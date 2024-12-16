@@ -18,7 +18,7 @@ data class EmbeddedDefaultLesson(
     ) val teacher: EmbeddedTeacher?,
     @Relation(
         parentColumn = "group_id",
-        entityColumn = "entity_id",
+        entityColumn = "id",
         entity = DbGroup::class
     ) val group: EmbeddedGroup,
     @Relation(

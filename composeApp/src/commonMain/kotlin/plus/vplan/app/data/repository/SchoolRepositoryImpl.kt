@@ -13,6 +13,7 @@ import plus.vplan.app.VPP_ROOT_URL
 import plus.vplan.app.VPP_SP24_URL
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
+import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.data.Response
@@ -69,6 +70,28 @@ class SchoolRepositoryImpl(
             val data = ResponseDataWrapper.fromJson<Int>(response.bodyAsText()) ?: return Response.Error.ParsingError
             return Response.Success(data)
         }
+    }
+
+    override suspend fun setSp24Info(
+        school: School,
+        sp24Id: Int,
+        username: String,
+        password: String,
+        daysPerWeek: Int,
+        studentsHaveFullAccess: Boolean,
+        downloadMode: School.IndiwareSchool.SchoolDownloadMode
+    ) {
+        vppDatabase.schoolDao.upsertSp24SchoolDetails(
+            DbSp24SchoolDetails(
+                schoolId = school.id,
+                sp24SchoolId = sp24Id.toString(),
+                username = username,
+                password = password,
+                daysPerWeek = daysPerWeek,
+                studentsHaveFullAccess = studentsHaveFullAccess,
+                downloadMode = downloadMode
+            )
+        )
     }
 }
 

@@ -2,6 +2,7 @@ package plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.
 
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
@@ -9,29 +10,47 @@ import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 class SetUpSchoolData(
     private val onboardingRepository: OnboardingRepository,
     private val indiwareRepository: IndiwareRepository,
-    private val schoolRepository: SchoolRepository
+    private val schoolRepository: SchoolRepository,
+    private val groupRepository: GroupRepository,
 ) {
     suspend operator fun invoke(): Boolean {
-        val sp24Id = onboardingRepository.getSp24OnboardingSchool().first()?.sp24Id?.toString() ?: return false
-        val username = onboardingRepository.getSp24Credentials()?.username ?: return false
-        val password = onboardingRepository.getSp24Credentials()?.password ?: return false
-        val result = indiwareRepository.getBaseData(
-            sp24Id = sp24Id,
-            username = username,
-            password = password
-        )
-        if (result !is Response.Success) return false
+        val prefix = "Onboarding/${this::class.simpleName}"
+        try {
+            val sp24Id = onboardingRepository.getSp24OnboardingSchool().first()?.sp24Id?.toString() ?: throw NullPointerException("$prefix sp24Id is null")
+            val username = onboardingRepository.getSp24Credentials()?.username ?: throw NullPointerException("$prefix username is null")
+            val password = onboardingRepository.getSp24Credentials()?.password ?: throw NullPointerException("$prefix password is null")
+            val baseData = indiwareRepository.getBaseData(
+                sp24Id = sp24Id,
+                username = username,
+                password = password
+            )
+            if (baseData !is Response.Success) throw IllegalStateException("$prefix baseData is not successful: $baseData")
 
-        val schoolId = schoolRepository.getIdFromSp24Id(sp24Id.toInt())
-        if (schoolId !is Response.Success) return false
-        val school = schoolRepository.getWithCachingById(schoolId.data).let {
-            if (it is Response.Success) it.data.first() else return false
+            val schoolId = schoolRepository.getIdFromSp24Id(sp24Id.toInt())
+            if (schoolId !is Response.Success) throw IllegalStateException("$prefix school-Lookup by sp24 was not successful: $schoolId")
+            val school = (schoolRepository.getWithCachingById(schoolId.data).let {
+                if (it is Response.Success) it.data.first() else throw IllegalStateException("$prefix school-Lookup was not successful: $it")
+            } ?: return false).let {
+                schoolRepository.setSp24Info(
+                    school = it,
+                    sp24Id = sp24Id.toInt(),
+                    username = username,
+                    password = password,
+                    daysPerWeek = baseData.data.daysPerWeek,
+                    studentsHaveFullAccess = baseData.data.studentsHaveFullAccess,
+                    downloadMode = baseData.data.downloadMode
+                )
+                schoolRepository.getById(it.id).first() ?: throw IllegalStateException("Onboarding/${this::class.simpleName}: schoolId ${it.id} not found")
+            }
+
+            val classes = groupRepository.getBySchoolWithCaching(school).let {
+                if (it is Response.Success) it.data.first() else throw IllegalStateException("$prefix groups-Lookup was not successful: $it")
+            }
+
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
         }
-
-        result.data.classes.forEach { classData ->
-
-        }
-
-        return true
     }
 }

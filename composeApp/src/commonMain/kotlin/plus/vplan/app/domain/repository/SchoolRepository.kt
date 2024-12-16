@@ -10,6 +10,16 @@ interface SchoolRepository {
     suspend fun getById(id: Int): Flow<School?>
 
     suspend fun getIdFromSp24Id(sp24Id: Int): Response<Int>
+
+    suspend fun setSp24Info(
+        school: School,
+        sp24Id: Int,
+        username: String,
+        password: String,
+        daysPerWeek: Int,
+        studentsHaveFullAccess: Boolean,
+        downloadMode: School.IndiwareSchool.SchoolDownloadMode
+    )
 }
 
 data class OnlineSchool(

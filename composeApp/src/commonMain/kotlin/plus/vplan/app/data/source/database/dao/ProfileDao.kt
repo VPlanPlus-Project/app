@@ -43,7 +43,7 @@ interface ProfileDao {
         schoolId: Int,
         displayName: String,
         type: ProfileType,
-        reference: Uuid
+        reference: Int
     ): Uuid {
         val id = Uuid.random()
         upsert(

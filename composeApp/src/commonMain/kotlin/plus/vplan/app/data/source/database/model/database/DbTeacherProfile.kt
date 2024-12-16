@@ -32,5 +32,5 @@ import kotlin.uuid.Uuid
 )
 data class DbTeacherProfile(
     @ColumnInfo(name = "profile_id") val profileId: Uuid,
-    @ColumnInfo(name = "teacher_id") val teacherId: Uuid,
+    @ColumnInfo(name = "teacher_id") val teacherId: Int,
 )

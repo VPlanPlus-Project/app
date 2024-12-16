@@ -15,7 +15,7 @@ data class EmbeddedGroupProfile(
     ) val profile: DbProfile,
     @Relation(
         parentColumn = "group_id",
-        entityColumn = "entity_id",
+        entityColumn = "id",
         entity = DbGroup::class
     ) val group: EmbeddedGroup
 )

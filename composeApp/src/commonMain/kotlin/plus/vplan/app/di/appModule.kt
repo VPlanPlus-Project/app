@@ -7,8 +7,10 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import plus.vplan.app.data.repository.GroupRepositoryImpl
 import plus.vplan.app.data.repository.IndiwareRepositoryImpl
 import plus.vplan.app.data.repository.SchoolRepositoryImpl
+import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.feature.onboarding.di.onboardingModule
@@ -21,6 +23,7 @@ val appModule = module(createdAtStart = true) {
     }
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
+    singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
     singleOf(::IndiwareRepositoryImpl).bind<IndiwareRepository>()
 }
 

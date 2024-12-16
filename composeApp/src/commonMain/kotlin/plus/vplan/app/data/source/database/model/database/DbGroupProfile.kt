@@ -23,7 +23,7 @@ import kotlin.uuid.Uuid
         ),
         ForeignKey(
             entity = DbGroup::class,
-            parentColumns = ["entity_id"],
+            parentColumns = ["id"],
             childColumns = ["group_id"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
@@ -32,5 +32,5 @@ import kotlin.uuid.Uuid
 )
 data class DbGroupProfile(
     @ColumnInfo(name = "profile_id") val profileId: Uuid,
-    @ColumnInfo(name = "group_id") val groupId: Uuid,
+    @ColumnInfo(name = "group_id") val groupId: Int,
 )
