@@ -4,7 +4,9 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 
 class SetUpSchoolData(
@@ -12,6 +14,8 @@ class SetUpSchoolData(
     private val indiwareRepository: IndiwareRepository,
     private val schoolRepository: SchoolRepository,
     private val groupRepository: GroupRepository,
+    private val teacherRepository: TeacherRepository,
+    private val roomRepository: RoomRepository
 ) {
     suspend operator fun invoke(): Boolean {
         val prefix = "Onboarding/${this::class.simpleName}"
@@ -45,6 +49,14 @@ class SetUpSchoolData(
 
             val classes = groupRepository.getBySchoolWithCaching(school).let {
                 if (it is Response.Success) it.data.first() else throw IllegalStateException("$prefix groups-Lookup was not successful: $it")
+            }
+
+            val teachers = teacherRepository.getBySchoolWithCaching(school).let {
+                if (it is Response.Success) it.data.first() else throw IllegalStateException("$prefix teachers-Lookup was not successful: $it")
+            }
+
+            val rooms = roomRepository.getBySchoolWithCaching(school).let {
+                if (it is Response.Success) it.data.first() else throw IllegalStateException("$prefix rooms-Lookup was not successful: $it")
             }
 
             return true

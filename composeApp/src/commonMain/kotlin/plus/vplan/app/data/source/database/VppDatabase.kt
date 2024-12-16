@@ -20,12 +20,10 @@ import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoom
-import plus.vplan.app.data.source.database.model.database.DbRoomIdentifier
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
 import plus.vplan.app.data.source.database.model.database.DbTeacher
-import plus.vplan.app.data.source.database.model.database.DbTeacherIdentifier
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 
 @Database(
@@ -35,9 +33,7 @@ import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 
         DbGroup::class,
         DbTeacher::class,
-        DbTeacherIdentifier::class,
         DbRoom::class,
-        DbRoomIdentifier::class,
 
         DbProfile::class,
         DbGroupProfile::class,

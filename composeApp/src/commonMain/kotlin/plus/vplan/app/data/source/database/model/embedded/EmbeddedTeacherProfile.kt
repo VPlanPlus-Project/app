@@ -15,7 +15,7 @@ data class EmbeddedTeacherProfile(
     ) val profile: DbProfile,
     @Relation(
         parentColumn = "teacher_id",
-        entityColumn = "entity_id",
+        entityColumn = "id",
         entity = DbTeacher::class
     ) val teacher: EmbeddedTeacher
 )

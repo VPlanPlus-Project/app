@@ -13,7 +13,7 @@ data class EmbeddedDefaultLesson(
     @Embedded val defaultLesson: DbDefaultLesson,
     @Relation(
         parentColumn = "teacher_id",
-        entityColumn = "entity_id",
+        entityColumn = "id",
         entity = DbTeacher::class
     ) val teacher: EmbeddedTeacher?,
     @Relation(

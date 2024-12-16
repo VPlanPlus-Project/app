@@ -4,7 +4,6 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbTeacher
-import plus.vplan.app.data.source.database.model.database.DbTeacherIdentifier
 import plus.vplan.app.domain.model.Teacher
 
 data class EmbeddedTeacher(
@@ -14,16 +13,10 @@ data class EmbeddedTeacher(
         entityColumn = "id",
         entity = DbSchool::class
     ) val school: EmbeddedSchool,
-    @Relation(
-        parentColumn = "entity_id",
-        entityColumn = "teacher_id",
-        entity = DbTeacherIdentifier::class
-    ) val identifiers: List<DbTeacherIdentifier>
 ) {
     fun toModel(): Teacher {
         return Teacher(
-            appId = teacher.id,
-            identifiers = identifiers.map { it.toModel() },
+            id = teacher.id,
             school = school.toModel(),
             name = teacher.name
         )

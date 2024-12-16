@@ -18,7 +18,7 @@ import kotlin.uuid.Uuid
     foreignKeys = [
         ForeignKey(
             entity = DbTeacher::class,
-            parentColumns = ["entity_id"],
+            parentColumns = ["id"],
             childColumns = ["teacher_id"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
@@ -35,7 +35,7 @@ import kotlin.uuid.Uuid
 data class DbDefaultLesson(
     @ColumnInfo(name = "entity_id") val id: Uuid = Uuid.random(),
     @ColumnInfo(name = "subject") val subject: String,
-    @ColumnInfo(name = "teacher_id") val teacherId: Uuid?,
+    @ColumnInfo(name = "teacher_id") val teacherId: Int?,
     @ColumnInfo(name = "group_id") val groupId: Int,
     @ColumnInfo(name = "course_id") val courseId: Uuid?
 )

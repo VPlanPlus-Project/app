@@ -23,7 +23,7 @@ import kotlin.uuid.Uuid
         ),
         ForeignKey(
             entity = DbRoom::class,
-            parentColumns = ["entity_id"],
+            parentColumns = ["id"],
             childColumns = ["room_id"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE

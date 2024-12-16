@@ -1,10 +1,7 @@
 package plus.vplan.app.domain.model
 
-import kotlin.uuid.Uuid
-
 data class Teacher(
-    val appId: Uuid,
-    val identifiers: List<EntityIdentifier>,
+    val id: Int,
     val school: School,
     val name: String
 )

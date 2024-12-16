@@ -15,7 +15,7 @@ data class EmbeddedRoomProfile(
     ) val profile: DbProfile,
     @Relation(
         parentColumn = "room_id",
-        entityColumn = "entity_id",
+        entityColumn = "id",
         entity = DbRoom::class
     ) val room: EmbeddedRoom
 )
