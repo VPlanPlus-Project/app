@@ -5,20 +5,32 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import plus.vplan.app.domain.data.Response
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.CheckCredentialsUseCase
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.GetCurrentOnboardingSchoolUseCase
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.GetSp24CredentialsStateUseCase
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.Sp24CredentialsState
+import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.Sp24LookupResponse
+import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.StartIndiwareInitJobUseCase
+import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 
 class OnboardingIndiwareLoginViewModel(
     private val checkCredentialsUseCase: CheckCredentialsUseCase,
     private val getCurrentOnboardingSchoolUseCase: GetCurrentOnboardingSchoolUseCase,
-    private val getSp24CredentialsStateUseCase: GetSp24CredentialsStateUseCase
+    private val getSp24CredentialsStateUseCase: GetSp24CredentialsStateUseCase,
+    private val startIndiwareInitJobUseCase: StartIndiwareInitJobUseCase
 ) : ViewModel() {
     var state by mutableStateOf<OnboardingIndiwareLoginState?>(null)
         private set
+
+    private lateinit var navController: NavHostController
+
+    fun init(navController: NavHostController) {
+        this.navController = navController
+    }
 
     init {
         viewModelScope.launch {
@@ -45,7 +57,21 @@ class OnboardingIndiwareLoginViewModel(
             when (event) {
                 is OnboardingIndiwareLoginEvent.OnUsernameChanged -> state = state?.copy(username = event.username)
                 is OnboardingIndiwareLoginEvent.OnPasswordChanged -> state = state?.copy(password = event.password)
-                is OnboardingIndiwareLoginEvent.OnCheckClicked -> checkCredentialsUseCase(state!!.sp24Id, state!!.username, state!!.password)
+                is OnboardingIndiwareLoginEvent.OnCheckClicked -> {
+                    val result = checkCredentialsUseCase(state!!.sp24Id, state!!.username, state!!.password)
+                    if (result is Response.Success) {
+                        when (result.data) {
+                            is Sp24LookupResponse.FirstSchool -> {
+                                startIndiwareInitJobUseCase()
+                                navController.navigate(OnboardingScreen.OnboardingIndiwareInit)
+                            }
+                            is Sp24LookupResponse.ExistingSchool -> {
+                                navController.navigate(OnboardingScreen.OnboardingIndiwareDataDownload)
+                            }
+                            else -> {}
+                        }
+                    }
+                }
             }
         }
     }

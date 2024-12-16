@@ -1,9 +1,22 @@
 package plus.vplan.app.feature.onboarding.data.repository
 
+import io.ktor.client.HttpClient
+import io.ktor.client.request.basicAuth
+import io.ktor.client.request.get
+import io.ktor.client.request.url
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import plus.vplan.app.VPP_SP24_URL
+import plus.vplan.app.data.repository.ResponseDataWrapper
+import plus.vplan.app.data.source.network.saveRequest
+import plus.vplan.app.data.source.network.toResponse
+import plus.vplan.app.domain.data.Response
 import plus.vplan.app.feature.onboarding.data.source.database.OnboardingDatabase
 import plus.vplan.app.feature.onboarding.domain.repository.CurrentOnboardingSchool
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
@@ -11,7 +24,8 @@ import plus.vplan.app.feature.onboarding.domain.repository.Sp24Credentials
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.Sp24CredentialsState
 
 class OnboardingRepositoryImpl(
-    private val onboardingDatabase: OnboardingDatabase
+    private val onboardingDatabase: OnboardingDatabase,
+    private val httpClient: HttpClient
 ) : OnboardingRepository {
     override suspend fun clear() {
         onboardingDatabase.keyValueDao.delete("indiware.sp24_id")
@@ -60,4 +74,50 @@ class OnboardingRepositoryImpl(
         if (username == null || password == null) return null
         return Sp24Credentials(username, password)
     }
+
+    override suspend fun startSp24UpdateJob(): Response<String> {
+        val sp24Id = onboardingDatabase.keyValueDao.get("indiware.sp24_id").first() ?: return Response.Error.Other("schoolId is null")
+        val username = onboardingDatabase.keyValueDao.get("indiware.username").first() ?: return Response.Error.Other("username is null")
+        val password = onboardingDatabase.keyValueDao.get("indiware.password").first() ?: return Response.Error.Other("password is null")
+        return saveRequest {
+            val result = httpClient.get {
+                url("$VPP_SP24_URL/school/sp24/$sp24Id/initialize")
+                basicAuth("$username@$sp24Id", password)
+            }
+            if (result.status.isSuccess()) {
+                val jobId = ResponseDataWrapper.fromJson<String>(result.bodyAsText()) ?: return Response.Error.ParsingError
+                onboardingDatabase.keyValueDao.insert("indiware.job_id", jobId)
+                return Response.Success(jobId)
+            }
+            return result.toResponse()
+        }
+    }
+
+    override suspend fun getSp24UpdateJobProgress(): Response<List<String>> {
+        val jobId = onboardingDatabase.keyValueDao.get("indiware.job_id").first() ?: return Response.Error.Other("jobId is null")
+        val username = onboardingDatabase.keyValueDao.get("indiware.username").first() ?: return Response.Error.Other("username is null")
+        val password = onboardingDatabase.keyValueDao.get("indiware.password").first() ?: return Response.Error.Other("password is null")
+        val sp24Id = onboardingDatabase.keyValueDao.get("indiware.sp24_id").first() ?: return Response.Error.Other("schoolId is null")
+        return saveRequest {
+            val response = httpClient.get {
+                url("$VPP_SP24_URL/school/sp24/$sp24Id/status/$jobId")
+                basicAuth("$username@$sp24Id", password)
+            }
+            if (response.status.isSuccess()) {
+                val data = ResponseDataWrapper.fromJson<Sp24UpdateJobWrapper>(response.bodyAsText()) ?: return Response.Error.ParsingError
+                return Response.Success(data.log.map { it.code })
+            }
+            return response.toResponse()
+        }
+    }
 }
+
+@Serializable
+data class Sp24UpdateJobWrapper(
+    @SerialName("log") val log: List<Sp24UpdateJob>
+)
+
+@Serializable
+data class Sp24UpdateJob(
+    @SerialName("code") val code: String
+)

@@ -5,12 +5,21 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.navigation.NavHostController
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun OnboardingIndiwareLoginScreen() {
+fun OnboardingIndiwareLoginScreen(
+    navController: NavHostController
+) {
 
     val viewModel = koinViewModel<OnboardingIndiwareLoginViewModel>()
+
+    LaunchedEffect(Unit) {
+        viewModel.init(navController)
+    }
+
     val state = viewModel.state ?: return
 
     OnboardingIndiwareLoginContent(
