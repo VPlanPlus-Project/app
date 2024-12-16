@@ -22,7 +22,7 @@ class GroupRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase
 ) : GroupRepository {
-    override suspend fun getBySchool(schoolId: Int): Flow<List<Group>> {
+    override fun getBySchool(schoolId: Int): Flow<List<Group>> {
         return vppDatabase.groupDao.getBySchool(schoolId)
             .map { result -> result.map { it.toModel() } }
     }
@@ -52,7 +52,7 @@ class GroupRepositoryImpl(
         }
     }
 
-    override suspend fun getById(id: Int): Flow<Group?> {
+    override fun getById(id: Int): Flow<Group?> {
         return vppDatabase.groupDao.getById(id).map { it?.toModel() }
     }
 
