@@ -100,12 +100,12 @@ class IndiwareRepositoryImpl(
                                 .map { baseDataClassDefaultLesson ->
                                     IndiwareBaseData.Class.DefaultLesson(
                                         subject = baseDataClassDefaultLesson.defaultLesson.subjectName,
-                                        teacher = baseDataClassDefaultLesson.defaultLesson.teacherName,
+                                        teacher = baseDataClassDefaultLesson.defaultLesson.teacherName.ifBlank { null },
                                         defaultLessonNumber = "sp24.$sp24Id.${baseDataClassDefaultLesson.defaultLesson.defaultLessonNumber}",
                                         course = if (baseDataClassDefaultLesson.defaultLesson.courseName == null) null else baseDataClass.courses.first { it.course.courseName == baseDataClassDefaultLesson.defaultLesson.courseName }.let {
                                             IndiwareBaseData.Class.Course(
                                                 name = it.course.courseName,
-                                                teacher = it.course.courseTeacherName
+                                                teacher = it.course.courseTeacherName.ifBlank { null }
                                             )
                                         }
                                     )

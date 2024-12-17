@@ -2,6 +2,8 @@ package plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.
 
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.repository.CourseRepository
+import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -15,14 +17,19 @@ class SetUpSchoolData(
     private val schoolRepository: SchoolRepository,
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
-    private val roomRepository: RoomRepository
+    private val roomRepository: RoomRepository,
+    private val courseRepository: CourseRepository,
+    private val defaultLessonRepository: DefaultLessonRepository
 ) {
     suspend operator fun invoke(): Boolean {
         val prefix = "Onboarding/${this::class.simpleName}"
         try {
-            val sp24Id = onboardingRepository.getSp24OnboardingSchool().first()?.sp24Id?.toString() ?: throw NullPointerException("$prefix sp24Id is null")
-            val username = onboardingRepository.getSp24Credentials()?.username ?: throw NullPointerException("$prefix username is null")
-            val password = onboardingRepository.getSp24Credentials()?.password ?: throw NullPointerException("$prefix password is null")
+            val sp24Id = onboardingRepository.getSp24OnboardingSchool().first()?.sp24Id?.toString()
+                ?: throw NullPointerException("$prefix sp24Id is null")
+            val username = onboardingRepository.getSp24Credentials()?.username
+                ?: throw NullPointerException("$prefix username is null")
+            val password = onboardingRepository.getSp24Credentials()?.password
+                ?: throw NullPointerException("$prefix password is null")
             val baseData = indiwareRepository.getBaseData(
                 sp24Id = sp24Id,
                 username = username,
@@ -44,7 +51,8 @@ class SetUpSchoolData(
                     studentsHaveFullAccess = baseData.data.studentsHaveFullAccess,
                     downloadMode = baseData.data.downloadMode
                 )
-                schoolRepository.getById(it.id).first() ?: throw IllegalStateException("Onboarding/${this::class.simpleName}: schoolId ${it.id} not found")
+                schoolRepository.getById(it.id).first()
+                    ?: throw IllegalStateException("Onboarding/${this::class.simpleName}: schoolId ${it.id} not found")
             }
 
             val classes = groupRepository.getBySchoolWithCaching(school).let {
@@ -58,6 +66,29 @@ class SetUpSchoolData(
             val rooms = roomRepository.getBySchoolWithCaching(school).let {
                 if (it is Response.Success) it.data.first() else throw IllegalStateException("$prefix rooms-Lookup was not successful: $it")
             }
+
+            baseData.data.classes
+                .map { it to it.defaultLessons }
+                .forEach { (group, defaultLessons) ->
+                    defaultLessons
+                        .forEach { defaultLesson ->
+                            val course = defaultLesson.course?.let { course ->
+                                courseRepository.upsert(
+                                    id = "sp24.$sp24Id.${group.name}.${course.name}+${course.teacher}",
+                                    name = course.name,
+                                    groupId = classes.first { it.name == group.name }.id,
+                                    teacherId = teachers.first { it.name == course.teacher }.id
+                                ).first()
+                            }
+                            defaultLessonRepository.upsert(
+                                id = "sp24.$sp24Id.${group.name}.${defaultLesson.defaultLessonNumber}",
+                                subject = defaultLesson.subject,
+                                groupId = classes.first { it.name == group.name }.id,
+                                teacherId = teachers.firstOrNull { it.name == defaultLesson.teacher }?.id,
+                                courseId = course?.id
+                            )
+                        }
+                }
 
             return true
         } catch (e: Exception) {

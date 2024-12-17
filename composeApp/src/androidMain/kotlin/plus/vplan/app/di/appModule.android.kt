@@ -8,7 +8,6 @@ import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.converters.IdOriginConverter
 import plus.vplan.app.data.source.database.converters.UuidTypeConverter
 
 actual fun platformModule(): Module = module(createdAtStart = true) {
@@ -22,7 +21,6 @@ actual fun platformModule(): Module = module(createdAtStart = true) {
             .enableMultiInstanceInvalidation()
             .setQueryCoroutineContext(Dispatchers.IO)
             .addTypeConverter(UuidTypeConverter())
-            .addTypeConverter(IdOriginConverter())
             .build()
     }
 }

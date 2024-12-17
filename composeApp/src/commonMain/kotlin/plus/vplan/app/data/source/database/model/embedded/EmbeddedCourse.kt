@@ -3,7 +3,6 @@ package plus.vplan.app.data.source.database.model.embedded
 import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbCourse
-import plus.vplan.app.data.source.database.model.database.DbCourseIdentifier
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.domain.model.Course
@@ -14,24 +13,18 @@ data class EmbeddedCourse(
         parentColumn = "teacher_id",
         entityColumn = "id",
         entity = DbTeacher::class
-    ) val teacher: EmbeddedTeacher,
+    ) val teacher: EmbeddedTeacher?,
     @Relation(
         parentColumn = "group_id",
         entityColumn = "id",
         entity = DbGroup::class
-    ) val group: EmbeddedGroup,
-    @Relation(
-        parentColumn = "entity_id",
-        entityColumn = "course_id",
-        entity = DbCourseIdentifier::class
-    ) val identifiers: List<DbCourseIdentifier>
+    ) val group: EmbeddedGroup
 ) {
     fun toModel(): Course {
         return Course(
-            appId = course.id,
-            identifiers = identifiers.map { it.toModel() },
+            id = course.id,
             name = course.name,
-            teacher = teacher.toModel(),
+            teacher = teacher?.toModel(),
             group = group.toModel()
         )
     }

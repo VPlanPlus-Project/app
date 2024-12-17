@@ -7,11 +7,15 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import plus.vplan.app.data.repository.CourseRepositoryImpl
+import plus.vplan.app.data.repository.DefaultLessonRepositoryImpl
 import plus.vplan.app.data.repository.GroupRepositoryImpl
 import plus.vplan.app.data.repository.IndiwareRepositoryImpl
 import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.SchoolRepositoryImpl
 import plus.vplan.app.data.repository.TeacherRepositoryImpl
+import plus.vplan.app.domain.repository.CourseRepository
+import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -31,6 +35,8 @@ val appModule = module(createdAtStart = true) {
     singleOf(::TeacherRepositoryImpl).bind<TeacherRepository>()
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
     singleOf(::IndiwareRepositoryImpl).bind<IndiwareRepository>()
+    singleOf(::CourseRepositoryImpl).bind<CourseRepository>()
+    singleOf(::DefaultLessonRepositoryImpl).bind<DefaultLessonRepository>()
 }
 
 fun initKoin(configuration: KoinAppDeclaration? = null) {

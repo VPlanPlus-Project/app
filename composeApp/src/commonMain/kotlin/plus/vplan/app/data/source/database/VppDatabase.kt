@@ -3,7 +3,6 @@ package plus.vplan.app.data.source.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import plus.vplan.app.data.source.database.converters.IdOriginConverter
 import plus.vplan.app.data.source.database.converters.UuidTypeConverter
 import plus.vplan.app.data.source.database.dao.CourseDao
 import plus.vplan.app.data.source.database.dao.DefaultLessonDao
@@ -13,9 +12,7 @@ import plus.vplan.app.data.source.database.dao.RoomDao
 import plus.vplan.app.data.source.database.dao.SchoolDao
 import plus.vplan.app.data.source.database.dao.TeacherDao
 import plus.vplan.app.data.source.database.model.database.DbCourse
-import plus.vplan.app.data.source.database.model.database.DbCourseIdentifier
 import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
-import plus.vplan.app.data.source.database.model.database.DbDefaultLessonIdentifier
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbProfile
@@ -41,16 +38,13 @@ import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
         DbRoomProfile::class,
 
         DbDefaultLesson::class,
-        DbDefaultLessonIdentifier::class,
         DbCourse::class,
-        DbCourseIdentifier::class
     ],
     version = 1,
 )
 @TypeConverters(
     value = [
         UuidTypeConverter::class,
-        IdOriginConverter::class
     ]
 )
 abstract class VppDatabase: RoomDatabase() {

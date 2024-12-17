@@ -37,14 +37,14 @@ data class IndiwareBaseData(
 
         data class DefaultLesson(
             val subject: String,
-            val teacher: String,
+            val teacher: String?,
             val defaultLessonNumber: String,
             val course: Course?
         )
 
         data class Course(
             val name: String,
-            val teacher: String
+            val teacher: String?
         )
     }
 
