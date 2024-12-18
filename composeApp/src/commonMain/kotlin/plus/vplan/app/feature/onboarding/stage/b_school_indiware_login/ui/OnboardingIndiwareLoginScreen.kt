@@ -1,11 +1,13 @@
 package plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -33,7 +35,9 @@ private fun OnboardingIndiwareLoginContent(
     state: OnboardingIndiwareLoginState,
     onEvent: (OnboardingIndiwareLoginEvent) -> Unit
 ) {
-    Column {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
         TextField(
             value = state.username,
             onValueChange = { onEvent(OnboardingIndiwareLoginEvent.OnUsernameChanged(it)) },

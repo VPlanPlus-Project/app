@@ -1,5 +1,11 @@
 package plus.vplan.app.feature.onboarding.ui
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
@@ -7,6 +13,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,6 +24,38 @@ import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.ui.OnboardingInd
 import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.ui.OnboardingIndiwareDataDownloadScreen
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileScreen
 
+val enterSlideTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) =
+    {
+        slideIntoContainer(
+            AnimatedContentTransitionScope.SlideDirection.Left,
+            animationSpec = tween(300)
+        ) + fadeIn(animationSpec = tween(300))
+    }
+
+val exitSlideTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition) =
+    {
+        slideOutOfContainer(
+            AnimatedContentTransitionScope.SlideDirection.Left,
+            animationSpec = tween(300)
+        ) + fadeOut(animationSpec = tween(300))
+    }
+
+val enterSlideTransitionRight: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) =
+    {
+        slideIntoContainer(
+            AnimatedContentTransitionScope.SlideDirection.Right,
+            animationSpec = tween(300)
+        ) + fadeIn(animationSpec = tween(300))
+    }
+
+val exitSlideTransitionRight: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition) =
+    {
+        slideOutOfContainer(
+            AnimatedContentTransitionScope.SlideDirection.Right,
+            animationSpec = tween(300)
+        ) + fadeOut(animationSpec = tween(300))
+    }
+
 @Composable
 fun OnboardingScreen() {
     Scaffold(
@@ -25,7 +64,11 @@ fun OnboardingScreen() {
         val navController = rememberNavController()
         NavHost(
             navController = navController,
-            startDestination = OnboardingScreen.OnboardingScreenHome
+            startDestination = OnboardingScreen.OnboardingScreenHome,
+            enterTransition = enterSlideTransition,
+            exitTransition = exitSlideTransition,
+            popEnterTransition = enterSlideTransitionRight,
+            popExitTransition = exitSlideTransitionRight
         ) {
             composable<OnboardingScreen.OnboardingScreenHome> {
                 OnboardingSchoolSearch(navController)

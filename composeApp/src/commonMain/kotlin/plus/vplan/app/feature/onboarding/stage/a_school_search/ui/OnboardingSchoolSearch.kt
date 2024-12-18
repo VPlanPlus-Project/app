@@ -1,11 +1,13 @@
 package plus.vplan.app.feature.onboarding.stage.a_school_search.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.data.Response
@@ -29,7 +31,9 @@ private fun OnboardingSchoolSearchContent(
     state: OnboardingSchoolSearchState,
     onEvent: (OnboardingSchoolSearchEvent) -> Unit,
 ) {
-    Column {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
         TextField(
             value = state.searchQuery,
             onValueChange = { onEvent(OnboardingSchoolSearchEvent.OnQueryChanged(it)) },
