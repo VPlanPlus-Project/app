@@ -51,6 +51,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.navigation.compose)
 
+            implementation(libs.kermit)
+
             implementation(libs.androidx.room.runtime)
             implementation(libs.sqlite.bundled)
 

@@ -7,13 +7,18 @@ import plus.vplan.app.domain.repository.SchoolRepository
 class SearchForSchoolUseCase(
     private val schoolRepository: SchoolRepository
 ) {
-    private val onlineSchools = mutableListOf<OnlineSchool>()
+    private val onlineSchools = mutableListOf<SearchSchool>()
 
     suspend fun init() {
         val response = schoolRepository.fetchAllOnline()
         if (response is Response.Success) {
             onlineSchools.clear()
-            onlineSchools.addAll(response.data.sortedBy { it.name })
+            onlineSchools.addAll(
+                response
+                    .data
+                    .sortedBy { it.name }
+                    .map { SearchSchool(it) }
+            )
         }
     }
 
@@ -21,6 +26,29 @@ class SearchForSchoolUseCase(
         if (onlineSchools.isEmpty()) {
             init()
         }
-        return Response.Success(onlineSchools.filter { it.name.contains(query, ignoreCase = true) })
+        if (query.isBlank()) return Response.Success(emptyList())
+        val adjustedQuery = query
+            .lowercase()
+            .replace("-", " ")
+            .trim()
+        return Response.Success(
+            onlineSchools
+                .filter {
+                    it.adjustedName.contains(adjustedQuery) ||
+                            it.adjustedName.split(" ").joinToString("") { wordPart -> wordPart.first().toString() }.contains(adjustedQuery) ||
+                            it.school.sp24Id?.toString()?.startsWith(adjustedQuery) == true
+                }
+                .map { it.school }
+        )
     }
+}
+
+private data class SearchSchool(
+    val school: OnlineSchool,
+    val adjustedName: String
+) {
+    constructor(school: OnlineSchool) : this(
+        school,
+        school.name.lowercase().replace("-", " ").trim()
+    )
 }

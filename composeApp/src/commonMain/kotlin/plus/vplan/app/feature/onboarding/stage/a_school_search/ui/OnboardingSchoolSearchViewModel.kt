@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.repository.OnlineSchool
@@ -36,11 +37,27 @@ class OnboardingSchoolSearchViewModel(
         viewModelScope.launch {
             when (event) {
                 is OnboardingSchoolSearchEvent.OnQueryChanged -> {
-                    state = state.copy(searchQuery = event.query)
+                    state = state.copy(
+                        searchQuery = event.query,
+                        textFieldError = null
+                    )
+                    if (state.results == Response.Loading) delay(500)
                     state = state.copy(results = searchForSchoolUseCase(event.query))
                 }
                 is OnboardingSchoolSearchEvent.OnUseIndiwareClicked -> {
+                    if ((state.searchQuery.toIntOrNull() ?: 0) !in 10000000..99999999) {
+                        state = state.copy(textFieldError = OnboardingSchoolSearchTextFieldError.BadSp24Id)
+                        return@launch
+                    }
                     useUnknownSp24SchoolUseCase(state.searchQuery.toInt())
+                    navController.navigate(OnboardingScreen.OnboardingScreenIndiwareLogin)
+                }
+                is OnboardingSchoolSearchEvent.OnSchoolSelected -> {
+                    if (event.school.sp24Id == null) {
+                        state = state.copy(textFieldError = OnboardingSchoolSearchTextFieldError.SchoolNotFound)
+                        return@launch
+                    }
+                    useUnknownSp24SchoolUseCase(event.school.sp24Id)
                     navController.navigate(OnboardingScreen.OnboardingScreenIndiwareLogin)
                 }
             }
@@ -50,10 +67,17 @@ class OnboardingSchoolSearchViewModel(
 
 data class OnboardingSchoolSearchState(
     val searchQuery: String = "",
-    val results: Response<List<OnlineSchool>> = Response.Loading
+    val results: Response<List<OnlineSchool>> = Response.Loading,
+    val textFieldError: OnboardingSchoolSearchTextFieldError? = null
 )
 
 sealed class OnboardingSchoolSearchEvent {
     data class OnQueryChanged(val query: String) : OnboardingSchoolSearchEvent()
     data object OnUseIndiwareClicked : OnboardingSchoolSearchEvent()
+    data class OnSchoolSelected(val school: OnlineSchool) : OnboardingSchoolSearchEvent()
+}
+
+sealed class OnboardingSchoolSearchTextFieldError {
+    data object BadSp24Id : OnboardingSchoolSearchTextFieldError()
+    data object SchoolNotFound : OnboardingSchoolSearchTextFieldError()
 }
