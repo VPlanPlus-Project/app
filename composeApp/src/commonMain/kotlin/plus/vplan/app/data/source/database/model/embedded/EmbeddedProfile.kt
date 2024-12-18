@@ -26,12 +26,16 @@ data class EmbeddedProfile(
         entityColumn = "profile_id"
     ) val embeddedRoomProfile: EmbeddedRoomProfile?
 ) {
-    fun toModel(): Profile {
+    fun toModel(): Profile? {
         if (embeddedGroupProfile != null) {
+            val disabledDefaultLessons = embeddedGroupProfile.disabledDefaultLesson.map { it.id }
             return Profile.StudentProfile(
                 id = profile.id,
                 displayName = profile.displayName,
-                group = embeddedGroupProfile.group.toModel()
+                group = embeddedGroupProfile.group.toModel(),
+                defaultLessons = embeddedGroupProfile.defaultLessons.associateWith {
+                    disabledDefaultLessons.contains(it.defaultLesson.id)
+                }.mapKeys { it.key.toModel() }
             )
         }
         if (embeddedTeacherProfile != null) {
@@ -48,6 +52,6 @@ data class EmbeddedProfile(
                 room = embeddedRoomProfile.room.toModel()
             )
         }
-        throw IllegalStateException("Profile ${profile.id} does not have entities associated with it!")
+        return null
     }
 }

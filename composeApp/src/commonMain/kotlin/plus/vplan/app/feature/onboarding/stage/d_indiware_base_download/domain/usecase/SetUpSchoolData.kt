@@ -51,6 +51,7 @@ class SetUpSchoolData(
                     studentsHaveFullAccess = baseData.data.studentsHaveFullAccess,
                     downloadMode = baseData.data.downloadMode
                 )
+                onboardingRepository.setSchoolId(it.id)
                 schoolRepository.getById(it.id).first()
                     ?: throw IllegalStateException("Onboarding/${this::class.simpleName}: schoolId ${it.id} not found")
             }

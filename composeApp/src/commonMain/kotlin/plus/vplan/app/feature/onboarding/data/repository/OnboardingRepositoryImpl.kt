@@ -22,6 +22,7 @@ import plus.vplan.app.feature.onboarding.domain.repository.CurrentOnboardingScho
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.domain.repository.Sp24Credentials
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.Sp24CredentialsState
+import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 
 class OnboardingRepositoryImpl(
     private val onboardingDatabase: OnboardingDatabase,
@@ -68,6 +69,10 @@ class OnboardingRepositoryImpl(
         onboardingDatabase.keyValueDao.delete("indiware.password")
     }
 
+    override suspend fun setSchoolId(id: Int) {
+        onboardingDatabase.keyValueDao.insert("indiware.school_id", id.toString())
+    }
+
     override suspend fun getSp24Credentials(): Sp24Credentials? {
         val username = onboardingDatabase.keyValueDao.get("indiware.username").first()
         val password = onboardingDatabase.keyValueDao.get("indiware.password").first()
@@ -109,6 +114,11 @@ class OnboardingRepositoryImpl(
             }
             return response.toResponse()
         }
+    }
+
+    override suspend fun setSelectedProfile(onboardingProfile: OnboardingProfile) {
+        onboardingDatabase.keyValueDao.insert("onboarding.profile_type", onboardingProfile.type.name)
+        onboardingDatabase.keyValueDao.insert("onboarding.profile_id", onboardingProfile.id.toString())
     }
 }
 

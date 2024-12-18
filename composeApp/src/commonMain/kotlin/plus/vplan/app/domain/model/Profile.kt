@@ -9,7 +9,8 @@ abstract class Profile {
     data class StudentProfile(
         override val id: Uuid,
         override val displayName: String?,
-        val group: Group
+        val group: Group,
+        val defaultLessons: Map<DefaultLesson, Boolean>
     ) : Profile()
 
     data class TeacherProfile(

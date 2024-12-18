@@ -15,6 +15,7 @@ import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingScho
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.OnboardingIndiwareLoginScreen
 import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.ui.OnboardingIndiwareInitScreen
 import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.ui.OnboardingIndiwareDataDownloadScreen
+import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileScreen
 
 @Composable
 fun OnboardingScreen() {
@@ -41,6 +42,10 @@ fun OnboardingScreen() {
             composable<OnboardingScreen.OnboardingIndiwareDataDownload> {
                 OnboardingIndiwareDataDownloadScreen(navController)
             }
+
+            composable<OnboardingScreen.OnboardingChooseProfile> {
+                OnboardingSelectProfileScreen(navController)
+            }
         }
     }
 }
@@ -51,4 +56,5 @@ sealed class OnboardingScreen(val name: String) {
     @Serializable data object OnboardingScreenIndiwareLogin : OnboardingScreen("OnboardingScreenIndiwareLogin")
     @Serializable data object OnboardingIndiwareInit : OnboardingScreen("OnboardingScreenInit")
     @Serializable data object OnboardingIndiwareDataDownload : OnboardingScreen("OnboardingScreenDataDownload")
+    @Serializable data object OnboardingChooseProfile : OnboardingScreen("OnboardingScreenChooseProfileType")
 }

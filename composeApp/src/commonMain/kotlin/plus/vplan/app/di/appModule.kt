@@ -11,6 +11,8 @@ import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DefaultLessonRepositoryImpl
 import plus.vplan.app.data.repository.GroupRepositoryImpl
 import plus.vplan.app.data.repository.IndiwareRepositoryImpl
+import plus.vplan.app.data.repository.KeyValueRepositoryImpl
+import plus.vplan.app.data.repository.ProfileRepositoryImpl
 import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.SchoolRepositoryImpl
 import plus.vplan.app.data.repository.TeacherRepositoryImpl
@@ -18,6 +20,8 @@ import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -37,6 +41,8 @@ val appModule = module(createdAtStart = true) {
     singleOf(::IndiwareRepositoryImpl).bind<IndiwareRepository>()
     singleOf(::CourseRepositoryImpl).bind<CourseRepository>()
     singleOf(::DefaultLessonRepositoryImpl).bind<DefaultLessonRepository>()
+    singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
+    singleOf(::KeyValueRepositoryImpl).bind<KeyValueRepository>()
 }
 
 fun initKoin(configuration: KoinAppDeclaration? = null) {

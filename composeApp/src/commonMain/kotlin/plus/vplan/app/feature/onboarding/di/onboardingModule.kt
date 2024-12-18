@@ -19,6 +19,9 @@ import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.domain.usecase.T
 import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.ui.OnboardingIndiwareInitViewModel
 import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.usecase.SetUpSchoolData
 import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.ui.OnboardingIndiwareDataDownloadViewModel
+import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.GetProfileOptionsUseCase
+import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.SelectProfileUseCase
+import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileViewModel
 
 expect fun onboardingDatabaseModule(): Module
 
@@ -35,9 +38,12 @@ val onboardingModule = module {
     singleOf(::GetCurrentOnboardingSchoolUseCase)
     singleOf(::TrackIndiwareProgressUseCase)
     singleOf(::SetUpSchoolData)
+    singleOf(::GetProfileOptionsUseCase)
+    singleOf(::SelectProfileUseCase)
 
     viewModelOf(::OnboardingSchoolSearchViewModel)
     viewModelOf(::OnboardingIndiwareLoginViewModel)
     viewModelOf(::OnboardingIndiwareInitViewModel)
     viewModelOf(::OnboardingIndiwareDataDownloadViewModel)
+    viewModelOf(::OnboardingSelectProfileViewModel)
 }

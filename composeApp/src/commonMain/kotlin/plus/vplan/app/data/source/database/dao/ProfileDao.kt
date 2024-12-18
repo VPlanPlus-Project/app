@@ -36,49 +36,11 @@ interface ProfileDao {
 
     @Transaction
     @Query("SELECT * FROM profiles WHERE id = :id")
-    fun getById(id: Uuid): Flow<EmbeddedProfile>
+    fun getById(id: Uuid): Flow<EmbeddedProfile?>
 
-    @Transaction
-    suspend fun insertProfile(
-        schoolId: Int,
-        displayName: String,
-        type: ProfileType,
-        reference: Int
-    ): Uuid {
-        val id = Uuid.random()
-        upsert(
-            DbProfile(
-                id = id,
-                schoolId = schoolId,
-                displayName = displayName
-            )
-        ).toInt()
-        when (type) {
-            ProfileType.STUDENT -> {
-                upsertGroupProfile(
-                    DbGroupProfile(
-                        profileId = id,
-                        groupId = reference
-                    )
-                )
-            }
-            ProfileType.TEACHER -> {
-                upsertTeacherProfile(
-                    DbTeacherProfile(
-                        profileId = id,
-                        teacherId = reference
-                    )
-                )
-            }
-            ProfileType.ROOM -> {
-                upsertRoomProfile(
-                    DbRoomProfile(
-                        profileId = id,
-                        roomId = reference
-                    )
-                )
-            }
-        }
-        return id
-    }
+    @Query("INSERT INTO profiles_group_disabled_default_lessons (profile_id, default_lesson_id) VALUES (:profileId, :defaultLessonId)")
+    suspend fun insertDisabledDefaultLesson(profileId: Uuid, defaultLessonId: String)
+
+    @Query("DELETE FROM profiles_group_disabled_default_lessons WHERE default_lesson_id = :defaultLessonId AND profile_id = :profileId")
+    suspend fun deleteDisabledDefaultLesson(profileId: Uuid, defaultLessonId: String)
 }
