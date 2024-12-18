@@ -3,6 +3,7 @@ package plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.repository.OnlineSchool
 import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.utils.removeFollowingDuplicates
 
 class SearchForSchoolUseCase(
     private val schoolRepository: SchoolRepository
@@ -27,10 +28,7 @@ class SearchForSchoolUseCase(
             init()
         }
         if (query.isBlank()) return Response.Success(emptyList())
-        val adjustedQuery = query
-            .lowercase()
-            .replace("-", " ")
-            .trim()
+        val adjustedQuery = query.optimizeForSearch()
         return Response.Success(
             onlineSchools
                 .filter {
@@ -47,8 +45,15 @@ private data class SearchSchool(
     val school: OnlineSchool,
     val adjustedName: String
 ) {
-    constructor(school: OnlineSchool) : this(
-        school,
-        school.name.lowercase().replace("-", " ").trim()
-    )
+    constructor(school: OnlineSchool) : this(school, school.name.optimizeForSearch())
+}
+
+private fun String.optimizeForSearch(): String {
+    return this.lowercase()
+        .replace("-", " ")
+        .replace(".", " ")
+        .replace("'", " ")
+        .replace("\"", " ")
+        .removeFollowingDuplicates(listOf(' '))
+        .trim()
 }
