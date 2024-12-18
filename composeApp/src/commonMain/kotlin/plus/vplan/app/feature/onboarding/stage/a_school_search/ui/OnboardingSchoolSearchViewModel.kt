@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.repository.OnlineSchool
@@ -41,7 +40,6 @@ class OnboardingSchoolSearchViewModel(
                         searchQuery = event.query,
                         textFieldError = null
                     )
-                    if (state.results == Response.Loading) delay(500)
                     state = state.copy(results = searchForSchoolUseCase(event.query))
                 }
                 is OnboardingSchoolSearchEvent.OnUseIndiwareClicked -> {

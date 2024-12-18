@@ -83,7 +83,10 @@ data class OnboardingIndiwareLoginState(
     val username: String = "schueler",
     val password: String = "",
     val sp24CredentialsState: Sp24CredentialsState = Sp24CredentialsState.NOT_CHECKED
-)
+) {
+    val isUsernameValid: Boolean
+        get() = username in listOf("schueler", "lehrer")
+}
 
 sealed class OnboardingIndiwareLoginEvent {
     data class OnUsernameChanged(val username: String) : OnboardingIndiwareLoginEvent()
