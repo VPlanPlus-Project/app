@@ -4,8 +4,11 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -78,7 +81,6 @@ private fun OnboardingSchoolSearchContent(
     Column(
         modifier = Modifier
             .padding(WindowInsets.systemBars.asPaddingValues())
-            .padding(bottom = 16.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.Bottom
     ) {
@@ -89,7 +91,10 @@ private fun OnboardingSchoolSearchContent(
             exit = slideOutVertically { height -> -height },
             modifier = Modifier.weight(1f, true)
         ) {
-            AnimatedContent(state.results::class) { schoolLookupResponse ->
+            AnimatedContent(
+                targetState = state.results::class,
+                transitionSpec = { fadeIn(tween()) togetherWith fadeOut(tween()) }
+            ) { schoolLookupResponse ->
                 when (schoolLookupResponse) {
                     Response.Loading::class -> {
                         Box(
@@ -164,7 +169,9 @@ private fun OnboardingSchoolSearchContent(
         }
         Row(
             modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 8.dp)
+                .padding(bottom = 16.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Top
