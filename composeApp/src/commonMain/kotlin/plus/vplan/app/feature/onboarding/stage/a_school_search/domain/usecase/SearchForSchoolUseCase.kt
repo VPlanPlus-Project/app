@@ -54,6 +54,6 @@ private fun String.optimizeForSearch(): String {
         .replace(".", " ")
         .replace("'", " ")
         .replace("\"", " ")
-        .removeFollowingDuplicates(listOf(' '))
+        .removeFollowingDuplicates(' ')
         .trim()
 }

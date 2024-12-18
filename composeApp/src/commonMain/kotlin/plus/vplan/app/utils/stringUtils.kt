@@ -1,7 +1,7 @@
 package plus.vplan.app.utils
 
 fun String.removeFollowingDuplicates(
-    chars: List<Char>
+    vararg chars: Char
 ): String {
     if (isEmpty()) return this
 
@@ -9,7 +9,7 @@ fun String.removeFollowingDuplicates(
     var previousChar: Char? = null
 
     for (currentChar in this) {
-        if (currentChar != previousChar && !chars.contains(currentChar)) {
+        if (!(currentChar == previousChar && chars.contains(currentChar))) {
             result.append(currentChar)
         }
         previousChar = currentChar

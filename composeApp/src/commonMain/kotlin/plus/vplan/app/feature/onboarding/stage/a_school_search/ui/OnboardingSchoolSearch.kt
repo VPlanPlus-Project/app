@@ -3,6 +3,7 @@ package plus.vplan.app.feature.onboarding.stage.a_school_search.ui
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -48,7 +49,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import co.touchlab.kermit.Logger
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.data.Response
@@ -92,7 +92,6 @@ private fun OnboardingSchoolSearchContent(
             AnimatedContent(state.results::class) { schoolLookupResponse ->
                 when (schoolLookupResponse) {
                     Response.Loading::class -> {
-                        Logger.d("LOADING")
                         Box(
                             modifier = Modifier
                                 .fillMaxSize(),
@@ -103,7 +102,6 @@ private fun OnboardingSchoolSearchContent(
                     }
                     Response.Error::class -> Text("Error")
                     Response.Success::class -> {
-                        Logger.d("Success")
                         Column(
                             modifier = Modifier
                                 .padding(8.dp)
@@ -116,7 +114,7 @@ private fun OnboardingSchoolSearchContent(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 8.dp, bottomStart = 8.dp))
-                                    .animateContentSize(),
+                                    .animateContentSize(tween()),
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 items(

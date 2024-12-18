@@ -17,7 +17,7 @@ import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.us
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.OnboardingIndiwareLoginViewModel
 import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.domain.usecase.TrackIndiwareProgressUseCase
 import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.ui.OnboardingIndiwareInitViewModel
-import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.usecase.SetUpSchoolData
+import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.usecase.SetUpSchoolDataUseCase
 import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.ui.OnboardingIndiwareDataDownloadViewModel
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.GetProfileOptionsUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.SelectProfileUseCase
@@ -37,7 +37,7 @@ val onboardingModule = module {
     singleOf(::StartIndiwareInitJobUseCase)
     singleOf(::GetCurrentOnboardingSchoolUseCase)
     singleOf(::TrackIndiwareProgressUseCase)
-    singleOf(::SetUpSchoolData)
+    singleOf(::SetUpSchoolDataUseCase)
     singleOf(::GetProfileOptionsUseCase)
     singleOf(::SelectProfileUseCase)
 
