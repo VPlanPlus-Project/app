@@ -3,7 +3,6 @@ package plus.vplan.app.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbProfile
@@ -33,26 +32,24 @@ class ProfileRepositoryImpl(
         disabledDefaultLessons: List<DefaultLesson>
     ): Profile.StudentProfile {
         val id = Uuid.random()
-        runBlocking {
-            vppDatabase.profileDao.upsert(
-                DbProfile(
-                    id = id,
-                    schoolId = group.school.id,
-                    displayName = group.name
-                )
+        vppDatabase.profileDao.upsert(
+            DbProfile(
+                id = id,
+                schoolId = group.school.id,
+                displayName = group.name
             )
-            vppDatabase.profileDao.upsertGroupProfile(
-                DbGroupProfile(
-                    profileId = id,
-                    groupId = group.id
-                )
+        )
+        vppDatabase.profileDao.upsertGroupProfile(
+            DbGroupProfile(
+                profileId = id,
+                groupId = group.id
             )
-            disabledDefaultLessons.forEach {
-                vppDatabase.profileDao.insertDisabledDefaultLesson(
-                    profileId = id,
-                    defaultLessonId = it.id
-                )
-            }
+        )
+        disabledDefaultLessons.forEach {
+            vppDatabase.profileDao.insertDisabledDefaultLesson(
+                profileId = id,
+                defaultLessonId = it.id
+            )
         }
 
         return getById(id).first() as Profile.StudentProfile

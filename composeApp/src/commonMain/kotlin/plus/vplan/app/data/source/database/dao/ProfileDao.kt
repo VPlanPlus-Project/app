@@ -12,7 +12,6 @@ import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedProfile
-import plus.vplan.app.domain.model.ProfileType
 import kotlin.uuid.Uuid
 
 @Dao
@@ -22,9 +21,11 @@ interface ProfileDao {
     @Query("SELECT * FROM profiles")
     fun getAll(): Flow<List<EmbeddedProfile>>
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(profile: DbProfile): Long
 
+    @Transaction
     @Upsert
     suspend fun upsertGroupProfile(profile: DbGroupProfile)
 
@@ -38,6 +39,7 @@ interface ProfileDao {
     @Query("SELECT * FROM profiles WHERE id = :id")
     fun getById(id: Uuid): Flow<EmbeddedProfile?>
 
+    @Transaction
     @Query("INSERT INTO profiles_group_disabled_default_lessons (profile_id, default_lesson_id) VALUES (:profileId, :defaultLessonId)")
     suspend fun insertDisabledDefaultLesson(profileId: Uuid, defaultLessonId: String)
 
