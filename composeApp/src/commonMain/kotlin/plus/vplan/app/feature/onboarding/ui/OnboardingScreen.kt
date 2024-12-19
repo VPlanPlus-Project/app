@@ -6,10 +6,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -59,7 +56,7 @@ val exitSlideTransitionRight: (AnimatedContentTransitionScope<NavBackStackEntry>
 @Composable
 fun OnboardingScreen() {
     Scaffold(
-        modifier = Modifier.padding(WindowInsets.statusBars.asPaddingValues())
+        modifier = Modifier.fillMaxSize()
     ) {
         val navController = rememberNavController()
         NavHost(
