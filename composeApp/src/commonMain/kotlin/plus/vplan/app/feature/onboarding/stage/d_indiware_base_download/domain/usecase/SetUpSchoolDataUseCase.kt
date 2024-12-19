@@ -107,7 +107,7 @@ class SetUpSchoolDataUseCase(
                                     id = "sp24.$sp24Id.${group.name}.${course.name}+${course.teacher}",
                                     name = course.name,
                                     groupId = classes.firstOrNull{ it.name == group.name }?.id ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${group.name} not found")),
-                                    teacherId = teachers.firstOrNull { it.name == course.teacher }?.id ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix teacher ${course.teacher} not found"))
+                                    teacherId = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }?.id ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix teacher ${course.teacher} not found"))
                                 ).firstOrNull() ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix course ${course.name} not found"))
                             }
                             defaultLessonRepository.upsert(
