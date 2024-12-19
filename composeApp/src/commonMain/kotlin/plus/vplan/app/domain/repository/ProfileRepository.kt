@@ -10,6 +10,7 @@ import kotlin.uuid.Uuid
 
 interface ProfileRepository {
     fun getById(id: Uuid): Flow<Profile?>
+    fun getAll(): Flow<List<Profile>>
     suspend fun upsert(
         group: Group,
         disabledDefaultLessons: List<DefaultLesson>

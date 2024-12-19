@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
-import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
+import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
 
 const val VPP_ROOT_URL = "http://192.168.3.102:8000"
@@ -23,7 +23,7 @@ fun App() {
                     .fillMaxSize()
                     .imePadding()
             ) {
-                OnboardingScreen()
+                NavigationHost()
             }
         }
     }
