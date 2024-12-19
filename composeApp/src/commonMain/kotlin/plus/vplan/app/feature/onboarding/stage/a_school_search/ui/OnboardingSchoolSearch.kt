@@ -49,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -113,53 +114,84 @@ private fun OnboardingSchoolSearchContent(
                                 .fillMaxSize(),
                             verticalArrangement = Arrangement.Bottom
                         ) {
-                            val scrollState = rememberLazyListState()
-                            LazyColumn(
-                                state = scrollState,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 8.dp, bottomStart = 8.dp))
-                                    .animateContentSize(tween()),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                items(
-                                    items = (state.results as? Response.Success)?.data.orEmpty(),
-                                    key = { it.id }
-                                ) { school ->
-                                    Column(
+                            AnimatedContent(
+                                targetState = state.searchQuery.isNotBlank() && (state.results as? Response.Success)?.data?.isEmpty() == true,
+                                modifier = Modifier.fillMaxSize()
+                            ) searchResult@{ hasNoResults ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    contentAlignment = Alignment.BottomCenter
+                                ) {
+                                    if (hasNoResults) {
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                        ) {
+                                            Text(
+                                                text = "Keine Schulen gefunden",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Text(
+                                                text = "Du kannst dennoch die Stundenplan24.de-Schulnummer verwende, um eine neue Schule hinzuzufügen.",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                        return@searchResult
+                                    }
+                                    val scrollState = rememberLazyListState()
+                                    LazyColumn(
+                                        state = scrollState,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceContainer)
-                                            .defaultMinSize(minHeight = 48.dp)
-                                            .clickable { onEvent(OnboardingSchoolSearchEvent.OnSchoolSelected(school)) }
-                                            .padding(8.dp),
-                                        verticalArrangement = Arrangement.Center
+                                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 8.dp, bottomStart = 8.dp))
+                                            .animateContentSize(tween()),
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
                                     ) {
-                                        Text(
-                                            text = school.name,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        if (school.sp24Id != null) {
-                                            Text(
-                                                text = school.sp24Id.toString(),
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
+                                        items(
+                                            items = (state.results as? Response.Success)?.data.orEmpty(),
+                                            key = { it.id }
+                                        ) { school ->
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(4.dp))
+                                                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                                                    .defaultMinSize(minHeight = 48.dp)
+                                                    .clickable { onEvent(OnboardingSchoolSearchEvent.OnSchoolSelected(school)) }
+                                                    .padding(8.dp),
+                                                verticalArrangement = Arrangement.Center
+                                            ) {
+                                                Text(
+                                                    text = school.name,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                if (school.sp24Id != null) {
+                                                    Text(
+                                                        text = school.sp24Id.toString(),
+                                                        style = MaterialTheme.typography.labelMedium,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        Snapshot.withoutReadObservation {
+                                            scrollState.requestScrollToItem(
+                                                index = scrollState.firstVisibleItemIndex,
+                                                scrollOffset = scrollState.firstVisibleItemScrollOffset
                                             )
                                         }
                                     }
-                                }
-
-                                Snapshot.withoutReadObservation {
-                                    scrollState.requestScrollToItem(
-                                        index = scrollState.firstVisibleItemIndex,
-                                        scrollOffset = scrollState.firstVisibleItemScrollOffset
-                                    )
                                 }
                             }
                         }
