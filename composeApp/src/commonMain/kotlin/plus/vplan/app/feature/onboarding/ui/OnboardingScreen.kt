@@ -20,6 +20,7 @@ import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.Onboar
 import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.ui.OnboardingIndiwareInitScreen
 import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.ui.OnboardingIndiwareDataDownloadScreen
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileScreen
+import plus.vplan.app.feature.onboarding.stage.e_finished.ui.OnboardingFinishedScreen
 
 val enterSlideTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) =
     {
@@ -54,7 +55,9 @@ val exitSlideTransitionRight: (AnimatedContentTransitionScope<NavBackStackEntry>
     }
 
 @Composable
-fun OnboardingScreen() {
+fun OnboardingScreen(
+    onFinish: () -> Unit
+) {
     Scaffold(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -86,6 +89,10 @@ fun OnboardingScreen() {
             composable<OnboardingScreen.OnboardingChooseProfile> {
                 OnboardingSelectProfileScreen(navController)
             }
+
+            composable<OnboardingScreen.OnboardingFinished> {
+                OnboardingFinishedScreen(onFinish)
+            }
         }
     }
 }
@@ -97,4 +104,5 @@ sealed class OnboardingScreen(val name: String) {
     @Serializable data object OnboardingIndiwareInit : OnboardingScreen("OnboardingScreenInit")
     @Serializable data object OnboardingIndiwareDataDownload : OnboardingScreen("OnboardingScreenDataDownload")
     @Serializable data object OnboardingChooseProfile : OnboardingScreen("OnboardingScreenChooseProfileType")
+    @Serializable data object OnboardingFinished : OnboardingScreen("OnboardingScreenFinished")
 }

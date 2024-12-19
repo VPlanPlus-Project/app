@@ -18,8 +18,7 @@ actual fun platformModule(): Module = module(createdAtStart = true) {
             .setDriver(BundledSQLiteDriver())
             .addTypeConverter(UuidTypeConverter())
             .fallbackToDestructiveMigration(true)
-            .setJournalMode(RoomDatabase.JournalMode.TRUNCATE)
-            .enableMultiInstanceInvalidation()
+            .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
             .build()
     }
 }

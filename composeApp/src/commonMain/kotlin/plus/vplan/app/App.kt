@@ -3,6 +3,7 @@ package plus.vplan.app
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -18,12 +19,16 @@ const val VPP_SP24_URL = "http://192.168.3.102:8080"
 fun App() {
     AppTheme(dynamicColor = false) {
         KoinContext {
-            Column(
+            Surface(
                 modifier = Modifier
                     .fillMaxSize()
                     .imePadding()
             ) {
-                NavigationHost()
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    NavigationHost()
+                }
             }
         }
     }

@@ -39,8 +39,13 @@ class OnboardingSelectProfileViewModel(
                         state = state.copy(selectedProfile = null)
                         return@launch
                     }
-                    if (event.profile !is OnboardingProfile.StudentProfile) selectProfileUseCase(event.profile)
-                    else state = state.copy(
+                    if (event.profile !is OnboardingProfile.StudentProfile) {
+                        state = state.copy(saveState = OnboardingProfileSelectionSaveState.IN_PROGRESS)
+                        selectProfileUseCase(event.profile)
+                        state = state.copy(saveState = OnboardingProfileSelectionSaveState.DONE)
+                        return@launch
+                    }
+                    state = state.copy(
                         selectedProfile = event.profile,
                         defaultLessons = event.profile.defaultLessons.associateWith { true }
                     )
@@ -58,7 +63,9 @@ class OnboardingSelectProfileViewModel(
                     )
                 }
                 is OnboardingProfileSelectionEvent.CommitProfile -> {
+                    state = state.copy(saveState = OnboardingProfileSelectionSaveState.IN_PROGRESS)
                     selectProfileUseCase(state.selectedProfile!!, state.defaultLessons)
+                    state = state.copy(saveState = OnboardingProfileSelectionSaveState.DONE)
                 }
             }
         }
@@ -70,7 +77,14 @@ data class OnboardingSelectProfileUiState(
     val selectedProfile: OnboardingProfile? = null,
     val filterProfileType: ProfileType? = null,
     val defaultLessons: Map<DefaultLesson, Boolean> = emptyMap(),
+    val saveState: OnboardingProfileSelectionSaveState = OnboardingProfileSelectionSaveState.NOT_STARTED
 )
+
+enum class OnboardingProfileSelectionSaveState {
+    NOT_STARTED,
+    IN_PROGRESS,
+    DONE
+}
 
 sealed class OnboardingProfileSelectionEvent {
     data class SelectProfileType(val profileType: ProfileType?) : OnboardingProfileSelectionEvent()

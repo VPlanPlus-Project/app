@@ -19,7 +19,7 @@ fun NavigationHost() {
         navController = navigationHostController,
         startDestination = if (state.hasProfile == true) AppScreen.Home else AppScreen.Onboarding
     ) {
-        composable<AppScreen.Onboarding> { OnboardingScreen() }
+        composable<AppScreen.Onboarding> { OnboardingScreen { navigationHostController.navigate(AppScreen.Home) { popUpTo(0) } } }
         composable<AppScreen.Home> { Text("Home") }
     }
 }

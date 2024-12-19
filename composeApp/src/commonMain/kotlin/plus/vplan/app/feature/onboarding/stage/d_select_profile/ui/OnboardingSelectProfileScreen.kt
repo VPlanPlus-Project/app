@@ -22,27 +22,35 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.DefaultLessonTitle
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
+import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
+import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.arrow_right
 
 @Composable
 fun OnboardingSelectProfileScreen(
@@ -50,6 +58,12 @@ fun OnboardingSelectProfileScreen(
 ) {
     val viewModel = koinViewModel<OnboardingSelectProfileViewModel>()
     val state = viewModel.state
+
+    LaunchedEffect(state.saveState) {
+        if (state.saveState == OnboardingProfileSelectionSaveState.DONE) {
+            navController.navigate(OnboardingScreen.OnboardingFinished)
+        }
+    }
 
     OnboardingSelectProfileScreen(
         state = state,
@@ -215,7 +229,41 @@ private fun OnboardingSelectProfileScreen(
                                     .fillMaxWidth()
                                     .height(56.dp)
                             ) {
-                                Text("Speichern")
+                                AnimatedContent(
+                                    targetState = state.saveState
+                                ) { saveState ->
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentAlignment = Alignment.CenterEnd
+                                    ) {
+                                        when (saveState) {
+                                            OnboardingProfileSelectionSaveState.NOT_STARTED -> Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            ) {
+                                                Text("Speichern")
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.arrow_right),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(24.dp),
+                                                    tint = MaterialTheme.colorScheme.onPrimary
+                                                )
+                                            }
+
+                                            OnboardingProfileSelectionSaveState.IN_PROGRESS -> CircularProgressIndicator(
+                                                color = MaterialTheme.colorScheme.onPrimary,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+
+                                            OnboardingProfileSelectionSaveState.DONE -> Icon(
+                                                painter = painterResource(Res.drawable.arrow_right),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp),
+                                                tint = MaterialTheme.colorScheme.onPrimary
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                         return@AnimatedContent
