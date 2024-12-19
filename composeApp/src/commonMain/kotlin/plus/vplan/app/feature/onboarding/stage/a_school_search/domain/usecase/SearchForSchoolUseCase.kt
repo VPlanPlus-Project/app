@@ -10,7 +10,7 @@ class SearchForSchoolUseCase(
 ) {
     private val onlineSchools = mutableListOf<SearchSchool>()
 
-    suspend fun init() {
+    suspend fun init(): Response.Error? {
         val response = schoolRepository.fetchAllOnline()
         if (response is Response.Success) {
             onlineSchools.clear()
@@ -20,12 +20,15 @@ class SearchForSchoolUseCase(
                     .sortedBy { it.name }
                     .map { SearchSchool(it) }
             )
+            return null
         }
+        return response as Response.Error
     }
 
     suspend operator fun invoke(query: String): Response<List<OnlineSchool>> {
         if (onlineSchools.isEmpty()) {
-            init()
+            val response = init()
+            if (response != null) return response
         }
         if (query.isBlank()) return Response.Success(emptyList())
         val adjustedQuery = query.optimizeForSearch()

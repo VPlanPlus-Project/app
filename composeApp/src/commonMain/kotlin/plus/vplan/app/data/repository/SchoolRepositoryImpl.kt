@@ -26,13 +26,11 @@ class SchoolRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : SchoolRepository {
     override suspend fun fetchAllOnline(): Response<List<OnlineSchool>> {
-        return try {
+        return saveRequest {
             val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/school")
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<List<OnlineSchoolResponse>>(response.bodyAsText()) ?: return Response.Error.ParsingError
             return Response.Success(data.map { it.toModel() })
-        } catch (e: Exception) {
-            Response.Error.Other(e.message ?: "Unknown error")
         }
     }
 

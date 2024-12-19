@@ -1,6 +1,7 @@
 package plus.vplan.app.di
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -32,7 +33,13 @@ expect fun platformModule(): Module
 
 val appModule = module(createdAtStart = true) {
     single<HttpClient> {
-        HttpClient()
+        HttpClient {
+            install(HttpTimeout) {
+                socketTimeoutMillis = 5_000
+                connectTimeoutMillis = 5_000
+                requestTimeoutMillis = 5_000
+            }
+        }
     }
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
