@@ -12,6 +12,7 @@ import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.GetProfileOptionsUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.SelectProfileUseCase
+import plus.vplan.app.ui.components.ButtonState
 
 class OnboardingSelectProfileViewModel(
     private val getProfileOptionsUseCase: GetProfileOptionsUseCase,
@@ -84,6 +85,13 @@ enum class OnboardingProfileSelectionSaveState {
     NOT_STARTED,
     IN_PROGRESS,
     DONE
+}
+
+fun OnboardingProfileSelectionSaveState.toButtonState(): ButtonState {
+    return when (this) {
+        OnboardingProfileSelectionSaveState.IN_PROGRESS -> ButtonState.LOADING
+        else -> ButtonState.ENABLED
+    }
 }
 
 sealed class OnboardingProfileSelectionEvent {

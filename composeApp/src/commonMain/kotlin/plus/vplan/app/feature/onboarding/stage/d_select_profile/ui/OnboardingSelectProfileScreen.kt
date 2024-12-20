@@ -12,7 +12,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -20,16 +19,13 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -49,6 +45,8 @@ import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.Onb
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.DefaultLessonTitle
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
+import plus.vplan.app.ui.components.Button
+import plus.vplan.app.ui.components.ButtonSize
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_right
 import vplanplus.composeapp.generated.resources.user_pen
@@ -223,48 +221,13 @@ private fun OnboardingSelectProfileScreen(
                             }
 
                             Button(
-                                onClick = { onEvent(OnboardingProfileSelectionEvent.CommitProfile) },
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp)
-                            ) {
-                                AnimatedContent(
-                                    targetState = state.saveState
-                                ) { saveState ->
-                                    Box(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        contentAlignment = Alignment.CenterEnd
-                                    ) {
-                                        when (saveState) {
-                                            OnboardingProfileSelectionSaveState.NOT_STARTED -> Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            ) {
-                                                Text("Speichern")
-                                                Icon(
-                                                    painter = painterResource(Res.drawable.arrow_right),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(24.dp),
-                                                    tint = MaterialTheme.colorScheme.onPrimary
-                                                )
-                                            }
-
-                                            OnboardingProfileSelectionSaveState.IN_PROGRESS -> CircularProgressIndicator(
-                                                color = MaterialTheme.colorScheme.onPrimary,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-
-                                            OnboardingProfileSelectionSaveState.DONE -> Icon(
-                                                painter = painterResource(Res.drawable.arrow_right),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(24.dp),
-                                                tint = MaterialTheme.colorScheme.onPrimary
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                                text = "Speichern",
+                                state = state.saveState.toButtonState(),
+                                icon = Res.drawable.arrow_right,
+                                size = ButtonSize.BIG,
+                                onlyEventOnActive = true,
+                                onClick = { onEvent(OnboardingProfileSelectionEvent.CommitProfile) }
+                            )
                         }
                         return@AnimatedContent
                     }
