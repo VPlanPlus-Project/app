@@ -28,6 +28,8 @@ import org.jetbrains.compose.resources.painterResource
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.house
+import vplanplus.composeapp.generated.resources.message_square
+import vplanplus.composeapp.generated.resources.search
 import vplanplus.composeapp.generated.resources.user
 
 @Composable
@@ -38,6 +40,9 @@ fun MainScreenHost() {
         currentDestination =
             if (destination.route.orEmpty().startsWith(MainScreen.Home::class.qualifiedName ?: "__")) "Home"
             else if (destination.route.orEmpty().startsWith(MainScreen.Calendar::class.qualifiedName ?: "__")) "Calendar"
+            else if (destination.route.orEmpty().startsWith(MainScreen.Search::class.qualifiedName ?: "__")) "Search"
+            else if (destination.route.orEmpty().startsWith(MainScreen.Chat::class.qualifiedName ?: "__")) "Chat"
+            else if (destination.route.orEmpty().startsWith(MainScreen.Profile::class.qualifiedName ?: "__")) "Profile"
             else null
     }
     Scaffold(
@@ -61,6 +66,18 @@ fun MainScreenHost() {
                         onClick = { navController.navigate(MainScreen.Calendar) { popUpTo(MainScreen.Home) } }
                     )
                     NavigationBarItem(
+                        selected = currentDestination == "Search",
+                        label = { Text("Suche") },
+                        icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                        onClick = { navController.navigate(MainScreen.Search) { popUpTo(MainScreen.Home) } }
+                    )
+                    NavigationBarItem(
+                        selected = currentDestination == "Chat",
+                        label = { Text("Chat") },
+                        icon = { Icon(painter = painterResource(Res.drawable.message_square), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                        onClick = { navController.navigate(MainScreen.Chat) { popUpTo(MainScreen.Home) } }
+                    )
+                    NavigationBarItem(
                         selected = currentDestination == "Profile",
                         label = { Text("Profil") },
                         icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
@@ -78,6 +95,8 @@ fun MainScreenHost() {
                 Text("Home")
             }
             composable<MainScreen.Calendar> { Text("Calendar") }
+            composable<MainScreen.Search> { Text("Search") }
+            composable<MainScreen.Chat> { Text("Chat") }
             composable<MainScreen.Profile> { Text("Profile") }
         }
     }
@@ -87,5 +106,7 @@ fun MainScreenHost() {
 sealed class MainScreen(val name: String) {
     @Serializable data object Home : MainScreen("Home")
     @Serializable data object Calendar : MainScreen("Calendar")
+    @Serializable data object Search : MainScreen("Search")
+    @Serializable data object Chat : MainScreen("Chat")
     @Serializable data object Profile : MainScreen("Profile")
 }
