@@ -70,7 +70,7 @@ private fun OnboardingIndiwareLoginContent(
         Label()
         Column(
             modifier = Modifier
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 16.dp)
                 .fillMaxWidth()
         ) {
             val passwordFocusRequester = remember { FocusRequester() }
