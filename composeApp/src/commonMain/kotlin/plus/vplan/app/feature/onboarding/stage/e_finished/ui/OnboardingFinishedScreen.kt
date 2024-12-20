@@ -38,7 +38,6 @@ fun OnboardingFinishedScreen(
             modifier = Modifier
                 .weight(1f, true)
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
                 .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -66,6 +65,7 @@ fun OnboardingFinishedScreen(
         Column(
             modifier = Modifier
                 .padding(horizontal = 8.dp)
+                .padding(bottom = 16.dp)
                 .fillMaxWidth()
         ) {
             Button(
