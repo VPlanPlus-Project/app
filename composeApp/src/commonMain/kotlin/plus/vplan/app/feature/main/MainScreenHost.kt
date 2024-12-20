@@ -25,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.feature.home.ui.HomeScreen
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.house
@@ -91,9 +92,7 @@ fun MainScreenHost() {
             navController = navController,
             startDestination = MainScreen.Home
         ) {
-            composable<MainScreen.Home> {
-                Text("Home")
-            }
+            composable<MainScreen.Home> { HomeScreen() }
             composable<MainScreen.Calendar> { Text("Calendar") }
             composable<MainScreen.Search> { Text("Search") }
             composable<MainScreen.Chat> { Text("Chat") }

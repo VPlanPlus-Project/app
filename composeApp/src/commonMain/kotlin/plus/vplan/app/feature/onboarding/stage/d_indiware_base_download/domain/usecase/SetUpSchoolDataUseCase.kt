@@ -94,6 +94,12 @@ class SetUpSchoolDataUseCase(
             }
 
             result[SetUpSchoolDataStep.GET_ROOMS] = SetUpSchoolDataState.DONE
+            result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.IN_PROGRESS
+            emitResult()
+
+            baseData.data.weeks
+
+            result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
@@ -144,6 +150,7 @@ enum class SetUpSchoolDataStep {
     GET_GROUPS,
     GET_TEACHERS,
     GET_ROOMS,
+    GET_WEEKS,
     SET_UP_DATA
 }
 
