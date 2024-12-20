@@ -59,8 +59,7 @@ private fun OnboardingIndiwareInitContent(
         modifier = Modifier
             .padding(WindowInsets.systemBars.asPaddingValues())
             .padding(bottom = 16.dp)
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Bottom
+            .fillMaxSize()
     ) {
         Column(
             modifier = Modifier

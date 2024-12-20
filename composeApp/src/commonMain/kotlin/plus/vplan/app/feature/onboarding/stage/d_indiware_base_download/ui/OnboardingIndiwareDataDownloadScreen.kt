@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -22,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
@@ -32,6 +32,7 @@ import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.u
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
+import vplanplus.composeapp.generated.resources.download
 
 @Composable
 fun OnboardingIndiwareDataDownloadScreen(
@@ -56,7 +57,7 @@ fun OnboardingIndiwareDataDownloadScreen(
 private fun OnboardingIndiwareDataDownloadContent(
     state: OnboardingIndiwareDataDownloadUiState
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .padding(WindowInsets.systemBars.asPaddingValues())
             .padding(bottom = 16.dp)
@@ -64,21 +65,37 @@ private fun OnboardingIndiwareDataDownloadContent(
     ) {
         Column(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 8.dp)
+                .weight(1f, true)
                 .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
+            Icon(
+                painter = painterResource(Res.drawable.download),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.size(8.dp))
             Text(
                 text = "VPlanPlus wird vorbereitet",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
             )
             Text(
-                text = "Wir laden aktuelle Daten herunter, bitte warte einen kleinen Moment",
+                text = "Wir laden aktuelle Daten herunter, bitte warte einen kleinen Moment.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+        }
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .fillMaxWidth()
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
