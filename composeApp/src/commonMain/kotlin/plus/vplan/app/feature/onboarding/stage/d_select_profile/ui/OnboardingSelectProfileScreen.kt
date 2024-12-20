@@ -51,6 +51,7 @@ import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.Fi
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_right
+import vplanplus.composeapp.generated.resources.user_pen
 
 @Composable
 fun OnboardingSelectProfileScreen(
@@ -76,16 +77,15 @@ private fun OnboardingSelectProfileScreen(
     state: OnboardingSelectProfileUiState,
     onEvent: (OnboardingProfileSelectionEvent) -> Unit
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .padding(WindowInsets.systemBars.asPaddingValues())
             .fillMaxSize()
     ) {
         Column(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
                 .padding(horizontal = 8.dp)
-                .fillMaxWidth()
+                .fillMaxSize()
         ) {
             AnimatedContent(
                 targetState = state.selectedProfile is OnboardingProfile.StudentProfile,
@@ -268,11 +268,22 @@ private fun OnboardingSelectProfileScreen(
                         }
                         return@AnimatedContent
                     }
-                    Text(
-                        text = "Lege ein Profil an",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.user_pen),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Lege ein Profil an",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
                     Text(
                         text = "Wähle eine Option aus",
                         style = MaterialTheme.typography.bodyMedium,
