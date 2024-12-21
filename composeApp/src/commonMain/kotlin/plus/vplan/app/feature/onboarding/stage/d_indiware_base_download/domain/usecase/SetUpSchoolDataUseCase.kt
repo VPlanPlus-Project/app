@@ -7,11 +7,13 @@ import kotlinx.coroutines.flow.flow
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -27,7 +29,8 @@ class SetUpSchoolDataUseCase(
     private val roomRepository: RoomRepository,
     private val courseRepository: CourseRepository,
     private val defaultLessonRepository: DefaultLessonRepository,
-    private val weekRepository: WeekRepository
+    private val weekRepository: WeekRepository,
+    private val lessonTimeRepository: LessonTimeRepository
 ) {
     operator fun invoke(): Flow<SetUpSchoolDataResult> = flow {
         val result = SetUpSchoolDataStep.entries.associateWith { SetUpSchoolDataState.NOT_STARTED }.toMutableMap()
@@ -115,6 +118,25 @@ class SetUpSchoolDataUseCase(
             }
 
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.DONE
+            result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.IN_PROGRESS
+            emitResult()
+
+            baseData.data.classes.forEach { baseDataClass ->
+                val group = classes.firstOrNull { it.name == baseDataClass.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataClass.name} not found"))
+                baseDataClass.lessonTimes.forEach { baseDataLessonTime ->
+                    val lessonTime = LessonTime(
+                        id = "${school.id}/${group.id}/${baseDataLessonTime.lessonNumber}",
+                        start = baseDataLessonTime.start,
+                        end = baseDataLessonTime.end,
+                        lessonNumber = baseDataLessonTime.lessonNumber,
+                        group = group,
+                        interpolated = false
+                    )
+                    lessonTimeRepository.upsert(lessonTime)
+                }
+            }
+
+            result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
@@ -171,6 +193,7 @@ enum class SetUpSchoolDataStep {
     GET_TEACHERS,
     GET_ROOMS,
     GET_WEEKS,
+    GET_LESSON_TIMES,
     SET_UP_DATA
 }
 
