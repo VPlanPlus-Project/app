@@ -12,7 +12,7 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.feature.sync.domain.usecase.UpdateWeeksUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
 
 class HomeViewModel(
     private val weekRepository: WeekRepository,

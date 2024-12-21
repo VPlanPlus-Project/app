@@ -3,9 +3,10 @@ package plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.model.Course
+import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
@@ -119,23 +120,28 @@ class SetUpSchoolDataUseCase(
 
             baseData.data.classes
                 .map { it to it.defaultLessons }
-                .forEach { (group, defaultLessons) ->
+                .forEach { (baseDataGroup, defaultLessons) ->
+                    val group = classes.firstOrNull { it.name == baseDataGroup.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataGroup.name} not found"))
                     defaultLessons
                         .forEach { defaultLesson ->
                             val course = defaultLesson.course?.let { course ->
                                 courseRepository.upsert(
-                                    id = "sp24.$sp24Id.${group.name}.${course.name}+${course.teacher}",
-                                    name = course.name,
-                                    groupId = classes.firstOrNull{ it.name == group.name }?.id ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${group.name} not found")),
-                                    teacherId = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }?.id ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix teacher ${course.teacher} not found"))
-                                ).firstOrNull() ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix course ${course.name} not found"))
+                                    Course.fromIndiware(
+                                        sp24SchoolId = sp24Id,
+                                        group = group,
+                                        name = course.name,
+                                        teacher = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }
+                                    )
+                                ).first()
                             }
                             defaultLessonRepository.upsert(
-                                id = "sp24.$sp24Id.${group.name}.${defaultLesson.defaultLessonNumber}",
-                                subject = defaultLesson.subject,
-                                groupId = classes.firstOrNull { it.name == group.name }?.id ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${group.name} not found")),
-                                teacherId = teachers.firstOrNull { it.name == defaultLesson.teacher }?.id,
-                                courseId = course?.id
+                                DefaultLesson(
+                                    indiwareDefaultLessonId = defaultLesson.defaultLessonNumber,
+                                    subject = defaultLesson.subject,
+                                    group = group,
+                                    teacher = teachers.firstOrNull { it.name == defaultLesson.teacher },
+                                    course = course
+                                )
                             )
                         }
                 }

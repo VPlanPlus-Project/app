@@ -18,22 +18,16 @@ class DefaultLessonRepositoryImpl(
         return vppDatabase.defaultLessonDao.getById(id).map { it?.toModel() }
     }
 
-    override suspend fun upsert(
-        id: String,
-        subject: String,
-        groupId: Int,
-        teacherId: Int?,
-        courseId: String?
-    ): Flow<DefaultLesson> {
+    override suspend fun upsert(defaultLesson: DefaultLesson): Flow<DefaultLesson> {
         vppDatabase.defaultLessonDao.upsert(
             DbDefaultLesson(
-            id = id,
-            subject = subject,
-            teacherId = teacherId,
-            groupId = groupId,
-            courseId = courseId
+                id = defaultLesson.id,
+                subject = defaultLesson.subject,
+                teacherId = defaultLesson.teacher?.id,
+                groupId = defaultLesson.group.id,
+                courseId = defaultLesson.course?.id
+            )
         )
-        )
-        return getById(id).map { it ?: throw IllegalStateException("upsert: defaultLesson not found") }
+        return getById(defaultLesson.id).map { it ?: throw IllegalStateException("upsert: defaultLesson not found") }
     }
 }

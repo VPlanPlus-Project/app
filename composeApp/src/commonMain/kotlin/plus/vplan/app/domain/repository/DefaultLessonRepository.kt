@@ -7,5 +7,5 @@ interface DefaultLessonRepository {
     fun getByGroup(groupId: Int): Flow<List<DefaultLesson>>
     fun getById(id: String): Flow<DefaultLesson?>
 
-    suspend fun upsert(id: String, subject: String, groupId: Int, teacherId: Int?, courseId: String?): Flow<DefaultLesson>
+    suspend fun upsert(defaultLesson: DefaultLesson): Flow<DefaultLesson>
 }

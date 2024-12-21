@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.sync.domain.usecase
+package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first

@@ -11,25 +11,22 @@ class CourseRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : CourseRepository {
     override fun getByGroup(groupId: Int): Flow<List<Course>> {
-        return vppDatabase.courseDao.getByGroup(groupId).map { it.map { it.toModel() } }
+        return vppDatabase.courseDao.getByGroup(groupId).map { it.map { course -> course.toModel() } }
     }
 
     override fun getBypId(id: String): Flow<Course?> {
         return vppDatabase.courseDao.getById(id).map { it?.toModel() }
     }
 
-    override suspend fun upsert(
-        id: String,
-        name: String,
-        groupId: Int,
-        teacherId: Int?
-    ): Flow<Course> {
-        vppDatabase.courseDao.upsert(DbCourse(
-            id = id,
-            name = name,
-            teacherId = teacherId,
-            groupId = groupId
-        ))
-        return getBypId(id).map { it ?: throw IllegalStateException("upsert: course not found") }
+    override suspend fun upsert(course: Course): Flow<Course> {
+        vppDatabase.courseDao.upsert(
+            DbCourse(
+                id = course.id,
+                name = course.name,
+                teacherId = course.teacher?.id,
+                groupId = course.group.id
+            )
+        )
+        return getBypId(course.id).map { it ?: throw IllegalStateException("upsert: course not found") }
     }
 }
