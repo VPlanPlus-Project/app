@@ -14,7 +14,7 @@ import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.TeacherRepository
-import plus.vplan.app.utils.take
+import plus.vplan.app.utils.latest
 
 private val LOGGER = Logger.withTag("UpdateDefaultLessonsUseCase")
 
@@ -38,19 +38,19 @@ class UpdateDefaultLessonsUseCase(
         updateCourses(
             school = school,
             baseData = baseData.data,
-            existingCourses = existingCourses.take(),
+            existingCourses = existingCourses.latest(),
             groups = groups,
             teachers = teachers
         )
 
         updateDefaultLessons(
             baseData = baseData.data,
-            courses = existingCourses.take(),
-            existingDefaultLessons = existingDefaultLessons.take(),
+            courses = existingCourses.latest(),
+            existingDefaultLessons = existingDefaultLessons.latest(),
             groups = groups,
             teachers = teachers
         )
-        
+
         return null
     }
 

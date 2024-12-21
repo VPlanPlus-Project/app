@@ -55,19 +55,14 @@ fun HomeScreen() {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            state.defaultLessons.forEach {
+            state.lessonTimes.forEach {
                 Text(
                     text = buildString {
-                        append(it.subject)
-                        append("@")
-                        append(it.group.name)
+                        append(it.lessonNumber)
+                        append(": ")
+                        append(it.start.toString())
                         append(" - ")
-                        append(it.teacher?.name ?: "_NT_")
-                        append(" // ")
-                        append(it.course?.name ?: "_NC_")
-                        append(" (")
-                        append(it.id)
-                        append(")")
+                        append(it.end.toString())
                     },
                     maxLines = 1,
                     overflow = TextOverflow.Visible

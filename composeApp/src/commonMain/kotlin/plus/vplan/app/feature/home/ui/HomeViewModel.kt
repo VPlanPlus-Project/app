@@ -7,19 +7,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.model.DefaultLesson
+import kotlinx.datetime.LocalTime
 import plus.vplan.app.domain.model.Group
+import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
+import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateDefaultLessonsUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateLessonTimesUseCase
 
 class HomeViewModel(
     private val schoolRepository: SchoolRepository,
     private val groupRepository: GroupRepository,
-    private val defaultLessonRepository: DefaultLessonRepository,
-    private val updateDefaultLessonsUseCase: UpdateDefaultLessonsUseCase
+    private val lessonTimeRepository: LessonTimeRepository,
+    private val updateLessonTimesUseCase: UpdateLessonTimesUseCase
 ) : ViewModel() {
     var state by mutableStateOf(HomeUiState())
         private set
@@ -30,8 +31,8 @@ class HomeViewModel(
                 school = schoolRepository.getById(67).first(),
                 group = groupRepository.getById(1721).first()
             )
-            defaultLessonRepository.getByGroup(1721).collect { defaultLessons ->
-                state = state.copy(defaultLessons = defaultLessons.sortedBy { it.subject })
+            lessonTimeRepository.getByGroup(1721).collect { lessonTimes ->
+                state = state.copy(lessonTimes = lessonTimes.filter { !it.interpolated }.sortedBy { it.lessonNumber })
             }
         }
     }
@@ -39,18 +40,19 @@ class HomeViewModel(
     fun onEvent(event: HomeUiEvent) {
         viewModelScope.launch {
             when (event) {
-                HomeUiEvent.Update -> updateDefaultLessonsUseCase(state.school as School.IndiwareSchool)
+                HomeUiEvent.Update -> updateLessonTimesUseCase(state.school as School.IndiwareSchool)
                 is HomeUiEvent.Delete -> {
-                    if (event.all) defaultLessonRepository.deleteById(state.defaultLessons.map { it.id })
-                    else defaultLessonRepository.deleteById(state.defaultLessons.filter { it.subject == "CH" }.map { it.id })
+                    if (event.all) lessonTimeRepository.deleteById(state.lessonTimes.map { it.id })
+                    else lessonTimeRepository.deleteById(state.lessonTimes.filter { it.lessonNumber % 2 == 0 }.map { it.id })
                 }
                 HomeUiEvent.SneakWeekIn -> {
-                    defaultLessonRepository.upsert(DefaultLesson(
-                        "idk",
-                        "Sneak In",
-                        state.group!!,
-                        null,
-                        null
+                    lessonTimeRepository.upsert(LessonTime(
+                        id = "idk",
+                        start = LocalTime.parse("10:00"),
+                        end = LocalTime.parse("11:00"),
+                        lessonNumber = 1,
+                        group = state.group!!,
+                        interpolated = false
                     ))
                 }
             }
@@ -61,7 +63,7 @@ class HomeViewModel(
 data class HomeUiState(
     val school: School? = null,
     val group: Group? = null,
-    val defaultLessons: List<DefaultLesson> = emptyList()
+    val lessonTimes: List<LessonTime> = emptyList()
 )
 
 sealed class HomeUiEvent {

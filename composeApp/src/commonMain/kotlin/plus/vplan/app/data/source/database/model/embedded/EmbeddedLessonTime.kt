@@ -9,8 +9,8 @@ import plus.vplan.app.domain.model.LessonTime
 data class EmbeddedLessonTime(
     @Embedded val lessonTime: DbLessonTime,
     @Relation(
-        parentColumn = "id",
-        entityColumn = "group_id",
+        parentColumn = "group_id",
+        entityColumn = "id",
         entity = DbGroup::class
     ) val group: EmbeddedGroup
 ) {
