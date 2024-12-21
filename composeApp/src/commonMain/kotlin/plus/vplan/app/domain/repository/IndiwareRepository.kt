@@ -13,6 +13,12 @@ interface IndiwareRepository {
         username: String,
         password: String
     ): Response<IndiwareBaseData>
+
+//    suspend fun getTimetable(
+//        sp24Id: String,
+//        username: String,
+//        password: String
+//    ): Response<IndiwareTimeTable>
 }
 
 data class IndiwareBaseData(
@@ -20,6 +26,7 @@ data class IndiwareBaseData(
     val holidays: List<LocalDate>,
     val teachers: List<String>,
     val rooms: List<String>,
+    val weeks: List<Week>?,
     val daysPerWeek: Int,
     val studentsHaveFullAccess: Boolean,
     val downloadMode: School.IndiwareSchool.SchoolDownloadMode
@@ -46,7 +53,16 @@ data class IndiwareBaseData(
             val name: String,
             val teacher: String?
         )
+
     }
+
+    data class Week(
+        val calendarWeek: Int,
+        val start: LocalDate,
+        val end: LocalDate,
+        val weekType: String,
+        val weekIndex: Int,
+    )
 
     data class Teacher(
         val name: String

@@ -8,12 +8,14 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.format.char
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.XmlDeclMode
 import nl.adaptivity.xmlutil.core.XmlVersion
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlConfig.Companion.IGNORING_UNKNOWN_CHILD_HANDLER
 import plus.vplan.app.data.source.indiware.model.MobdatenClassData
+import plus.vplan.app.data.source.indiware.model.WplanBaseData
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.data.Response
@@ -24,6 +26,7 @@ import plus.vplan.app.domain.repository.IndiwareRepository
 class IndiwareRepositoryImpl(
     private val httpClient: HttpClient
 ) : IndiwareRepository {
+
     override suspend fun checkCredentials(
         sp24Id: Int,
         username: String,
@@ -46,7 +49,7 @@ class IndiwareRepositoryImpl(
         username: String,
         password: String
     ): Response<IndiwareBaseData> {
-        val response = httpClient.get {
+        val mobileDataResponse = httpClient.get {
             url(
                 scheme = "https",
                 host = "stundenplan24.de",
@@ -54,7 +57,7 @@ class IndiwareRepositoryImpl(
             )
             basicAuth(username, password)
         }
-        if (response.status != HttpStatusCode.OK) return response.toResponse()
+        if (mobileDataResponse.status != HttpStatusCode.OK) return mobileDataResponse.toResponse()
         val xml: XML by lazy {
             XML {
                 xmlVersion = XmlVersion.XML10
@@ -68,8 +71,45 @@ class IndiwareRepositoryImpl(
         }
         val mobileClassBaseData = xml.decodeFromString(
             deserializer = MobdatenClassData.serializer(),
-            string = response.bodyAsText()
+            string = mobileDataResponse.bodyAsText()
         )
+
+        val weeks = mutableListOf<IndiwareBaseData.Week>()
+
+        val wplanBaseDataResponse = httpClient.get {
+            url(
+                scheme = "https",
+                host = "stundenplan24.de",
+                path = "/$sp24Id/wplan/wdatenk/SPlanKl_Basis.xml"
+            )
+            basicAuth(username, password)
+        }
+        if (wplanBaseDataResponse.status == HttpStatusCode.OK) {
+            val wplanBaseData = xml.decodeFromString(
+                deserializer = WplanBaseData.serializer(),
+                string = wplanBaseDataResponse.bodyAsText()
+            )
+            weeks.removeAll { it.calendarWeek in wplanBaseData.schoolWeeks.map { data -> data.calendarWeek } }
+            weeks.addAll(
+                wplanBaseData.schoolWeeks
+                    .map { schoolWeek ->
+                        val format = LocalDate.Format {
+                            dayOfMonth()
+                            char('.')
+                            monthNumber()
+                            char('.')
+                            year()
+                        }
+                        IndiwareBaseData.Week(
+                            calendarWeek = schoolWeek.calendarWeek,
+                            start = LocalDate.parse(schoolWeek.start, format),
+                            end = LocalDate.parse(schoolWeek.end, format),
+                            weekType = schoolWeek.weekType,
+                            weekIndex = schoolWeek.weekIndex
+                        )
+                    }
+            )
+        }
 
         return Response.Success(
             IndiwareBaseData(
@@ -120,7 +160,8 @@ class IndiwareRepositoryImpl(
                 rooms = emptyList(),
                 daysPerWeek = mobileClassBaseData.header.daysPerWeek.daysPerWeek,
                 studentsHaveFullAccess = false,
-                downloadMode = School.IndiwareSchool.SchoolDownloadMode.INDIWARE_MOBIL
+                downloadMode = School.IndiwareSchool.SchoolDownloadMode.INDIWARE_MOBIL,
+                weeks = weeks.ifEmpty { null }
             )
         )
     }

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "cfa77b96f8a9d667b3c3b5b68c3dc8f0",
+    "identityHash": "22c79bc378edb415124af48b16e01816",
     "entities": [
       {
         "tableName": "schools",
@@ -856,11 +856,100 @@
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_key_value_id` ON `${TABLE_NAME}` (`id`)"
           }
         ]
+      },
+      {
+        "tableName": "weeks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `school_id` INTEGER NOT NULL, `calendar_week` INTEGER NOT NULL, `start` TEXT NOT NULL, `end` TEXT NOT NULL, `week_type` TEXT NOT NULL, `week_index` INTEGER NOT NULL, PRIMARY KEY(`school_id`, `calendar_week`), FOREIGN KEY(`school_id`) REFERENCES `schools`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schoolId",
+            "columnName": "school_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "calendarWeek",
+            "columnName": "calendar_week",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "start",
+            "columnName": "start",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "end",
+            "columnName": "end",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weekType",
+            "columnName": "week_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weekIndex",
+            "columnName": "week_index",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "school_id",
+            "calendar_week"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_weeks_id",
+            "unique": true,
+            "columnNames": [
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_weeks_id` ON `${TABLE_NAME}` (`id`)"
+          },
+          {
+            "name": "index_weeks_school_id_calendar_week",
+            "unique": true,
+            "columnNames": [
+              "school_id",
+              "calendar_week"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_weeks_school_id_calendar_week` ON `${TABLE_NAME}` (`school_id`, `calendar_week`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "schools",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "school_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cfa77b96f8a9d667b3c3b5b68c3dc8f0')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '22c79bc378edb415124af48b16e01816')"
     ]
   }
 }

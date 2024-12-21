@@ -17,6 +17,7 @@ import plus.vplan.app.data.repository.ProfileRepositoryImpl
 import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.SchoolRepositoryImpl
 import plus.vplan.app.data.repository.TeacherRepositoryImpl
+import plus.vplan.app.data.repository.WeekRepositoryImpl
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
@@ -26,8 +27,11 @@ import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.TeacherRepository
+import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.feature.home.di.homeModule
 import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
+import plus.vplan.app.feature.sync.di.syncModule
 
 expect fun platformModule(): Module
 
@@ -51,12 +55,13 @@ val appModule = module(createdAtStart = true) {
     singleOf(::DefaultLessonRepositoryImpl).bind<DefaultLessonRepository>()
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
     singleOf(::KeyValueRepositoryImpl).bind<KeyValueRepository>()
+    singleOf(::WeekRepositoryImpl).bind<WeekRepository>()
 }
 
 fun initKoin(configuration: KoinAppDeclaration? = null) {
     startKoin {
         configuration?.invoke(this)
         modules(platformModule())
-        modules(appModule, hostModule, onboardingModule)
+        modules(appModule, hostModule, syncModule, onboardingModule, homeModule)
     }
 }
