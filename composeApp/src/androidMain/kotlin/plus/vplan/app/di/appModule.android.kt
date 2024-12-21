@@ -8,6 +8,7 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
+import plus.vplan.app.data.source.database.converters.LocalTimeConverter
 import plus.vplan.app.data.source.database.converters.UuidTypeConverter
 
 actual fun platformModule(): Module = module(createdAtStart = true) {
@@ -19,6 +20,7 @@ actual fun platformModule(): Module = module(createdAtStart = true) {
             .setDriver(BundledSQLiteDriver())
             .addTypeConverter(UuidTypeConverter())
             .addTypeConverter(LocalDateConverter())
+            .addTypeConverter(LocalTimeConverter())
             .fallbackToDestructiveMigration(true)
             .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
             .build()
