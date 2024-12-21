@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
@@ -13,6 +14,7 @@ import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.TeacherRepository
+import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 
 class SetUpSchoolDataUseCase(
@@ -23,7 +25,8 @@ class SetUpSchoolDataUseCase(
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
     private val courseRepository: CourseRepository,
-    private val defaultLessonRepository: DefaultLessonRepository
+    private val defaultLessonRepository: DefaultLessonRepository,
+    private val weekRepository: WeekRepository
 ) {
     operator fun invoke(): Flow<SetUpSchoolDataResult> = flow {
         val result = SetUpSchoolDataStep.entries.associateWith { SetUpSchoolDataState.NOT_STARTED }.toMutableMap()
@@ -97,7 +100,18 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
-            baseData.data.weeks
+            baseData.data.weeks?.forEach { baseDataWeek ->
+                val week = Week(
+                    id = school.id.toString() + "/" + baseDataWeek.calendarWeek.toString(),
+                    calendarWeek = baseDataWeek.calendarWeek,
+                    start = baseDataWeek.start,
+                    end = baseDataWeek.end,
+                    weekType = baseDataWeek.weekType,
+                    weekIndex = baseDataWeek.weekIndex,
+                    school = school
+                )
+                weekRepository.insert(week)
+            }
 
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.IN_PROGRESS
