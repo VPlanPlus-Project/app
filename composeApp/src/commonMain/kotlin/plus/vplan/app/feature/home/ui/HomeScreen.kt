@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
@@ -27,12 +28,11 @@ fun HomeScreen() {
             .fillMaxSize()
     ) root@{
         Spacer(Modifier.height(WindowInsets.systemBars.asPaddingValues().calculateTopPadding()))
-        Text("Hello")
         Row {
             Button(
                 text = "Update",
                 size = ButtonSize.SMALL,
-                onClick = { viewModel.onEvent(HomeUiEvent.UpdateWeeks) }
+                onClick = { viewModel.onEvent(HomeUiEvent.Update) }
             )
             Button(
                 text = "Sneak In",
@@ -42,12 +42,12 @@ fun HomeScreen() {
             Button(
                 text = "Delete",
                 size = ButtonSize.SMALL,
-                onClick = { viewModel.onEvent(HomeUiEvent.DeleteWeeks(true)) }
+                onClick = { viewModel.onEvent(HomeUiEvent.Delete(true)) }
             )
             Button(
                 text = "Delete A",
                 size = ButtonSize.SMALL,
-                onClick = { viewModel.onEvent(HomeUiEvent.DeleteWeeks(false)) }
+                onClick = { viewModel.onEvent(HomeUiEvent.Delete(false)) }
             )
         }
         Column(
@@ -55,22 +55,20 @@ fun HomeScreen() {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            state.weeks.forEach {
+            state.courses.forEach {
                 Text(
                     text = buildString {
-                        append("KW")
-                        append(it.calendarWeek)
-                        append(": ")
-                        append(it.start.toString())
+                        append(it.name)
+                        append("@")
+                        append(it.group.name)
                         append(" - ")
-                        append(it.end.toString())
+                        append(it.teacher?.name ?: "_NT_")
                         append(" (")
-                        append(it.weekType)
-                        append(" Woche, ")
-                        append(it.weekIndex)
+                        append(it.id)
                         append(")")
                     },
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Visible
                 )
             }
         }

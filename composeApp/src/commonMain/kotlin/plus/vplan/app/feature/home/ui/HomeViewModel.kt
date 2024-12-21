@@ -7,26 +7,31 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.model.Course
+import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.Week
+import plus.vplan.app.domain.repository.CourseRepository
+import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateDefaultLessonsUseCase
 
 class HomeViewModel(
-    private val weekRepository: WeekRepository,
     private val schoolRepository: SchoolRepository,
-    private val updateWeeksUseCase: UpdateWeeksUseCase
+    private val groupRepository: GroupRepository,
+    private val courseRepository: CourseRepository,
+    private val updateDefaultLessonsUseCase: UpdateDefaultLessonsUseCase
 ) : ViewModel() {
     var state by mutableStateOf(HomeUiState())
         private set
 
     init {
         viewModelScope.launch {
-            state = state.copy(school = schoolRepository.getById(67).first())
-            weekRepository.getBySchool(schoolId = 67).collect { weeks ->
-                state = state.copy(weeks = weeks.sortedBy { it.weekIndex })
+            state = state.copy(
+                school = schoolRepository.getById(67).first(),
+                group = groupRepository.getById(1721).first()
+            )
+            courseRepository.getByGroup(1721).collect { courses ->
+                state = state.copy(courses = courses.sortedBy { it.id })
             }
         }
     }
@@ -34,20 +39,19 @@ class HomeViewModel(
     fun onEvent(event: HomeUiEvent) {
         viewModelScope.launch {
             when (event) {
-                HomeUiEvent.UpdateWeeks -> updateWeeksUseCase(state.school as School.IndiwareSchool)
-                is HomeUiEvent.DeleteWeeks -> {
-                    if (event.all) weekRepository.deleteBySchool(schoolId = state.school?.id ?: return@launch)
-                    else weekRepository.deleteById(state.weeks.mapNotNull { if (it.weekType == "A") it.id else null })
+                HomeUiEvent.Update -> updateDefaultLessonsUseCase(state.school as School.IndiwareSchool)
+                is HomeUiEvent.Delete -> {
+                    if (event.all) courseRepository.deleteById(state.courses.map { it.id })
+                    else courseRepository.deleteById(state.courses.filter { it.name.uppercase() == it.name }.map { it.id })
                 }
-                HomeUiEvent.SneakWeekIn -> weekRepository.upsert(Week(
-                    id = "67/000",
-                    calendarWeek = 1,
-                    start = LocalDate.parse("2022-01-01"),
-                    end = LocalDate.parse("2022-01-07"),
-                    weekType = "C",
-                    weekIndex = 1,
-                    school = state.school as School.IndiwareSchool
-                ))
+                HomeUiEvent.SneakWeekIn -> {
+                    courseRepository.upsert(Course.fromIndiware(
+                        sp24SchoolId = (state.school as School.IndiwareSchool).sp24Id,
+                        group = state.group!!,
+                        name = "Sneak In",
+                        teacher = null
+                    ))
+                }
             }
         }
     }
@@ -55,11 +59,12 @@ class HomeViewModel(
 
 data class HomeUiState(
     val school: School? = null,
-    val weeks: List<Week> = emptyList()
+    val group: Group? = null,
+    val courses: List<Course> = emptyList()
 )
 
 sealed class HomeUiEvent {
-    data object UpdateWeeks : HomeUiEvent()
-    data class DeleteWeeks(val all: Boolean) : HomeUiEvent()
+    data object Update : HomeUiEvent()
+    data class Delete(val all: Boolean) : HomeUiEvent()
     data object SneakWeekIn : HomeUiEvent()
 }

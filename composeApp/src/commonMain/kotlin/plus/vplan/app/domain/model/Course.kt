@@ -13,7 +13,7 @@ data class Course(
             name: String,
             teacher: Teacher?
         ) = Course(
-            id = "sp24.$sp24SchoolId.$name+${teacher ?: ""}",
+            id = "sp24.$sp24SchoolId.$name+${teacher?.name ?: ""}",
             group = group,
             name = name,
             teacher = teacher
