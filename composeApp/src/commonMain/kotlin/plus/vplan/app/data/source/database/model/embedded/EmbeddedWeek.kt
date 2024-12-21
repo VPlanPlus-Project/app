@@ -9,8 +9,8 @@ import plus.vplan.app.domain.model.Week
 data class EmbeddedWeek(
     @Embedded val week: DbWeek,
     @Relation(
-        parentColumn = "id",
-        entityColumn = "school_id",
+        parentColumn = "school_id",
+        entityColumn = "id",
         entity = DbSchool::class
     ) val school: EmbeddedSchool
 ) {

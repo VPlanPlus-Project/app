@@ -1,5 +1,7 @@
 package plus.vplan.app.data.repository
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbWeek
 import plus.vplan.app.domain.model.Week
@@ -8,7 +10,7 @@ import plus.vplan.app.domain.repository.WeekRepository
 class WeekRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : WeekRepository {
-    override suspend fun insert(week: Week) {
+    override suspend fun upsert(week: Week) {
         vppDatabase.weekDao.upsert(
             DbWeek(
                 id = week.id,
@@ -22,4 +24,16 @@ class WeekRepositoryImpl(
         )
     }
 
+    override fun getBySchool(schoolId: Int): Flow<List<Week>> {
+        return vppDatabase.weekDao
+            .getBySchool(schoolId).map { it.map { embeddedWeek -> embeddedWeek.toModel() } }
+    }
+
+    override suspend fun deleteBySchool(schoolId: Int) {
+        vppDatabase.weekDao.deleteBySchool(schoolId)
+    }
+
+    override suspend fun deleteById(id: String) {
+        vppDatabase.weekDao.deleteById(id)
+    }
 }

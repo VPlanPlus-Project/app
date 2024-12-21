@@ -28,8 +28,10 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.feature.home.di.homeModule
 import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
+import plus.vplan.app.feature.sync.di.syncModule
 
 expect fun platformModule(): Module
 
@@ -60,6 +62,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
     startKoin {
         configuration?.invoke(this)
         modules(platformModule())
-        modules(appModule, hostModule, onboardingModule)
+        modules(appModule, hostModule, syncModule, onboardingModule, homeModule)
     }
 }

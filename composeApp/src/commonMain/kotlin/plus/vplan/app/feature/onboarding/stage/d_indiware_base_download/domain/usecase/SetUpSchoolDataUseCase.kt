@@ -110,7 +110,7 @@ class SetUpSchoolDataUseCase(
                     weekIndex = baseDataWeek.weekIndex,
                     school = school
                 )
-                weekRepository.insert(week)
+                weekRepository.upsert(week)
             }
 
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.DONE

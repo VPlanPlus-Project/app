@@ -5,6 +5,8 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -87,16 +89,18 @@ fun MainScreenHost() {
                 }
             }
         }
-    ) {
-        NavHost(
-            navController = navController,
-            startDestination = MainScreen.Home
-        ) {
-            composable<MainScreen.Home> { HomeScreen() }
-            composable<MainScreen.Calendar> { Text("Calendar") }
-            composable<MainScreen.Search> { Text("Search") }
-            composable<MainScreen.Chat> { Text("Chat") }
-            composable<MainScreen.Profile> { Text("Profile") }
+    ) { contentPadding ->
+        Box(modifier = Modifier.padding(bottom = contentPadding.calculateBottomPadding())) {
+            NavHost(
+                navController = navController,
+                startDestination = MainScreen.Home
+            ) {
+                composable<MainScreen.Home> { HomeScreen() }
+                composable<MainScreen.Calendar> { Text("Calendar") }
+                composable<MainScreen.Search> { Text("Search") }
+                composable<MainScreen.Chat> { Text("Chat") }
+                composable<MainScreen.Profile> { Text("Profile") }
+            }
         }
     }
 }
