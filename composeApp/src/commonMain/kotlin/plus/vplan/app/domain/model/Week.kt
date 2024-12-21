@@ -13,4 +13,21 @@ data class Week(
     val weekType: String,
     val weekIndex: Int,
     val school: School
-)
+) {
+    constructor(
+        calendarWeek: Int,
+        start: LocalDate,
+        end: LocalDate,
+        weekType: String,
+        weekIndex: Int,
+        school: School
+    ) : this(
+        id = school.id.toString() + "/" + calendarWeek.toString(),
+        calendarWeek = calendarWeek,
+        start = start,
+        end = end,
+        weekType = weekType,
+        weekIndex = weekIndex,
+        school = school
+    )
+}
