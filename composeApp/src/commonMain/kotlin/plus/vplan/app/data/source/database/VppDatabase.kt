@@ -10,6 +10,7 @@ import plus.vplan.app.data.source.database.dao.CourseDao
 import plus.vplan.app.data.source.database.dao.DefaultLessonDao
 import plus.vplan.app.data.source.database.dao.GroupDao
 import plus.vplan.app.data.source.database.dao.KeyValueDao
+import plus.vplan.app.data.source.database.dao.LessonTimeDao
 import plus.vplan.app.data.source.database.dao.ProfileDao
 import plus.vplan.app.data.source.database.dao.RoomDao
 import plus.vplan.app.data.source.database.dao.SchoolDao
@@ -73,4 +74,5 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val profileDao: ProfileDao
     abstract val keyValueDao: KeyValueDao
     abstract val weekDao: WeekDao
+    abstract val lessonTimeDao: LessonTimeDao
 }

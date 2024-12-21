@@ -13,6 +13,7 @@ import plus.vplan.app.data.repository.DefaultLessonRepositoryImpl
 import plus.vplan.app.data.repository.GroupRepositoryImpl
 import plus.vplan.app.data.repository.IndiwareRepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
+import plus.vplan.app.data.repository.LessonTimeRepositoryImpl
 import plus.vplan.app.data.repository.ProfileRepositoryImpl
 import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.SchoolRepositoryImpl
@@ -23,6 +24,7 @@ import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
@@ -56,6 +58,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
     singleOf(::KeyValueRepositoryImpl).bind<KeyValueRepository>()
     singleOf(::WeekRepositoryImpl).bind<WeekRepository>()
+    singleOf(::LessonTimeRepositoryImpl).bind<LessonTimeRepository>()
 }
 
 fun initKoin(configuration: KoinAppDeclaration? = null) {
