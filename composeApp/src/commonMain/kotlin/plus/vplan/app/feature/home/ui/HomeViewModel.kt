@@ -37,7 +37,7 @@ class HomeViewModel(
                 HomeUiEvent.UpdateWeeks -> updateWeeksUseCase(state.school as School.IndiwareSchool)
                 is HomeUiEvent.DeleteWeeks -> {
                     if (event.all) weekRepository.deleteBySchool(schoolId = state.school?.id ?: return@launch)
-                    else state.weeks.filter { it.weekType == "A" }.forEach { weekRepository.deleteById(it.id) }
+                    else weekRepository.deleteById(state.weeks.mapNotNull { if (it.weekType == "A") it.id else null })
                 }
                 HomeUiEvent.SneakWeekIn -> weekRepository.upsert(Week(
                     id = "67/000",

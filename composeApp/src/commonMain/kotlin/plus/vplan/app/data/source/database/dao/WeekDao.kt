@@ -12,7 +12,8 @@ import plus.vplan.app.data.source.database.model.embedded.EmbeddedWeek
 interface WeekDao {
 
     @Upsert
-    suspend fun upsert(week: DbWeek)
+    @Transaction
+    suspend fun upsert(weeks: List<DbWeek>)
 
     @Transaction
     @Query("SELECT * FROM weeks WHERE school_id = :schoolId")
@@ -25,4 +26,9 @@ interface WeekDao {
     @Transaction
     @Query("DELETE FROM weeks WHERE id = :id")
     suspend fun deleteById(id: String)
+
+    @Transaction
+    suspend fun deleteById(ids: List<String>) {
+        ids.forEach { deleteById(it) }
+    }
 }

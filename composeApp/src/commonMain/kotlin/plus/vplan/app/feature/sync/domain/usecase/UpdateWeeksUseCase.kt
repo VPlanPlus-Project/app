@@ -35,12 +35,12 @@ class UpdateWeeksUseCase(
             val downloadedIds = downloadedWeeks.map { it.id }
             val weeksToDelete = existing.filter { existingWeek -> downloadedIds.none { it == existingWeek.id } }
             LOGGER.d { "Delete ${weeksToDelete.size} weeks" }
-            weeksToDelete.forEach { weekRepository.deleteById(it.id) }
+            weekRepository.deleteById(weeksToDelete.map { it.id })
         }
         existingWeeks.let { existing ->
             val weeksToUpsert = downloadedWeeks.filter { downloadedWeek -> existing.none { it.hashCode() == downloadedWeek.hashCode() } }
             LOGGER.d { "Upsert ${weeksToUpsert.size} weeks" }
-            weeksToUpsert.forEach { weekRepository.upsert(it) }
+            weekRepository.upsert(weeksToUpsert)
         }
         return null
     }

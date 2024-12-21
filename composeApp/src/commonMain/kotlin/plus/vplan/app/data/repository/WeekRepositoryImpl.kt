@@ -11,7 +11,11 @@ class WeekRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : WeekRepository {
     override suspend fun upsert(week: Week) {
-        vppDatabase.weekDao.upsert(
+        upsert(listOf(week))
+    }
+
+    override suspend fun upsert(weeks: List<Week>) {
+        vppDatabase.weekDao.upsert(weeks.map { week ->
             DbWeek(
                 id = week.id,
                 schoolId = week.school.id,
@@ -21,7 +25,7 @@ class WeekRepositoryImpl(
                 weekType = week.weekType,
                 weekIndex = week.weekIndex
             )
-        )
+        })
     }
 
     override fun getBySchool(schoolId: Int): Flow<List<Week>> {
@@ -34,6 +38,10 @@ class WeekRepositoryImpl(
     }
 
     override suspend fun deleteById(id: String) {
+        vppDatabase.weekDao.deleteById(id)
+    }
+
+    override suspend fun deleteById(id: List<String>) {
         vppDatabase.weekDao.deleteById(id)
     }
 }
