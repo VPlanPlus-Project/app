@@ -8,6 +8,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.XmlDeclMode
@@ -111,6 +112,12 @@ class IndiwareRepositoryImpl(
             )
         }
 
+        val lessonTimeFormat = LocalTime.Format {
+            hour(Padding.NONE)
+            char(':')
+            minute()
+        }
+
         return Response.Success(
             IndiwareBaseData(
                 holidays = mobileClassBaseData
@@ -131,8 +138,8 @@ class IndiwareRepositoryImpl(
                             lessonTimes = baseDataClass.lessonTimes
                                 .map { baseDataClassLessonTime ->
                                     IndiwareBaseData.Class.LessonTime(
-                                        start = LocalTime.parse(baseDataClassLessonTime.startTime),
-                                        end = LocalTime.parse(baseDataClassLessonTime.endTime),
+                                        start = LocalTime.parse(baseDataClassLessonTime.startTime.trim(), lessonTimeFormat),
+                                        end = LocalTime.parse(baseDataClassLessonTime.endTime.trim(), lessonTimeFormat),
                                         lessonNumber = baseDataClassLessonTime.lessonNumber
                                     )
                                 },

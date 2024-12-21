@@ -28,10 +28,10 @@ class HomeViewModel(
     init {
         viewModelScope.launch {
             state = state.copy(
-                school = schoolRepository.getById(67).first(),
-                group = groupRepository.getById(1721).first()
+                school = schoolRepository.getById(69).first(),
+                group = groupRepository.getById(1764).first()
             )
-            lessonTimeRepository.getByGroup(1721).collect { lessonTimes ->
+            lessonTimeRepository.getByGroup(1764).collect { lessonTimes ->
                 state = state.copy(lessonTimes = lessonTimes.filter { !it.interpolated }.sortedBy { it.lessonNumber })
             }
         }
