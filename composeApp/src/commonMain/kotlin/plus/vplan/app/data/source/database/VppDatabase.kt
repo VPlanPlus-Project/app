@@ -4,11 +4,13 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
+import plus.vplan.app.data.source.database.converters.LocalTimeConverter
 import plus.vplan.app.data.source.database.converters.UuidTypeConverter
 import plus.vplan.app.data.source.database.dao.CourseDao
 import plus.vplan.app.data.source.database.dao.DefaultLessonDao
 import plus.vplan.app.data.source.database.dao.GroupDao
 import plus.vplan.app.data.source.database.dao.KeyValueDao
+import plus.vplan.app.data.source.database.dao.LessonTimeDao
 import plus.vplan.app.data.source.database.dao.ProfileDao
 import plus.vplan.app.data.source.database.dao.RoomDao
 import plus.vplan.app.data.source.database.dao.SchoolDao
@@ -20,6 +22,7 @@ import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
+import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
@@ -50,6 +53,7 @@ import plus.vplan.app.data.source.database.model.database.DbWeek
         DbKeyValue::class,
 
         DbWeek::class,
+        DbLessonTime::class
     ],
     version = 1,
 )
@@ -57,6 +61,7 @@ import plus.vplan.app.data.source.database.model.database.DbWeek
     value = [
         UuidTypeConverter::class,
         LocalDateConverter::class,
+        LocalTimeConverter::class
     ]
 )
 abstract class VppDatabase : RoomDatabase() {
@@ -69,4 +74,5 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val profileDao: ProfileDao
     abstract val keyValueDao: KeyValueDao
     abstract val weekDao: WeekDao
+    abstract val lessonTimeDao: LessonTimeDao
 }

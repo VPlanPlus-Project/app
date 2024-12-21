@@ -139,6 +139,7 @@ private fun OnboardingIndiwareDataDownloadContent(
                                 SetUpSchoolDataStep.GET_GROUPS -> "Gruppen laden"
                                 SetUpSchoolDataStep.GET_TEACHERS -> "Lehrer laden"
                                 SetUpSchoolDataStep.GET_ROOMS -> "Räume laden"
+                                SetUpSchoolDataStep.GET_LESSON_TIMES -> "Stundenzeiten laden"
                                 SetUpSchoolDataStep.GET_WEEKS -> "Schulwochen laden"
                             },
                             style = MaterialTheme.typography.bodyMedium,
