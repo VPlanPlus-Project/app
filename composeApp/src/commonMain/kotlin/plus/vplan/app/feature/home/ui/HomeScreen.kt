@@ -55,14 +55,16 @@ fun HomeScreen() {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            state.courses.forEach {
+            state.defaultLessons.forEach {
                 Text(
                     text = buildString {
-                        append(it.name)
+                        append(it.subject)
                         append("@")
                         append(it.group.name)
                         append(" - ")
                         append(it.teacher?.name ?: "_NT_")
+                        append(" // ")
+                        append(it.course?.name ?: "_NC_")
                         append(" (")
                         append(it.id)
                         append(")")

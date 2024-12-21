@@ -7,10 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.model.Course
+import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.repository.CourseRepository
+import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateDefaultLessonsUseCase
@@ -18,7 +18,7 @@ import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateDefaultLessonsU
 class HomeViewModel(
     private val schoolRepository: SchoolRepository,
     private val groupRepository: GroupRepository,
-    private val courseRepository: CourseRepository,
+    private val defaultLessonRepository: DefaultLessonRepository,
     private val updateDefaultLessonsUseCase: UpdateDefaultLessonsUseCase
 ) : ViewModel() {
     var state by mutableStateOf(HomeUiState())
@@ -30,8 +30,8 @@ class HomeViewModel(
                 school = schoolRepository.getById(67).first(),
                 group = groupRepository.getById(1721).first()
             )
-            courseRepository.getByGroup(1721).collect { courses ->
-                state = state.copy(courses = courses.sortedBy { it.id })
+            defaultLessonRepository.getByGroup(1721).collect { defaultLessons ->
+                state = state.copy(defaultLessons = defaultLessons.sortedBy { it.subject })
             }
         }
     }
@@ -41,15 +41,16 @@ class HomeViewModel(
             when (event) {
                 HomeUiEvent.Update -> updateDefaultLessonsUseCase(state.school as School.IndiwareSchool)
                 is HomeUiEvent.Delete -> {
-                    if (event.all) courseRepository.deleteById(state.courses.map { it.id })
-                    else courseRepository.deleteById(state.courses.filter { it.name.uppercase() == it.name }.map { it.id })
+                    if (event.all) defaultLessonRepository.deleteById(state.defaultLessons.map { it.id })
+                    else defaultLessonRepository.deleteById(state.defaultLessons.filter { it.subject == "CH" }.map { it.id })
                 }
                 HomeUiEvent.SneakWeekIn -> {
-                    courseRepository.upsert(Course.fromIndiware(
-                        sp24SchoolId = (state.school as School.IndiwareSchool).sp24Id,
-                        group = state.group!!,
-                        name = "Sneak In",
-                        teacher = null
+                    defaultLessonRepository.upsert(DefaultLesson(
+                        "idk",
+                        "Sneak In",
+                        state.group!!,
+                        null,
+                        null
                     ))
                 }
             }
@@ -60,7 +61,7 @@ class HomeViewModel(
 data class HomeUiState(
     val school: School? = null,
     val group: Group? = null,
-    val courses: List<Course> = emptyList()
+    val defaultLessons: List<DefaultLesson> = emptyList()
 )
 
 sealed class HomeUiEvent {
