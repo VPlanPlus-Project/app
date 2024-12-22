@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6fb2e89d3769b1abf3cc144125109d7a",
+    "identityHash": "3691216ec6df54858bceb49b8b7cdcb3",
     "entities": [
       {
         "tableName": "schools",
@@ -1352,11 +1352,70 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "day",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `date` TEXT NOT NULL, `school_id` INTEGER NOT NULL, `info` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`school_id`) REFERENCES `schools`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schoolId",
+            "columnName": "school_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "info",
+            "columnName": "info",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_day_school_id",
+            "unique": false,
+            "columnNames": [
+              "school_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_day_school_id` ON `${TABLE_NAME}` (`school_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "schools",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "school_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6fb2e89d3769b1abf3cc144125109d7a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3691216ec6df54858bceb49b8b7cdcb3')"
     ]
   }
 }

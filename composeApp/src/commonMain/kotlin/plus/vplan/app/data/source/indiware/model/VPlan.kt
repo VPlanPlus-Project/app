@@ -38,7 +38,7 @@ data class VPlan(
             @SerialName("Le") val teacher: Teacher,
             @SerialName("Ra") val room: Room,
             @SerialName("If") val info: Info,
-            @SerialName("Nr") val defaultLessonNumber: DefaultLessonNumber,
+            @SerialName("Nr") val defaultLessonNumber: DefaultLessonNumber? = null,
             @SerialName("Beginn") val start: Start,
             @SerialName("Ende") val end: End
         ) {

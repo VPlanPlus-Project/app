@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.School
@@ -17,14 +18,14 @@ import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.TimetableRepository
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 
 class HomeViewModel(
     private val schoolRepository: SchoolRepository,
     private val groupRepository: GroupRepository,
     private val timetableRepository: TimetableRepository,
     private val keyValueRepository: KeyValueRepository,
-    private val updateTimetableUseCase: UpdateTimetableUseCase
+    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase
 ) : ViewModel() {
     var state by mutableStateOf(HomeUiState())
         private set
@@ -32,8 +33,8 @@ class HomeViewModel(
     init {
         viewModelScope.launch {
             state = state.copy(
-                school = schoolRepository.getById(67).first(),
-                group = groupRepository.getById(1721).first()
+                school = schoolRepository.getById(35).first(),
+                group = groupRepository.getById(891).first()
             )
             viewModelScope.launch {
                 keyValueRepository.get(Keys.timetableVersion(state.school!!.id)).map { it?.toIntOrNull() }.collectLatest { version ->
@@ -48,7 +49,7 @@ class HomeViewModel(
     fun onEvent(event: HomeUiEvent) {
         viewModelScope.launch {
             when (event) {
-                HomeUiEvent.Update -> updateTimetableUseCase(state.school as School.IndiwareSchool)
+                HomeUiEvent.Update -> updateSubstitutionPlanUseCase(state.school as School.IndiwareSchool, date = LocalDate(2024,12,19))
                 is HomeUiEvent.Delete -> {
                     if (event.all) timetableRepository.deleteAllTimetables()
                 }

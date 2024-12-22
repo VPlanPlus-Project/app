@@ -306,7 +306,7 @@ class IndiwareRepositoryImpl(
                                     info = substitutionPlanLesson.info.value.ifBlank { null },
                                     start = LocalTime.parse(substitutionPlanLesson.start.value),
                                     end = LocalTime.parse(substitutionPlanLesson.end.value),
-                                    defaultLessonNumber = substitutionPlanLesson.defaultLessonNumber.value.toIntOrNull()
+                                    defaultLessonNumber = substitutionPlanLesson.defaultLessonNumber?.value?.toIntOrNull()
                                 )
                             }
                         )

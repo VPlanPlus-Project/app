@@ -13,9 +13,7 @@ class UpdateSubstitutionPlanUseCase(
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository
 ) {
-
     suspend operator fun invoke(indiwareSchool: School.IndiwareSchool, date: LocalDate): Response.Error? {
-
         val teachers = teacherRepository.getBySchool(indiwareSchool.id).latest()
         val rooms = roomRepository.getBySchool(indiwareSchool.id).latest()
 
