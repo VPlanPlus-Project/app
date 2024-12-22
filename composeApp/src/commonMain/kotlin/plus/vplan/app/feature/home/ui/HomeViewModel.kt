@@ -36,7 +36,7 @@ class HomeViewModel(
                 group = groupRepository.getById(1721).first()
             )
             viewModelScope.launch {
-                keyValueRepository.get(Keys.TIMETABLE_VERSION).map { it?.toIntOrNull() }.collectLatest { version ->
+                keyValueRepository.get(Keys.timetableVersion(state.school!!.id)).map { it?.toIntOrNull() }.collectLatest { version ->
                     timetableRepository.getTimetableForSchool(state.school!!.id).collect { lessons ->
                         state = state.copy(currentVersion = version, lessons = lessons.filter { state.group in it.groups })
                     }

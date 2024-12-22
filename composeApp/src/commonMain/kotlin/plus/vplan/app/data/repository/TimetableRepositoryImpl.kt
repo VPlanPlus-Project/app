@@ -17,7 +17,7 @@ class TimetableRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : TimetableRepository {
     override suspend fun insertNewTimetable(schoolId: Int, lessons: List<Lesson.TimetableLesson>) {
-        val currentVersion = vppDatabase.keyValueDao.get(Keys.TIMETABLE_VERSION).first()?.toIntOrNull() ?: -1
+        val currentVersion = vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).first()?.toIntOrNull() ?: -1
         val newVersion = currentVersion + 1
         vppDatabase.timetableDao.upsert(
             lessons = lessons.map { lesson ->
@@ -55,7 +55,7 @@ class TimetableRepositoryImpl(
                 }
             }
         )
-        vppDatabase.keyValueDao.set(Keys.TIMETABLE_VERSION, newVersion.toString())
+        vppDatabase.keyValueDao.set(Keys.timetableVersion(schoolId), newVersion.toString())
         vppDatabase.timetableDao.deleteTimetableByVersion(currentVersion)
     }
 
@@ -68,7 +68,7 @@ class TimetableRepositoryImpl(
     }
 
     override fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>> = channelFlow {
-        vppDatabase.keyValueDao.get(Keys.TIMETABLE_VERSION).collectLatest { currentVersionFlow ->
+        vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).collectLatest { currentVersionFlow ->
             val currentVersion = currentVersionFlow?.toIntOrNull() ?: -1
             vppDatabase.timetableDao.getTimetableLessons(schoolId, currentVersion).collect { timetableLessons ->
                 send(timetableLessons.map { lesson -> lesson.toModel() })
