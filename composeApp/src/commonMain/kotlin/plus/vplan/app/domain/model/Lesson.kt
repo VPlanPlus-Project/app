@@ -1,6 +1,7 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.datetime.LocalDate
+import kotlin.uuid.Uuid
 
 sealed interface Lesson {
     val id: String
@@ -34,7 +35,7 @@ sealed interface Lesson {
             groups: List<Group>,
             lessonTime: LessonTime,
         ) : this(
-            id = "$date.${groups.joinToString("|") { it.id.toString() }}.${lessonTime.lessonNumber}.$subject".lowercase(),
+            id = Uuid.random().toHexString(),
             date = date,
             week = week,
             subject = subject,
