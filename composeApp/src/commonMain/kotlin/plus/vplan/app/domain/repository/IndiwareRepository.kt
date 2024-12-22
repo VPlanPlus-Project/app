@@ -1,5 +1,6 @@
 package plus.vplan.app.domain.repository
 
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import plus.vplan.app.domain.data.Response
@@ -14,11 +15,13 @@ interface IndiwareRepository {
         password: String
     ): Response<IndiwareBaseData>
 
-//    suspend fun getTimetable(
-//        sp24Id: String,
-//        username: String,
-//        password: String
-//    ): Response<IndiwareTimeTable>
+    suspend fun getTimetable(
+        sp24Id: String,
+        username: String,
+        password: String,
+        schoolWeek: Int,
+        roomNames: List<String>
+    ): Response<IndiwareTimeTable>
 }
 
 data class IndiwareBaseData(
@@ -71,4 +74,21 @@ data class IndiwareBaseData(
     data class Room(
         val name: String
     )
+}
+
+data class IndiwareTimeTable(
+    val classes: List<Class>
+) {
+    data class Class(
+        val name: String,
+        val lessons: List<Lesson>
+    ) {
+        data class Lesson(
+            val dayOfWeek: DayOfWeek,
+            val lessonNumber: Int,
+            val subject: String,
+            val teacher: List<String>,
+            val room: List<String>,
+        )
+    }
 }

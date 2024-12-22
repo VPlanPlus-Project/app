@@ -34,7 +34,8 @@ class LessonTimeRepositoryImpl(
                 startTime = lessonTime.start,
                 endTime = lessonTime.end,
                 lessonNumber = lessonTime.lessonNumber,
-                groupId = lessonTime.group.id
+                groupId = lessonTime.group.id,
+                interpolated = lessonTime.interpolated
             )
         })
     }

@@ -6,6 +6,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format.Padding
@@ -16,6 +17,7 @@ import nl.adaptivity.xmlutil.core.XmlVersion
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlConfig.Companion.IGNORING_UNKNOWN_CHILD_HANDLER
 import plus.vplan.app.data.source.indiware.model.MobdatenClassData
+import plus.vplan.app.data.source.indiware.model.SPlan
 import plus.vplan.app.data.source.indiware.model.WplanBaseData
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toResponse
@@ -23,6 +25,7 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.IndiwareTimeTable
 
 class IndiwareRepositoryImpl(
     private val httpClient: HttpClient
@@ -171,5 +174,70 @@ class IndiwareRepositoryImpl(
                 weeks = weeks.ifEmpty { null }
             )
         )
+    }
+
+    @OptIn(ExperimentalXmlUtilApi::class)
+    override suspend fun getTimetable(
+        sp24Id: String,
+        username: String,
+        password: String,
+        schoolWeek: Int,
+        roomNames: List<String>
+    ): Response<IndiwareTimeTable> {
+        return saveRequest {
+            val response = httpClient.get {
+                url(
+                    scheme = "https",
+                    host = "stundenplan24.de",
+                    path = "/$sp24Id/wplan/wdatenk/SPlanKl_Sw$schoolWeek.xml"
+                )
+                basicAuth(username, password)
+            }
+            if (response.status != HttpStatusCode.OK) return response.toResponse()
+            val xml: XML by lazy {
+                XML {
+                    xmlVersion = XmlVersion.XML10
+                    xmlDeclMode = XmlDeclMode.Auto
+                    indentString = "  "
+                    repairNamespaces = true
+                    defaultPolicy {
+                        unknownChildHandler = IGNORING_UNKNOWN_CHILD_HANDLER
+                    }
+                }
+            }
+            val splan = xml.decodeFromString(
+                deserializer = SPlan.serializer(),
+                string = response.bodyAsText()
+            )
+            return Response.Success(
+                IndiwareTimeTable(
+                    classes = splan.classes.map { timetableClass ->
+                        IndiwareTimeTable.Class(
+                            name = timetableClass.name.name,
+                            lessons = timetableClass.lessons.map { timetableLesson ->
+                                IndiwareTimeTable.Class.Lesson(
+                                    dayOfWeek = DayOfWeek(timetableLesson.dayOfWeek.value),
+                                    lessonNumber = timetableLesson.lessonNumber.value,
+                                    subject = timetableLesson.subject.value,
+                                    teacher = timetableLesson.teacher.value.split(","),
+                                    room = timetableLesson.room.value.let { rooms ->
+                                        val regex = Regex(roomNames.joinToString("|") { Regex.escape(it) })
+                                        val matches = mutableListOf<String>()
+                                        var remaining = rooms
+                                        while (true) {
+                                            val match = regex.find(remaining) ?: break
+                                            matches.add(match.value)
+                                            remaining = remaining.removeRange(match.range).trim()
+                                        }
+
+                                        if (remaining.isEmpty()) matches else emptyList()
+                                    }
+                                )
+                            }
+                        )
+                    }
+                )
+            )
+        }
     }
 }

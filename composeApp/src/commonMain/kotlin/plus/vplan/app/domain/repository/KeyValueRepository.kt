@@ -10,4 +10,5 @@ interface KeyValueRepository {
 
 object Keys {
     const val CURRENT_PROFILE = "current_profile"
+    const val TIMETABLE_VERSION = "timetable_version"
 }

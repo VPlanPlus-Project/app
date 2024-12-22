@@ -5,22 +5,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalTime
 import plus.vplan.app.domain.model.Group
-import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateLessonTimesUseCase
+import plus.vplan.app.domain.repository.TimetableRepository
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 
 class HomeViewModel(
     private val schoolRepository: SchoolRepository,
     private val groupRepository: GroupRepository,
-    private val lessonTimeRepository: LessonTimeRepository,
-    private val updateLessonTimesUseCase: UpdateLessonTimesUseCase
+    private val timetableRepository: TimetableRepository,
+    private val keyValueRepository: KeyValueRepository,
+    private val updateTimetableUseCase: UpdateTimetableUseCase
 ) : ViewModel() {
     var state by mutableStateOf(HomeUiState())
         private set
@@ -28,11 +32,15 @@ class HomeViewModel(
     init {
         viewModelScope.launch {
             state = state.copy(
-                school = schoolRepository.getById(69).first(),
-                group = groupRepository.getById(1764).first()
+                school = schoolRepository.getById(67).first(),
+                group = groupRepository.getById(1721).first()
             )
-            lessonTimeRepository.getByGroup(1764).collect { lessonTimes ->
-                state = state.copy(lessonTimes = lessonTimes.filter { !it.interpolated }.sortedBy { it.lessonNumber })
+            viewModelScope.launch {
+                keyValueRepository.get(Keys.TIMETABLE_VERSION).map { it?.toIntOrNull() }.collectLatest { version ->
+                    timetableRepository.getTimetableForSchool(state.school!!.id).collect { lessons ->
+                        state = state.copy(currentVersion = version, lessons = lessons.filter { state.group in it.groups })
+                    }
+                }
             }
         }
     }
@@ -40,20 +48,12 @@ class HomeViewModel(
     fun onEvent(event: HomeUiEvent) {
         viewModelScope.launch {
             when (event) {
-                HomeUiEvent.Update -> updateLessonTimesUseCase(state.school as School.IndiwareSchool)
+                HomeUiEvent.Update -> updateTimetableUseCase(state.school as School.IndiwareSchool)
                 is HomeUiEvent.Delete -> {
-                    if (event.all) lessonTimeRepository.deleteById(state.lessonTimes.map { it.id })
-                    else lessonTimeRepository.deleteById(state.lessonTimes.filter { it.lessonNumber % 2 == 0 }.map { it.id })
+                    if (event.all) timetableRepository.deleteAllTimetables()
                 }
-                HomeUiEvent.SneakWeekIn -> {
-                    lessonTimeRepository.upsert(LessonTime(
-                        id = "idk",
-                        start = LocalTime.parse("10:00"),
-                        end = LocalTime.parse("11:00"),
-                        lessonNumber = 1,
-                        group = state.group!!,
-                        interpolated = false
-                    ))
+                HomeUiEvent.SneakIn -> {
+
                 }
             }
         }
@@ -63,11 +63,12 @@ class HomeViewModel(
 data class HomeUiState(
     val school: School? = null,
     val group: Group? = null,
-    val lessonTimes: List<LessonTime> = emptyList()
+    val currentVersion: Int? = null,
+    val lessons: List<Lesson.TimetableLesson> = emptyList()
 )
 
 sealed class HomeUiEvent {
     data object Update : HomeUiEvent()
     data class Delete(val all: Boolean) : HomeUiEvent()
-    data object SneakWeekIn : HomeUiEvent()
+    data object SneakIn : HomeUiEvent()
 }
