@@ -24,3 +24,7 @@ data class DefaultLesson(
         group = group
     )
 }
+
+fun Collection<DefaultLesson>.findByIndiwareId(indiwareId: String): DefaultLesson? {
+    return firstOrNull { it.id.matches(Regex("^sp24\\..*\\.$indiwareId\$")) }
+}

@@ -10,4 +10,5 @@ interface KeyValueRepository {
 
 object Keys {
     const val CURRENT_PROFILE = "current_profile"
+    fun timetableVersion(schoolId: Int) = "timetable_version::$schoolId"
 }

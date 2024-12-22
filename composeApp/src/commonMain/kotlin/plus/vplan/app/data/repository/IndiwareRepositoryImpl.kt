@@ -6,26 +6,36 @@ import io.ktor.client.request.get
 import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.XmlDeclMode
 import nl.adaptivity.xmlutil.core.XmlVersion
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlConfig.Companion.IGNORING_UNKNOWN_CHILD_HANDLER
+import plus.vplan.app.data.source.database.VppDatabase
+import plus.vplan.app.data.source.database.model.database.DbIndiwareHasTimetableInWeek
 import plus.vplan.app.data.source.indiware.model.MobdatenClassData
+import plus.vplan.app.data.source.indiware.model.SPlan
 import plus.vplan.app.data.source.indiware.model.WplanBaseData
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.IndiwareTimeTable
 
 class IndiwareRepositoryImpl(
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
+    private val vppDatabase: VppDatabase
 ) : IndiwareRepository {
 
     override suspend fun checkCredentials(
@@ -171,5 +181,77 @@ class IndiwareRepositoryImpl(
                 weeks = weeks.ifEmpty { null }
             )
         )
+    }
+
+    @OptIn(ExperimentalXmlUtilApi::class)
+    override suspend fun getTimetable(
+        sp24Id: String,
+        username: String,
+        password: String,
+        week: Week,
+        roomNames: List<String>
+    ): Response<IndiwareTimeTable> {
+        val hasTimetableInWeek = vppDatabase.indiwareDao.getHasTimetableInWeek(week.id)
+        if (hasTimetableInWeek == false) return Response.Error.OnlineError.NotFound
+        return saveRequest {
+            val response = httpClient.get {
+                url(
+                    scheme = "https",
+                    host = "stundenplan24.de",
+                    path = "/$sp24Id/wplan/wdatenk/SPlanKl_Sw${week.weekIndex}.xml"
+                )
+                basicAuth(username, password)
+            }
+            if (response.status == HttpStatusCode.NotFound) {
+                if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date !in week.start..week.end)
+                    vppDatabase.indiwareDao.upsert(DbIndiwareHasTimetableInWeek(week.id, false))
+            }
+            if (response.status != HttpStatusCode.OK) return response.toResponse()
+            vppDatabase.indiwareDao.upsert(DbIndiwareHasTimetableInWeek(week.id, true))
+            val xml: XML by lazy {
+                XML {
+                    xmlVersion = XmlVersion.XML10
+                    xmlDeclMode = XmlDeclMode.Auto
+                    indentString = "  "
+                    repairNamespaces = true
+                    defaultPolicy {
+                        unknownChildHandler = IGNORING_UNKNOWN_CHILD_HANDLER
+                    }
+                }
+            }
+            val splan = xml.decodeFromString(
+                deserializer = SPlan.serializer(),
+                string = response.bodyAsText()
+            )
+            return Response.Success(
+                IndiwareTimeTable(
+                    classes = splan.classes.map { timetableClass ->
+                        IndiwareTimeTable.Class(
+                            name = timetableClass.name.name,
+                            lessons = timetableClass.lessons.map { timetableLesson ->
+                                IndiwareTimeTable.Class.Lesson(
+                                    dayOfWeek = DayOfWeek(timetableLesson.dayOfWeek.value),
+                                    lessonNumber = timetableLesson.lessonNumber.value,
+                                    subject = timetableLesson.subject.value,
+                                    teacher = timetableLesson.teacher.value.split(","),
+                                    room = timetableLesson.room.value.let { rooms ->
+                                        val regex = Regex(roomNames.joinToString("|") { Regex.escape(it) })
+                                        val matches = mutableListOf<String>()
+                                        var remaining = rooms
+                                        while (true) {
+                                            val match = regex.find(remaining) ?: break
+                                            matches.add(match.value)
+                                            remaining = remaining.removeRange(match.range).trim()
+                                        }
+
+                                        if (remaining.isEmpty()) matches else emptyList()
+                                    }
+                                )
+                            }
+                        )
+                    }
+                )
+            )
+        }
     }
 }

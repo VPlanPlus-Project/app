@@ -20,6 +20,6 @@ data class EmbeddedLessonTime(
         end = lessonTime.endTime,
         lessonNumber = lessonTime.lessonNumber,
         group = group.toModel(),
-        interpolated = false
+        interpolated = lessonTime.interpolated
     )
 }

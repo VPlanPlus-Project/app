@@ -9,7 +9,11 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.utils.isContinuous
+import plus.vplan.app.utils.lastContinuousBy
 import plus.vplan.app.utils.latest
+import plus.vplan.app.utils.plus
+import plus.vplan.app.utils.until
 
 private val LOGGER = Logger.withTag("UpdateLessonTimesUseCase")
 
@@ -51,6 +55,34 @@ class UpdateLessonTimesUseCase(
             LOGGER.d { "Upsert ${downloadedLessonTimesToUpsert.size} lesson times" }
             lessonTimeRepository.upsert(downloadedLessonTimesToUpsert)
         }
+
+        val lessonsToInterpolate = mutableListOf<LessonTime>()
+        groups.forEach { group ->
+            val lessonTimes = lessonTimeRepository
+                .getByGroup(group.id).latest()
+                .sortedBy { it.lessonNumber }
+                .toMutableList()
+
+            if (lessonTimes.isEmpty()) return@forEach
+            while (!lessonTimes.map { it.lessonNumber }.isContinuous() || lessonTimes.size < 10) {
+                val last = lessonTimes.lastContinuousBy { it.lessonNumber } ?: lessonTimes.last()
+                val lessonDuration = (last.start until last.end)
+                val next = LessonTime(
+                    id = "${school.id}/${group.id}/${last.lessonNumber + 1}",
+                    start = last.end,
+                    end = last.end + lessonDuration,
+                    lessonNumber = last.lessonNumber + 1,
+                    group = group,
+                    interpolated = true
+                )
+                lessonTimes.add(next)
+                lessonTimes.sortBy { it.lessonNumber }
+                lessonsToInterpolate.add(next)
+            }
+        }
+        lessonTimeRepository.upsert(lessonsToInterpolate)
+
+        LOGGER.i { "Lesson times updated" }
 
         return null
     }
