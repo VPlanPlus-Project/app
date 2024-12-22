@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "779aee20e4c4ff4b1a44f75230913fb9",
+    "identityHash": "6fb2e89d3769b1abf3cc144125109d7a",
     "entities": [
       {
         "tableName": "schools",
@@ -110,6 +110,54 @@
             "onUpdate": "CASCADE",
             "columns": [
               "school_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "indiware_has_timetable_in_week",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`week_id` TEXT NOT NULL, `has_data` INTEGER NOT NULL, PRIMARY KEY(`week_id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "weekId",
+            "columnName": "week_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasData",
+            "columnName": "has_data",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "week_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_indiware_has_timetable_in_week_week_id",
+            "unique": true,
+            "columnNames": [
+              "week_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_indiware_has_timetable_in_week_week_id` ON `${TABLE_NAME}` (`week_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "weeks",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "week_id"
             ],
             "referencedColumns": [
               "id"
@@ -1308,7 +1356,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '779aee20e4c4ff4b1a44f75230913fb9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6fb2e89d3769b1abf3cc144125109d7a')"
     ]
   }
 }

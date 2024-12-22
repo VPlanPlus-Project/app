@@ -9,6 +9,7 @@ import plus.vplan.app.data.source.database.converters.UuidTypeConverter
 import plus.vplan.app.data.source.database.dao.CourseDao
 import plus.vplan.app.data.source.database.dao.DefaultLessonDao
 import plus.vplan.app.data.source.database.dao.GroupDao
+import plus.vplan.app.data.source.database.dao.IndiwareDao
 import plus.vplan.app.data.source.database.dao.KeyValueDao
 import plus.vplan.app.data.source.database.dao.LessonTimeDao
 import plus.vplan.app.data.source.database.dao.ProfileDao
@@ -22,6 +23,7 @@ import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
+import plus.vplan.app.data.source.database.model.database.DbIndiwareHasTimetableInWeek
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbProfile
@@ -41,6 +43,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
     entities = [
         DbSchool::class,
         DbSp24SchoolDetails::class,
+        DbIndiwareHasTimetableInWeek::class,
 
         DbGroup::class,
         DbTeacher::class,
@@ -85,4 +88,5 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val weekDao: WeekDao
     abstract val lessonTimeDao: LessonTimeDao
     abstract val timetableDao: TimetableDao
+    abstract val indiwareDao: IndiwareDao
 }

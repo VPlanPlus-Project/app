@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.Week
 
 interface IndiwareRepository {
     suspend fun checkCredentials(sp24Id: Int, username: String, password: String): Response<Boolean>
@@ -19,7 +20,7 @@ interface IndiwareRepository {
         sp24Id: String,
         username: String,
         password: String,
-        schoolWeek: Int,
+        week: Week,
         roomNames: List<String>
     ): Response<IndiwareTimeTable>
 }

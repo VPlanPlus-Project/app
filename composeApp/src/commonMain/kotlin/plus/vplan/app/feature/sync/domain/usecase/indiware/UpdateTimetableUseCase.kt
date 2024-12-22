@@ -54,7 +54,7 @@ class UpdateTimetableUseCase(
                 sp24Id = indiwareSchool.sp24Id,
                 username = indiwareSchool.username,
                 password = indiwareSchool.password,
-                schoolWeek = weeksInPastOrCurrent[weekIndex].weekIndex,
+                week = weeksInPastOrCurrent[weekIndex],
                 roomNames = rooms.map { it.name }
             )
             when {
