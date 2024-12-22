@@ -23,6 +23,15 @@ interface IndiwareRepository {
         week: Week,
         roomNames: List<String>
     ): Response<IndiwareTimeTable>
+
+    suspend fun getSubstitutionPlan(
+        sp24Id: String,
+        username: String,
+        password: String,
+        date: LocalDate,
+        teacherNames: List<String>,
+        roomNames: List<String>
+    ): Response<IndiwareSubstitutionPlan>
 }
 
 data class IndiwareBaseData(
@@ -90,6 +99,31 @@ data class IndiwareTimeTable(
             val subject: String,
             val teacher: List<String>,
             val room: List<String>,
+        )
+    }
+}
+
+data class IndiwareSubstitutionPlan(
+    val classes: List<Class>,
+    val info: String?,
+    val date: LocalDate
+) {
+    data class Class(
+        val name: String,
+        val lessons: List<Lesson>
+    ) {
+        data class Lesson(
+            val lessonNumber: Int,
+            val subject: String,
+            val subjectChanged: Boolean,
+            val teacher: List<String>,
+            val teacherChanged: Boolean,
+            val room: List<String>,
+            val roomChanged: Boolean,
+            val info: String?,
+            val defaultLessonNumber: Int?,
+            val start: LocalTime,
+            val end: LocalTime
         )
     }
 }

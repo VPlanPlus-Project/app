@@ -19,6 +19,7 @@ import plus.vplan.app.data.source.database.dao.TeacherDao
 import plus.vplan.app.data.source.database.dao.TimetableDao
 import plus.vplan.app.data.source.database.dao.WeekDao
 import plus.vplan.app.data.source.database.model.database.DbCourse
+import plus.vplan.app.data.source.database.model.database.DbDay
 import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
@@ -65,7 +66,9 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
         DbTimetableLesson::class,
         DbTimetableGroup::class,
         DbTimetableTeacher::class,
-        DbTimetableRoom::class
+        DbTimetableRoom::class,
+
+        DbDay::class
     ],
     version = 1,
 )
