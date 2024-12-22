@@ -1,8 +1,9 @@
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroup
@@ -66,11 +67,12 @@ class TimetableRepositoryImpl(
         vppDatabase.timetableDao.deleteTimetableByVersion(version)
     }
 
-    override fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>> = flow {
-        vppDatabase.keyValueDao.get(Keys.TIMETABLE_VERSION).collect { currentVersionFlow ->
+    override fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>> = channelFlow {
+        vppDatabase.keyValueDao.get(Keys.TIMETABLE_VERSION).collectLatest { currentVersionFlow ->
             val currentVersion = currentVersionFlow?.toIntOrNull() ?: -1
-            val lessons = vppDatabase.timetableDao.getTimetableLessons(schoolId, currentVersion).first()
-            emit(lessons.map { it.toModel() })
+            vppDatabase.timetableDao.getTimetableLessons(schoolId, currentVersion).collect { timetableLessons ->
+                send(timetableLessons.map { lesson -> lesson.toModel() })
+            }
         }
     }
 }
