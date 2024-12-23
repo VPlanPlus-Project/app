@@ -30,6 +30,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.feature.home.ui.HomeScreen
+import plus.vplan.app.feature.home.ui.HomeViewModel
 import plus.vplan.app.feature.profile.ui.ProfileScreen
 import plus.vplan.app.feature.profile.ui.ProfileScreenEvent
 import plus.vplan.app.feature.profile.ui.ProfileViewModel
@@ -57,6 +58,7 @@ fun MainScreenHost(
             else null
     }
 
+    val homeViewModel = koinViewModel<HomeViewModel>()
     val profileViewModel = koinViewModel<ProfileViewModel>()
 
     Scaffold(
@@ -106,7 +108,7 @@ fun MainScreenHost(
                 navController = navController,
                 startDestination = MainScreen.Home
             ) {
-                composable<MainScreen.Home> { HomeScreen() }
+                composable<MainScreen.Home> { HomeScreen(homeViewModel) }
                 composable<MainScreen.Calendar> { Text("Calendar") }
                 composable<MainScreen.Search> { Text("Search") }
                 composable<MainScreen.Chat> { Text("Chat") }
