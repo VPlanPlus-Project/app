@@ -5,26 +5,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.domain.repository.TimetableRepository
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
+import plus.vplan.app.domain.repository.SubstitutionPlanRepository
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 
 class HomeViewModel(
     private val schoolRepository: SchoolRepository,
     private val groupRepository: GroupRepository,
-    private val timetableRepository: TimetableRepository,
-    private val keyValueRepository: KeyValueRepository,
-    private val updateTimetableUseCase: UpdateTimetableUseCase
+    private val substitutionPlanRepository: SubstitutionPlanRepository,
+    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase
 ) : ViewModel() {
     var state by mutableStateOf(HomeUiState())
         private set
@@ -32,14 +28,12 @@ class HomeViewModel(
     init {
         viewModelScope.launch {
             state = state.copy(
-                school = schoolRepository.getById(67).first(),
-                group = groupRepository.getById(1721).first()
+                school = schoolRepository.getById(35).first(),
+                group = groupRepository.getById(891).first()
             )
             viewModelScope.launch {
-                keyValueRepository.get(Keys.timetableVersion(state.school!!.id)).map { it?.toIntOrNull() }.collectLatest { version ->
-                    timetableRepository.getTimetableForSchool(state.school!!.id).collect { lessons ->
-                        state = state.copy(currentVersion = version, lessons = lessons.filter { state.group in it.groups })
-                    }
+                substitutionPlanRepository.getSubstitutionPlanBySchool(35, LocalDate(2024, 12, 19)).collect {
+                    state = state.copy(lessons = it.filter { state.group in it.groups })
                 }
             }
         }
@@ -48,9 +42,9 @@ class HomeViewModel(
     fun onEvent(event: HomeUiEvent) {
         viewModelScope.launch {
             when (event) {
-                HomeUiEvent.Update -> updateTimetableUseCase(state.school as School.IndiwareSchool)
+                HomeUiEvent.Update -> updateSubstitutionPlanUseCase(state.school as School.IndiwareSchool, date = LocalDate(2024,12,19))
                 is HomeUiEvent.Delete -> {
-                    if (event.all) timetableRepository.deleteAllTimetables()
+                    if (event.all) substitutionPlanRepository.deleteAllSubstitutionPlans()
                 }
                 HomeUiEvent.SneakIn -> {
 
@@ -64,7 +58,7 @@ data class HomeUiState(
     val school: School? = null,
     val group: Group? = null,
     val currentVersion: Int? = null,
-    val lessons: List<Lesson.TimetableLesson> = emptyList()
+    val lessons: List<Lesson.SubstitutionPlanLesson> = emptyList()
 )
 
 sealed class HomeUiEvent {

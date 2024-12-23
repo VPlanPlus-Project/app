@@ -11,8 +11,8 @@ import org.koin.compose.KoinContext
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
 
-const val VPP_ROOT_URL = "http://192.168.3.102:8000"
-const val VPP_SP24_URL = "http://192.168.3.102:8080"
+const val VPP_ROOT_URL = "http://192.168.102.109:8000"
+const val VPP_SP24_URL = "http://192.168.102.109:8080"
 
 @Composable
 @Preview

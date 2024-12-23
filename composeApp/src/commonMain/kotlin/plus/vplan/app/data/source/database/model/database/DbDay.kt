@@ -4,14 +4,14 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDate
 
 @Entity(
-    tableName = "timetable_lessons",
+    tableName = "day",
     primaryKeys = ["id"],
     indices = [
-        Index(value = ["lesson_time_id"], unique = false),
-        Index(value = ["week_id"], unique = false),
+        Index(value = ["school_id"], unique = false),
+        Index(value = ["week_id"], unique = false)
     ],
     foreignKeys = [
         ForeignKey(
@@ -22,19 +22,18 @@ import kotlinx.datetime.DayOfWeek
             onUpdate = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = DbLessonTime::class,
+            entity = DbSchool::class,
             parentColumns = ["id"],
-            childColumns = ["lesson_time_id"],
+            childColumns = ["school_id"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
         )
     ]
 )
-data class DbTimetableLesson(
-    @ColumnInfo(name = "id") val id: String,
-    @ColumnInfo(name = "day_of_week") val dayOfWeek: DayOfWeek,
-    @ColumnInfo(name = "week_id") val weekId: String,
-    @ColumnInfo(name = "lesson_time_id") val lessonTimeId: String,
-    @ColumnInfo(name = "subject") val subject: String?,
-    @ColumnInfo(name = "version") val version: String,
+data class DbDay(
+    @ColumnInfo("id") val id: String,
+    @ColumnInfo("date") val date: LocalDate,
+    @ColumnInfo("week_id") val weekId: String,
+    @ColumnInfo("school_id") val schoolId: Int,
+    @ColumnInfo("info") val info: String?,
 )

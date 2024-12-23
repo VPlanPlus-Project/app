@@ -7,6 +7,7 @@ import plus.vplan.app.data.source.database.converters.LocalDateConverter
 import plus.vplan.app.data.source.database.converters.LocalTimeConverter
 import plus.vplan.app.data.source.database.converters.UuidTypeConverter
 import plus.vplan.app.data.source.database.dao.CourseDao
+import plus.vplan.app.data.source.database.dao.DayDao
 import plus.vplan.app.data.source.database.dao.DefaultLessonDao
 import plus.vplan.app.data.source.database.dao.GroupDao
 import plus.vplan.app.data.source.database.dao.IndiwareDao
@@ -15,10 +16,12 @@ import plus.vplan.app.data.source.database.dao.LessonTimeDao
 import plus.vplan.app.data.source.database.dao.ProfileDao
 import plus.vplan.app.data.source.database.dao.RoomDao
 import plus.vplan.app.data.source.database.dao.SchoolDao
+import plus.vplan.app.data.source.database.dao.SubstitutionPlanDao
 import plus.vplan.app.data.source.database.dao.TeacherDao
 import plus.vplan.app.data.source.database.dao.TimetableDao
 import plus.vplan.app.data.source.database.dao.WeekDao
 import plus.vplan.app.data.source.database.model.database.DbCourse
+import plus.vplan.app.data.source.database.model.database.DbDay
 import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
@@ -31,13 +34,17 @@ import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
+import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.DbWeek
-import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroup
-import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoom
-import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacher
+import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
 
 @Database(
     entities = [
@@ -63,9 +70,16 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
         DbWeek::class,
         DbLessonTime::class,
         DbTimetableLesson::class,
-        DbTimetableGroup::class,
-        DbTimetableTeacher::class,
-        DbTimetableRoom::class
+        DbTimetableGroupCrossover::class,
+        DbTimetableTeacherCrossover::class,
+        DbTimetableRoomCrossover::class,
+
+        DbSubstitutionPlanLesson::class,
+        DbSubstitutionPlanGroupCrossover::class,
+        DbSubstitutionPlanRoomCrossover::class,
+        DbSubstitutionPlanTeacherCrossover::class,
+
+        DbDay::class
     ],
     version = 1,
 )
@@ -89,4 +103,6 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val lessonTimeDao: LessonTimeDao
     abstract val timetableDao: TimetableDao
     abstract val indiwareDao: IndiwareDao
+    abstract val dayDao: DayDao
+    abstract val substitutionPlanDao: SubstitutionPlanDao
 }

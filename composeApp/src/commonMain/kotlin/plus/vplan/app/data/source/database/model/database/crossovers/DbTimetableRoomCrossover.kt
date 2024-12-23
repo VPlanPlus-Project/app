@@ -4,14 +4,14 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import plus.vplan.app.data.source.database.model.database.DbGroup
+import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 
 @Entity(
-    tableName = "timetable_group_crossover",
-    primaryKeys = ["group_id", "timetable_lesson_id"],
+    tableName = "timetable_room_crossover",
+    primaryKeys = ["room_id", "timetable_lesson_id"],
     indices = [
-        Index(value = ["group_id"], unique = false),
+        Index(value = ["room_id"], unique = false),
         Index(value = ["timetable_lesson_id"], unique = false)
     ],
     foreignKeys = [
@@ -23,15 +23,15 @@ import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
             onUpdate = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = DbGroup::class,
+            entity = DbRoom::class,
             parentColumns = ["id"],
-            childColumns = ["group_id"],
+            childColumns = ["room_id"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
         )
     ]
 )
-data class DbTimetableGroup(
-    @ColumnInfo(name = "group_id") val groupId: Int,
+data class DbTimetableRoomCrossover(
+    @ColumnInfo(name = "room_id") val roomId: Int,
     @ColumnInfo(name = "timetable_lesson_id") val timetableLessonId: String,
 )

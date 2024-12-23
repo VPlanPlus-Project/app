@@ -51,11 +51,14 @@ sealed interface Lesson {
         override val date: LocalDate,
         override val week: Week,
         override val subject: String?,
+        val isSubjectChanged: Boolean,
         override val teachers: List<Teacher>,
+        val isTeacherChanged: Boolean,
         override val rooms: List<Room>,
         val isRoomChanged: Boolean,
         override val groups: List<Group>,
         override val defaultLesson: DefaultLesson?,
         override val lessonTime: LessonTime,
+        val info: String?
     ) : Lesson
 }

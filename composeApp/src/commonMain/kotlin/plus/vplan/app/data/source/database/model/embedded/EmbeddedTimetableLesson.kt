@@ -12,9 +12,9 @@ import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.DbWeek
-import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroup
-import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoom
-import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacher
+import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
 import plus.vplan.app.domain.model.Lesson
 
 data class EmbeddedTimetableLesson(
@@ -25,7 +25,7 @@ data class EmbeddedTimetableLesson(
         associateBy = Junction(
             parentColumn = "timetable_lesson_id",
             entityColumn = "teacher_id",
-            value = DbTimetableTeacher::class
+            value = DbTimetableTeacherCrossover::class
         ),
         entity = DbTeacher::class
     ) val teachers: List<EmbeddedTeacher>,
@@ -35,7 +35,7 @@ data class EmbeddedTimetableLesson(
         associateBy = Junction(
             parentColumn = "timetable_lesson_id",
             entityColumn = "room_id",
-            value = DbTimetableRoom::class
+            value = DbTimetableRoomCrossover::class
         ),
         entity = DbRoom::class
     ) val rooms: List<EmbeddedRoom>,
@@ -45,7 +45,7 @@ data class EmbeddedTimetableLesson(
         associateBy = Junction(
             parentColumn = "timetable_lesson_id",
             entityColumn = "group_id",
-            value = DbTimetableGroup::class
+            value = DbTimetableGroupCrossover::class
         ),
         entity = DbGroup::class
     ) val groups: List<EmbeddedGroup>,
