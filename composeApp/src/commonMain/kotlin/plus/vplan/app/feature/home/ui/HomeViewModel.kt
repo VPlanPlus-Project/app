@@ -5,26 +5,35 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.SchoolDay
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.domain.usecase.GetDayUseCase
 
 class HomeViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
-    private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase
+    private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
+    private val getDayUseCase: GetDayUseCase
 ) : ViewModel() {
     var state by mutableStateOf(HomeState())
         private set
 
     init {
         viewModelScope.launch {
-            getCurrentProfileUseCase().collect { profile ->
+            getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(currentProfile = profile)
+                if (profile == null) return@collectLatest
+                getDayUseCase(profile, LocalDate(2024, 12, 19)).collectLatest { day ->
+                    state = state.copy(currentDay = day)
+                }
             }
         }
         viewModelScope.launch {
@@ -37,5 +46,6 @@ class HomeViewModel(
 
 data class HomeState(
     val currentProfile: Profile? = null,
-    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+    val currentDay: SchoolDay? = null
 )

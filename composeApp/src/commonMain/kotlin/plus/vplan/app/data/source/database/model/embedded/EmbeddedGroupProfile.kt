@@ -22,11 +22,6 @@ data class EmbeddedGroupProfile(
         entity = DbGroup::class
     ) val group: EmbeddedGroup,
     @Relation(
-        parentColumn = "group_id",
-        entityColumn = "group_id",
-        entity = DbDefaultLesson::class
-    ) val defaultLessons: List<EmbeddedDefaultLesson>,
-    @Relation(
         parentColumn = "profile_id",
         entityColumn = "id",
         associateBy = Junction(
@@ -35,5 +30,5 @@ data class EmbeddedGroupProfile(
             entityColumn = "default_lesson_id"
         ),
         entity = DbDefaultLesson::class
-    ) val disabledDefaultLesson: List<DbDefaultLesson>
+    ) val disabledDefaultLesson: List<EmbeddedDefaultLesson>
 )

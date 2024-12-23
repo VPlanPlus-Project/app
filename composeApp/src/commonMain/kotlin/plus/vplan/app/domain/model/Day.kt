@@ -16,3 +16,18 @@ data class Day(
         info: String?
     ) : this("${school.id}/$date", date, school, week, info)
 }
+
+sealed interface SchoolDay{
+    val id: String
+    val date: LocalDate
+    val school: School
+
+    data class NormalDay(
+        override val id: String,
+        override val date: LocalDate,
+        override val school: School,
+        val week: Week,
+        val info: String?,
+        val lessons: List<Lesson>
+    ) : SchoolDay
+}
