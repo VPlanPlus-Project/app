@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.profile.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,22 +16,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.ui.components.noRippleClickable
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.chevron_down
 
 @Composable
 fun ProfileTitle(
-    currentProfileName: String
+    currentProfileName: String,
+    onClick: () -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
+        modifier = Modifier.noRippleClickable(onClick)
     ) {
-        Text(
-            text = currentProfileName,
-            style = MaterialTheme.typography.titleLarge
-        )
+        AnimatedContent(
+            targetState = currentProfileName
+        ) { displayProfileName ->
+            Text(
+                text = displayProfileName,
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
         Box(
             modifier = Modifier
                 .size(24.dp)

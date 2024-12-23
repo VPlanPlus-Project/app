@@ -42,7 +42,7 @@ class OnboardingRepositoryImpl(
     override suspend fun getSp24OnboardingSchool(): Flow<CurrentOnboardingSchool?> {
         return combine(
             onboardingDatabase.keyValueDao.get("indiware.sp24_id"),
-            onboardingDatabase.keyValueDao.get("indiware.school_id")
+            onboardingDatabase.keyValueDao.get("onboarding.school_id")
         ) { sp24Id, schoolId ->
             if (sp24Id == null) return@combine null
             CurrentOnboardingSchool(sp24Id.toInt(), schoolId?.toIntOrNull())
@@ -70,7 +70,11 @@ class OnboardingRepositoryImpl(
     }
 
     override suspend fun setSchoolId(id: Int) {
-        onboardingDatabase.keyValueDao.insert("indiware.school_id", id.toString())
+        onboardingDatabase.keyValueDao.insert("onboarding.school_id", id.toString())
+    }
+
+    override fun getSchoolId(): Flow<Int?> {
+        return onboardingDatabase.keyValueDao.get("onboarding.school_id").map { it?.toIntOrNull() }
     }
 
     override suspend fun getSp24Credentials(): Sp24Credentials? {

@@ -20,12 +20,12 @@ class GetProfileOptionsUseCase(
     private val defaultLessonRepository: DefaultLessonRepository
 ) {
     operator fun invoke(): Flow<List<OnboardingProfile>> = channelFlow {
-        onboardingRepository.getSp24OnboardingSchool().collectLatest { currentOnboardingSchool ->
-            if (currentOnboardingSchool == null) return@collectLatest send(emptyList())
+        onboardingRepository.getSchoolId().collectLatest { schoolId ->
+            if (schoolId == null) return@collectLatest send(emptyList())
             combine(
-                groupRepository.getBySchool(currentOnboardingSchool.schoolId!!),
-                teacherRepository.getBySchool(currentOnboardingSchool.schoolId),
-                roomRepository.getBySchool(currentOnboardingSchool.schoolId)
+                groupRepository.getBySchool(schoolId),
+                teacherRepository.getBySchool(schoolId),
+                roomRepository.getBySchool(schoolId)
             ) { groups, teachers, rooms ->
                 groups.map {
                     OnboardingProfile.StudentProfile(

@@ -9,12 +9,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
+import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingSchoolSearch
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.OnboardingIndiwareLoginScreen
 import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.ui.OnboardingIndiwareInitScreen
@@ -56,12 +58,22 @@ val exitSlideTransitionRight: (AnimatedContentTransitionScope<NavBackStackEntry>
 
 @Composable
 fun OnboardingScreen(
-    onFinish: () -> Unit
+    schoolId: Int?,
+    onFinish: () -> Unit,
 ) {
+    val viewModel = koinViewModel<OnboardingHostViewModel>()
+
     Scaffold(
         modifier = Modifier.fillMaxSize()
     ) {
         val navController = rememberNavController()
+
+        LaunchedEffect(schoolId) {
+            viewModel.init(schoolId)
+            if (schoolId != null) navController.navigate(OnboardingScreen.OnboardingChooseProfile) {
+                popUpTo(0)
+            }
+        }
         NavHost(
             navController = navController,
             startDestination = OnboardingScreen.OnboardingScreenHome,

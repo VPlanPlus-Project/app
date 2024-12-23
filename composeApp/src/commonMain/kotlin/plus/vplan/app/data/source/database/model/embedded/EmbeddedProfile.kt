@@ -31,7 +31,7 @@ data class EmbeddedProfile(
             val disabledDefaultLessons = embeddedGroupProfile.disabledDefaultLesson.map { it.id }
             return Profile.StudentProfile(
                 id = profile.id,
-                displayName = profile.displayName,
+                customName = profile.displayName,
                 group = embeddedGroupProfile.group.toModel(),
                 defaultLessons = embeddedGroupProfile.defaultLessons.associateWith {
                     disabledDefaultLessons.contains(it.defaultLesson.id)
@@ -41,14 +41,14 @@ data class EmbeddedProfile(
         if (embeddedTeacherProfile != null) {
             return Profile.TeacherProfile(
                 id = profile.id,
-                displayName = profile.displayName,
+                customName = profile.displayName,
                 teacher = embeddedTeacherProfile.teacher.toModel()
             )
         }
         if (embeddedRoomProfile != null) {
             return Profile.RoomProfile(
                 id = profile.id,
-                displayName = profile.displayName,
+                customName = profile.displayName,
                 room = embeddedRoomProfile.room.toModel()
             )
         }

@@ -70,9 +70,9 @@ fun OnboardingFinishedScreen(
         ) {
             Button(
                 text = "Fertig",
-                state = ButtonState.ENABLED,
+                state = ButtonState.Enabled,
                 icon = Res.drawable.check,
-                size = ButtonSize.BIG,
+                size = ButtonSize.Big,
                 onlyEventOnActive = true,
                 onClick = onFinish
             )

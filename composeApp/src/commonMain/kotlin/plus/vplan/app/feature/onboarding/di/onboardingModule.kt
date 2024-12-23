@@ -7,6 +7,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import plus.vplan.app.feature.onboarding.data.repository.OnboardingRepositoryImpl
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
+import plus.vplan.app.feature.onboarding.domain.usecase.InitialiseOnboardingWithSchoolIdUseCase
 import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.SearchForSchoolUseCase
 import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.UseUnknownSp24SchoolUseCase
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingSchoolSearchViewModel
@@ -22,6 +23,7 @@ import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.ui.Onboa
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.GetProfileOptionsUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.SelectProfileUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileViewModel
+import plus.vplan.app.feature.onboarding.ui.OnboardingHostViewModel
 
 expect fun onboardingDatabaseModule(): Module
 
@@ -30,6 +32,7 @@ val onboardingModule = module {
 
     singleOf(::OnboardingRepositoryImpl).bind<OnboardingRepository>()
 
+    singleOf(::InitialiseOnboardingWithSchoolIdUseCase)
     singleOf(::SearchForSchoolUseCase)
     singleOf(::UseUnknownSp24SchoolUseCase)
     singleOf(::CheckCredentialsUseCase)
@@ -41,6 +44,7 @@ val onboardingModule = module {
     singleOf(::GetProfileOptionsUseCase)
     singleOf(::SelectProfileUseCase)
 
+    viewModelOf(::OnboardingHostViewModel)
     viewModelOf(::OnboardingSchoolSearchViewModel)
     viewModelOf(::OnboardingIndiwareLoginViewModel)
     viewModelOf(::OnboardingIndiwareInitViewModel)

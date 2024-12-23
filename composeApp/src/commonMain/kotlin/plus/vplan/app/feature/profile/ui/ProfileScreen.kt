@@ -31,14 +31,17 @@ fun ProfileScreen(
     val state = viewModel.state
 
     ProfileContent(
-        state = state
+        state = state,
+        onEvent = viewModel::onEvent
     )
 }
 
 @Composable
 private fun ProfileContent(
-    state: ProfileState
+    state: ProfileState,
+    onEvent: (event: ProfileScreenEvent) -> Unit
 ) {
+
     Column(Modifier.fillMaxSize()) {
         Spacer(Modifier.height(WindowInsets.systemBars.asPaddingValues().calculateTopPadding()))
         Row(
@@ -49,7 +52,7 @@ private fun ProfileContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            ProfileTitle(state.currentProfile?.displayName.orEmpty())
+            ProfileTitle(state.currentProfile?.customName.orEmpty()) { onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(true)) }
             FilledTonalIconButton(
                 onClick = {}
             ) {
