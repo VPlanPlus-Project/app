@@ -22,6 +22,7 @@ import plus.vplan.app.data.repository.SubstitutionPlanRepositoryImpl
 import plus.vplan.app.data.repository.TeacherRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
+import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
@@ -39,6 +40,7 @@ import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.home.di.homeModule
 import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
+import plus.vplan.app.feature.profile.di.profileModule
 import plus.vplan.app.feature.sync.di.syncModule
 
 expect fun platformModule(): Module
@@ -74,6 +76,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
     startKoin {
         configuration?.invoke(this)
         modules(platformModule())
-        modules(appModule, hostModule, syncModule, onboardingModule, homeModule)
+        modules(domainModule)
+        modules(appModule, hostModule, syncModule, onboardingModule, homeModule, profileModule)
     }
 }
