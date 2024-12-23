@@ -297,7 +297,10 @@ class IndiwareRepositoryImpl(
                             lessons = substitutionPlanClass.lessons.map { substitutionPlanLesson ->
                                 IndiwareSubstitutionPlan.Class.Lesson(
                                     lessonNumber = substitutionPlanLesson.lessonNumber.value,
-                                    subject = substitutionPlanLesson.subject.value,
+                                    subject = substitutionPlanLesson.subject.value.let {
+                                        if (it == "---") return@let null
+                                        else return@let it
+                                    },
                                     subjectChanged = (substitutionPlanLesson.subject.changed ?: "").isNotBlank(),
                                     room = substitutionPlanLesson.room.value.splitWithKnownValuesBySpace(roomNames),
                                     roomChanged = (substitutionPlanLesson.room.changed ?: "").isNotBlank(),

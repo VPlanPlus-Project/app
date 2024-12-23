@@ -31,7 +31,7 @@ import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
         )
     ]
 )
-data class DbTimetableTeacher(
+data class DbTimetableTeacherCrossover(
     @ColumnInfo(name = "teacher_id") val teacherId: Int,
     @ColumnInfo(name = "timetable_lesson_id") val timetableLessonId: String,
 )

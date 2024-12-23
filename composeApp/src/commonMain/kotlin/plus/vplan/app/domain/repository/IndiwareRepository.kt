@@ -114,7 +114,7 @@ data class IndiwareSubstitutionPlan(
     ) {
         data class Lesson(
             val lessonNumber: Int,
-            val subject: String,
+            val subject: String?,
             val subjectChanged: Boolean,
             val teacher: List<String>,
             val teacherChanged: Boolean,

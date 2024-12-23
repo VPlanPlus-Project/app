@@ -6,9 +6,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
-import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroup
-import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoom
-import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacher
+import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.TimetableRepository
@@ -27,12 +27,12 @@ class TimetableRepositoryImpl(
                     weekId = lesson.week.id,
                     lessonTimeId = lesson.lessonTime.id,
                     subject = lesson.subject,
-                    version = newVersion
+                    version = "${schoolId}_$newVersion"
                 )
             },
             groupCrossovers = lessons.flatMap { lesson ->
                 lesson.groups.map { group ->
-                    DbTimetableGroup(
+                    DbTimetableGroupCrossover(
                         timetableLessonId = lesson.id,
                         groupId = group.id
                     )
@@ -40,7 +40,7 @@ class TimetableRepositoryImpl(
             },
             teacherCrossovers = lessons.flatMap { lesson ->
                 lesson.teachers.map { teacher ->
-                    DbTimetableTeacher(
+                    DbTimetableTeacherCrossover(
                         timetableLessonId = lesson.id,
                         teacherId = teacher.id
                     )
@@ -48,7 +48,7 @@ class TimetableRepositoryImpl(
             },
             roomCrossovers = lessons.flatMap { lesson ->
                 lesson.rooms.orEmpty().map { room ->
-                    DbTimetableRoom(
+                    DbTimetableRoomCrossover(
                         timetableLessonId = lesson.id,
                         roomId = room.id
                     )
@@ -56,21 +56,21 @@ class TimetableRepositoryImpl(
             }
         )
         vppDatabase.keyValueDao.set(Keys.timetableVersion(schoolId), newVersion.toString())
-        vppDatabase.timetableDao.deleteTimetableByVersion(currentVersion)
+        vppDatabase.timetableDao.deleteTimetableByVersion("${schoolId}_$currentVersion")
     }
 
     override suspend fun deleteAllTimetables() {
         vppDatabase.timetableDao.deleteAll()
     }
 
-    override suspend fun deleteTimetableByVersion(version: Int) {
-        vppDatabase.timetableDao.deleteTimetableByVersion(version)
+    override suspend fun deleteTimetableByVersion(schoolId: Int, version: Int) {
+        vppDatabase.timetableDao.deleteTimetableByVersion("${schoolId}_$version")
     }
 
     override fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>> = channelFlow {
         vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).collectLatest { currentVersionFlow ->
             val currentVersion = currentVersionFlow?.toIntOrNull() ?: -1
-            vppDatabase.timetableDao.getTimetableLessons(schoolId, currentVersion).collect { timetableLessons ->
+            vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion").collect { timetableLessons ->
                 send(timetableLessons.map { lesson -> lesson.toModel() })
             }
         }

@@ -2,7 +2,6 @@ package plus.vplan.app.data.source.database.dao
 
 import androidx.room.Dao
 import androidx.room.Query
-import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
@@ -17,8 +16,7 @@ interface DefaultLessonDao {
     fun getByGroup(groupId: Int): Flow<List<EmbeddedDefaultLesson>>
 
     @Transaction
-    @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM default_lessons LEFT JOIN school_groups ON default_lessons.group_id = school_groups.id WHERE school_groups.school_id = :schoolId")
+    @Query("SELECT default_lessons.id, default_lessons.subject, default_lessons.teacher_id, default_lessons.group_id, default_lessons.group_id, default_lessons.course_id FROM default_lessons LEFT JOIN school_groups ON default_lessons.group_id = school_groups.id WHERE school_groups.school_id = :schoolId")
     fun getBySchool(schoolId: Int): Flow<List<EmbeddedDefaultLesson>>
 
     @Transaction

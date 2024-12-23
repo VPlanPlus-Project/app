@@ -3,11 +3,16 @@ package plus.vplan.app.data.source.database.model.database
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import kotlinx.datetime.DayOfWeek
 
 @Entity(
     tableName = "timetable_lessons",
     primaryKeys = ["id"],
+    indices = [
+        Index(value = ["lesson_time_id"], unique = false),
+        Index(value = ["week_id"], unique = false),
+    ],
     foreignKeys = [
         ForeignKey(
             entity = DbWeek::class,
@@ -31,5 +36,5 @@ data class DbTimetableLesson(
     @ColumnInfo(name = "week_id") val weekId: String,
     @ColumnInfo(name = "lesson_time_id") val lessonTimeId: String,
     @ColumnInfo(name = "subject") val subject: String?,
-    @ColumnInfo(name = "version") val version: Int,
+    @ColumnInfo(name = "version") val version: String,
 )

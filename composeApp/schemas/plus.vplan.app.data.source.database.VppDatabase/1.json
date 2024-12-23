@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "3691216ec6df54858bceb49b8b7cdcb3",
+    "identityHash": "d0872f84cf888cfb0055c0a25b211cb3",
     "entities": [
       {
         "tableName": "schools",
@@ -1077,7 +1077,7 @@
       },
       {
         "tableName": "timetable_lessons",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `day_of_week` TEXT NOT NULL, `week_id` TEXT NOT NULL, `lesson_time_id` TEXT NOT NULL, `subject` TEXT, `version` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`lesson_time_id`) REFERENCES `lesson_times`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `day_of_week` TEXT NOT NULL, `week_id` TEXT NOT NULL, `lesson_time_id` TEXT NOT NULL, `subject` TEXT, `version` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`lesson_time_id`) REFERENCES `lesson_times`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1111,7 +1111,7 @@
           {
             "fieldPath": "version",
             "columnName": "version",
-            "affinity": "INTEGER",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -1121,6 +1121,26 @@
             "id"
           ]
         },
+        "indices": [
+          {
+            "name": "index_timetable_lessons_lesson_time_id",
+            "unique": false,
+            "columnNames": [
+              "lesson_time_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_timetable_lessons_lesson_time_id` ON `${TABLE_NAME}` (`lesson_time_id`)"
+          },
+          {
+            "name": "index_timetable_lessons_week_id",
+            "unique": false,
+            "columnNames": [
+              "week_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_timetable_lessons_week_id` ON `${TABLE_NAME}` (`week_id`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "weeks",
@@ -1354,8 +1374,357 @@
         ]
       },
       {
+        "tableName": "substitution_plan_lesson",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `day_id` TEXT NOT NULL, `lesson_time_id` TEXT NOT NULL, `subject` TEXT, `is_subject_changed` INTEGER NOT NULL, `info` TEXT, `default_lesson_id` TEXT, `version` TEXT NOT NULL, `is_room_changed` INTEGER NOT NULL, `is_teacher_changed` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`day_id`) REFERENCES `day`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`lesson_time_id`) REFERENCES `lesson_times`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dayId",
+            "columnName": "day_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lessonTimeId",
+            "columnName": "lesson_time_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subject",
+            "columnName": "subject",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isSubjectChanged",
+            "columnName": "is_subject_changed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "info",
+            "columnName": "info",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "defaultLessonId",
+            "columnName": "default_lesson_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isRoomChanged",
+            "columnName": "is_room_changed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isTeacherChanged",
+            "columnName": "is_teacher_changed",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_substitution_plan_lesson_id",
+            "unique": true,
+            "columnNames": [
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_substitution_plan_lesson_id` ON `${TABLE_NAME}` (`id`)"
+          },
+          {
+            "name": "index_substitution_plan_lesson_day_id",
+            "unique": false,
+            "columnNames": [
+              "day_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_lesson_day_id` ON `${TABLE_NAME}` (`day_id`)"
+          },
+          {
+            "name": "index_substitution_plan_lesson_lesson_time_id",
+            "unique": false,
+            "columnNames": [
+              "lesson_time_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_lesson_lesson_time_id` ON `${TABLE_NAME}` (`lesson_time_id`)"
+          },
+          {
+            "name": "index_substitution_plan_lesson_default_lesson_id",
+            "unique": false,
+            "columnNames": [
+              "default_lesson_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_lesson_default_lesson_id` ON `${TABLE_NAME}` (`default_lesson_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "day",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "day_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "lesson_times",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "lesson_time_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "default_lessons",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "default_lesson_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "substitution_plan_group_crossover",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`group_id` INTEGER NOT NULL, `substitution_plan_lesson_id` TEXT NOT NULL, PRIMARY KEY(`group_id`, `substitution_plan_lesson_id`), FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`substitution_plan_lesson_id`) REFERENCES `substitution_plan_lesson`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "groupId",
+            "columnName": "group_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "substitutionPlanLessonId",
+            "columnName": "substitution_plan_lesson_id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "group_id",
+            "substitution_plan_lesson_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_substitution_plan_group_crossover_group_id",
+            "unique": false,
+            "columnNames": [
+              "group_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_group_crossover_group_id` ON `${TABLE_NAME}` (`group_id`)"
+          },
+          {
+            "name": "index_substitution_plan_group_crossover_substitution_plan_lesson_id",
+            "unique": false,
+            "columnNames": [
+              "substitution_plan_lesson_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_group_crossover_substitution_plan_lesson_id` ON `${TABLE_NAME}` (`substitution_plan_lesson_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "school_groups",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "group_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "substitution_plan_lesson",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "substitution_plan_lesson_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "substitution_plan_room_crossover",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`room_id` INTEGER NOT NULL, `substitution_plan_lesson_id` TEXT NOT NULL, PRIMARY KEY(`room_id`, `substitution_plan_lesson_id`), FOREIGN KEY(`room_id`) REFERENCES `school_rooms`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`substitution_plan_lesson_id`) REFERENCES `substitution_plan_lesson`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "roomId",
+            "columnName": "room_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "substitutionPlanLessonId",
+            "columnName": "substitution_plan_lesson_id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "room_id",
+            "substitution_plan_lesson_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_substitution_plan_room_crossover_room_id",
+            "unique": false,
+            "columnNames": [
+              "room_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_room_crossover_room_id` ON `${TABLE_NAME}` (`room_id`)"
+          },
+          {
+            "name": "index_substitution_plan_room_crossover_substitution_plan_lesson_id",
+            "unique": false,
+            "columnNames": [
+              "substitution_plan_lesson_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_room_crossover_substitution_plan_lesson_id` ON `${TABLE_NAME}` (`substitution_plan_lesson_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "school_rooms",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "room_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "substitution_plan_lesson",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "substitution_plan_lesson_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "substitution_teacher_room_crossover",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`teacher_id` INTEGER NOT NULL, `substitution_plan_lesson_id` TEXT NOT NULL, PRIMARY KEY(`teacher_id`, `substitution_plan_lesson_id`), FOREIGN KEY(`teacher_id`) REFERENCES `school_teachers`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`substitution_plan_lesson_id`) REFERENCES `substitution_plan_lesson`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "teacherId",
+            "columnName": "teacher_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "substitutionPlanLessonId",
+            "columnName": "substitution_plan_lesson_id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "teacher_id",
+            "substitution_plan_lesson_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_substitution_teacher_room_crossover_teacher_id",
+            "unique": false,
+            "columnNames": [
+              "teacher_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_teacher_room_crossover_teacher_id` ON `${TABLE_NAME}` (`teacher_id`)"
+          },
+          {
+            "name": "index_substitution_teacher_room_crossover_substitution_plan_lesson_id",
+            "unique": false,
+            "columnNames": [
+              "substitution_plan_lesson_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_teacher_room_crossover_substitution_plan_lesson_id` ON `${TABLE_NAME}` (`substitution_plan_lesson_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "school_teachers",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "teacher_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "substitution_plan_lesson",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "substitution_plan_lesson_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
         "tableName": "day",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `date` TEXT NOT NULL, `school_id` INTEGER NOT NULL, `info` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`school_id`) REFERENCES `schools`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `date` TEXT NOT NULL, `week_id` TEXT NOT NULL, `school_id` INTEGER NOT NULL, `info` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`school_id`) REFERENCES `schools`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1366,6 +1735,12 @@
           {
             "fieldPath": "date",
             "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weekId",
+            "columnName": "week_id",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -1396,9 +1771,29 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_day_school_id` ON `${TABLE_NAME}` (`school_id`)"
+          },
+          {
+            "name": "index_day_week_id",
+            "unique": false,
+            "columnNames": [
+              "week_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_day_week_id` ON `${TABLE_NAME}` (`week_id`)"
           }
         ],
         "foreignKeys": [
+          {
+            "table": "weeks",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "week_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
           {
             "table": "schools",
             "onDelete": "CASCADE",
@@ -1415,7 +1810,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3691216ec6df54858bceb49b8b7cdcb3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd0872f84cf888cfb0055c0a25b211cb3')"
     ]
   }
 }
