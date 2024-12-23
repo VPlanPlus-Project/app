@@ -84,7 +84,7 @@ private fun OnboardingIndiwareLoginContent(
                 state = state.sp24CredentialsState.toButtonState(),
                 icon = Res.drawable.arrow_right,
                 onlyEventOnActive = true,
-                size = ButtonSize.BIG,
+                size = ButtonSize.Big,
                 onClick = { onEvent(OnboardingIndiwareLoginEvent.OnCheckClicked) }
             )
 

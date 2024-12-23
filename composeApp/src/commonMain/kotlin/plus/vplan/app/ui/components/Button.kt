@@ -14,6 +14,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,49 +27,34 @@ import org.jetbrains.compose.resources.painterResource
 fun Button(
     text: String,
     icon: DrawableResource? = null,
-    state: ButtonState = ButtonState.ENABLED,
-    size: ButtonSize = ButtonSize.BIG,
+    state: ButtonState = ButtonState.Enabled,
+    size: ButtonSize = ButtonSize.Big,
     type: ButtonType = ButtonType.PRIMARY,
     onlyEventOnActive: Boolean = true,
+    center: Boolean = false,
     onClick: () -> Unit
 ) {
-    androidx.compose.material3.Button(
-        onClick = { if (!onlyEventOnActive || state == ButtonState.ENABLED) onClick() },
-        enabled = state != ButtonState.DISABLED,
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier
-            .then(
-                when (size) {
-                    ButtonSize.BIG -> Modifier.defaultMinSize(minHeight = 56.dp).fillMaxWidth()
-                    ButtonSize.NORMAL -> Modifier.defaultMinSize(minHeight = 48.dp).fillMaxWidth()
-                    ButtonSize.SMALL -> Modifier.defaultMinSize(minHeight = 48.dp).animateContentSize(tween())
-                }
-            ),
-        colors = when (type) {
-            ButtonType.PRIMARY -> ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-            ButtonType.SECONDARY -> ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary,
-                contentColor = MaterialTheme.colorScheme.onSecondary
-            )
-            ButtonType.TERTIARY -> ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.tertiary,
-                contentColor = MaterialTheme.colorScheme.onTertiary
-            )
+    val clickEvent = { if (!onlyEventOnActive || state == ButtonState.Enabled) onClick() }
+    val enabled = state != ButtonState.Disabled
+    val shape = RoundedCornerShape(8.dp)
+    val modifier = Modifier.then(
+        when (size) {
+            ButtonSize.Big -> Modifier.defaultMinSize(minHeight = 56.dp).fillMaxWidth()
+            ButtonSize.Normal -> Modifier.defaultMinSize(minHeight = 48.dp).fillMaxWidth()
+            ButtonSize.Small -> Modifier.defaultMinSize(minHeight = 48.dp).animateContentSize(tween())
         }
-    ) {
+    )
+    val content: @Composable () -> Unit = {
         AnimatedContent(
             targetState = state
         ) { displayState ->
             Box(
                 modifier = Modifier
                     .then(
-                        if (size == ButtonSize.SMALL) Modifier
+                        if (size == ButtonSize.Small) Modifier
                         else Modifier.fillMaxWidth()
                     ),
-                contentAlignment = Alignment.CenterEnd
+                contentAlignment = if (center) Alignment.Center else Alignment.CenterEnd
             ) {
                 when (displayState) {
                     ButtonState.LOADING -> CircularProgressIndicator(
@@ -81,30 +67,66 @@ fun Button(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
-                            text = text,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            text = text
                         )
                         if (icon != null) Icon(
                             painter = painterResource(icon),
                             contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.onPrimary
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             }
         }
     }
+
+    if (type in listOf(ButtonType.Outlined, ButtonType.OutlinedOnSheet)) {
+        OutlinedButton(
+            onClick = clickEvent,
+            enabled = enabled,
+            shape = shape,
+            modifier = modifier,
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            content()
+        }
+    } else {
+        androidx.compose.material3.Button(
+            onClick = clickEvent,
+            enabled = enabled,
+            shape = shape,
+            modifier = modifier,
+            colors = when (type) {
+                ButtonType.PRIMARY -> ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+                ButtonType.SECONDARY -> ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary
+                )
+                ButtonType.TERTIARY -> ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary
+                )
+                else -> ButtonDefaults.buttonColors()
+            }
+        ) {
+            content()
+        }
+    }
 }
 
 enum class ButtonSize {
-    BIG, NORMAL, SMALL
+    Big, Normal, Small
 }
 
 enum class ButtonType {
-    PRIMARY, SECONDARY, TERTIARY
+    PRIMARY, SECONDARY, TERTIARY, Outlined, OutlinedOnSheet
 }
 
 enum class ButtonState {
-    ENABLED, DISABLED, LOADING
+    Enabled, Disabled, LOADING
 }

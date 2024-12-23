@@ -90,7 +90,7 @@ enum class OnboardingProfileSelectionSaveState {
 fun OnboardingProfileSelectionSaveState.toButtonState(): ButtonState {
     return when (this) {
         OnboardingProfileSelectionSaveState.IN_PROGRESS -> ButtonState.LOADING
-        else -> ButtonState.ENABLED
+        else -> ButtonState.Enabled
     }
 }
 

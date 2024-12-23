@@ -22,6 +22,7 @@ interface OnboardingRepository {
     suspend fun clearSp24Credentials()
 
     suspend fun setSchoolId(id: Int)
+    fun getSchoolId(): Flow<Int?>
 
     suspend fun getSp24Credentials(): Sp24Credentials?
 

@@ -27,7 +27,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.feature.home.ui.HomeScreen
+import plus.vplan.app.feature.profile.ui.ProfileScreen
+import plus.vplan.app.feature.profile.ui.ProfileScreenEvent
+import plus.vplan.app.feature.profile.ui.ProfileViewModel
+import plus.vplan.app.feature.profile.ui.components.ProfileSwitcher
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.house
@@ -36,7 +42,9 @@ import vplanplus.composeapp.generated.resources.search
 import vplanplus.composeapp.generated.resources.user
 
 @Composable
-fun MainScreenHost() {
+fun MainScreenHost(
+    onNavigateToOnboarding: (school: School?) -> Unit
+) {
     val navController = rememberNavController()
     var currentDestination by rememberSaveable<MutableState<String?>> { mutableStateOf("Home") }
     navController.addOnDestinationChangedListener { _, destination, _ ->
@@ -48,6 +56,9 @@ fun MainScreenHost() {
             else if (destination.route.orEmpty().startsWith(MainScreen.Profile::class.qualifiedName ?: "__")) "Profile"
             else null
     }
+
+    val profileViewModel = koinViewModel<ProfileViewModel>()
+
     Scaffold(
         bottomBar = {
             AnimatedVisibility(
@@ -84,7 +95,7 @@ fun MainScreenHost() {
                         selected = currentDestination == "Profile",
                         label = { Text("Profil") },
                         icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.Profile) { popUpTo(MainScreen.Home) } }
+                        onClick = { navController.navigate(MainScreen.Profile) { popUpTo(MainScreen.Home) } },
                     )
                 }
             }
@@ -99,8 +110,19 @@ fun MainScreenHost() {
                 composable<MainScreen.Calendar> { Text("Calendar") }
                 composable<MainScreen.Search> { Text("Search") }
                 composable<MainScreen.Chat> { Text("Chat") }
-                composable<MainScreen.Profile> { Text("Profile") }
+                composable<MainScreen.Profile> { ProfileScreen(profileViewModel) }
             }
+        }
+
+        if (profileViewModel.state.isSheetVisible) {
+            val activeProfile = profileViewModel.state.currentProfile
+            if (activeProfile != null) ProfileSwitcher(
+                profiles = profileViewModel.state.profiles,
+                activeProfile = activeProfile,
+                onSelectProfile = { profileViewModel.onEvent(ProfileScreenEvent.SetActiveProfile(it)) },
+                onDismiss = { profileViewModel.onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(false)) },
+                onCreateNewProfile = onNavigateToOnboarding
+            )
         }
     }
 }

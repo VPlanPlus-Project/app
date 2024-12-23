@@ -224,7 +224,7 @@ private fun OnboardingSelectProfileScreen(
                                 text = "Speichern",
                                 state = state.saveState.toButtonState(),
                                 icon = Res.drawable.arrow_right,
-                                size = ButtonSize.BIG,
+                                size = ButtonSize.Big,
                                 onlyEventOnActive = true,
                                 onClick = { onEvent(OnboardingProfileSelectionEvent.CommitProfile) }
                             )
