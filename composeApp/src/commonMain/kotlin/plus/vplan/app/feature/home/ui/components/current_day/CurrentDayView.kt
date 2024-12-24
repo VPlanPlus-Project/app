@@ -26,12 +26,6 @@ fun CurrentDayView(
     contextTime: LocalDateTime
 ) {
     Column {
-        if (day.info != null) InfoCard(
-            title = "Informationen für den Tag",
-            text = day.info,
-            imageVector = Res.drawable.info,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
         val currentLessons = remember("${contextTime.hour}:${contextTime.minute}") {
             val contextZoned = contextTime.toInstant(TimeZone.currentSystemDefault())
             day.lessons.filter {
@@ -51,13 +45,20 @@ fun CurrentDayView(
 
         Column(
             modifier = Modifier
+                .padding(vertical = 4.dp)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp)),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             currentLessons.forEach { (currentLessons, followingConnected) ->
-                CurrentLessonCard(currentLessons, followingConnected)
+                CurrentLessonCard(currentLessons, followingConnected, contextTime)
             }
         }
     }
+    if (day.info != null) InfoCard(
+        title = "Informationen für den Tag",
+        text = day.info,
+        imageVector = Res.drawable.info,
+        modifier = Modifier.padding(vertical = 4.dp)
+    )
 }

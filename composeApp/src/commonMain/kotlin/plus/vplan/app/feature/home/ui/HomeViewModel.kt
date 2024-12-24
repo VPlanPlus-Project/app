@@ -48,10 +48,19 @@ class HomeViewModel(
         }
     }
 
-    fun update() {
+    private fun update() {
+        state = state.copy(isUpdating = true)
         viewModelScope.launch {
             updateTimetableUseCase(state.currentProfile!!.school as School.IndiwareSchool)
             updateSubstitutionPlanUseCase(state.currentProfile!!.school as School.IndiwareSchool, LocalDate(2024, 12, 18))
+        }.invokeOnCompletion { state = state.copy(isUpdating = false) }
+    }
+
+    fun onEvent(event: HomeEvent) {
+        viewModelScope.launch {
+            when (event) {
+                HomeEvent.OnRefresh -> update()
+            }
         }
     }
 }
@@ -59,5 +68,10 @@ class HomeViewModel(
 data class HomeState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
-    val currentDay: SchoolDay? = null
+    val currentDay: SchoolDay? = null,
+    val isUpdating: Boolean = false
 )
+
+sealed class HomeEvent {
+    data object OnRefresh : HomeEvent()
+}

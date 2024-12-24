@@ -9,6 +9,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -23,32 +28,45 @@ fun HomeScreen(
     homeViewModel: HomeViewModel
 ) {
     HomeContent(
-        state = homeViewModel.state
+        state = homeViewModel.state,
+        onEvent = homeViewModel::onEvent
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeContent(
-    state: HomeState
+    state: HomeState,
+    onEvent: (event: HomeEvent) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-    ) root@{
-        Spacer(Modifier.height(WindowInsets.systemBars.asPaddingValues().calculateTopPadding()))
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    PullToRefreshBox(
+        state = pullToRefreshState,
+        onRefresh = { onEvent(HomeEvent.OnRefresh) },
+        isRefreshing = state.isUpdating,
+        modifier = Modifier.fillMaxSize()
+    ) {
         Column(
             modifier = Modifier
-                .padding(top = 8.dp)
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth()
-        ) {
-            Greeting(state.currentProfile?.displayName ?: "", remember(state.currentTime.hour) { state.currentTime.time })
-            Spacer(Modifier.height(4.dp))
-            if (state.currentDay !is SchoolDay.NormalDay) return@root
-            CurrentDayView(
-                day = state.currentDay,
-                contextTime = LocalDateTime(2024, 12, 18, 8, 0, 0)
-            )
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) content@{
+            Spacer(Modifier.height(WindowInsets.systemBars.asPaddingValues().calculateTopPadding()))
+            Column(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth()
+            ) {
+                Greeting(state.currentProfile?.displayName ?: "", remember(state.currentTime.hour) { state.currentTime.time })
+                Spacer(Modifier.height(4.dp))
+                if (state.currentDay !is SchoolDay.NormalDay) return@content
+                CurrentDayView(
+                    day = state.currentDay,
+                    contextTime = LocalDateTime(2024, 12, 18, 8, 0, 0)
+                )
+            }
         }
     }
 }
