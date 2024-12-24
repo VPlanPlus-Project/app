@@ -35,6 +35,7 @@ import plus.vplan.app.utils.takeContinuousBy
 import plus.vplan.app.utils.transparent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.info
+import vplanplus.composeapp.generated.resources.lightbulb
 
 private val subtitleDateFormat = LocalDate.Format {
     dayOfWeek(
@@ -115,6 +116,17 @@ fun CurrentDayView(
                 } Stunde"
             )
 
+            if (currentLessons.all { it.first.subject == null }) {
+                val nextActualLesson = day.lessons
+                    .firstOrNull { it.subject != null && it.lessonTime.start > currentLessons.maxOf { it.first.lessonTime.end } }
+                InfoCard(
+                    imageVector = Res.drawable.lightbulb,
+                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp),
+                    title = "Ausfall",
+                    text = "Außerplanmäßiger Stundenausfall bis ${nextActualLesson?.lessonTime?.start?.format(subtitleTimeFormat) ?: "Ende des Tages"}",
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .padding(vertical = 4.dp, horizontal = 16.dp)
@@ -187,7 +199,7 @@ fun CurrentDayView(
                                         center = Offset(paddingStart.toPx() / 2, (paddingTop + headerFont.lineHeight.toDp()/2).toPx())
                                     )
                                 }
-                                .padding(start = paddingStart, bottom = 8.dp)
+                                .padding(start = paddingStart, bottom = 12.dp)
                                 .clip(RoundedCornerShape(16.dp)),
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {

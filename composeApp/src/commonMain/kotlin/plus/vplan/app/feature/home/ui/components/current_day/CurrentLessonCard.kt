@@ -1,6 +1,5 @@
 package plus.vplan.app.feature.home.ui.components.current_day
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
@@ -38,7 +36,6 @@ fun CurrentLessonCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(4.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 8.dp)
             .padding(top = 8.dp),
     ) {
@@ -46,7 +43,7 @@ fun CurrentLessonCard(
             Icon(
                 painter = painterResource(currentLesson.subject.subjectIcon()),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(24.dp).padding(2.dp),
                 tint =
                 if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) MaterialTheme.colorScheme.error
                 else MaterialTheme.colorScheme.onSurface
@@ -54,13 +51,12 @@ fun CurrentLessonCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 8.dp, top = 2.dp),
+                    .padding(start = 4.dp, top = 2.dp),
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
@@ -70,6 +66,7 @@ fun CurrentLessonCard(
                             else append("Entfall")
                         },
                         style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.alignByBaseline(),
                         color =
                         if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface
@@ -80,6 +77,7 @@ fun CurrentLessonCard(
                             if (currentLesson.rooms.orEmpty().isEmpty()) append("Kein Raum")
                         },
                         style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.alignByBaseline(),
                         color =
                         if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isRoomChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface
@@ -90,6 +88,7 @@ fun CurrentLessonCard(
                             if (currentLesson.teachers.isEmpty()) append("Keine Lehrkraft")
                         },
                         style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.alignByBaseline(),
                         color =
                         if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isTeacherChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface

@@ -19,9 +19,9 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atDate
 import kotlinx.datetime.format
-import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.ui.subjectIcon
@@ -31,8 +31,8 @@ import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.info
 
 private fun LocalDateTime.format(): String {
-    return toInstant(TimeZone.of("Europe/Berlin")).format(
-        DateTimeComponents.Format {
+    return toInstant(TimeZone.of("Europe/Berlin")).toLocalDateTime(TimeZone.currentSystemDefault()).format(
+        LocalDateTime.Format {
             hour()
             char(':')
             minute()
@@ -125,9 +125,8 @@ fun FollowingLesson(
                             Icon(
                                 painter = painterResource(Res.drawable.info),
                                 modifier = Modifier
-                                    .padding(end = 4.dp)
-                                    .size(MaterialTheme.typography.bodySmall.lineHeight.toDp())
-                                    .padding(2.dp),
+                                    .padding(end = 2.dp)
+                                    .size(MaterialTheme.typography.bodySmall.lineHeight.toDp()),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
                             )

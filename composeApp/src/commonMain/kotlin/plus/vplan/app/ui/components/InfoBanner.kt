@@ -51,7 +51,7 @@ fun InfoCard(
                 modifier = Modifier.size(24.dp).padding(2.dp),
                 tint = textColor
             )
-            Column(modifier = Modifier.padding(start = 16.dp)) {
+            Column(modifier = Modifier.padding(start = 12.dp)) {
                 Text(text = title, style = MaterialTheme.typography.titleSmall, color = textColor)
                 Text(text = text, color = textColor, style = MaterialTheme.typography.bodySmall)
             }
