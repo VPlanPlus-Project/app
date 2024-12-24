@@ -28,11 +28,16 @@ data class EmbeddedProfile(
 ) {
     fun toModel(): Profile? {
         if (embeddedGroupProfile != null) {
+            val disabledDefaultLessons = embeddedGroupProfile.disabledDefaultLesson.map { it.id }
             return Profile.StudentProfile(
                 id = profile.id,
                 customName = profile.displayName,
                 group = embeddedGroupProfile.group.toModel(),
-                disabledDefaultLessons = embeddedGroupProfile.disabledDefaultLesson.map { it.toModel() }
+                defaultLessons =
+                    embeddedGroupProfile.defaultLessons
+                        .sortedBy { it.defaultLesson.subject + "_" + it.course?.course?.name + "_" + it.teacher?.teacher?.name }
+                        .associateWith { disabledDefaultLessons.contains(it.defaultLesson.id).not() }
+                        .mapKeys { it.key.toModel() }
             )
         }
         if (embeddedTeacherProfile != null) {

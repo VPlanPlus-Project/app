@@ -23,4 +23,10 @@ interface ProfileRepository {
     suspend fun upsert(
         room: Room
     ): Profile.RoomProfile
+
+    suspend fun setDefaultLessonEnabled(
+        profileId: Uuid,
+        defaultLessonId: String,
+        enable: Boolean
+    )
 }
