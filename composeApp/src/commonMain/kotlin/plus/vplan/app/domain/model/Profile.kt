@@ -14,14 +14,14 @@ abstract class Profile {
         override val id: Uuid,
         override val customName: String?,
         val group: Group,
-        val disabledDefaultLessons: List<DefaultLesson>
+        val defaultLessons: Map<DefaultLesson, Boolean>
     ) : Profile() {
         override val school = group.school
         override val profileType = ProfileType.STUDENT
         override val displayName = customName ?: group.name
 
         override fun isLessonRelevant(lesson: Lesson): Boolean {
-            return this.group in lesson.groups && lesson.defaultLesson !in disabledDefaultLessons
+            return this.group in lesson.groups && lesson.defaultLesson !in defaultLessons
         }
     }
 
