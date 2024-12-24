@@ -21,7 +21,9 @@ abstract class Profile {
         override val displayName = customName ?: group.name
 
         override fun isLessonRelevant(lesson: Lesson): Boolean {
-            return this.group in lesson.groups && lesson.defaultLesson !in defaultLessons
+            return this.group in lesson.groups && lesson.defaultLesson?.let {
+                defaultLessons[it] != false
+            } ?: true
         }
     }
 
