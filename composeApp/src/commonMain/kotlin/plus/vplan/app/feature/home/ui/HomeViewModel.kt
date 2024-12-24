@@ -13,15 +13,20 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.SchoolDay
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 
 class HomeViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
-    private val getDayUseCase: GetDayUseCase
+    private val getDayUseCase: GetDayUseCase,
+    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val updateTimetableUseCase: UpdateTimetableUseCase
 ) : ViewModel() {
     var state by mutableStateOf(HomeState())
         private set
@@ -31,7 +36,7 @@ class HomeViewModel(
             getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(currentProfile = profile)
                 if (profile == null) return@collectLatest
-                getDayUseCase(profile, LocalDate(2024, 12, 19)).collectLatest { day ->
+                getDayUseCase(profile, LocalDate(2024, 12, 18)).collectLatest { day ->
                     state = state.copy(currentDay = day)
                 }
             }
@@ -40,6 +45,13 @@ class HomeViewModel(
             getCurrentDateTimeUseCase().collect { time ->
                 state = state.copy(currentTime = time)
             }
+        }
+    }
+
+    fun update() {
+        viewModelScope.launch {
+            updateTimetableUseCase(state.currentProfile!!.school as School.IndiwareSchool)
+            updateSubstitutionPlanUseCase(state.currentProfile!!.school as School.IndiwareSchool, LocalDate(2024, 12, 18))
         }
     }
 }

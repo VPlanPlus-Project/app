@@ -3,6 +3,7 @@ package plus.vplan.app.domain.usecase
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolDay
@@ -19,7 +20,7 @@ class GetDayUseCase(
         dayRepository.getBySchool(date, profile.school.id).collectLatest { day ->
             if (day == null) return@collectLatest
             combine(
-                timetableRepository.getTimetableForSchool(schoolId = profile.school.id),
+                timetableRepository.getTimetableForSchool(schoolId = profile.school.id).map { timetable -> timetable.filter { it.date.dayOfWeek == date.dayOfWeek } },
                 substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId = profile.school.id, date = date)
             ) { timetable, substitutionPlan ->
                 SchoolDay.NormalDay(

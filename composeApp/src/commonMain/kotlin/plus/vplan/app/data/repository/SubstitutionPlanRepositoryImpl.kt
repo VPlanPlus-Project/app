@@ -31,7 +31,7 @@ class SubstitutionPlanRepositoryImpl(
                     dayId = "${schoolId}/${lesson.date}",
                     lessonTimeId = lesson.lessonTime.id,
                     subject = lesson.subject,
-                    isSubjectChanged = lesson.subject != lesson.defaultLesson?.subject,
+                    isSubjectChanged = lesson.subject !in listOfNotNull(lesson.defaultLesson?.subject, lesson.defaultLesson?.course?.name),
                     info = lesson.info,
                     defaultLessonId = lesson.defaultLesson?.id,
                     version = "${schoolId}_$newVersion",
