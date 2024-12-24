@@ -1,5 +1,7 @@
 package plus.vplan.app.utils
 
+const val DOT = "•"
+
 fun String.removeFollowingDuplicates(
     vararg chars: Char
 ): String {

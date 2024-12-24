@@ -6,12 +6,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalTime
 
 @Composable
-fun Greeting(profileName: String, time: LocalTime) {
+fun Greeting(
+    modifier: Modifier = Modifier,
+    profileName: String,
+    time: LocalTime
+) {
     Row(
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {

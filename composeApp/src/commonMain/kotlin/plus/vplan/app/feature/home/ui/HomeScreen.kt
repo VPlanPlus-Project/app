@@ -56,15 +56,18 @@ private fun HomeContent(
             Column(
                 modifier = Modifier
                     .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp)
                     .fillMaxWidth()
             ) {
-                Greeting(state.currentProfile?.displayName ?: "", remember(state.currentTime.hour) { state.currentTime.time })
+                Greeting(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    profileName = state.currentProfile?.displayName ?: "",
+                    time = remember(state.currentTime.hour) { state.currentTime.time }
+                )
                 Spacer(Modifier.height(4.dp))
                 if (state.currentDay !is SchoolDay.NormalDay) return@content
                 CurrentDayView(
                     day = state.currentDay,
-                    contextTime = LocalDateTime(2024, 12, 18, 8, 0, 0)
+                    contextTime = LocalDateTime(2025, 1, 6, 8, 0, 0)
                 )
             }
         }

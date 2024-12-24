@@ -19,3 +19,5 @@ fun Color.toBlackAndWhite(): Color {
     val color = Color.hsl(h, 0f, l, this.alpha)
     return color
 }
+
+fun Color.transparent(alpha: Float = 0f) = this.copy(alpha = alpha)

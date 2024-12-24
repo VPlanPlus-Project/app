@@ -36,7 +36,7 @@ class HomeViewModel(
             getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(currentProfile = profile)
                 if (profile == null) return@collectLatest
-                getDayUseCase(profile, LocalDate(2024, 12, 18)).collectLatest { day ->
+                getDayUseCase(profile, LocalDate(2025, 1, 6)).collectLatest { day ->
                     state = state.copy(currentDay = day)
                 }
             }
@@ -52,7 +52,7 @@ class HomeViewModel(
         state = state.copy(isUpdating = true)
         viewModelScope.launch {
             updateTimetableUseCase(state.currentProfile!!.school as School.IndiwareSchool)
-            updateSubstitutionPlanUseCase(state.currentProfile!!.school as School.IndiwareSchool, LocalDate(2024, 12, 18))
+            updateSubstitutionPlanUseCase(state.currentProfile!!.school as School.IndiwareSchool, LocalDate(2025, 1, 6))
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }
 

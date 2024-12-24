@@ -264,8 +264,8 @@ class IndiwareRepositoryImpl(
                     host = "stundenplan24.de",
                     path = "/$sp24Id/mobil/mobdaten/PlanKl${date.format(LocalDate.Format { 
                         year()
-                        monthNumber()
-                        dayOfMonth()
+                        monthNumber(Padding.ZERO)
+                        dayOfMonth(Padding.ZERO)
                     })}.xml"
                 )
                 basicAuth(username, password)
