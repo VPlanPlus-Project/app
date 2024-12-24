@@ -94,4 +94,13 @@ class ProfileRepositoryImpl(
 
         return getById(id).first { it != null } as Profile.RoomProfile
     }
+
+    override suspend fun setDefaultLessonEnabled(
+        profileId: Uuid,
+        defaultLessonId: String,
+        enable: Boolean
+    ) {
+        if (enable) vppDatabase.profileDao.deleteDisabledDefaultLesson(profileId, defaultLessonId)
+        else vppDatabase.profileDao.insertDisabledDefaultLesson(profileId, defaultLessonId)
+    }
 }

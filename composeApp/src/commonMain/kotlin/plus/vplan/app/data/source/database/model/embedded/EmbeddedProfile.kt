@@ -33,9 +33,11 @@ data class EmbeddedProfile(
                 id = profile.id,
                 customName = profile.displayName,
                 group = embeddedGroupProfile.group.toModel(),
-                defaultLessons = embeddedGroupProfile.defaultLessons.associateWith {
-                    disabledDefaultLessons.contains(it.defaultLesson.id)
-                }.mapKeys { it.key.toModel() }
+                defaultLessons =
+                    embeddedGroupProfile.defaultLessons
+                        .sortedBy { it.defaultLesson.subject + "_" + it.course?.course?.name + "_" + it.teacher?.teacher?.name }
+                        .associateWith { disabledDefaultLessons.contains(it.defaultLesson.id).not() }
+                        .mapKeys { it.key.toModel() }
             )
         }
         if (embeddedTeacherProfile != null) {
