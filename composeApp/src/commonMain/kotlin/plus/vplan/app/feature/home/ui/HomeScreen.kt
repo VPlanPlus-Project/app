@@ -1,8 +1,5 @@
 package plus.vplan.app.feature.home.ui
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +16,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -28,24 +24,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.format
-import kotlinx.datetime.format.DayOfWeekNames
-import kotlinx.datetime.format.MonthNames
-import kotlinx.datetime.format.char
-import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.SchoolDay
 import plus.vplan.app.feature.home.ui.components.Greeting
+import plus.vplan.app.feature.home.ui.components.HolidayScreen
 import plus.vplan.app.feature.home.ui.components.PagerSwitcher
 import plus.vplan.app.feature.home.ui.components.current_day.CurrentDayView
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.undraw_relaxing_at_home_black
-import vplanplus.composeapp.generated.resources.undraw_relaxing_at_home_white
+import plus.vplan.app.feature.home.ui.components.next_day.NextDayView
 
 @Composable
 fun HomeScreen(
@@ -101,62 +88,16 @@ private fun HomeContent(
                         pageSize = PageSize.Fill,
                         verticalAlignment = Alignment.Top
                     ) { page ->
-                        when (page) {
-                            0 -> {
-                                when (state.currentDay) {
-                                    is SchoolDay.NormalDay -> CurrentDayView(
-                                        day = state.currentDay,
-                                        contextTime = LocalDateTime(2025, 1, 6, 8, 0, 0)
-                                    )
-                                    is SchoolDay.Holiday -> {
-                                        Column(
-                                            modifier = Modifier
-                                                .padding(16.dp)
-                                                .fillMaxSize(),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Image(
-                                                painter = painterResource(
-                                                    if (!isSystemInDarkTheme()) Res.drawable.undraw_relaxing_at_home_white
-                                                    else Res.drawable.undraw_relaxing_at_home_black
-                                                ),
-                                                contentDescription = null,
-                                                modifier = Modifier.fillMaxWidth(),
-                                                contentScale = ContentScale.Inside
-                                            )
-                                            Column(Modifier.fillMaxWidth()) {
-                                                Text(
-                                                    text = "Schulfreier Tag",
-                                                    style = MaterialTheme.typography.headlineMedium.copy(
-                                                        brush = Brush.horizontalGradient(
-                                                            listOf(
-                                                                MaterialTheme.colorScheme.tertiary,
-                                                                MaterialTheme.colorScheme.primary
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                                state.currentDay.nextRegularSchoolDay?.let { nextDay ->
-                                                    Text(
-                                                        text = "Nächster Schultag am ${nextDay.format(remember { LocalDate.Format {
-                                                            dayOfWeek(DayOfWeekNames("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"))
-                                                            chars(", ")
-                                                            dayOfMonth()
-                                                            chars(". ")
-                                                            monthName(MonthNames("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"))
-                                                            char(' ')
-                                                            year()
-                                                        } })}",
-                                                        style = MaterialTheme.typography.bodyMedium
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                    is SchoolDay.Unknown -> Text("Unbekannter Tag")
-                                    null -> Unit
-                                }
+                        val day = if (page == 0) state.currentDay else state.nextDay
+                        when (day) {
+                            is SchoolDay.Holiday -> HolidayScreen(nextRegularSchoolDay = day.nextRegularSchoolDay)
+                            is SchoolDay.Unknown, null -> Text("Unbekannter Tag")
+                            is SchoolDay.NormalDay -> {
+                                if (page == 0) CurrentDayView(
+                                    day = day,
+                                    contextTime = LocalDateTime(2025, 1, 6, 8, 0, 0)
+                                )
+                                else NextDayView(day)
                             }
                         }
                     }

@@ -39,6 +39,11 @@ class HomeViewModel(
                 if (profile == null) return@collectLatest
                 getDayUseCase(profile, state.currentTime.date).collectLatest { day ->
                     state = state.copy(currentDay = day)
+                    day.nextRegularSchoolDay?.let { nextDayDate ->
+                        getDayUseCase(profile, nextDayDate).collectLatest { nextDay ->
+                            state = state.copy(nextDay = nextDay)
+                        }
+                    }
                 }
             }
         }
@@ -71,6 +76,7 @@ data class HomeState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
     val currentDay: SchoolDay? = null,
+    val nextDay: SchoolDay? = null,
     val isUpdating: Boolean = false
 )
 

@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.home.ui.components.current_day
+package plus.vplan.app.feature.home.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
