@@ -8,6 +8,7 @@ abstract class Profile {
     abstract val school: School
     abstract val profileType: ProfileType
     abstract val displayName: String
+    abstract fun isLessonRelevant(lesson: Lesson): Boolean
 
     data class StudentProfile(
         override val id: Uuid,
@@ -18,6 +19,12 @@ abstract class Profile {
         override val school = group.school
         override val profileType = ProfileType.STUDENT
         override val displayName = customName ?: group.name
+
+        override fun isLessonRelevant(lesson: Lesson): Boolean {
+            return this.group in lesson.groups && lesson.defaultLesson?.let {
+                defaultLessons[it] != false
+            } ?: true
+        }
     }
 
     data class TeacherProfile(
@@ -28,6 +35,10 @@ abstract class Profile {
         override val school = teacher.school
         override val profileType = ProfileType.TEACHER
         override val displayName = customName ?: teacher.name
+
+        override fun isLessonRelevant(lesson: Lesson): Boolean {
+            return this.teacher in lesson.teachers
+        }
     }
 
     data class RoomProfile(
@@ -38,6 +49,10 @@ abstract class Profile {
         override val school = room.school
         override val profileType = ProfileType.ROOM
         override val displayName = customName ?: room.name
+
+        override fun isLessonRelevant(lesson: Lesson): Boolean {
+            return lesson.rooms?.contains(this.room) == true
+        }
     }
 }
 

@@ -2,7 +2,6 @@ package plus.vplan.app.di
 
 import android.content.Context
 import androidx.room.Room
-import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
@@ -17,8 +16,7 @@ actual fun platformModule(): Module = module(createdAtStart = true) {
         )
             .setDriver(BundledSQLiteDriver())
             .fallbackToDestructiveMigration(true)
-            .setJournalMode(RoomDatabase.JournalMode.TRUNCATE)
-            .setQueryCoroutineContext(Dispatchers.Main)
+            .setQueryCoroutineContext(Dispatchers.IO)
             .build()
     }
 }
