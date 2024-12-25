@@ -10,6 +10,7 @@ import plus.vplan.app.data.source.database.dao.CourseDao
 import plus.vplan.app.data.source.database.dao.DayDao
 import plus.vplan.app.data.source.database.dao.DefaultLessonDao
 import plus.vplan.app.data.source.database.dao.GroupDao
+import plus.vplan.app.data.source.database.dao.HolidayDao
 import plus.vplan.app.data.source.database.dao.IndiwareDao
 import plus.vplan.app.data.source.database.dao.KeyValueDao
 import plus.vplan.app.data.source.database.dao.LessonTimeDao
@@ -26,6 +27,7 @@ import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
+import plus.vplan.app.data.source.database.model.database.DbHoliday
 import plus.vplan.app.data.source.database.model.database.DbIndiwareHasTimetableInWeek
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
@@ -79,7 +81,8 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
         DbSubstitutionPlanRoomCrossover::class,
         DbSubstitutionPlanTeacherCrossover::class,
 
-        DbDay::class
+        DbDay::class,
+        DbHoliday::class,
     ],
     version = 1,
 )
@@ -104,5 +107,6 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val timetableDao: TimetableDao
     abstract val indiwareDao: IndiwareDao
     abstract val dayDao: DayDao
+    abstract val holidayDao: HolidayDao
     abstract val substitutionPlanDao: SubstitutionPlanDao
 }
