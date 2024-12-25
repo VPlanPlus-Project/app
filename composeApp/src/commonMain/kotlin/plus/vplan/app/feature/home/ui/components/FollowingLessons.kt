@@ -29,14 +29,16 @@ fun FollowingLessons(showFirstGradient: Boolean, lessons: Map<Int, List<Lesson>>
                     .drawBehind {
                         val circleY = (paddingTop + headerFont.lineHeight.toDp() / 2).toPx()
 
-                        if (i == 0 && showFirstGradient) drawLine( // isFirst
-                            brush = Brush.verticalGradient(
-                                colors = listOf(colorScheme.tertiary.transparent(), colorScheme.tertiary, colorScheme.tertiary)
-                            ),
-                            start = Offset(paddingStart.toPx()/2, 0f),
-                            end = Offset(paddingStart.toPx()/2, circleY),
-                            strokeWidth = 2.dp.toPx()
-                        ) else drawLine( // had previous elements
+                        if (i == 0) {
+                            if (showFirstGradient) drawLine( // isFirst
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(colorScheme.tertiary.transparent(), colorScheme.tertiary, colorScheme.tertiary)
+                                ),
+                                start = Offset(paddingStart.toPx()/2, 0f),
+                                end = Offset(paddingStart.toPx()/2, circleY),
+                                strokeWidth = 2.dp.toPx()
+                            )
+                        } else drawLine( // had previous elements
                             color = colorScheme.tertiary,
                             start = Offset(paddingStart.toPx()/2, 0f),
                             end = Offset(paddingStart.toPx()/2, circleY),
