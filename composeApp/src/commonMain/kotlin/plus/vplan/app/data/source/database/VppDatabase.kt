@@ -40,6 +40,7 @@ import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLess
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
+import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbWeek
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
@@ -47,6 +48,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitut
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
 
 @Database(
     entities = [
@@ -83,6 +85,9 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
 
         DbDay::class,
         DbHoliday::class,
+
+        DbVppId::class,
+        DbVppIdGroupCrossover::class,
     ],
     version = 1,
 )

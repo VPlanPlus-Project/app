@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "647dd9c0155ac6f1e511c05fd15d492d",
+    "identityHash": "220a4ea92e43c321ca2826cc09827b9e",
     "entities": [
       {
         "tableName": "schools",
@@ -1869,11 +1869,104 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "vpp_ids",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "vpp_id_group_crossover",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`vpp_id` INTEGER NOT NULL, `group_id` INTEGER NOT NULL, PRIMARY KEY(`vpp_id`, `group_id`), FOREIGN KEY(`vpp_id`) REFERENCES `vpp_ids`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "vppId",
+            "columnName": "vpp_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupId",
+            "columnName": "group_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "vpp_id",
+            "group_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_vpp_id_group_crossover_vpp_id",
+            "unique": false,
+            "columnNames": [
+              "vpp_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vpp_id_group_crossover_vpp_id` ON `${TABLE_NAME}` (`vpp_id`)"
+          },
+          {
+            "name": "index_vpp_id_group_crossover_group_id",
+            "unique": false,
+            "columnNames": [
+              "group_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vpp_id_group_crossover_group_id` ON `${TABLE_NAME}` (`group_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "vpp_ids",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vpp_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "school_groups",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "group_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '647dd9c0155ac6f1e511c05fd15d492d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '220a4ea92e43c321ca2826cc09827b9e')"
     ]
   }
 }

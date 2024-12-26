@@ -25,9 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import co.touchlab.kermit.Logger
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
@@ -35,6 +37,7 @@ import plus.vplan.app.feature.profile.ui.ProfileScreen
 import plus.vplan.app.feature.profile.ui.ProfileScreenEvent
 import plus.vplan.app.feature.profile.ui.ProfileViewModel
 import plus.vplan.app.feature.profile.ui.components.ProfileSwitcher
+import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.house
@@ -123,7 +126,11 @@ fun MainScreenHost(
                 activeProfile = activeProfile,
                 onSelectProfile = { profileViewModel.onEvent(ProfileScreenEvent.SetActiveProfile(it)) },
                 onDismiss = { profileViewModel.onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(false)) },
-                onCreateNewProfile = onNavigateToOnboarding
+                onCreateNewProfile = onNavigateToOnboarding,
+                onConnectVppId = {
+                    Logger.d { "Opening vpp.ID auth url: $VPP_ID_AUTH_URL" }
+                    BrowserIntent.openUrl(VPP_ID_AUTH_URL)
+                }
             )
         }
     }
