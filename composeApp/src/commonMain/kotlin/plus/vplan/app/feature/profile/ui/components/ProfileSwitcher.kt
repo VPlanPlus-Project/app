@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -71,8 +71,8 @@ fun ProfileSwitcher(
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
-                .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding())
+                .padding(horizontal = 16.dp)
+                .padding(bottom = WindowInsets.safeContent.asPaddingValues().calculateBottomPadding())
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
         ) {
@@ -172,14 +172,29 @@ fun ProfileSwitcher(
                     }
                 }
             }
-            Button(
-                text = "Profilübersicht",
-                state = ButtonState.Enabled,
-                size = ButtonSize.Normal,
-                type = ButtonType.Outlined,
-                center = true,
-                onClick = {}
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Button(
+                    text = "Weitere Schule",
+                    state = ButtonState.Enabled,
+                    size = ButtonSize.Normal,
+                    type = ButtonType.Outlined,
+                    center = true,
+                    onClick = { onCreateNewProfile(null) },
+                    modifier = Modifier.weight(1f, true)
+                )
+                Button(
+                    text = "Profileinstellungen",
+                    state = ButtonState.Enabled,
+                    size = ButtonSize.Normal,
+                    type = ButtonType.PRIMARY,
+                    center = true,
+                    onClick = {},
+                    modifier = Modifier.weight(1f, true)
+                )
+            }
         }
     }
 }
