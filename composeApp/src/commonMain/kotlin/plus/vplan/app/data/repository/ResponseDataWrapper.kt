@@ -9,9 +9,7 @@ data class ResponseDataWrapper<T>(
     @SerialName("data") val data: T
 ) {
     companion object {
-        val jsonParser = Json {
-            ignoreUnknownKeys = true
-        }
+        val jsonParser = Json { ignoreUnknownKeys = true }
         inline fun <reified T> fromJson(json: String?): T? {
             if (json == null) return null
             val wrapper = try {

@@ -54,6 +54,7 @@ import vplanplus.composeapp.generated.resources.logo_dark
 @Composable
 fun ProfileSwitcher(
     profiles: Map<School, List<Profile>>,
+    showVppIdBanner: Boolean,
     activeProfile: Profile,
     onDismiss: () -> Unit,
     onSelectProfile: (profile: Profile) -> Unit,
@@ -123,8 +124,9 @@ fun ProfileSwitcher(
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Row(
+            if (showVppIdBanner) Row(
                 modifier = Modifier
+                    .padding(bottom = 8.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
                     .clickable { onConnectVppId() }
@@ -170,7 +172,6 @@ fun ProfileSwitcher(
                     }
                 }
             }
-            Spacer(Modifier.height(8.dp))
             Button(
                 text = "Profilübersicht",
                 state = ButtonState.Enabled,

@@ -38,7 +38,7 @@ class GroupRepositoryImpl(
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data =
                 ResponseDataWrapper.fromJson<List<SchoolItemGroupsResponse>>(response.bodyAsText())
-                    ?: return Response.Error.ParsingError
+                    ?: return Response.Error.ParsingError(response.bodyAsText())
             data.forEach { group ->
                 vppDatabase.groupDao.upsert(
                     DbGroup(
@@ -64,7 +64,8 @@ class GroupRepositoryImpl(
                 school.getSchoolApiAccess().authentication(this)
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
-            val data = ResponseDataWrapper.fromJson<SchoolItemGroupsResponse>(response.bodyAsText()) ?: return Response.Error.ParsingError
+            val data = ResponseDataWrapper.fromJson<SchoolItemGroupsResponse>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
             vppDatabase.groupDao.upsert(
                 DbGroup(
                     id = data.id,

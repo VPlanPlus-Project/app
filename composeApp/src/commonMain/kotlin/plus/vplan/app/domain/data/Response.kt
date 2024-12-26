@@ -5,7 +5,7 @@ sealed class Response<out T> {
     data object Loading: Response<Nothing>()
     sealed class Error : Response<Nothing>() {
         data class Other(val message: String = "Other error") : OnlineError()
-        data object ParsingError : Error()
+        data class ParsingError(val rawResponse: String) : Error()
         data object Cancelled : Error()
 
         sealed class OnlineError: Error() {

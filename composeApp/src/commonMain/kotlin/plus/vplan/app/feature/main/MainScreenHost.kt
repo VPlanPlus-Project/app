@@ -123,6 +123,7 @@ fun MainScreenHost(
             val activeProfile = profileViewModel.state.currentProfile
             if (activeProfile != null) ProfileSwitcher(
                 profiles = profileViewModel.state.profiles,
+                showVppIdBanner = profileViewModel.state.showVppIdBanner,
                 activeProfile = activeProfile,
                 onSelectProfile = { profileViewModel.onEvent(ProfileScreenEvent.SetActiveProfile(it)) },
                 onDismiss = { profileViewModel.onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(false)) },

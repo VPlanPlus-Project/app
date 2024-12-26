@@ -10,7 +10,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:usesCleartextTraffic="true"
         android:supportsRtl="true"
-        android:launchMode="singleTask"
         android:name=".MainApplication"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
@@ -22,6 +21,14 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter android:label="vpp.ID Login">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="vpp"
+                    android:host="app" />
             </intent-filter>
         </activity>
     </application>

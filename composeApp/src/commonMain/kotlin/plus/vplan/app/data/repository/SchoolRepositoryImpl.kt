@@ -29,7 +29,9 @@ class SchoolRepositoryImpl(
         return saveRequest {
             val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/school")
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
-            val data = ResponseDataWrapper.fromJson<List<OnlineSchoolResponse>>(response.bodyAsText()) ?: return Response.Error.ParsingError
+            val data = ResponseDataWrapper.fromJson<List<OnlineSchoolResponse>>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
+
             return Response.Success(data.map { it.toModel() })
         }
     }
@@ -40,7 +42,9 @@ class SchoolRepositoryImpl(
         return saveRequest {
             val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/school/$id")
             if (!response.status.isSuccess()) return response.toResponse()
-            val data = ResponseDataWrapper.fromJson<SchoolItemResponse>(response.bodyAsText()) ?: return Response.Error.ParsingError
+            val data = ResponseDataWrapper.fromJson<SchoolItemResponse>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
+
             vppDatabase.schoolDao.upsertSchool(
                 DbSchool(
                     id = id,
@@ -65,7 +69,9 @@ class SchoolRepositoryImpl(
         return saveRequest {
             val response = httpClient.get("$VPP_SP24_URL/school/sp24/$sp24Id")
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
-            val data = ResponseDataWrapper.fromJson<Int>(response.bodyAsText()) ?: return Response.Error.ParsingError
+            val data = ResponseDataWrapper.fromJson<Int>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
+
             return Response.Success(data)
         }
     }

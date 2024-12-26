@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
+import plus.vplan.app.data.source.database.converters.LocalDateTimeConverter
 import plus.vplan.app.data.source.database.converters.LocalTimeConverter
 import plus.vplan.app.data.source.database.converters.UuidTypeConverter
 import plus.vplan.app.data.source.database.dao.CourseDao
@@ -20,6 +21,7 @@ import plus.vplan.app.data.source.database.dao.SchoolDao
 import plus.vplan.app.data.source.database.dao.SubstitutionPlanDao
 import plus.vplan.app.data.source.database.dao.TeacherDao
 import plus.vplan.app.data.source.database.dao.TimetableDao
+import plus.vplan.app.data.source.database.dao.VppIdDao
 import plus.vplan.app.data.source.database.dao.WeekDao
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbDay
@@ -41,6 +43,8 @@ import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.DbVppId
+import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
+import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.DbWeek
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
@@ -87,6 +91,8 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
         DbHoliday::class,
 
         DbVppId::class,
+        DbVppIdAccess::class,
+        DbVppIdSchulverwalter::class,
         DbVppIdGroupCrossover::class,
     ],
     version = 1,
@@ -95,7 +101,8 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
     value = [
         UuidTypeConverter::class,
         LocalDateConverter::class,
-        LocalTimeConverter::class
+        LocalTimeConverter::class,
+        LocalDateTimeConverter::class
     ]
 )
 abstract class VppDatabase : RoomDatabase() {
@@ -114,4 +121,5 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val dayDao: DayDao
     abstract val holidayDao: HolidayDao
     abstract val substitutionPlanDao: SubstitutionPlanDao
+    abstract val vppIdDao: VppIdDao
 }

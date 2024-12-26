@@ -35,7 +35,9 @@ class RoomRepositoryImpl(
                 school.getSchoolApiAccess().authentication(this)
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
-            val data = ResponseDataWrapper.fromJson<List<SchoolItemRoomsResponse>>(response.bodyAsText()) ?: return Response.Error.ParsingError
+            val data = ResponseDataWrapper.fromJson<List<SchoolItemRoomsResponse>>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
+
             data.forEach { room ->
                 vppDatabase.roomDao.upsert(
                     DbRoom(
@@ -62,7 +64,8 @@ class RoomRepositoryImpl(
                 school.getSchoolApiAccess().authentication(this)
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
-            val data = ResponseDataWrapper.fromJson<SchoolItemRoomsResponse>(response.bodyAsText()) ?: return Response.Error.ParsingError
+            val data = ResponseDataWrapper.fromJson<SchoolItemRoomsResponse>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
             vppDatabase.roomDao.upsert(
                 DbRoom(
                     id = data.id,

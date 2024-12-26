@@ -16,22 +16,25 @@ import plus.vplan.app.ui.theme.AppTheme
 
 const val VPP_ROOT_URL = "http://192.168.102.109:8000"
 const val VPP_SP24_URL = "http://192.168.102.109:8080"
+const val APP_ID = "4"
+const val APP_SECRET = "secret"
+const val APP_REDIRECT_URI = "vpp://app/auth/"
 val VPP_ID_AUTH_URL = URLBuilder(
     protocol = URLProtocol.HTTP,
     host = "192.168.102.109",
     port = 5174,
     pathSegments = listOf("authorize"),
     parameters = Parameters.build {
-        append("client_id", "4")
-        append("client_secret", "secret")
-        append("redirect_uri", "vpp://auth")
+        append("client_id", APP_ID)
+        append("client_secret", APP_SECRET)
+        append("redirect_uri", APP_REDIRECT_URI)
         append("device_name", "mein telefon")
     }
 ).build().toString()
 
 @Composable
 @Preview
-fun App() {
+fun App(task: StartTask?) {
     AppTheme(dynamicColor = false) {
         KoinContext {
             Surface(
@@ -42,9 +45,13 @@ fun App() {
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    NavigationHost()
+                    NavigationHost(task)
                 }
             }
         }
     }
+}
+
+sealed class StartTask {
+    data class VppIdLogin(val token: String) : StartTask()
 }

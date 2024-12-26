@@ -21,6 +21,7 @@ import plus.vplan.app.data.repository.SchoolRepositoryImpl
 import plus.vplan.app.data.repository.SubstitutionPlanRepositoryImpl
 import plus.vplan.app.data.repository.TeacherRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
+import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
 import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.CourseRepository
@@ -36,12 +37,14 @@ import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
+import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.home.di.homeModule
 import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
 import plus.vplan.app.feature.profile.di.profileModule
 import plus.vplan.app.feature.sync.di.syncModule
+import plus.vplan.app.feature.vpp_id.di.vppIdModule
 
 expect fun platformModule(): Module
 
@@ -70,6 +73,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::LessonTimeRepositoryImpl).bind<LessonTimeRepository>()
     singleOf(::TimetableRepositoryImpl).bind<TimetableRepository>()
     singleOf(::SubstitutionPlanRepositoryImpl).bind<SubstitutionPlanRepository>()
+    singleOf(::VppIdRepositoryImpl).bind<VppIdRepository>()
 }
 
 fun initKoin(configuration: KoinAppDeclaration? = null) {
@@ -77,6 +81,14 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         configuration?.invoke(this)
         modules(platformModule())
         modules(domainModule)
-        modules(appModule, hostModule, syncModule, onboardingModule, homeModule, profileModule)
+        modules(
+            appModule,
+            hostModule,
+            syncModule,
+            onboardingModule,
+            homeModule,
+            profileModule,
+            vppIdModule,
+        )
     }
 }
