@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.ui.components
+package plus.vplan.app.feature.profile.page.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background

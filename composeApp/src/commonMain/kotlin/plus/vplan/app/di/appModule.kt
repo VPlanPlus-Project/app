@@ -42,7 +42,8 @@ import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.home.di.homeModule
 import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
-import plus.vplan.app.feature.profile.di.profileModule
+import plus.vplan.app.feature.profile.page.di.profileModule
+import plus.vplan.app.feature.profile.settings.di.profileSettingsModule
 import plus.vplan.app.feature.sync.di.syncModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
 
@@ -88,6 +89,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             onboardingModule,
             homeModule,
             profileModule,
+            profileSettingsModule,
             vppIdModule,
         )
     }
