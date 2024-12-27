@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "33310c514288444580531825a364fdfb",
+    "identityHash": "37fc93623f727842a7018ed45c8c9eba",
     "entities": [
       {
         "tableName": "schools",
@@ -356,7 +356,7 @@
       },
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `school_id` INTEGER NOT NULL, `displayName` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`school_id`) REFERENCES `schools`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `school_id` INTEGER NOT NULL, `display_name` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`school_id`) REFERENCES `schools`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -372,7 +372,7 @@
           },
           {
             "fieldPath": "displayName",
-            "columnName": "displayName",
+            "columnName": "display_name",
             "affinity": "TEXT"
           }
         ],
@@ -2068,7 +2068,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '33310c514288444580531825a364fdfb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '37fc93623f727842a7018ed45c8c9eba')"
     ]
   }
 }

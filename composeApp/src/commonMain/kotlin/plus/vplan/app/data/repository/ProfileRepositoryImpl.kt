@@ -103,4 +103,8 @@ class ProfileRepositoryImpl(
         if (enable) vppDatabase.profileDao.deleteDisabledDefaultLesson(profileId, defaultLessonId)
         else vppDatabase.profileDao.insertDisabledDefaultLesson(profileId, defaultLessonId)
     }
+
+    override suspend fun updateDisplayName(id: Uuid, displayName: String) {
+        vppDatabase.profileDao.updateDisplayName(id, displayName.ifBlank { null })
+    }
 }

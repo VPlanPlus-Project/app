@@ -14,14 +14,15 @@ import org.koin.compose.KoinContext
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
 
-const val VPP_ROOT_URL = "http://192.168.102.109:8000"
-const val VPP_SP24_URL = "http://192.168.102.109:8080"
+const val SERVER_IP = "192.168.3.102"
+const val VPP_ROOT_URL = "http://$SERVER_IP:8000"
+const val VPP_SP24_URL = "http://$SERVER_IP:8080"
 const val APP_ID = "4"
 const val APP_SECRET = "secret"
 const val APP_REDIRECT_URI = "vpp://app/auth/"
 val VPP_ID_AUTH_URL = URLBuilder(
     protocol = URLProtocol.HTTP,
-    host = "192.168.102.109",
+    host = SERVER_IP,
     port = 5174,
     pathSegments = listOf("authorize"),
     parameters = Parameters.build {

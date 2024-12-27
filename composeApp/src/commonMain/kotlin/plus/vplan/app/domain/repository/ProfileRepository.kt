@@ -24,6 +24,8 @@ interface ProfileRepository {
         room: Room
     ): Profile.RoomProfile
 
+    suspend fun updateDisplayName(id: Uuid, displayName: String)
+
     suspend fun setDefaultLessonEnabled(
         profileId: Uuid,
         defaultLessonId: String,

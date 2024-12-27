@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,15 +36,12 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonSize
-import plus.vplan.app.ui.components.ButtonState
-import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.utils.DOT
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.pencil
+import vplanplus.composeapp.generated.resources.x
 
 @Composable
 fun ProfileSettingsScreen(
@@ -99,7 +98,7 @@ private fun ProfileSettingsContent(
                 .padding(top = 16.dp)
         ) {
             if (state.profile == null) return@Column
-            var isRenamingInProgress by remember { mutableStateOf(false) }
+            var isRenamingInProgress by rememberSaveable { mutableStateOf(false) }
             AnimatedContent(
                 targetState = isRenamingInProgress,
                 modifier = Modifier
@@ -107,25 +106,44 @@ private fun ProfileSettingsContent(
                     .fillMaxWidth()
             ) { showRenaming ->
                 if (showRenaming) {
+                    var newName by rememberSaveable { mutableStateOf(state.profile.displayName) }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         TextField(
-                            value = state.profile.displayName,
-                            modifier = Modifier.weight(1f),
+                            value = newName,
+                            modifier = Modifier.weight(1f, true),
                             singleLine = true,
-                            onValueChange = {},
+                            onValueChange = { newName = it },
                             label = { Text("Name") },
+                            placeholder = { Text(state.profile.originalName) }
                         )
-                        Button(
-                            text = "",
-                            icon = Res.drawable.check,
-                            state = ButtonState.Enabled,
-                            size = ButtonSize.Big,
-                            type = ButtonType.PRIMARY,
-                        ) { isRenamingInProgress = false }
+                        IconButton(
+                            onClick = { isRenamingInProgress = false },
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.x),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        FilledIconButton(
+                            onClick = {
+                                onEvent(ProfileSettingsEvent.RenameProfile(newName))
+                                isRenamingInProgress = false
+                            },
+                            modifier = Modifier.size(56.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.check),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                     return@AnimatedContent
                 }
@@ -153,7 +171,7 @@ private fun ProfileSettingsContent(
                         is Profile.TeacherProfile -> append("Lehrer ")
                         is Profile.RoomProfile -> append("Raum ")
                     }
-                    append(state.profile.displayName)
+                    append(state.profile.originalName)
                     append(" $DOT ")
                     append(state.profile.school.name)
                 },
