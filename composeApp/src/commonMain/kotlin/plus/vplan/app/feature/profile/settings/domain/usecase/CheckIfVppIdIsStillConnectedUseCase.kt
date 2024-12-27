@@ -8,7 +8,7 @@ class CheckIfVppIdIsStillConnectedUseCase(
     private val vppIdRepository: VppIdRepository
 ) {
     suspend operator fun invoke(vppId: VppId.Active): VppIdConnectionState {
-        val response = vppIdRepository.getUserByToken(vppId.accessToken)
+        val response = vppIdRepository.getUserByToken(vppId.accessToken, upsert = false)
         if (response is Response.Success && response.data.id == vppId.id) return VppIdConnectionState.CONNECTED
         if (response is Response.Error.OnlineError.Unauthorized) return VppIdConnectionState.DISCONNECTED
         return VppIdConnectionState.ERROR

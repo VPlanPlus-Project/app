@@ -112,6 +112,10 @@ fun Button(
                     containerColor = MaterialTheme.colorScheme.tertiary,
                     contentColor = MaterialTheme.colorScheme.onTertiary
                 )
+                ButtonType.Danger -> ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                )
                 else -> ButtonDefaults.buttonColors()
             }
         ) {
@@ -125,7 +129,7 @@ enum class ButtonSize {
 }
 
 enum class ButtonType {
-    PRIMARY, SECONDARY, TERTIARY, Outlined, OutlinedOnSheet
+    PRIMARY, SECONDARY, TERTIARY, Outlined, OutlinedOnSheet, Danger
 }
 
 enum class ButtonState {

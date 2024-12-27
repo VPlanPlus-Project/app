@@ -30,6 +30,7 @@ import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.repository.VppIdDevice
 import plus.vplan.app.domain.repository.VppIdRepository
 
 private val logger = Logger.withTag("VppIdRepositoryImpl")
@@ -61,7 +62,7 @@ class VppIdRepositoryImpl(
         }
     }
 
-    override suspend fun getUserByToken(token: String): Response<VppId.Active> {
+    override suspend fun getUserByToken(token: String, upsert: Boolean): Response<VppId.Active> {
         return saveRequest {
             val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/me") {
                 bearerAuth(token)
@@ -73,7 +74,7 @@ class VppIdRepositoryImpl(
             val data = ResponseDataWrapper.fromJson<UserResponse>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
 
-            vppDatabase.vppIdDao.upsert(
+            if (upsert) vppDatabase.vppIdDao.upsert(
                 vppId = DbVppId(
                     id = data.id,
                     name = data.name,
@@ -112,6 +113,44 @@ class VppIdRepositoryImpl(
         return vppDatabase.vppIdDao.getAll().map { flowData ->
             flowData.map { it.toModel() }
         }
+    }
+
+    override suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>> {
+        return saveRequest {
+            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/me/devices") {
+                bearerAuth(vppId.accessToken)
+            }
+            if (response.status != HttpStatusCode.OK) {
+                logger.e { "Error getting devices: $response" }
+                return response.toResponse()
+            }
+//            val data = ResponseDataWrapper.fromJson<List<DeviceResponse>>(response.bodyAsText())
+//                ?: return Response.Error.ParsingError(response.bodyAsText())
+//
+//            return Response.Success(data.map { it.toModel() })
+        }
+    }
+
+    override suspend fun logoutDevice(vppId: VppId.Active, deviceId: Int): Response<Unit> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun logout(token: String): Response<Unit> {
+        return saveRequest {
+            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/auth/logout") {
+                bearerAuth(token)
+            }
+            if (response.status != HttpStatusCode.OK) {
+                logger.e { "Error logging out: $response" }
+                return response.toResponse()
+            }
+            return Response.Success(Unit)
+        }
+    }
+
+    override suspend fun deleteAccessTokens(vppId: VppId.Active) {
+        vppDatabase.vppIdDao.deleteAccessToken(vppId.id)
+        vppDatabase.vppIdDao.deleteSchulverwalterAccessToken(vppId.id)
     }
 }
 

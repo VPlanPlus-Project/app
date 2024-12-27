@@ -48,6 +48,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.profile.settings.domain.usecase.VppIdConnectionState
+import plus.vplan.app.feature.profile.settings.ui.vpp_id_management.VppIdManagementDrawer
 import plus.vplan.app.utils.BrowserIntent
 import plus.vplan.app.utils.DOT
 import vplanplus.composeapp.generated.resources.Res
@@ -85,6 +86,7 @@ private fun ProfileSettingsContent(
 ) {
 
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
+    var isVppIdManagementDrawerVisible by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -196,20 +198,23 @@ private fun ProfileSettingsContent(
             )
             Spacer(Modifier.height(8.dp))
             if (state.profile is Profile.StudentProfile) {
-                if (state.profile.vppId != null) {
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainer)
-                            .clickable {
-                                if (state.isVppIdStillConnected == VppIdConnectionState.DISCONNECTED) {
-                                    BrowserIntent.openUrl(VPP_ID_AUTH_URL)
-                                    return@clickable
-                                }
+                AnimatedContent(
+                    targetState = state.profile.vppId,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .clickable {
+                            if (state.profile.vppId == null || state.isVppIdStillConnected == VppIdConnectionState.DISCONNECTED) {
+                                BrowserIntent.openUrl(VPP_ID_AUTH_URL)
+                                return@clickable
                             }
-                            .padding(16.dp),
+                            isVppIdManagementDrawerVisible = true
+                        }
+                        .padding(16.dp)
+                ) { displayVppId ->
+                    if (displayVppId != null) Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
@@ -220,7 +225,7 @@ private fun ProfileSettingsContent(
                         )
                         Column {
                             Text(
-                                text = state.profile.vppId.name,
+                                text = displayVppId.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -252,11 +257,31 @@ private fun ProfileSettingsContent(
                                 )
                             }
                         }
+                        return@AnimatedContent
                     }
-                } else {
-                    Text(text = "vpp.ID verbinden")
+                    Column {
+                        Text(
+                            text = "vpp.ID verbinden",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Nimm am digitalen Klassenalltag teil.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
+        }
+
+        if (isVppIdManagementDrawerVisible &&
+            state.profile is Profile.StudentProfile &&
+            state.profile.vppId != null) {
+            VppIdManagementDrawer(
+                vppId = state.profile.vppId,
+                onDismiss = { isVppIdManagementDrawerVisible = false }
+            )
         }
     }
 }

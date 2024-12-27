@@ -46,4 +46,10 @@ interface VppIdDao {
     @Transaction
     @Query("SELECT * FROM vpp_id")
     fun getAll(): Flow<List<EmbeddedVppId>>
+
+    @Query("DELETE FROM vpp_id_access WHERE vpp_id = :vppId")
+    suspend fun deleteAccessToken(vppId: Int)
+
+    @Query("DELETE FROM vpp_id_schulverwalter WHERE vpp_id = :vppId")
+    suspend fun deleteSchulverwalterAccessToken(vppId: Int)
 }
