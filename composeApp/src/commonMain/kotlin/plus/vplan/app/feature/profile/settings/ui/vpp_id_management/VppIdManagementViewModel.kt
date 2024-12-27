@@ -8,16 +8,22 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.repository.VppIdDevice
+import plus.vplan.app.feature.profile.settings.domain.usecase.GetVppIdDevicesUseCase
 import plus.vplan.app.feature.profile.settings.domain.usecase.LogoutVppIdUseCase
 
 class VppIdManagementViewModel(
-    private val logoutVppIdUseCase: LogoutVppIdUseCase
+    private val logoutVppIdUseCase: LogoutVppIdUseCase,
+    private val getVppIdDevicesUseCase: GetVppIdDevicesUseCase
 ) : ViewModel() {
     var state by mutableStateOf(VppIdManagementState())
         private set
 
     fun init(vppId: VppId.Active) {
         state = state.copy(vppId = vppId)
+        viewModelScope.launch {
+            state = state.copy(devices = getVppIdDevicesUseCase(vppId))
+        }
     }
 
     fun onEvent(event: VppIdManagementEvent) {
@@ -34,7 +40,8 @@ class VppIdManagementViewModel(
 
 data class VppIdManagementState(
     val vppId: VppId.Active? = null,
-    val deletionState: Response<Unit>? = null
+    val deletionState: Response<Unit>? = null,
+    val devices: Response<List<VppIdDevice>> = Response.Loading
 )
 
 sealed class VppIdManagementEvent {

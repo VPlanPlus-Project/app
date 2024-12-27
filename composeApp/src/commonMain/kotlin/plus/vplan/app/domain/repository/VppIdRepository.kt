@@ -23,5 +23,6 @@ interface VppIdRepository {
 data class VppIdDevice(
     val id: Int,
     val name: String,
-    val connectedAt: LocalDateTime
+    val connectedAt: LocalDateTime,
+    val isThisDevice: Boolean
 )

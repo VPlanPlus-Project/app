@@ -1,46 +1,37 @@
 package plus.vplan.app.feature.profile.settings.ui.vpp_id_management
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.feature.profile.settings.ui.vpp_id_management.components.LogoutDialog
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
@@ -67,6 +58,39 @@ private fun VppIdManagementDrawerContent(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
     ) {
+        Text(
+            text = "Geräte in deiner vpp.ID",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(Modifier.height(4.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize()
+                .clip(RoundedCornerShape(8.dp))
+        ) {
+            when (state.devices) {
+                is Response.Loading -> CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .size(24.dp)
+                )
+                is Response.Success -> {
+                    state.devices.data.forEach {
+                        Text(text = it.toString())
+                    }
+                }
+                is Response.Error -> {
+                    Text(
+                        text = "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
         Button(
             text = "Abmelden",
             state = ButtonState.Enabled,
@@ -77,70 +101,10 @@ private fun VppIdManagementDrawerContent(
         )
     }
 
-    if (isLogoutDialogVisible) AlertDialog(
-        onDismissRequest = { isLogoutDialogVisible = false },
-        confirmButton = {
-            var boxHeight by remember<MutableState<Dp?>> { mutableStateOf(null) }
-            val localDensity = LocalDensity.current
-            Box(
-                modifier = Modifier.then(boxHeight?.let { Modifier.height(it) } ?: Modifier)
-            ) {
-                AnimatedContent(
-                    targetState = state.deletionState,
-                    modifier = Modifier.align(Alignment.Center)
-                ) { logoutState ->
-                    if (logoutState is Response.Loading) CircularProgressIndicator(Modifier.size(24.dp))
-                    else TextButton(
-                        onClick = { onEvent(VppIdManagementEvent.Logout) },
-                        modifier = Modifier.onSizeChanged {
-                            boxHeight = with(localDensity) { it.height.toDp() }
-                        }
-                    ) {
-                        Text(
-                            text = "Abmelden",
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    isLogoutDialogVisible = false
-                }
-            ) {
-                Text("Abbrechen")
-            }
-        },
-        icon = {
-            Icon(
-                painter = painterResource(Res.drawable.logout),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp)
-            )
-        },
-        title = {
-            Text("Abmelden")
-        },
-        text = {
-            Column {
-                Text("Bist du sicher, dass du dich abmelden möchtest?")
-                AnimatedVisibility(
-                    visible = state.deletionState is Response.Error,
-                    modifier = Modifier.fillMaxWidth(),
-                    enter = expandVertically(),
-                    exit = shrinkVertically()
-                ) {
-                    Text(
-                        text = "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-        },
+    if (isLogoutDialogVisible) LogoutDialog(
+        onDismiss = { isLogoutDialogVisible = false },
+        deletionState = state.deletionState,
+        onEvent = onEvent
     )
 }
 

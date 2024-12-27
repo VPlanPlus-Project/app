@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.SerialName
@@ -117,17 +118,18 @@ class VppIdRepositoryImpl(
 
     override suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>> {
         return saveRequest {
-            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/me/devices") {
+            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/me/session") {
                 bearerAuth(vppId.accessToken)
             }
             if (response.status != HttpStatusCode.OK) {
                 logger.e { "Error getting devices: $response" }
                 return response.toResponse()
             }
-//            val data = ResponseDataWrapper.fromJson<List<DeviceResponse>>(response.bodyAsText())
-//                ?: return Response.Error.ParsingError(response.bodyAsText())
-//
-//            return Response.Success(data.map { it.toModel() })
+
+            val data = ResponseDataWrapper.fromJson<List<MeSession>>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
+
+            return Response.Success(data.map { it.toModel() })
         }
     }
 
@@ -166,3 +168,21 @@ private data class UserResponse(
     @SerialName("group_id") val groupId: Int,
     @SerialName("schulverwalter_access_token") val schulverwalterAccessToken: String?,
 )
+
+@Serializable
+private data class MeSession(
+    @SerialName("session_id") val sessionId: Int,
+    @SerialName("session_name") val sessionName: String,
+    @SerialName("created_at") val createdAt: Long,
+    @SerialName("is_current") val isCurrent: Boolean,
+    @SerialName("session_type") val sessionType: Char,
+) {
+    fun toModel(): VppIdDevice {
+        return VppIdDevice(
+            id = sessionId,
+            name = sessionName,
+            connectedAt = Instant.fromEpochSeconds(createdAt).toLocalDateTime(TimeZone.UTC),
+            isThisDevice = isCurrent
+        )
+    }
+}
