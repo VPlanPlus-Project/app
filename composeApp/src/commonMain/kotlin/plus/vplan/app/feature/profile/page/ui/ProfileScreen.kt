@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.ui
+package plus.vplan.app.feature.profile.page.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.feature.profile.ui.components.ProfileTitle
+import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.settings
 
@@ -61,7 +61,11 @@ private fun ProfileContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            ProfileTitle(state.currentProfile?.customName.orEmpty()) { onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(true)) }
+            ProfileTitle(state.currentProfile?.customName.orEmpty()) { onEvent(
+                ProfileScreenEvent.SetProfileSwitcherVisibility(
+                    true
+                )
+            ) }
             FilledTonalIconButton(
                 onClick = {}
             ) {
@@ -87,13 +91,25 @@ private fun ProfileContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { onEvent(ProfileScreenEvent.ToggleDefaultLessonEnabled(state.currentProfile, defaultLesson, !isEnabled)) },
+                            .clickable { onEvent(
+                                ProfileScreenEvent.ToggleDefaultLessonEnabled(
+                                    state.currentProfile,
+                                    defaultLesson,
+                                    !isEnabled
+                                )
+                            ) },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Checkbox(
                             checked = isEnabled,
                             onCheckedChange = {
-                                onEvent(ProfileScreenEvent.ToggleDefaultLessonEnabled(state.currentProfile, defaultLesson, it))
+                                onEvent(
+                                    ProfileScreenEvent.ToggleDefaultLessonEnabled(
+                                        state.currentProfile,
+                                        defaultLesson,
+                                        it
+                                    )
+                                )
                             }
                         )
                         Spacer(Modifier.width(8.dp))

@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import co.touchlab.kermit.Logger
+import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -33,10 +33,11 @@ import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
-import plus.vplan.app.feature.profile.ui.ProfileScreen
-import plus.vplan.app.feature.profile.ui.ProfileScreenEvent
-import plus.vplan.app.feature.profile.ui.ProfileViewModel
-import plus.vplan.app.feature.profile.ui.components.ProfileSwitcher
+import plus.vplan.app.feature.profile.page.ui.ProfileScreen
+import plus.vplan.app.feature.profile.page.ui.ProfileScreenEvent
+import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
+import plus.vplan.app.feature.profile.page.ui.components.ProfileSwitcher
+import plus.vplan.app.feature.profile.settings.ui.ProfileSettingsScreen
 import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
@@ -53,11 +54,11 @@ fun MainScreenHost(
     var currentDestination by rememberSaveable<MutableState<String?>> { mutableStateOf("Home") }
     navController.addOnDestinationChangedListener { _, destination, _ ->
         currentDestination =
-            if (destination.route.orEmpty().startsWith(MainScreen.Home::class.qualifiedName ?: "__")) "Home"
-            else if (destination.route.orEmpty().startsWith(MainScreen.Calendar::class.qualifiedName ?: "__")) "Calendar"
-            else if (destination.route.orEmpty().startsWith(MainScreen.Search::class.qualifiedName ?: "__")) "Search"
-            else if (destination.route.orEmpty().startsWith(MainScreen.Chat::class.qualifiedName ?: "__")) "Chat"
-            else if (destination.route.orEmpty().startsWith(MainScreen.Profile::class.qualifiedName ?: "__")) "Profile"
+            if (destination.route.orEmpty().startsWith(MainScreen.MainHome::class.qualifiedName ?: "__")) "_Home"
+            else if (destination.route.orEmpty().startsWith(MainScreen.MainCalendar::class.qualifiedName ?: "__")) "_Calendar"
+            else if (destination.route.orEmpty().startsWith(MainScreen.MainSearch::class.qualifiedName ?: "__")) "_Search"
+            else if (destination.route.orEmpty().startsWith(MainScreen.MainChat::class.qualifiedName ?: "__")) "_Chat"
+            else if (destination.route.orEmpty().startsWith(MainScreen.MainProfile::class.qualifiedName ?: "__")) "_Profile"
             else null
     }
 
@@ -67,40 +68,40 @@ fun MainScreenHost(
     Scaffold(
         bottomBar = {
             AnimatedVisibility(
-                visible = currentDestination != null,
+                visible = currentDestination?.startsWith("_") == true,
                 enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
                 exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut()
             ) {
                 NavigationBar {
                     NavigationBarItem(
-                        selected = currentDestination == "Home",
+                        selected = currentDestination == "_Home",
                         label = { Text("Home") },
                         icon = { Icon(painter = painterResource(Res.drawable.house), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.Home) { popUpTo(0) } }
+                        onClick = { navController.navigate(MainScreen.MainHome) { popUpTo(0) } }
                     )
                     NavigationBarItem(
-                        selected = currentDestination == "Calendar",
+                        selected = currentDestination == "_Calendar",
                         label = { Text("Kalender") },
                         icon = { Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.Calendar) { popUpTo(MainScreen.Home) } }
+                        onClick = { navController.navigate(MainScreen.MainCalendar) { popUpTo(MainScreen.MainHome) } }
                     )
                     NavigationBarItem(
-                        selected = currentDestination == "Search",
+                        selected = currentDestination == "_Search",
                         label = { Text("Suche") },
                         icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.Search) { popUpTo(MainScreen.Home) } }
+                        onClick = { navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) } }
                     )
                     NavigationBarItem(
-                        selected = currentDestination == "Chat",
+                        selected = currentDestination == "_Chat",
                         label = { Text("Chat") },
                         icon = { Icon(painter = painterResource(Res.drawable.message_square), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.Chat) { popUpTo(MainScreen.Home) } }
+                        onClick = { navController.navigate(MainScreen.MainChat) { popUpTo(MainScreen.MainHome) } }
                     )
                     NavigationBarItem(
-                        selected = currentDestination == "Profile",
+                        selected = currentDestination == "_Profile",
                         label = { Text("Profil") },
                         icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.Profile) { popUpTo(MainScreen.Home) } },
+                        onClick = { navController.navigate(MainScreen.MainProfile) { popUpTo(MainScreen.MainHome) } },
                     )
                 }
             }
@@ -109,13 +110,18 @@ fun MainScreenHost(
         Box(modifier = Modifier.padding(bottom = contentPadding.calculateBottomPadding())) {
             NavHost(
                 navController = navController,
-                startDestination = MainScreen.Home
+                startDestination = MainScreen.MainHome
             ) {
-                composable<MainScreen.Home> { HomeScreen(homeViewModel) }
-                composable<MainScreen.Calendar> { Text("Calendar") }
-                composable<MainScreen.Search> { Text("Search") }
-                composable<MainScreen.Chat> { Text("Chat") }
-                composable<MainScreen.Profile> { ProfileScreen(profileViewModel) }
+                composable<MainScreen.MainHome> { HomeScreen(homeViewModel) }
+                composable<MainScreen.MainCalendar> { Text("Calendar") }
+                composable<MainScreen.MainSearch> { Text("Search") }
+                composable<MainScreen.MainChat> { Text("Chat") }
+                composable<MainScreen.MainProfile> { ProfileScreen(profileViewModel) }
+
+                composable<MainScreen.ProfileSettings> {
+                    val args = it.toRoute<MainScreen.ProfileSettings>()
+                    ProfileSettingsScreen(args.profileId, navController)
+                }
             }
         }
 
@@ -128,20 +134,25 @@ fun MainScreenHost(
                 onSelectProfile = { profileViewModel.onEvent(ProfileScreenEvent.SetActiveProfile(it)) },
                 onDismiss = { profileViewModel.onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(false)) },
                 onCreateNewProfile = onNavigateToOnboarding,
-                onConnectVppId = {
-                    Logger.d { "Opening vpp.ID auth url: $VPP_ID_AUTH_URL" }
-                    BrowserIntent.openUrl(VPP_ID_AUTH_URL)
+                onConnectVppId = { BrowserIntent.openUrl(VPP_ID_AUTH_URL) },
+                onOpenProfileSettings = {
+                    navController.navigate(MainScreen.ProfileSettings(activeProfile.id.toString()))
                 }
             )
         }
     }
 }
 
+/**
+ * @param name The name of the screen, used for the route. If it starts with an underscore, the bottom bar will be shown.
+ */
 @Serializable
 sealed class MainScreen(val name: String) {
-    @Serializable data object Home : MainScreen("Home")
-    @Serializable data object Calendar : MainScreen("Calendar")
-    @Serializable data object Search : MainScreen("Search")
-    @Serializable data object Chat : MainScreen("Chat")
-    @Serializable data object Profile : MainScreen("Profile")
+    @Serializable data object MainHome : MainScreen("_Home")
+    @Serializable data object MainCalendar : MainScreen("_Calendar")
+    @Serializable data object MainSearch : MainScreen("_Search")
+    @Serializable data object MainChat : MainScreen("_Chat")
+    @Serializable data object MainProfile : MainScreen("_Profile")
+
+    @Serializable data class ProfileSettings(val profileId: String) : MainScreen("ProfileSettings")
 }

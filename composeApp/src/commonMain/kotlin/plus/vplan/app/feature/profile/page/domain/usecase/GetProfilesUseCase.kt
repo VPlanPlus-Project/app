@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.domain.usecase
+package plus.vplan.app.feature.profile.page.domain.usecase
 
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.domain.repository.ProfileRepository

@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.ui.components
+package plus.vplan.app.feature.profile.page.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -57,7 +57,8 @@ fun ProfileSwitcher(
     onDismiss: () -> Unit,
     onSelectProfile: (profile: Profile) -> Unit,
     onCreateNewProfile: (school: School?) -> Unit,
-    onConnectVppId: () -> Unit
+    onConnectVppId: () -> Unit,
+    onOpenProfileSettings: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
@@ -181,7 +182,7 @@ fun ProfileSwitcher(
                     size = ButtonSize.Normal,
                     type = ButtonType.Outlined,
                     center = true,
-                    onClick = { onCreateNewProfile(null) },
+                    onClick = { hideSheet(); onCreateNewProfile(null) },
                     modifier = Modifier.weight(1f, true)
                 )
                 Button(
@@ -190,7 +191,7 @@ fun ProfileSwitcher(
                     size = ButtonSize.Normal,
                     type = ButtonType.PRIMARY,
                     center = true,
-                    onClick = {},
+                    onClick = { hideSheet(); onOpenProfileSettings() },
                     modifier = Modifier.weight(1f, true)
                 )
             }

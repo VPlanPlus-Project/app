@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.ui
+package plus.vplan.app.feature.profile.page.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,9 +12,9 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
-import plus.vplan.app.feature.profile.domain.usecase.GetProfilesUseCase
-import plus.vplan.app.feature.profile.domain.usecase.HasVppIdLinkedUseCase
-import plus.vplan.app.feature.profile.domain.usecase.SetProfileDefaultLessonEnabledUseCase
+import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
+import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
+import plus.vplan.app.feature.profile.page.domain.usecase.SetProfileDefaultLessonEnabledUseCase
 
 class ProfileViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
