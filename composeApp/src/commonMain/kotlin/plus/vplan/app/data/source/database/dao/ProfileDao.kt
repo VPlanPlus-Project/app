@@ -48,4 +48,7 @@ interface ProfileDao {
 
     @Query("UPDATE profiles SET display_name = :displayName WHERE id = :id")
     suspend fun updateDisplayName(id: Uuid, displayName: String?)
+
+    @Query("UPDATE profiles_group SET vpp_id = :vppId WHERE profile_id = :id")
+    suspend fun updateVppId(id: Uuid, vppId: Int)
 }

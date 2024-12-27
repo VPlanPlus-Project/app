@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "37fc93623f727842a7018ed45c8c9eba",
+    "identityHash": "ff1b569b6635971a47814e5150175e74",
     "entities": [
       {
         "tableName": "schools",
@@ -418,7 +418,7 @@
       },
       {
         "tableName": "profiles_group",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `group_id` INTEGER NOT NULL, PRIMARY KEY(`profile_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `group_id` INTEGER NOT NULL, `vpp_id` INTEGER, PRIMARY KEY(`profile_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`vpp_id`) REFERENCES `vpp_id`(`id`) ON UPDATE CASCADE ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "profileId",
@@ -431,6 +431,11 @@
             "columnName": "group_id",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "vppId",
+            "columnName": "vpp_id",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -457,6 +462,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_profiles_group_group_id` ON `${TABLE_NAME}` (`group_id`)"
+          },
+          {
+            "name": "index_profiles_group_vpp_id",
+            "unique": true,
+            "columnNames": [
+              "vpp_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_profiles_group_vpp_id` ON `${TABLE_NAME}` (`vpp_id`)"
           }
         ],
         "foreignKeys": [
@@ -477,6 +491,17 @@
             "onUpdate": "CASCADE",
             "columns": [
               "group_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "vpp_id",
+            "onDelete": "SET NULL",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "vpp_id"
             ],
             "referencedColumns": [
               "id"
@@ -2068,7 +2093,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '37fc93623f727842a7018ed45c8c9eba')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ff1b569b6635971a47814e5150175e74')"
     ]
   }
 }

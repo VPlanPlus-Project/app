@@ -42,7 +42,8 @@ class ProfileRepositoryImpl(
         vppDatabase.profileDao.upsertGroupProfile(
             DbGroupProfile(
                 profileId = id,
-                groupId = group.id
+                groupId = group.id,
+                vppId = null
             )
         )
         disabledDefaultLessons.forEach {
@@ -106,5 +107,9 @@ class ProfileRepositoryImpl(
 
     override suspend fun updateDisplayName(id: Uuid, displayName: String) {
         vppDatabase.profileDao.updateDisplayName(id, displayName.ifBlank { null })
+    }
+
+    override suspend fun updateVppId(id: Uuid, vppId: Int) {
+        vppDatabase.profileDao.updateVppId(id, vppId)
     }
 }

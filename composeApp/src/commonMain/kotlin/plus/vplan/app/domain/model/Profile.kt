@@ -15,7 +15,8 @@ abstract class Profile {
         override val id: Uuid,
         override val customName: String?,
         val group: Group,
-        val defaultLessons: Map<DefaultLesson, Boolean>
+        val defaultLessons: Map<DefaultLesson, Boolean>,
+        val vppId: VppId.Active?
     ) : Profile() {
         override val school = group.school
         override val profileType = ProfileType.STUDENT

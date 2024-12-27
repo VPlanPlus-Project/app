@@ -21,3 +21,7 @@ fun VppIdSetupScreen(token: String) {
         Text(state.user.toString())
     }
 }
+
+/* TODO: Show profile picker if there are multiple profiles that match the vpp.ID target (group)
+ * or when the same vpp.ID is already connected, for instance, if it got logged out remotely.
+ */
