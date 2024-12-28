@@ -4,6 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -16,22 +18,20 @@ class CalendarViewModel : ViewModel() {
         private set
 
     fun onEvent(event: CalendarEvent) {
+        viewModelScope.launch {
+            when (event) {
+                is CalendarEvent.SelectDate -> state = state.copy(selectedDate = event.date)
+            }
+        }
     }
 }
 
 data class CalendarState(
     val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
-    val currentSelectCause: DateSelectCause = DateSelectCause.CALENDAR_CLICK,
     val currentProfile: Profile? = null,
     val days: Map<LocalDate, SchoolDay> = emptyMap(),
 )
 
 sealed class CalendarEvent {
-    data class SelectDate(val date: LocalDate, val cause: DateSelectCause) : CalendarEvent()
-}
-
-enum class DateSelectCause {
-    CALENDAR_SWIPE,
-    CALENDAR_CLICK,
-    DAY_SWIPE,
+    data class SelectDate(val date: LocalDate) : CalendarEvent()
 }

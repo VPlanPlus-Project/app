@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -98,7 +99,6 @@ private fun CalendarScreenContent(
         }
     }
 
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier
@@ -106,6 +106,9 @@ private fun CalendarScreenContent(
                 .fillMaxSize()
                 .nestedScroll(scrollConnection)
         ) {
+            Button(onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) }) {
+                Text("Heute auswählen")
+            }
             Column (
                 modifier = Modifier
                     .fillMaxWidth()
@@ -122,7 +125,7 @@ private fun CalendarScreenContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = selectedDate.format(LocalDate.Format {
+                    text = state.selectedDate.format(LocalDate.Format {
                         monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
                         char(' ')
                         yearTwoDigits(2000)
@@ -136,13 +139,13 @@ private fun CalendarScreenContent(
                 ScrollableDateSelector(
                     scrollProgress = displayScrollProgress,
                     allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
-                    selectedDate = selectedDate,
-                    onSelectDate = { selectedDate = it }
+                    selectedDate = state.selectedDate,
+                    onSelectDate = { onEvent(CalendarEvent.SelectDate(it)) }
                 )
             }
             HorizontalDivider()
             Text(
-                text = selectedDate.format(LocalDate.Formats.ISO),
+                text = state.selectedDate.format(LocalDate.Formats.ISO),
                 modifier = Modifier.padding(8.dp)
             )
             Column(
