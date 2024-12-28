@@ -25,6 +25,7 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun Button(
+    modifier: Modifier = Modifier,
     text: String,
     icon: DrawableResource? = null,
     state: ButtonState = ButtonState.Enabled,
@@ -37,7 +38,7 @@ fun Button(
     val clickEvent = { if (!onlyEventOnActive || state == ButtonState.Enabled) onClick() }
     val enabled = state != ButtonState.Disabled
     val shape = RoundedCornerShape(8.dp)
-    val modifier = Modifier.then(
+    val buttonModifier = modifier.then(
         when (size) {
             ButtonSize.Big -> Modifier.defaultMinSize(minHeight = 56.dp).fillMaxWidth()
             ButtonSize.Normal -> Modifier.defaultMinSize(minHeight = 48.dp).fillMaxWidth()
@@ -85,7 +86,7 @@ fun Button(
             onClick = clickEvent,
             enabled = enabled,
             shape = shape,
-            modifier = modifier,
+            modifier = buttonModifier,
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = MaterialTheme.colorScheme.primary
             )
@@ -97,7 +98,7 @@ fun Button(
             onClick = clickEvent,
             enabled = enabled,
             shape = shape,
-            modifier = modifier,
+            modifier = buttonModifier,
             colors = when (type) {
                 ButtonType.PRIMARY -> ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -110,6 +111,10 @@ fun Button(
                 ButtonType.TERTIARY -> ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.tertiary,
                     contentColor = MaterialTheme.colorScheme.onTertiary
+                )
+                ButtonType.Danger -> ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
                 )
                 else -> ButtonDefaults.buttonColors()
             }
@@ -124,7 +129,7 @@ enum class ButtonSize {
 }
 
 enum class ButtonType {
-    PRIMARY, SECONDARY, TERTIARY, Outlined, OutlinedOnSheet
+    PRIMARY, SECONDARY, TERTIARY, Outlined, OutlinedOnSheet, Danger
 }
 
 enum class ButtonState {

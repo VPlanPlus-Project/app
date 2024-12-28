@@ -4,23 +4,30 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import co.touchlab.kermit.Logger
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        activity = this
+
         enableEdgeToEdge()
 
-        setContent {
-            App()
+        var task: StartTask? = null
+
+        intent?.let {
+            val action = it.action
+            val data = it.data
+            Logger.d { "Action: $action, Data: $data" }
+            if (action == "android.intent.action.VIEW" && data.toString().startsWith("vpp://app/auth/")) {
+                val token = data.toString().substringAfter("vpp://app/auth/")
+                task = StartTask.VppIdLogin(token)
+            }
         }
+
+        setContent { App(task) }
     }
 }
 
-@Preview
-@Composable
-fun AppAndroidPreview() {
-    App()
-}
+lateinit var activity: MainActivity

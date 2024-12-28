@@ -1,6 +1,7 @@
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
@@ -24,7 +25,7 @@ class ProfileRepositoryImpl(
     }
 
     override fun getAll(): Flow<List<Profile>> {
-        return vppDatabase.profileDao.getAll().map { it.mapNotNull { profile -> profile.toModel() } }
+        return vppDatabase.profileDao.getAll().map { it.mapNotNull { profile -> profile.toModel() } }.distinctUntilChanged()
     }
 
     override suspend fun upsert(
@@ -42,7 +43,8 @@ class ProfileRepositoryImpl(
         vppDatabase.profileDao.upsertGroupProfile(
             DbGroupProfile(
                 profileId = id,
-                groupId = group.id
+                groupId = group.id,
+                vppId = null
             )
         )
         disabledDefaultLessons.forEach {
@@ -102,5 +104,13 @@ class ProfileRepositoryImpl(
     ) {
         if (enable) vppDatabase.profileDao.deleteDisabledDefaultLesson(profileId, defaultLessonId)
         else vppDatabase.profileDao.insertDisabledDefaultLesson(profileId, defaultLessonId)
+    }
+
+    override suspend fun updateDisplayName(id: Uuid, displayName: String) {
+        vppDatabase.profileDao.updateDisplayName(id, displayName.ifBlank { null })
+    }
+
+    override suspend fun updateVppId(id: Uuid, vppId: Int?) {
+        vppDatabase.profileDao.updateVppId(id, vppId)
     }
 }

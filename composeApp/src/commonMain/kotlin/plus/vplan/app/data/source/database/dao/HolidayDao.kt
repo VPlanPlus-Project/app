@@ -19,6 +19,7 @@ interface HolidayDao {
         holidays.forEach { upsert(it) }
     }
 
+    @Transaction
     @Query("SELECT * FROM holidays WHERE school_id = :schoolId")
     fun getBySchoolId(schoolId: Int): Flow<List<EmbeddedHoliday>>
 

@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.ui
+package plus.vplan.app.feature.profile.page.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,14 +12,16 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
-import plus.vplan.app.feature.profile.domain.usecase.GetProfilesUseCase
-import plus.vplan.app.feature.profile.domain.usecase.SetProfileDefaultLessonEnabledUseCase
+import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
+import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
+import plus.vplan.app.feature.profile.page.domain.usecase.SetProfileDefaultLessonEnabledUseCase
 
 class ProfileViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val setCurrentProfileUseCase: SetCurrentProfileUseCase,
     private val getProfilesUseCase: GetProfilesUseCase,
-    private val setProfileDefaultLessonEnabledUseCase: SetProfileDefaultLessonEnabledUseCase
+    private val setProfileDefaultLessonEnabledUseCase: SetProfileDefaultLessonEnabledUseCase,
+    private val hasVppIdLinkedUseCase: HasVppIdLinkedUseCase
 ) : ViewModel() {
     var state by mutableStateOf(ProfileState())
         private set
@@ -28,9 +30,14 @@ class ProfileViewModel(
         viewModelScope.launch {
             combine(
                 getCurrentProfileUseCase(),
-                getProfilesUseCase()
-            ) { currentProfile, profiles ->
-                state.copy(currentProfile = currentProfile, profiles = profiles)
+                getProfilesUseCase(),
+                hasVppIdLinkedUseCase()
+            ) { currentProfile, profiles, hasVppIdLinked ->
+                state.copy(
+                    currentProfile = currentProfile,
+                    profiles = profiles,
+                    showVppIdBanner = !hasVppIdLinked
+                )
             }
             .collect { state = it }
         }
@@ -50,6 +57,7 @@ class ProfileViewModel(
 data class ProfileState(
     val currentProfile: Profile? = null,
     val profiles: Map<School, List<Profile>> = emptyMap(),
+    val showVppIdBanner: Boolean = false,
 
     val isSheetVisible: Boolean = false
 )

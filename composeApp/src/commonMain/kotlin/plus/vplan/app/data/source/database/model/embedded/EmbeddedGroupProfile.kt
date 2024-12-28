@@ -8,6 +8,7 @@ import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
 import plus.vplan.app.data.source.database.model.database.DbProfile
+import plus.vplan.app.data.source.database.model.database.DbVppId
 
 data class EmbeddedGroupProfile(
     @Embedded val profileLink: DbGroupProfile,
@@ -35,5 +36,10 @@ data class EmbeddedGroupProfile(
             entityColumn = "default_lesson_id"
         ),
         entity = DbDefaultLesson::class
-    ) val disabledDefaultLesson: List<EmbeddedDefaultLesson>
+    ) val disabledDefaultLesson: List<EmbeddedDefaultLesson>,
+    @Relation(
+        parentColumn = "vpp_id",
+        entityColumn = "id",
+        entity = DbVppId::class
+    ) val vppId: EmbeddedVppId?
 )

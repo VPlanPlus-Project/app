@@ -94,7 +94,8 @@ class OnboardingRepositoryImpl(
                 basicAuth("$username@$sp24Id", password)
             }
             if (result.status.isSuccess()) {
-                val jobId = ResponseDataWrapper.fromJson<String>(result.bodyAsText()) ?: return Response.Error.ParsingError
+                val jobId = ResponseDataWrapper.fromJson<String>(result.bodyAsText())
+                    ?: return Response.Error.ParsingError(result.bodyAsText())
                 onboardingDatabase.keyValueDao.insert("indiware.job_id", jobId)
                 return Response.Success(jobId)
             }
@@ -113,7 +114,9 @@ class OnboardingRepositoryImpl(
                 basicAuth("$username@$sp24Id", password)
             }
             if (response.status.isSuccess()) {
-                val data = ResponseDataWrapper.fromJson<Sp24UpdateJobWrapper>(response.bodyAsText()) ?: return Response.Error.ParsingError
+                val data = ResponseDataWrapper.fromJson<Sp24UpdateJobWrapper>(response.bodyAsText())
+                    ?: return Response.Error.ParsingError(response.bodyAsText())
+
                 return Response.Success(data.log.map { it.code })
             }
             return response.toResponse()

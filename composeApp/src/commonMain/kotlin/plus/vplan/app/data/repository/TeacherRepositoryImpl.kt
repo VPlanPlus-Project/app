@@ -34,7 +34,8 @@ class TeacherRepositoryImpl(
                 school.getSchoolApiAccess().authentication(this)
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
-            val data = ResponseDataWrapper.fromJson<List<SchoolItemTeachersResponse>>(response.bodyAsText()) ?: return Response.Error.ParsingError
+            val data = ResponseDataWrapper.fromJson<List<SchoolItemTeachersResponse>>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
 
             data.forEach { teacher ->
                 vppDatabase.teacherDao.upsertTeacher(
@@ -61,7 +62,9 @@ class TeacherRepositoryImpl(
                 school.getSchoolApiAccess().authentication(this)
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
-            val data = ResponseDataWrapper.fromJson<SchoolItemTeachersResponse>(response.bodyAsText()) ?: return Response.Error.ParsingError
+            val data = ResponseDataWrapper.fromJson<SchoolItemTeachersResponse>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
+
             vppDatabase.teacherDao.upsertTeacher(
                 DbTeacher(
                     id = data.id,

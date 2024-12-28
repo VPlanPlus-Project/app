@@ -45,4 +45,10 @@ interface ProfileDao {
 
     @Query("DELETE FROM profiles_group_disabled_default_lessons WHERE default_lesson_id = :defaultLessonId AND profile_id = :profileId")
     suspend fun deleteDisabledDefaultLesson(profileId: Uuid, defaultLessonId: String)
+
+    @Query("UPDATE profiles SET display_name = :displayName WHERE id = :id")
+    suspend fun updateDisplayName(id: Uuid, displayName: String?)
+
+    @Query("UPDATE profiles_group SET vpp_id = :vppId WHERE profile_id = :id")
+    suspend fun updateVppId(id: Uuid, vppId: Int?)
 }

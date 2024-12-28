@@ -7,6 +7,7 @@ import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.VppId
 
 data class EmbeddedProfile(
     @Embedded val profile: DbProfile,
@@ -37,7 +38,8 @@ data class EmbeddedProfile(
                     embeddedGroupProfile.defaultLessons
                         .sortedBy { it.defaultLesson.subject + "_" + it.course?.course?.name + "_" + it.teacher?.teacher?.name }
                         .associateWith { disabledDefaultLessons.contains(it.defaultLesson.id).not() }
-                        .mapKeys { it.key.toModel() }
+                        .mapKeys { it.key.toModel() },
+                vppId = embeddedGroupProfile.vppId?.toModel() as? VppId.Active
             )
         }
         if (embeddedTeacherProfile != null) {
