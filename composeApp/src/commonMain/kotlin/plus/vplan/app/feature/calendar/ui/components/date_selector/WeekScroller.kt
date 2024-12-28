@@ -6,8 +6,10 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.until
 import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
@@ -21,7 +23,7 @@ fun WeekScroller(
     onChangeSelectedDate: (LocalDate) -> Unit
 ) {
     val referenceWeek = LocalDate.now().atStartOfWeek()
-    val pagerState = rememberPagerState(initialPage = WEEK_PAGER_SIZE/2) { WEEK_PAGER_SIZE }
+    val pagerState = rememberPagerState(initialPage = (WEEK_PAGER_SIZE / 2) + referenceWeek.until(selectedDate.atStartOfWeek(), DateTimeUnit.WEEK)) { WEEK_PAGER_SIZE }
     LaunchedEffect(pagerState.currentPage) {
         val date = (referenceWeek + ((pagerState.currentPage - WEEK_PAGER_SIZE / 2) * 7).days) + selectedDate.dayOfWeek.isoDayNumber.minus(1).days
         onChangeSelectedDate(date)

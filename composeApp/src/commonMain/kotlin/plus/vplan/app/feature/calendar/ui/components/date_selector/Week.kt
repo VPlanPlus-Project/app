@@ -28,7 +28,8 @@ fun Week(
                 date = date,
                 isSelected = selectedDate == date,
                 onClick = { onDateSelected(date) },
-                height = height
+                height = height,
+                isOtherMonth = date.month != selectedDate.month
             )
         }
     }

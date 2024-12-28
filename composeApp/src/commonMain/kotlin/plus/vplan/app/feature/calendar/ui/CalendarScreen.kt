@@ -2,7 +2,6 @@ package plus.vplan.app.feature.calendar.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -25,12 +26,15 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.navigation.NavHostController
 import co.touchlab.kermit.Logger
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
 import plus.vplan.app.utils.now
@@ -60,11 +64,19 @@ private fun CalendarScreenContent(
     var scrollProgress by remember { mutableStateOf(0f) }
     val contentScrollState = rememberScrollState()
     var isUserScrolling by remember { mutableStateOf(false) }
+    var isAnimating by remember { mutableStateOf(false) }
     LaunchedEffect(contentScrollState.isScrollInProgress) {
         isUserScrolling = contentScrollState.isScrollInProgress
-        if (!isUserScrolling) scrollProgress = scrollProgress.roundToInt().toFloat()
+        if (!isUserScrolling) {
+            scrollProgress = scrollProgress.roundToInt().toFloat()
+            isAnimating = true
+        }
     }
-    val animatedScrollProgress by animateFloatAsState(targetValue = scrollProgress, label = "scrollProgress")
+    val animatedScrollProgress by animateFloatAsState(
+        targetValue = scrollProgress,
+        label = "scrollProgress",
+        finishedListener = { isAnimating = false }
+    )
     val displayScrollProgress = if (isUserScrolling) scrollProgress else animatedScrollProgress
 
     val scrollConnection = remember {
@@ -97,7 +109,7 @@ private fun CalendarScreenContent(
                 .fillMaxSize()
                 .nestedScroll(scrollConnection)
         ) {
-            Box(
+            Column (
                 modifier = Modifier
                     .fillMaxWidth()
                     .pointerInput(Unit) {
@@ -109,16 +121,24 @@ private fun CalendarScreenContent(
                             val y = (with(localDensity) { dragAmount.toDp() }) / (5 * weekHeight)
                             scrollProgress = (scrollProgress + y).coerceIn(0f, 1f)
                         }
-                    }
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-//                Month(
-//                    startDate = LocalDate(2024, 11, 25),
-//                    keepWeek = LocalDate(2024, 12, 23),
-//                    scrollProgress = displayScrollProgress
-//                )
+                Text(
+                    text = selectedDate.format(LocalDate.Format {
+                        monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
+                        char(' ')
+                        yearTwoDigits(2000)
+                    }),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .padding(vertical = 4.dp)
+                        .fillMaxWidth(),
+                    style = MaterialTheme.typography.headlineSmall
+                )
                 ScrollableDateSelector(
                     scrollProgress = displayScrollProgress,
-                    isScrollInProgress = isUserScrolling,
+                    allowInteractions = !isUserScrolling && !isAnimating,
                     selectedDate = selectedDate,
                     onSelectDate = { selectedDate = it }
                 )
