@@ -99,6 +99,7 @@ data class IndiwareTimeTable(
             val subject: String,
             val teacher: List<String>,
             val room: List<String>,
+            val weekType: String?
         )
     }
 }

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ff1b569b6635971a47814e5150175e74",
+    "identityHash": "59499e24f2286b55c0662c89ff3c54b9",
     "entities": [
       {
         "tableName": "schools",
@@ -1102,7 +1102,7 @@
       },
       {
         "tableName": "timetable_lessons",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `day_of_week` TEXT NOT NULL, `week_id` TEXT NOT NULL, `lesson_time_id` TEXT NOT NULL, `subject` TEXT, `version` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`lesson_time_id`) REFERENCES `lesson_times`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `day_of_week` TEXT NOT NULL, `week_id` TEXT NOT NULL, `lesson_time_id` TEXT NOT NULL, `subject` TEXT, `version` TEXT NOT NULL, `week_type` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`lesson_time_id`) REFERENCES `lesson_times`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1138,6 +1138,11 @@
             "columnName": "version",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "weekType",
+            "columnName": "week_type",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -2093,7 +2098,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ff1b569b6635971a47814e5150175e74')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '59499e24f2286b55c0662c89ff3c54b9')"
     ]
   }
 }

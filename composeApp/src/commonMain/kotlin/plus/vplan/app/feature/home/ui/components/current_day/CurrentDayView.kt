@@ -111,7 +111,7 @@ fun CurrentDayView(
 
             if (currentLessons.all { it.first.subject == null }) {
                 val nextActualLesson = day.lessons
-                    .firstOrNull { it.subject != null && it.lessonTime.start > currentLessons.maxOf { it.first.lessonTime.end } }
+                    .firstOrNull { lesson -> lesson.subject != null && lesson.lessonTime.start > currentLessons.maxOf { it.first.lessonTime.end } }
                 InfoCard(
                     imageVector = Res.drawable.lightbulb,
                     modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp),
@@ -156,6 +156,7 @@ fun CurrentDayView(
                     showFirstGradient =
                     lessonsGroupedByLessonNumber.keys.min() > (currentLessons.minOfOrNull { it.first.lessonTime.lessonNumber }
                         ?: -1),
+                    date = day.date,
                     lessons = lessonsGroupedByLessonNumber
                 )
             }

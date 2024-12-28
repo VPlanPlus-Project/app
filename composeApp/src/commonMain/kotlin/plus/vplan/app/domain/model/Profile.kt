@@ -24,9 +24,13 @@ abstract class Profile {
         override val originalName = group.name
 
         override fun isLessonRelevant(lesson: Lesson): Boolean {
-            return this.group in lesson.groups && lesson.defaultLesson?.let {
-                defaultLessons[it] != false
-            } ?: true
+            return this.group in lesson.groups &&
+                    ((lesson.defaultLesson != null && defaultLessons[lesson.defaultLesson] != false) ||
+                            (lesson is Lesson.TimetableLesson &&
+                                    lesson.subject in defaultLessons.mapKeys { it.key.course?.name } &&
+                                    defaultLessons.none { it.key.course?.name == lesson.subject && !it.value }
+                                    )
+                            )
         }
     }
 

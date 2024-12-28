@@ -12,11 +12,16 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.utils.transparent
 
 @Composable
-fun FollowingLessons(showFirstGradient: Boolean, lessons: Map<Int, List<Lesson>>) {
+fun FollowingLessons(
+    showFirstGradient: Boolean,
+    date: LocalDate,
+    lessons: Map<Int, List<Lesson>>
+) {
     lessons
         .entries
         .forEachIndexed { i, (_, followingLessons) ->
@@ -63,7 +68,7 @@ fun FollowingLessons(showFirstGradient: Boolean, lessons: Map<Int, List<Lesson>>
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 followingLessons.forEach { followingLesson ->
-                    FollowingLesson(followingLesson)
+                    FollowingLesson(followingLesson, date)
                 }
             }
         }

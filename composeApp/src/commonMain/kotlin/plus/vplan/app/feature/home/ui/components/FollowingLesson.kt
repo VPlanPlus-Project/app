@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atDate
@@ -47,7 +48,8 @@ fun headerFont() = MaterialTheme.typography.bodyMedium
 
 @Composable
 fun FollowingLesson(
-    lesson: Lesson
+    lesson: Lesson,
+    date: LocalDate
 ) {
     Column(
         modifier = Modifier
@@ -106,9 +108,9 @@ fun FollowingLesson(
                     text = buildString {
                         append(lesson.lessonTime.lessonNumber)
                         append(". Stunde $DOT ")
-                        append(lesson.lessonTime.start.atDate(lesson.date).format())
+                        append(lesson.lessonTime.start.atDate(date).format())
                         append(" - ")
-                        append(lesson.lessonTime.end.atDate(lesson.date).format())
+                        append(lesson.lessonTime.end.atDate(date).format())
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface

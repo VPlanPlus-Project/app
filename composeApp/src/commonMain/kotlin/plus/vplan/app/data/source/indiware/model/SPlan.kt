@@ -35,7 +35,14 @@ data class SPlan(
             @SerialName("PlKl") val lessonClass: Class,
             @SerialName("PlLe") val teacher: Teacher,
             @SerialName("PlRa") val room: Room,
+            @SerialName("PlWo") val weekType: WeekType? = null,
         ) {
+            @Serializable
+            @SerialName("PlWo")
+            data class WeekType(
+                @XmlValue val value: String
+            )
+
             @Serializable
             @SerialName("PlTg")
             data class DayOfWeek(

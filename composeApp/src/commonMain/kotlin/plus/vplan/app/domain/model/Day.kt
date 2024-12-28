@@ -47,4 +47,11 @@ sealed interface SchoolDay{
         override val school: School,
         override val nextRegularSchoolDay: LocalDate?
     ) : SchoolDay
+
+    data class Weekend(
+        override val id: String,
+        override val date: LocalDate,
+        override val school: School,
+        override val nextRegularSchoolDay: LocalDate?
+    ) : SchoolDay
 }

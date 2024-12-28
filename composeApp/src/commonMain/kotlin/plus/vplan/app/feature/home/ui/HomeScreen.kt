@@ -108,7 +108,7 @@ private fun HomeContent(
                     ) { page ->
                         val day = if (page == 0) state.currentDay else state.nextDay
                         when (day) {
-                            is SchoolDay.Holiday -> HolidayScreen(nextRegularSchoolDay = day.nextRegularSchoolDay)
+                            is SchoolDay.Holiday, is SchoolDay.Weekend -> HolidayScreen(isWeekend = day is SchoolDay.Weekend, nextRegularSchoolDay = day.nextRegularSchoolDay)
                             is SchoolDay.Unknown, null -> Text("Unbekannter Tag")
                             is SchoolDay.NormalDay -> {
                                 if (page == 0) CurrentDayView(

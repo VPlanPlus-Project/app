@@ -2,10 +2,7 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
 import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.isoDayNumber
-import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Lesson
@@ -18,7 +15,6 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.latest
 
 private val LOGGER = Logger.withTag("UpdateTimetableUseCase")
@@ -77,8 +73,9 @@ class UpdateTimetableUseCase(
                 val lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
                 clazz.lessons.map { lesson ->
                     Lesson.TimetableLesson(
-                        date = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.atStartOfWeek().plus(lesson.dayOfWeek.isoDayNumber-1, DateTimeUnit.DAY),
+                        dayOfWeek = lesson.dayOfWeek,
                         week = currentWeek ?: weeks.first(),
+                        weekType = lesson.weekType,
                         subject = lesson.subject,
                         rooms = lesson.room.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } },
                         teachers = lesson.teacher.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } },

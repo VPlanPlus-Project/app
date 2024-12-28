@@ -29,6 +29,7 @@ import vplanplus.composeapp.generated.resources.undraw_relaxing_at_home_white
 @Composable
 fun HolidayScreen(
     modifier: Modifier = Modifier,
+    isWeekend: Boolean,
     nextRegularSchoolDay: LocalDate?
 ) {
     Column(
@@ -49,7 +50,7 @@ fun HolidayScreen(
         )
         Column(Modifier.fillMaxWidth()) {
             Text(
-                text = "Schulfreier Tag",
+                text = if (isWeekend) "Wochenende" else "Schulfreier Tag",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     brush = Brush.horizontalGradient(
                         listOf(
