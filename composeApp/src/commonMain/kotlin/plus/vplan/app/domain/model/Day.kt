@@ -20,7 +20,7 @@ data class Day(
 sealed interface SchoolDay{
     val id: String
     val date: LocalDate
-    val school: School
+    val school: School?
     val nextRegularSchoolDay: LocalDate?
 
     data class NormalDay(
@@ -35,10 +35,10 @@ sealed interface SchoolDay{
 
     data class Unknown(
         override val date: LocalDate,
-        override val school: School
     ) : SchoolDay {
         override val id: String = "no_id"
         override val nextRegularSchoolDay: LocalDate? = null
+        override val school: School? = null
     }
 
     data class Holiday(

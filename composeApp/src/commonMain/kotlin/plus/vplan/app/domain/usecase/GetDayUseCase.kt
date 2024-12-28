@@ -82,10 +82,7 @@ class GetDayUseCase(
                     }
                 }
 
-                if (dayWeek == null) return@combine SchoolDay.Unknown(
-                    date = date,
-                    school = profile.school
-                )
+                if (dayWeek == null) return@combine SchoolDay.Unknown(date = date)
 
                 val timetableLessons = timetable.filter { timetableLesson ->
                     val a = timetableLesson.week.weekIndex
