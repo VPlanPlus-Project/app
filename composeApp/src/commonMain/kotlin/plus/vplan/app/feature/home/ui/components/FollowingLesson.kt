@@ -29,6 +29,7 @@ import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
 
 private fun LocalDateTime.format(): String {
@@ -118,6 +119,27 @@ fun FollowingLesson(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
+                    if (lesson is Lesson.TimetableLesson && lesson.weekType != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) weekType@{
+                            Icon(
+                                painter = painterResource(Res.drawable.calendar),
+                                modifier = Modifier
+                                    .padding(end = 2.dp)
+                                    .size(MaterialTheme.typography.bodySmall.lineHeight.toDp()),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Nur in ${lesson.weekType}-Woche",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),

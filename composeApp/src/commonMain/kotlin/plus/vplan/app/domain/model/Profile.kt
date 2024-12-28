@@ -73,26 +73,6 @@ abstract class Profile {
             return lesson.rooms?.contains(this.room) == true
         }
     }
-
-//    override fun hashCode(): Int {
-//        var result = school.hashCode()
-//        result = 31 * result + profileType.hashCode()
-//        result = 31 * result + displayName.hashCode()
-//        result = 31 * result + originalName.hashCode()
-//        return result
-//    }
-//
-//    override fun equals(other: Any?): Boolean {
-//        if (this === other) return true
-//        if (other !is Profile) return false
-//
-//        if (school != other.school) return false
-//        if (profileType != other.profileType) return false
-//        if (displayName != other.displayName) return false
-//        if (originalName != other.originalName) return false
-//
-//        return true
-//    }
 }
 
 enum class ProfileType {
