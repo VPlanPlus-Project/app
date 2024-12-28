@@ -3,9 +3,6 @@ package plus.vplan.app.data.source.database.model.embedded
 import androidx.room.Embedded
 import androidx.room.Junction
 import androidx.room.Relation
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.isoDayNumber
-import kotlinx.datetime.plus
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbRoom
@@ -62,16 +59,16 @@ data class EmbeddedTimetableLesson(
 ) {
     fun toModel(): Lesson.TimetableLesson {
         val week = week.toModel()
-        val date = week.start.plus(timetableLesson.dayOfWeek.isoDayNumber.minus(1), DateTimeUnit.DAY)
         return Lesson.TimetableLesson(
             id = timetableLesson.id,
-            date = date,
+            dayOfWeek = timetableLesson.dayOfWeek,
             week = week,
             subject = timetableLesson.subject,
             teachers = teachers.map { it.toModel() },
             rooms = rooms.map { it.toModel() },
             groups = groups.map { it.toModel() },
-            lessonTime = lessonTime.toModel()
+            lessonTime = lessonTime.toModel(),
+            weekType = timetableLesson.weekType
         )
     }
 }

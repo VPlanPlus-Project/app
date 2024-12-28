@@ -1,11 +1,11 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.Uuid
 
 sealed interface Lesson {
     val id: String
-    val date: LocalDate
     val week: Week
     val subject: String?
     val teachers: List<Teacher>
@@ -16,39 +16,42 @@ sealed interface Lesson {
 
     data class TimetableLesson(
         override val id: String,
-        override val date: LocalDate,
+        val dayOfWeek: DayOfWeek,
         override val week: Week,
         override val subject: String?,
         override val teachers: List<Teacher>,
         override val rooms: List<Room>?,
         override val groups: List<Group>,
-        override val lessonTime: LessonTime
+        override val lessonTime: LessonTime,
+        val weekType: String?
     ) : Lesson {
         override val defaultLesson: DefaultLesson? = null
 
         constructor(
-            date: LocalDate,
+            dayOfWeek: DayOfWeek,
             week: Week,
             subject: String?,
             teachers: List<Teacher>,
             rooms: List<Room>?,
             groups: List<Group>,
             lessonTime: LessonTime,
+            weekType: String?
         ) : this(
             id = Uuid.random().toHexString(),
-            date = date,
+            dayOfWeek = dayOfWeek,
             week = week,
             subject = subject,
             teachers = teachers,
             rooms = rooms,
             groups = groups,
-            lessonTime = lessonTime
+            lessonTime = lessonTime,
+            weekType = weekType
         )
     }
 
     data class SubstitutionPlanLesson(
         override val id: String,
-        override val date: LocalDate,
+        val date: LocalDate,
         override val week: Week,
         override val subject: String?,
         val isSubjectChanged: Boolean,

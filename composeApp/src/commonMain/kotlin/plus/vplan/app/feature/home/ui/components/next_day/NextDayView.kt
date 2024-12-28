@@ -35,7 +35,7 @@ fun NextDayView(day: SchoolDay.NormalDay) {
                     monthName(MonthNames("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"))
                     char(' ')
                     year()
-                })
+                }) + "\n${day.week.weekType}-Woche (KW ${day.week.calendarWeek}, SW ${day.week.weekIndex})"
             )
             if (day.info != null) DayInfoCard(Modifier.padding(vertical = 4.dp), info = day.info)
         }
@@ -44,9 +44,14 @@ fun NextDayView(day: SchoolDay.NormalDay) {
             SectionTitle(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = "Nächste Stunden",
-                subtitle = "${day.lessons.minOf { it.lessonTime.start }} bis ${day.lessons.maxOf { it.lessonTime.end }}"
+                subtitle =
+                    if (day.lessons.isEmpty()) "Keine Stunden"
+                    else "${day.lessons.minOf { it.lessonTime.start }} bis ${day.lessons.maxOf { it.lessonTime.end }}"
             )
-            FollowingLessons(false, day.lessons.groupBy { it.lessonTime.lessonNumber })
+            FollowingLessons(
+                showFirstGradient = false,
+                date = day.date,
+                lessons = day.lessons.groupBy { it.lessonTime.lessonNumber })
         }
     }
 }

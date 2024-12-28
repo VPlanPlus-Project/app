@@ -24,9 +24,23 @@ abstract class Profile {
         override val originalName = group.name
 
         override fun isLessonRelevant(lesson: Lesson): Boolean {
-            return this.group in lesson.groups && lesson.defaultLesson?.let {
-                defaultLessons[it] != false
-            } ?: true
+            val isGroupInLesson = this.group in lesson.groups
+            val hasDefaultLesson = lesson.defaultLesson != null
+            val isDefaultLessonEnabled = defaultLessons[lesson.defaultLesson] != false
+
+            val isLessonTimetable = lesson is Lesson.TimetableLesson
+            val isLessonAsCourseEnabled = defaultLessons.entries.any { (defaultLesson, enabled) ->
+                enabled &&
+                        defaultLesson.course != null &&
+                        defaultLesson.course.name == lesson.subject
+            }
+            val isLessonAsDefaultLessonEnabled = defaultLessons.entries.any { (defaultLesson, enabled) ->
+                enabled &&
+                        defaultLesson.subject == lesson.subject &&
+                        listOf(defaultLesson.teacher) == lesson.teachers
+            }
+
+            return isGroupInLesson && ((hasDefaultLesson && isDefaultLessonEnabled) || (isLessonTimetable && (isLessonAsCourseEnabled || isLessonAsDefaultLessonEnabled)))
         }
     }
 

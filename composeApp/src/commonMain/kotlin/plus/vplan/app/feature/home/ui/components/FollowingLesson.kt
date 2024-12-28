@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atDate
@@ -28,6 +29,7 @@ import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
 
 private fun LocalDateTime.format(): String {
@@ -47,7 +49,8 @@ fun headerFont() = MaterialTheme.typography.bodyMedium
 
 @Composable
 fun FollowingLesson(
-    lesson: Lesson
+    lesson: Lesson,
+    date: LocalDate
 ) {
     Column(
         modifier = Modifier
@@ -106,9 +109,9 @@ fun FollowingLesson(
                     text = buildString {
                         append(lesson.lessonTime.lessonNumber)
                         append(". Stunde $DOT ")
-                        append(lesson.lessonTime.start.atDate(lesson.date).format())
+                        append(lesson.lessonTime.start.atDate(date).format())
                         append(" - ")
-                        append(lesson.lessonTime.end.atDate(lesson.date).format())
+                        append(lesson.lessonTime.end.atDate(date).format())
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface
@@ -116,6 +119,27 @@ fun FollowingLesson(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
+                    if (lesson is Lesson.TimetableLesson && lesson.weekType != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) weekType@{
+                            Icon(
+                                painter = painterResource(Res.drawable.calendar),
+                                modifier = Modifier
+                                    .padding(end = 2.dp)
+                                    .size(MaterialTheme.typography.bodySmall.lineHeight.toDp()),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Nur in ${lesson.weekType}-Woche",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),

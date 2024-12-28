@@ -23,8 +23,9 @@ class TimetableRepositoryImpl(
             lessons = lessons.map { lesson ->
                 DbTimetableLesson(
                     id = lesson.id,
-                    dayOfWeek = lesson.date.dayOfWeek,
+                    dayOfWeek = lesson.dayOfWeek,
                     weekId = lesson.week.id,
+                    weekType = lesson.weekType,
                     lessonTimeId = lesson.lessonTime.id,
                     subject = lesson.subject,
                     version = "${schoolId}_$newVersion"
