@@ -3,6 +3,7 @@ package plus.vplan.app.data.repository
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -134,7 +135,16 @@ class VppIdRepositoryImpl(
     }
 
     override suspend fun logoutDevice(vppId: VppId.Active, deviceId: Int): Response<Unit> {
-        TODO("Not yet implemented")
+        return saveRequest {
+            val response = httpClient.delete("$VPP_ROOT_URL/api/v2.2/user/me/session/$deviceId") {
+                bearerAuth(vppId.accessToken)
+            }
+            if (response.status != HttpStatusCode.OK) {
+                logger.e { "Error logging out device: $response" }
+                return response.toResponse()
+            }
+            return Response.Success(Unit)
+        }
     }
 
     override suspend fun logout(token: String): Response<Unit> {
