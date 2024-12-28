@@ -191,7 +191,7 @@ private data class MeSession(
         return VppIdDevice(
             id = sessionId,
             name = sessionName,
-            connectedAt = Instant.fromEpochSeconds(createdAt).toLocalDateTime(TimeZone.UTC),
+            connectedAt = Instant.fromEpochSeconds(createdAt).toLocalDateTime(TimeZone.currentSystemDefault()),
             isThisDevice = isCurrent
         )
     }
