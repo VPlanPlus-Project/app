@@ -13,6 +13,8 @@ import kotlin.time.Duration.Companion.days
 @Composable
 fun Week(
     startDate: LocalDate,
+    selectedDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit = {},
     height: Dp
 ) {
     Row(
@@ -21,7 +23,13 @@ fun Week(
             .height(height),
     ) {
         repeat(7) {
-            Day(startDate + it.days, height)
+            val date = startDate + it.days
+            Day(
+                date = date,
+                isSelected = selectedDate == date,
+                onClick = { onDateSelected(date) },
+                height = height
+            )
         }
     }
 }

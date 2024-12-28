@@ -30,8 +30,10 @@ import androidx.compose.ui.unit.times
 import androidx.navigation.NavHostController
 import co.touchlab.kermit.Logger
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.feature.calendar.ui.components.date_selector.Month
+import kotlinx.datetime.format
+import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
+import plus.vplan.app.utils.now
 import kotlin.math.roundToInt
 
 private val logger = Logger.withTag("CalendarScreen")
@@ -87,6 +89,7 @@ private fun CalendarScreenContent(
         }
     }
 
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier
@@ -108,13 +111,23 @@ private fun CalendarScreenContent(
                         }
                     }
             ) {
-                Month(
-                    startDate = LocalDate(2024, 11, 25),
-                    keepWeek = LocalDate(2024, 12, 23),
-                    scrollProgress = displayScrollProgress
+//                Month(
+//                    startDate = LocalDate(2024, 11, 25),
+//                    keepWeek = LocalDate(2024, 12, 23),
+//                    scrollProgress = displayScrollProgress
+//                )
+                ScrollableDateSelector(
+                    scrollProgress = displayScrollProgress,
+                    isScrollInProgress = isUserScrolling,
+                    selectedDate = selectedDate,
+                    onSelectDate = { selectedDate = it }
                 )
             }
             HorizontalDivider()
+            Text(
+                text = selectedDate.format(LocalDate.Formats.ISO),
+                modifier = Modifier.padding(8.dp)
+            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()

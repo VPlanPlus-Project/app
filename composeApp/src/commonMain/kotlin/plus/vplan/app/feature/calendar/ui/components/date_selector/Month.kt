@@ -14,8 +14,6 @@ val weekHeight = 56.dp
 @Composable
 fun Month(
     startDate: LocalDate,
-    keepWeek: LocalDate,
-    scrollProgress: Float
 ) {
     Column(
         modifier = Modifier
@@ -23,10 +21,10 @@ fun Month(
     ) {
         repeat(6) {
             val date = startDate + (it*7).days
-            Week(
-                startDate = date,
-                if (date == keepWeek) weekHeight else weekHeight * scrollProgress,
-            )
+//            Week(
+//                startDate = date,
+//                height = weekHeight,
+//            )
         }
     }
 }
