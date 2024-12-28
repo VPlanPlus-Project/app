@@ -94,7 +94,7 @@ class GetDayUseCase(
                 }.let { timetableLessons ->
                     val maxWeek = timetableLessons.maxOfOrNull { it.week.weekIndex } ?: return@let emptyList()
                     timetableLessons.filter { it.week.weekIndex == maxWeek }
-                }
+                }.filter { it.weekType == null || it.weekType == dayWeek.weekType }
 
                 if (day == null) {
                     return@combine SchoolDay.NormalDay(

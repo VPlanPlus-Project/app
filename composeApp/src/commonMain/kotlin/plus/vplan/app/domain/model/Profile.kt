@@ -24,13 +24,23 @@ abstract class Profile {
         override val originalName = group.name
 
         override fun isLessonRelevant(lesson: Lesson): Boolean {
-            return this.group in lesson.groups &&
-                    ((lesson.defaultLesson != null && defaultLessons[lesson.defaultLesson] != false) ||
-                            (lesson is Lesson.TimetableLesson &&
-                                    lesson.subject in defaultLessons.mapKeys { it.key.course?.name } &&
-                                    defaultLessons.none { it.key.course?.name == lesson.subject && !it.value }
-                                    )
-                            )
+            val isGroupInLesson = this.group in lesson.groups
+            val hasDefaultLesson = lesson.defaultLesson != null
+            val isDefaultLessonEnabled = defaultLessons[lesson.defaultLesson] != false
+
+            val isLessonTimetable = lesson is Lesson.TimetableLesson
+            val isLessonAsCourseEnabled = defaultLessons.entries.any { (defaultLesson, enabled) ->
+                enabled &&
+                        defaultLesson.course != null &&
+                        defaultLesson.course.name == lesson.subject
+            }
+            val isLessonAsDefaultLessonEnabled = defaultLessons.entries.any { (defaultLesson, enabled) ->
+                enabled &&
+                        defaultLesson.subject == lesson.subject &&
+                        listOf(defaultLesson.teacher) == lesson.teachers
+            }
+
+            return isGroupInLesson && ((hasDefaultLesson && isDefaultLessonEnabled) || (isLessonTimetable && (isLessonAsCourseEnabled || isLessonAsDefaultLessonEnabled)))
         }
     }
 
@@ -63,6 +73,26 @@ abstract class Profile {
             return lesson.rooms?.contains(this.room) == true
         }
     }
+
+//    override fun hashCode(): Int {
+//        var result = school.hashCode()
+//        result = 31 * result + profileType.hashCode()
+//        result = 31 * result + displayName.hashCode()
+//        result = 31 * result + originalName.hashCode()
+//        return result
+//    }
+//
+//    override fun equals(other: Any?): Boolean {
+//        if (this === other) return true
+//        if (other !is Profile) return false
+//
+//        if (school != other.school) return false
+//        if (profileType != other.profileType) return false
+//        if (displayName != other.displayName) return false
+//        if (originalName != other.originalName) return false
+//
+//        return true
+//    }
 }
 
 enum class ProfileType {

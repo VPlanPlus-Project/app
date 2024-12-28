@@ -68,7 +68,7 @@ data class EmbeddedTimetableLesson(
             rooms = rooms.map { it.toModel() },
             groups = groups.map { it.toModel() },
             lessonTime = lessonTime.toModel(),
-            weekType = week.weekType
+            weekType = timetableLesson.weekType
         )
     }
 }

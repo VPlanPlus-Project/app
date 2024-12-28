@@ -35,7 +35,7 @@ fun NextDayView(day: SchoolDay.NormalDay) {
                     monthName(MonthNames("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"))
                     char(' ')
                     year()
-                })
+                }) + "\n${day.week.weekType}-Woche (KW ${day.week.calendarWeek}, SW ${day.week.weekIndex})"
             )
             if (day.info != null) DayInfoCard(Modifier.padding(vertical = 4.dp), info = day.info)
         }
