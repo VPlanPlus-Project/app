@@ -12,7 +12,7 @@ import kotlinx.datetime.LocalTime
 @Composable
 fun Greeting(
     modifier: Modifier = Modifier,
-    profileName: String,
+    displayName: String,
     time: LocalTime
 ) {
     Row(
@@ -30,7 +30,7 @@ fun Greeting(
             modifier = Modifier.alignByBaseline()
         )
         Text(
-            text = profileName,
+            text = displayName,
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.alignByBaseline()
         )

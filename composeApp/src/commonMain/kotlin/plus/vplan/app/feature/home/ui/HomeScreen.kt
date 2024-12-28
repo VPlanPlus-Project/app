@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolDay
 import plus.vplan.app.feature.home.ui.components.Greeting
 import plus.vplan.app.feature.home.ui.components.HolidayScreen
@@ -71,7 +72,10 @@ private fun HomeContent(
             ) {
                 Greeting(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    profileName = state.currentProfile?.displayName ?: "",
+                    displayName =
+                    (state.currentProfile as? Profile.StudentProfile)?.vppId?.name?.substringBefore(
+                        " "
+                    ) ?: state.currentProfile?.displayName ?: "",
                     time = remember(state.currentTime.hour) { state.currentTime.time }
                 )
                 Spacer(Modifier.height(4.dp))
@@ -82,7 +86,11 @@ private fun HomeContent(
 
                 LaunchedEffect(state.nextDay) {
                     if (state.nextDay !is SchoolDay.NormalDay) return@LaunchedEffect
-                    if (state.currentDay !is SchoolDay.NormalDay || state.nextDay.lessons.none { state.currentTime progressIn it.lessonTime.start.atDate(state.nextDay.date)..it.lessonTime.end.atDate(state.nextDay.date) < 1f }) {
+                    if (state.currentDay !is SchoolDay.NormalDay || state.nextDay.lessons.none {
+                            state.currentTime progressIn it.lessonTime.start.atDate(
+                                state.nextDay.date
+                            )..it.lessonTime.end.atDate(state.nextDay.date) < 1f
+                        }) {
                         pagerState.animateScrollToPage(1)
                     }
                 }
