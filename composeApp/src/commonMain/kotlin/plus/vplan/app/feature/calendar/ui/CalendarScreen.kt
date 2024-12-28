@@ -64,7 +64,7 @@ private fun CalendarScreenContent(
     var isUserScrolling by remember { mutableStateOf(false) }
     var isAnimating by remember { mutableStateOf(false) }
     LaunchedEffect(contentScrollState.isScrollInProgress) {
-        if (!isUserScrolling) {
+        if (!contentScrollState.isScrollInProgress) {
             scrollProgress = scrollProgress.roundToInt().toFloat()
             isAnimating = scrollProgress.roundToInt().toFloat() != scrollProgress
         }
