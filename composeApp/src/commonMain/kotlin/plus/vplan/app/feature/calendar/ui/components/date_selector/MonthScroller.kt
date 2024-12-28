@@ -25,7 +25,7 @@ fun MonthScroller(
     val pagerState = rememberPagerState(initialPage = (MONTH_PAGER_SIZE / 2) + referenceDate.until(selectedDate.atStartOfMonth(), DateTimeUnit.MONTH)) { MONTH_PAGER_SIZE }
     LaunchedEffect(pagerState.currentPage) {
         val date = referenceDate.plus((pagerState.currentPage - MONTH_PAGER_SIZE / 2), DateTimeUnit.MONTH).atStartOfMonth()
-        onChangeSelectedDate(date)
+        if (date.month != selectedDate.month) onChangeSelectedDate(date)
     }
 
     LaunchedEffect(selectedDate) {
