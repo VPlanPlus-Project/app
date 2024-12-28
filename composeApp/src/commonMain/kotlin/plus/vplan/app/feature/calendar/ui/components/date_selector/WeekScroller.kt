@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.calendar.ui.components.date_selector
 
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
@@ -25,8 +26,10 @@ fun WeekScroller(
 ) {
     val referenceWeek = LocalDate.now().atStartOfWeek()
     val pagerState = rememberPagerState(initialPage = (WEEK_PAGER_SIZE / 2) + referenceWeek.until(selectedDate.atStartOfWeek(), DateTimeUnit.WEEK)) { WEEK_PAGER_SIZE }
-    LaunchedEffect(pagerState.currentPage) {
-        val date = (referenceWeek + ((pagerState.currentPage - WEEK_PAGER_SIZE / 2) * 7).days) + selectedDate.dayOfWeek.isoDayNumber.minus(1).days
+    val isUserDragging = pagerState.interactionSource.collectIsDraggedAsState().value
+    LaunchedEffect(pagerState.targetPage, isUserDragging) {
+        if (isUserDragging) return@LaunchedEffect
+        val date = (referenceWeek + ((pagerState.targetPage - WEEK_PAGER_SIZE / 2) * 7).days) + selectedDate.dayOfWeek.isoDayNumber.minus(1).days
         if (date.atStartOfWeek() != selectedDate.atStartOfWeek()) onChangeSelectedDate(date)
     }
 

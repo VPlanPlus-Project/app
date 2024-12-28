@@ -3,6 +3,7 @@ package plus.vplan.app.feature.calendar.ui
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
@@ -35,10 +39,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.navigation.NavHostController
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
+import kotlinx.datetime.plus
+import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
@@ -46,6 +53,8 @@ import plus.vplan.app.utils.now
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import kotlin.math.roundToInt
+
+private const val CONTENT_PAGER_SIZE = Int.MAX_VALUE
 
 
 @Composable
@@ -165,17 +174,34 @@ private fun CalendarScreenContent(
                 )
             }
             HorizontalDivider()
-            Text(
-                text = state.selectedDate.format(LocalDate.Formats.ISO),
-                modifier = Modifier.padding(8.dp)
-            )
-            Column(
+            val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + state.selectedDate.until(LocalDate.now(), DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
+            val isUserDragging = pagerState.interactionSource.collectIsDraggedAsState().value
+            LaunchedEffect(pagerState.targetPage, isUserDragging) {
+                if (isUserDragging) return@LaunchedEffect
+                val date = LocalDate.now().plus((pagerState.targetPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+                if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
+            }
+            LaunchedEffect(state.selectedDate) {
+                val currentlyOpenedDate = LocalDate.now().plus((pagerState.currentPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+                if (currentlyOpenedDate != state.selectedDate) {
+                    pagerState.animateScrollToPage((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+                }
+            }
+            HorizontalPager(
+                state = pagerState,
+                pageSize = PageSize.Fill,
+                verticalAlignment = Alignment.Top,
+                beyondViewportPageCount = 7,
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(contentScrollState)
-            ) {
-                repeat(100) {
-                    Text("Content item $it", Modifier.padding(16.dp))
+            ) { page ->
+                val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+                Column {
+                    Text(date.toString())
+                    repeat(3) {
+                        Text("Content item $it", Modifier.padding(16.dp))
+                    }
                 }
             }
         }
