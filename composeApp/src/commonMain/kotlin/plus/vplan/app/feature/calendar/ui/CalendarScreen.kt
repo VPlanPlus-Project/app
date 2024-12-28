@@ -30,7 +30,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.navigation.NavHostController
-import co.touchlab.kermit.Logger
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
@@ -40,7 +39,6 @@ import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
 import plus.vplan.app.utils.now
 import kotlin.math.roundToInt
 
-private val logger = Logger.withTag("CalendarScreen")
 
 @Composable
 fun CalendarScreen(
@@ -66,11 +64,11 @@ private fun CalendarScreenContent(
     var isUserScrolling by remember { mutableStateOf(false) }
     var isAnimating by remember { mutableStateOf(false) }
     LaunchedEffect(contentScrollState.isScrollInProgress) {
-        isUserScrolling = contentScrollState.isScrollInProgress
         if (!isUserScrolling) {
             scrollProgress = scrollProgress.roundToInt().toFloat()
-            isAnimating = true
+            isAnimating = scrollProgress.roundToInt().toFloat() != scrollProgress
         }
+        isUserScrolling = contentScrollState.isScrollInProgress
     }
     val animatedScrollProgress by animateFloatAsState(
         targetValue = scrollProgress,
@@ -84,7 +82,6 @@ private fun CalendarScreenContent(
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val isContentAtTop = contentScrollState.value == 0
                 val y = (with(localDensity) { available.y.toDp() }) / (5 * weekHeight)
-                logger.d { "Scrolled ${available.y}" }
 
                 if ((isContentAtTop || scrollProgress > 0 && scrollProgress < 1) && available.y > 0) { // scroll to expand date picker
                     scrollProgress = (scrollProgress + y).coerceIn(0f, 1f)
@@ -138,7 +135,7 @@ private fun CalendarScreenContent(
                 )
                 ScrollableDateSelector(
                     scrollProgress = displayScrollProgress,
-                    allowInteractions = !isUserScrolling && !isAnimating,
+                    allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
                     selectedDate = selectedDate,
                     onSelectDate = { selectedDate = it }
                 )
