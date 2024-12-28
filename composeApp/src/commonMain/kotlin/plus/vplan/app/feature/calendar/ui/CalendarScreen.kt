@@ -1,15 +1,20 @@
 package plus.vplan.app.feature.calendar.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,7 +32,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.navigation.NavHostController
@@ -35,9 +39,12 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
+import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
 import plus.vplan.app.utils.now
+import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.calendar
 import kotlin.math.roundToInt
 
 
@@ -106,9 +113,6 @@ private fun CalendarScreenContent(
                 .fillMaxSize()
                 .nestedScroll(scrollConnection)
         ) {
-            Button(onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) }) {
-                Text("Heute auswählen")
-            }
             Column (
                 modifier = Modifier
                     .fillMaxWidth()
@@ -124,18 +128,35 @@ private fun CalendarScreenContent(
                     },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = state.selectedDate.format(LocalDate.Format {
-                        monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
-                        char(' ')
-                        yearTwoDigits(2000)
-                    }),
-                    textAlign = TextAlign.Center,
+                Row(
                     modifier = Modifier
                         .padding(vertical = 4.dp)
                         .fillMaxWidth(),
-                    style = MaterialTheme.typography.headlineSmall
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                ) {
+                    AnimatedContent(
+                        targetState = state.selectedDate.format(LocalDate.Format {
+                            monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
+                            char(' ')
+                            yearTwoDigits(2000)
+                        }),
+                    ) { displayDate ->
+                        Text(
+                            text = displayDate,
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                    }
+                    IconButton(
+                        onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) },
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.calendar),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
                 ScrollableDateSelector(
                     scrollProgress = displayScrollProgress,
                     allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
