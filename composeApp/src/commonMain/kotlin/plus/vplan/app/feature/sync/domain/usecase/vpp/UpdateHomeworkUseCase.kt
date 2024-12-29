@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.sync.domain.usecase.vpp
 
+import kotlinx.coroutines.flow.map
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
@@ -28,6 +29,8 @@ class UpdateHomeworkUseCase(
         val groupCache = groupRepository.getBySchool(profile.school.id)
         val defaultLessonCache = defaultLessonRepository.getBySchool(profile.school.id)
         val vppIdCache = vppIdRepository.getVppIds()
+        val homeworkCache = homeworkRepository.getByGroup(profile.group.id)
+            .map { flowData -> flowData.filterIsInstance<Homework.CloudHomework>() }
 
         var cachedGroups = groupCache.latest()
         val cachedDefaultLessons = defaultLessonCache.latest()
@@ -70,6 +73,12 @@ class UpdateHomeworkUseCase(
                 createdBy = createdBy
             )
         }.also { homeworkRepository.upsert(it) }
+
+        val cachedHomework = homeworkCache.latest()
+
+        cachedHomework.filter { it.id !in downloadedHomework.map { it.id } }.let { homeworkToDelete ->
+            homeworkRepository.deleteById(homeworkToDelete.map { it.id })
+        }
 
         downloadedHomework.size
         response.data.size

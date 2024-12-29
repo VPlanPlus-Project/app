@@ -31,4 +31,8 @@ interface HomeworkDao {
     @Transaction
     @Query("SELECT * FROM homework")
     fun getAll(): Flow<List<EmbeddedHomework>>
+
+    @Transaction
+    @Query("DELETE FROM homework WHERE id IN (:ids)")
+    suspend fun deleteById(ids: List<Int>)
 }

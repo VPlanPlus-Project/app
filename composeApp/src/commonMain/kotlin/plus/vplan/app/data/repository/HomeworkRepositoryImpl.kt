@@ -126,6 +126,14 @@ class HomeworkRepositoryImpl(
             }.map { it.toModel() }
         }
     }
+
+    override suspend fun deleteById(id: Int) {
+        deleteById(listOf(id))
+    }
+
+    override suspend fun deleteById(ids: List<Int>) {
+        vppDatabase.homeworkDao.deleteById(ids)
+    }
 }
 
 @Serializable

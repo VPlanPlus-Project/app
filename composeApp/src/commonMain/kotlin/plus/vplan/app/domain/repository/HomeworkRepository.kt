@@ -12,6 +12,9 @@ interface HomeworkRepository {
     suspend fun getByDefaultLesson(authentication: SchoolApiAccess, defaultLessonIds: List<String>, from: LocalDateTime? = null, to: LocalDate? = null): Response<List<HomeworkResponse>>
     suspend fun upsert(homework: List<Homework>)
     suspend fun getByGroup(groupId: Int): Flow<List<Homework>>
+
+    suspend fun deleteById(id: Int)
+    suspend fun deleteById(ids: List<Int>)
 }
 
 data class HomeworkResponse(
