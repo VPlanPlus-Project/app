@@ -37,7 +37,7 @@ data class EmbeddedHomework(
         parentColumn = "id",
         entityColumn = "homework_id",
         entity = DbHomeworkTask::class
-    ) val tasks: List<DbHomeworkTask>
+    ) val tasks: List<EmbeddedHomeworkTask>
 ) {
     fun toModel(): Homework {
         if (homework.id < 0) {
@@ -47,7 +47,7 @@ data class EmbeddedHomework(
                 createdAt = homework.createdAt,
                 createdByProfile = createdByProfile!!.toModel() as Profile.StudentProfile,
                 defaultLesson = defaultLesson?.toModel(),
-                tasks = emptyList()
+                tasks = tasks.map { it.toModel() }
             )
         }
         return Homework.CloudHomework(
@@ -58,7 +58,7 @@ data class EmbeddedHomework(
             defaultLesson = defaultLesson?.toModel(),
             group = group?.toModel(),
             isPublic = homework.isPublic,
-            tasks = emptyList()
+            tasks = tasks.map { it.toModel() }
         )
     }
 }

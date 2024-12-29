@@ -19,6 +19,7 @@ import plus.vplan.app.VPP_PORT
 import plus.vplan.app.VPP_PROTOCOL
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbHomework
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.data.Response
@@ -84,33 +85,44 @@ class HomeworkRepositoryImpl(
     }
 
     override suspend fun upsert(homework: List<Homework>) {
-        vppDatabase.homeworkDao.upsert(homework.map { homeworkItem ->
-            DbHomework(
-                id = homeworkItem.id,
-                defaultLessonId = homeworkItem.defaultLesson?.id,
-                groupId = homeworkItem.group?.id,
-                createdAt = homeworkItem.createdAt,
-                createdByProfileId = when (homeworkItem) {
-                    is Homework.CloudHomework -> null
-                    is Homework.LocalHomework -> homeworkItem.createdByProfile.id
-                },
-                createdBy = when (homeworkItem) {
-                    is Homework.CloudHomework -> homeworkItem.createdBy.id
-                    is Homework.LocalHomework -> null
-                },
-                isPublic = when (homeworkItem) {
-                    is Homework.CloudHomework -> homeworkItem.isPublic
-                    is Homework.LocalHomework -> false
-                },
-                dueTo = homeworkItem.dueTo,
-            )
-        })
+        vppDatabase.homeworkDao.upsertMany(
+            homework = homework.map { homeworkItem ->
+                DbHomework(
+                    id = homeworkItem.id,
+                    defaultLessonId = homeworkItem.defaultLesson?.id,
+                    groupId = homeworkItem.group?.id,
+                    createdAt = homeworkItem.createdAt,
+                    createdByProfileId = when (homeworkItem) {
+                        is Homework.CloudHomework -> null
+                        is Homework.LocalHomework -> homeworkItem.createdByProfile.id
+                    },
+                    createdBy = when (homeworkItem) {
+                        is Homework.CloudHomework -> homeworkItem.createdBy.id
+                        is Homework.LocalHomework -> null
+                    },
+                    isPublic = when (homeworkItem) {
+                        is Homework.CloudHomework -> homeworkItem.isPublic
+                        is Homework.LocalHomework -> false
+                    },
+                    dueTo = homeworkItem.dueTo,
+                )
+            },
+            homeworkTask = homework.flatMap { homeworkItem ->
+                homeworkItem.tasks.map { homeworkTask ->
+                    DbHomeworkTask(
+                        id = homeworkTask.id,
+                        homeworkId = homeworkItem.id,
+                        content = homeworkTask.content
+                    )
+                }
+            }
+        )
     }
 
     override suspend fun getByGroup(groupId: Int): Flow<List<Homework>> {
         return vppDatabase.homeworkDao.getAll().map { flowData ->
             flowData.filter {
-                it.group?.group?.id == groupId || it.defaultLesson?.groups?.map { it.group.id }?.contains(groupId) ?: false
+                it.group?.group?.id == groupId || it.defaultLesson?.groups?.map { group -> group.group.id }?.contains(groupId) ?: false
             }.map { it.toModel() }
         }
     }
