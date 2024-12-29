@@ -30,6 +30,9 @@ import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
 import plus.vplan.app.data.source.database.model.database.DbHoliday
+import plus.vplan.app.data.source.database.model.database.DbHomework
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDone
 import plus.vplan.app.data.source.database.model.database.DbIndiwareHasTimetableInWeek
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
@@ -46,6 +49,8 @@ import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.DbWeek
+import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbDefaultLessonGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
@@ -71,7 +76,9 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
         DbRoomProfile::class,
 
         DbDefaultLesson::class,
+        DbDefaultLessonGroupCrossover::class,
         DbCourse::class,
+        DbCourseGroupCrossover::class,
 
         DbKeyValue::class,
 
@@ -94,6 +101,10 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
         DbVppIdAccess::class,
         DbVppIdSchulverwalter::class,
         DbVppIdGroupCrossover::class,
+
+        DbHomework::class,
+        DbHomeworkTask::class,
+        DbHomeworkTaskDone::class,
     ],
     version = 1,
 )

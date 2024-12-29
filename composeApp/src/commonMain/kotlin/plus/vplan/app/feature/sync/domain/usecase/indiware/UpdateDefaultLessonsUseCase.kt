@@ -44,6 +44,7 @@ class UpdateDefaultLessonsUseCase(
         )
 
         updateDefaultLessons(
+            school = school,
             baseData = baseData.data,
             courses = existingCourses.latest(),
             existingDefaultLessons = existingDefaultLessons.latest(),
@@ -63,16 +64,24 @@ class UpdateDefaultLessonsUseCase(
     ) {
         val downloadedCourses = baseData.classes.flatMap { baseDataClass ->
             val group = groups.firstOrNull { it.name == baseDataClass.name } ?: throw NoSuchElementException("Group ${baseDataClass.name} not found")
-            baseDataClass.defaultLessons.mapNotNull { baseDataDefaultLesson ->
-                if (baseDataDefaultLesson.course == null) return@mapNotNull null
-                return@mapNotNull Course.fromIndiware(
+            baseDataClass.defaultLessons.mapNotNull { it.course }.map { course ->
+                Course.fromIndiware(
                     sp24SchoolId = school.sp24Id,
-                    group = group,
-                    name = baseDataDefaultLesson.course.name,
-                    teacher = teachers.firstOrNull { it.name == baseDataDefaultLesson.course.teacher }
+                    groups = listOf(group),
+                    name = course.name,
+                    teacher = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }
                 )
             }
         }
+            .groupBy { it.id }
+            .map { (id, courses) ->
+                Course(
+                    id = id,
+                    groups = courses.flatMap { it.groups }.distinctBy { it.id },
+                    name = courses.first().name,
+                    teacher = courses.first().teacher
+                )
+            }
 
         downloadedCourses.let {
             val existingCourseIds = existingCourses.map { it.id }
@@ -87,23 +96,39 @@ class UpdateDefaultLessonsUseCase(
     }
 
     private suspend fun updateDefaultLessons(
+        school: School.IndiwareSchool,
         baseData: IndiwareBaseData,
         courses: List<Course>,
         existingDefaultLessons: List<DefaultLesson>,
         groups: List<Group>,
         teachers: List<Teacher>
     ) {
-        val downloadedDefaultLessons = baseData.classes.flatMap { baseDataClass ->
-            baseDataClass.defaultLessons.map { baseDataDefaultLesson ->
-                DefaultLesson(
-                    indiwareDefaultLessonId = baseDataDefaultLesson.defaultLessonNumber,
-                    subject = baseDataDefaultLesson.subject,
-                    group = groups.first { it.name == baseDataClass.name },
-                    teacher = if (baseDataDefaultLesson.teacher == null) null else teachers.firstOrNull { it.name == baseDataDefaultLesson.teacher },
-                    course = courses.firstOrNull { it.name == it.name }
-                )
+        val downloadedDefaultLessons = baseData.classes
+            .flatMap { baseDataClass ->
+                val group = groups.firstOrNull { it.name == baseDataClass.name } ?: throw NoSuchElementException("Group ${baseDataClass.name} not found")
+                baseDataClass.defaultLessons.map { defaultLesson ->
+                    DefaultLesson(
+                        indiwareDefaultLessonId = defaultLesson.defaultLessonNumber,
+                        indiwareSchoolId = school.sp24Id,
+                        subject = defaultLesson.subject,
+                        groups = listOf(group),
+                        course = courses.firstOrNull { it.name == defaultLesson.course?.name },
+                        teacher = teachers.firstOrNull { it.name == defaultLesson.teacher }
+                    )
+                }
             }
-        }
+            .groupBy { it.id }
+            .map { (id, defaultLessons) ->
+                defaultLessonRepository.upsert(
+                    DefaultLesson(
+                        id = id,
+                        subject = defaultLessons.first().subject,
+                        groups = defaultLessons.flatMap { it.groups }.distinctBy { it.id },
+                        course = defaultLessons.firstOrNull { it.course != null }?.course,
+                        teacher = defaultLessons.firstOrNull { it.teacher != null }?.teacher
+                    )
+                ).first()
+            }
 
         downloadedDefaultLessons.let {
             val existingDefaultLessonIds = existingDefaultLessons.map { it.id }

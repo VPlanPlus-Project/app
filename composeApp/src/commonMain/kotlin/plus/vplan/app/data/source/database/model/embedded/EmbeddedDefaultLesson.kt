@@ -1,11 +1,13 @@
 package plus.vplan.app.data.source.database.model.embedded
 
 import androidx.room.Embedded
+import androidx.room.Junction
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbTeacher
+import plus.vplan.app.data.source.database.model.database.crossovers.DbDefaultLessonGroupCrossover
 import plus.vplan.app.domain.model.DefaultLesson
 
 data class EmbeddedDefaultLesson(
@@ -16,10 +18,15 @@ data class EmbeddedDefaultLesson(
         entity = DbTeacher::class
     ) val teacher: EmbeddedTeacher?,
     @Relation(
-        parentColumn = "group_id",
+        parentColumn = "id",
         entityColumn = "id",
+        associateBy = Junction(
+            value = DbDefaultLessonGroupCrossover::class,
+            parentColumn = "default_lesson_id",
+            entityColumn = "group_id"
+        ),
         entity = DbGroup::class
-    ) val group: EmbeddedGroup,
+    ) val groups: List<EmbeddedGroup>,
     @Relation(
         parentColumn = "course_id",
         entityColumn = "id",
@@ -31,7 +38,7 @@ data class EmbeddedDefaultLesson(
             id = defaultLesson.id,
             subject = defaultLesson.subject,
             teacher = teacher?.toModel(),
-            group = group.toModel(),
+            groups = groups.map { it.toModel() },
             course = course?.toModel()
         )
     }

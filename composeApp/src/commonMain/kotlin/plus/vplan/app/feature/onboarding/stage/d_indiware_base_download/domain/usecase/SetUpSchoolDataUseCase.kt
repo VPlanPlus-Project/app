@@ -140,32 +140,54 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
-            baseData.data.classes
-                .map { it to it.defaultLessons }
-                .forEach { (baseDataGroup, defaultLessons) ->
-                    val group = classes.firstOrNull { it.name == baseDataGroup.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataGroup.name} not found"))
-                    defaultLessons
-                        .forEach { defaultLesson ->
-                            val course = defaultLesson.course?.let { course ->
-                                courseRepository.upsert(
-                                    Course.fromIndiware(
-                                        sp24SchoolId = sp24Id,
-                                        group = group,
-                                        name = course.name,
-                                        teacher = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }
-                                    )
-                                ).first()
-                            }
-                            defaultLessonRepository.upsert(
-                                DefaultLesson(
-                                    indiwareDefaultLessonId = defaultLesson.defaultLessonNumber,
-                                    subject = defaultLesson.subject,
-                                    group = group,
-                                    teacher = teachers.firstOrNull { it.name == defaultLesson.teacher },
-                                    course = course
-                                )
-                            )
-                        }
+            val courses = baseData.data.classes.flatMap { baseDataClass ->
+                val group = classes.firstOrNull { it.name == baseDataClass.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataClass.name} not found"))
+                baseDataClass.defaultLessons.mapNotNull { it.course }.map { course ->
+                    Course.fromIndiware(
+                        sp24SchoolId = sp24Id,
+                        groups = listOf(group),
+                        name = course.name,
+                        teacher = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }
+                    )
+                }
+            }
+                .groupBy { it.id }
+                .map { (id, courses) ->
+                    courseRepository.upsert(
+                        Course(
+                            id = id,
+                            groups = courses.flatMap { it.groups }.distinctBy { it.id },
+                            name = courses.first().name,
+                            teacher = courses.first().teacher
+                        )
+                    ).first()
+                }
+
+            val defaultLessons = baseData.data.classes
+                .flatMap { baseDataClass ->
+                    val group = classes.firstOrNull { it.name == baseDataClass.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataClass.name} not found"))
+                    baseDataClass.defaultLessons.map { defaultLesson ->
+                        DefaultLesson(
+                            indiwareDefaultLessonId = defaultLesson.defaultLessonNumber,
+                            indiwareSchoolId = sp24Id,
+                            subject = defaultLesson.subject,
+                            groups = listOf(group),
+                            course = courses.firstOrNull { it.name == defaultLesson.course?.name },
+                            teacher = teachers.firstOrNull { it.name == defaultLesson.teacher }
+                        )
+                    }
+                }
+                .groupBy { it.id }
+                .map { (id, defaultLessons) ->
+                    defaultLessonRepository.upsert(
+                        DefaultLesson(
+                            id = id,
+                            subject = defaultLessons.first().subject,
+                            groups = defaultLessons.flatMap { it.groups }.distinctBy { it.id },
+                            course = defaultLessons.firstOrNull { it.course != null }?.course,
+                            teacher = defaultLessons.firstOrNull { it.teacher != null }?.teacher
+                        )
+                    ).first()
                 }
 
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.DONE

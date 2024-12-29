@@ -6,24 +6,24 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 
 @Entity(
-    tableName = "courses",
+    tableName = "homework_task",
     primaryKeys = ["id"],
     indices = [
-        Index(value = ["id"], unique = true),
-        Index(value = ["teacher_id"], unique = false)
+        Index("id", unique = true),
+        Index("homework_id")
     ],
     foreignKeys = [
         ForeignKey(
-            entity = DbTeacher::class,
+            entity = DbHomework::class,
             parentColumns = ["id"],
-            childColumns = ["teacher_id"],
+            childColumns = ["homework_id"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
-        ),
+        )
     ]
 )
-data class DbCourse(
-    @ColumnInfo(name = "id") val id: String,
-    @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "teacher_id") val teacherId: Int?
+data class DbHomeworkTask(
+    @ColumnInfo(name = "id") val id: Int,
+    @ColumnInfo(name = "homework_id") val homeworkId: Int,
+    @ColumnInfo(name = "content") val content: String,
 )

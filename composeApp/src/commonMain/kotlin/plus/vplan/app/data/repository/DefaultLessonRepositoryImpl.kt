@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
+import plus.vplan.app.data.source.database.model.database.crossovers.DbDefaultLessonGroupCrossover
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 
@@ -28,15 +29,24 @@ class DefaultLessonRepositoryImpl(
     }
 
     override suspend fun upsert(defaultLessons: List<DefaultLesson>) {
-        vppDatabase.defaultLessonDao.upsert(defaultLessons.map { defaultLesson ->
-            DbDefaultLesson(
-                id = defaultLesson.id,
-                subject = defaultLesson.subject,
-                teacherId = defaultLesson.teacher?.id,
-                groupId = defaultLesson.group.id,
-                courseId = defaultLesson.course?.id
-            )
-        })
+        vppDatabase.defaultLessonDao.upsert(
+            defaultLessons = defaultLessons.map { defaultLesson ->
+                DbDefaultLesson(
+                    id = defaultLesson.id,
+                    subject = defaultLesson.subject,
+                    teacherId = defaultLesson.teacher?.id,
+                    courseId = defaultLesson.course?.id
+                )
+            },
+            defaultLessonGroupCrossovers = defaultLessons.flatMap { defaultLesson ->
+                defaultLesson.groups.map { group ->
+                    DbDefaultLessonGroupCrossover(
+                        defaultLessonId = defaultLesson.id,
+                        groupId = group.id
+                    )
+                }
+            }
+        )
     }
 
     override suspend fun deleteById(id: String) {

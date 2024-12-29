@@ -2,19 +2,19 @@ package plus.vplan.app.domain.model
 
 data class Course(
     val id: String,
-    val group: Group,
+    val groups: List<Group>,
     val name: String,
     val teacher: Teacher?,
 ) {
     companion object {
         fun fromIndiware(
             sp24SchoolId: String,
-            group: Group,
+            groups: List<Group>,
             name: String,
             teacher: Teacher?
         ) = Course(
             id = "sp24.$sp24SchoolId.$name+${teacher?.name ?: ""}",
-            group = group,
+            groups = groups,
             name = name,
             teacher = teacher
         )

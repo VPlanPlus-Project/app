@@ -9,6 +9,7 @@ import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbVppId
+import plus.vplan.app.data.source.database.model.database.crossovers.DbDefaultLessonGroupCrossover
 
 data class EmbeddedGroupProfile(
     @Embedded val profileLink: DbGroupProfile,
@@ -24,7 +25,12 @@ data class EmbeddedGroupProfile(
     ) val group: EmbeddedGroup,
     @Relation(
         parentColumn = "group_id",
-        entityColumn = "group_id",
+        entityColumn = "id",
+        associateBy = Junction(
+            value = DbDefaultLessonGroupCrossover::class,
+            parentColumn = "group_id",
+            entityColumn = "default_lesson_id"
+        ),
         entity = DbDefaultLesson::class
     ) val defaultLessons: List<EmbeddedDefaultLesson>,
     @Relation(

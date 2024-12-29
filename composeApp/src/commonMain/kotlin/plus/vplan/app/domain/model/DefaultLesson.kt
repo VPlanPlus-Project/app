@@ -8,20 +8,21 @@ data class DefaultLesson(
     val subject: String,
     val course: Course?,
     val teacher: Teacher?,
-    val group: Group
+    val groups: List<Group>
 ) {
     constructor(
         indiwareDefaultLessonId: String,
+        indiwareSchoolId: String,
         subject: String,
-        group: Group,
+        groups: List<Group>,
         teacher: Teacher?,
         course: Course?
     ) : this(
-        id = "sp24.${group.name}.$indiwareDefaultLessonId",
+        id = "sp24.${indiwareSchoolId}.$indiwareDefaultLessonId",
         subject = subject,
         course = course,
         teacher = teacher,
-        group = group
+        groups = groups
     )
 }
 
