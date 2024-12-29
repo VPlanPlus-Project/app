@@ -11,6 +11,7 @@
         android:usesCleartextTraffic="true"
         android:supportsRtl="true"
         android:name=".MainApplication"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
             android:exported="true"

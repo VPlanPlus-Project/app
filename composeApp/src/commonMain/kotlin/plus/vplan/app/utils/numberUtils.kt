@@ -1,5 +1,7 @@
 package plus.vplan.app.utils
 
+import kotlin.math.abs
+
 fun List<Int>.isContinuous(): Boolean {
     if (isEmpty()) return true
     var last = first()
@@ -34,4 +36,25 @@ fun <T> List<T>.takeContinuousBy(predicate: (T) -> Int): List<T> {
         result.add(current)
     }
     return result
+}
+
+inline infix fun <reified T: Number> Number.roundToNearest(numbers: List<T>): T {
+    require(numbers.isNotEmpty())
+    return numbers.minBy { abs(it.toDouble() - this.toDouble()) }.let {
+        when (T::class) {
+            Int::class -> it.toInt()
+            Long::class -> it.toLong()
+            Float::class -> it.toFloat()
+            Double::class -> it.toDouble()
+            else -> throw IllegalStateException("Unknown number type")
+        } as T
+    }
+}
+
+inline fun <reified T: Number> T.ifNan(block: () -> T): T {
+    return when (this) {
+        is Float -> if (this.isNaN()) block() else this
+        is Double -> if (this.isNaN()) block() else this
+        else -> this
+    }
 }

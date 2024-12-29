@@ -6,21 +6,29 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -71,89 +79,107 @@ fun MainScreenHost(
     val calendarViewModel = koinViewModel<CalendarViewModel>()
     val profileViewModel = koinViewModel<ProfileViewModel>()
 
-    Scaffold(
-        bottomBar = {
-            AnimatedVisibility(
-                visible = currentDestination?.startsWith("_") == true,
-                enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
-                exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut()
-            ) {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = currentDestination == "_Home",
-                        label = { Text("Home") },
-                        icon = { Icon(painter = painterResource(Res.drawable.house), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.MainHome) { popUpTo(0) } }
-                    )
-                    NavigationBarItem(
-                        selected = currentDestination == "_Calendar",
-                        label = { Text("Kalender") },
-                        icon = { Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.MainCalendar) { popUpTo(MainScreen.MainHome) } }
-                    )
-                    NavigationBarItem(
-                        selected = currentDestination == "_Search",
-                        label = { Text("Suche") },
-                        icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) } }
-                    )
-                    NavigationBarItem(
-                        selected = currentDestination == "_Chat",
-                        label = { Text("Chat") },
-                        icon = { Icon(painter = painterResource(Res.drawable.message_square), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.MainChat) { popUpTo(MainScreen.MainHome) } }
-                    )
-                    NavigationBarItem(
-                        selected = currentDestination == "_Dev",
-                        label = { Text("Dev") },
-                        icon = { Icon(painter = painterResource(Res.drawable.bug_play), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.MainDev) { popUpTo(MainScreen.MainHome) } }
-                    )
-                    NavigationBarItem(
-                        selected = currentDestination == "_Profile",
-                        label = { Text("Profil") },
-                        icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                        onClick = { navController.navigate(MainScreen.MainProfile) { popUpTo(MainScreen.MainHome) } },
-                    )
-                }
-            }
-        }
-    ) { contentPadding ->
-        Box(modifier = Modifier.padding(bottom = contentPadding.calculateBottomPadding())) {
-            NavHost(
-                navController = navController,
+    val localDensity = LocalDensity.current
+    val localLayoutDirection = LocalLayoutDirection.current
+
+    var isBottomBarVisible by rememberSaveable { mutableStateOf(true) }
+    val toggleBottomBar = remember<(Boolean) -> Unit> { { isBottomBarVisible = it } }
+    var bottomBarHeight by remember { mutableStateOf(0.dp) }
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
+        val left = WindowInsets.systemBars.asPaddingValues().calculateLeftPadding(localLayoutDirection)
+        val right = WindowInsets.systemBars.asPaddingValues().calculateRightPadding(localLayoutDirection)
+        val bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + bottomBarHeight
+        val contentPadding = PaddingValues(left, top, right, bottom)
+        NavHost(
+            modifier = Modifier.fillMaxSize(),
+            navController = navController,
 //                startDestination = MainScreen.MainHome
-                startDestination = MainScreen.MainDev // TODO remove
-            ) {
-                composable<MainScreen.MainHome> { HomeScreen(homeViewModel) }
-                composable<MainScreen.MainCalendar> { CalendarScreen(navController, calendarViewModel) }
-                composable<MainScreen.MainSearch> { Text("Search") }
-                composable<MainScreen.MainChat> { Text("Chat") }
-                composable<MainScreen.MainDev> { DevScreen() }
-                composable<MainScreen.MainProfile> { ProfileScreen(profileViewModel) }
+            startDestination = MainScreen.MainDev // TODO remove
+        ) {
+            composable<MainScreen.MainHome> { HomeScreen(homeViewModel) }
+            composable<MainScreen.MainCalendar> { CalendarScreen(navController, calendarViewModel) }
+            composable<MainScreen.MainSearch> { Text("Search") }
+            composable<MainScreen.MainChat> { Text("Chat") }
+            composable<MainScreen.MainDev> { DevScreen(contentPadding, toggleBottomBar) }
+            composable<MainScreen.MainProfile> { ProfileScreen(contentPadding, profileViewModel) }
 
-                composable<MainScreen.ProfileSettings> {
-                    val args = it.toRoute<MainScreen.ProfileSettings>()
-                    ProfileSettingsScreen(args.profileId, navController)
-                }
+            composable<MainScreen.ProfileSettings> {
+                val args = it.toRoute<MainScreen.ProfileSettings>()
+                ProfileSettingsScreen(args.profileId, navController)
             }
         }
 
-        if (profileViewModel.state.isSheetVisible) {
-            val activeProfile = profileViewModel.state.currentProfile
-            if (activeProfile != null) ProfileSwitcher(
-                profiles = profileViewModel.state.profiles,
-                showVppIdBanner = profileViewModel.state.showVppIdBanner,
-                activeProfile = activeProfile,
-                onSelectProfile = { profileViewModel.onEvent(ProfileScreenEvent.SetActiveProfile(it)) },
-                onDismiss = { profileViewModel.onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(false)) },
-                onCreateNewProfile = onNavigateToOnboarding,
-                onConnectVppId = { BrowserIntent.openUrl(VPP_ID_AUTH_URL) },
-                onOpenProfileSettings = {
-                    navController.navigate(MainScreen.ProfileSettings(activeProfile.id.toString()))
-                }
-            )
+        AnimatedVisibility(
+            visible = currentDestination?.startsWith("_") == true && isBottomBarVisible,
+            enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+        ) {
+            NavigationBar(
+                modifier = Modifier
+                    .onSizeChanged {
+                        with(localDensity) { bottomBarHeight = it.height.toDp() }
+                    }
+            ) {
+                NavigationBarItem(
+                    selected = currentDestination == "_Home",
+                    label = { Text("Home") },
+                    icon = { Icon(painter = painterResource(Res.drawable.house), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainHome) { popUpTo(0) } }
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Calendar",
+                    label = { Text("Kalender") },
+                    icon = { Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainCalendar) { popUpTo(MainScreen.MainHome) } }
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Search",
+                    label = { Text("Suche") },
+                    icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) } }
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Chat",
+                    label = { Text("Chat") },
+                    icon = { Icon(painter = painterResource(Res.drawable.message_square), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainChat) { popUpTo(MainScreen.MainHome) } }
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Dev",
+                    label = { Text("Dev") },
+                    icon = { Icon(painter = painterResource(Res.drawable.bug_play), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainDev) { popUpTo(MainScreen.MainHome) } }
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Profile",
+                    label = { Text("Profil") },
+                    icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainProfile) { popUpTo(MainScreen.MainHome) } },
+                )
+            }
         }
+    }
+
+    if (profileViewModel.state.isSheetVisible) {
+        val activeProfile = profileViewModel.state.currentProfile
+        if (activeProfile != null) ProfileSwitcher(
+            profiles = profileViewModel.state.profiles,
+            showVppIdBanner = profileViewModel.state.showVppIdBanner,
+            activeProfile = activeProfile,
+            onSelectProfile = { profileViewModel.onEvent(ProfileScreenEvent.SetActiveProfile(it)) },
+            onDismiss = { profileViewModel.onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(false)) },
+            onCreateNewProfile = onNavigateToOnboarding,
+            onConnectVppId = { BrowserIntent.openUrl(VPP_ID_AUTH_URL) },
+            onOpenProfileSettings = {
+                navController.navigate(MainScreen.ProfileSettings(activeProfile.id.toString()))
+            }
+        )
     }
 }
 
