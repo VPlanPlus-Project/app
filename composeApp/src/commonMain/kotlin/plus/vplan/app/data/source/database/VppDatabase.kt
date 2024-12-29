@@ -3,6 +3,7 @@ package plus.vplan.app.data.source.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import plus.vplan.app.data.source.database.converters.InstantConverter
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
 import plus.vplan.app.data.source.database.converters.LocalDateTimeConverter
 import plus.vplan.app.data.source.database.converters.LocalTimeConverter
@@ -12,6 +13,7 @@ import plus.vplan.app.data.source.database.dao.DayDao
 import plus.vplan.app.data.source.database.dao.DefaultLessonDao
 import plus.vplan.app.data.source.database.dao.GroupDao
 import plus.vplan.app.data.source.database.dao.HolidayDao
+import plus.vplan.app.data.source.database.dao.HomeworkDao
 import plus.vplan.app.data.source.database.dao.IndiwareDao
 import plus.vplan.app.data.source.database.dao.KeyValueDao
 import plus.vplan.app.data.source.database.dao.LessonTimeDao
@@ -113,7 +115,8 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
         UuidTypeConverter::class,
         LocalDateConverter::class,
         LocalTimeConverter::class,
-        LocalDateTimeConverter::class
+        LocalDateTimeConverter::class,
+        InstantConverter::class
     ]
 )
 abstract class VppDatabase : RoomDatabase() {
@@ -133,4 +136,5 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val holidayDao: HolidayDao
     abstract val substitutionPlanDao: SubstitutionPlanDao
     abstract val vppIdDao: VppIdDao
+    abstract val homeworkDao: HomeworkDao
 }

@@ -9,22 +9,7 @@ data class DefaultLesson(
     val course: Course?,
     val teacher: Teacher?,
     val groups: List<Group>
-) {
-    constructor(
-        indiwareDefaultLessonId: String,
-        indiwareSchoolId: String,
-        subject: String,
-        groups: List<Group>,
-        teacher: Teacher?,
-        course: Course?
-    ) : this(
-        id = "sp24.${indiwareSchoolId}.$indiwareDefaultLessonId",
-        subject = subject,
-        course = course,
-        teacher = teacher,
-        groups = groups
-    )
-}
+)
 
 fun Collection<DefaultLesson>.findByIndiwareId(indiwareId: String): DefaultLesson? {
     return firstOrNull { it.id.matches(Regex("^sp24\\..*\\.$indiwareId\$")) }

@@ -31,6 +31,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.VppIdDevice
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -73,7 +74,7 @@ class VppIdRepositoryImpl(
                 logger.e { "Error getting user by token: $response" }
                 return response.toResponse()
             }
-            val data = ResponseDataWrapper.fromJson<UserResponse>(response.bodyAsText())
+            val data = ResponseDataWrapper.fromJson<UserMeResponse>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
 
             if (upsert) vppDatabase.vppIdDao.upsert(
@@ -107,8 +108,34 @@ class VppIdRepositoryImpl(
         return vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
     }
 
-    override suspend fun getVppIdByIdWithCaching(id: Int): Response<VppId> {
-        TODO("Not yet implemented")
+    override suspend fun getVppIdByIdWithCaching(schoolApiAccess: SchoolApiAccess, id: Int): Response<VppId> {
+        return saveRequest {
+            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/$id") {
+                schoolApiAccess.authentication(this)
+            }
+            if (response.status != HttpStatusCode.OK) {
+                logger.e { "Error getting user by id: $response" }
+                return response.toResponse()
+            }
+            val data = ResponseDataWrapper.fromJson<UserItemResponse>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
+
+            vppDatabase.vppIdDao.upsert(
+                vppId = DbVppId(
+                    id = data.id,
+                    name = data.username,
+                    cachedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+                ),
+                groupCrossovers = data.groups.map {
+                    DbVppIdGroupCrossover(
+                        vppId = data.id,
+                        groupId = it
+                    )
+                }
+            )
+
+            return Response.Success(getVppIdById(data.id).first() as VppId)
+        }
     }
 
     override fun getVppIds(): Flow<List<VppId>> {
@@ -172,11 +199,18 @@ private data class TokenResponse(
 )
 
 @Serializable
-private data class UserResponse(
+private data class UserMeResponse(
     @SerialName("id") val id: Int,
     @SerialName("username") val name: String,
     @SerialName("group_id") val groupId: Int,
     @SerialName("schulverwalter_access_token") val schulverwalterAccessToken: String?,
+)
+
+@Serializable
+data class UserItemResponse(
+    @SerialName("id") val id: Int,
+    @SerialName("name") val username: String,
+    @SerialName("groups") val groups: List<Int>
 )
 
 @Serializable

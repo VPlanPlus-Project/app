@@ -33,6 +33,7 @@ import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
+import plus.vplan.app.feature.dev.DevScreen
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
 import plus.vplan.app.feature.profile.page.ui.ProfileScreen
@@ -42,6 +43,7 @@ import plus.vplan.app.feature.profile.page.ui.components.ProfileSwitcher
 import plus.vplan.app.feature.profile.settings.ui.ProfileSettingsScreen
 import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.bug_play
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.house
 import vplanplus.composeapp.generated.resources.message_square
@@ -60,6 +62,7 @@ fun MainScreenHost(
             else if (destination.route.orEmpty().startsWith(MainScreen.MainCalendar::class.qualifiedName ?: "__")) "_Calendar"
             else if (destination.route.orEmpty().startsWith(MainScreen.MainSearch::class.qualifiedName ?: "__")) "_Search"
             else if (destination.route.orEmpty().startsWith(MainScreen.MainChat::class.qualifiedName ?: "__")) "_Chat"
+            else if (destination.route.orEmpty().startsWith(MainScreen.MainDev::class.qualifiedName ?: "__")) "_Dev"
             else if (destination.route.orEmpty().startsWith(MainScreen.MainProfile::class.qualifiedName ?: "__")) "_Profile"
             else null
     }
@@ -101,6 +104,12 @@ fun MainScreenHost(
                         onClick = { navController.navigate(MainScreen.MainChat) { popUpTo(MainScreen.MainHome) } }
                     )
                     NavigationBarItem(
+                        selected = currentDestination == "_Dev",
+                        label = { Text("Dev") },
+                        icon = { Icon(painter = painterResource(Res.drawable.bug_play), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                        onClick = { navController.navigate(MainScreen.MainDev) { popUpTo(MainScreen.MainHome) } }
+                    )
+                    NavigationBarItem(
                         selected = currentDestination == "_Profile",
                         label = { Text("Profil") },
                         icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
@@ -114,12 +123,13 @@ fun MainScreenHost(
             NavHost(
                 navController = navController,
 //                startDestination = MainScreen.MainHome
-                startDestination = MainScreen.MainCalendar // TODO remove
+                startDestination = MainScreen.MainDev // TODO remove
             ) {
                 composable<MainScreen.MainHome> { HomeScreen(homeViewModel) }
                 composable<MainScreen.MainCalendar> { CalendarScreen(navController, calendarViewModel) }
                 composable<MainScreen.MainSearch> { Text("Search") }
                 composable<MainScreen.MainChat> { Text("Chat") }
+                composable<MainScreen.MainDev> { DevScreen() }
                 composable<MainScreen.MainProfile> { ProfileScreen(profileViewModel) }
 
                 composable<MainScreen.ProfileSettings> {
@@ -156,6 +166,7 @@ sealed class MainScreen(val name: String) {
     @Serializable data object MainCalendar : MainScreen("_Calendar")
     @Serializable data object MainSearch : MainScreen("_Search")
     @Serializable data object MainChat : MainScreen("_Chat")
+    @Serializable data object MainDev : MainScreen("_Dev")
     @Serializable data object MainProfile : MainScreen("_Profile")
 
     @Serializable data class ProfileSettings(val profileId: String) : MainScreen("ProfileSettings")

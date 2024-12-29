@@ -168,8 +168,7 @@ class SetUpSchoolDataUseCase(
                     val group = classes.firstOrNull { it.name == baseDataClass.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataClass.name} not found"))
                     baseDataClass.defaultLessons.map { defaultLesson ->
                         DefaultLesson(
-                            indiwareDefaultLessonId = defaultLesson.defaultLessonNumber,
-                            indiwareSchoolId = sp24Id,
+                            id = defaultLesson.defaultLessonNumber,
                             subject = defaultLesson.subject,
                             groups = listOf(group),
                             course = courses.firstOrNull { it.name == defaultLesson.course?.name },

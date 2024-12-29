@@ -12,6 +12,7 @@ import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DayRepositoryImpl
 import plus.vplan.app.data.repository.DefaultLessonRepositoryImpl
 import plus.vplan.app.data.repository.GroupRepositoryImpl
+import plus.vplan.app.data.repository.HomeworkRepositoryImpl
 import plus.vplan.app.data.repository.IndiwareRepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
 import plus.vplan.app.data.repository.LessonTimeRepositoryImpl
@@ -28,6 +29,7 @@ import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
+import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
@@ -40,6 +42,7 @@ import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.calendar.di.calendarModule
+import plus.vplan.app.feature.dev.devModule
 import plus.vplan.app.feature.home.di.homeModule
 import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
@@ -76,6 +79,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::TimetableRepositoryImpl).bind<TimetableRepository>()
     singleOf(::SubstitutionPlanRepositoryImpl).bind<SubstitutionPlanRepository>()
     singleOf(::VppIdRepositoryImpl).bind<VppIdRepository>()
+    singleOf(::HomeworkRepositoryImpl).bind<HomeworkRepository>()
 }
 
 fun initKoin(configuration: KoinAppDeclaration? = null) {
@@ -94,5 +98,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             profileSettingsModule,
             vppIdModule,
         )
+        modules(devModule)
     }
 }

@@ -44,7 +44,6 @@ class UpdateDefaultLessonsUseCase(
         )
 
         updateDefaultLessons(
-            school = school,
             baseData = baseData.data,
             courses = existingCourses.latest(),
             existingDefaultLessons = existingDefaultLessons.latest(),
@@ -96,7 +95,6 @@ class UpdateDefaultLessonsUseCase(
     }
 
     private suspend fun updateDefaultLessons(
-        school: School.IndiwareSchool,
         baseData: IndiwareBaseData,
         courses: List<Course>,
         existingDefaultLessons: List<DefaultLesson>,
@@ -108,8 +106,7 @@ class UpdateDefaultLessonsUseCase(
                 val group = groups.firstOrNull { it.name == baseDataClass.name } ?: throw NoSuchElementException("Group ${baseDataClass.name} not found")
                 baseDataClass.defaultLessons.map { defaultLesson ->
                     DefaultLesson(
-                        indiwareDefaultLessonId = defaultLesson.defaultLessonNumber,
-                        indiwareSchoolId = school.sp24Id,
+                        id = defaultLesson.defaultLessonNumber,
                         subject = defaultLesson.subject,
                         groups = listOf(group),
                         course = courses.firstOrNull { it.name == defaultLesson.course?.name },

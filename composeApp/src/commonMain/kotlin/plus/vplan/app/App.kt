@@ -15,7 +15,9 @@ import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
 
 const val SERVER_IP = "192.168.3.102"
-const val VPP_ROOT_URL = "http://$SERVER_IP:8000"
+val VPP_PROTOCOL = URLProtocol.HTTP
+const val VPP_PORT = 8000
+val VPP_ROOT_URL = "${VPP_PROTOCOL.name}://$SERVER_IP:$VPP_PORT"
 const val VPP_SP24_URL = "http://$SERVER_IP:8080"
 const val APP_ID = "4"
 const val APP_SECRET = "secret"
