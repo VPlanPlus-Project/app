@@ -174,7 +174,7 @@ private fun CalendarScreenContent(
                 )
             }
             HorizontalDivider()
-            val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + state.selectedDate.until(LocalDate.now(), DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
+            val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
             val isUserDragging = pagerState.interactionSource.collectIsDraggedAsState().value
             LaunchedEffect(pagerState.targetPage, isUserDragging) {
                 if (isUserDragging) return@LaunchedEffect
