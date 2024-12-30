@@ -5,13 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import co.touchlab.kermit.Logger
+import io.github.vinceglb.filekit.core.FileKit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         activity = this
-
+        FileKit.init(this)
         enableEdgeToEdge()
 
         var task: StartTask? = null

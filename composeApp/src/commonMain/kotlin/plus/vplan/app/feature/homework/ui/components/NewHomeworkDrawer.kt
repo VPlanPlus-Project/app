@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,7 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
+import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.core.PickerMode
+import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
@@ -73,6 +79,27 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
+
+    val filePickerLauncher = rememberFilePickerLauncher(
+        mode = PickerMode.Multiple(),
+        type = PickerType.File()
+    ) { files ->
+        // Handle picked files
+        Logger.d { "Picked files: ${files?.map { it.path }}" }
+        files?.forEach { file ->
+            viewModel.onEvent(NewHomeworkEvent.AddFile(file))
+        }
+    }
+
+    val imagePickerLauncher = rememberFilePickerLauncher(
+        mode = PickerMode.Multiple(),
+        type = PickerType.Image
+    ) { images ->
+        Logger.d { "Picked images: ${images?.map { it.path }}" }
+        images?.forEach { image ->
+            viewModel.onEvent(NewHomeworkEvent.AddFile(image))
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -350,7 +377,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
                 state = ButtonState.Enabled,
                 size = ButtonSize.Normal,
                 type = ButtonType.Secondary,
-                onClick = {  }
+                onClick = { filePickerLauncher.launch() }
             )
             Spacer(Modifier.height(8.dp))
             Button(
@@ -362,8 +389,34 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
                 state = ButtonState.Enabled,
                 size = ButtonSize.Normal,
                 type = ButtonType.Secondary,
-                onClick = {  }
+                onClick = { imagePickerLauncher.launch() }
             )
+
+            Spacer(Modifier.height(16.dp))
+            state.files.forEach { file ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable {  }
+                        .padding(horizontal = 16.dp)
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (file.bitmap != null) Image(
+                        bitmap = file.bitmap,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = file.platformFile.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
         }
         Button(
             modifier = Modifier.padding(horizontal = 16.dp),

@@ -11,6 +11,12 @@ plugins {
     alias(libs.plugins.serialization)
 }
 
+repositories {
+    mavenCentral()
+    google()
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev/")
+}
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -55,6 +61,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.navigation.compose)
 
+            implementation(libs.filekit.compose)
+
             implementation(libs.kermit)
 
             implementation(libs.androidx.room.runtime)
@@ -73,6 +81,8 @@ kotlin {
 
             implementation(libs.xmlutil.core)
             implementation(libs.xmlutil.serialization)
+
+            implementation(libs.skiko)
         }
 
         iosMain.dependencies {
