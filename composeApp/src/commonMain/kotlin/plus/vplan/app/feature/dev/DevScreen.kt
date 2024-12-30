@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawerContent
 import plus.vplan.app.ui.components.FullscreenDrawer
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.x
@@ -85,7 +86,7 @@ fun DevScreen(
         topAppBar = { onCloseClicked, modifier, scrollProgress ->
             TopAppBar(
                 modifier = modifier,
-                title = { Text("New Homework") },
+                title = { Text("Neue Hausaufgabe") },
                 navigationIcon = {
                     IconButton(onClick = { onCloseClicked() }) {
                         Icon(
@@ -104,7 +105,7 @@ fun DevScreen(
             )
         },
         content = {
-            Text("Hello")
+            NewHomeworkDrawerContent()
         }
     )
 }

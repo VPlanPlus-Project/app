@@ -44,6 +44,7 @@ import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.calendar.di.calendarModule
 import plus.vplan.app.feature.dev.devModule
 import plus.vplan.app.feature.home.di.homeModule
+import plus.vplan.app.feature.homework.di.homeworkModule
 import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
 import plus.vplan.app.feature.profile.page.di.profileModule
@@ -94,6 +95,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             onboardingModule,
             homeModule,
             calendarModule,
+            homeworkModule,
             profileModule,
             profileSettingsModule,
             vppIdModule,

@@ -6,11 +6,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,7 +48,7 @@ fun FullscreenDrawer(
     contentScrollState: ScrollState,
     onDismissRequest: () -> Unit,
     topAppBar: @Composable (onCloseClicked: () -> Unit, modifier: Modifier, scrollProgress: Float) -> Unit = { _, _, _ -> },
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable FullscreenDrawerContext.() -> Unit
 ) {
     var maxHeight by remember { mutableStateOf(0.dp) }
     val localDensity = LocalDensity.current
@@ -143,10 +145,15 @@ fun FullscreenDrawer(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.surface)
-                    .verticalScroll(contentScrollState)
             ) {
-                content()
+                FullscreenDrawerContext(contentScrollState, onDismissRequest, WindowInsets.systemBars.asPaddingValues()).content()
             }
         }
     }
 }
+
+data class FullscreenDrawerContext(
+    val scrollState: ScrollState,
+    val hideDrawer: () -> Unit,
+    val contentPadding: PaddingValues,
+)

@@ -6,9 +6,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -67,8 +70,12 @@ fun Button(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
+                        if (icon != null && center) Spacer(Modifier.width(24.dp))
                         Text(
-                            text = text
+                            text = text,
+                            style = MaterialTheme.typography.labelLarge,
+                            textAlign = if (center) TextAlign.Center else TextAlign.Start,
+                            modifier = Modifier.weight(1f)
                         )
                         if (icon != null) Icon(
                             painter = painterResource(icon),
@@ -104,7 +111,7 @@ fun Button(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
-                ButtonType.SECONDARY -> ButtonDefaults.buttonColors(
+                ButtonType.Secondary -> ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondary,
                     contentColor = MaterialTheme.colorScheme.onSecondary
                 )
@@ -129,7 +136,7 @@ enum class ButtonSize {
 }
 
 enum class ButtonType {
-    PRIMARY, SECONDARY, TERTIARY, Outlined, OutlinedOnSheet, Danger
+    PRIMARY, Secondary, TERTIARY, Outlined, OutlinedOnSheet, Danger
 }
 
 enum class ButtonState {
