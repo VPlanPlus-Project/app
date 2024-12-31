@@ -8,23 +8,39 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.vinceglb.filekit.core.PlatformFile
 import io.github.vinceglb.filekit.core.extension
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
+import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
 import plus.vplan.app.utils.getBitmapFromBytes
 import plus.vplan.app.utils.getBitmapFromPdf
 import kotlin.uuid.Uuid
 
 class NewHomeworkViewModel(
-    private val getCurrentProfileUseCase: GetCurrentProfileUseCase
+    private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
+    private val isVppIdBannerAllowedUseCase: IsVppIdBannerAllowedUseCase,
+    private val hideVppIdBannerUseCase: HideVppIdBannerUseCase
 ) : ViewModel() {
     var state by mutableStateOf(NewHomeworkState())
         private set
 
     init {
-        viewModelScope.launch { getCurrentProfileUseCase().collect { state = state.copy(currentProfile = it as? Profile.StudentProfile) } }
+        viewModelScope.launch {
+            combine(
+                getCurrentProfileUseCase(),
+                isVppIdBannerAllowedUseCase()
+            ) { currentProfile, canShowVppIdBanner ->
+                state.copy(
+                    currentProfile = currentProfile as? Profile.StudentProfile,
+                    isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppId == null) null else true,
+                    canShowVppIdBanner = canShowVppIdBanner
+                )
+            }.collect { state = it }
+        }
     }
 
     fun onEvent(event: NewHomeworkEvent) {
@@ -44,6 +60,7 @@ class NewHomeworkViewModel(
                     }
                     state = state.copy(files = state.files + Document(event.file, bitmap))
                 }
+                is NewHomeworkEvent.HideVppIdBanner -> hideVppIdBannerUseCase()
             }
         }
     }
@@ -54,8 +71,9 @@ data class NewHomeworkState(
     val currentProfile: Profile.StudentProfile? = null,
     val selectedDefaultLesson: DefaultLesson? = null,
     val selectedDate: LocalDate? = null,
-    val isPublic: Boolean = true,
-    val files: List<Document> = emptyList()
+    val isPublic: Boolean? = null,
+    val files: List<Document> = emptyList(),
+    val canShowVppIdBanner: Boolean = false
 )
 
 data class Document(
@@ -74,4 +92,6 @@ sealed class NewHomeworkEvent {
     data class SetVisibility(val isPublic: Boolean) : NewHomeworkEvent()
 
     data class AddFile(val file: PlatformFile) : NewHomeworkEvent()
+
+    data object HideVppIdBanner : NewHomeworkEvent()
 }

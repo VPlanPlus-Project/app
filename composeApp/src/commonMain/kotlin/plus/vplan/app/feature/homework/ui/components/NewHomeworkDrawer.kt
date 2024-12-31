@@ -2,8 +2,11 @@ package plus.vplan.app.feature.homework.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -51,13 +54,18 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.components.FullscreenDrawerContext
+import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.subjectIcon
+import plus.vplan.app.ui.theme.ColorToken
+import plus.vplan.app.ui.theme.customColors
+import plus.vplan.app.utils.BrowserIntent
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.mediumDayOfWeekNames
 import plus.vplan.app.utils.now
@@ -68,6 +76,7 @@ import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.file_text
 import vplanplus.composeapp.generated.resources.image
+import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.user
 import vplanplus.composeapp.generated.resources.users
 import vplanplus.composeapp.generated.resources.x
@@ -275,89 +284,112 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = "Sichtbarkeit",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp)
-                    .padding(horizontal = 16.dp)
-            ) {
-                Box(
+            if (state.isPublic != null) Column {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = "Sichtbarkeit",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Row(
                     modifier = Modifier
-                        .weight(1f, true)
+                        .fillMaxWidth()
                         .height(72.dp)
+                        .padding(horizontal = 16.dp)
                 ) {
-                    AnimatedContent(
-                        targetState = state.isPublic
-                    ) { displayVisibility ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(if (!displayVisibility) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
-                                .clickable { viewModel.onEvent(NewHomeworkEvent.SetVisibility(false)) }
-                                .padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                painter =
-                                if (displayVisibility) painterResource(Res.drawable.user)
-                                else painterResource(Res.drawable.check),
-                                contentDescription = null,
-                                modifier = Modifier.size(24.dp),
-                                tint = if (!displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "Nur ich",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = if (!displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                            )
+                    Box(
+                        modifier = Modifier
+                            .weight(1f, true)
+                            .height(72.dp)
+                    ) {
+                        AnimatedContent(
+                            targetState = state.isPublic
+                        ) { displayVisibility ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (!displayVisibility) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+                                    .clickable { viewModel.onEvent(NewHomeworkEvent.SetVisibility(false)) }
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    painter =
+                                    if (displayVisibility) painterResource(Res.drawable.user)
+                                    else painterResource(Res.drawable.check),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = if (!displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Nur ich",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = if (!displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                    Spacer(Modifier.padding(8.dp).width(DividerDefaults.Thickness))
+                    Box(
+                        modifier = Modifier
+                            .weight(1f, true)
+                            .height(72.dp)
+                    ) {
+                        AnimatedContent(
+                            targetState = state.isPublic
+                        ) { displayVisibility ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (displayVisibility) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+                                    .clickable { viewModel.onEvent(NewHomeworkEvent.SetVisibility(true)) }
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    painter =
+                                    if (!displayVisibility) painterResource(Res.drawable.user)
+                                    else painterResource(Res.drawable.check),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = if (displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text =
+                                    if ((state.selectedDefaultLesson?.groups?.size ?: 0) > 1) "Klassen ${state.selectedDefaultLesson?.groups.orEmpty().joinToString { it.name }}"
+                                    else "Klasse ${state.currentProfile?.group?.name}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = if (displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     }
                 }
-                Spacer(Modifier.padding(8.dp).width(DividerDefaults.Thickness))
-                Box(
-                    modifier = Modifier
-                        .weight(1f, true)
-                        .height(72.dp)
+            } else {
+                AnimatedVisibility(
+                    visible = state.canShowVppIdBanner,
+                    enter = EnterTransition.None,
+                    exit = shrinkVertically() + fadeOut()
                 ) {
-                    AnimatedContent(
-                        targetState = state.isPublic
-                    ) { displayVisibility ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(if (displayVisibility) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
-                                .clickable { viewModel.onEvent(NewHomeworkEvent.SetVisibility(true)) }
-                                .padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                painter =
-                                if (!displayVisibility) painterResource(Res.drawable.user)
-                                else painterResource(Res.drawable.check),
-                                contentDescription = null,
-                                modifier = Modifier.size(24.dp),
-                                tint = if (displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text =
-                                if ((state.selectedDefaultLesson?.groups?.size ?: 0) > 1) "Klassen ${state.selectedDefaultLesson?.groups.orEmpty().joinToString { it.name }}"
-                                else "Klasse ${state.currentProfile?.group?.name}",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = if (displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
+                    InfoCard(
+                        modifier = Modifier
+                            .padding(top = 16.dp)
+                            .padding(horizontal = 16.dp),
+                        imageVector = Res.drawable.info,
+                        title = "Cloud-Speicherung",
+                        text = "Teile Hausaufgaben mit deiner Klasse, wenn du dich mit einer vpp.ID anmeldest.",
+                        buttonText2 = "Ignorieren",
+                        buttonAction2 = { viewModel.onEvent(NewHomeworkEvent.HideVppIdBanner) },
+                        buttonText1 = "Anmelden",
+                        buttonAction1 = { BrowserIntent.openUrl(VPP_ID_AUTH_URL) },
+                        backgroundColor = customColors[ColorToken.YellowContainer]!!.get(),
+                        textColor = customColors[ColorToken.OnYellowContainer]!!.get()
+                    )
                 }
             }
 

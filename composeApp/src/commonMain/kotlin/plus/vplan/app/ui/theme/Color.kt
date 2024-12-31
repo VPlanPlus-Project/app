@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 val primaryLight = Color(0xFF000000)
 val onPrimaryLight = Color(0xFFFFFFFF)
 val primaryContainerLight = Color(0xFF262626)
-val onPrimaryContainerLight = Color(0xFFB1B1B1)
+val onPrimaryContainerLight = Color(0xFFA1A1A1)
 
 val secondaryLight = Color(0xFFE2E2E2)
 val onSecondaryLight = Color(0xFF4C4C4C)
@@ -87,8 +87,20 @@ val onGreenDark = Color(0xFF00390A)
 val greenContainerDark = Color(0xFF60C461)
 val onGreenContainerDark = Color(0xFF002B06)
 
+val yellowLight = Color(0xFFFFD600)
+val onYellowLight = Color(0xFF000000)
+val yellowContainerLight = Color(0xFFFFF176)
+val onYellowContainerLight = Color(0xFF402C00)
+
+val yellowDark = Color(0xFFFFE45C)
+val onYellowDark = Color(0xFF3F2D00)
+val yellowContainerDark = Color(0xFFFFC400)
+val onYellowContainerDark = Color(0xFF201C00)
+
+
 enum class ColorToken {
-    Green, OnGreen, GreenContainer, OnGreenContainer
+    Green, OnGreen, GreenContainer, OnGreenContainer,
+    Yellow, OnYellow, YellowContainer, OnYellowContainer
 }
 
 val customColors = mapOf(
@@ -107,6 +119,23 @@ val customColors = mapOf(
     ColorToken.OnGreenContainer to ColorTokens(
         light = onGreenContainerLight,
         dark = onGreenContainerDark,
+    ),
+
+    ColorToken.Yellow to ColorTokens(
+        light = yellowLight,
+        dark = yellowDark,
+    ),
+    ColorToken.OnYellow to ColorTokens(
+        light = onYellowLight,
+        dark = onYellowDark,
+    ),
+    ColorToken.YellowContainer to ColorTokens(
+        light = yellowContainerLight,
+        dark = yellowContainerDark,
+    ),
+    ColorToken.OnYellowContainer to ColorTokens(
+        light = onYellowContainerLight,
+        dark = onYellowContainerDark,
     )
 )
 
