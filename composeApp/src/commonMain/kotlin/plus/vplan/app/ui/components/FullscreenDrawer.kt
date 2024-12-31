@@ -33,6 +33,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
+import co.touchlab.kermit.Logger
 import plus.vplan.app.utils.abs
 import plus.vplan.app.utils.ifNan
 import plus.vplan.app.utils.roundToNearest
@@ -83,15 +84,21 @@ fun FullscreenDrawer(
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val isContentAtTop = contentScrollState.value == 0
-                if (isContentAtTop && available.y > 0) {
+                val isContentAtBottom = contentScrollState.value == contentScrollState.maxValue
+                Logger.d { "isContentAtTop: $isContentAtTop, isContentAtBottom: $isContentAtBottom, available.y: ${available.y}, offset: $offset" }
+                if (isContentAtTop && available.y >= 0) { // Scroll down
                     offset -= (with(localDensity) { available.y.toDp() })
-                    return super.onPreScroll(available, source)
+                    return Offset(0f, available.y)
                 }
-                if (available.y < 0 && offset > 0.dp) {
+                if (available.y <= 0 && offset > 0.dp && isContentAtBottom) { // Scroll down
                     offset -= (with(localDensity) { available.y.toDp() })
-                    return super.onPreScroll(available, source)
+                    return Offset(0f, available.y)
                 }
-                return super.onPreScroll(available, source)
+                if (!isContentAtBottom && offset != maxHeight) {
+                    offset -= (with(localDensity) { available.y.toDp() })
+                    return Offset(0f, available.y)
+                }
+                return super.onPreScroll(Offset.Zero, source)
             }
         }
     }
