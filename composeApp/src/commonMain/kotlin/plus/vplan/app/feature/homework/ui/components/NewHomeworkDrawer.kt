@@ -3,6 +3,7 @@ package plus.vplan.app.feature.homework.ui.components
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
@@ -26,30 +27,45 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
+import io.github.vinceglb.filekit.core.extension
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
@@ -65,18 +81,23 @@ import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.ui.theme.ColorToken
 import plus.vplan.app.ui.theme.customColors
+import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.BrowserIntent
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.mediumDayOfWeekNames
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortMonthNames
+import plus.vplan.app.utils.toHumanSize
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.check
+import vplanplus.composeapp.generated.resources.file
 import vplanplus.composeapp.generated.resources.file_text
 import vplanplus.composeapp.generated.resources.image
 import vplanplus.composeapp.generated.resources.info
+import vplanplus.composeapp.generated.resources.pencil
+import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.user
 import vplanplus.composeapp.generated.resources.users
 import vplanplus.composeapp.generated.resources.x
@@ -88,6 +109,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
+    var fileToRename by rememberSaveable { mutableStateOf<File?>(null) }
 
     val filePickerLauncher = rememberFilePickerLauncher(
         mode = PickerMode.Multiple(),
@@ -400,53 +422,144 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
-            Button(
+            Column(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .fillMaxWidth(),
-                text = "Dokument anhängen",
-                icon = Res.drawable.file_text,
-                state = ButtonState.Enabled,
-                size = ButtonSize.Normal,
-                type = ButtonType.Secondary,
-                onClick = { filePickerLauncher.launch() }
-            )
-            Spacer(Modifier.height(8.dp))
-            Button(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .fillMaxWidth(),
-                text = "Bild anhängen",
-                icon = Res.drawable.image,
-                state = ButtonState.Enabled,
-                size = ButtonSize.Normal,
-                type = ButtonType.Secondary,
-                onClick = { imagePickerLauncher.launch() }
-            )
+                    .clip(RoundedCornerShape(16.dp)),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Dokument anhängen",
+                    icon = Res.drawable.file_text,
+                    state = ButtonState.Enabled,
+                    size = ButtonSize.Normal,
+                    type = ButtonType.Secondary,
+                    onClick = { filePickerLauncher.launch() }
+                )
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Bild anhängen",
+                    icon = Res.drawable.image,
+                    state = ButtonState.Enabled,
+                    size = ButtonSize.Normal,
+                    type = ButtonType.Secondary,
+                    onClick = { imagePickerLauncher.launch() }
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
             state.files.forEach { file ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable {  }
-                        .padding(horizontal = 16.dp)
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (file.bitmap != null) Image(
-                        bitmap = file.bitmap,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = file.platformFile.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                key(file.platformFile.path.hashCode()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .padding(horizontal = 16.dp)
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(92.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainer),
+                            contentAlignment = Alignment.Center
+                        ) image@{
+                            file.bitmap?.let { bitmap ->
+                                Image(
+                                    bitmap = bitmap,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .thenIf(Modifier.rotate(animateFloatAsState(((file as? File.Image)?.rotation ?: 0) * 90f).value)) { file is File.Image },
+                                    contentScale = ContentScale.Fit
+                                )
+                            } ?: Icon(
+                                painter = painterResource(Res.drawable.file),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Column(Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) fileNameAndDetails@{
+                                Text(
+                                    text = file.platformFile.extension.uppercase(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    maxLines = 1,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(MaterialTheme.colorScheme.primaryContainer)
+                                        .padding(4.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = file.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = buildString {
+                                            append(file.size.toHumanSize())
+                                            if (file is File.Document) append(" $DOT ${file.pages} Seite" + (if (file.pages > 1) "n" else ""))
+                                            if (file is File.Image) append(" $DOT ${file.widthWithRotation}x${file.heightWithRotation}")
+                                        },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                            ) tools@{
+                                if (file is File.Image) {
+                                    IconButton(
+                                        onClick = { viewModel.onEvent(NewHomeworkEvent.UpdateFile(file.copy(rotation = file.rotation + 1))) }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(Res.drawable.rotate_cw),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                                IconButton(
+                                    onClick = { fileToRename = file }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.pencil),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { viewModel.onEvent(NewHomeworkEvent.RemoveFile(file)) }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.x),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -458,6 +571,72 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
             size = ButtonSize.Normal,
             onClick = {  }
         )
+
+        if (fileToRename != null) {
+            val confirm: (String) -> Unit = { fileNameValue ->
+                viewModel.onEvent(NewHomeworkEvent.UpdateFile(fileToRename!!.copyBase(name = fileNameValue + "." + fileToRename?.platformFile?.extension)))
+                fileToRename = null
+            }
+            var fileNameValue by rememberSaveable { mutableStateOf((fileToRename?.name ?: ".file").substringBeforeLast(".")) }
+            var fileName by remember {
+                mutableStateOf(
+                    TextFieldValue(
+                        text = fileNameValue,
+                        selection = TextRange(0, fileNameValue.length)
+                    )
+                )
+            }
+            LaunchedEffect(fileName.text) { fileNameValue = fileName.text }
+            AlertDialog(
+                onDismissRequest = { fileToRename = null },
+                icon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.file_text),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                title = { Text("Datei umbenennen") },
+                text = {
+                    val focusRequester = remember { FocusRequester() }
+                    Column {
+                        TextField(
+                            value = fileName,
+                            onValueChange = { fileName = it },
+                            label = { Text("Name") },
+                            placeholder = { Text(fileToRename?.name ?: "") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { confirm(fileName.text) }),
+                            trailingIcon = {
+                                Text(
+                                    text = ".${fileToRename?.platformFile?.extension ?: ""}",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.outline,
+                                )
+                            },
+                            modifier = Modifier.focusRequester(focusRequester)
+                        )
+                    }
+                    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = { confirm(fileName.text) },
+                    ) {
+                        Text("Speichern")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { fileToRename = null }
+                    ) {
+                        Text("Abbrechen")
+                    }
+                }
+            )
+        }
     }
 
     if (showLessonSelectDrawer) {

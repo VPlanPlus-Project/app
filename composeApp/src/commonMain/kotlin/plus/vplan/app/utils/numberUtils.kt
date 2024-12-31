@@ -1,6 +1,9 @@
 package plus.vplan.app.utils
 
 import kotlin.math.abs
+import kotlin.math.log
+import kotlin.math.pow
+import kotlin.math.roundToLong
 
 fun List<Int>.isContinuous(): Boolean {
     if (isEmpty()) return true
@@ -57,4 +60,15 @@ inline fun <reified T: Number> T.ifNan(block: () -> T): T {
         is Double -> if (this.isNaN()) block() else this
         else -> this
     }
+}
+
+fun Long.toHumanSize(): String {
+    val units = listOf("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+    if (this < 1024) return "$this ${units[0]}"
+
+    val exponent = (log(this.toDouble(), 2.0) / log(1024.0, 2.0)).toInt()
+    val unit = units.getOrElse(exponent) { "Too Large" }
+    val value = this / 1024.0.pow(exponent.toDouble())
+
+    return "${((value * 10).roundToLong() / 10)} $unit"
 }

@@ -17,7 +17,7 @@ import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
 import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
 import plus.vplan.app.utils.getBitmapFromBytes
-import plus.vplan.app.utils.getBitmapFromPdf
+import plus.vplan.app.utils.getDataFromPdf
 import kotlin.uuid.Uuid
 
 class NewHomeworkViewModel(
@@ -53,12 +53,49 @@ class NewHomeworkViewModel(
                 is NewHomeworkEvent.SelectDate -> state = state.copy(selectedDate = event.date)
                 is NewHomeworkEvent.SetVisibility -> state = state.copy(isPublic = event.isPublic)
                 is NewHomeworkEvent.AddFile -> {
-                    val bitmap = if (event.file.extension == "pdf") {
-                        getBitmapFromPdf(event.file.readBytes())
-                    } else {
-                        getBitmapFromBytes(event.file.readBytes())
+                    val bytes = event.file.readBytes()
+                    val size = event.file.getSize() ?: 0L
+                    val name = event.file.name
+                    val file = when (event.file.extension) {
+                        "pdf" -> {
+                            val data = getDataFromPdf(bytes)
+                            File.Document(
+                                platformFile = event.file,
+                                bitmap = data?.firstPage,
+                                size = size,
+                                name = name,
+                                pages = data?.pages ?: 0
+                            )
+                        }
+                        "jpg", "jpeg", "png" -> {
+                            val bitmap = getBitmapFromBytes(bytes)
+                            File.Image(
+                                platformFile = event.file,
+                                bitmap = bitmap,
+                                size = size,
+                                width = bitmap?.width ?: 0,
+                                height = bitmap?.height ?: 0,
+                                name = name,
+                                rotation = 0
+                            )
+                        }
+                        else -> {
+                            val bitmap = getBitmapFromBytes(bytes)
+                            File.Other(
+                                platformFile = event.file,
+                                bitmap = bitmap,
+                                size = size,
+                                name = name
+                            )
+                        }
                     }
-                    state = state.copy(files = state.files + Document(event.file, bitmap))
+                    state = state.copy(files = state.files + file)
+                }
+                is NewHomeworkEvent.UpdateFile -> {
+                    state = state.copy(files = state.files.map { file -> if (file.platformFile.path.hashCode() == event.file.platformFile.path.hashCode()) event.file else file })
+                }
+                is NewHomeworkEvent.RemoveFile -> {
+                    state = state.copy(files = state.files.filter { it.platformFile.path.hashCode() != event.file.platformFile.path.hashCode() })
                 }
                 is NewHomeworkEvent.HideVppIdBanner -> hideVppIdBannerUseCase()
             }
@@ -72,14 +109,65 @@ data class NewHomeworkState(
     val selectedDefaultLesson: DefaultLesson? = null,
     val selectedDate: LocalDate? = null,
     val isPublic: Boolean? = null,
-    val files: List<Document> = emptyList(),
+    val files: List<File> = emptyList(),
     val canShowVppIdBanner: Boolean = false
 )
 
-data class Document(
-    val platformFile: PlatformFile,
-    val bitmap: ImageBitmap?
-)
+abstract class File {
+    abstract val platformFile: PlatformFile
+    abstract val name: String
+    abstract val bitmap: ImageBitmap?
+    abstract val size: Long
+
+    data class Document(
+        override val platformFile: PlatformFile,
+        override val bitmap: ImageBitmap?,
+        override val size: Long,
+        override val name: String,
+        val pages: Int
+    ) : File() {
+        override fun copyBase(platformFile: PlatformFile, bitmap: ImageBitmap?, size: Long, name: String): Document {
+            return copy(platformFile = platformFile, bitmap = bitmap, size = size, name = name, pages = pages)
+        }
+    }
+
+    data class Image(
+        override val platformFile: PlatformFile,
+        override val bitmap: ImageBitmap?,
+        override val size: Long,
+        override val name: String,
+        val rotation: Int,
+        val width: Int,
+        val height: Int
+    ) : File() {
+        val widthWithRotation: Int
+            get() = if (rotation % 2 == 0) width else height
+        val heightWithRotation: Int
+            get() = if (rotation % 2 == 0) height else width
+
+        override fun copyBase(platformFile: PlatformFile, bitmap: ImageBitmap?, size: Long, name: String): Image {
+            return copy(platformFile = platformFile, bitmap = bitmap, size = size, name = name, rotation = rotation, width = width, height = height)
+        }
+    }
+
+    data class Other(
+        override val platformFile: PlatformFile,
+        override val bitmap: ImageBitmap?,
+        override val size: Long,
+        override val name: String
+    ) : File() {
+        override fun copyBase(platformFile: PlatformFile, bitmap: ImageBitmap?, size: Long, name: String): Other {
+            return copy(platformFile = platformFile, bitmap = bitmap, size = size, name = name)
+        }
+    }
+
+    abstract fun copyBase(
+        platformFile: PlatformFile = this.platformFile,
+        bitmap: ImageBitmap? = this.bitmap,
+        size: Long = this.size,
+        name: String = this.name
+    ): File
+}
 
 sealed class NewHomeworkEvent {
     data class AddTask(val task: String) : NewHomeworkEvent()
@@ -92,6 +180,8 @@ sealed class NewHomeworkEvent {
     data class SetVisibility(val isPublic: Boolean) : NewHomeworkEvent()
 
     data class AddFile(val file: PlatformFile) : NewHomeworkEvent()
+    data class UpdateFile(val file: File) : NewHomeworkEvent()
+    data class RemoveFile(val file: File) : NewHomeworkEvent()
 
     data object HideVppIdBanner : NewHomeworkEvent()
 }
