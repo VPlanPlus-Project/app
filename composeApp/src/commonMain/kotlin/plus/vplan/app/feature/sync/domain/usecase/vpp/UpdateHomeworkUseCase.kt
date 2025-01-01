@@ -26,6 +26,15 @@ class UpdateHomeworkUseCase(
         if (response is Response.Error) return response
         if (response !is Response.Success) throw IllegalStateException("response is not successful: $response")
 
+        val groupResponse = homeworkRepository.getByGroup(
+            authentication = profile.school.getSchoolApiAccess(),
+            groupId = profile.group.id,
+            from = null,
+            to = null
+        )
+        if (groupResponse is Response.Error) return groupResponse
+        if (groupResponse !is Response.Success) throw IllegalStateException("groupResponse is not successful: $groupResponse")
+
         val groupCache = groupRepository.getBySchool(profile.school.id)
         val defaultLessonCache = defaultLessonRepository.getBySchool(profile.school.id)
         val vppIdCache = vppIdRepository.getVppIds()
@@ -36,7 +45,7 @@ class UpdateHomeworkUseCase(
         val cachedDefaultLessons = defaultLessonCache.latest()
         var cachedVppIds = vppIdCache.latest()
 
-        val downloadedHomework = response.data.mapNotNull { homeworkResponse ->
+        val downloadedHomework = response.data.plus(groupResponse.data).mapNotNull { homeworkResponse ->
             val group = homeworkResponse.group?.let updateGroup@{ groupId ->
                 cachedGroups.firstOrNull { it.id == homeworkResponse.group } ?:
                 groupRepository.getByIdWithCaching(groupId, profile.school).let { groupUpdateResponse ->

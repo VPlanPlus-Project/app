@@ -569,7 +569,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
             icon = Res.drawable.check,
             state = ButtonState.Enabled,
             size = ButtonSize.Normal,
-            onClick = {  }
+            onClick = { viewModel.onEvent(NewHomeworkEvent.Save) }
         )
 
         if (fileToRename != null) {

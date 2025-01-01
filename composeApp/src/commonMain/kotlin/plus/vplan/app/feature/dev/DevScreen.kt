@@ -62,6 +62,7 @@ fun DevScreen(
                 Text("New Homework")
             }
         }
+        state.reloadResponse?.let { Text(it.toString()) }
         state.homework.forEach { homework ->
             Column(
                 modifier = Modifier

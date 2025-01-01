@@ -2,6 +2,8 @@ package plus.vplan.app.di
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -61,6 +63,10 @@ val appModule = module(createdAtStart = true) {
                 socketTimeoutMillis = 5_000
                 connectTimeoutMillis = 5_000
                 requestTimeoutMillis = 5_000
+            }
+
+            install(ContentNegotiation) {
+                json()
             }
         }
     }

@@ -35,4 +35,10 @@ interface HomeworkDao {
     @Transaction
     @Query("DELETE FROM homework WHERE id IN (:ids)")
     suspend fun deleteById(ids: List<Int>)
+
+    @Query("SELECT MIN(id) FROM homework")
+    fun getMinId(): Flow<Int?>
+
+    @Query("SELECT MIN(id) FROM homework_task")
+    fun getMinTaskId(): Flow<Int?>
 }

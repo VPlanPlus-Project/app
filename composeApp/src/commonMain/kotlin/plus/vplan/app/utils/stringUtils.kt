@@ -32,3 +32,5 @@ fun String.splitWithKnownValuesBySpace(values: List<String>): List<String> {
 
     return if (remaining.isEmpty()) matches else emptyList()
 }
+
+expect fun String.sha256(): String

@@ -14,6 +14,7 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
 import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
 import plus.vplan.app.utils.getBitmapFromBytes
@@ -23,7 +24,8 @@ import kotlin.uuid.Uuid
 class NewHomeworkViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val isVppIdBannerAllowedUseCase: IsVppIdBannerAllowedUseCase,
-    private val hideVppIdBannerUseCase: HideVppIdBannerUseCase
+    private val hideVppIdBannerUseCase: HideVppIdBannerUseCase,
+    private val createHomeworkUseCase: CreateHomeworkUseCase
 ) : ViewModel() {
     var state by mutableStateOf(NewHomeworkState())
         private set
@@ -98,6 +100,12 @@ class NewHomeworkViewModel(
                     state = state.copy(files = state.files.filter { it.platformFile.path.hashCode() != event.file.platformFile.path.hashCode() })
                 }
                 is NewHomeworkEvent.HideVppIdBanner -> hideVppIdBannerUseCase()
+                is NewHomeworkEvent.Save -> {
+                    if (state.tasks.isEmpty()) return@launch
+                    if (state.currentProfile == null) return@launch
+                    if (state.selectedDate == null) return@launch
+                    createHomeworkUseCase(state.tasks.values.toList(), state.isPublic, state.selectedDate!!, state.selectedDefaultLesson, state.files)
+                }
             }
         }
     }
@@ -184,4 +192,5 @@ sealed class NewHomeworkEvent {
     data class RemoveFile(val file: File) : NewHomeworkEvent()
 
     data object HideVppIdBanner : NewHomeworkEvent()
+    data object Save : NewHomeworkEvent()
 }

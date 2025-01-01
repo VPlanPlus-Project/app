@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -35,13 +36,17 @@ class DevViewModel(
     fun onEvent(event: DevEvent) {
         viewModelScope.launch {
             when (event) {
-                DevEvent.Refresh -> updateHomeworkUseCase(state.profile as Profile.StudentProfile)
+                DevEvent.Refresh -> {
+                    val result = updateHomeworkUseCase(state.profile as Profile.StudentProfile)
+                    state = state.copy(reloadResponse = result)
+                }
             }
         }
     }
 }
 
 data class DevState(
+    val reloadResponse: Response<Unit>? = null,
     val homework: List<Homework> = emptyList(),
     val profile: Profile? = null
 )
