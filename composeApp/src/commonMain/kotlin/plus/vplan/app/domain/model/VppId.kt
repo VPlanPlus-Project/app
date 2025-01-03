@@ -1,12 +1,20 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.datetime.LocalDateTime
+import plus.vplan.app.domain.cache.CacheableItem
+import plus.vplan.app.domain.cache.CachedItem
 
-sealed class VppId {
+sealed class VppId : CachedItem<VppId> {
     abstract val id: Int
     abstract val name: String
     abstract val groups: List<Group>
     abstract val cachedAt: LocalDateTime
+
+    override fun getItemId(): String = id.toString()
+    override fun isConfigSatisfied(
+        configuration: CacheableItem.FetchConfiguration<VppId>,
+        allowLoading: Boolean
+    ): Boolean = true
 
     data class Cached(
         override val id: Int,
@@ -40,4 +48,6 @@ sealed class VppId {
 
         return true
     }
+
+    data object Fetch : CacheableItem.FetchConfiguration.Fetch<VppId>()
 }

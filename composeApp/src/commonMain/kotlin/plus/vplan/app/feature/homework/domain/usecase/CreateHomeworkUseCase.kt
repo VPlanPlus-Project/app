@@ -3,6 +3,7 @@ package plus.vplan.app.feature.homework.domain.usecase
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Homework
@@ -46,10 +47,10 @@ class CreateHomeworkUseCase(
                 defaultLesson = defaultLesson,
                 group = profile.group,
                 createdAt = Clock.System.now(),
-                createdBy = profile.vppId,
+                createdBy = Cacheable.Loaded(profile.vppId),
                 isPublic = isPublic ?: false,
                 dueTo = Instant.fromEpochSeconds(date.toEpochDays() * 24 * 60 * 60L),
-                tasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, isDone = false) }
+                tasks = taskIds.map { Cacheable.Loaded(Homework.HomeworkTask(id = it.value, content = it.key, homework = Cacheable.Uninitialized(id.toString()), isDone = false)) }
             )
         } else {
             id = homeworkRepository.getIdForNewLocalHomework()
@@ -60,7 +61,7 @@ class CreateHomeworkUseCase(
                 createdAt = Clock.System.now(),
                 createdByProfile = profile,
                 dueTo = Instant.fromEpochSeconds(date.toEpochDays() * 24 * 60 * 60L),
-                tasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, isDone = false) }
+                tasks = taskIds.map { Cacheable.Loaded(Homework.HomeworkTask(id = it.value, content = it.key, homework = Cacheable.Uninitialized(id.toString()), isDone = false)) }
             )
         }
 

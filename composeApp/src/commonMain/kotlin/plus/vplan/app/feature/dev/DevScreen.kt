@@ -28,6 +28,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawerContent
 import plus.vplan.app.ui.components.FullscreenDrawer
 import vplanplus.composeapp.generated.resources.Res
@@ -61,6 +63,11 @@ fun DevScreen(
             ) {
                 Text("New Homework")
             }
+            Button(
+                onClick = { viewModel.onEvent(DevEvent.Clear) }
+            ) {
+                Text("Clear Cache")
+            }
         }
         state.reloadResponse?.let { Text(it.toString()) }
         state.homework.forEach { homework ->
@@ -69,12 +76,20 @@ fun DevScreen(
                     .padding(vertical = 4.dp)
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(homework.defaultLesson?.subject ?: homework.group?.name ?: "wtf")
-                    Text(homework.dueTo.toString())
+                    Text("ID: ${homework.getItemId()}")
+                    if (homework is Cacheable.Loaded) Text(homework.value.defaultLesson?.subject ?: homework.value.group?.name ?: "wtf")
+                    if (homework is Cacheable.Loaded) Text(homework.value.dueTo.toString())
+                    if (homework is Cacheable.Loaded && homework.value is Homework.CloudHomework) when (homework.value.createdBy) {
+                        is Cacheable.Uninitialized -> Text("User ${homework.value.createdBy.id}")
+                        is Cacheable.Loading -> Text("Loading... (${homework.value.createdBy.getItemId()}")
+                        is Cacheable.Error -> Text("Error: ${homework.value.createdBy.error}")
+                        is Cacheable.Loaded -> Text("von ${homework.value.createdBy.value.name}")
+                        is Cacheable.NotExisting -> Text("existiert nicht")
+                    }
                 }
-                Text(homework.tasks.joinToString("\n") { it.content })
+                if (homework is Cacheable.Loaded) Text(homework.value.tasks.filterIsInstance<Cacheable.Loaded<Homework.HomeworkTask>>().joinToString("\n") { it.value.content })
             }
         }
     }

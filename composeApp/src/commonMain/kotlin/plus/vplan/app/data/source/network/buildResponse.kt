@@ -14,3 +14,11 @@ fun <T> HttpResponse.toResponse(
         else -> throw UnsupportedOperationException("The status code ${status.value} is not supported at the moment")
     }
 }
+
+fun <T> HttpResponse.toErrorResponse(): Response.Error {
+    return when (status) {
+        HttpStatusCode.Unauthorized -> Response.Error.OnlineError.Unauthorized
+        HttpStatusCode.NotFound -> Response.Error.OnlineError.NotFound
+        else -> throw UnsupportedOperationException("The status code ${status.value} is not supported at the moment")
+    }
+}

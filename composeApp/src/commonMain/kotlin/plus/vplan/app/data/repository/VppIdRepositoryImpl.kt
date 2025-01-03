@@ -9,9 +9,7 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -29,12 +27,15 @@ import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
 import plus.vplan.app.data.source.network.saveRequest
+import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.SchoolApiAccess
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.VppIdDevice
 import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.utils.forEachBreakable
 
 private val logger = Logger.withTag("VppIdRepositoryImpl")
 
@@ -100,41 +101,50 @@ class VppIdRepositoryImpl(
                     )
                 )
             )
-            return Response.Success(getVppIdById(data.id).first() as VppId.Active)
+            return Response.Success((getVppIdById(data.id).first() as Cacheable.Loaded).value as VppId.Active)
         }
     }
 
-    override suspend fun getVppIdById(id: Int): Flow<VppId?> {
-        return vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
-    }
+    override fun getVppIdById(id: Int): Flow<Cacheable<VppId>> {
+        return flow {
+            val databaseItem = vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
+            if (databaseItem.first() != null) return@flow emitAll(databaseItem.map { Cacheable.Loaded(it!!) })
+            emit(Cacheable.Loading(id.toString(), 0))
+            val schools = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/$id")
+            if (schools.status != HttpStatusCode.OK) return@flow emit(Cacheable.Error(id.toString(), schools.toErrorResponse<VppId>()))
+            val schoolIds = ResponseDataWrapper.fromJson<UserSchoolResponse>(schools.bodyAsText()) ?: return@flow emit(Cacheable.Error(id.toString(), Response.Error.ParsingError(schools.bodyAsText())))
+            vppDatabase.schoolDao
+                .getAll()
+                .first()
+                .filter { it.school.id in schoolIds.ids }
+                .map { it.toModel() }
+                .filterIsInstance<School.IndiwareSchool>()
+                .map { it.getSchoolApiAccess() }
+                .forEachBreakable { schoolAccess ->
+                    val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/$id") {
+                        schoolAccess.authentication(this)
+                    }
+                    if (response.status != HttpStatusCode.OK) return@forEachBreakable false
+                    val data = ResponseDataWrapper.fromJson<UserItemResponse>(response.bodyAsText())
+                            ?: return@flow emit(Cacheable.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
-    override suspend fun getVppIdByIdWithCaching(schoolApiAccess: SchoolApiAccess, id: Int): Response<VppId> {
-        return saveRequest {
-            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/$id") {
-                schoolApiAccess.authentication(this)
-            }
-            if (response.status != HttpStatusCode.OK) {
-                logger.e { "Error getting user by id: $response" }
-                return response.toResponse()
-            }
-            val data = ResponseDataWrapper.fromJson<UserItemResponse>(response.bodyAsText())
-                ?: return Response.Error.ParsingError(response.bodyAsText())
-
-            vppDatabase.vppIdDao.upsert(
-                vppId = DbVppId(
-                    id = data.id,
-                    name = data.username,
-                    cachedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-                ),
-                groupCrossovers = data.groups.map {
-                    DbVppIdGroupCrossover(
-                        vppId = data.id,
-                        groupId = it
+                    vppDatabase.vppIdDao.upsert(
+                        vppId = DbVppId(
+                            id = data.id,
+                            name = data.username,
+                            cachedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+                        ),
+                        groupCrossovers = data.groups.map {
+                            DbVppIdGroupCrossover(
+                                vppId = data.id,
+                                groupId = it
+                            )
+                        }
                     )
+                    true
                 }
-            )
 
-            return Response.Success(getVppIdById(data.id).first() as VppId)
+            return@flow emitAll(getVppIdById(id))
         }
     }
 
@@ -230,3 +240,8 @@ private data class MeSession(
         )
     }
 }
+
+@Serializable
+data class UserSchoolResponse(
+    @SerialName("school_ids") val ids: List<Int>
+)

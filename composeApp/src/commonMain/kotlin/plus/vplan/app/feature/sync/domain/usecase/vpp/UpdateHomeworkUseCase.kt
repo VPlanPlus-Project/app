@@ -1,9 +1,12 @@
 package plus.vplan.app.feature.sync.domain.usecase.vpp
 
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -37,13 +40,11 @@ class UpdateHomeworkUseCase(
 
         val groupCache = groupRepository.getBySchool(profile.school.id)
         val defaultLessonCache = defaultLessonRepository.getBySchool(profile.school.id)
-        val vppIdCache = vppIdRepository.getVppIds()
         val homeworkCache = homeworkRepository.getByGroup(profile.group.id)
             .map { flowData -> flowData.filterIsInstance<Homework.CloudHomework>() }
 
         var cachedGroups = groupCache.latest()
         val cachedDefaultLessons = defaultLessonCache.latest()
-        var cachedVppIds = vppIdCache.latest()
 
         val downloadedHomework = response.data.plus(groupResponse.data).mapNotNull { homeworkResponse ->
             val group = homeworkResponse.group?.let updateGroup@{ groupId ->
@@ -57,35 +58,40 @@ class UpdateHomeworkUseCase(
             val defaultLesson = homeworkResponse.defaultLesson?.let getDefaultLesson@{ defaultLessonId ->
                 cachedDefaultLessons.firstOrNull { it.id == defaultLessonId } ?: return@mapNotNull null
             }
-            val createdBy = cachedVppIds.firstOrNull { it.id == homeworkResponse.createdBy } ?: run {
-                vppIdRepository.getVppIdByIdWithCaching(profile.school.getSchoolApiAccess(), homeworkResponse.createdBy).let { vppIdResponse ->
-                    if (vppIdResponse !is Response.Success) return@mapNotNull null
-                    cachedVppIds = vppIdCache.latest()
-                    cachedVppIds.firstOrNull { it.id == homeworkResponse.createdBy } ?: return@mapNotNull null
-                }
-            }
 
             Homework.CloudHomework(
                 id = homeworkResponse.id,
                 createdAt = homeworkResponse.createdAt,
                 dueTo = homeworkResponse.dueTo,
                 tasks = homeworkResponse.tasks.map { homeworkTaskResponse ->
-                    Homework.HomeworkTask(
+                    Cacheable.Loaded(Homework.HomeworkTask(
                         id = homeworkTaskResponse.id,
                         content = homeworkTaskResponse.content,
+                        homework = Cacheable.Uninitialized(homeworkResponse.id.toString()),
                         isDone = null
-                    )
+                    ))
                 },
                 defaultLesson = defaultLesson,
                 group = group,
                 isPublic = homeworkResponse.isPublic,
-                createdBy = createdBy
+                createdBy = Cacheable.Uninitialized(homeworkResponse.createdBy.toString())
             )
-        }.also { homeworkRepository.upsert(it) }
+        }.also { homeworkItems ->
+            homeworkItems
+                .map { it.createdBy }
+                .filterIsInstance<Cacheable.Uninitialized<VppId>>()
+                .distinctBy { it.id }
+                .forEach {
+                    vppIdRepository.getVppIdById(it.id.toInt()).takeUnless { cachedVppId ->
+                        cachedVppId is Cacheable.Loaded<*> || cachedVppId is Cacheable.Error<*>
+                    }?.last()
+                }
+            homeworkRepository.upsert(homeworkItems)
+        }
 
         val cachedHomework = homeworkCache.latest()
 
-        cachedHomework.filter { it.id !in downloadedHomework.map { it.id } }.let { homeworkToDelete ->
+        cachedHomework.filter { cachedItem -> cachedItem.id !in downloadedHomework.map { it.id } }.let { homeworkToDelete ->
             homeworkRepository.deleteById(homeworkToDelete.map { it.id })
         }
 

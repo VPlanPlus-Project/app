@@ -33,13 +33,6 @@ import kotlin.uuid.Uuid
             onUpdate = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = DbVppId::class,
-            parentColumns = ["id"],
-            childColumns = ["created_by_vpp_id"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE
-        ),
-        ForeignKey(
             entity = DbProfile::class,
             parentColumns = ["id"],
             childColumns = ["created_by_profile_id"],

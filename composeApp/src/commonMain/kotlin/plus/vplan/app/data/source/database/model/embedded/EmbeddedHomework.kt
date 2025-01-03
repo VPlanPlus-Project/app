@@ -7,7 +7,7 @@ import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbProfile
-import plus.vplan.app.data.source.database.model.database.DbVppId
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 
@@ -23,11 +23,6 @@ data class EmbeddedHomework(
         entityColumn = "id",
         entity = DbProfile::class
     ) val createdByProfile: EmbeddedProfile?,
-    @Relation(
-        parentColumn = "created_by_vpp_id",
-        entityColumn = "id",
-        entity = DbVppId::class
-    ) val createdByVppId: EmbeddedVppId?,
     @Relation(
         parentColumn = "default_lesson_id",
         entityColumn = "id",
@@ -47,18 +42,18 @@ data class EmbeddedHomework(
                 createdAt = homework.createdAt,
                 createdByProfile = createdByProfile!!.toModel() as Profile.StudentProfile,
                 defaultLesson = defaultLesson?.toModel(),
-                tasks = tasks.map { it.toModel() }
+                tasks = tasks.map { Cacheable.Loaded(it.toModel()) }
             )
         }
         return Homework.CloudHomework(
             id = homework.id,
             dueTo = homework.dueTo,
             createdAt = homework.createdAt,
-            createdBy = createdByVppId!!.toModel(),
+            createdBy = Cacheable.Uninitialized(homework.createdBy!!.toString()),
             defaultLesson = defaultLesson?.toModel(),
             group = group?.toModel(),
             isPublic = homework.isPublic,
-            tasks = tasks.map { it.toModel() }
+            tasks = tasks.map { Cacheable.Loaded(it.toModel()) }
         )
     }
 }

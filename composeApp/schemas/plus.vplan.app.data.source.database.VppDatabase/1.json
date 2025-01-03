@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ffe56c3a8ef792e262328c969e3a430a",
+    "identityHash": "2889cd1d21e41f7f77b78b841c32d702",
     "entities": [
       {
         "tableName": "schools",
@@ -2183,7 +2183,7 @@
       },
       {
         "tableName": "homework",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `default_lesson_id` TEXT, `group_id` INTEGER, `created_at` INTEGER NOT NULL, `due_to` INTEGER NOT NULL, `created_by_vpp_id` INTEGER, `created_by_profile_id` TEXT, `is_public` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`created_by_vpp_id`) REFERENCES `vpp_id`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`created_by_profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `default_lesson_id` TEXT, `group_id` INTEGER, `created_at` INTEGER NOT NULL, `due_to` INTEGER NOT NULL, `created_by_vpp_id` INTEGER, `created_by_profile_id` TEXT, `is_public` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`created_by_profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -2301,17 +2301,6 @@
             "onUpdate": "CASCADE",
             "columns": [
               "group_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "vpp_id",
-            "onDelete": "CASCADE",
-            "onUpdate": "CASCADE",
-            "columns": [
-              "created_by_vpp_id"
             ],
             "referencedColumns": [
               "id"
@@ -2465,7 +2454,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ffe56c3a8ef792e262328c969e3a430a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2889cd1d21e41f7f77b78b841c32d702')"
     ]
   }
 }

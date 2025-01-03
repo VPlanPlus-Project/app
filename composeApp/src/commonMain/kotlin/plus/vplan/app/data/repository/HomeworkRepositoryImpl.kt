@@ -13,7 +13,9 @@ import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.contentType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -28,7 +30,9 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.network.saveRequest
+import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
@@ -109,7 +113,7 @@ class HomeworkRepositoryImpl(
                         is Homework.LocalHomework -> homeworkItem.createdByProfile.id
                     },
                     createdBy = when (homeworkItem) {
-                        is Homework.CloudHomework -> homeworkItem.createdBy.id
+                        is Homework.CloudHomework -> homeworkItem.createdBy.getItemId().toInt()
                         is Homework.LocalHomework -> null
                     },
                     isPublic = when (homeworkItem) {
@@ -120,11 +124,11 @@ class HomeworkRepositoryImpl(
                 )
             },
             homeworkTask = homework.flatMap { homeworkItem ->
-                homeworkItem.tasks.map { homeworkTask ->
+                homeworkItem.tasks.filterIsInstance<Cacheable.Loaded<Homework.HomeworkTask>>().map { homeworkTask ->
                     DbHomeworkTask(
-                        id = homeworkTask.id,
+                        id = homeworkTask.getItemId().toInt(),
                         homeworkId = homeworkItem.id,
-                        content = homeworkTask.content
+                        content = homeworkTask.value.content
                     )
                 }
             }
@@ -183,6 +187,60 @@ class HomeworkRepositoryImpl(
         }
     }
 
+    override suspend fun getById(id: Int): Flow<Cacheable<Homework>> {
+        if (id < 0) return vppDatabase.homeworkDao.getById(id).map {
+            if (it == null) Cacheable.NotExisting(id.toString())
+            else Cacheable.Loaded(it.toModel())
+        }
+        return flow {
+            val databaseObject = vppDatabase.homeworkDao.getById(id)
+            if (databaseObject.first() != null) return@flow emitAll(databaseObject.map {
+                if (it == null) Cacheable.NotExisting(id.toString())
+                else Cacheable.Loaded(it.toModel())
+            })
+
+            val metadataResponse = httpClient.get("$VPP_ROOT_URL/api/v2.2/homework/$id")
+            if (metadataResponse.status == HttpStatusCode.NotFound) return@flow emit(Cacheable.NotExisting(id.toString()))
+            if (metadataResponse.status != HttpStatusCode.OK) return@flow emit(Cacheable.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
+
+            val metadataResponseData = ResponseDataWrapper.fromJson<HomeworkMetadataResponse>(metadataResponse.bodyAsText())
+                ?: return@flow emit(Cacheable.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
+
+            val vppId = vppDatabase.vppIdDao.getById(metadataResponseData.createdBy).first()?.toModel() as? VppId.Active
+            val school = vppDatabase.schoolDao.findById(metadataResponseData.schoolId).first()?.toModel()
+
+            val homeworkResponse = httpClient.get("$VPP_ROOT_URL/api/v2.2/homework/$id") {
+                vppId?.let { bearerAuth(it.accessToken) } ?: school?.getSchoolApiAccess()?.authentication(this)
+            }
+            if (homeworkResponse.status != HttpStatusCode.OK) return@flow emit(Cacheable.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
+            val data = ResponseDataWrapper.fromJson<HomeworkResponseItem>(homeworkResponse.bodyAsText())
+                ?: return@flow emit(Cacheable.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
+
+            vppDatabase.homeworkDao.upsertMany(
+                homework = listOf(
+                    DbHomework(
+                        id = id,
+                        defaultLessonId = data.defaultLesson,
+                        groupId = data.group,
+                        createdAt = Instant.fromEpochSeconds(data.createdAt),
+                        dueTo = Instant.fromEpochSeconds(data.dueTo),
+                        createdBy = data.createdBy,
+                        createdByProfileId = null,
+                        isPublic = data.isPublic
+                )),
+                homeworkTask = data.tasks.map { task ->
+                    DbHomeworkTask(
+                        id = task.id,
+                        content = task.description,
+                        homeworkId = id
+                    )
+                }
+            )
+
+            return@flow emitAll(getById(id))
+        }
+    }
+
     override suspend fun deleteById(id: Int) {
         deleteById(listOf(id))
     }
@@ -197,6 +255,10 @@ class HomeworkRepositoryImpl(
 
     override suspend fun getIdForNewLocalHomeworkTask(): Int {
         return (vppDatabase.homeworkDao.getMinTaskId().first() ?: 0).coerceAtMost(-1)
+    }
+
+    override suspend fun clearCache() {
+        vppDatabase.homeworkDao.deleteAll()
     }
 
     override suspend fun createHomeworkOnline(
@@ -277,4 +339,10 @@ private data class HomeworkPostResponseItem(
 private data class HomeworkTaskResponseItem(
     @SerialName("id") val id: Int,
     @SerialName("description") val description: String
+)
+
+@Serializable
+private data class HomeworkMetadataResponse(
+    @SerialName("school_id") val schoolId: Int,
+    @SerialName("created_by") val createdBy: Int
 )
