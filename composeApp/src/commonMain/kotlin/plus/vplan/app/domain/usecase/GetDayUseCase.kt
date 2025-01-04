@@ -25,12 +25,12 @@ class GetDayUseCase(
     private val weekRepository: WeekRepository
 ) {
     operator fun invoke(profile: Profile, date: LocalDate) = channelFlow {
-        dayRepository.getBySchool(date, profile.school.id).collectLatest { day ->
+        dayRepository.getBySchool(date, profile.school.getItemId().toInt()).collectLatest { day ->
             combine(
-                timetableRepository.getTimetableForSchool(schoolId = profile.school.id).map { timetable -> timetable.filter { it.dayOfWeek == date.dayOfWeek && profile.isLessonRelevant(it) } },
-                substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId = profile.school.id, date = date),
-                dayRepository.getHolidays(profile.school.id),
-                weekRepository.getBySchool(profile.school.id)
+                timetableRepository.getTimetableForSchool(schoolId = profile.school.getItemId().toInt()).map { timetable -> timetable.filter { it.dayOfWeek == date.dayOfWeek && profile.isLessonRelevant(it) } },
+                substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId = profile.school.getItemId().toInt(), date = date),
+                dayRepository.getHolidays(profile.school.getItemId().toInt()),
+                weekRepository.getBySchool(profile.school.getItemId().toInt())
             ) { timetable, substitutionPlan, holidays, weeks ->
                 val dayWeek = weeks.firstOrNull { date in it.start..it.end }
                 val findNextRegularSchoolDayAfter: (LocalDate) -> LocalDate? = findNextRegularSchoolDayAfter@{ startDate ->
@@ -38,7 +38,7 @@ class GetDayUseCase(
                     var nextSchoolDay = startDate + 1.days
                     while (holidays.maxOf { it.date } > nextSchoolDay) {
                         nextSchoolDay += 1.days
-                        if (holidays.none { it.date == nextSchoolDay } && nextSchoolDay.dayOfWeek.isoDayNumber <= ((profile.school as? School.IndiwareSchool)?.daysPerWeek ?: 5)) break
+                        if (holidays.none { it.date == nextSchoolDay } && nextSchoolDay.dayOfWeek.isoDayNumber <= ((profile.school.toValueOrNull() as? School.IndiwareSchool)?.daysPerWeek ?: 5)) break
                     }
                     nextSchoolDay
                 }
@@ -47,9 +47,9 @@ class GetDayUseCase(
                 holidays.firstOrNull { it.date == date }?.let {
                     val nextSchoolDay = findNextRegularSchoolDayAfter(date)
                     return@combine SchoolDay.Holiday(
-                        id = "${profile.school.id}/$date",
+                        id = "${profile.school.getItemId().toInt()}/$date",
                         date = date,
-                        school = profile.school,
+                        school = profile.school.toValueOrNull()!!,
                         nextRegularSchoolDay = nextSchoolDay
                     )
                 }
@@ -67,16 +67,16 @@ class GetDayUseCase(
                     if (holidays.any { it.date == friday } || holidays.any { it.date == monday }) {
                         val nextSchoolDay = findNextRegularSchoolDayAfter(date)
                         return@combine SchoolDay.Holiday(
-                            id = "${profile.school.id}/$date",
+                            id = "${profile.school.getItemId().toInt()}/$date",
                             date = date,
-                            school = profile.school,
+                            school = profile.school.toValueOrNull()!!,
                             nextRegularSchoolDay = nextSchoolDay
                         )
                     } else {
                         return@combine SchoolDay.Weekend(
-                            id = "${profile.school.id}/$date",
+                            id = "${profile.school.getItemId().toInt()}/$date",
                             date = date,
-                            school = profile.school,
+                            school = profile.school.toValueOrNull()!!,
                             nextRegularSchoolDay = findNextRegularSchoolDayAfter(date)
                         )
                     }
@@ -85,19 +85,19 @@ class GetDayUseCase(
                 if (dayWeek == null) return@combine SchoolDay.Unknown(date = date)
 
                 val timetableLessons = timetable.filter { timetableLesson ->
-                    val a = timetableLesson.week.weekIndex
+                    val a = timetableLesson.week.toValueOrNull()!!.weekIndex
                     val b = dayWeek.weekIndex
                     a <= b
                 }.let { timetableLessons ->
-                    val maxWeek = timetableLessons.maxOfOrNull { it.week.weekIndex } ?: return@let emptyList()
-                    timetableLessons.filter { it.week.weekIndex == maxWeek }
+                    val maxWeek = timetableLessons.maxOfOrNull { it.week.toValueOrNull()!!.weekIndex } ?: return@let emptyList()
+                    timetableLessons.filter { it.week.toValueOrNull()!!.weekIndex == maxWeek }
                 }.filter { it.weekType == null || it.weekType == dayWeek.weekType }
 
                 if (day == null) {
                     return@combine SchoolDay.NormalDay(
-                        id = "${profile.school.id}/$date",
+                        id = "${profile.school.getItemId().toInt()}/$date",
                         date = date,
-                        school = profile.school,
+                        school = profile.school.toValueOrNull()!!,
                         week = dayWeek,
                         info = null,
                         lessons = timetableLessons,
@@ -107,8 +107,8 @@ class GetDayUseCase(
                 SchoolDay.NormalDay(
                     id = day.id,
                     date = day.date,
-                    school = profile.school,
-                    week = day.week,
+                    school = profile.school.toValueOrNull()!!,
+                    week = day.week.toValueOrNull()!!,
                     info = day.info,
                     lessons = substitutionPlan.filter { profile.isLessonRelevant(it) }.ifEmpty { timetableLessons },
                     nextRegularSchoolDay = findNextRegularSchoolDayAfter(day.date)

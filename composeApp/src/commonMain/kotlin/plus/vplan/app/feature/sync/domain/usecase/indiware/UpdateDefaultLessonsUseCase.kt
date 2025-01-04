@@ -76,7 +76,7 @@ class UpdateDefaultLessonsUseCase(
             .map { (id, courses) ->
                 Course(
                     id = id,
-                    groups = courses.flatMap { it.groups }.distinctBy { it.id },
+                    groups = courses.flatMap { it.groups }.distinctBy { it.toValueOrNull()!!.id },
                     name = courses.first().name,
                     teacher = courses.first().teacher
                 )

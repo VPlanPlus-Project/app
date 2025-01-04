@@ -2,6 +2,7 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
@@ -72,16 +73,16 @@ class UpdateSubstitutionPlanUseCase(
                 Lesson.SubstitutionPlanLesson(
                     id = Uuid.random().toHexString(),
                     date = date,
-                    week = week,
+                    week = Cacheable.Loaded(week),
                     subject = substitutionPlanLesson.subject,
                     isSubjectChanged = substitutionPlanLesson.subjectChanged,
-                    teachers = teachers.filter { it.name in substitutionPlanLesson.teacher },
+                    teachers = teachers.filter { it.name in substitutionPlanLesson.teacher }.map { Cacheable.Loaded(it) },
                     isTeacherChanged = substitutionPlanLesson.teacherChanged,
-                    rooms = rooms.filter { it.name in substitutionPlanLesson.room },
+                    rooms = rooms.filter { it.name in substitutionPlanLesson.room }.map { Cacheable.Loaded(it) },
                     isRoomChanged = substitutionPlanLesson.roomChanged,
-                    groups = listOf(group),
-                    defaultLesson = substitutionPlanLesson.defaultLessonNumber?.let { defaultLessons.findByIndiwareId(it.toString()) },
-                    lessonTime = lessonTimes.first { it.lessonNumber == substitutionPlanLesson.lessonNumber },
+                    groups = listOf(group).map { Cacheable.Loaded(it) },
+                    defaultLesson = substitutionPlanLesson.defaultLessonNumber?.let { defaultLessons.findByIndiwareId(it.toString()) }?.let { Cacheable.Loaded(it) },
+                    lessonTime = lessonTimes.first { it.lessonNumber == substitutionPlanLesson.lessonNumber }.let { Cacheable.Loaded(it) },
                     info = substitutionPlanLesson.info
                 )
             }

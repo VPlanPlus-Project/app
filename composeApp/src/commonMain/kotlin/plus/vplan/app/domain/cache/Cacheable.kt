@@ -25,24 +25,30 @@ sealed class Cacheable<T : CachedItem<T>> {
     data class Loaded<T : CachedItem<T>>(val value: T) : Cacheable<T>() {
         override fun getItemId(): String = value.getItemId()
         override fun isConfigSatisfied(configuration: CacheableItem.FetchConfiguration<T>, allowLoading: Boolean): Boolean = value.isConfigSatisfied(configuration, allowLoading)
+        override fun toValueOrNull(): T = value
     }
     data class Loading<T : CachedItem<T>>(val id: String, val progress: Int) : Cacheable<T>() {
         override fun getItemId(): String = id
         override fun isConfigSatisfied(configuration: CacheableItem.FetchConfiguration<T>, allowLoading: Boolean): Boolean = allowLoading
+        override fun toValueOrNull(): T? = null
     }
     data class Error<T : CachedItem<T>>(val id: String, val error: Response.Error): Cacheable<T>() {
         override fun getItemId(): String = id
         override fun isConfigSatisfied(configuration: CacheableItem.FetchConfiguration<T>, allowLoading: Boolean): Boolean = allowLoading
+        override fun toValueOrNull(): T? = null
     }
     data class Uninitialized<T : CachedItem<T>>(val id: String) : Cacheable<T>() {
         override fun getItemId(): String = id
         override fun isConfigSatisfied(configuration: CacheableItem.FetchConfiguration<T>, allowLoading: Boolean): Boolean = false
+        override fun toValueOrNull(): T? = null
     }
     data class NotExisting<T : CachedItem<T>>(val id: String) : Cacheable<T>() {
         override fun getItemId(): String = id
         override fun isConfigSatisfied(configuration: CacheableItem.FetchConfiguration<T>, allowLoading: Boolean): Boolean = allowLoading
+        override fun toValueOrNull(): T? = null
     }
 
     abstract fun getItemId(): String
     abstract fun isConfigSatisfied(configuration: CacheableItem.FetchConfiguration<T>, allowLoading: Boolean): Boolean
+    abstract fun toValueOrNull(): T?
 }

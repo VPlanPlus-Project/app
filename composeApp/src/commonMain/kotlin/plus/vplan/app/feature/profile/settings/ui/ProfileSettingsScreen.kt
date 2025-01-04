@@ -189,7 +189,7 @@ private fun ProfileSettingsContent(
                     }
                     append(state.profile.originalName)
                     append(" $DOT ")
-                    append(state.profile.school.name)
+                    append(state.profile.school.toValueOrNull()!!.name)
                 },
                 modifier = Modifier.padding(horizontal = 16.dp),
                 style = MaterialTheme.typography.labelMedium,

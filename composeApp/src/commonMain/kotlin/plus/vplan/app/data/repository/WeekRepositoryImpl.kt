@@ -18,7 +18,7 @@ class WeekRepositoryImpl(
         vppDatabase.weekDao.upsert(weeks.map { week ->
             DbWeek(
                 id = week.id,
-                schoolId = week.school.id,
+                schoolId = week.school.getItemId().toInt(),
                 calendarWeek = week.calendarWeek,
                 start = week.start,
                 end = week.end,

@@ -6,6 +6,7 @@ import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 
@@ -33,12 +34,12 @@ data class EmbeddedProfile(
             return Profile.StudentProfile(
                 id = profile.id,
                 customName = profile.displayName,
-                group = embeddedGroupProfile.group.toModel(),
+                group = Cacheable.Loaded(embeddedGroupProfile.group.toModel()),
                 defaultLessons =
                     embeddedGroupProfile.defaultLessons
                         .sortedBy { it.defaultLesson.subject + "_" + it.course?.course?.name + "_" + it.teacher?.teacher?.name }
                         .associateWith { disabledDefaultLessons.contains(it.defaultLesson.id).not() }
-                        .mapKeys { it.key.toModel() },
+                        .mapKeys { Cacheable.Loaded(it.key.toModel()) },
                 vppId = embeddedGroupProfile.vppId?.toModel() as? VppId.Active
             )
         }

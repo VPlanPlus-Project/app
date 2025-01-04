@@ -4,6 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbHoliday
 import plus.vplan.app.data.source.database.model.database.DbSchool
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Holiday
 
 data class EmbeddedHoliday(
@@ -18,7 +19,7 @@ data class EmbeddedHoliday(
         return Holiday(
             id = holiday.id,
             date = holiday.date,
-            school = school.toModel()
+            school = Cacheable.Loaded(school.toModel())
         )
     }
 }

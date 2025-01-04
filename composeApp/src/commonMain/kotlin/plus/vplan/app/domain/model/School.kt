@@ -2,11 +2,21 @@ package plus.vplan.app.domain.model
 
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.basicAuth
+import plus.vplan.app.domain.cache.CacheableItem
+import plus.vplan.app.domain.cache.CachedItem
 
-sealed interface School {
+sealed interface School : CachedItem<School> {
     val id: Int
 
     val name: String
+
+    override fun getItemId(): String = this.id.toString()
+    override fun isConfigSatisfied(
+        configuration: CacheableItem.FetchConfiguration<School>,
+        allowLoading: Boolean
+    ): Boolean = true
+
+    data object Fetch : CacheableItem.FetchConfiguration.Fetch<School>()
 
     fun getSchoolApiAccess(): SchoolApiAccess
 

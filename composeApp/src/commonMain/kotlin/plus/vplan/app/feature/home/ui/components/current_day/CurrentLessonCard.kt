@@ -19,7 +19,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.Room
+import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.utils.progressIn
 import plus.vplan.app.utils.toDp
@@ -62,7 +65,7 @@ fun CurrentLessonCard(
                     Text(
                         text = buildString {
                             if (currentLesson.subject != null) append(currentLesson.subject)
-                            else if (currentLesson.defaultLesson != null) append(currentLesson.defaultLesson?.subject + " entfällt")
+                            else if (currentLesson.defaultLesson != null) append(currentLesson.defaultLesson?.toValueOrNull()?.subject + " entfällt")
                             else append("Entfall")
                         },
                         style = MaterialTheme.typography.titleMedium,
@@ -73,7 +76,7 @@ fun CurrentLessonCard(
                     )
                     if (currentLesson.rooms != null) Text(
                         text = buildString {
-                            append(currentLesson.rooms.orEmpty().joinToString { it.name })
+                            append(currentLesson.rooms.orEmpty().filterIsInstance<Cacheable.Loaded<Room>>().joinToString { it.value.name })
                             if (currentLesson.rooms.orEmpty().isEmpty()) append("Kein Raum")
                         },
                         style = MaterialTheme.typography.bodyMedium,
@@ -84,7 +87,7 @@ fun CurrentLessonCard(
                     )
                     Text(
                         text = buildString {
-                            append(currentLesson.teachers.joinToString { it.name })
+                            append(currentLesson.teachers.filterIsInstance<Cacheable.Loaded<Teacher>>().joinToString { it.value.name })
                             if (currentLesson.teachers.isEmpty()) append("Keine Lehrkraft")
                         },
                         style = MaterialTheme.typography.bodyMedium,
@@ -102,16 +105,16 @@ fun CurrentLessonCard(
                         )
                         Text(
                             text = "Weiter in ${
-                                followingLessons.map { it.lessonTime.lessonNumber }.distinct().sorted()
+                                followingLessons.map { it.lessonTime.toValueOrNull()!!.lessonNumber }.distinct().sorted()
                                     .joinToString { "$it." }
                             } Stunde: "
                                     + followingLessons.joinToString {
                                 buildString {
                                     append(it.subject ?: "Entfall")
                                     append(" ")
-                                    append(it.teachers.joinToString { it.name })
+                                    append(it.teachers.filterIsInstance<Cacheable.Loaded<Teacher>>().joinToString { it.value.name })
                                     append(" ")
-                                    append(it.rooms.orEmpty().joinToString { it.name })
+                                    append(it.rooms.orEmpty().filterIsInstance<Cacheable.Loaded<Room>>().joinToString { it.value.name })
                                 }
                             },
                             style = MaterialTheme.typography.labelMedium
@@ -141,7 +144,7 @@ fun CurrentLessonCard(
             }
         }
         LinearProgressIndicator(
-            progress = { (contextTime.time progressIn currentLesson.lessonTime.start..currentLesson.lessonTime.end).toFloat() },
+            progress = { (contextTime.time progressIn currentLesson.lessonTime.toValueOrNull()!!.start..currentLesson.lessonTime.toValueOrNull()!!.end).toFloat() },
             modifier = Modifier
                 .padding(top = 8.dp)
                 .padding(horizontal = 8.dp)

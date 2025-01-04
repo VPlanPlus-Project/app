@@ -44,6 +44,7 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.HomeworkResponse
 import plus.vplan.app.domain.repository.HomeworkTaskResponse
 import plus.vplan.app.utils.sha256
+import kotlin.uuid.Uuid
 
 private val logger = Logger.withTag("HomeworkRepositoryImpl")
 
@@ -105,12 +106,12 @@ class HomeworkRepositoryImpl(
             homework = homework.map { homeworkItem ->
                 DbHomework(
                     id = homeworkItem.id,
-                    defaultLessonId = homeworkItem.defaultLesson?.id,
-                    groupId = homeworkItem.group?.id,
+                    defaultLessonId = homeworkItem.defaultLesson?.getItemId(),
+                    groupId = homeworkItem.group?.getItemId()?.toInt(),
                     createdAt = homeworkItem.createdAt,
                     createdByProfileId = when (homeworkItem) {
                         is Homework.CloudHomework -> null
-                        is Homework.LocalHomework -> homeworkItem.createdByProfile.id
+                        is Homework.LocalHomework -> homeworkItem.createdByProfile.getItemId().let { Uuid.parseHex(it) }
                     },
                     createdBy = when (homeworkItem) {
                         is Homework.CloudHomework -> homeworkItem.createdBy.getItemId().toInt()
@@ -270,7 +271,7 @@ class HomeworkRepositoryImpl(
         tasks: List<String>
     ): Response<CreateHomeworkResponse> {
         return saveRequest {
-            val response = httpClient.post(VPP_ROOT_URL + "/api/v2.2/school/${group.school.id}/homework") {
+            val response = httpClient.post(VPP_ROOT_URL + "/api/v2.2/school/${group.school.getItemId()}/homework") {
                 bearerAuth(vppId.accessToken)
                 contentType(ContentType.Application.Json)
                 setBody(

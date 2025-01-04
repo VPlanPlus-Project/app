@@ -10,15 +10,23 @@ sealed class Homework : CachedItem<Homework> {
     abstract val createdAt: Instant
     abstract val dueTo: Instant
     abstract val tasks: List<Cacheable<HomeworkTask>>
-    abstract val defaultLesson: DefaultLesson?
-    abstract val group: Group?
+    abstract val defaultLesson: Cacheable<DefaultLesson>?
+    abstract val group: Cacheable<Group>?
 
     override fun getItemId(): String = this.id.toString()
     override fun isConfigSatisfied(
         configuration: CacheableItem.FetchConfiguration<Homework>,
         allowLoading: Boolean
     ): Boolean {
-        TODO("Not yet implemented")
+        if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+        if (configuration is Fetch) {
+            if (configuration.vppId is VppId.Fetch && this is CloudHomework && !this.createdBy.isConfigSatisfied(configuration.vppId, allowLoading)) return false
+            if (configuration.tasks is HomeworkTask.Fetch && this.tasks.any { !it.isConfigSatisfied(configuration.tasks, allowLoading) }) return false
+            if (configuration.defaultLesson is DefaultLesson.Fetch && this.defaultLesson?.isConfigSatisfied(configuration.defaultLesson, allowLoading) == false) return false
+            if (configuration.group is Group.Fetch && this.group?.isConfigSatisfied(configuration.group, allowLoading) == false) return false
+            if (configuration.profile is Profile.StudentProfile.Fetch && this is LocalHomework && !this.createdByProfile.isConfigSatisfied(Profile.Fetch(studentProfile = configuration.profile), allowLoading)) return false
+        }
+        return true
     }
 
     data class HomeworkTask(
@@ -32,11 +40,15 @@ sealed class Homework : CachedItem<Homework> {
             configuration: CacheableItem.FetchConfiguration<HomeworkTask>,
             allowLoading: Boolean
         ): Boolean {
-            TODO()
+            if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+            if (configuration is Fetch) {
+                if (configuration.homework is Homework.Fetch && !this.homework.isConfigSatisfied(configuration.homework, allowLoading)) return false
+            }
+            return true
         }
 
-        class Fetch(
-            homework: CacheableItem.FetchConfiguration<Homework> = Ignore()
+        data class Fetch(
+            val homework: CacheableItem.FetchConfiguration<Homework> = Ignore()
         ) : CacheableItem.FetchConfiguration.Fetch<HomeworkTask>()
     }
 
@@ -45,8 +57,8 @@ sealed class Homework : CachedItem<Homework> {
         override val createdAt: Instant,
         override val dueTo: Instant,
         override val tasks: List<Cacheable<HomeworkTask>>,
-        override val defaultLesson: DefaultLesson?,
-        override val group: Group?,
+        override val defaultLesson: Cacheable<DefaultLesson>?,
+        override val group: Cacheable<Group>?,
         val isPublic: Boolean,
         val createdBy: Cacheable<VppId>,
     ) : Homework()
@@ -56,14 +68,21 @@ sealed class Homework : CachedItem<Homework> {
         override val createdAt: Instant,
         override val dueTo: Instant,
         override val tasks: List<Cacheable<HomeworkTask>>,
-        override val defaultLesson: DefaultLesson?,
-        val createdByProfile: Profile.StudentProfile
+        override val defaultLesson: Cacheable<DefaultLesson>?,
+        val createdByProfile: Cacheable<Profile>
     ) : Homework() {
-        override val group: Group = createdByProfile.group
+        override val group: Cacheable<Group> by lazy {
+            if (createdByProfile !is Cacheable.Loaded) throw IllegalStateException("Opt-in for profile@Homework")
+            if (createdByProfile.value !is Profile.StudentProfile) throw IllegalStateException("Profile must be student-profile")
+            return@lazy createdByProfile.value.group
+        }
     }
 
-    open class Fetch(
+    data class Fetch(
         val tasks: CacheableItem.FetchConfiguration<HomeworkTask> = Ignore(),
         val vppId: CacheableItem.FetchConfiguration<VppId> = Ignore(),
+        val defaultLesson: CacheableItem.FetchConfiguration<DefaultLesson> = Ignore(),
+        val group: CacheableItem.FetchConfiguration<Group> = Ignore(),
+        val profile: CacheableItem.FetchConfiguration<Profile.StudentProfile> = Ignore()
     ) : CacheableItem.FetchConfiguration.Fetch<Homework>()
 }

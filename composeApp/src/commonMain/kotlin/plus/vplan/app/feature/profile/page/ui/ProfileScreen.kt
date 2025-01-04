@@ -90,7 +90,8 @@ private fun ProfileContent(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                state.currentProfile.defaultLessons.forEach { (defaultLesson, isEnabled) ->
+                state.currentProfile.defaultLessons.mapKeys { it.key.toValueOrNull() }.filterKeys { it == null }.forEach { (defaultLesson, isEnabled) ->
+                    if (defaultLesson == null) return@forEach
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

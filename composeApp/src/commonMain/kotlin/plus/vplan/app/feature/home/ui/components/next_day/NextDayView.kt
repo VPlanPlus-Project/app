@@ -46,12 +46,12 @@ fun NextDayView(day: SchoolDay.NormalDay) {
                 title = "Nächste Stunden",
                 subtitle =
                     if (day.lessons.isEmpty()) "Keine Stunden"
-                    else "${day.lessons.minOf { it.lessonTime.start }} bis ${day.lessons.maxOf { it.lessonTime.end }}"
+                    else "${day.lessons.minOf { it.lessonTime.toValueOrNull()!!.start }} bis ${day.lessons.maxOf { it.lessonTime.toValueOrNull()!!.end }}"
             )
             FollowingLessons(
                 showFirstGradient = false,
                 date = day.date,
-                lessons = day.lessons.groupBy { it.lessonTime.lessonNumber })
+                lessons = day.lessons.groupBy { it.lessonTime.toValueOrNull()!!.lessonNumber })
         }
     }
 }

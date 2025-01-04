@@ -4,6 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbSchool
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Group
 
 data class EmbeddedGroup(
@@ -18,7 +19,7 @@ data class EmbeddedGroup(
         return Group(
             id = group.id,
             name = group.name,
-            school = school.toModel()
+            school = Cacheable.Loaded(school.toModel())
         )
     }
 }

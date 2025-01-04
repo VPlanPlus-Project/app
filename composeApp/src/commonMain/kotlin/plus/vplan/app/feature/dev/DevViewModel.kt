@@ -35,7 +35,7 @@ class DevViewModel(
                 App.homeworkSource.getById(
                     id = 208,
                     configuration = Homework.Fetch(
-                        vppId = VppId.Fetch
+                        vppId = VppId.Fetch()
                     )
                 ).collect {
                     state = state.copy(homework = listOf(it))

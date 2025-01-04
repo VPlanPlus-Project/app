@@ -29,11 +29,11 @@ class SubstitutionPlanRepositoryImpl(
                 DbSubstitutionPlanLesson(
                     id = lesson.id,
                     dayId = "${schoolId}/${lesson.date}",
-                    lessonTimeId = lesson.lessonTime.id,
+                    lessonTimeId = lesson.lessonTime.getItemId(),
                     subject = lesson.subject,
-                    isSubjectChanged = lesson.subject !in listOfNotNull(lesson.defaultLesson?.subject, lesson.defaultLesson?.course?.name),
+                    isSubjectChanged = lesson.subject !in listOfNotNull(lesson.defaultLesson?.toValueOrNull()?.subject, lesson.defaultLesson?.toValueOrNull()?.course?.name),
                     info = lesson.info,
-                    defaultLessonId = lesson.defaultLesson?.id,
+                    defaultLessonId = lesson.defaultLesson?.getItemId(),
                     version = "${schoolId}_$newVersion",
                     isRoomChanged = lesson.isRoomChanged,
                     isTeacherChanged = lesson.isTeacherChanged
@@ -41,17 +41,17 @@ class SubstitutionPlanRepositoryImpl(
             },
             groups = lessons.flatMap { lesson ->
                 lesson.groups.map { group ->
-                    DbSubstitutionPlanGroupCrossover(group.id, lesson.id)
+                    DbSubstitutionPlanGroupCrossover(group.getItemId().toInt(), lesson.id)
                 }
             },
             teachers = lessons.flatMap { lesson ->
                 lesson.teachers.map { teacher ->
-                    DbSubstitutionPlanTeacherCrossover(teacher.id, lesson.id)
+                    DbSubstitutionPlanTeacherCrossover(teacher.getItemId().toInt(), lesson.id)
                 }
             },
             rooms = lessons.flatMap { lesson ->
                 lesson.rooms.map { room ->
-                    DbSubstitutionPlanRoomCrossover(room.id, lesson.id)
+                    DbSubstitutionPlanRoomCrossover(room.getItemId().toInt(), lesson.id)
                 }
             }
         )

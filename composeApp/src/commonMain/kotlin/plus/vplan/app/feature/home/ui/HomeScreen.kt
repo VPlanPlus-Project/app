@@ -87,9 +87,9 @@ private fun HomeContent(
                 LaunchedEffect(state.nextDay) {
                     if (state.nextDay !is SchoolDay.NormalDay) return@LaunchedEffect
                     if (state.currentDay !is SchoolDay.NormalDay || state.nextDay.lessons.none {
-                            state.currentTime progressIn it.lessonTime.start.atDate(
+                            state.currentTime progressIn it.lessonTime.toValueOrNull()!!.start.atDate(
                                 state.nextDay.date
-                            )..it.lessonTime.end.atDate(state.nextDay.date) < 1f
+                            )..it.lessonTime.toValueOrNull()!!.end.atDate(state.nextDay.date) < 1f
                         }) {
                         pagerState.animateScrollToPage(1)
                     }

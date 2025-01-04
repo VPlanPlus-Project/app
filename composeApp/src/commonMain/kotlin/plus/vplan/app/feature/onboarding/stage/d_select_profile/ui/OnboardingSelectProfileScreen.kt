@@ -152,7 +152,7 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                     Text(
-                                                        text = course.teacher?.name ?: "-",
+                                                        text = course.teacher?.toValueOrNull()?.name ?: "-",
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )

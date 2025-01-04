@@ -18,8 +18,8 @@ class DayRepositoryImpl(
             id = day.id,
             date = day.date,
             info = day.info,
-            weekId = day.week.id,
-            schoolId = day.school.id
+            weekId = day.week.getItemId(),
+            schoolId = day.school.getItemId().toInt()
         ))
     }
 
@@ -32,7 +32,7 @@ class DayRepositoryImpl(
             DbHoliday(
                 id = holiday.id,
                 date = holiday.date,
-                schoolId = holiday.school.id
+                schoolId = holiday.school.getItemId().toInt()
             )
         })
     }

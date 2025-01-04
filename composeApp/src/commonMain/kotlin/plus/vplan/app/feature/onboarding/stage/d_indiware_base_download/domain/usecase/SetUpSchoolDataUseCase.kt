@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.DefaultLesson
@@ -112,7 +113,7 @@ class SetUpSchoolDataUseCase(
                     end = baseDataWeek.end,
                     weekType = baseDataWeek.weekType,
                     weekIndex = baseDataWeek.weekIndex,
-                    school = school
+                    school = Cacheable.Loaded(school)
                 )
                 weekRepository.upsert(week)
             }
@@ -129,7 +130,7 @@ class SetUpSchoolDataUseCase(
                         start = baseDataLessonTime.start,
                         end = baseDataLessonTime.end,
                         lessonNumber = baseDataLessonTime.lessonNumber,
-                        group = group,
+                        group = Cacheable.Loaded(group),
                         interpolated = false
                     )
                     lessonTimeRepository.upsert(lessonTime)
@@ -156,7 +157,7 @@ class SetUpSchoolDataUseCase(
                     courseRepository.upsert(
                         Course(
                             id = id,
-                            groups = courses.flatMap { it.groups }.distinctBy { it.id },
+                            groups = courses.flatMap { it.groups }.distinctBy { it.toValueOrNull()!!.id },
                             name = courses.first().name,
                             teacher = courses.first().teacher
                         )

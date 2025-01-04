@@ -12,6 +12,7 @@ import plus.vplan.app.data.source.database.model.database.DbWeek
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Lesson
 
 data class EmbeddedTimetableLesson(
@@ -62,12 +63,12 @@ data class EmbeddedTimetableLesson(
         return Lesson.TimetableLesson(
             id = timetableLesson.id,
             dayOfWeek = timetableLesson.dayOfWeek,
-            week = week,
+            week = Cacheable.Loaded(week),
             subject = timetableLesson.subject,
-            teachers = teachers.map { it.toModel() },
-            rooms = rooms.map { it.toModel() },
-            groups = groups.map { it.toModel() },
-            lessonTime = lessonTime.toModel(),
+            teachers = teachers.map { Cacheable.Loaded(it.toModel()) },
+            rooms = rooms.map { Cacheable.Loaded(it.toModel()) },
+            groups = groups.map { Cacheable.Loaded(it.toModel()) },
+            lessonTime = Cacheable.Loaded(lessonTime.toModel()),
             weekType = timetableLesson.weekType
         )
     }

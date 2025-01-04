@@ -24,9 +24,9 @@ class TimetableRepositoryImpl(
                 DbTimetableLesson(
                     id = lesson.id,
                     dayOfWeek = lesson.dayOfWeek,
-                    weekId = lesson.week.id,
+                    weekId = lesson.week.getItemId(),
                     weekType = lesson.weekType,
-                    lessonTimeId = lesson.lessonTime.id,
+                    lessonTimeId = lesson.lessonTime.getItemId(),
                     subject = lesson.subject,
                     version = "${schoolId}_$newVersion"
                 )
@@ -35,7 +35,7 @@ class TimetableRepositoryImpl(
                 lesson.groups.map { group ->
                     DbTimetableGroupCrossover(
                         timetableLessonId = lesson.id,
-                        groupId = group.id
+                        groupId = group.getItemId().toInt()
                     )
                 }
             },
@@ -43,7 +43,7 @@ class TimetableRepositoryImpl(
                 lesson.teachers.map { teacher ->
                     DbTimetableTeacherCrossover(
                         timetableLessonId = lesson.id,
-                        teacherId = teacher.id
+                        teacherId = teacher.getItemId().toInt()
                     )
                 }
             },
@@ -51,7 +51,7 @@ class TimetableRepositoryImpl(
                 lesson.rooms.orEmpty().map { room ->
                     DbTimetableRoomCrossover(
                         timetableLessonId = lesson.id,
-                        roomId = room.id
+                        roomId = room.getItemId().toInt()
                     )
                 }
             }

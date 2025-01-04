@@ -32,7 +32,7 @@ class CreateHomeworkUseCase(
             val result = homeworkRepository.createHomeworkOnline(
                 vppId = profile.vppId,
                 until = date,
-                group = profile.group,
+                group = profile.group.toValueOrNull()!!,
                 defaultLesson = defaultLesson,
                 isPublic = isPublic ?: false,
                 tasks = tasks
@@ -44,7 +44,7 @@ class CreateHomeworkUseCase(
             taskIds = idMapping.taskIds
             homework = Homework.CloudHomework(
                 id = id,
-                defaultLesson = defaultLesson,
+                defaultLesson = defaultLesson?.let { Cacheable.Loaded(it) },
                 group = profile.group,
                 createdAt = Clock.System.now(),
                 createdBy = Cacheable.Loaded(profile.vppId),
@@ -57,9 +57,9 @@ class CreateHomeworkUseCase(
             taskIds = tasks.associateWith { homeworkRepository.getIdForNewLocalHomeworkTask() }
             homework = Homework.LocalHomework(
                 id = id,
-                defaultLesson = defaultLesson,
+                defaultLesson = defaultLesson?.let { Cacheable.Loaded(it) },
                 createdAt = Clock.System.now(),
-                createdByProfile = profile,
+                createdByProfile = profile.let { Cacheable.Loaded(it) },
                 dueTo = Instant.fromEpochSeconds(date.toEpochDays() * 24 * 60 * 60L),
                 tasks = taskIds.map { Cacheable.Loaded(Homework.HomeworkTask(id = it.value, content = it.key, homework = Cacheable.Uninitialized(id.toString()), isDone = false)) }
             )

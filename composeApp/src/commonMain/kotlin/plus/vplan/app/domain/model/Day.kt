@@ -1,20 +1,42 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.cache.CacheableItem
+import plus.vplan.app.domain.cache.CachedItem
 
 data class Day(
     val id: String,
     val date: LocalDate,
-    val school: School,
-    val week: Week,
+    val school: Cacheable<School>,
+    val week: Cacheable<Week>,
     val info: String?
-) {
+): CachedItem<Day> {
     constructor(
         date: LocalDate,
         school: School,
         week: Week,
         info: String?
-    ) : this("${school.id}/$date", date, school, week, info)
+    ) : this("${school.id}/$date", date, Cacheable.Loaded(school), Cacheable.Loaded(week), info)
+
+    override fun getItemId(): String = this.id
+
+    override fun isConfigSatisfied(
+        configuration: CacheableItem.FetchConfiguration<Day>,
+        allowLoading: Boolean
+    ): Boolean {
+        if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+        if (configuration is Fetch) {
+            if (configuration.school is School.Fetch && !school.isConfigSatisfied(configuration.school, allowLoading)) return false
+            if (configuration.week is Week.Fetch && !week.isConfigSatisfied(configuration.week, allowLoading)) return false
+        }
+        return true
+    }
+
+    data class Fetch(
+        val school: CacheableItem.FetchConfiguration<School> = Ignore(),
+        val week: CacheableItem.FetchConfiguration<Week> = Ignore()
+    ) : CacheableItem.FetchConfiguration.Fetch<Day>()
 }
 
 sealed interface SchoolDay{

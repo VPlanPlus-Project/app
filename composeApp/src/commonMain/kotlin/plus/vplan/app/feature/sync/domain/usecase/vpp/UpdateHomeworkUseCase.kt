@@ -21,8 +21,8 @@ class UpdateHomeworkUseCase(
 ) {
     suspend operator fun invoke(profile: Profile.StudentProfile): Response<Unit> {
         val response = homeworkRepository.getByDefaultLesson(
-            authentication = profile.school.getSchoolApiAccess(),
-            defaultLessonIds = profile.defaultLessons.filterValues { it }.keys.map { it.id },
+            authentication = profile.school.toValueOrNull()!!.getSchoolApiAccess(),
+            defaultLessonIds = profile.defaultLessons.filterValues { it }.keys.map { it.toValueOrNull()!!.id },
             from = null,
             to = null
         )
@@ -30,17 +30,17 @@ class UpdateHomeworkUseCase(
         if (response !is Response.Success) throw IllegalStateException("response is not successful: $response")
 
         val groupResponse = homeworkRepository.getByGroup(
-            authentication = profile.school.getSchoolApiAccess(),
-            groupId = profile.group.id,
+            authentication = profile.school.toValueOrNull()!!.getSchoolApiAccess(),
+            groupId = profile.group.getItemId().toInt(),
             from = null,
             to = null
         )
         if (groupResponse is Response.Error) return groupResponse
         if (groupResponse !is Response.Success) throw IllegalStateException("groupResponse is not successful: $groupResponse")
 
-        val groupCache = groupRepository.getBySchool(profile.school.id)
-        val defaultLessonCache = defaultLessonRepository.getBySchool(profile.school.id)
-        val homeworkCache = homeworkRepository.getByGroup(profile.group.id)
+        val groupCache = groupRepository.getBySchool(profile.school.getItemId().toInt())
+        val defaultLessonCache = defaultLessonRepository.getBySchool(profile.school.getItemId().toInt())
+        val homeworkCache = homeworkRepository.getByGroup(profile.group.getItemId().toInt())
             .map { flowData -> flowData.filterIsInstance<Homework.CloudHomework>() }
 
         var cachedGroups = groupCache.latest()
@@ -49,7 +49,7 @@ class UpdateHomeworkUseCase(
         val downloadedHomework = response.data.plus(groupResponse.data).mapNotNull { homeworkResponse ->
             val group = homeworkResponse.group?.let updateGroup@{ groupId ->
                 cachedGroups.firstOrNull { it.id == homeworkResponse.group } ?:
-                groupRepository.getByIdWithCaching(groupId, profile.school).let { groupUpdateResponse ->
+                groupRepository.getByIdWithCaching(groupId, profile.school.toValueOrNull()!!).let { groupUpdateResponse ->
                     if (groupUpdateResponse !is Response.Success) return@mapNotNull null
                     cachedGroups = groupCache.latest()
                     cachedGroups.firstOrNull { it.id == groupId } ?: return@mapNotNull null
@@ -71,8 +71,8 @@ class UpdateHomeworkUseCase(
                         isDone = null
                     ))
                 },
-                defaultLesson = defaultLesson,
-                group = group,
+                defaultLesson = defaultLesson?.let { Cacheable.Loaded(it) },
+                group = group?.let { Cacheable.Loaded(it) },
                 isPublic = homeworkResponse.isPublic,
                 createdBy = Cacheable.Uninitialized(homeworkResponse.createdBy.toString())
             )

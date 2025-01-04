@@ -38,14 +38,14 @@ class CourseRepositoryImpl(
                 DbCourse(
                     id = course.id,
                     name = course.name,
-                    teacherId = course.teacher?.id
+                    teacherId = course.teacher?.getItemId()?.toInt()
                 )
             },
             courseGroupCrossovers = courses.flatMap { course ->
                 course.groups.map { group ->
                     DbCourseGroupCrossover(
                         courseId = course.id,
-                        groupId = group.id
+                        groupId = group.getItemId().toInt()
                     )
                 }
             }

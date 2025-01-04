@@ -79,7 +79,7 @@ fun DevScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text("ID: ${homework.getItemId()}")
-                    if (homework is Cacheable.Loaded) Text(homework.value.defaultLesson?.subject ?: homework.value.group?.name ?: "wtf")
+                    if (homework is Cacheable.Loaded) Text(homework.value.defaultLesson?.toValueOrNull()?.subject ?: homework.value.group?.toValueOrNull()?.name ?: "wtf")
                     if (homework is Cacheable.Loaded) Text(homework.value.dueTo.toString())
                     if (homework is Cacheable.Loaded && homework.value is Homework.CloudHomework) when (homework.value.createdBy) {
                         is Cacheable.Uninitialized -> Text("User ${homework.value.createdBy.id}")

@@ -40,8 +40,8 @@ data class EmbeddedHomework(
                 id = homework.id,
                 dueTo = homework.dueTo,
                 createdAt = homework.createdAt,
-                createdByProfile = createdByProfile!!.toModel() as Profile.StudentProfile,
-                defaultLesson = defaultLesson?.toModel(),
+                createdByProfile = Cacheable.Loaded(createdByProfile!!.toModel() as Profile.StudentProfile),
+                defaultLesson = defaultLesson?.toModel()?.let { Cacheable.Loaded(it) },
                 tasks = tasks.map { Cacheable.Loaded(it.toModel()) }
             )
         }
@@ -50,8 +50,8 @@ data class EmbeddedHomework(
             dueTo = homework.dueTo,
             createdAt = homework.createdAt,
             createdBy = Cacheable.Uninitialized(homework.createdBy!!.toString()),
-            defaultLesson = defaultLesson?.toModel(),
-            group = group?.toModel(),
+            defaultLesson = defaultLesson?.toModel()?.let { Cacheable.Loaded(it) },
+            group = group?.toModel()?.let { Cacheable.Loaded(it) },
             isPublic = homework.isPublic,
             tasks = tasks.map { Cacheable.Loaded(it.toModel()) }
         )

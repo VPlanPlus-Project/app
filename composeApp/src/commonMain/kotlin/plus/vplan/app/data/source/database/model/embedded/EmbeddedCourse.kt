@@ -7,6 +7,7 @@ import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Course
 
 data class EmbeddedCourse(
@@ -31,8 +32,8 @@ data class EmbeddedCourse(
         return Course(
             id = course.id,
             name = course.name,
-            teacher = teacher?.toModel(),
-            groups = groups.map { it.toModel() }
+            teacher = teacher?.let { Cacheable.Loaded(it.toModel()) },
+            groups = groups.map { Cacheable.Loaded(it.toModel()) }
         )
     }
 }
