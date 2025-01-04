@@ -2,7 +2,7 @@ package plus.vplan.app.domain.model
 
 import kotlinx.datetime.Instant
 import plus.vplan.app.domain.cache.Cacheable
-import plus.vplan.app.domain.cache.CacheableItem
+import plus.vplan.app.domain.cache.CacheableItemSource
 import plus.vplan.app.domain.cache.CachedItem
 
 sealed class Homework : CachedItem<Homework> {
@@ -15,10 +15,10 @@ sealed class Homework : CachedItem<Homework> {
 
     override fun getItemId(): String = this.id.toString()
     override fun isConfigSatisfied(
-        configuration: CacheableItem.FetchConfiguration<Homework>,
+        configuration: CacheableItemSource.FetchConfiguration<Homework>,
         allowLoading: Boolean
     ): Boolean {
-        if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+        if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
         if (configuration is Fetch) {
             if (configuration.vppId is VppId.Fetch && this is CloudHomework && !this.createdBy.isConfigSatisfied(configuration.vppId, allowLoading)) return false
             if (configuration.tasks is HomeworkTask.Fetch && this.tasks.any { !it.isConfigSatisfied(configuration.tasks, allowLoading) }) return false
@@ -37,10 +37,10 @@ sealed class Homework : CachedItem<Homework> {
     ) : CachedItem<HomeworkTask> {
         override fun getItemId(): String = this.id.toString()
         override fun isConfigSatisfied(
-            configuration: CacheableItem.FetchConfiguration<HomeworkTask>,
+            configuration: CacheableItemSource.FetchConfiguration<HomeworkTask>,
             allowLoading: Boolean
         ): Boolean {
-            if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+            if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
             if (configuration is Fetch) {
                 if (configuration.homework is Homework.Fetch && !this.homework.isConfigSatisfied(configuration.homework, allowLoading)) return false
             }
@@ -48,8 +48,8 @@ sealed class Homework : CachedItem<Homework> {
         }
 
         data class Fetch(
-            val homework: CacheableItem.FetchConfiguration<Homework> = Ignore()
-        ) : CacheableItem.FetchConfiguration.Fetch<HomeworkTask>()
+            val homework: CacheableItemSource.FetchConfiguration<Homework> = Ignore()
+        ) : CacheableItemSource.FetchConfiguration.Fetch<HomeworkTask>()
     }
 
     data class CloudHomework(
@@ -79,10 +79,10 @@ sealed class Homework : CachedItem<Homework> {
     }
 
     data class Fetch(
-        val tasks: CacheableItem.FetchConfiguration<HomeworkTask> = Ignore(),
-        val vppId: CacheableItem.FetchConfiguration<VppId> = Ignore(),
-        val defaultLesson: CacheableItem.FetchConfiguration<DefaultLesson> = Ignore(),
-        val group: CacheableItem.FetchConfiguration<Group> = Ignore(),
-        val profile: CacheableItem.FetchConfiguration<Profile.StudentProfile> = Ignore()
-    ) : CacheableItem.FetchConfiguration.Fetch<Homework>()
+        val tasks: CacheableItemSource.FetchConfiguration<HomeworkTask> = Ignore(),
+        val vppId: CacheableItemSource.FetchConfiguration<VppId> = Ignore(),
+        val defaultLesson: CacheableItemSource.FetchConfiguration<DefaultLesson> = Ignore(),
+        val group: CacheableItemSource.FetchConfiguration<Group> = Ignore(),
+        val profile: CacheableItemSource.FetchConfiguration<Profile.StudentProfile> = Ignore()
+    ) : CacheableItemSource.FetchConfiguration.Fetch<Homework>()
 }

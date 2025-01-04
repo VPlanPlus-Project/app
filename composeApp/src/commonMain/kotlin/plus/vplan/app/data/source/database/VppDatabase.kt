@@ -60,6 +60,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 
 @Database(
     entities = [
@@ -107,6 +108,8 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
         DbHomework::class,
         DbHomeworkTask::class,
         DbHomeworkTaskDone::class,
+
+        FKSchoolGroup::class
     ],
     version = 1,
 )

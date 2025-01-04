@@ -6,13 +6,14 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbGroup
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedGroup
 
 @Dao
 interface GroupDao {
 
     @Transaction
-    @Query("SELECT * FROM school_groups WHERE school_id = :schoolId")
+    @Query("SELECT * FROM school_groups LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId")
     fun getBySchool(schoolId: Int): Flow<List<EmbeddedGroup>>
 
     @Transaction
@@ -20,5 +21,5 @@ interface GroupDao {
     fun getById(id: Int): Flow<EmbeddedGroup?>
 
     @Upsert
-    suspend fun upsert(group: DbGroup)
+    suspend fun upsert(group: DbGroup, fkSchoolGroup: FKSchoolGroup)
 }

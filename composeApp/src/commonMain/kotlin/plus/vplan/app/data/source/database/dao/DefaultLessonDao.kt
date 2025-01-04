@@ -19,7 +19,7 @@ interface DefaultLessonDao {
     fun getByGroup(groupId: Int): Flow<List<EmbeddedDefaultLesson>>
 
     @Transaction
-    @Query("SELECT * FROM default_lesson_group_crossover LEFT JOIN default_lessons ON default_lessons.id = default_lesson_group_crossover.default_lesson_id LEFT JOIN school_groups ON default_lesson_group_crossover.group_id = school_groups.id WHERE school_groups.school_id = :schoolId")
+    @Query("SELECT * FROM default_lesson_group_crossover LEFT JOIN default_lessons ON default_lessons.id = default_lesson_group_crossover.default_lesson_id LEFT JOIN school_groups ON default_lesson_group_crossover.group_id = school_groups.id LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId")
     fun getBySchool(schoolId: Int): Flow<List<EmbeddedDefaultLesson>>
 
     @Transaction

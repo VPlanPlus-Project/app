@@ -7,11 +7,13 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.VPP_ROOT_URL
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroup
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
@@ -44,7 +46,11 @@ class GroupRepositoryImpl(
                     DbGroup(
                         id = group.id,
                         name = group.name,
-                        schoolId = school.id
+                        cachedAt = Clock.System.now()
+                    ),
+                    FKSchoolGroup(
+                        schoolId = school.id,
+                        groupId = group.id
                     )
                 )
             }
@@ -70,7 +76,11 @@ class GroupRepositoryImpl(
                 DbGroup(
                     id = data.id,
                     name = data.name,
-                    schoolId = school.id
+                    cachedAt = Clock.System.now()
+                ),
+                FKSchoolGroup(
+                    schoolId = school.id,
+                    groupId = data.id
                 )
             )
             return Response.Success(getById(id))

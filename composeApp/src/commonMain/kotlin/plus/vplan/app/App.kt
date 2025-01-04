@@ -12,7 +12,10 @@ import io.ktor.http.URLProtocol
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
+import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
+import plus.vplan.app.domain.source.ProfileSource
+import plus.vplan.app.domain.source.SchoolSource
 import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
@@ -41,6 +44,9 @@ val VPP_ID_AUTH_URL = URLBuilder(
 object App {
     lateinit var vppIdSource: VppIdSource
     lateinit var homeworkSource: HomeworkSource
+    lateinit var profileSource: ProfileSource
+    lateinit var groupSource: GroupSource
+    lateinit var schoolSource: SchoolSource
 }
 
 @Composable
@@ -50,6 +56,9 @@ fun App(task: StartTask?) {
         KoinContext {
             App.vppIdSource = VppIdSource(koinInject())
             App.homeworkSource = HomeworkSource(koinInject())
+            App.profileSource = ProfileSource(koinInject())
+            App.groupSource = GroupSource(koinInject())
+            App.schoolSource = SchoolSource(koinInject())
             Surface(
                 modifier = Modifier
                     .fillMaxSize()

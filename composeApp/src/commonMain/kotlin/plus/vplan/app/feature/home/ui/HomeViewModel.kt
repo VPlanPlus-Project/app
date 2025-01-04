@@ -37,14 +37,14 @@ class HomeViewModel(
             getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(currentProfile = profile)
                 if (profile == null) return@collectLatest
-                getDayUseCase(profile, state.currentTime.date).collectLatest { day ->
-                    state = state.copy(currentDay = day)
-                    day.nextRegularSchoolDay?.let { nextDayDate ->
-                        getDayUseCase(profile, nextDayDate).collectLatest { nextDay ->
-                            state = state.copy(nextDay = nextDay)
-                        }
-                    }
-                }
+//                getDayUseCase(profile, state.currentTime.date).collectLatest { day ->
+//                    state = state.copy(currentDay = day)
+//                    day.nextRegularSchoolDay?.let { nextDayDate ->
+//                        getDayUseCase(profile, nextDayDate).collectLatest { nextDay ->
+//                            state = state.copy(nextDay = nextDay)
+//                        }
+//                    }
+//                }
             }
         }
         viewModelScope.launch {

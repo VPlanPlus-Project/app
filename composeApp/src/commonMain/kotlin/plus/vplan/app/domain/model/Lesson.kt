@@ -3,7 +3,7 @@ package plus.vplan.app.domain.model
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.cache.Cacheable
-import plus.vplan.app.domain.cache.CacheableItem
+import plus.vplan.app.domain.cache.CacheableItemSource
 import plus.vplan.app.domain.cache.CachedItem
 import kotlin.uuid.Uuid
 
@@ -20,10 +20,10 @@ sealed interface Lesson : CachedItem<Lesson> {
     override fun getItemId(): String = this.id
 
     override fun isConfigSatisfied(
-        configuration: CacheableItem.FetchConfiguration<Lesson>,
+        configuration: CacheableItemSource.FetchConfiguration<Lesson>,
         allowLoading: Boolean
     ): Boolean {
-        if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+        if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
         if (configuration is Fetch) {
             if (configuration.week is Week.Fetch && !this.week.isConfigSatisfied(configuration.week, allowLoading)) return false
             if (configuration.teachers is Teacher.Fetch && this.teachers.any { !it.isConfigSatisfied(configuration.teachers, allowLoading)} ) return false
@@ -35,12 +35,12 @@ sealed interface Lesson : CachedItem<Lesson> {
     }
 
     data class Fetch(
-        val week: CacheableItem.FetchConfiguration<Week> = Ignore(),
-        val teachers: CacheableItem.FetchConfiguration<Teacher> = Ignore(),
-        val rooms: CacheableItem.FetchConfiguration<Room> = Ignore(),
-        val groups: CacheableItem.FetchConfiguration<Group> = Ignore(),
-        val lessonTime: CacheableItem.FetchConfiguration<LessonTime> = Ignore()
-    ) : CacheableItem.FetchConfiguration.Fetch<Lesson>()
+        val week: CacheableItemSource.FetchConfiguration<Week> = Ignore(),
+        val teachers: CacheableItemSource.FetchConfiguration<Teacher> = Ignore(),
+        val rooms: CacheableItemSource.FetchConfiguration<Room> = Ignore(),
+        val groups: CacheableItemSource.FetchConfiguration<Group> = Ignore(),
+        val lessonTime: CacheableItemSource.FetchConfiguration<LessonTime> = Ignore()
+    ) : CacheableItemSource.FetchConfiguration.Fetch<Lesson>()
 
     data class TimetableLesson(
         override val id: String,

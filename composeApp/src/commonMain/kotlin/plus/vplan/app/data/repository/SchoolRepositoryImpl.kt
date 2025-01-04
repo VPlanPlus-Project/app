@@ -7,6 +7,7 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.VPP_ROOT_URL
@@ -48,7 +49,8 @@ class SchoolRepositoryImpl(
             vppDatabase.schoolDao.upsertSchool(
                 DbSchool(
                     id = id,
-                    name = data.name
+                    name = data.name,
+                    cachedAt = Clock.System.now()
                 )
             )
             return Response.Success(getById(id))

@@ -2,7 +2,7 @@ package plus.vplan.app.domain.model
 
 import kotlinx.datetime.LocalTime
 import plus.vplan.app.domain.cache.Cacheable
-import plus.vplan.app.domain.cache.CacheableItem
+import plus.vplan.app.domain.cache.CacheableItemSource
 import plus.vplan.app.domain.cache.CachedItem
 
 data class LessonTime(
@@ -16,10 +16,10 @@ data class LessonTime(
     override fun getItemId(): String = this.id
 
     override fun isConfigSatisfied(
-        configuration: CacheableItem.FetchConfiguration<LessonTime>,
+        configuration: CacheableItemSource.FetchConfiguration<LessonTime>,
         allowLoading: Boolean
     ): Boolean {
-        if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+        if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
         if (configuration is Fetch) {
             if (configuration.group is Group.Fetch && !this.group.isConfigSatisfied(configuration.group, allowLoading)) return false
         }
@@ -27,6 +27,6 @@ data class LessonTime(
     }
 
     data class Fetch(
-        val group: CacheableItem.FetchConfiguration<Group> = Ignore()
-    ) : CacheableItem.FetchConfiguration.Fetch<LessonTime>()
+        val group: CacheableItemSource.FetchConfiguration<Group> = Ignore()
+    ) : CacheableItemSource.FetchConfiguration.Fetch<LessonTime>()
 }

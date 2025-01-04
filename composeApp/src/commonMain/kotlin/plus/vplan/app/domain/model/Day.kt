@@ -2,7 +2,7 @@ package plus.vplan.app.domain.model
 
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.cache.Cacheable
-import plus.vplan.app.domain.cache.CacheableItem
+import plus.vplan.app.domain.cache.CacheableItemSource
 import plus.vplan.app.domain.cache.CachedItem
 
 data class Day(
@@ -22,10 +22,10 @@ data class Day(
     override fun getItemId(): String = this.id
 
     override fun isConfigSatisfied(
-        configuration: CacheableItem.FetchConfiguration<Day>,
+        configuration: CacheableItemSource.FetchConfiguration<Day>,
         allowLoading: Boolean
     ): Boolean {
-        if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+        if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
         if (configuration is Fetch) {
             if (configuration.school is School.Fetch && !school.isConfigSatisfied(configuration.school, allowLoading)) return false
             if (configuration.week is Week.Fetch && !week.isConfigSatisfied(configuration.week, allowLoading)) return false
@@ -34,9 +34,9 @@ data class Day(
     }
 
     data class Fetch(
-        val school: CacheableItem.FetchConfiguration<School> = Ignore(),
-        val week: CacheableItem.FetchConfiguration<Week> = Ignore()
-    ) : CacheableItem.FetchConfiguration.Fetch<Day>()
+        val school: CacheableItemSource.FetchConfiguration<School> = Ignore(),
+        val week: CacheableItemSource.FetchConfiguration<Week> = Ignore()
+    ) : CacheableItemSource.FetchConfiguration.Fetch<Day>()
 }
 
 sealed interface SchoolDay{

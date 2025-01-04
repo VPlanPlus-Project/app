@@ -1,7 +1,7 @@
 package plus.vplan.app.domain.model
 
 import plus.vplan.app.domain.cache.Cacheable
-import plus.vplan.app.domain.cache.CacheableItem
+import plus.vplan.app.domain.cache.CacheableItemSource
 import plus.vplan.app.domain.cache.CachedItem
 import kotlin.uuid.Uuid
 
@@ -17,12 +17,11 @@ abstract class Profile : CachedItem<Profile> {
     override fun getItemId(): String = this.id.toHexString()
 
     override fun isConfigSatisfied(
-        configuration: CacheableItem.FetchConfiguration<Profile>,
+        configuration: CacheableItemSource.FetchConfiguration<Profile>,
         allowLoading: Boolean
     ): Boolean {
-        if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+        if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
         if (configuration is Fetch) {
-            if (configuration.school is School.Fetch && !this.school.isConfigSatisfied(configuration.school, allowLoading)) return false
             if (this is StudentProfile && !isConfigSatisfiedForStudentProfile(configuration.studentProfile, allowLoading)) return false
         }
 
@@ -31,11 +30,10 @@ abstract class Profile : CachedItem<Profile> {
     }
 
     data class Fetch(
-        val studentProfile: CacheableItem.FetchConfiguration<StudentProfile> = Ignore(),
-        val teacherProfile: CacheableItem.FetchConfiguration<TeacherProfile> = Ignore(),
-        val roomProfile: CacheableItem.FetchConfiguration<RoomProfile> = Ignore(),
-        val school: CacheableItem.FetchConfiguration<School> = Ignore()
-    ) : CacheableItem.FetchConfiguration.Fetch<Profile>()
+        val studentProfile: CacheableItemSource.FetchConfiguration<StudentProfile> = Ignore(),
+        val teacherProfile: CacheableItemSource.FetchConfiguration<TeacherProfile> = Ignore(),
+        val roomProfile: CacheableItemSource.FetchConfiguration<RoomProfile> = Ignore(),
+    ) : CacheableItemSource.FetchConfiguration.Fetch<Profile>()
 
     data class StudentProfile(
         override val id: Uuid,
@@ -84,15 +82,15 @@ abstract class Profile : CachedItem<Profile> {
         }
 
         data class Fetch(
-            val group: CacheableItem.FetchConfiguration<Group> = Ignore(),
-            val defaultLessons: CacheableItem.FetchConfiguration<DefaultLesson> = Ignore()
-        ) : CacheableItem.FetchConfiguration.Fetch<StudentProfile>()
+            val group: CacheableItemSource.FetchConfiguration<Group> = Ignore(),
+            val defaultLessons: CacheableItemSource.FetchConfiguration<DefaultLesson> = Ignore()
+        ) : CacheableItemSource.FetchConfiguration.Fetch<StudentProfile>()
 
         fun isConfigSatisfiedForStudentProfile(
-            configuration: CacheableItem.FetchConfiguration<StudentProfile>,
+            configuration: CacheableItemSource.FetchConfiguration<StudentProfile>,
             allowLoading: Boolean
         ): Boolean {
-            if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+            if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
             if (configuration is Fetch) {
                 if (configuration.group is Group.Fetch && !this.group.isConfigSatisfied(configuration.group, allowLoading)) return false
                 if (configuration.defaultLessons is DefaultLesson.Fetch && this.defaultLessons.keys.any { !it.isConfigSatisfied(configuration.defaultLessons, allowLoading) }) return false

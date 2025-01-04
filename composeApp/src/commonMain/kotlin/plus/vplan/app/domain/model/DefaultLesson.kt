@@ -1,6 +1,6 @@
 package plus.vplan.app.domain.model
 
-import plus.vplan.app.domain.cache.CacheableItem
+import plus.vplan.app.domain.cache.CacheableItemSource
 import plus.vplan.app.domain.cache.CachedItem
 
 /**
@@ -16,10 +16,10 @@ data class DefaultLesson(
     override fun getItemId(): String = this.id
 
     override fun isConfigSatisfied(
-        configuration: CacheableItem.FetchConfiguration<DefaultLesson>,
+        configuration: CacheableItemSource.FetchConfiguration<DefaultLesson>,
         allowLoading: Boolean
     ): Boolean {
-        if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+        if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
         if (configuration is Fetch) {
             if (configuration.course is Course.Fetch && course?.isConfigSatisfied(configuration.course, allowLoading) == false) return false
             if (configuration.teacher is Teacher.Fetch && teacher?.isConfigSatisfied(configuration.teacher, allowLoading) == false) return false
@@ -29,10 +29,10 @@ data class DefaultLesson(
     }
 
     data class Fetch(
-        val course: CacheableItem.FetchConfiguration<Course> = Ignore(),
-        val teacher: CacheableItem.FetchConfiguration<Teacher> = Ignore(),
-        val groups: CacheableItem.FetchConfiguration<Group> = Ignore()
-    ) : CacheableItem.FetchConfiguration.Fetch<DefaultLesson>()
+        val course: CacheableItemSource.FetchConfiguration<Course> = Ignore(),
+        val teacher: CacheableItemSource.FetchConfiguration<Teacher> = Ignore(),
+        val groups: CacheableItemSource.FetchConfiguration<Group> = Ignore()
+    ) : CacheableItemSource.FetchConfiguration.Fetch<DefaultLesson>()
 }
 
 fun Collection<DefaultLesson>.findByIndiwareId(indiwareId: String): DefaultLesson? {

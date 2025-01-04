@@ -1,7 +1,7 @@
 package plus.vplan.app.domain.model
 
 import plus.vplan.app.domain.cache.Cacheable
-import plus.vplan.app.domain.cache.CacheableItem
+import plus.vplan.app.domain.cache.CacheableItemSource
 import plus.vplan.app.domain.cache.CachedItem
 
 data class Course(
@@ -27,10 +27,10 @@ data class Course(
     override fun getItemId(): String = this.id
 
     override fun isConfigSatisfied(
-        configuration: CacheableItem.FetchConfiguration<Course>,
+        configuration: CacheableItemSource.FetchConfiguration<Course>,
         allowLoading: Boolean
     ): Boolean {
-        if (configuration is CacheableItem.FetchConfiguration.Ignore) return true
+        if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
         if (configuration is Fetch) {
             if (configuration.groups is Group.Fetch && groups.any { !it.isConfigSatisfied(configuration.groups, allowLoading) }) return false
             if (configuration.teacher is Teacher.Fetch && teacher?.isConfigSatisfied(configuration.teacher, allowLoading) == false) return false
@@ -39,7 +39,7 @@ data class Course(
     }
 
     data class Fetch(
-        val groups: CacheableItem.FetchConfiguration<Group> = Ignore(),
-        val teacher: CacheableItem.FetchConfiguration<Teacher> = Ignore()
-    ) : CacheableItem.FetchConfiguration.Fetch<Course>()
+        val groups: CacheableItemSource.FetchConfiguration<Group> = Ignore(),
+        val teacher: CacheableItemSource.FetchConfiguration<Teacher> = Ignore()
+    ) : CacheableItemSource.FetchConfiguration.Fetch<Course>()
 }
