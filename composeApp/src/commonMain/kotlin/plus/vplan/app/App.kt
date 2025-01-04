@@ -12,6 +12,7 @@ import io.ktor.http.URLProtocol
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
+import plus.vplan.app.domain.source.DefaultLessonSource
 import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.ProfileSource
@@ -47,6 +48,7 @@ object App {
     lateinit var profileSource: ProfileSource
     lateinit var groupSource: GroupSource
     lateinit var schoolSource: SchoolSource
+    lateinit var defaultLessonSource: DefaultLessonSource
 }
 
 @Composable
@@ -59,6 +61,7 @@ fun App(task: StartTask?) {
             App.profileSource = ProfileSource(koinInject())
             App.groupSource = GroupSource(koinInject())
             App.schoolSource = SchoolSource(koinInject())
+            App.defaultLessonSource = DefaultLessonSource(koinInject())
             Surface(
                 modifier = Modifier
                     .fillMaxSize()

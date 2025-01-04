@@ -1,6 +1,7 @@
 package plus.vplan.app.domain.source
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -8,6 +9,7 @@ import kotlinx.coroutines.launch
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.cache.CacheableItemSource
+import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -34,11 +36,28 @@ class ProfileSource(
 
             if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return@collectLatest
             if (configuration !is Profile.Fetch) throw IllegalArgumentException("Expected Profile.Fetch Configuration")
-            if (cacheableProfile is Profile.StudentProfile && configuration.studentProfile is Profile.StudentProfile.Fetch) {
+
+            val profile = MutableStateFlow(cacheableProfile)
+            launch { profile.collect { send(Cacheable.Loaded(it)) } }
+
+            if (profile.value is Profile.StudentProfile && configuration.studentProfile is Profile.StudentProfile.Fetch) {
                 if (configuration.studentProfile.group is Group.Fetch) {
                     launch {
-                        App.groupSource.getById(cacheableProfile.group.getItemId(), configuration.studentProfile.group).collect { cacheableGroup ->
-                            send(Cacheable.Loaded(cacheableProfile.copy(group = cacheableGroup)))
+                        App.groupSource.getById((profile.value as Profile.StudentProfile).group.getItemId(), configuration.studentProfile.group).collect { cacheableGroup ->
+                            profile.value = (profile.value as Profile.StudentProfile).copy(group = cacheableGroup)
+                        }
+                    }
+                }
+                if (configuration.studentProfile.defaultLessons is DefaultLesson.Fetch) {
+                    launch {
+                        combine(
+                            (profile.value as Profile.StudentProfile).defaultLessons.keys.map { App.defaultLessonSource.getById(it.getItemId(), configuration.studentProfile.defaultLessons) }
+                        ) {
+                            (profile.value as Profile.StudentProfile).defaultLessons.mapKeys { key ->
+                                it.first { it.getItemId() == key.key.getItemId() }
+                            }
+                        }.collect {
+                            profile.value = (profile.value as Profile.StudentProfile).copy(defaultLessons = it)
                         }
                     }
                 }
