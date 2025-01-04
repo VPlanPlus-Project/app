@@ -20,6 +20,10 @@ interface WeekDao {
     fun getBySchool(schoolId: Int): Flow<List<EmbeddedWeek>>
 
     @Transaction
+    @Query("SELECT * FROM weeks WHERE id = :id")
+    fun getById(id: String): Flow<EmbeddedWeek?>
+
+    @Transaction
     @Query("DELETE FROM weeks WHERE school_id = :schoolId")
     suspend fun deleteBySchool(schoolId: Int)
 

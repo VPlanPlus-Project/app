@@ -39,7 +39,8 @@ sealed interface Lesson : CachedItem<Lesson> {
         val teachers: CacheableItemSource.FetchConfiguration<Teacher> = Ignore(),
         val rooms: CacheableItemSource.FetchConfiguration<Room> = Ignore(),
         val groups: CacheableItemSource.FetchConfiguration<Group> = Ignore(),
-        val lessonTime: CacheableItemSource.FetchConfiguration<LessonTime> = Ignore()
+        val lessonTime: CacheableItemSource.FetchConfiguration<LessonTime> = Ignore(),
+        val onlyIf: (Lesson) -> Boolean = { true }
     ) : CacheableItemSource.FetchConfiguration.Fetch<Lesson>()
 
     data class TimetableLesson(

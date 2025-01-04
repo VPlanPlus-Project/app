@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
@@ -12,6 +13,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.TimetableRepository
+import kotlin.uuid.Uuid
 
 class TimetableRepositoryImpl(
     private val vppDatabase: VppDatabase
@@ -73,6 +75,30 @@ class TimetableRepositoryImpl(
             val currentVersion = currentVersionFlow?.toIntOrNull() ?: -1
             vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion").collect { timetableLessons ->
                 send(timetableLessons.map { lesson -> lesson.toModel() })
+            }
+        }
+    }
+
+    override fun getById(id: Uuid): Flow<Lesson.TimetableLesson?> = channelFlow {
+        vppDatabase.timetableDao.getById(id.toHexString()).collectLatest {
+            if (it.isEmpty()) return@collectLatest send(null)
+            val schoolId = it.first().week.school.school.id
+            vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).collectLatest { versionFlow ->
+                val currentVersion = versionFlow?.toIntOrNull() ?: -1
+                vppDatabase.timetableDao.getById(id.toHexString(), "${schoolId}_$currentVersion").collect { timetableLesson ->
+                    send(timetableLesson?.toModel())
+                }
+            }
+        }
+    }
+
+    override fun getForSchool(schoolId: Int, minWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<Uuid>> = channelFlow {
+        vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).collectLatest { versionFlow ->
+            val currentVersion = versionFlow?.toIntOrNull() ?: -1
+            vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion").collectLatest collectLessons@{
+                val weekIndex = it.map { it.week.week.weekIndex }.filter { it >= minWeekIndex }.minOrNull()
+                if (weekIndex == null) return@collectLessons send(emptyList())
+                send(it.filter { it.week.week.weekIndex == weekIndex && it.timetableLesson.dayOfWeek == dayOfWeek }.map { Uuid.parseHex(it.timetableLesson.id) })
             }
         }
     }

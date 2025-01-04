@@ -8,6 +8,7 @@ interface WeekRepository {
     suspend fun upsert(weeks: List<Week>)
 
     fun getBySchool(schoolId: Int): Flow<List<Week>>
+    fun getById(id: String): Flow<Week?>
 
     suspend fun deleteBySchool(schoolId: Int)
     suspend fun deleteById(id: String)

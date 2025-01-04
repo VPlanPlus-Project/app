@@ -21,7 +21,10 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
-import plus.vplan.app.domain.model.SchoolDay
+import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.model.Day
+import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FollowingLessons
 import plus.vplan.app.feature.home.ui.components.SectionTitle
@@ -73,7 +76,7 @@ private val subtitleTimeFormat = LocalTime.Format {
 
 @Composable
 fun CurrentDayView(
-    day: SchoolDay.NormalDay,
+    day: Day,
     contextTime: LocalDateTime
 ) {
     Column(
@@ -81,22 +84,31 @@ fun CurrentDayView(
     ) {
         val currentLessons = remember("${contextTime.hour}:${contextTime.minute}") {
             val contextZoned = contextTime.toInstant(TimeZone.currentSystemDefault())
-            day.lessons.filter {
-                val start =
-                    it.lessonTime.toValueOrNull()!!.start.atDate(day.date).toInstant(TimeZone.of("Europe/Berlin"))
-                val end = it.lessonTime.toValueOrNull()!!.end.atDate(day.date).toInstant(TimeZone.of("Europe/Berlin"))
-                contextZoned in start..end
-            }.map { currentLesson ->
-                currentLesson to day.lessons.filter {
-                    it.subject == currentLesson.subject
-                            && (it.teachers - currentLesson.teachers.toSet()).size != it.teachers.size
-                            && ((it.rooms.orEmpty() - currentLesson.rooms.orEmpty()
-                        .toSet()).size != it.rooms?.size || it.rooms.orEmpty()
-                        .isEmpty() || currentLesson.rooms.orEmpty().isEmpty())
-                            && it.defaultLesson == currentLesson.defaultLesson
-                            && it.lessonTime.toValueOrNull()!!.lessonNumber > currentLesson.lessonTime.toValueOrNull()!!.lessonNumber
-                }.sortedBy { it.lessonTime.toValueOrNull()!!.lessonNumber }
-                    .takeContinuousBy { it.lessonTime.toValueOrNull()!!.lessonNumber }
+            day.substitutionPlan.ifEmpty { day.timetable }
+                .filter {
+                    if (!(it is Cacheable.Loaded && it.value.lessonTime is Cacheable.Loaded<LessonTime>)) return@filter false
+                    val lessonTime = (it.value.lessonTime as? Cacheable.Loaded)?.value ?: return@filter false
+                    val start =
+                        lessonTime.start.atDate(day.date).toInstant(TimeZone.of("Europe/Berlin"))
+                    val end = lessonTime.end.atDate(day.date).toInstant(TimeZone.of("Europe/Berlin"))
+                    contextZoned in start..end
+                }
+                .filterIsInstance<Cacheable.Loaded<Lesson>>()
+                .map { it.value }
+                .map { currentLesson ->
+                    currentLesson to day.substitutionPlan.ifEmpty { day.timetable }
+                        .filterIsInstance<Cacheable.Loaded<Lesson>>()
+                        .map { it.value }
+                        .filter {
+                            it.subject == currentLesson.subject
+                                    && (it.teachers - currentLesson.teachers.toSet()).size != it.teachers.size
+                                    && ((it.rooms.orEmpty() - currentLesson.rooms.orEmpty()
+                                .toSet()).size != it.rooms?.size || it.rooms.orEmpty()
+                                .isEmpty() || currentLesson.rooms.orEmpty().isEmpty())
+                                    && it.defaultLesson == currentLesson.defaultLesson
+                                    && it.lessonTime.toValueOrNull()!!.lessonNumber > currentLesson.lessonTime.toValueOrNull()!!.lessonNumber
+                        }.sortedBy { it.lessonTime.toValueOrNull()!!.lessonNumber }
+                        .takeContinuousBy { it.lessonTime.toValueOrNull()!!.lessonNumber }
             }
         }
         if (currentLessons.isNotEmpty()) Column currentLessons@{
@@ -110,7 +122,9 @@ fun CurrentDayView(
             )
 
             if (currentLessons.all { it.first.subject == null }) {
-                val nextActualLesson = day.lessons
+                val nextActualLesson = day.substitutionPlan.ifEmpty { day.timetable }
+                    .filterIsInstance<Cacheable.Loaded<Lesson>>()
+                    .map { it.value }
                     .firstOrNull { lesson -> lesson.subject != null && lesson.lessonTime.toValueOrNull()!!.start > currentLessons.maxOf { it.first.lessonTime.toValueOrNull()!!.end } }
                 InfoCard(
                     imageVector = Res.drawable.lightbulb,
@@ -142,11 +156,14 @@ fun CurrentDayView(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = "Dein Tag",
                 subtitle = "${day.date.format(remember { subtitleDateFormat })}, bis ${
-                    day.lessons.maxOf { it.lessonTime.toValueOrNull()!!.end }.format(remember { subtitleTimeFormat })
+                    day.substitutionPlan.ifEmpty { day.timetable }
+                        .mapNotNull { it.toValueOrNull() }
+                        .maxOf { it.lessonTime.toValueOrNull()!!.end }.format(remember { subtitleTimeFormat })
                 }"
             )
             if (day.info != null) DayInfoCard(Modifier.padding(vertical = 4.dp), info = day.info)
-            val followingLessons = day.lessons
+            val followingLessons = day.substitutionPlan.ifEmpty { day.timetable }
+                .mapNotNull { it.toValueOrNull() }
                 .filter { it.lessonTime.toValueOrNull()!!.lessonNumber > currentLessons.last().first.lessonTime.toValueOrNull()!!.lessonNumber }
                 .sortedBy { it.lessonTime.toValueOrNull()!!.start }
             if (followingLessons.isNotEmpty()) Column {

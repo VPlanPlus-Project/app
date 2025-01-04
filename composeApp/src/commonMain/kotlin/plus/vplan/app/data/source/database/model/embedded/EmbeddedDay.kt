@@ -27,7 +27,11 @@ data class EmbeddedDay(
             date = day.date,
             info = day.info,
             week = Cacheable.Loaded(week.toModel()),
-            school = Cacheable.Loaded(school.toModel())
+            school = Cacheable.Loaded(school.toModel()),
+            dayType = Day.DayType.UNKNOWN,
+            substitutionPlan = emptyList(),
+            timetable = emptyList(),
+            nextSchoolDay = null
         )
     }
 }

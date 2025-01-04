@@ -55,10 +55,15 @@ class UpdateSubstitutionPlanUseCase(
         val substitutionPlan = substitutionPlanResponse.data
 
         val day = Day(
+            id = Day.buildId(indiwareSchool, date),
             date = date,
-            school = indiwareSchool,
-            week = week,
-            info = substitutionPlan.info
+            school = Cacheable.Loaded(indiwareSchool),
+            week = Cacheable.Loaded(week),
+            info = substitutionPlan.info,
+            dayType = Day.DayType.REGULAR,
+            substitutionPlan = emptyList(),
+            timetable = emptyList(),
+            nextSchoolDay = null
         )
 
         dayRepository.insert(day)

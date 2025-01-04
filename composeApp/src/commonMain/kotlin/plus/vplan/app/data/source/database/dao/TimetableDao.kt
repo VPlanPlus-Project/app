@@ -44,6 +44,14 @@ interface TimetableDao {
     fun getTimetableLessons(schoolId: Int, version: String): Flow<List<EmbeddedTimetableLesson>>
 
     @Transaction
+    @Query("SELECT * FROM timetable_lessons WHERE id = :id AND version = :version")
+    fun getById(id: String, version: String): Flow<EmbeddedTimetableLesson?>
+
+    @Transaction
+    @Query("SELECT * FROM timetable_lessons WHERE id = :id")
+    fun getById(id: String): Flow<List<EmbeddedTimetableLesson>>
+
+    @Transaction
     @Query("DELETE FROM timetable_lessons")
     suspend fun deleteAll()
 

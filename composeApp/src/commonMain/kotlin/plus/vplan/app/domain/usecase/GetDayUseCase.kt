@@ -1,119 +1,30 @@
 package plus.vplan.app.domain.usecase
 
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.isoDayNumber
+import plus.vplan.app.App
+import plus.vplan.app.domain.model.Day
+import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.SchoolDay
-import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TimetableRepository
-import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.utils.minus
-import plus.vplan.app.utils.plus
-import kotlin.time.Duration.Companion.days
+import plus.vplan.app.domain.model.Week
 
-class GetDayUseCase(
-    private val dayRepository: DayRepository,
-    private val timetableRepository: TimetableRepository,
-    private val substitutionPlanRepository: SubstitutionPlanRepository,
-    private val weekRepository: WeekRepository
-) {
+class GetDayUseCase {
+
+    private fun configuration(profile: Profile) = Day.Fetch(
+        school = School.Fetch(),
+        week = Week.Fetch(),
+        timetable = Lesson.Fetch(onlyIf = { profile.isLessonRelevant(it) }),
+        nextSchoolDay = Day.Fetch(
+            week = Week.Fetch(),
+            timetable = Lesson.Fetch(onlyIf = { profile.isLessonRelevant(it) })
+        )
+    )
+
     operator fun invoke(profile: Profile, date: LocalDate) = channelFlow {
-        dayRepository.getBySchool(date, profile.school.getItemId().toInt()).collectLatest { day ->
-            combine(
-                timetableRepository.getTimetableForSchool(schoolId = profile.school.getItemId().toInt()).map { timetable -> timetable.filter { it.dayOfWeek == date.dayOfWeek && profile.isLessonRelevant(it) } },
-                substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId = profile.school.getItemId().toInt(), date = date),
-                dayRepository.getHolidays(profile.school.getItemId().toInt()),
-                weekRepository.getBySchool(profile.school.getItemId().toInt())
-            ) { timetable, substitutionPlan, holidays, weeks ->
-                val dayWeek = weeks.firstOrNull { date in it.start..it.end }
-                val findNextRegularSchoolDayAfter: (LocalDate) -> LocalDate? = findNextRegularSchoolDayAfter@{ startDate ->
-                    if (holidays.isEmpty()) return@findNextRegularSchoolDayAfter null
-                    var nextSchoolDay = startDate + 1.days
-                    while (holidays.maxOf { it.date } > nextSchoolDay) {
-                        nextSchoolDay += 1.days
-                        if (holidays.none { it.date == nextSchoolDay } && nextSchoolDay.dayOfWeek.isoDayNumber <= ((profile.school.toValueOrNull() as? School.IndiwareSchool)?.daysPerWeek ?: 5)) break
-                    }
-                    nextSchoolDay
-                }
-
-                // is day a holiday?
-                holidays.firstOrNull { it.date == date }?.let {
-                    val nextSchoolDay = findNextRegularSchoolDayAfter(date)
-                    return@combine SchoolDay.Holiday(
-                        id = "${profile.school.getItemId().toInt()}/$date",
-                        date = date,
-                        school = profile.school.toValueOrNull()!!,
-                        nextRegularSchoolDay = nextSchoolDay
-                    )
-                }
-
-                // is d day a weekend?
-                if (date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY) {
-                    var friday = date
-                    while (friday.dayOfWeek != DayOfWeek.FRIDAY) {
-                        friday -= 1.days
-                    }
-                    var monday = date
-                    while (monday.dayOfWeek != DayOfWeek.MONDAY) {
-                        monday += 1.days
-                    }
-                    if (holidays.any { it.date == friday } || holidays.any { it.date == monday }) {
-                        val nextSchoolDay = findNextRegularSchoolDayAfter(date)
-                        return@combine SchoolDay.Holiday(
-                            id = "${profile.school.getItemId().toInt()}/$date",
-                            date = date,
-                            school = profile.school.toValueOrNull()!!,
-                            nextRegularSchoolDay = nextSchoolDay
-                        )
-                    } else {
-                        return@combine SchoolDay.Weekend(
-                            id = "${profile.school.getItemId().toInt()}/$date",
-                            date = date,
-                            school = profile.school.toValueOrNull()!!,
-                            nextRegularSchoolDay = findNextRegularSchoolDayAfter(date)
-                        )
-                    }
-                }
-
-                if (dayWeek == null) return@combine SchoolDay.Unknown(date = date)
-
-                val timetableLessons = timetable.filter { timetableLesson ->
-                    val a = timetableLesson.week.toValueOrNull()!!.weekIndex
-                    val b = dayWeek.weekIndex
-                    a <= b
-                }.let { timetableLessons ->
-                    val maxWeek = timetableLessons.maxOfOrNull { it.week.toValueOrNull()!!.weekIndex } ?: return@let emptyList()
-                    timetableLessons.filter { it.week.toValueOrNull()!!.weekIndex == maxWeek }
-                }.filter { it.weekType == null || it.weekType == dayWeek.weekType }
-
-                if (day == null) {
-                    return@combine SchoolDay.NormalDay(
-                        id = "${profile.school.getItemId().toInt()}/$date",
-                        date = date,
-                        school = profile.school.toValueOrNull()!!,
-                        week = dayWeek,
-                        info = null,
-                        lessons = timetableLessons,
-                        nextRegularSchoolDay = findNextRegularSchoolDayAfter(date)
-                    )
-                }
-                SchoolDay.NormalDay(
-                    id = day.id,
-                    date = day.date,
-                    school = profile.school.toValueOrNull()!!,
-                    week = day.week.toValueOrNull()!!,
-                    info = day.info,
-                    lessons = substitutionPlan.filter { profile.isLessonRelevant(it) }.ifEmpty { timetableLessons },
-                    nextRegularSchoolDay = findNextRegularSchoolDayAfter(day.date)
-                )
-            }.collect { send(it) }
+        val configuration = configuration(profile)
+        App.daySource.getById("${profile.school.getItemId()}/$date", configuration).collect { cachedDay ->
+            if (cachedDay.isConfigSatisfied(configuration, false)) cachedDay.toValueOrNull()?.let { day -> send(day) }
         }
     }
 }

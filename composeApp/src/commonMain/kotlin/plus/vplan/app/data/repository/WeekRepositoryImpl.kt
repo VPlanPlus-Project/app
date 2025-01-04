@@ -33,6 +33,10 @@ class WeekRepositoryImpl(
             .getBySchool(schoolId).map { it.map { embeddedWeek -> embeddedWeek.toModel() } }
     }
 
+    override fun getById(id: String): Flow<Week?> {
+        return vppDatabase.weekDao.getById(id).map { it?.toModel() }
+    }
+
     override suspend fun deleteBySchool(schoolId: Int) {
         vppDatabase.weekDao.deleteBySchool(schoolId)
     }

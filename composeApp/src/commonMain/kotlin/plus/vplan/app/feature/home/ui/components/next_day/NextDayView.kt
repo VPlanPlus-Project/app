@@ -12,13 +12,13 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
-import plus.vplan.app.domain.model.SchoolDay
+import plus.vplan.app.domain.model.Day
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FollowingLessons
 import plus.vplan.app.feature.home.ui.components.SectionTitle
 
 @Composable
-fun NextDayView(day: SchoolDay.NormalDay) {
+fun NextDayView(day: Day) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -35,7 +35,7 @@ fun NextDayView(day: SchoolDay.NormalDay) {
                     monthName(MonthNames("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"))
                     char(' ')
                     year()
-                }) + "\n${day.week.weekType}-Woche (KW ${day.week.calendarWeek}, SW ${day.week.weekIndex})"
+                }) + "\n${day.week?.toValueOrNull()?.weekType ?: "Unbekannte"}-Woche (KW ${day.week?.toValueOrNull()?.calendarWeek}, SW ${day.week?.toValueOrNull()?.weekIndex})"
             )
             if (day.info != null) DayInfoCard(Modifier.padding(vertical = 4.dp), info = day.info)
         }
@@ -45,13 +45,13 @@ fun NextDayView(day: SchoolDay.NormalDay) {
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = "Nächste Stunden",
                 subtitle =
-                    if (day.lessons.isEmpty()) "Keine Stunden"
-                    else "${day.lessons.minOf { it.lessonTime.toValueOrNull()!!.start }} bis ${day.lessons.maxOf { it.lessonTime.toValueOrNull()!!.end }}"
+                    if (day.substitutionPlan.ifEmpty { day.timetable }.isEmpty()) "Keine Stunden"
+                    else "${day.substitutionPlan.ifEmpty { day.timetable }.mapNotNull { it.toValueOrNull() }.minOf { it.lessonTime.toValueOrNull()!!.start }} bis ${day.substitutionPlan.ifEmpty { day.timetable }.mapNotNull { it.toValueOrNull() }.maxOf { it.lessonTime.toValueOrNull()!!.end }}"
             )
             FollowingLessons(
                 showFirstGradient = false,
                 date = day.date,
-                lessons = day.lessons.groupBy { it.lessonTime.toValueOrNull()!!.lessonNumber })
+                lessons = day.substitutionPlan.ifEmpty { day.timetable }.mapNotNull { it.toValueOrNull() }.groupBy { it.lessonTime.toValueOrNull()!!.lessonNumber })
         }
     }
 }
