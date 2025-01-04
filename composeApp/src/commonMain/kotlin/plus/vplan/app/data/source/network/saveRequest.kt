@@ -6,6 +6,24 @@ import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.CancellationException
 import plus.vplan.app.domain.data.Response
 
+inline fun safeRequest(
+    onError: (error: Response.Error) -> Unit,
+    request: () -> Unit
+) {
+    try {
+        request()
+    } catch (e: Exception) {
+        onError(
+            when (e) {
+                is ClientRequestException, is ConnectionException, is HttpRequestTimeoutException -> Response.Error.OnlineError.ConnectionError
+                is ServerResponseException -> Response.Error.Other(e.message)
+                is CancellationException -> Response.Error.Cancelled
+                else -> Response.Error.Other(e.stackTraceToString())
+            }
+        )
+    }
+}
+
 inline fun <T> saveRequest(
     request: () -> Unit,
 ): Response<T> {
