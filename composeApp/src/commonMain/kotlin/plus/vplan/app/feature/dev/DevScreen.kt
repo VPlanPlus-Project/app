@@ -52,6 +52,7 @@ fun DevScreen(
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
     ) {
+        Text(state.profile?.displayName.toString())
         Row {
             Button(
                 onClick = { viewModel.onEvent(DevEvent.Refresh) }

@@ -36,6 +36,7 @@ data class Day(
             if (configuration.week is Week.Fetch && this.week?.isConfigSatisfied(configuration.week, allowLoading) == false) return false
             if (configuration.timetable is Lesson.Fetch && this.timetable.any { !it.isConfigSatisfied(configuration.timetable, allowLoading)}) return false
             if (configuration.substitutionPlan is Lesson.Fetch && this.substitutionPlan.any { !it.isConfigSatisfied(configuration.substitutionPlan, allowLoading)}) return false
+            if (configuration.nextSchoolDay is Fetch && this.nextSchoolDay?.isConfigSatisfied(configuration.nextSchoolDay, allowLoading) == false) return false
         }
 
         return true

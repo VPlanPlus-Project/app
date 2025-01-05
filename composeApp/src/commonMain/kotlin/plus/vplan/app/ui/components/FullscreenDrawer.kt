@@ -31,6 +31,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.coerceAtLeast
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import co.touchlab.kermit.Logger
@@ -130,7 +132,7 @@ fun FullscreenDrawer(
                 .offset(y = maxHeight - displayOffset, x = horizontalOffset)
                 .fillMaxSize()
                 .scale(((1 - (((1.05 * sech(4.0 * scrollProgress).toFloat().ifNan { 0f }) - 0.05) / 6)).toFloat()).coerceIn(0f, 1f))
-                .clip(RoundedCornerShape(sin((1 - scrollProgress) * PI / 2).ifNan { 0.0 } * 32.dp))
+                .clip(RoundedCornerShape((sin((1 - scrollProgress) * PI / 2).ifNan { 0.0 } * 32.dp).coerceAtLeast(0.dp)))
                 .nestedScroll(scrollConnection),
         ) {
             topAppBar(

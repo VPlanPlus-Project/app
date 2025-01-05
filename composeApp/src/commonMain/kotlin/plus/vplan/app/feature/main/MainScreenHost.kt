@@ -96,8 +96,7 @@ fun MainScreenHost(
         NavHost(
             modifier = Modifier.fillMaxSize(),
             navController = navController,
-//                startDestination = MainScreen.MainHome
-            startDestination = MainScreen.MainDev // TODO remove
+            startDestination = MainScreen.MainHome
         ) {
             composable<MainScreen.MainHome> { HomeScreen(homeViewModel) }
             composable<MainScreen.MainCalendar> { CalendarScreen(navController, calendarViewModel) }

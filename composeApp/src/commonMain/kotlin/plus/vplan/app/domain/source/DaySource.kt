@@ -48,9 +48,8 @@ class DaySource(
                 val findNextRegularSchoolDayAfter: (LocalDate) -> LocalDate? = findNextRegularSchoolDayAfter@{ startDate ->
                     if (holidays.isEmpty()) return@findNextRegularSchoolDayAfter null
                     var nextSchoolDay = startDate + 1.days
-                    while (holidays.maxOf { it } > nextSchoolDay) {
+                    while (holidays.maxOf { it } > nextSchoolDay && !(holidays.none { it == nextSchoolDay } && nextSchoolDay.dayOfWeek.isoDayNumber < ((school as? School.IndiwareSchool)?.daysPerWeek ?: 5))) {
                         nextSchoolDay += 1.days
-                        if (holidays.none { it == nextSchoolDay } && nextSchoolDay.dayOfWeek.isoDayNumber <= ((school as? School.IndiwareSchool)?.daysPerWeek ?: 5)) break
                     }
                     nextSchoolDay
                 }

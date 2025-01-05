@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -35,7 +36,6 @@ class ProfileSource(
         id: String,
         configuration: FetchConfiguration<Profile>
     ): Flow<Cacheable<Profile>> {
-        Logger.d { "Requested $id with config: $configuration" }
         return configuredCache.getOrPut("${id}_$configuration") { channelFlow {
             val profile = MutableStateFlow<Profile?>(null)
             launch { profile.filterNotNull().onEach { Logger.d { "Profile update $configuration" } }.collectLatest { send(Cacheable.Loaded(it)) } }
@@ -43,7 +43,7 @@ class ProfileSource(
             val groupUpdater = IdentifiedJob<Int>()
             val defaultLessonUpdater = IdentifiedJob<String>()
 
-            cache.getOrPut(id) { profileRepository.getById(Uuid.parseHex(id)) }.collectLatest { cacheableProfile ->
+            cache.getOrPut(id) { profileRepository.getById(Uuid.parseHex(id)) }.distinctUntilChanged().collectLatest { cacheableProfile ->
                 if (cacheableProfile == null) return@collectLatest send(Cacheable.NotExisting(id))
                 if (profile.value == null) profile.value = cacheableProfile
                 else if (profile.value!!.customName != cacheableProfile.customName) profile.value = profile.value!!.copyBase(customName = cacheableProfile.customName)
@@ -60,7 +60,6 @@ class ProfileSource(
                         } }
                     }
                     if (configuration.studentProfile.defaultLessons is DefaultLesson.Fetch) {
-                        Logger.d { "$configuration has new default lesson stuff??" }
                         val newDefaultLessons = (profile.value as Profile.StudentProfile).defaultLessons.map { it.key.getItemId() to it.value }.toMap()
                         val cachedDefaultLessons = (cacheableProfile as Profile.StudentProfile).defaultLessons.map { it.key.getItemId() to it.value }.toMap()
                         if (newDefaultLessons.keys.toSet() != cachedDefaultLessons.keys.toSet() || (profile.value as Profile.StudentProfile).defaultLessons.keys.any { it is Cacheable.Uninitialized }) defaultLessonUpdater.set(Uuid.random().toString(), launch {

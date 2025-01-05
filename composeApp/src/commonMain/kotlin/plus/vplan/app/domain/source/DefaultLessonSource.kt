@@ -11,6 +11,7 @@ import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.cache.CacheableItemSource
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 
 class DefaultLessonSource(
@@ -37,6 +38,10 @@ class DefaultLessonSource(
                             defaultLesson.value.course?.let { courseId ->
                                 App.courseSource.getById(courseId.getItemId(), configuration.course).collectLatest { defaultLesson.value = defaultLesson.value.copy(course = it) }
                             }
+                        }
+                        if (configuration.teacher is Teacher.Fetch) launch {
+                            val teacherId = defaultLesson.value.teacher?.getItemId() ?: return@launch
+                            App.teacherSource.getById(teacherId, configuration.teacher).collectLatest { defaultLesson.value = defaultLesson.value.copy(teacher = it)}
                         }
                     }
                 }

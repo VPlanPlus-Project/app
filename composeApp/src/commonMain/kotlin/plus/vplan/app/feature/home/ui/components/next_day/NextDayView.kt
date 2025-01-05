@@ -51,7 +51,8 @@ fun NextDayView(day: Day) {
             FollowingLessons(
                 showFirstGradient = false,
                 date = day.date,
-                lessons = day.substitutionPlan.ifEmpty { day.timetable }.mapNotNull { it.toValueOrNull() }.groupBy { it.lessonTime.toValueOrNull()!!.lessonNumber })
+                lessons = day.substitutionPlan.ifEmpty { day.timetable }.mapNotNull { it.toValueOrNull() }.groupBy { it.lessonTime.toValueOrNull()!!.lessonNumber }
+            )
         }
     }
 }

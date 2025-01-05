@@ -14,6 +14,7 @@ import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 
@@ -24,7 +25,8 @@ class GetCurrentProfileUseCase(
     private val configuration = Profile.Fetch(
         studentProfile = Profile.StudentProfile.Fetch(
             defaultLessons = DefaultLesson.Fetch(
-                course = Course.Fetch()
+                course = Course.Fetch(),
+                teacher = Teacher.Fetch()
             )
         )
     )

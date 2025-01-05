@@ -107,6 +107,9 @@ fun FollowingLesson(
                         if (lesson is Lesson.SubstitutionPlanLesson && lesson.isTeacherChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface
                     )
+                    Text(
+                        text = lesson.groups.joinToString { it.getItemId() }
+                    )
                 }
                 Text(
                     text = buildString {
