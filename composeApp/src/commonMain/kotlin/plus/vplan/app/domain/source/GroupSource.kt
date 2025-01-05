@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Cacheable
@@ -14,16 +15,17 @@ import plus.vplan.app.domain.repository.GroupRepository
 
 class GroupSource(
     private val groupRepository: GroupRepository
-) : CacheableItemSource<Group> {
-    override fun getAll(configuration: CacheableItemSource.FetchConfiguration<Group>): Flow<List<Cacheable<Group>>> {
+) : CacheableItemSource<Group>() {
+
+    override fun getAll(configuration: FetchConfiguration<Group>): Flow<List<Cacheable<Group>>> {
         TODO("Not yet implemented")
     }
 
     override fun getById(
         id: String,
-        configuration: CacheableItemSource.FetchConfiguration<Group>
+        configuration: FetchConfiguration<Group>
     ): Flow<Cacheable<Group>> = channelFlow {
-        groupRepository.getById(id.toInt()).collectLatest { cachedGroup ->
+        cache.getOrPut(id) { groupRepository.getById(id.toInt()).distinctUntilChanged() }.collectLatest { cachedGroup ->
             if (cachedGroup == null) return@collectLatest send(Cacheable.NotExisting(id))
             val group = MutableStateFlow(cachedGroup)
             launch { group.collect { send(Cacheable.Loaded(it)) } }

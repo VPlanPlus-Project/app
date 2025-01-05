@@ -140,7 +140,7 @@ class HomeworkRepositoryImpl(
     override suspend fun getByGroup(groupId: Int): Flow<List<Homework>> {
         return vppDatabase.homeworkDao.getAll().map { flowData ->
             flowData.filter {
-                it.group?.group?.id == groupId || it.defaultLesson?.groups?.map { group -> group.group.id }?.contains(groupId) ?: false
+                it.group?.group?.id == groupId || it.defaultLesson?.groups?.map { group -> group.groupId }?.contains(groupId) ?: false
             }.map { it.toModel() }
         }
     }

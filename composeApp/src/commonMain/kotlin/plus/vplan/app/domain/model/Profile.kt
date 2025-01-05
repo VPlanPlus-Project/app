@@ -66,10 +66,11 @@ abstract class Profile : CachedItem<Profile> {
 
             val isLessonTimetable = lesson is Lesson.TimetableLesson
             val isLessonAsCourseEnabled = defaultLessons.entries.any { (defaultLesson, enabled) ->
-                if (defaultLesson !is Cacheable.Loaded) throw IllegalStateException("Opt-in for default lesson@Profile.StudentProfile")
+                if (defaultLesson !is Cacheable.Loaded) throw IllegalStateException("Opt-in for DefaultLesson@Profile.StudentProfile")
+                if (defaultLesson.value.course != null && defaultLesson.value.course !is Cacheable.Loaded) throw IllegalStateException("Opt-in for DefaultLesson.course@Profile.StudentProfile")
                 enabled &&
                         defaultLesson.value.course != null &&
-                        defaultLesson.value.course.name == lesson.subject
+                        defaultLesson.value.course.toValueOrNull()!!.name == lesson.subject
             }
             val isLessonAsDefaultLessonEnabled = defaultLessons.entries.any { (defaultLesson, enabled) ->
                 if (defaultLesson !is Cacheable.Loaded) throw IllegalStateException("Opt-in for default lesson@Profile.StudentProfile")
@@ -97,6 +98,14 @@ abstract class Profile : CachedItem<Profile> {
             }
             return true
         }
+
+        override fun copyBase(id: Uuid, customName: String?, profileType: ProfileType): Profile {
+            if (profileType != ProfileType.STUDENT) throw IllegalArgumentException("Cannot change type of profile")
+            return this.copy(
+                id = id,
+                customName = customName
+            )
+        }
     }
 
     data class TeacherProfile(
@@ -111,6 +120,14 @@ abstract class Profile : CachedItem<Profile> {
 
         override fun isLessonRelevant(lesson: Lesson): Boolean {
             return this.teacher.getItemId() in lesson.teachers.map { it.getItemId() }
+        }
+
+        override fun copyBase(id: Uuid, customName: String?, profileType: ProfileType): Profile {
+            if (profileType != ProfileType.TEACHER) throw IllegalStateException("Cannot change type of profile")
+            return this.copy(
+                id = id,
+                customName = customName
+            )
         }
     }
 
@@ -127,7 +144,21 @@ abstract class Profile : CachedItem<Profile> {
         override fun isLessonRelevant(lesson: Lesson): Boolean {
             return lesson.rooms?.map { it.getItemId() }?.contains(this.getItemId()) == true
         }
+
+        override fun copyBase(id: Uuid, customName: String?, profileType: ProfileType): Profile {
+            if (profileType != ProfileType.ROOM) throw IllegalArgumentException("Cannot change type of profile")
+            return this.copy(
+                id = id,
+                customName = customName
+            )
+        }
     }
+
+    abstract fun copyBase(
+        id: Uuid = this.id,
+        customName: String? = this.customName,
+        profileType: ProfileType = this.profileType,
+    ): Profile
 }
 
 enum class ProfileType {

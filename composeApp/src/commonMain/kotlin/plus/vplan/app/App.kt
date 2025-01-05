@@ -12,6 +12,7 @@ import io.ktor.http.URLProtocol
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
+import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
 import plus.vplan.app.domain.source.DefaultLessonSource
 import plus.vplan.app.domain.source.GroupSource
@@ -55,6 +56,7 @@ object App {
     lateinit var daySource: DaySource
     lateinit var timetableSource: TimetableSource
     lateinit var weekSource: WeekSource
+    lateinit var courseSource: CourseSource
 }
 
 @Composable
@@ -71,6 +73,7 @@ fun App(task: StartTask?) {
             App.daySource = DaySource(koinInject(), koinInject(), koinInject())
             App.timetableSource = TimetableSource(koinInject())
             App.weekSource = WeekSource(koinInject())
+            App.courseSource = CourseSource(koinInject())
 
             Surface(
                 modifier = Modifier

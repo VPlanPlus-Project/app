@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -21,6 +23,8 @@ import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 
+private val LOGGER = Logger.withTag("HomeViewModel")
+
 class HomeViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
@@ -36,9 +40,9 @@ class HomeViewModel(
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(currentProfile = profile)
-                getDayUseCase(profile, state.currentTime.date).collectLatest { day ->
-                    state = state.copy(currentDay = day)
-                }
+                getDayUseCase(profile, state.currentTime.date)
+                    .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.displayName}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
+                    .collectLatest { day -> state = state.copy(currentDay = day) }
             }
         }
         viewModelScope.launch {

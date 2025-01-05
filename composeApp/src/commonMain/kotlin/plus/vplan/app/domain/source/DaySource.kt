@@ -29,14 +29,14 @@ class DaySource(
     private val dayRepository: DayRepository,
     private val weekRepository: WeekRepository,
     private val timetableRepository: TimetableRepository
-) : CacheableItemSource<Day> {
-    override fun getAll(configuration: CacheableItemSource.FetchConfiguration<Day>): Flow<List<Cacheable<Day>>> {
+) : CacheableItemSource<Day>() {
+    override fun getAll(configuration: FetchConfiguration<Day>): Flow<List<Cacheable<Day>>> {
         TODO("Not yet implemented")
     }
 
     override fun getById(
         id: String,
-        configuration: CacheableItemSource.FetchConfiguration<Day>
+        configuration: FetchConfiguration<Day>
     ): Flow<Cacheable<Day>> = channelFlow {
         val schoolId = id.substringBefore("/").toInt()
         val date = LocalDate.parse(id.substringAfter("/"))

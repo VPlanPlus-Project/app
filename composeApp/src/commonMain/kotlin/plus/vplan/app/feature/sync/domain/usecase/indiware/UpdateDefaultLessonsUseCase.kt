@@ -2,6 +2,7 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.DefaultLesson
@@ -108,9 +109,9 @@ class UpdateDefaultLessonsUseCase(
                     DefaultLesson(
                         id = defaultLesson.defaultLessonNumber,
                         subject = defaultLesson.subject,
-                        groups = listOf(group),
-                        course = courses.firstOrNull { it.name == defaultLesson.course?.name },
-                        teacher = teachers.firstOrNull { it.name == defaultLesson.teacher }
+                        groups = listOf(group).map { Cacheable.Loaded(it) },
+                        course = courses.firstOrNull { it.name == defaultLesson.course?.name }?.let { Cacheable.Loaded(it) },
+                        teacher = teachers.firstOrNull { it.name == defaultLesson.teacher }?.let { Cacheable.Loaded(it) }
                     )
                 }
             }
@@ -120,7 +121,7 @@ class UpdateDefaultLessonsUseCase(
                     DefaultLesson(
                         id = id,
                         subject = defaultLessons.first().subject,
-                        groups = defaultLessons.flatMap { it.groups }.distinctBy { it.id },
+                        groups = defaultLessons.flatMap { it.groups }.distinctBy { it.getItemId() },
                         course = defaultLessons.firstOrNull { it.course != null }?.course,
                         teacher = defaultLessons.firstOrNull { it.teacher != null }?.teacher
                     )

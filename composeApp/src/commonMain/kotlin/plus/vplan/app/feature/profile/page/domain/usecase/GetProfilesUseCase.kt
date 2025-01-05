@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.profile.page.domain.usecase
 
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Cacheable
@@ -26,5 +27,5 @@ class GetProfilesUseCase {
                 .mapValues { profilesBySchool ->
                     profilesBySchool.value.sortedBy { it.profileType.ordinal.toString() + it.customName }
                 }
-        }
+        }.distinctUntilChanged()
 }

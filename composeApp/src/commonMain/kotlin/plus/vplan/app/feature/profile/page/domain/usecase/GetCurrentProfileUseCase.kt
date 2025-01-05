@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.mapLatest
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
@@ -20,7 +21,9 @@ class GetCurrentProfileUseCase(
 
     private val configuration = Profile.Fetch(
         studentProfile = Profile.StudentProfile.Fetch(
-            defaultLessons = DefaultLesson.Fetch()
+            defaultLessons = DefaultLesson.Fetch(
+                course = Course.Fetch()
+            )
         )
     )
 

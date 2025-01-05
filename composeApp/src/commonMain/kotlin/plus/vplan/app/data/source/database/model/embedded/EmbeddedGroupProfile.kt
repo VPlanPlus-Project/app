@@ -1,9 +1,7 @@
 package plus.vplan.app.data.source.database.model.embedded
 
 import androidx.room.Embedded
-import androidx.room.Junction
 import androidx.room.Relation
-import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
@@ -25,24 +23,14 @@ data class EmbeddedGroupProfile(
     ) val group: EmbeddedGroup,
     @Relation(
         parentColumn = "group_id",
-        entityColumn = "id",
-        associateBy = Junction(
-            value = DbDefaultLessonGroupCrossover::class,
-            parentColumn = "group_id",
-            entityColumn = "default_lesson_id"
-        ),
-        entity = DbDefaultLesson::class
-    ) val defaultLessons: List<EmbeddedDefaultLesson>,
+        entityColumn = "group_id",
+        entity = DbDefaultLessonGroupCrossover::class
+    ) val defaultLessons: List<DbDefaultLessonGroupCrossover>,
     @Relation(
         parentColumn = "profile_id",
-        entityColumn = "id",
-        associateBy = Junction(
-            value = DbGroupProfileDisabledDefaultLessons::class,
-            parentColumn = "profile_id",
-            entityColumn = "default_lesson_id"
-        ),
-        entity = DbDefaultLesson::class
-    ) val disabledDefaultLesson: List<EmbeddedDefaultLesson>,
+        entityColumn = "profile_id",
+        entity = DbGroupProfileDisabledDefaultLessons::class
+    ) val disabledDefaultLesson: List<DbGroupProfileDisabledDefaultLessons>,
     @Relation(
         parentColumn = "vpp_id",
         entityColumn = "id",

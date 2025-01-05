@@ -1,5 +1,6 @@
 package plus.vplan.app.domain.model
 
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.cache.CacheableItemSource
 import plus.vplan.app.domain.cache.CachedItem
 
@@ -9,9 +10,9 @@ import plus.vplan.app.domain.cache.CachedItem
 data class DefaultLesson(
     val id: String,
     val subject: String,
-    val course: Course?,
-    val teacher: Teacher?,
-    val groups: List<Group>
+    val course: Cacheable<Course>?,
+    val teacher: Cacheable<Teacher>?,
+    val groups: List<Cacheable<Group>>
 ) : CachedItem<DefaultLesson> {
     override fun getItemId(): String = this.id
 

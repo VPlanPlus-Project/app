@@ -14,12 +14,12 @@ import plus.vplan.app.domain.repository.WeekRepository
 
 class WeekSource(
     private val weekRepository: WeekRepository
-) : CacheableItemSource<Week> {
-    override fun getAll(configuration: CacheableItemSource.FetchConfiguration<Week>): Flow<List<Cacheable<Week>>> {
+) : CacheableItemSource<Week>() {
+    override fun getAll(configuration: FetchConfiguration<Week>): Flow<List<Cacheable<Week>>> {
         TODO("Not yet implemented")
     }
 
-    override fun getById(id: String, configuration: CacheableItemSource.FetchConfiguration<Week>): Flow<Cacheable<Week>> = channelFlow {
+    override fun getById(id: String, configuration: FetchConfiguration<Week>): Flow<Cacheable<Week>> = channelFlow {
         weekRepository.getById(id).collectLatest { cachedWeek ->
             if (cachedWeek == null) return@collectLatest send(Cacheable.NotExisting(id))
 

@@ -150,7 +150,7 @@ private fun LessonSelectContent(
                             color = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text = defaultLesson.teacher?.name ?: "Kein Lehrer",
+                            text = defaultLesson.teacher?.toValueOrNull()?.name ?: "Kein Lehrer",
                             style = MaterialTheme.typography.bodySmall,
                             color = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )

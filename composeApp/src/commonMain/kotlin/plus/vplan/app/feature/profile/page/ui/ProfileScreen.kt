@@ -122,13 +122,13 @@ private fun ProfileContent(
                             Text(
                                 text = buildString {
                                     append(defaultLesson.subject)
-                                    if (defaultLesson.course != null) append(" (${defaultLesson.course.name})")
+                                    if (defaultLesson.course != null) append(" (${defaultLesson.course.toValueOrNull()!!.name})")
                                 },
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = defaultLesson.teacher?.name ?: "Keine Lehrkraft",
+                                text = defaultLesson.teacher?.toValueOrNull()?.name ?: "Keine Lehrkraft",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )

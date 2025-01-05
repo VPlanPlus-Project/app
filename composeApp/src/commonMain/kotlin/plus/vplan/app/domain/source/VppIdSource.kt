@@ -8,10 +8,10 @@ import plus.vplan.app.domain.repository.VppIdRepository
 
 class VppIdSource(
     private val vppIdRepository: VppIdRepository
-): CacheableItemSource<VppId> {
-    override fun getAll(configuration: CacheableItemSource.FetchConfiguration<VppId>): Flow<List<Cacheable<VppId>>> {
+): CacheableItemSource<VppId>() {
+    override fun getAll(configuration: FetchConfiguration<VppId>): Flow<List<Cacheable<VppId>>> {
         TODO("Not yet implemented")
     }
 
-    override fun getById(id: String, configuration: CacheableItemSource.FetchConfiguration<VppId>): Flow<Cacheable<VppId>> = vppIdRepository.getVppIdById(id.toInt())
+    override fun getById(id: String, configuration: FetchConfiguration<VppId>): Flow<Cacheable<VppId>> = vppIdRepository.getVppIdById(id.toInt())
 }

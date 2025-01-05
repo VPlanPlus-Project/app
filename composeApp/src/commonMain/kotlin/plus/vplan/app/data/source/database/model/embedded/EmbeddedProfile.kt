@@ -30,16 +30,15 @@ data class EmbeddedProfile(
 ) {
     fun toModel(): Profile? {
         if (embeddedGroupProfile != null) {
-            val disabledDefaultLessons = embeddedGroupProfile.disabledDefaultLesson.map { it.defaultLesson.id }
+            val disabledDefaultLessons = embeddedGroupProfile.disabledDefaultLesson.map { it.defaultLessonId }
             return Profile.StudentProfile(
                 id = profile.id,
                 customName = profile.displayName,
                 group = Cacheable.Loaded(embeddedGroupProfile.group.toModel()),
                 defaultLessons =
                     embeddedGroupProfile.defaultLessons
-                        .sortedBy { it.defaultLesson.subject + "_" + it.course?.course?.name + "_" + it.teacher?.teacher?.name }
-                        .associateWith { disabledDefaultLessons.contains(it.defaultLesson.id).not() }
-                        .mapKeys { Cacheable.Loaded(it.key.toModel()) },
+                        .associateWith { disabledDefaultLessons.contains(it.defaultLessonId).not() }
+                        .mapKeys { Cacheable.Uninitialized(it.key.defaultLessonId) },
                 vppId = embeddedGroupProfile.vppId?.toModel() as? VppId.Active
             )
         }

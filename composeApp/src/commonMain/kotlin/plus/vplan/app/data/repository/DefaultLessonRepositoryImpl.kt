@@ -34,15 +34,15 @@ class DefaultLessonRepositoryImpl(
                 DbDefaultLesson(
                     id = defaultLesson.id,
                     subject = defaultLesson.subject,
-                    teacherId = defaultLesson.teacher?.id,
-                    courseId = defaultLesson.course?.id
+                    teacherId = defaultLesson.teacher?.getItemId()?.toInt(),
+                    courseId = defaultLesson.course?.getItemId()
                 )
             },
             defaultLessonGroupCrossovers = defaultLessons.flatMap { defaultLesson ->
                 defaultLesson.groups.map { group ->
                     DbDefaultLessonGroupCrossover(
                         defaultLessonId = defaultLesson.id,
-                        groupId = group.id
+                        groupId = group.getItemId().toInt()
                     )
                 }
             }

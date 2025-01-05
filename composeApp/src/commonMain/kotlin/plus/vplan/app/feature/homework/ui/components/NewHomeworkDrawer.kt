@@ -250,7 +250,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
                                 )
                                 Text(
                                     text = selectedDefaultLesson?.let { defaultLesson ->
-                                        "${defaultLesson.subject} $DOT ${defaultLesson.teacher?.name ?: "Kein Lehrer"}"
+                                        "${defaultLesson.subject} $DOT ${defaultLesson.teacher?.toValueOrNull()?.name ?: "Kein Lehrer"}"
                                     } ?: "Klasse ${state.currentProfile?.group?.toValueOrNull()?.name}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -383,7 +383,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
                                 )
                                 Text(
                                     text =
-                                    if ((state.selectedDefaultLesson?.groups?.size ?: 0) > 1) "Klassen ${state.selectedDefaultLesson?.groups.orEmpty().joinToString { it.name }}"
+                                    if ((state.selectedDefaultLesson?.groups?.size ?: 0) > 1) "Klassen ${state.selectedDefaultLesson?.groups.orEmpty().mapNotNull { it.toValueOrNull() }.joinToString { it.name }}"
                                     else "Klasse ${state.currentProfile?.group?.toValueOrNull()?.name}",
                                     style = MaterialTheme.typography.titleSmall,
                                     color = if (displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface

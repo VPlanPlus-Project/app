@@ -17,18 +17,18 @@ import kotlin.uuid.Uuid
 
 class TimetableSource(
     private val timetableRepository: TimetableRepository
-) : CacheableItemSource<Lesson> {
-    override fun getAll(configuration: CacheableItemSource.FetchConfiguration<Lesson>): Flow<List<Cacheable<Lesson>>> {
+) : CacheableItemSource<Lesson>() {
+    override fun getAll(configuration: FetchConfiguration<Lesson>): Flow<List<Cacheable<Lesson>>> {
         TODO("Not yet implemented")
     }
 
-    fun getBySchool(schoolId: Int, configuration: CacheableItemSource.FetchConfiguration<Lesson>): Flow<List<Cacheable<Lesson>>> = channelFlow {
+    fun getBySchool(schoolId: Int, configuration: FetchConfiguration<Lesson>): Flow<List<Cacheable<Lesson>>> = channelFlow {
         timetableRepository.getTimetableForSchool(schoolId).map { it.map { lesson -> lesson.id } }.collectLatest { timetableLessonIds ->
             combine(timetableLessonIds.map { getById(it, configuration) }) { it }.collectLatest { send(it.toList()) }
         }
     }
 
-    override fun getById(id: String, configuration: CacheableItemSource.FetchConfiguration<Lesson>): Flow<Cacheable<Lesson>> = channelFlow {
+    override fun getById(id: String, configuration: FetchConfiguration<Lesson>): Flow<Cacheable<Lesson>> = channelFlow {
         timetableRepository.getById(Uuid.parseHex(id)).collectLatest { timetableCache ->
             if (timetableCache == null) return@collectLatest send(Cacheable.NotExisting(id))
             send(Cacheable.Loaded(timetableCache))
