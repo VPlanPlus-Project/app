@@ -6,11 +6,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.cache.CacheableItemSource
+import plus.vplan.app.domain.cache.IdentifiedJob
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Profile
@@ -33,42 +35,49 @@ class ProfileSource(
         id: String,
         configuration: FetchConfiguration<Profile>
     ): Flow<Cacheable<Profile>> {
-        Logger.d { "ProfileC: $configuration" }
+        Logger.d { "Requested $id with config: $configuration" }
         return configuredCache.getOrPut("${id}_$configuration") { channelFlow {
-            cache.getOrPut(id) { profileRepository.getById(Uuid.parseHex(id)).distinctUntilChanged() } .collectLatest { cacheableProfile ->
+            val profile = MutableStateFlow<Profile?>(null)
+            launch { profile.filterNotNull().onEach { Logger.d { "Profile update $configuration" } }.collectLatest { send(Cacheable.Loaded(it)) } }
+
+            val groupUpdater = IdentifiedJob<Int>()
+            val defaultLessonUpdater = IdentifiedJob<String>()
+
+            cache.getOrPut(id) { profileRepository.getById(Uuid.parseHex(id)) }.collectLatest { cacheableProfile ->
                 if (cacheableProfile == null) return@collectLatest send(Cacheable.NotExisting(id))
-                val profile = MutableStateFlow(cacheableProfile)
-                launch { profile.collectLatest { send(Cacheable.Loaded(it)) } }
+                if (profile.value == null) profile.value = cacheableProfile
+                else if (profile.value!!.customName != cacheableProfile.customName) profile.value = profile.value!!.copyBase(customName = cacheableProfile.customName)
 
                 if (configuration is FetchConfiguration.Ignore) return@collectLatest
                 if (configuration !is Profile.Fetch) throw IllegalArgumentException("Expected Profile.Fetch Configuration")
 
                 if (profile.value is Profile.StudentProfile && configuration.studentProfile is Profile.StudentProfile.Fetch) {
-                    if (configuration.studentProfile.group is Group.Fetch) { launch {
-                        App.groupSource.getById((profile.value as Profile.StudentProfile).group.getItemId(), configuration.studentProfile.group).collect { cacheableGroup ->
-                            profile.value = (profile.value as Profile.StudentProfile).copy(group = cacheableGroup)
+                    if (configuration.studentProfile.group is Group.Fetch) {
+                        groupUpdater.setOnNewKey((cacheableProfile as Profile.StudentProfile).group.getItemId().toInt()) { key -> launch {
+                            App.groupSource.getById(key.toString(), configuration.studentProfile.group).collect { cacheableGroup ->
+                                profile.value = (profile.value as Profile.StudentProfile).copy(group = cacheableGroup)
+                            }
                         } }
                     }
                     if (configuration.studentProfile.defaultLessons is DefaultLesson.Fetch) {
-                        val defaultLessonIds = (profile.value as Profile.StudentProfile).defaultLessons.keys.map { it.getItemId() }.toSet()
-                        launch {
+                        Logger.d { "$configuration has new default lesson stuff??" }
+                        val newDefaultLessons = (profile.value as Profile.StudentProfile).defaultLessons.map { it.key.getItemId() to it.value }.toMap()
+                        val cachedDefaultLessons = (cacheableProfile as Profile.StudentProfile).defaultLessons.map { it.key.getItemId() to it.value }.toMap()
+                        if (newDefaultLessons.keys.toSet() != cachedDefaultLessons.keys.toSet() || (profile.value as Profile.StudentProfile).defaultLessons.keys.any { it is Cacheable.Uninitialized }) defaultLessonUpdater.set(Uuid.random().toString(), launch {
                             combine(
-                                defaultLessonIds.map { App.defaultLessonSource.getById(it, configuration.studentProfile.defaultLessons) }
+                                newDefaultLessons.keys.map { App.defaultLessonSource.getById(it, configuration.studentProfile.defaultLessons) }
                             ) {
                                 (profile.value as Profile.StudentProfile).defaultLessons.mapKeys { key ->
                                     it.first { it.getItemId() == key.key.getItemId() }
-                                }.toList().sortedBy {
-                                    buildString {
-                                        if (it.first !is Cacheable.Loaded) return@buildString run { append("_${it.first.getItemId()}") }
-                                        it.first.toValueOrNull()?.let {
-                                            append(it.subject)
-                                            append("_")
-                                        }
-                                    }
-                                }.toMap()
-                            }.collect {
+                                }.sort()
+                            }.collectLatest {
                                 profile.value = (profile.value as Profile.StudentProfile).copy(defaultLessons = it)
                             }
+                        })
+                        else if (newDefaultLessons.values.toList() != cachedDefaultLessons.values.toList()) {
+                            profile.value = (profile.value as Profile.StudentProfile).copy(
+                                defaultLessons = cachedDefaultLessons.mapKeys { ndl -> (profile.value as Profile.StudentProfile).defaultLessons.filterKeys { it.getItemId() == ndl.key }.keys.first() }.sort()
+                            )
                         }
                     }
                 }
@@ -76,3 +85,13 @@ class ProfileSource(
         } }
     }
 }
+
+private fun Map<Cacheable<DefaultLesson>, Boolean>.sort() = this.toList().sortedBy {
+        buildString {
+            if (it.first !is Cacheable.Loaded) return@buildString run { append("_${it.first.getItemId()}") }
+            it.first.toValueOrNull()?.let {
+                append(it.subject)
+                append("_")
+            }
+        }
+    }.toMap()

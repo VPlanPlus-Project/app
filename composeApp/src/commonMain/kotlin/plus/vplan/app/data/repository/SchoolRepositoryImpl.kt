@@ -1,6 +1,5 @@
 package plus.vplan.app.data.repository
 
-import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -59,7 +58,6 @@ class SchoolRepositoryImpl(
     }
 
     override suspend fun getById(id: Int): Flow<School?> {
-        Logger.d { "School flow triggered" }
         return vppDatabase.schoolDao.findById(id).map { it?.toModel() }
     }
 
