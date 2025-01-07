@@ -53,55 +53,6 @@ class HomeworkRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase
 ) : HomeworkRepository {
-    override suspend fun getByDefaultLesson(
-        authentication: SchoolApiAccess,
-        defaultLessonIds: List<String>,
-        from: LocalDateTime?,
-        to: LocalDate?
-    ): Response<List<HomeworkResponse>> {
-        return saveRequest {
-            val response = httpClient.get(
-                URLBuilder(
-                    protocol = VPP_PROTOCOL,
-                    host = SERVER_IP,
-                    port = VPP_PORT,
-                    pathSegments = listOf("api", "v2.2", "school", authentication.schoolId.toString(), "homework"),
-                    parameters = Parameters.build {
-                        append("filter_until", from?.toString().orEmpty() + ".." + to?.toString().orEmpty())
-                        append("filter_default_lessons", defaultLessonIds.joinToString("|"))
-                    }
-                ).build()
-            ) {
-                authentication.authentication(this)
-            }
-            if (response.status != HttpStatusCode.OK) {
-                logger.e { "Error getting homework: $response" }
-                return response.toResponse()
-            }
-
-            val data = ResponseDataWrapper.fromJson<List<HomeworkResponseItem>>(response.bodyAsText())
-                ?: return Response.Error.ParsingError(response.bodyAsText())
-
-            return Response.Success(data.map { homeworkResponseItem ->
-                HomeworkResponse(
-                    id = homeworkResponseItem.id,
-                    createdBy = homeworkResponseItem.createdBy,
-                    createdAt = Instant.fromEpochSeconds(homeworkResponseItem.createdAt),
-                    dueTo = Instant.fromEpochSeconds(homeworkResponseItem.dueTo),
-                    isPublic = homeworkResponseItem.isPublic,
-                    group = homeworkResponseItem.group,
-                    defaultLesson = homeworkResponseItem.defaultLesson,
-                    tasks = homeworkResponseItem.tasks.map { homeworkTaskResponseItem ->
-                        HomeworkTaskResponse(
-                            id = homeworkTaskResponseItem.id,
-                            content = homeworkTaskResponseItem.description
-                        )
-                    }
-                )
-            })
-        }
-    }
-
     override suspend fun upsert(homework: List<Homework>) {
         vppDatabase.homeworkDao.upsertMany(
             homework = homework.map { homeworkItem ->

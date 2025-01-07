@@ -13,7 +13,6 @@ import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 
 interface HomeworkRepository {
-    suspend fun getByDefaultLesson(authentication: SchoolApiAccess, defaultLessonIds: List<String>, from: LocalDateTime? = null, to: LocalDate? = null): Response<List<HomeworkResponse>>
     suspend fun upsert(homework: List<Homework>)
     suspend fun getByGroup(groupId: Int): Flow<List<Homework>>
     suspend fun getByGroup(authentication: SchoolApiAccess, groupId: Int, from: LocalDateTime? = null, to: LocalDate? = null): Response<List<HomeworkResponse>>
