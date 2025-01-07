@@ -55,8 +55,8 @@ class HomeViewModel(
     private fun update() {
         state = state.copy(isUpdating = true)
         viewModelScope.launch {
-            updateHolidaysUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool)
-            updateTimetableUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool)
+//            updateHolidaysUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool)
+//            updateTimetableUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool)
             updateSubstitutionPlanUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool, state.currentTime.date)
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }
