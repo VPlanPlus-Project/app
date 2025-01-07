@@ -109,7 +109,6 @@ class VppIdRepositoryImpl(
         return flow {
             val databaseItem = vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
             if (databaseItem.first() != null) return@flow emitAll(databaseItem.map { Cacheable.Loaded(it!!) })
-            emit(Cacheable.Loading(id.toString(), 0))
             val schools = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/$id")
             if (schools.status != HttpStatusCode.OK) return@flow emit(Cacheable.Error(id.toString(), schools.toErrorResponse<VppId>()))
             val schoolIds = ResponseDataWrapper.fromJson<UserSchoolResponse>(schools.bodyAsText()) ?: return@flow emit(Cacheable.Error(id.toString(), Response.Error.ParsingError(schools.bodyAsText())))

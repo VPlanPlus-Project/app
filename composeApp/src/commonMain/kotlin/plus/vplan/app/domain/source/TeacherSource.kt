@@ -23,13 +23,13 @@ class TeacherSource(
     override fun getById(id: String, configuration: FetchConfiguration<Teacher>): Flow<Cacheable<Teacher>> {
         return configuredCache.getOrPut("${id}_$configuration") { channelFlow {
             cache.getOrPut(id) { teacherRepository.getById(id.toInt()).distinctUntilChanged() }.collectLatest { cachedTeacher ->
-                if (cachedTeacher == null) return@collectLatest send(Cacheable.NotExisting(id))
-                val teacher = MutableStateFlow(cachedTeacher)
+                if (cachedTeacher !is Cacheable.Loaded) return@collectLatest send(cachedTeacher)
+                val teacher = MutableStateFlow(cachedTeacher.value)
                 launch { teacher.collectLatest { send(Cacheable.Loaded(it)) } }
 
                 if (configuration is Teacher.Fetch) {
                     if (configuration.school is School.Fetch) launch {
-                        App.schoolSource.getById(cachedTeacher.school.getItemId(), configuration.school).collectLatest {
+                        App.schoolSource.getById(cachedTeacher.value.school.getItemId(), configuration.school).collectLatest {
                             teacher.value = teacher.value.copy(school = it)
                         }
                     }

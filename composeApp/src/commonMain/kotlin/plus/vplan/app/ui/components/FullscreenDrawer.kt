@@ -32,10 +32,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.coerceAtLeast
-import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
-import co.touchlab.kermit.Logger
+import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.abs
 import plus.vplan.app.utils.ifNan
 import plus.vplan.app.utils.roundToNearest
@@ -87,7 +86,6 @@ fun FullscreenDrawer(
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val isContentAtTop = contentScrollState.value == 0
                 val isContentAtBottom = contentScrollState.value == contentScrollState.maxValue
-                Logger.d { "isContentAtTop: $isContentAtTop, isContentAtBottom: $isContentAtBottom, available.y: ${available.y}, offset: $offset" }
                 if (isContentAtTop && available.y >= 0) { // Scroll down
                     offset -= (with(localDensity) { available.y.toDp() })
                     return Offset(0f, available.y)
@@ -120,13 +118,14 @@ fun FullscreenDrawer(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.transparent((tanh(6 * (1 - scrollProgress) - 4) / -8) + 0.125f))
+            .thenIf(Modifier.background(Color.Black.transparent((tanh(6 * (1 - scrollProgress) - 4) / -8) + 0.125f))) { maxHeight != 0.dp }
             .noRippleClickable { offset = maxHeight }
             .onSizeChanged {
                 maxHeight = with(localDensity) { it.height.toDp() }
                 offset = maxHeight
             }
     ) {
+        if (maxHeight == 0.dp) return@Box
         Column(
             modifier = Modifier
                 .offset(y = maxHeight - displayOffset, x = horizontalOffset)

@@ -73,7 +73,7 @@ class SetUpSchoolDataUseCase(
                     downloadMode = baseData.data.downloadMode
                 )
                 onboardingRepository.setSchoolId(it.id)
-                schoolRepository.getById(it.id).first()
+                schoolRepository.getById(it.id).first().toValueOrNull()
                     ?: return@flow emit(SetUpSchoolDataResult.Error("Onboarding/${this::class.simpleName}: schoolId ${it.id} not found"))
             }
 
@@ -161,7 +161,7 @@ class SetUpSchoolDataUseCase(
                             name = courses.first().name,
                             teacher = courses.first().teacher
                         )
-                    ).first()
+                    )
                 }
 
             val defaultLessons = baseData.data.classes
@@ -187,7 +187,7 @@ class SetUpSchoolDataUseCase(
                             course = defaultLessons.firstOrNull { it.course != null }?.course,
                             teacher = defaultLessons.firstOrNull { it.teacher != null }?.teacher
                         )
-                    ).first()
+                    )
                 }
 
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.DONE

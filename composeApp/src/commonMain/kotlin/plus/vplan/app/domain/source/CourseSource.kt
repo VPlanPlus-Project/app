@@ -24,12 +24,12 @@ class CourseSource(
     override fun getById(id: String, configuration: FetchConfiguration<Course>): Flow<Cacheable<Course>> {
         return configuredCache.getOrPut("${id}_$configuration") { channelFlow {
             cache.getOrPut(id) { courseRepository.getById(id).distinctUntilChanged() }.collectLatest { cachedCourse ->
-                if (cachedCourse == null) return@collectLatest send(Cacheable.NotExisting(id))
-                val course = MutableStateFlow(cachedCourse)
+                if (cachedCourse !is Cacheable.Loaded) return@collectLatest send(cachedCourse)
+                val course = MutableStateFlow(cachedCourse.value)
                 launch { course.collectLatest { send(Cacheable.Loaded(it)) } }
                 if (configuration is Course.Fetch) {
                     if (configuration.groups is Group.Fetch) launch {
-                        combine(cachedCourse.groups.map { App.groupSource.getById(it.getItemId(), configuration.groups) }) { it.toList() }.collectLatest { course.value = course.value.copy(groups = it) }
+                        combine(cachedCourse.value.groups.map { App.groupSource.getById(it.getItemId(), configuration.groups) }) { it.toList() }.collectLatest { course.value = course.value.copy(groups = it) }
                     }
                 }
             }

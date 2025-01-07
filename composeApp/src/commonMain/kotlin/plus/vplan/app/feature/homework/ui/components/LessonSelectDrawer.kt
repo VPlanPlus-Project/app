@@ -145,7 +145,10 @@ private fun LessonSelectContent(
                     )
                     Column {
                         Text(
-                            text = defaultLesson.subject,
+                            text = buildString {
+                                append(defaultLesson.subject)
+                                if (defaultLesson.course != null) append(" (${defaultLesson.course.toValueOrNull()!!.name})")
+                            },
                             style = MaterialTheme.typography.titleSmall,
                             color = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )

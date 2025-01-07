@@ -39,7 +39,12 @@ data class EmbeddedProfile(
                     embeddedGroupProfile.defaultLessons
                         .associateWith { disabledDefaultLessons.contains(it.defaultLessonId).not() }
                         .mapKeys { Cacheable.Uninitialized(it.key.defaultLessonId) },
-                vppId = embeddedGroupProfile.vppId?.toModel() as? VppId.Active
+                vppId = run {
+                    val model = embeddedGroupProfile?.vppId?.toModel() as? VppId.Active
+                    @Suppress("UNCHECKED_CAST")
+                    if (model == null) null
+                    else Cacheable.Loaded(model) as Cacheable<VppId.Active>
+                }
             )
         }
         if (embeddedTeacherProfile != null) {

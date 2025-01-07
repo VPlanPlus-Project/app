@@ -19,20 +19,6 @@ import kotlin.uuid.Uuid
     ],
     foreignKeys = [
         ForeignKey(
-            entity = DbDefaultLesson::class,
-            parentColumns = ["id"],
-            childColumns = ["default_lesson_id"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = DbGroup::class,
-            parentColumns = ["id"],
-            childColumns = ["group_id"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE
-        ),
-        ForeignKey(
             entity = DbProfile::class,
             parentColumns = ["id"],
             childColumns = ["created_by_profile_id"],

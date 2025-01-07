@@ -53,6 +53,7 @@ fun DevScreen(
             .padding(contentPadding)
     ) {
         Text(state.profile?.displayName.toString())
+        Text(state.updateResponse.toString())
         Row {
             Button(
                 onClick = { viewModel.onEvent(DevEvent.Refresh) }
@@ -70,7 +71,6 @@ fun DevScreen(
                 Text("Clear Cache")
             }
         }
-        state.reloadResponse?.let { Text(it.toString()) }
         state.homework.forEach { homework ->
             Column(
                 modifier = Modifier
@@ -84,7 +84,6 @@ fun DevScreen(
                     if (homework is Cacheable.Loaded) Text(homework.value.dueTo.toString())
                     if (homework is Cacheable.Loaded && homework.value is Homework.CloudHomework) when (homework.value.createdBy) {
                         is Cacheable.Uninitialized -> Text("User ${homework.value.createdBy.id}")
-                        is Cacheable.Loading -> Text("Loading... (${homework.value.createdBy.getItemId()}")
                         is Cacheable.Error -> Text("Error: ${homework.value.createdBy.error}")
                         is Cacheable.Loaded -> Text("von ${homework.value.createdBy.value.name}")
                         is Cacheable.NotExisting -> Text("existiert nicht")

@@ -164,7 +164,7 @@ fun CurrentDayView(
             if (day.info != null) DayInfoCard(Modifier.padding(vertical = 4.dp), info = day.info)
             val followingLessons = day.substitutionPlan.ifEmpty { day.timetable }
                 .mapNotNull { it.toValueOrNull() }
-                .filter { it.lessonTime.toValueOrNull()!!.lessonNumber > currentLessons.last().first.lessonTime.toValueOrNull()!!.lessonNumber }
+                .filter { it.lessonTime.toValueOrNull()!!.lessonNumber > (currentLessons.lastOrNull()?.first?.lessonTime?.toValueOrNull()?.lessonNumber ?: Int.MAX_VALUE) }
                 .sortedBy { it.lessonTime.toValueOrNull()!!.start }
             if (followingLessons.isNotEmpty()) Column {
                 val lessonsGroupedByLessonNumber =

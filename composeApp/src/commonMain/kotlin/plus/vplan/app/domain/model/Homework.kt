@@ -61,7 +61,17 @@ sealed class Homework : CachedItem<Homework> {
         override val group: Cacheable<Group>?,
         val isPublic: Boolean,
         val createdBy: Cacheable<VppId>,
-    ) : Homework()
+    ) : Homework() {
+        override fun copyBase(createdAt: Instant, dueTo: Instant, tasks: List<Cacheable<HomeworkTask>>, defaultLesson: Cacheable<DefaultLesson>?, group: Cacheable<Group>?): Homework {
+            return this.copy(
+                createdAt = createdAt,
+                dueTo = dueTo,
+                tasks = tasks,
+                defaultLesson = defaultLesson,
+                group = group
+            )
+        }
+    }
 
     data class LocalHomework(
         override val id: Int,
@@ -76,6 +86,15 @@ sealed class Homework : CachedItem<Homework> {
             if (createdByProfile.value !is Profile.StudentProfile) throw IllegalStateException("Profile must be student-profile")
             return@lazy createdByProfile.value.group
         }
+
+        override fun copyBase(createdAt: Instant, dueTo: Instant, tasks: List<Cacheable<HomeworkTask>>, defaultLesson: Cacheable<DefaultLesson>?, group: Cacheable<Group>?): Homework {
+            return this.copy(
+                createdAt = createdAt,
+                dueTo = dueTo,
+                tasks = tasks,
+                defaultLesson = defaultLesson
+            )
+        }
     }
 
     data class Fetch(
@@ -85,4 +104,12 @@ sealed class Homework : CachedItem<Homework> {
         val group: CacheableItemSource.FetchConfiguration<Group> = Ignore(),
         val profile: CacheableItemSource.FetchConfiguration<Profile.StudentProfile> = Ignore()
     ) : CacheableItemSource.FetchConfiguration.Fetch<Homework>()
+
+    abstract fun copyBase(
+        createdAt: Instant = this.createdAt,
+        dueTo: Instant = this.dueTo,
+        tasks: List<Cacheable<HomeworkTask>> = this.tasks,
+        defaultLesson: Cacheable<DefaultLesson>? = this.defaultLesson,
+        group: Cacheable<Group>? = this.group
+    ): Homework
 }

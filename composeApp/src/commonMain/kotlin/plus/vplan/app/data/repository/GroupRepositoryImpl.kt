@@ -15,6 +15,7 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.data.source.network.saveRequest
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.School
@@ -58,8 +59,8 @@ class GroupRepositoryImpl(
         }
     }
 
-    override fun getById(id: Int): Flow<Group?> {
-        return vppDatabase.groupDao.getById(id).map { it?.toModel() }
+    override fun getById(id: Int): Flow<Cacheable<Group>> {
+        return vppDatabase.groupDao.getById(id).map { it?.toModel()?.let { model -> Cacheable.Loaded(model) } ?: Cacheable.NotExisting(id.toString()) }
     }
 
     override suspend fun getByIdWithCaching(id: Int, school: School): Response<Flow<Group?>> {
@@ -83,7 +84,7 @@ class GroupRepositoryImpl(
                     groupId = data.id
                 )
             )
-            return Response.Success(getById(id))
+            return Response.Success(getById(id).map { it.toValueOrNull() })
         }
     }
 

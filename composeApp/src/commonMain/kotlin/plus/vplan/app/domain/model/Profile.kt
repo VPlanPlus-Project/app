@@ -40,7 +40,7 @@ abstract class Profile : CachedItem<Profile> {
         override val customName: String?,
         val group: Cacheable<Group>,
         val defaultLessons: Map<Cacheable<DefaultLesson>, Boolean>,
-        val vppId: VppId.Active?
+        val vppId: Cacheable<VppId.Active>?
     ) : Profile() {
         override val school by lazy {
             if (group is Cacheable.Loaded) group.value.school
@@ -84,7 +84,8 @@ abstract class Profile : CachedItem<Profile> {
 
         data class Fetch(
             val group: CacheableItemSource.FetchConfiguration<Group> = Ignore(),
-            val defaultLessons: CacheableItemSource.FetchConfiguration<DefaultLesson> = Ignore()
+            val defaultLessons: CacheableItemSource.FetchConfiguration<DefaultLesson> = Ignore(),
+            val vppId: CacheableItemSource.FetchConfiguration<VppId> = Ignore()
         ) : CacheableItemSource.FetchConfiguration.Fetch<StudentProfile>()
 
         fun isConfigSatisfiedForStudentProfile(

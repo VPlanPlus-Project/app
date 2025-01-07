@@ -225,7 +225,7 @@ private fun ProfileSettingsContent(
                         )
                         Column {
                             Text(
-                                text = displayVppId.name,
+                                text = displayVppId.toValueOrNull()!!.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -279,7 +279,7 @@ private fun ProfileSettingsContent(
             state.profile is Profile.StudentProfile &&
             state.profile.vppId != null) {
             VppIdManagementDrawer(
-                vppId = state.profile.vppId,
+                vppId = state.profile.vppId.toValueOrNull()!!,
                 onDismiss = { isVppIdManagementDrawerVisible = false }
             )
         }

@@ -26,14 +26,13 @@ class GroupSource(
         configuration: FetchConfiguration<Group>
     ): Flow<Cacheable<Group>> = channelFlow {
         cache.getOrPut(id) { groupRepository.getById(id.toInt()).distinctUntilChanged() }.collectLatest { cachedGroup ->
-            if (cachedGroup == null) return@collectLatest send(Cacheable.NotExisting(id))
-            val group = MutableStateFlow(cachedGroup)
+            if (cachedGroup !is Cacheable.Loaded) return@collectLatest send(cachedGroup)
+            val group = MutableStateFlow(cachedGroup.value)
             launch { group.collect { send(Cacheable.Loaded(it)) } }
-            send(Cacheable.Loaded(cachedGroup))
             if (configuration is Group.Fetch) {
                 if (configuration.school is School.Fetch) {
                     launch {
-                        App.schoolSource.getById(cachedGroup.school.getItemId(), configuration.school).collect {
+                        App.schoolSource.getById(cachedGroup.value.school.getItemId(), configuration.school).collect {
                             group.value = group.value.copy(school = it)
                         }
                     }

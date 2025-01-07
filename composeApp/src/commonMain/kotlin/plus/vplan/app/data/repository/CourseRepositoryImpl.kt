@@ -1,10 +1,12 @@
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.repository.CourseRepository
 
@@ -21,15 +23,13 @@ class CourseRepositoryImpl(
             .map { it.map { course -> course.toModel() } }
     }
 
-    override fun getById(id: String): Flow<Course?> {
-        return vppDatabase.courseDao.getById(id).map { it?.toModel() }
+    override fun getById(id: String): Flow<Cacheable<Course>> {
+        return vppDatabase.courseDao.getById(id).map { it?.toModel()?.let { model -> Cacheable.Loaded(model) } ?: Cacheable.NotExisting(id) }
     }
 
-    override suspend fun upsert(course: Course): Flow<Course> {
+    override suspend fun upsert(course: Course): Course {
         upsert(listOf(course))
-        return getById(course.id).map {
-            it ?: throw IllegalStateException("upsert: course not found")
-        }
+        return getById(course.id).first().toValueOrNull()!!
     }
 
     override suspend fun upsert(courses: List<Course>) {

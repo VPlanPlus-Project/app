@@ -139,8 +139,9 @@ class HomeworkRepositoryImpl(
 
     override suspend fun getByGroup(groupId: Int): Flow<List<Homework>> {
         return vppDatabase.homeworkDao.getAll().map { flowData ->
+            val defaultLessons = vppDatabase.defaultLessonDao.getByGroup(groupId).first()
             flowData.filter {
-                it.group?.group?.id == groupId || it.defaultLesson?.groups?.map { group -> group.groupId }?.contains(groupId) ?: false
+                it.homework.groupId == groupId || defaultLessons.any { defaultLesson -> defaultLesson.groups.any { group -> group.groupId == groupId } }
             }.map { it.toModel() }
         }
     }
@@ -187,6 +188,10 @@ class HomeworkRepositoryImpl(
                 )
             })
         }
+    }
+
+    override fun getAll(): Flow<List<Cacheable<Homework>>> {
+        return vppDatabase.homeworkDao.getAll().map { it.map { Cacheable.Loaded(it.toModel()) } }
     }
 
     override suspend fun getById(id: Int): Flow<Cacheable<Homework>> {
@@ -261,6 +266,52 @@ class HomeworkRepositoryImpl(
 
     override suspend fun getIdForNewLocalHomeworkTask(): Int {
         return (vppDatabase.homeworkDao.getMinTaskId().first() ?: 0).coerceAtMost(-1)
+    }
+
+    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<String>): Response.Error? {
+        safeRequest(onError = { return it }) {
+            val response = httpClient.get(URLBuilder(
+                protocol = VPP_PROTOCOL,
+                host = SERVER_IP,
+                port = VPP_PORT,
+                pathSegments = listOf("api", "v2.2", "homework"),
+                parameters = Parameters.build {
+                    append("filter_groups", groupId.toString())
+                    append("filter_default_lessons", defaultLessonIds.joinToString(","))
+                }
+            ).build()) { schoolApiAccess.authentication(this) }
+
+            if (response.status != HttpStatusCode.OK) return response.toErrorResponse<Any>()
+
+            val data = ResponseDataWrapper.fromJson<List<HomeworkGetResponse>>(response.bodyAsText()) ?: return Response.Error.ParsingError(response.bodyAsText())
+
+            vppDatabase.homeworkDao.upsertMany(
+                homework = data.map { homework ->
+                    DbHomework(
+                        id = homework.id,
+                        defaultLessonId = homework.defaultLesson,
+                        groupId = if (homework.defaultLesson == null) homework.group else null,
+                        createdAt = Instant.fromEpochSeconds(homework.createdAt),
+                        dueTo = Instant.fromEpochSeconds(homework.dueTo),
+                        createdBy = homework.createdBy,
+                        createdByProfileId = null,
+                        isPublic = homework.isPublic
+                    )
+                }.also { Logger.d { "${it.size} homework upserted" } },
+                homeworkTask = data.map { homework ->
+                    homework.tasks.map { homeworkTask ->
+                        DbHomeworkTask(
+                            id = homeworkTask.id,
+                            homeworkId = homework.id,
+                            content = homeworkTask.content
+                        )
+                    }
+                }.flatten()
+            )
+
+            return null
+        }
+        return null
     }
 
     override suspend fun clearCache() {
@@ -351,4 +402,23 @@ private data class HomeworkTaskResponseItem(
 private data class HomeworkMetadataResponse(
     @SerialName("school_id") val schoolId: Int,
     @SerialName("created_by") val createdBy: Int
+)
+
+@Serializable
+data class HomeworkGetResponse(
+    @SerialName("id") val id: Int,
+    @SerialName("created_by") val createdBy: Int,
+    @SerialName("created_at") val createdAt: Long,
+    @SerialName("due_to") val dueTo: Long,
+    @SerialName("is_public") val isPublic: Boolean,
+    @SerialName("group") val group: Int,
+    @SerialName("default_lesson") val defaultLesson: String?,
+    @SerialName("tasks") val tasks: List<HomeworkGetResponseTask>,
+)
+
+@Serializable
+data class HomeworkGetResponseTask(
+    @SerialName("id") val id: Int,
+    @SerialName("content") val content: String,
+    @SerialName("done") val done: Boolean?
 )

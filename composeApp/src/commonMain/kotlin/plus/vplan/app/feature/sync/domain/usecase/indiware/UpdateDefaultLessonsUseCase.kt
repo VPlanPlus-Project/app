@@ -125,7 +125,7 @@ class UpdateDefaultLessonsUseCase(
                         course = defaultLessons.firstOrNull { it.course != null }?.course,
                         teacher = defaultLessons.firstOrNull { it.teacher != null }?.teacher
                     )
-                ).first()
+                )
             }
 
         downloadedDefaultLessons.let {

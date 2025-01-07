@@ -1,10 +1,12 @@
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
 import plus.vplan.app.data.source.database.model.database.crossovers.DbDefaultLessonGroupCrossover
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 
@@ -19,13 +21,13 @@ class DefaultLessonRepositoryImpl(
         return vppDatabase.defaultLessonDao.getBySchool(schoolId).map { it.map { dl -> dl.toModel() } }
     }
 
-    override fun getById(id: String): Flow<DefaultLesson?> {
-        return vppDatabase.defaultLessonDao.getById(id).map { it?.toModel() }
+    override fun getById(id: String): Flow<Cacheable<DefaultLesson>> {
+        return vppDatabase.defaultLessonDao.getById(id).map { it?.toModel()?.let { model -> Cacheable.Loaded(model) } ?: Cacheable.NotExisting(id) }
     }
 
-    override suspend fun upsert(defaultLesson: DefaultLesson): Flow<DefaultLesson> {
+    override suspend fun upsert(defaultLesson: DefaultLesson): DefaultLesson {
         upsert(listOf(defaultLesson))
-        return getById(defaultLesson.id).map { it ?: throw IllegalStateException("upsert: defaultLesson not found") }
+        return getById(defaultLesson.id).first().toValueOrNull()!!
     }
 
     override suspend fun upsert(defaultLessons: List<DefaultLesson>) {

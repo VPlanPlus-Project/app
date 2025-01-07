@@ -20,6 +20,12 @@ open class IdentifiedValue <K, V>(private val onDelete: (V) -> Unit) {
         this.key = key
         this.value = value
     }
+
+    fun delete() {
+        this.value?.let(onDelete)
+        this.value = null
+        this.key = null
+    }
 }
 
 class IdentifiedJob<K> : IdentifiedValue<K, Job>(onDelete = { it.cancel() })

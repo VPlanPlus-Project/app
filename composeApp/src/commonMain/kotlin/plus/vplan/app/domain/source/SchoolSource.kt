@@ -24,8 +24,8 @@ class SchoolSource(
         return configuredCache.getOrPut("$id--$configuration") {
             channelFlow {
                 cache.getOrPut(id) { schoolRepository.getById(id.toInt()).distinctUntilChanged() }.collectLatest { cacheableSchool ->
-                    if (cacheableSchool == null) return@collectLatest send(Cacheable.NotExisting(id))
-                    send(Cacheable.Loaded(cacheableSchool))
+                    if (cacheableSchool !is Cacheable.Loaded) return@collectLatest send(cacheableSchool)
+                    send(Cacheable.Loaded(cacheableSchool.value))
                 }
             }
         }

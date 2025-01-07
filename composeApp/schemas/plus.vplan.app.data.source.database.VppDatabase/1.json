@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "789dbff26195cceb33f5bd127800578e",
+    "identityHash": "a35e49b596dacabb15e42787be1ef9c7",
     "entities": [
       {
         "tableName": "schools",
@@ -2154,7 +2154,7 @@
       },
       {
         "tableName": "homework",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `default_lesson_id` TEXT, `group_id` INTEGER, `created_at` INTEGER NOT NULL, `due_to` INTEGER NOT NULL, `created_by_vpp_id` INTEGER, `created_by_profile_id` TEXT, `is_public` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`created_by_profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `default_lesson_id` TEXT, `group_id` INTEGER, `created_at` INTEGER NOT NULL, `due_to` INTEGER NOT NULL, `created_by_vpp_id` INTEGER, `created_by_profile_id` TEXT, `is_public` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`created_by_profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -2255,28 +2255,6 @@
           }
         ],
         "foreignKeys": [
-          {
-            "table": "default_lessons",
-            "onDelete": "CASCADE",
-            "onUpdate": "CASCADE",
-            "columns": [
-              "default_lesson_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "school_groups",
-            "onDelete": "CASCADE",
-            "onUpdate": "CASCADE",
-            "columns": [
-              "group_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
           {
             "table": "profiles",
             "onDelete": "CASCADE",
@@ -2469,7 +2447,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '789dbff26195cceb33f5bd127800578e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a35e49b596dacabb15e42787be1ef9c7')"
     ]
   }
 }

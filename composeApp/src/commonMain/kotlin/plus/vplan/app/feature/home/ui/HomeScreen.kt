@@ -70,10 +70,7 @@ private fun HomeContent(
             ) {
                 Greeting(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    displayName =
-                    (state.currentProfile as? Profile.StudentProfile)?.vppId?.name?.substringBefore(
-                        " "
-                    ) ?: state.currentProfile?.displayName ?: "",
+                    displayName = (state.currentProfile as? Profile.StudentProfile)?.vppId?.toValueOrNull()?.name?.substringBefore(" ") ?: state.currentProfile?.displayName ?: "",
                     time = remember(state.currentTime.hour) { state.currentTime.time }
                 )
                 Spacer(Modifier.height(4.dp))

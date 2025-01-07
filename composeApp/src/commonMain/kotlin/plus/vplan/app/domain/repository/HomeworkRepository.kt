@@ -18,12 +18,19 @@ interface HomeworkRepository {
     suspend fun getByGroup(groupId: Int): Flow<List<Homework>>
     suspend fun getByGroup(authentication: SchoolApiAccess, groupId: Int, from: LocalDateTime? = null, to: LocalDate? = null): Response<List<HomeworkResponse>>
     suspend fun getById(id: Int): Flow<Cacheable<Homework>>
+    fun getAll(): Flow<List<Cacheable<Homework>>>
 
     suspend fun deleteById(id: Int)
     suspend fun deleteById(ids: List<Int>)
 
     suspend fun getIdForNewLocalHomework(): Int
     suspend fun getIdForNewLocalHomeworkTask(): Int
+
+    suspend fun download(
+        schoolApiAccess: SchoolApiAccess,
+        groupId: Int,
+        defaultLessonIds: List<String>
+    ): Response.Error?
 
     suspend fun clearCache()
 
