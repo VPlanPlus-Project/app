@@ -18,7 +18,7 @@ class WeekRepositoryImpl(
         vppDatabase.weekDao.upsert(weeks.map { week ->
             DbWeek(
                 id = week.id,
-                schoolId = week.school.id,
+                schoolId = week.school.getItemId().toInt(),
                 calendarWeek = week.calendarWeek,
                 start = week.start,
                 end = week.end,
@@ -31,6 +31,10 @@ class WeekRepositoryImpl(
     override fun getBySchool(schoolId: Int): Flow<List<Week>> {
         return vppDatabase.weekDao
             .getBySchool(schoolId).map { it.map { embeddedWeek -> embeddedWeek.toModel() } }
+    }
+
+    override fun getById(id: String): Flow<Week?> {
+        return vppDatabase.weekDao.getById(id).map { it?.toModel() }
     }
 
     override suspend fun deleteBySchool(schoolId: Int) {

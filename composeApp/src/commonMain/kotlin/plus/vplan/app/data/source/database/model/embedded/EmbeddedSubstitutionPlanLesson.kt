@@ -13,6 +13,7 @@ import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Lesson
 
 data class EmbeddedSubstitutionPlanLesson(
@@ -67,16 +68,16 @@ data class EmbeddedSubstitutionPlanLesson(
         return Lesson.SubstitutionPlanLesson(
             id = substitutionPlanLesson.id,
             date = day.day.date,
-            week = day.week.toModel(),
+            week = Cacheable.Loaded(day.week.toModel()),
             subject = substitutionPlanLesson.subject,
             isSubjectChanged = substitutionPlanLesson.isSubjectChanged,
-            teachers = teachers.map { it.toModel() },
+            teachers = teachers.map { Cacheable.Loaded(it.toModel()) },
             isTeacherChanged = substitutionPlanLesson.isTeacherChanged,
-            rooms = rooms.map { it.toModel() },
+            rooms = rooms.map { Cacheable.Loaded(it.toModel()) },
             isRoomChanged = substitutionPlanLesson.isRoomChanged,
-            groups = groups.map { it.toModel() },
-            defaultLesson = defaultLesson?.toModel(),
-            lessonTime = lessonTime.toModel(),
+            groups = groups.map { Cacheable.Loaded(it.toModel()) },
+            defaultLesson = defaultLesson?.toModel()?.let { Cacheable.Loaded(it) },
+            lessonTime = Cacheable.Loaded(lessonTime.toModel()),
             info = substitutionPlanLesson.info
         )
     }

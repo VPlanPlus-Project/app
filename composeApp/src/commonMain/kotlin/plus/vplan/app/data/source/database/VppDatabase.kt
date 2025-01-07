@@ -3,6 +3,7 @@ package plus.vplan.app.data.source.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import plus.vplan.app.data.source.database.converters.InstantConverter
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
 import plus.vplan.app.data.source.database.converters.LocalDateTimeConverter
 import plus.vplan.app.data.source.database.converters.LocalTimeConverter
@@ -12,6 +13,7 @@ import plus.vplan.app.data.source.database.dao.DayDao
 import plus.vplan.app.data.source.database.dao.DefaultLessonDao
 import plus.vplan.app.data.source.database.dao.GroupDao
 import plus.vplan.app.data.source.database.dao.HolidayDao
+import plus.vplan.app.data.source.database.dao.HomeworkDao
 import plus.vplan.app.data.source.database.dao.IndiwareDao
 import plus.vplan.app.data.source.database.dao.KeyValueDao
 import plus.vplan.app.data.source.database.dao.LessonTimeDao
@@ -30,6 +32,9 @@ import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
 import plus.vplan.app.data.source.database.model.database.DbHoliday
+import plus.vplan.app.data.source.database.model.database.DbHomework
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDone
 import plus.vplan.app.data.source.database.model.database.DbIndiwareHasTimetableInWeek
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
@@ -46,6 +51,8 @@ import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.DbWeek
+import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
+import plus.vplan.app.data.source.database.model.database.crossovers.DbDefaultLessonGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
@@ -53,6 +60,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 
 @Database(
     entities = [
@@ -71,7 +79,9 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
         DbRoomProfile::class,
 
         DbDefaultLesson::class,
+        DbDefaultLessonGroupCrossover::class,
         DbCourse::class,
+        DbCourseGroupCrossover::class,
 
         DbKeyValue::class,
 
@@ -94,6 +104,12 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
         DbVppIdAccess::class,
         DbVppIdSchulverwalter::class,
         DbVppIdGroupCrossover::class,
+
+        DbHomework::class,
+        DbHomeworkTask::class,
+        DbHomeworkTaskDone::class,
+
+        FKSchoolGroup::class
     ],
     version = 1,
 )
@@ -102,7 +118,8 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
         UuidTypeConverter::class,
         LocalDateConverter::class,
         LocalTimeConverter::class,
-        LocalDateTimeConverter::class
+        LocalDateTimeConverter::class,
+        InstantConverter::class
     ]
 )
 abstract class VppDatabase : RoomDatabase() {
@@ -122,4 +139,5 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val holidayDao: HolidayDao
     abstract val substitutionPlanDao: SubstitutionPlanDao
     abstract val vppIdDao: VppIdDao
+    abstract val homeworkDao: HomeworkDao
 }

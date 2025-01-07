@@ -5,6 +5,7 @@ import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbDay
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbWeek
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Day
 
 data class EmbeddedDay(
@@ -25,8 +26,12 @@ data class EmbeddedDay(
             id = day.id,
             date = day.date,
             info = day.info,
-            week = week.toModel(),
-            school = school.toModel()
+            week = Cacheable.Loaded(week.toModel()),
+            school = Cacheable.Loaded(school.toModel()),
+            dayType = Day.DayType.UNKNOWN,
+            substitutionPlan = emptyList(),
+            timetable = emptyList(),
+            nextSchoolDay = null
         )
     }
 }

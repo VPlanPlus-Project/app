@@ -24,7 +24,10 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.Room
+import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.toDp
@@ -76,7 +79,7 @@ fun FollowingLesson(
                     Text(
                         text = buildString {
                             if (lesson.subject != null) append(lesson.subject)
-                            else if (lesson.defaultLesson != null) append(lesson.defaultLesson?.subject + " entfällt")
+                            else if (lesson.defaultLesson != null) append(lesson.defaultLesson?.toValueOrNull()?.subject + " entfällt")
                             else append("Entfall")
                         },
                         style = headerFont(),
@@ -86,7 +89,7 @@ fun FollowingLesson(
                     )
                     if (lesson.rooms != null) Text(
                         text = buildString {
-                            append(lesson.rooms.orEmpty().joinToString { it.name })
+                            append(lesson.rooms.orEmpty().filterIsInstance<Cacheable.Loaded<Room>>().joinToString { it.value.name })
                             if (lesson.rooms.orEmpty().isEmpty()) append("Kein Raum")
                         },
                         style = headerFont(),
@@ -96,7 +99,7 @@ fun FollowingLesson(
                     )
                     Text(
                         text = buildString {
-                            append(lesson.teachers.joinToString { it.name })
+                            append(lesson.teachers.filterIsInstance<Cacheable.Loaded<Teacher>>().joinToString { it.value.name })
                             if (lesson.teachers.isEmpty()) append("Keine Lehrkraft")
                         },
                         style = headerFont(),
@@ -104,14 +107,17 @@ fun FollowingLesson(
                         if (lesson is Lesson.SubstitutionPlanLesson && lesson.isTeacherChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface
                     )
+                    Text(
+                        text = lesson.groups.joinToString { it.getItemId() }
+                    )
                 }
                 Text(
                     text = buildString {
-                        append(lesson.lessonTime.lessonNumber)
+                        append(lesson.lessonTime.toValueOrNull()!!.lessonNumber)
                         append(". Stunde $DOT ")
-                        append(lesson.lessonTime.start.atDate(date).format())
+                        append(lesson.lessonTime.toValueOrNull()!!.start.atDate(date).format())
                         append(" - ")
-                        append(lesson.lessonTime.end.atDate(date).format())
+                        append(lesson.lessonTime.toValueOrNull()!!.end.atDate(date).format())
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface

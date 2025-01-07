@@ -31,7 +31,7 @@ class ProfileSettingsViewModel(
                 logger.d { "Got profile $profile" }
                 state = state.copy(profile = profile)
                 if (profile is Profile.StudentProfile && profile.vppId != null) {
-                    checkIfVppIdIsStillConnectedUseCase(profile.vppId).let {
+                    checkIfVppIdIsStillConnectedUseCase(profile.vppId.toValueOrNull()!!).let {
                         state = state.copy(isVppIdStillConnected = it)
                     }
                 }

@@ -11,6 +11,12 @@ plugins {
     alias(libs.plugins.serialization)
 }
 
+repositories {
+    mavenCentral()
+    google()
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev/")
+}
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -41,6 +47,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
 
             implementation(libs.androidx.browser)
+
+            implementation(libs.androidx.material)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -52,6 +60,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.navigation.compose)
+
+            implementation(libs.filekit.compose)
 
             implementation(libs.kermit)
 
@@ -67,10 +77,14 @@ kotlin {
 
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
 
             implementation(libs.xmlutil.core)
             implementation(libs.xmlutil.serialization)
+
+            implementation(libs.skiko)
         }
 
         iosMain.dependencies {
@@ -102,6 +116,7 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

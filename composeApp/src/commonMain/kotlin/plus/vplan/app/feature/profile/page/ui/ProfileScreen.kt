@@ -3,16 +3,14 @@ package plus.vplan.app.feature.profile.page.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,12 +33,14 @@ import vplanplus.composeapp.generated.resources.settings
 
 @Composable
 fun ProfileScreen(
+    contentPadding: PaddingValues,
     viewModel: ProfileViewModel
 ) {
     val state = viewModel.state
 
     ProfileContent(
         state = state,
+        contentPadding = contentPadding,
         onEvent = viewModel::onEvent
     )
 }
@@ -48,11 +48,15 @@ fun ProfileScreen(
 @Composable
 private fun ProfileContent(
     state: ProfileState,
+    contentPadding: PaddingValues,
     onEvent: (event: ProfileScreenEvent) -> Unit
 ) {
 
-    Column(Modifier.fillMaxSize()) {
-        Spacer(Modifier.height(WindowInsets.systemBars.asPaddingValues().calculateTopPadding()))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(contentPadding)
+    ) {
         Row(
             modifier = Modifier
                 .padding(top = 8.dp)
@@ -86,7 +90,8 @@ private fun ProfileContent(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                state.currentProfile.defaultLessons.forEach { (defaultLesson, isEnabled) ->
+                state.currentProfile.defaultLessons.mapKeys { it.key.toValueOrNull() }.filterKeys { it != null }.forEach { (defaultLesson, isEnabled) ->
+                    if (defaultLesson == null) return@forEach
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -117,13 +122,13 @@ private fun ProfileContent(
                             Text(
                                 text = buildString {
                                     append(defaultLesson.subject)
-                                    if (defaultLesson.course != null) append(" (${defaultLesson.course.name})")
+                                    if (defaultLesson.course != null) append(" (${defaultLesson.course.toValueOrNull()!!.name})")
                                 },
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = defaultLesson.teacher?.name ?: "Keine Lehrkraft",
+                                text = defaultLesson.teacher?.toValueOrNull()?.name ?: "Keine Lehrkraft",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )

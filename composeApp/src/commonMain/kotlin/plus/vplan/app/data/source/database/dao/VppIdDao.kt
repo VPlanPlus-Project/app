@@ -40,6 +40,15 @@ interface VppIdDao {
     }
 
     @Transaction
+    suspend fun upsert(
+        vppId: DbVppId,
+        groupCrossovers: List<DbVppIdGroupCrossover>
+    ) {
+        upsert(vppId)
+        groupCrossovers.forEach { upsert(it) }
+    }
+
+    @Transaction
     @Query("SELECT * FROM vpp_id WHERE id = :id")
     fun getById(id: Int): Flow<EmbeddedVppId?>
 

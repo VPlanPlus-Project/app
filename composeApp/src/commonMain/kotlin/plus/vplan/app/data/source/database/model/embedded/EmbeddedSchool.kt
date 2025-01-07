@@ -4,6 +4,8 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.School
 
 data class EmbeddedSchool(
@@ -12,13 +14,19 @@ data class EmbeddedSchool(
         parentColumn = "id",
         entityColumn = "school_id",
         entity = DbSp24SchoolDetails::class
-    ) val sp24SchoolDetails: DbSp24SchoolDetails?
+    ) val sp24SchoolDetails: DbSp24SchoolDetails?,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "school_id",
+        entity = FKSchoolGroup::class
+    ) val groups: List<FKSchoolGroup>
 ) {
     fun toModel(): School {
         if (sp24SchoolDetails != null) {
             return School.IndiwareSchool(
                 id = school.id,
                 name = school.name,
+                groups = groups.map { Cacheable.Uninitialized(it.groupId.toString()) },
                 sp24Id = sp24SchoolDetails.sp24SchoolId,
                 username = sp24SchoolDetails.username,
                 password = sp24SchoolDetails.password,
@@ -30,7 +38,8 @@ data class EmbeddedSchool(
 
         return School.DefaultSchool(
             id = school.id,
-            name = school.name
+            name = school.name,
+            groups = groups.map { Cacheable.Uninitialized(it.groupId.toString()) }
         )
     }
 }

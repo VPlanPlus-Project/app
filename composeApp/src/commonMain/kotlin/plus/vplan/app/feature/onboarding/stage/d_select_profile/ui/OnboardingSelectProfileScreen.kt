@@ -107,10 +107,13 @@ private fun OnboardingSelectProfileScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) listHost@{
                             val courses = state.defaultLessons.keys
+                                .asSequence()
                                 .map { it.course }
                                 .distinct()
                                 .filterNotNull()
+                                .mapNotNull { it.toValueOrNull() }
                                 .sortedBy { it.name }
+                                .toList()
 
                             if (courses.isNotEmpty()) {
                                 Column {
@@ -123,8 +126,8 @@ private fun OnboardingSelectProfileScreen(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         courses.forEach { course ->
-                                            val isCourseFullySelected = state.defaultLessons.filterKeys { it.course == course }.values.all { it }
-                                            val isCoursePartiallySelected = state.defaultLessons.filterKeys { it.course == course }.values.any { it }
+                                            val isCourseFullySelected = state.defaultLessons.filterKeys { it.course?.getItemId() == course.getItemId() }.values.all { it }
+                                            val isCoursePartiallySelected = state.defaultLessons.filterKeys { it.course?.getItemId() == course.getItemId() }.values.any { it }
                                             Row (
                                                 modifier = Modifier
                                                     .fillMaxWidth()
@@ -152,7 +155,7 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                     Text(
-                                                        text = course.teacher?.name ?: "-",
+                                                        text = course.teacher?.toValueOrNull()?.name ?: "-",
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
@@ -174,7 +177,7 @@ private fun OnboardingSelectProfileScreen(
                                 ) {
                                     state.defaultLessons
                                         .entries
-                                        .sortedBy { "${it.key.subject}_${it.key.course?.name ?: ""}_${it.key.teacher?.name ?: ""}" }
+                                        .sortedBy { "${it.key.subject}_${it.key.course?.toValueOrNull()?.name ?: ""}_${it.key.teacher?.toValueOrNull()?.name ?: ""}" }
                                         .forEach { (defaultLesson, enabled) ->
                                         Row (
                                             modifier = Modifier
@@ -204,13 +207,13 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                     if (defaultLesson.course != null) Text(
-                                                        text = defaultLesson.course.name,
+                                                        text = defaultLesson.course.toValueOrNull()!!.name,
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
                                                 }
                                                 Text(
-                                                    text = defaultLesson.teacher?.name ?: "-",
+                                                    text = defaultLesson.teacher?.toValueOrNull()?.name ?: "-",
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )

@@ -5,21 +5,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.SchoolDay
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
+import plus.vplan.app.feature.home.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
+
+private val LOGGER = Logger.withTag("HomeViewModel")
 
 class HomeViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
@@ -27,7 +31,7 @@ class HomeViewModel(
     private val getDayUseCase: GetDayUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
-    private val updateHolidaysUseCase: UpdateHolidaysUseCase
+    private val updateHolidaysUseCase: UpdateHolidaysUseCase,
 ) : ViewModel() {
     var state by mutableStateOf(HomeState())
         private set
@@ -36,15 +40,9 @@ class HomeViewModel(
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(currentProfile = profile)
-                if (profile == null) return@collectLatest
-                getDayUseCase(profile, state.currentTime.date).collectLatest { day ->
-                    state = state.copy(currentDay = day)
-                    day.nextRegularSchoolDay?.let { nextDayDate ->
-                        getDayUseCase(profile, nextDayDate).collectLatest { nextDay ->
-                            state = state.copy(nextDay = nextDay)
-                        }
-                    }
-                }
+                getDayUseCase(profile, state.currentTime.date)
+                    .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.displayName}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
+                    .collectLatest { day -> state = state.copy(currentDay = day) }
             }
         }
         viewModelScope.launch {
@@ -57,9 +55,9 @@ class HomeViewModel(
     private fun update() {
         state = state.copy(isUpdating = true)
         viewModelScope.launch {
-            updateHolidaysUseCase(state.currentProfile!!.school as School.IndiwareSchool)
-            updateTimetableUseCase(state.currentProfile!!.school as School.IndiwareSchool)
-            updateSubstitutionPlanUseCase(state.currentProfile!!.school as School.IndiwareSchool, state.currentTime.date)
+            updateHolidaysUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool)
+            updateTimetableUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool)
+            updateSubstitutionPlanUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool, state.currentTime.date)
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }
 
@@ -75,8 +73,7 @@ class HomeViewModel(
 data class HomeState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
-    val currentDay: SchoolDay? = null,
-    val nextDay: SchoolDay? = null,
+    val currentDay: Day? = null,
     val isUpdating: Boolean = false
 )
 

@@ -4,6 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbSchool
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Room
 
 data class EmbeddedRoom(
@@ -17,7 +18,7 @@ data class EmbeddedRoom(
     fun toModel(): Room {
         return Room(
             id = room.id,
-            school = school.toModel(),
+            school = Cacheable.Loaded(school.toModel()),
             name = room.name
         )
     }

@@ -10,8 +10,8 @@ import kotlinx.coroutines.launch
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
+import plus.vplan.app.feature.profile.page.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.SetProfileDefaultLessonEnabledUseCase
@@ -35,7 +35,7 @@ class ProfileViewModel(
             ) { currentProfile, profiles, hasVppIdLinked ->
                 state.copy(
                     currentProfile = currentProfile,
-                    profiles = profiles,
+                    profiles = profiles.mapKeys { it.key.toValueOrNull()!! },
                     showVppIdBanner = !hasVppIdLinked
                 )
             }

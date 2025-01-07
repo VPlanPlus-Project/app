@@ -49,7 +49,6 @@ interface SubstitutionPlanDao {
     suspend fun deleteSubstitutionPlanByVersion(version: String)
 
     @Transaction
-    @Query("SELECT * FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id LEFT JOIN day ON day.id = day_id WHERE school_groups.school_id = :schoolId AND substitution_plan_lesson.version = :version AND day.date = :date")
+    @Query("SELECT * FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id LEFT JOIN day ON day.id = day_id LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId AND substitution_plan_lesson.version = :version AND day.date = :date")
     fun getTimetableLessons(schoolId: Int, version: String, date: LocalDate): Flow<List<EmbeddedSubstitutionPlanLesson>>
-
 }

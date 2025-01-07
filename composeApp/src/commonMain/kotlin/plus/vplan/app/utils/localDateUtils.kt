@@ -4,7 +4,9 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
@@ -38,4 +40,35 @@ fun LocalDate.Companion.now(): LocalDate {
 
 fun LocalDate.atStartOfMonth(): LocalDate {
     return this - this.dayOfMonth.minus(1).days
+}
+
+infix fun LocalDate.untilText(other: LocalDate): String {
+    val days = (other - this).days
+    when (days) {
+        -2 -> return "Vorgestern"
+        -1 -> return "Gestern"
+        0 -> return "Heute"
+        1 -> return "Morgen"
+        2 -> return "Übermorgen"
+        else -> {
+            if (days > 0) return "In $days Tagen"
+            return "Vor $days Tagen"
+        }
+    }
+}
+
+infix fun LocalDate.untilRelativeText(other: LocalDate): String? {
+    val days = (other - this).days
+    return when (days) {
+        -2 -> "Vorgestern"
+        -1 -> "Gestern"
+        0 -> "Heute"
+        1 -> "Morgen"
+        2 -> "Übermorgen"
+        else -> null
+    }
+}
+
+fun LocalDate.atStartOfDay(): LocalDateTime {
+    return this.atTime(LocalTime.fromSecondOfDay(0))
 }

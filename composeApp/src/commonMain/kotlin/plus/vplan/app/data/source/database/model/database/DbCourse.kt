@@ -10,8 +10,7 @@ import androidx.room.Index
     primaryKeys = ["id"],
     indices = [
         Index(value = ["id"], unique = true),
-        Index(value = ["teacher_id"], unique = false),
-        Index(value = ["group_id"], unique = false)
+        Index(value = ["teacher_id"], unique = false)
     ],
     foreignKeys = [
         ForeignKey(
@@ -21,18 +20,10 @@ import androidx.room.Index
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
         ),
-        ForeignKey(
-            entity = DbGroup::class,
-            parentColumns = ["id"],
-            childColumns = ["group_id"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE
-        )
     ]
 )
 data class DbCourse(
     @ColumnInfo(name = "id") val id: String,
     @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "teacher_id") val teacherId: Int?,
-    @ColumnInfo(name = "group_id") val groupId: Int
+    @ColumnInfo(name = "teacher_id") val teacherId: Int?
 )

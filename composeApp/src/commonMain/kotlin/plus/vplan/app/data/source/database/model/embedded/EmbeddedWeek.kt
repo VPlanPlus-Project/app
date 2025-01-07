@@ -4,6 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbWeek
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Week
 
 data class EmbeddedWeek(
@@ -22,7 +23,7 @@ data class EmbeddedWeek(
             end = week.end,
             weekType = week.weekType,
             weekIndex = week.weekIndex,
-            school = school.toModel()
+            school = Cacheable.Loaded(school.toModel())
         )
     }
 }

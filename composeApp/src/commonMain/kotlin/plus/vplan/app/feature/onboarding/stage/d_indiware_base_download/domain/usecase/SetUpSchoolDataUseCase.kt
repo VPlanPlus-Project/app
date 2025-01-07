@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.DefaultLesson
@@ -72,7 +73,7 @@ class SetUpSchoolDataUseCase(
                     downloadMode = baseData.data.downloadMode
                 )
                 onboardingRepository.setSchoolId(it.id)
-                schoolRepository.getById(it.id).first()
+                schoolRepository.getById(it.id).first().toValueOrNull()
                     ?: return@flow emit(SetUpSchoolDataResult.Error("Onboarding/${this::class.simpleName}: schoolId ${it.id} not found"))
             }
 
@@ -112,7 +113,7 @@ class SetUpSchoolDataUseCase(
                     end = baseDataWeek.end,
                     weekType = baseDataWeek.weekType,
                     weekIndex = baseDataWeek.weekIndex,
-                    school = school
+                    school = Cacheable.Loaded(school)
                 )
                 weekRepository.upsert(week)
             }
@@ -129,7 +130,7 @@ class SetUpSchoolDataUseCase(
                         start = baseDataLessonTime.start,
                         end = baseDataLessonTime.end,
                         lessonNumber = baseDataLessonTime.lessonNumber,
-                        group = group,
+                        group = Cacheable.Loaded(group),
                         interpolated = false
                     )
                     lessonTimeRepository.upsert(lessonTime)
@@ -140,32 +141,53 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
-            baseData.data.classes
-                .map { it to it.defaultLessons }
-                .forEach { (baseDataGroup, defaultLessons) ->
-                    val group = classes.firstOrNull { it.name == baseDataGroup.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataGroup.name} not found"))
-                    defaultLessons
-                        .forEach { defaultLesson ->
-                            val course = defaultLesson.course?.let { course ->
-                                courseRepository.upsert(
-                                    Course.fromIndiware(
-                                        sp24SchoolId = sp24Id,
-                                        group = group,
-                                        name = course.name,
-                                        teacher = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }
-                                    )
-                                ).first()
-                            }
-                            defaultLessonRepository.upsert(
-                                DefaultLesson(
-                                    indiwareDefaultLessonId = defaultLesson.defaultLessonNumber,
-                                    subject = defaultLesson.subject,
-                                    group = group,
-                                    teacher = teachers.firstOrNull { it.name == defaultLesson.teacher },
-                                    course = course
-                                )
-                            )
-                        }
+            val courses = baseData.data.classes.flatMap { baseDataClass ->
+                val group = classes.firstOrNull { it.name == baseDataClass.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataClass.name} not found"))
+                baseDataClass.defaultLessons.mapNotNull { it.course }.map { course ->
+                    Course.fromIndiware(
+                        sp24SchoolId = sp24Id,
+                        groups = listOf(group),
+                        name = course.name,
+                        teacher = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }
+                    )
+                }
+            }
+                .groupBy { it.id }
+                .map { (id, courses) ->
+                    courseRepository.upsert(
+                        Course(
+                            id = id,
+                            groups = courses.flatMap { it.groups }.distinctBy { it.toValueOrNull()!!.id },
+                            name = courses.first().name,
+                            teacher = courses.first().teacher
+                        )
+                    )
+                }
+
+            val defaultLessons = baseData.data.classes
+                .flatMap { baseDataClass ->
+                    val group = classes.firstOrNull { it.name == baseDataClass.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataClass.name} not found"))
+                    baseDataClass.defaultLessons.map { defaultLesson ->
+                        DefaultLesson(
+                            id = defaultLesson.defaultLessonNumber,
+                            subject = defaultLesson.subject,
+                            groups = listOf(group).map { Cacheable.Loaded(it) },
+                            course = courses.firstOrNull { it.name == defaultLesson.course?.name }?.let { Cacheable.Loaded(it) },
+                            teacher = teachers.firstOrNull { it.name == defaultLesson.teacher }?.let { Cacheable.Loaded(it) }
+                        )
+                    }
+                }
+                .groupBy { it.id }
+                .map { (id, defaultLessons) ->
+                    defaultLessonRepository.upsert(
+                        DefaultLesson(
+                            id = id,
+                            subject = defaultLessons.first().subject,
+                            groups = defaultLessons.flatMap { it.groups }.distinctBy { it.getItemId() },
+                            course = defaultLessons.firstOrNull { it.course != null }?.course,
+                            teacher = defaultLessons.firstOrNull { it.teacher != null }?.teacher
+                        )
+                    )
                 }
 
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.DONE

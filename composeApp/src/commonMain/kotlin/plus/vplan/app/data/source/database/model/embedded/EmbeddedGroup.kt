@@ -3,22 +3,23 @@ package plus.vplan.app.data.source.database.model.embedded
 import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbGroup
-import plus.vplan.app.data.source.database.model.database.DbSchool
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Group
 
 data class EmbeddedGroup(
     @Embedded val group: DbGroup,
     @Relation(
-        parentColumn = "school_id",
-        entityColumn = "id",
-        entity = DbSchool::class
-    ) val school: EmbeddedSchool,
+        parentColumn = "id",
+        entityColumn = "group_id",
+        entity = FKSchoolGroup::class
+    ) val school: FKSchoolGroup,
 ) {
     fun toModel(): Group {
         return Group(
             id = group.id,
             name = group.name,
-            school = school.toModel()
+            school = Cacheable.Uninitialized(school.schoolId.toString())
         )
     }
 }

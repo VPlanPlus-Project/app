@@ -13,6 +13,7 @@ import plus.vplan.app.VPP_ROOT_URL
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.network.saveRequest
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Teacher
@@ -50,8 +51,8 @@ class TeacherRepositoryImpl(
         }
     }
 
-    override fun getById(teacherId: Int): Flow<Teacher?> {
-        return vppDatabase.teacherDao.getById(teacherId).map { it?.toModel() }
+    override fun getById(teacherId: Int): Flow<Cacheable<Teacher>> {
+        return vppDatabase.teacherDao.getById(teacherId).map { it?.toModel()?.let { model -> Cacheable.Loaded(model) } ?: Cacheable.NotExisting(teacherId.toString()) }
     }
 
     override suspend fun getByIdWithCaching(id: Int, school: School): Response<Flow<Teacher?>> {
@@ -72,7 +73,7 @@ class TeacherRepositoryImpl(
                     name = data.name
                 )
             )
-            return Response.Success(getById(id))
+            return Response.Success(getById(id).map { it.toValueOrNull() })
         }
     }
 }

@@ -10,8 +10,8 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.SchoolDay
 
 class CalendarViewModel : ViewModel() {
     var state by mutableStateOf(CalendarState())
@@ -29,7 +29,7 @@ class CalendarViewModel : ViewModel() {
 data class CalendarState(
     val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
     val currentProfile: Profile? = null,
-    val days: Map<LocalDate, SchoolDay> = emptyMap(),
+    val days: Map<LocalDate, Day> = emptyMap(),
 )
 
 sealed class CalendarEvent {

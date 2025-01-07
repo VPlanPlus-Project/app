@@ -57,7 +57,7 @@ class OnboardingSelectProfileViewModel(
                     )
                 }
                 is OnboardingProfileSelectionEvent.ToggleCourse -> {
-                    val defaultLessons = state.defaultLessons.filterKeys { it.course == event.course }
+                    val defaultLessons = state.defaultLessons.filterKeys { it.course?.toValueOrNull() == event.course }
                     val isCourseFullySelected = defaultLessons.values.all { it }
                     state = state.copy(
                         defaultLessons = state.defaultLessons.plus(defaultLessons.mapValues { !isCourseFullySelected })

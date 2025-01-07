@@ -189,7 +189,7 @@ private fun ProfileSettingsContent(
                     }
                     append(state.profile.originalName)
                     append(" $DOT ")
-                    append(state.profile.school.name)
+                    append(state.profile.school.toValueOrNull()!!.name)
                 },
                 modifier = Modifier.padding(horizontal = 16.dp),
                 style = MaterialTheme.typography.labelMedium,
@@ -225,7 +225,7 @@ private fun ProfileSettingsContent(
                         )
                         Column {
                             Text(
-                                text = displayVppId.name,
+                                text = displayVppId.toValueOrNull()!!.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -279,7 +279,7 @@ private fun ProfileSettingsContent(
             state.profile is Profile.StudentProfile &&
             state.profile.vppId != null) {
             VppIdManagementDrawer(
-                vppId = state.profile.vppId,
+                vppId = state.profile.vppId.toValueOrNull()!!,
                 onDismiss = { isVppIdManagementDrawerVisible = false }
             )
         }

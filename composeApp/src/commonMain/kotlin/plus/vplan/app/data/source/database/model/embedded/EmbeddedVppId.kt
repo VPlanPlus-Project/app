@@ -8,6 +8,7 @@ import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.VppId
 
 data class EmbeddedVppId(
@@ -37,13 +38,13 @@ data class EmbeddedVppId(
         if (access == null) return VppId.Cached(
             id = vppId.id,
             name = vppId.name,
-            groups = groups.map { it.toModel() },
+            groups = groups.map { Cacheable.Loaded(it.toModel()) },
             cachedAt = vppId.cachedAt
         )
         return VppId.Active(
             id = vppId.id,
             name = vppId.name,
-            groups = groups.map { it.toModel() },
+            groups = groups.map { Cacheable.Loaded(it.toModel()) },
             accessToken = access.accessToken,
             cachedAt = vppId.cachedAt,
             schulverwalterAccessToken = schulverwalterAccess?.schulverwalterAccessToken

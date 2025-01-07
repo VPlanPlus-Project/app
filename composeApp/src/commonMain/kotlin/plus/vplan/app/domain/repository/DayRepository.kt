@@ -14,4 +14,5 @@ interface DayRepository {
     suspend fun deleteHolidayById(id: String)
     suspend fun deleteHolidaysByIds(ids: List<String>)
     fun getBySchool(date: LocalDate, schoolId: Int): Flow<Day?>
+    fun getById(id: String): Flow<Day?>
 }
