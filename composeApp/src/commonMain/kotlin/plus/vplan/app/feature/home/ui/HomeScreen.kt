@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
+import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.home.ui.components.Greeting
@@ -80,14 +81,11 @@ private fun HomeContent(
                 )
 
                 LaunchedEffect(state.currentDay?.nextSchoolDay) {
-//                    if (state.currentDay?.nextSchoolDay !is SchoolDay.NormalDay) return@LaunchedEffect
-//                    if (state.currentDay !is SchoolDay.NormalDay || state.nextDay.lessons.none {
-//                            state.currentTime progressIn it.lessonTime.toValueOrNull()!!.start.atDate(
-//                                state.nextDay.date
-//                            )..it.lessonTime.toValueOrNull()!!.end.atDate(state.nextDay.date) < 1f
-//                        }) {
-//                        pagerState.animateScrollToPage(1)
-//                    }
+                    if (state.currentDay?.nextSchoolDay !is Cacheable.Loaded<Day>) return@LaunchedEffect
+                    if (state.currentDay.nextSchoolDay.value.dayType != Day.DayType.REGULAR) return@LaunchedEffect
+                    if (state.currentDay.substitutionPlan.ifEmpty { state.currentDay.timetable }.all { it is Cacheable.Loaded && it.value.lessonTime is Cacheable.Loaded && it.value.lessonTime.toValueOrNull()!!.end < state.currentTime.time }) {
+                        pagerState.animateScrollToPage(1)
+                    }
                 }
                 Box(
                     modifier = Modifier
