@@ -2,7 +2,6 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
@@ -29,7 +28,7 @@ class UpdateWeeksUseCase(
                 end = baseDataWeek.end,
                 weekType = baseDataWeek.weekType,
                 weekIndex = baseDataWeek.weekIndex,
-                school = Cacheable.Loaded(school)
+                school = school.id
             )
         }
         existingWeeks.let { existing ->

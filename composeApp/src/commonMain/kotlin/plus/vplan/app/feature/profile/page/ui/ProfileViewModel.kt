@@ -35,7 +35,7 @@ class ProfileViewModel(
             ) { currentProfile, profiles, hasVppIdLinked ->
                 state.copy(
                     currentProfile = currentProfile,
-                    profiles = profiles.mapKeys { it.key.toValueOrNull()!! },
+                    profiles = profiles,
                     showVppIdBanner = !hasVppIdLinked
                 )
             }

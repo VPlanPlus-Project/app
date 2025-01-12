@@ -21,6 +21,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -28,7 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
-import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.home.ui.components.Greeting
@@ -69,11 +71,22 @@ private fun HomeContent(
                     .padding(top = 8.dp)
                     .fillMaxWidth()
             ) {
-                Greeting(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    displayName = (state.currentProfile as? Profile.StudentProfile)?.vppId?.toValueOrNull()?.name?.substringBefore(" ") ?: state.currentProfile?.displayName ?: "",
-                    time = remember(state.currentTime.hour) { state.currentTime.time }
-                )
+                run greeting@{
+                    val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppId?.let {
+                        App.vppIdSource.getById(it).collectAsState(CacheState.Loading(it.toString()))
+                    }
+                    Greeting(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        displayName = vppId?.value.let {
+                            if (it == null) return@let state.currentProfile?.name ?: ""
+                            else return@let when (it) {
+                                is CacheState.Done -> it.data.name
+                                else -> ""
+                            }
+                        },
+                        time = remember(state.currentTime.hour) { state.currentTime.time }
+                    )
+                }
                 Spacer(Modifier.height(4.dp))
                 val pagerState = rememberPagerState(
                     initialPage = 0,
@@ -81,11 +94,11 @@ private fun HomeContent(
                 )
 
                 LaunchedEffect(state.currentDay?.nextSchoolDay) {
-                    if (state.currentDay?.nextSchoolDay !is Cacheable.Loaded<Day>) return@LaunchedEffect
-                    if (state.currentDay.nextSchoolDay.value.dayType != Day.DayType.REGULAR) return@LaunchedEffect
-                    if (state.currentDay.substitutionPlan.ifEmpty { state.currentDay.timetable }.all { it is Cacheable.Loaded && it.value.lessonTime is Cacheable.Loaded && it.value.lessonTime.toValueOrNull()!!.end < state.currentTime.time }) {
-                        pagerState.animateScrollToPage(1)
-                    }
+//                    if (state.currentDay?.nextSchoolDay !is Cacheable.Loaded<Day>) return@LaunchedEffect
+//                    if (state.currentDay.nextSchoolDay.value.dayType != Day.DayType.REGULAR) return@LaunchedEffect
+//                    if (state.currentDay.substitutionPlan.ifEmpty { state.currentDay.timetable }.all { it is Cacheable.Loaded && it.value.lessonTime is Cacheable.Loaded && it.value.lessonTime.toValueOrNull()!!.end < state.currentTime.time }) {
+//                        pagerState.animateScrollToPage(1)
+//                    }
                 }
                 Box(
                     modifier = Modifier
@@ -99,29 +112,29 @@ private fun HomeContent(
                         pageSize = PageSize.Fill,
                         verticalAlignment = Alignment.Top
                     ) { page ->
-                        val day = if (page == 0) state.currentDay else state.currentDay?.nextSchoolDay?.toValueOrNull()
-                        when (day?.dayType) {
-                            Day.DayType.HOLIDAY, Day.DayType.WEEKEND -> HolidayScreen(isWeekend = day.dayType == Day.DayType.WEEKEND, nextRegularSchoolDay = day.nextSchoolDay?.toValueOrNull()?.date)
-                            Day.DayType.UNKNOWN -> Text("Unbekannter Tag")
-                            Day.DayType.REGULAR -> {
-                                if (page == 0) CurrentDayView(
-                                    day = day,
-                                    contextTime = LocalDateTime(2025, 1, 6, 8, 0, 0)
-                                )
-                                else NextDayView(day)
-                            }
-                            null -> Text("Nicht geladen")
-                        }
+//                        val day = if (page == 0) state.currentDay else state.currentDay?.nextSchoolDay?.toValueOrNull()
+//                        when (day?.dayType) {
+//                            Day.DayType.HOLIDAY, Day.DayType.WEEKEND -> HolidayScreen(isWeekend = day.dayType == Day.DayType.WEEKEND, nextRegularSchoolDay = day.nextSchoolDay?.toValueOrNull()?.date)
+//                            Day.DayType.UNKNOWN -> Text("Unbekannter Tag")
+//                            Day.DayType.REGULAR -> {
+//                                if (page == 0) CurrentDayView(
+//                                    day = day,
+//                                    contextTime = LocalDateTime(2025, 1, 6, 8, 0, 0)
+//                                )
+//                                else NextDayView(day)
+//                            }
+//                            null -> Text("Nicht geladen")
+//                        }
                     }
 
-                    if (state.currentDay?.nextSchoolDay?.toValueOrNull() != null) PagerSwitcher(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 8.dp),
-                        swipeProgress = pagerState.currentPage + pagerState.currentPageOffsetFraction,
-                        nextDate = state.currentDay.nextSchoolDay.toValueOrNull()!!.date,
-                        onSelectPage = { scope.launch { pagerState.animateScrollToPage(it) } }
-                    )
+//                    if (state.currentDay?.nextSchoolDay?.toValueOrNull() != null) PagerSwitcher(
+//                        modifier = Modifier
+//                            .align(Alignment.BottomCenter)
+//                            .padding(bottom = 8.dp),
+//                        swipeProgress = pagerState.currentPage + pagerState.currentPageOffsetFraction,
+//                        nextDate = state.currentDay.nextSchoolDay.toValueOrNull()!!.date,
+//                        onSelectPage = { scope.launch { pagerState.animateScrollToPage(it) } }
+//                    )
                 }
             }
         }

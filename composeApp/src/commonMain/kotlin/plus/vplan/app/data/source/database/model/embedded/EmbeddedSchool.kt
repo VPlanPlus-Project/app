@@ -5,7 +5,6 @@ import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.School
 
 data class EmbeddedSchool(
@@ -26,7 +25,7 @@ data class EmbeddedSchool(
             return School.IndiwareSchool(
                 id = school.id,
                 name = school.name,
-                groups = groups.map { Cacheable.Uninitialized(it.groupId.toString()) },
+                groups = groups.map { it.groupId },
                 sp24Id = sp24SchoolDetails.sp24SchoolId,
                 username = sp24SchoolDetails.username,
                 password = sp24SchoolDetails.password,
@@ -39,7 +38,7 @@ data class EmbeddedSchool(
         return School.DefaultSchool(
             id = school.id,
             name = school.name,
-            groups = groups.map { Cacheable.Uninitialized(it.groupId.toString()) }
+            groups = groups.map { it.groupId }
         )
     }
 }

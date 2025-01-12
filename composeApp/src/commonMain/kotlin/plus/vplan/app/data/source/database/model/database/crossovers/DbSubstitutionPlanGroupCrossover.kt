@@ -6,6 +6,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
+import kotlin.uuid.Uuid
 
 @Entity(
     tableName = "substitution_plan_group_crossover",
@@ -33,5 +34,5 @@ import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLess
 )
 data class DbSubstitutionPlanGroupCrossover(
     @ColumnInfo(name = "group_id") val groupId: Int,
-    @ColumnInfo(name = "substitution_plan_lesson_id") val substitutionPlanLessonId: String
+    @ColumnInfo(name = "substitution_plan_lesson_id") val substitutionPlanLessonId: Uuid
 )

@@ -29,7 +29,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
-import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.VppId
@@ -101,17 +101,17 @@ class VppIdRepositoryImpl(
                     )
                 )
             )
-            return Response.Success((getVppIdById(data.id).first() as Cacheable.Loaded).value as VppId.Active)
+            return Response.Success(getVppIdById(data.id).filterIsInstance<CacheState.Done<VppId.Active>>().first().data)
         }
     }
 
-    override fun getVppIdById(id: Int): Flow<Cacheable<VppId>> {
+    override fun getVppIdById(id: Int): Flow<CacheState<VppId>> {
         return flow {
             val databaseItem = vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
-            if (databaseItem.first() != null) return@flow emitAll(databaseItem.map { Cacheable.Loaded(it!!) })
+            if (databaseItem.first() != null) return@flow emitAll(databaseItem.map { CacheState.Done(it!!) })
             val schools = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/$id")
-            if (schools.status != HttpStatusCode.OK) return@flow emit(Cacheable.Error(id.toString(), schools.toErrorResponse<VppId>()))
-            val schoolIds = ResponseDataWrapper.fromJson<UserSchoolResponse>(schools.bodyAsText()) ?: return@flow emit(Cacheable.Error(id.toString(), Response.Error.ParsingError(schools.bodyAsText())))
+            if (schools.status != HttpStatusCode.OK) return@flow emit(CacheState.Error(id.toString(), schools.toErrorResponse<VppId>()))
+            val schoolIds = ResponseDataWrapper.fromJson<UserSchoolResponse>(schools.bodyAsText()) ?: return@flow emit(CacheState.Error(id.toString(), Response.Error.ParsingError(schools.bodyAsText())))
             vppDatabase.schoolDao
                 .getAll()
                 .first()
@@ -125,7 +125,7 @@ class VppIdRepositoryImpl(
                     }
                     if (response.status != HttpStatusCode.OK) return@forEachBreakable false
                     val data = ResponseDataWrapper.fromJson<UserItemResponse>(response.bodyAsText())
-                            ?: return@flow emit(Cacheable.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                            ?: return@flow emit(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
                     vppDatabase.vppIdDao.upsert(
                         vppId = DbVppId(

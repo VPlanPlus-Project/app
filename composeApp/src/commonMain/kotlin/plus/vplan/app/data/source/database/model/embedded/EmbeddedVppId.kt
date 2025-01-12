@@ -1,28 +1,20 @@
 package plus.vplan.app.data.source.database.model.embedded
 
 import androidx.room.Embedded
-import androidx.room.Junction
 import androidx.room.Relation
-import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.VppId
 
 data class EmbeddedVppId(
     @Embedded val vppId: DbVppId,
     @Relation(
         parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(
-            value = DbVppIdGroupCrossover::class,
-            parentColumn = "vpp_id",
-            entityColumn = "group_id"
-        ),
-        entity = DbGroup::class
-    ) val groups: List<EmbeddedGroup>,
+        entityColumn = "vpp_id",
+        entity = DbVppIdGroupCrossover::class
+    ) val groups: List<DbVppIdGroupCrossover>,
     @Relation(
         parentColumn = "id",
         entityColumn = "vpp_id",
@@ -38,13 +30,13 @@ data class EmbeddedVppId(
         if (access == null) return VppId.Cached(
             id = vppId.id,
             name = vppId.name,
-            groups = groups.map { Cacheable.Loaded(it.toModel()) },
+            groups = groups.map { it.groupId },
             cachedAt = vppId.cachedAt
         )
         return VppId.Active(
             id = vppId.id,
             name = vppId.name,
-            groups = groups.map { Cacheable.Loaded(it.toModel()) },
+            groups = groups.map { it.groupId },
             accessToken = access.accessToken,
             cachedAt = vppId.cachedAt,
             schulverwalterAccessToken = schulverwalterAccess?.schulverwalterAccessToken

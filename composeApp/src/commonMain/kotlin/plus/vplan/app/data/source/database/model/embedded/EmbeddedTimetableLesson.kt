@@ -3,16 +3,13 @@ package plus.vplan.app.data.source.database.model.embedded
 import androidx.room.Embedded
 import androidx.room.Junction
 import androidx.room.Relation
-import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
-import plus.vplan.app.data.source.database.model.database.DbWeek
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Lesson
 
 data class EmbeddedTimetableLesson(
@@ -26,7 +23,7 @@ data class EmbeddedTimetableLesson(
             value = DbTimetableTeacherCrossover::class
         ),
         entity = DbTeacher::class
-    ) val teachers: List<EmbeddedTeacher>,
+    ) val teachers: List<DbTeacher>,
     @Relation(
         parentColumn = "id",
         entityColumn = "id",
@@ -36,39 +33,28 @@ data class EmbeddedTimetableLesson(
             value = DbTimetableRoomCrossover::class
         ),
         entity = DbRoom::class
-    ) val rooms: List<EmbeddedRoom>,
+    ) val rooms: List<DbRoom>,
     @Relation(
         parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(
-            parentColumn = "timetable_lesson_id",
-            entityColumn = "group_id",
-            value = DbTimetableGroupCrossover::class
-        ),
-        entity = DbGroup::class
-    ) val groups: List<EmbeddedGroup>,
-    @Relation(
-        parentColumn = "week_id",
-        entityColumn = "id",
-        entity = DbWeek::class
-    ) val week: EmbeddedWeek,
+        entityColumn = "timetable_lesson_id",
+        entity = DbTimetableGroupCrossover::class
+    ) val groups: List<DbTimetableGroupCrossover>,
     @Relation(
         parentColumn = "lesson_time_id",
         entityColumn = "id",
         entity = DbLessonTime::class
-    ) val lessonTime: EmbeddedLessonTime
+    ) val lessonTime: DbLessonTime
 ) {
     fun toModel(): Lesson.TimetableLesson {
-        val week = week.toModel()
         return Lesson.TimetableLesson(
             id = timetableLesson.id,
             dayOfWeek = timetableLesson.dayOfWeek,
-            week = Cacheable.Loaded(week),
+            week = timetableLesson.weekId,
             subject = timetableLesson.subject,
-            teachers = teachers.map { Cacheable.Loaded(it.toModel()) },
-            rooms = rooms.map { Cacheable.Loaded(it.toModel()) },
-            groups = groups.map { Cacheable.Loaded(it.toModel()) },
-            lessonTime = Cacheable.Loaded(lessonTime.toModel()),
+            teachers = teachers.map { it.id },
+            rooms = rooms.map { it.id },
+            groups = groups.map { it.groupId },
+            lessonTime = timetableLesson.lessonTimeId,
             weekType = timetableLesson.weekType
         )
     }

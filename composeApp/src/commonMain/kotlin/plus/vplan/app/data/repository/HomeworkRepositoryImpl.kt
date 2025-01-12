@@ -33,7 +33,7 @@ import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
-import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
@@ -45,7 +45,6 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.HomeworkResponse
 import plus.vplan.app.domain.repository.HomeworkTaskResponse
 import plus.vplan.app.utils.sha256
-import kotlin.uuid.Uuid
 
 private val logger = Logger.withTag("HomeworkRepositoryImpl")
 
@@ -53,20 +52,20 @@ class HomeworkRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase
 ) : HomeworkRepository {
-    override suspend fun upsert(homework: List<Homework>) {
+    override suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>) {
         vppDatabase.homeworkDao.upsertMany(
             homework = homework.map { homeworkItem ->
                 DbHomework(
                     id = homeworkItem.id,
-                    defaultLessonId = homeworkItem.defaultLesson?.getItemId(),
-                    groupId = homeworkItem.group?.getItemId()?.toInt(),
+                    defaultLessonId = homeworkItem.defaultLesson,
+                    groupId = homeworkItem.group,
                     createdAt = homeworkItem.createdAt,
                     createdByProfileId = when (homeworkItem) {
                         is Homework.CloudHomework -> null
-                        is Homework.LocalHomework -> homeworkItem.createdByProfile.getItemId().let { Uuid.parseHex(it) }
+                        is Homework.LocalHomework -> homeworkItem.createdByProfile
                     },
                     createdBy = when (homeworkItem) {
-                        is Homework.CloudHomework -> homeworkItem.createdBy.getItemId().toInt()
+                        is Homework.CloudHomework -> homeworkItem.createdBy
                         is Homework.LocalHomework -> null
                     },
                     isPublic = when (homeworkItem) {
@@ -77,11 +76,11 @@ class HomeworkRepositoryImpl(
                 )
             },
             homeworkTask = homework.flatMap { homeworkItem ->
-                homeworkItem.tasks.filterIsInstance<Cacheable.Loaded<Homework.HomeworkTask>>().map { homeworkTask ->
+                tasks.map { homeworkTask ->
                     DbHomeworkTask(
-                        id = homeworkTask.getItemId().toInt(),
+                        id = homeworkTask.id,
                         homeworkId = homeworkItem.id,
-                        content = homeworkTask.value.content
+                        content = homeworkTask.content
                     )
                 }
             }
@@ -141,31 +140,31 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override fun getAll(): Flow<List<Cacheable<Homework>>> {
-        return vppDatabase.homeworkDao.getAll().map { it.map { Cacheable.Loaded(it.toModel()) } }
+    override fun getAll(): Flow<List<CacheState<Homework>>> {
+        return vppDatabase.homeworkDao.getAll().map { it.map { CacheState.Done(it.toModel()) } }
     }
 
-    override suspend fun getById(id: Int): Flow<Cacheable<Homework>> {
+    override fun getById(id: Int): Flow<CacheState<Homework>> {
         if (id < 0) return vppDatabase.homeworkDao.getById(id).map {
-            if (it == null) Cacheable.NotExisting(id.toString())
-            else Cacheable.Loaded(it.toModel())
+            if (it == null) CacheState.NotExisting(id.toString())
+            else CacheState.Done(it.toModel())
         }
         return flow {
             val databaseObject = vppDatabase.homeworkDao.getById(id)
             if (databaseObject.first() != null) return@flow emitAll(databaseObject.map {
-                if (it == null) Cacheable.NotExisting(id.toString())
-                else Cacheable.Loaded(it.toModel())
+                if (it == null) CacheState.NotExisting(id.toString())
+                else CacheState.Done(it.toModel())
             })
 
             safeRequest(
-                onError = { return@flow emit(Cacheable.Error(id.toString(), it)) }
+                onError = { return@flow emit(CacheState.Error(id.toString(), it)) }
             ) {
                 val metadataResponse = httpClient.get("$VPP_ROOT_URL/api/v2.2/homework/$id")
-                if (metadataResponse.status == HttpStatusCode.NotFound) return@flow emit(Cacheable.NotExisting(id.toString()))
-                if (metadataResponse.status != HttpStatusCode.OK) return@flow emit(Cacheable.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
+                if (metadataResponse.status == HttpStatusCode.NotFound) return@flow emit(CacheState.NotExisting(id.toString()))
+                if (metadataResponse.status != HttpStatusCode.OK) return@flow emit(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
 
                 val metadataResponseData = ResponseDataWrapper.fromJson<HomeworkMetadataResponse>(metadataResponse.bodyAsText())
-                    ?: return@flow emit(Cacheable.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
+                    ?: return@flow emit(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
 
                 val vppId = vppDatabase.vppIdDao.getById(metadataResponseData.createdBy).first()?.toModel() as? VppId.Active
                 val school = vppDatabase.schoolDao.findById(metadataResponseData.schoolId).first()?.toModel()
@@ -173,9 +172,9 @@ class HomeworkRepositoryImpl(
                 val homeworkResponse = httpClient.get("$VPP_ROOT_URL/api/v2.2/homework/$id") {
                     vppId?.let { bearerAuth(it.accessToken) } ?: school?.getSchoolApiAccess()?.authentication(this)
                 }
-                if (homeworkResponse.status != HttpStatusCode.OK) return@flow emit(Cacheable.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
+                if (homeworkResponse.status != HttpStatusCode.OK) return@flow emit(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
                 val data = ResponseDataWrapper.fromJson<HomeworkResponseItem>(homeworkResponse.bodyAsText())
-                    ?: return@flow emit(Cacheable.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
+                    ?: return@flow emit(CacheState.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
 
                 vppDatabase.homeworkDao.upsertMany(
                     homework = listOf(
@@ -278,7 +277,7 @@ class HomeworkRepositoryImpl(
         tasks: List<String>
     ): Response<CreateHomeworkResponse> {
         return saveRequest {
-            val response = httpClient.post(VPP_ROOT_URL + "/api/v2.2/school/${group.school.getItemId()}/homework") {
+            val response = httpClient.post(VPP_ROOT_URL + "/api/v2.2/school/${group.school}/homework") {
                 bearerAuth(vppId.accessToken)
                 contentType(ContentType.Application.Json)
                 setBody(

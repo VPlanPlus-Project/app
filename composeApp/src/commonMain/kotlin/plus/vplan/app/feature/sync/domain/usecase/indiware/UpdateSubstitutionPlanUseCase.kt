@@ -2,7 +2,6 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
@@ -57,8 +56,8 @@ class UpdateSubstitutionPlanUseCase(
         val day = Day(
             id = Day.buildId(indiwareSchool, date),
             date = date,
-            school = Cacheable.Loaded(indiwareSchool),
-            week = Cacheable.Loaded(week),
+            school = indiwareSchool.id,
+            week = week.id,
             info = substitutionPlan.info,
             dayType = Day.DayType.REGULAR,
             substitutionPlan = emptyList(),
@@ -76,18 +75,18 @@ class UpdateSubstitutionPlanUseCase(
             val lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
             substitutionPlanClass.lessons.map { substitutionPlanLesson ->
                 Lesson.SubstitutionPlanLesson(
-                    id = Uuid.random().toHexString(),
+                    id = Uuid.random(),
                     date = date,
-                    week = Cacheable.Loaded(week),
+                    week = week.id,
                     subject = substitutionPlanLesson.subject,
                     isSubjectChanged = substitutionPlanLesson.subjectChanged,
-                    teachers = teachers.filter { it.name in substitutionPlanLesson.teacher }.map { Cacheable.Loaded(it) },
+                    teachers = teachers.filter { it.name in substitutionPlanLesson.teacher }.map { it.id },
                     isTeacherChanged = substitutionPlanLesson.teacherChanged,
-                    rooms = rooms.filter { it.name in substitutionPlanLesson.room }.map { Cacheable.Loaded(it) },
+                    rooms = rooms.filter { it.name in substitutionPlanLesson.room }.map { it.id },
                     isRoomChanged = substitutionPlanLesson.roomChanged,
-                    groups = listOf(group).map { Cacheable.Loaded(it) },
-                    defaultLesson = substitutionPlanLesson.defaultLessonNumber?.let { defaultLessons.findByIndiwareId(it.toString()) }?.let { Cacheable.Loaded(it) },
-                    lessonTime = lessonTimes.first { it.lessonNumber == substitutionPlanLesson.lessonNumber }.let { Cacheable.Loaded(it) },
+                    groups = listOf(group.id),
+                    defaultLesson = substitutionPlanLesson.defaultLessonNumber?.let { defaultLessons.findByIndiwareId(it.toString()) }?.id,
+                    lessonTime = lessonTimes.first { it.lessonNumber == substitutionPlanLesson.lessonNumber }.id,
                     info = substitutionPlanLesson.info
                 )
             }

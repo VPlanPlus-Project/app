@@ -1,31 +1,14 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.cache.Cacheable
-import plus.vplan.app.domain.cache.CacheableItemSource
-import plus.vplan.app.domain.cache.CachedItem
+import plus.vplan.app.domain.cache.Item
 
 data class Holiday(
     val id: String,
     val date: LocalDate,
-    val school: Cacheable<School>
-): CachedItem<Holiday> {
-    constructor(date: LocalDate, school: School) : this(id = "${school.id}/$date", date = date, school = Cacheable.Loaded(school))
+    val school: Int
+): Item {
+    constructor(date: LocalDate, school: Int) : this(id = "${school}/$date", date = date, school = school)
 
-    override fun getItemId(): String = this.id
-
-    override fun isConfigSatisfied(
-        configuration: CacheableItemSource.FetchConfiguration<Holiday>,
-        allowLoading: Boolean
-    ): Boolean {
-        if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
-        if (configuration is Fetch) {
-            if (configuration.school is School.Fetch && !school.isConfigSatisfied(configuration.school, allowLoading)) return false
-        }
-        return true
-    }
-
-    data class Fetch(
-        val school: CacheableItemSource.FetchConfiguration<School> = Ignore()
-    ) : CacheableItemSource.FetchConfiguration.Fetch<Holiday>()
+    override fun getEntityId(): String = this.id
 }

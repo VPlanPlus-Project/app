@@ -4,12 +4,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.Cacheable
-import plus.vplan.app.domain.model.Course
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.DefaultLesson
-import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -33,11 +32,10 @@ class GetProfileOptionsUseCase(
                 roomRepository.getBySchool(schoolId)
             ) { groups, teachers, rooms ->
                 groups.map {
-                    val config = DefaultLesson.Fetch(teacher = Teacher.Fetch(), course = Course.Fetch())
                     OnboardingProfile.StudentProfile(
                         id = it.id,
                         name = it.name,
-                        defaultLessons = defaultLessonRepository.getByGroup(it.id).first().map { App.defaultLessonSource.getById(it.id, config).first { it is Cacheable.Loaded && it.isConfigSatisfied(config, false) }.toValueOrNull()!! }
+                        defaultLessons = defaultLessonRepository.getByGroup(it.id).first().map { App.defaultLessonSource.getById(it.id).filterIsInstance<CacheState.Done<DefaultLesson>>().first().data }
                     )
                 } + teachers.map {
                     OnboardingProfile.TeacherProfile(

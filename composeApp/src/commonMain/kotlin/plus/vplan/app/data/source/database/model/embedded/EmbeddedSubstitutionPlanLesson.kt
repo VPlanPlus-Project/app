@@ -13,7 +13,6 @@ import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Lesson
 
 data class EmbeddedSubstitutionPlanLesson(
@@ -27,7 +26,7 @@ data class EmbeddedSubstitutionPlanLesson(
             value = DbSubstitutionPlanTeacherCrossover::class
         ),
         entity = DbTeacher::class
-    ) val teachers: List<EmbeddedTeacher>,
+    ) val teachers: List<DbTeacher>,
     @Relation(
         parentColumn = "id",
         entityColumn = "id",
@@ -37,7 +36,7 @@ data class EmbeddedSubstitutionPlanLesson(
             value = DbSubstitutionPlanRoomCrossover::class
         ),
         entity = DbRoom::class
-    ) val rooms: List<EmbeddedRoom>,
+    ) val rooms: List<DbRoom>,
     @Relation(
         parentColumn = "id",
         entityColumn = "id",
@@ -52,7 +51,7 @@ data class EmbeddedSubstitutionPlanLesson(
         parentColumn = "lesson_time_id",
         entityColumn = "id",
         entity = DbLessonTime::class
-    ) val lessonTime: EmbeddedLessonTime,
+    ) val lessonTime: DbLessonTime,
     @Relation(
         parentColumn = "default_lesson_id",
         entityColumn = "id",
@@ -62,22 +61,22 @@ data class EmbeddedSubstitutionPlanLesson(
         parentColumn = "day_id",
         entityColumn = "id",
         entity = DbDay::class
-    ) val day: EmbeddedDay
+    ) val day: DbDay
 ) {
     fun toModel(): Lesson.SubstitutionPlanLesson {
         return Lesson.SubstitutionPlanLesson(
             id = substitutionPlanLesson.id,
-            date = day.day.date,
-            week = Cacheable.Loaded(day.week.toModel()),
+            date = day.date,
+            week = day.weekId,
             subject = substitutionPlanLesson.subject,
             isSubjectChanged = substitutionPlanLesson.isSubjectChanged,
-            teachers = teachers.map { Cacheable.Loaded(it.toModel()) },
+            teachers = teachers.map { it.id },
             isTeacherChanged = substitutionPlanLesson.isTeacherChanged,
-            rooms = rooms.map { Cacheable.Loaded(it.toModel()) },
+            rooms = rooms.map { it.id },
             isRoomChanged = substitutionPlanLesson.isRoomChanged,
-            groups = groups.map { Cacheable.Loaded(it.toModel()) },
-            defaultLesson = defaultLesson?.toModel()?.let { Cacheable.Loaded(it) },
-            lessonTime = Cacheable.Loaded(lessonTime.toModel()),
+            groups = groups.map { it.group.id },
+            defaultLesson = defaultLesson?.defaultLesson?.id,
+            lessonTime = lessonTime.id,
             info = substitutionPlanLesson.info
         )
     }

@@ -4,7 +4,6 @@ import co.touchlab.kermit.Logger
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.School
@@ -75,13 +74,13 @@ class UpdateTimetableUseCase(
                 clazz.lessons.map { lesson ->
                     Lesson.TimetableLesson(
                         dayOfWeek = lesson.dayOfWeek,
-                        week = Cacheable.Loaded(currentWeek ?: weeks.first()),
+                        week = (currentWeek ?: weeks.first()).id,
                         weekType = lesson.weekType,
                         subject = lesson.subject,
-                        rooms = lesson.room.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { Cacheable.Loaded(it) },
-                        teachers = lesson.teacher.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { Cacheable.Loaded(it) },
-                        lessonTime = lessonTimes.first { it.lessonNumber == lesson.lessonNumber }.let { Cacheable.Loaded(it) },
-                        groups = listOf(group).map { Cacheable.Loaded(it) }
+                        rooms = lesson.room.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
+                        teachers = lesson.teacher.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
+                        lessonTime = lessonTimes.first { it.lessonNumber == lesson.lessonNumber }.id,
+                        groups = listOf(group.id)
                     )
                 }
             }

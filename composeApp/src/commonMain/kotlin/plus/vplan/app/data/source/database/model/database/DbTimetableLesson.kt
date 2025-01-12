@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import kotlinx.datetime.DayOfWeek
+import kotlin.uuid.Uuid
 
 @Entity(
     tableName = "timetable_lessons",
@@ -31,7 +32,7 @@ import kotlinx.datetime.DayOfWeek
     ]
 )
 data class DbTimetableLesson(
-    @ColumnInfo(name = "id") val id: String,
+    @ColumnInfo(name = "id") val id: Uuid,
     @ColumnInfo(name = "day_of_week") val dayOfWeek: DayOfWeek,
     @ColumnInfo(name = "week_id") val weekId: String,
     @ColumnInfo(name = "lesson_time_id") val lessonTimeId: String,

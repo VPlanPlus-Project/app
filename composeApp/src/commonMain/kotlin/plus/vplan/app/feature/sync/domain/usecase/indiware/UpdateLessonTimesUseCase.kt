@@ -3,7 +3,6 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.School
@@ -38,7 +37,7 @@ class UpdateLessonTimesUseCase(
                     start = baseDataLessonTime.start,
                     end = baseDataLessonTime.end,
                     lessonNumber = baseDataLessonTime.lessonNumber,
-                    group = Cacheable.Loaded(group),
+                    group = group.id,
                     interpolated = false
                 )
             }
@@ -73,7 +72,7 @@ class UpdateLessonTimesUseCase(
                     start = last.end,
                     end = last.end + lessonDuration,
                     lessonNumber = last.lessonNumber + 1,
-                    group = Cacheable.Loaded(group),
+                    group = group.id,
                     interpolated = true
                 )
                 lessonTimes.add(next)

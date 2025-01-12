@@ -122,7 +122,7 @@ private fun ProfileSettingsContent(
                     .fillMaxWidth()
             ) { showRenaming ->
                 if (showRenaming) {
-                    var newName by rememberSaveable { mutableStateOf(state.profile.displayName) }
+                    var newName by rememberSaveable { mutableStateOf(state.profile.name) }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -134,7 +134,7 @@ private fun ProfileSettingsContent(
                             singleLine = true,
                             onValueChange = { newName = it },
                             label = { Text("Name") },
-                            placeholder = { Text(state.profile.originalName) }
+                            placeholder = { Text(state.profile.name) }
                         )
                         IconButton(
                             onClick = { isRenamingInProgress = false },
@@ -168,7 +168,7 @@ private fun ProfileSettingsContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = state.profile.displayName,
+                        text = state.profile.name,
                         style = MaterialTheme.typography.headlineMedium
                     )
                     IconButton(onClick = { isRenamingInProgress = true }) {
@@ -187,9 +187,9 @@ private fun ProfileSettingsContent(
                         is Profile.TeacherProfile -> append("Lehrer ")
                         is Profile.RoomProfile -> append("Raum ")
                     }
-                    append(state.profile.originalName)
+                    append(state.profile.name)
                     append(" $DOT ")
-                    append(state.profile.school.toValueOrNull()!!.name)
+//                    append(state.profile.school.toValueOrNull()!!.name)
                 },
                 modifier = Modifier.padding(horizontal = 16.dp),
                 style = MaterialTheme.typography.labelMedium,
@@ -224,11 +224,11 @@ private fun ProfileSettingsContent(
                             modifier = Modifier.size(32.dp)
                         )
                         Column {
-                            Text(
-                                text = displayVppId.toValueOrNull()!!.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+//                            Text(
+//                                text = displayVppId.toValueOrNull()!!.name,
+//                                style = MaterialTheme.typography.titleMedium,
+//                                color = MaterialTheme.colorScheme.onSurface
+//                            )
                             Text(
                                 text = "vpp.ID verwalten",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -278,10 +278,10 @@ private fun ProfileSettingsContent(
         if (isVppIdManagementDrawerVisible &&
             state.profile is Profile.StudentProfile &&
             state.profile.vppId != null) {
-            VppIdManagementDrawer(
-                vppId = state.profile.vppId.toValueOrNull()!!,
-                onDismiss = { isVppIdManagementDrawerVisible = false }
-            )
+//            VppIdManagementDrawer(
+//                vppId = state.profile.vppId.toValueOrNull()!!,
+//                onDismiss = { isVppIdManagementDrawerVisible = false }
+//            )
         }
     }
 }

@@ -26,9 +26,9 @@ class TimetableRepositoryImpl(
                 DbTimetableLesson(
                     id = lesson.id,
                     dayOfWeek = lesson.dayOfWeek,
-                    weekId = lesson.week.getItemId(),
+                    weekId = lesson.week,
                     weekType = lesson.weekType,
-                    lessonTimeId = lesson.lessonTime.getItemId(),
+                    lessonTimeId = lesson.lessonTime,
                     subject = lesson.subject,
                     version = "${schoolId}_$newVersion"
                 )
@@ -37,7 +37,7 @@ class TimetableRepositoryImpl(
                 lesson.groups.map { group ->
                     DbTimetableGroupCrossover(
                         timetableLessonId = lesson.id,
-                        groupId = group.getItemId().toInt()
+                        groupId = group
                     )
                 }
             },
@@ -45,7 +45,7 @@ class TimetableRepositoryImpl(
                 lesson.teachers.map { teacher ->
                     DbTimetableTeacherCrossover(
                         timetableLessonId = lesson.id,
-                        teacherId = teacher.getItemId().toInt()
+                        teacherId = teacher
                     )
                 }
             },
@@ -53,7 +53,7 @@ class TimetableRepositoryImpl(
                 lesson.rooms.orEmpty().map { room ->
                     DbTimetableRoomCrossover(
                         timetableLessonId = lesson.id,
-                        roomId = room.getItemId().toInt()
+                        roomId = room
                     )
                 }
             }
@@ -82,7 +82,7 @@ class TimetableRepositoryImpl(
     override fun getById(id: Uuid): Flow<Lesson.TimetableLesson?> = channelFlow {
         vppDatabase.timetableDao.getById(id.toHexString()).collectLatest {
             if (it.isEmpty()) return@collectLatest send(null)
-            val schoolId = it.first().week.school.school.id
+            val schoolId = vppDatabase.weekDao.getById(it.first().timetableLesson.weekId).first()!!.schoolId
             vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).collectLatest { versionFlow ->
                 val currentVersion = versionFlow?.toIntOrNull() ?: -1
                 vppDatabase.timetableDao.getById(id.toHexString(), "${schoolId}_$currentVersion").collect { timetableLesson ->
@@ -95,10 +95,9 @@ class TimetableRepositoryImpl(
     override fun getForSchool(schoolId: Int, minWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<Uuid>> = channelFlow {
         vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).collectLatest { versionFlow ->
             val currentVersion = versionFlow?.toIntOrNull() ?: -1
-            vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion").collectLatest collectLessons@{
-                val weekIndex = it.map { it.week.week.weekIndex }.filter { it >= minWeekIndex }.minOrNull()
-                if (weekIndex == null) return@collectLessons send(emptyList())
-                send(it.filter { it.week.week.weekIndex == weekIndex && it.timetableLesson.dayOfWeek == dayOfWeek }.map { Uuid.parseHex(it.timetableLesson.id) })
+            val allowedWeeks = vppDatabase.weekDao.getBySchool(schoolId).first().filter { it.weekIndex >= minWeekIndex }
+            vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion", allowedWeeks.map { it.id }).collectLatest collectLessons@{
+                send(it.map { it.timetableLesson.id })
             }
         }
     }

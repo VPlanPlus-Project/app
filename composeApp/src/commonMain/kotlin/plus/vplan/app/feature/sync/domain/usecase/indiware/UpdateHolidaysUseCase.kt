@@ -20,7 +20,7 @@ class UpdateHolidaysUseCase(
         val downloadedHolidays = baseData.data.holidays.map { holiday ->
             Holiday(
                 date = holiday,
-                school = school
+                school = school.id
             )
         }
 

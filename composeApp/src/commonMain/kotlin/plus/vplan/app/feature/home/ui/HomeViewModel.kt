@@ -15,7 +15,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetCurrentProfileUseCase
@@ -41,7 +40,7 @@ class HomeViewModel(
             getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(currentProfile = profile)
                 getDayUseCase(profile, state.currentTime.date)
-                    .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.displayName}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
+                    .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.name}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
                     .collectLatest { day -> state = state.copy(currentDay = day) }
             }
         }
@@ -57,7 +56,7 @@ class HomeViewModel(
         viewModelScope.launch {
 //            updateHolidaysUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool)
 //            updateTimetableUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool)
-            updateSubstitutionPlanUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool, state.currentTime.date)
+//            updateSubstitutionPlanUseCase(state.currentProfile!!.school.toValueOrNull() as School.IndiwareSchool, state.currentTime.date)
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }
 

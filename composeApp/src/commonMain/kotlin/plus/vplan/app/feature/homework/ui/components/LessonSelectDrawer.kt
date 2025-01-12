@@ -144,19 +144,19 @@ private fun LessonSelectContent(
                         tint = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                     )
                     Column {
-                        Text(
-                            text = buildString {
-                                append(defaultLesson.subject)
-                                if (defaultLesson.course != null) append(" (${defaultLesson.course.toValueOrNull()!!.name})")
-                            },
-                            style = MaterialTheme.typography.titleSmall,
-                            color = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text = defaultLesson.teacher?.toValueOrNull()?.name ?: "Kein Lehrer",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                        )
+//                        Text(
+//                            text = buildString {
+//                                append(defaultLesson.subject)
+//                                if (defaultLesson.course != null) append(" (${defaultLesson.course.toValueOrNull()!!.name})")
+//                            },
+//                            style = MaterialTheme.typography.titleSmall,
+//                            color = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+//                        )
+//                        Text(
+//                            text = defaultLesson.teacher?.toValueOrNull()?.name ?: "Kein Lehrer",
+//                            style = MaterialTheme.typography.bodySmall,
+//                            color = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+//                        )
                     }
                 }
             }

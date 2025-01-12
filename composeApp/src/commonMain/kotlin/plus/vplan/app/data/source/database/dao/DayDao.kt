@@ -7,7 +7,6 @@ import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.data.source.database.model.database.DbDay
-import plus.vplan.app.data.source.database.model.embedded.EmbeddedDay
 
 @Dao
 interface DayDao {
@@ -17,5 +16,5 @@ interface DayDao {
 
     @Transaction
     @Query("SELECT * FROM day WHERE date = :date AND school_id = :schoolId")
-    fun getBySchool(date: LocalDate, schoolId: Int): Flow<EmbeddedDay?>
+    fun getBySchool(date: LocalDate, schoolId: Int): Flow<DbDay?>
 }

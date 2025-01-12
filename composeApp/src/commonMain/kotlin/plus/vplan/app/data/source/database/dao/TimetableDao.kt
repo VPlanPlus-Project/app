@@ -44,6 +44,10 @@ interface TimetableDao {
     fun getTimetableLessons(schoolId: Int, version: String): Flow<List<EmbeddedTimetableLesson>>
 
     @Transaction
+    @Query("SELECT * FROM timetable_lessons LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId AND timetable_lessons.version = :version AND timetable_lessons.week_id IN (:allowedWeekIds)")
+    fun getTimetableLessons(schoolId: Int, version: String, allowedWeekIds: List<String>): Flow<List<EmbeddedTimetableLesson>>
+
+    @Transaction
     @Query("SELECT * FROM timetable_lessons WHERE id = :id AND version = :version")
     fun getById(id: String, version: String): Flow<EmbeddedTimetableLesson?>
 

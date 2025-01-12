@@ -1,12 +1,13 @@
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
 import plus.vplan.app.data.source.database.model.database.crossovers.DbDefaultLessonGroupCrossover
-import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 
@@ -21,13 +22,13 @@ class DefaultLessonRepositoryImpl(
         return vppDatabase.defaultLessonDao.getBySchool(schoolId).map { it.map { dl -> dl.toModel() } }
     }
 
-    override fun getById(id: String): Flow<Cacheable<DefaultLesson>> {
-        return vppDatabase.defaultLessonDao.getById(id).map { it?.toModel()?.let { model -> Cacheable.Loaded(model) } ?: Cacheable.NotExisting(id) }
+    override fun getById(id: String): Flow<CacheState<DefaultLesson>> {
+        return vppDatabase.defaultLessonDao.getById(id).map { it?.toModel()?.let { model -> CacheState.Done(model) } ?: CacheState.NotExisting(id) }
     }
 
     override suspend fun upsert(defaultLesson: DefaultLesson): DefaultLesson {
         upsert(listOf(defaultLesson))
-        return getById(defaultLesson.id).first().toValueOrNull()!!
+        return getById(defaultLesson.id).filterIsInstance<CacheState.Done<DefaultLesson>>().first().data
     }
 
     override suspend fun upsert(defaultLessons: List<DefaultLesson>) {
@@ -36,15 +37,15 @@ class DefaultLessonRepositoryImpl(
                 DbDefaultLesson(
                     id = defaultLesson.id,
                     subject = defaultLesson.subject,
-                    teacherId = defaultLesson.teacher?.getItemId()?.toInt(),
-                    courseId = defaultLesson.course?.getItemId()
+                    teacherId = defaultLesson.teacher,
+                    courseId = defaultLesson.course
                 )
             },
             defaultLessonGroupCrossovers = defaultLessons.flatMap { defaultLesson ->
                 defaultLesson.groups.map { group ->
                     DbDefaultLessonGroupCrossover(
                         defaultLessonId = defaultLesson.id,
-                        groupId = group.getItemId().toInt()
+                        groupId = group
                     )
                 }
             }

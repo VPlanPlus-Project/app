@@ -5,6 +5,7 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
@@ -17,7 +18,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toResponse
-import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.OnlineSchool
@@ -54,12 +55,12 @@ class SchoolRepositoryImpl(
                     cachedAt = Clock.System.now()
                 )
             )
-            return Response.Success(getById(id).map { it.toValueOrNull() })
+            return Response.Success(getById(id).filterIsInstance())
         }
     }
 
-    override suspend fun getById(id: Int): Flow<Cacheable<School>> {
-        return vppDatabase.schoolDao.findById(id).map { it?.toModel()?.let { model -> Cacheable.Loaded(model) } ?: Cacheable.NotExisting(id.toString()) }
+    override fun getById(id: Int): Flow<CacheState<School>> {
+        return vppDatabase.schoolDao.findById(id).map { it?.toModel()?.let { model -> CacheState.Done(model) } ?: CacheState.NotExisting(id.toString()) }
     }
 
     override suspend fun getIdFromSp24Id(sp24Id: Int): Response<Int> {
