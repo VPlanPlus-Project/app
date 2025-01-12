@@ -132,19 +132,37 @@ private fun ProfileContent(
                         Spacer(Modifier.width(8.dp))
                         (defaultLesson as? CacheState.Done)?.data?.let { defaultLessonValue ->
                             Column {
+                                val courseState = defaultLessonValue.course?.let { App.courseSource.getById(it).collectAsLoadingState(it) }
                                 Text(
                                     text = buildString {
                                         append(defaultLessonValue.subject)
-//                                        if (defaultLesson.course != null) append(" (${defaultLesson.course.toValueOrNull()!!.name})")
+                                        when (courseState?.value) {
+                                            is CacheState.Done -> append(" (${(courseState.value as CacheState.Done).data.name})")
+                                            else -> Unit
+                                        }
                                     },
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-//                                Text(
-//                                    text = defaultLessonValue.teacher?.toValueOrNull()?.name ?: "Keine Lehrkraft",
-//                                    style = MaterialTheme.typography.bodyMedium,
-//                                    color = MaterialTheme.colorScheme.onSurface
-//                                )
+                                defaultLessonValue.teacher?.let { teacherId ->
+                                    val teacherState by App.teacherSource.getById(teacherId).collectAsLoadingState(teacherId.toString())
+                                    teacherState.let {
+                                        when (it) {
+                                            is CacheState.Done -> Text(
+                                                text = it.data.name,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            else -> Unit
+                                        }
+                                    }
+                                } ?: run {
+                                    Text(
+                                        text = "Keine Lehrkraft",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
                             }
                         }
                     }
