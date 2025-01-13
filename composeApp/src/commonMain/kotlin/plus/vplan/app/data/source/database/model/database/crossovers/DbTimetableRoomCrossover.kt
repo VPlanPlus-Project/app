@@ -6,6 +6,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
+import kotlin.uuid.Uuid
 
 @Entity(
     tableName = "timetable_room_crossover",
@@ -33,5 +34,5 @@ import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 )
 data class DbTimetableRoomCrossover(
     @ColumnInfo(name = "room_id") val roomId: Int,
-    @ColumnInfo(name = "timetable_lesson_id") val timetableLessonId: String,
+    @ColumnInfo(name = "timetable_lesson_id") val timetableLessonId: Uuid,
 )

@@ -21,11 +21,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.collectAsLoadingState
+import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
 import vplanplus.composeapp.generated.resources.Res
@@ -65,11 +74,13 @@ private fun ProfileContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            ProfileTitle(state.currentProfile?.customName.orEmpty()) { onEvent(
-                ProfileScreenEvent.SetProfileSwitcherVisibility(
-                    true
+            ProfileTitle(state.currentProfile?.name.orEmpty()) {
+                onEvent(
+                    ProfileScreenEvent.SetProfileSwitcherVisibility(
+                        true
+                    )
                 )
-            ) }
+            }
             FilledTonalIconButton(
                 onClick = {}
             ) {
@@ -90,19 +101,19 @@ private fun ProfileContent(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                state.currentProfile.defaultLessons.mapKeys { it.key.toValueOrNull() }.filterKeys { it != null }.forEach { (defaultLesson, isEnabled) ->
-                    if (defaultLesson == null) return@forEach
+                val defaultLessons by combine(state.currentProfile.defaultLessons.map { App.defaultLessonSource.getById(it.key).filterIsInstance<CacheState.Done<DefaultLesson>>().map { it.data.also { it.getCourseItem() } } }) { it.toList().sortedBy { it.subject + "_" + it.courseItem?.name} }.collectAsState(emptyList())
+                defaultLessons.associateWith { state.currentProfile.defaultLessons[it.getEntityId()] ?: false }.forEach { (defaultLesson, isEnabled) ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { onEvent(
-                                ProfileScreenEvent.ToggleDefaultLessonEnabled(
+                            .clickable {
+                                onEvent(ProfileScreenEvent.ToggleDefaultLessonEnabled(
                                     state.currentProfile,
                                     defaultLesson,
                                     !isEnabled
-                                )
-                            ) },
+                                ))
+                            },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Checkbox(
@@ -122,16 +133,30 @@ private fun ProfileContent(
                             Text(
                                 text = buildString {
                                     append(defaultLesson.subject)
-                                    if (defaultLesson.course != null) append(" (${defaultLesson.course.toValueOrNull()!!.name})")
+                                    if (defaultLesson.courseItem != null) append(" (${defaultLesson.courseItem!!.name})")
                                 },
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Text(
-                                text = defaultLesson.teacher?.toValueOrNull()?.name ?: "Keine Lehrkraft",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            defaultLesson.teacher?.let { teacherId ->
+                                val teacherState by App.teacherSource.getById(teacherId).collectAsLoadingState(teacherId.toString())
+                                teacherState.let {
+                                    when (it) {
+                                        is CacheState.Done -> Text(
+                                            text = it.data.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        else -> Unit
+                                    }
+                                }
+                            } ?: run {
+                                Text(
+                                    text = "Keine Lehrkraft",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     }
                 }

@@ -6,6 +6,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
+import kotlin.uuid.Uuid
 
 @Entity(
     tableName = "timetable_teacher_crossover",
@@ -33,5 +34,5 @@ import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 )
 data class DbTimetableTeacherCrossover(
     @ColumnInfo(name = "teacher_id") val teacherId: Int,
-    @ColumnInfo(name = "timetable_lesson_id") val timetableLessonId: String,
+    @ColumnInfo(name = "timetable_lesson_id") val timetableLessonId: Uuid,
 )

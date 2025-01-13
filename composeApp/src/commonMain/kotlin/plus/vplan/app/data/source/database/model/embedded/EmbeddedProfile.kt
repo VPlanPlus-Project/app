@@ -6,9 +6,7 @@ import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
 
 data class EmbeddedProfile(
     @Embedded val profile: DbProfile,
@@ -33,32 +31,27 @@ data class EmbeddedProfile(
             val disabledDefaultLessons = embeddedGroupProfile.disabledDefaultLesson.map { it.defaultLessonId }
             return Profile.StudentProfile(
                 id = profile.id,
-                customName = profile.displayName,
-                group = Cacheable.Loaded(embeddedGroupProfile.group.toModel()),
+                name = profile.displayName ?: embeddedGroupProfile.group.group.name,
+                group = embeddedGroupProfile.group.group.id,
                 defaultLessons =
                     embeddedGroupProfile.defaultLessons
                         .associateWith { disabledDefaultLessons.contains(it.defaultLessonId).not() }
-                        .mapKeys { Cacheable.Uninitialized(it.key.defaultLessonId) },
-                vppId = run {
-                    val model = embeddedGroupProfile?.vppId?.toModel() as? VppId.Active
-                    @Suppress("UNCHECKED_CAST")
-                    if (model == null) null
-                    else Cacheable.Loaded(model) as Cacheable<VppId.Active>
-                }
+                        .mapKeys { it.key.defaultLessonId },
+                vppId = embeddedGroupProfile.vppId?.vppId?.id
             )
         }
         if (embeddedTeacherProfile != null) {
             return Profile.TeacherProfile(
                 id = profile.id,
-                customName = profile.displayName,
-                teacher = embeddedTeacherProfile.teacher.toModel()
+                name = profile.displayName ?: embeddedTeacherProfile.teacher.name,
+                teacher = embeddedTeacherProfile.teacher.id
             )
         }
         if (embeddedRoomProfile != null) {
             return Profile.RoomProfile(
                 id = profile.id,
-                customName = profile.displayName,
-                room = embeddedRoomProfile.room.toModel()
+                name = profile.displayName ?: embeddedRoomProfile.room.name,
+                room = embeddedRoomProfile.room.id
             )
         }
         return null

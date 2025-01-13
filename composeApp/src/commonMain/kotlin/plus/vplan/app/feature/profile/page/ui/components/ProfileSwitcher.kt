@@ -107,7 +107,7 @@ fun ProfileSwitcher(
                             item { Spacer(Modifier.width(8.dp)) }
                             items(profiles) { profile ->
                                 ProfileIcon(
-                                    label = profile.displayName,
+                                    label = profile.name,
                                     type = if (activeProfile == profile) ProfileIconType.Active else ProfileIconType.Other,
                                     onClick = { hideSheet(); onSelectProfile(profile) }
                                 )

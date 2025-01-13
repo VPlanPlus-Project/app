@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import plus.vplan.app.domain.model.Teacher
 
 @Entity(
     tableName = "school_teachers",
@@ -26,4 +27,12 @@ data class DbTeacher(
     @ColumnInfo(name = "id") val id: Int,
     @ColumnInfo(name = "school_id") val schoolId: Int,
     @ColumnInfo(name = "name") val name: String
-)
+) {
+    fun toModel(): Teacher {
+        return Teacher(
+            id = id,
+            school = schoolId,
+            name = name
+        )
+    }
+}

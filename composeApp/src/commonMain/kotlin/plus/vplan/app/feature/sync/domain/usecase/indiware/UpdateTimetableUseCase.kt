@@ -4,7 +4,6 @@ import co.touchlab.kermit.Logger
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.School
@@ -37,8 +36,8 @@ class UpdateTimetableUseCase(
         val weeks = weekRepository.getBySchool(indiwareSchool.id).latest()
 
         val weeksInPastOrCurrent = weeks
-            .filter { it.end > Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
-            .sortedBy { it.calendarWeek }
+            .filter { it.start < Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
+            .sortedBy { it.weekIndex }
 
         val currentWeek = weeks.firstOrNull { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date in it.start..it.end }
 
@@ -56,11 +55,12 @@ class UpdateTimetableUseCase(
             )
             when {
                 timetable is Response.Error.OnlineError.NotFound -> {
-                    LOGGER.i { "Timetable not found for indiware school ${indiwareSchool.id} and week ${weeksInPastOrCurrent[weekIndex].calendarWeek} (retrying $weekIndex times)" }
+                    LOGGER.i { "Timetable not found for indiware school ${indiwareSchool.id} and week CW${weeksInPastOrCurrent[weekIndex].calendarWeek} (${weeksInPastOrCurrent[weekIndex].weekIndex} week of school year) (retrying $weekIndex times)" }
                     weekIndex -= 1
                 }
                 timetable !is Response.Success && timetable is Response.Error -> return timetable
                 timetable is Response.Success -> {
+                    LOGGER.i { "Timetable found for indiware school ${indiwareSchool.id} in week CW${weeksInPastOrCurrent[weekIndex].calendarWeek} (${weeksInPastOrCurrent[weekIndex].weekIndex} week of school year)" }
                     downloadedTimetable = timetable.data
                     break
                 }
@@ -75,13 +75,13 @@ class UpdateTimetableUseCase(
                 clazz.lessons.map { lesson ->
                     Lesson.TimetableLesson(
                         dayOfWeek = lesson.dayOfWeek,
-                        week = Cacheable.Loaded(currentWeek ?: weeks.first()),
+                        week = (currentWeek ?: weeks.first()).id,
                         weekType = lesson.weekType,
                         subject = lesson.subject,
-                        rooms = lesson.room.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { Cacheable.Loaded(it) },
-                        teachers = lesson.teacher.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { Cacheable.Loaded(it) },
-                        lessonTime = lessonTimes.first { it.lessonNumber == lesson.lessonNumber }.let { Cacheable.Loaded(it) },
-                        groups = listOf(group).map { Cacheable.Loaded(it) }
+                        rooms = lesson.room.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
+                        teachers = lesson.teacher.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
+                        lessonTime = lessonTimes.first { it.lessonNumber == lesson.lessonNumber }.id,
+                        groups = listOf(group.id)
                     )
                 }
             }

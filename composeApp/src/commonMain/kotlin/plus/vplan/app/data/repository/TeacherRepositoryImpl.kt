@@ -5,6 +5,7 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerialName
@@ -13,7 +14,7 @@ import plus.vplan.app.VPP_ROOT_URL
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.network.saveRequest
-import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Teacher
@@ -51,8 +52,8 @@ class TeacherRepositoryImpl(
         }
     }
 
-    override fun getById(teacherId: Int): Flow<Cacheable<Teacher>> {
-        return vppDatabase.teacherDao.getById(teacherId).map { it?.toModel()?.let { model -> Cacheable.Loaded(model) } ?: Cacheable.NotExisting(teacherId.toString()) }
+    override fun getById(teacherId: Int): Flow<CacheState<Teacher>> {
+        return vppDatabase.teacherDao.getById(teacherId).map { it?.toModel()?.let { model -> CacheState.Done(model) } ?: CacheState.NotExisting(teacherId.toString()) }
     }
 
     override suspend fun getByIdWithCaching(id: Int, school: School): Response<Flow<Teacher?>> {
@@ -73,7 +74,7 @@ class TeacherRepositoryImpl(
                     name = data.name
                 )
             )
-            return Response.Success(getById(id).map { it.toValueOrNull() })
+            return Response.Success(getById(id).filterIsInstance())
         }
     }
 }

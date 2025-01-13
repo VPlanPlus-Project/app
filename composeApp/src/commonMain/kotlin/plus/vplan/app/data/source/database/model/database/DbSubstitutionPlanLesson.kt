@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import kotlin.uuid.Uuid
 
 @Entity(
     tableName = "substitution_plan_lesson",
@@ -39,7 +40,7 @@ import androidx.room.Index
     ]
 )
 data class DbSubstitutionPlanLesson(
-    @ColumnInfo("id") val id: String,
+    @ColumnInfo("id") val id: Uuid,
     @ColumnInfo("day_id") val dayId: String,
     @ColumnInfo("lesson_time_id") val lessonTimeId: String,
     @ColumnInfo("subject") val subject: String?,

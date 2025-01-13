@@ -2,7 +2,6 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.Cacheable
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.DefaultLesson
@@ -67,7 +66,7 @@ class UpdateDefaultLessonsUseCase(
             baseDataClass.defaultLessons.mapNotNull { it.course }.map { course ->
                 Course.fromIndiware(
                     sp24SchoolId = school.sp24Id,
-                    groups = listOf(group),
+                    groups = listOf(group.id),
                     name = course.name,
                     teacher = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }
                 )
@@ -77,7 +76,7 @@ class UpdateDefaultLessonsUseCase(
             .map { (id, courses) ->
                 Course(
                     id = id,
-                    groups = courses.flatMap { it.groups }.distinctBy { it.toValueOrNull()!!.id },
+                    groups = courses.flatMap { it.groups }.distinct(),
                     name = courses.first().name,
                     teacher = courses.first().teacher
                 )
@@ -109,9 +108,9 @@ class UpdateDefaultLessonsUseCase(
                     DefaultLesson(
                         id = defaultLesson.defaultLessonNumber,
                         subject = defaultLesson.subject,
-                        groups = listOf(group).map { Cacheable.Loaded(it) },
-                        course = courses.firstOrNull { it.name == defaultLesson.course?.name }?.let { Cacheable.Loaded(it) },
-                        teacher = teachers.firstOrNull { it.name == defaultLesson.teacher }?.let { Cacheable.Loaded(it) }
+                        groups = listOf(group.id),
+                        course = courses.firstOrNull { it.name == defaultLesson.course?.name }?.id,
+                        teacher = teachers.firstOrNull { it.name == defaultLesson.teacher }?.id
                     )
                 }
             }
@@ -121,7 +120,7 @@ class UpdateDefaultLessonsUseCase(
                     DefaultLesson(
                         id = id,
                         subject = defaultLessons.first().subject,
-                        groups = defaultLessons.flatMap { it.groups }.distinctBy { it.getItemId() },
+                        groups = defaultLessons.flatMap { it.groups }.distinct(),
                         course = defaultLessons.firstOrNull { it.course != null }?.course,
                         teacher = defaultLessons.firstOrNull { it.teacher != null }?.teacher
                     )

@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.model.Week
 
 @Entity(
     tableName = "weeks",
@@ -30,4 +31,16 @@ data class DbWeek(
     @ColumnInfo(name = "end") val end: LocalDate,
     @ColumnInfo(name = "week_type") val weekType: String,
     @ColumnInfo(name = "week_index") val weekIndex: Int
-)
+) {
+    fun toModel(): Week {
+        return Week(
+            id = id,
+            calendarWeek = calendarWeek,
+            start = start,
+            end = end,
+            weekType = weekType,
+            weekIndex = weekIndex,
+            school = schoolId
+        )
+    }
+}

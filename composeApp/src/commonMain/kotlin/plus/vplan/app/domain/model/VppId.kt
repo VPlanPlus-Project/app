@@ -1,39 +1,27 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.datetime.LocalDateTime
-import plus.vplan.app.domain.cache.Cacheable
-import plus.vplan.app.domain.cache.CacheableItemSource
-import plus.vplan.app.domain.cache.CachedItem
+import plus.vplan.app.domain.cache.Item
 
-sealed class VppId : CachedItem<VppId> {
+sealed class VppId : Item {
     abstract val id: Int
     abstract val name: String
-    abstract val groups: List<Cacheable<Group>>
+    abstract val groups: List<Int>
     abstract val cachedAt: LocalDateTime
 
-    override fun getItemId(): String = id.toString()
-    override fun isConfigSatisfied(
-        configuration: CacheableItemSource.FetchConfiguration<VppId>,
-        allowLoading: Boolean
-    ): Boolean {
-        if (configuration is CacheableItemSource.FetchConfiguration.Ignore) return true
-        if (configuration is Fetch) {
-            if (configuration.groups is Group.Fetch && this.groups.any { !it.isConfigSatisfied(configuration.groups, allowLoading) }) return false
-        }
-        return true
-    }
+    override fun getEntityId(): String = this.id.toString()
 
     data class Cached(
         override val id: Int,
         override val name: String,
-        override val groups: List<Cacheable<Group>>,
+        override val groups: List<Int>,
         override val cachedAt: LocalDateTime
     ) : VppId()
 
     data class Active(
         override val id: Int,
         override val name: String,
-        override val groups: List<Cacheable<Group>>,
+        override val groups: List<Int>,
         override val cachedAt: LocalDateTime,
         val accessToken: String,
         val schulverwalterAccessToken: String?
@@ -55,8 +43,4 @@ sealed class VppId : CachedItem<VppId> {
 
         return true
     }
-
-    data class Fetch(
-        val groups: CacheableItemSource.FetchConfiguration<Group> = Ignore()
-    ) : CacheableItemSource.FetchConfiguration.Fetch<VppId>()
 }

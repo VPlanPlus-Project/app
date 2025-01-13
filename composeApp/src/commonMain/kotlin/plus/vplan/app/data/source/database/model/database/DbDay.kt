@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.model.Day
 
 @Entity(
     tableName = "day",
@@ -36,4 +37,18 @@ data class DbDay(
     @ColumnInfo("week_id") val weekId: String,
     @ColumnInfo("school_id") val schoolId: Int,
     @ColumnInfo("info") val info: String?,
-)
+) {
+    fun toModel(): Day {
+        return Day(
+            id = id,
+            date = date,
+            info = info,
+            week = weekId,
+            school = schoolId,
+            dayType = Day.DayType.UNKNOWN,
+            substitutionPlan = emptyList(),
+            timetable = emptyList(),
+            nextSchoolDay = null
+        )
+    }
+}

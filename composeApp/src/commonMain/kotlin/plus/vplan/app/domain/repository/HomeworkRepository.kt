@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
@@ -13,11 +13,11 @@ import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 
 interface HomeworkRepository {
-    suspend fun upsert(homework: List<Homework>)
+    suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>)
     suspend fun getByGroup(groupId: Int): Flow<List<Homework>>
     suspend fun getByGroup(authentication: SchoolApiAccess, groupId: Int, from: LocalDateTime? = null, to: LocalDate? = null): Response<List<HomeworkResponse>>
-    suspend fun getById(id: Int): Flow<Cacheable<Homework>>
-    fun getAll(): Flow<List<Cacheable<Homework>>>
+    fun getById(id: Int): Flow<CacheState<Homework>>
+    fun getAll(): Flow<List<CacheState<Homework>>>
 
     suspend fun deleteById(id: Int)
     suspend fun deleteById(ids: List<Int>)

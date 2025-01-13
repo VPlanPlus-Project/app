@@ -2,13 +2,15 @@ package plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import plus.vplan.app.domain.cache.Cacheable
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
@@ -73,8 +75,7 @@ class SetUpSchoolDataUseCase(
                     downloadMode = baseData.data.downloadMode
                 )
                 onboardingRepository.setSchoolId(it.id)
-                schoolRepository.getById(it.id).first().toValueOrNull()
-                    ?: return@flow emit(SetUpSchoolDataResult.Error("Onboarding/${this::class.simpleName}: schoolId ${it.id} not found"))
+                schoolRepository.getById(it.id).filterIsInstance<CacheState.Done<School>>().first().data
             }
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE
@@ -113,7 +114,7 @@ class SetUpSchoolDataUseCase(
                     end = baseDataWeek.end,
                     weekType = baseDataWeek.weekType,
                     weekIndex = baseDataWeek.weekIndex,
-                    school = Cacheable.Loaded(school)
+                    school = school.id
                 )
                 weekRepository.upsert(week)
             }
@@ -130,7 +131,7 @@ class SetUpSchoolDataUseCase(
                         start = baseDataLessonTime.start,
                         end = baseDataLessonTime.end,
                         lessonNumber = baseDataLessonTime.lessonNumber,
-                        group = Cacheable.Loaded(group),
+                        group = group.id,
                         interpolated = false
                     )
                     lessonTimeRepository.upsert(lessonTime)
@@ -146,7 +147,7 @@ class SetUpSchoolDataUseCase(
                 baseDataClass.defaultLessons.mapNotNull { it.course }.map { course ->
                     Course.fromIndiware(
                         sp24SchoolId = sp24Id,
-                        groups = listOf(group),
+                        groups = listOf(group.id),
                         name = course.name,
                         teacher = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }
                     )
@@ -157,7 +158,7 @@ class SetUpSchoolDataUseCase(
                     courseRepository.upsert(
                         Course(
                             id = id,
-                            groups = courses.flatMap { it.groups }.distinctBy { it.toValueOrNull()!!.id },
+                            groups = courses.flatMap { it.groups }.distinct(),
                             name = courses.first().name,
                             teacher = courses.first().teacher
                         )
@@ -171,9 +172,9 @@ class SetUpSchoolDataUseCase(
                         DefaultLesson(
                             id = defaultLesson.defaultLessonNumber,
                             subject = defaultLesson.subject,
-                            groups = listOf(group).map { Cacheable.Loaded(it) },
-                            course = courses.firstOrNull { it.name == defaultLesson.course?.name }?.let { Cacheable.Loaded(it) },
-                            teacher = teachers.firstOrNull { it.name == defaultLesson.teacher }?.let { Cacheable.Loaded(it) }
+                            groups = listOf(group.id),
+                            course = courses.firstOrNull { it.name == defaultLesson.course?.name }?.id,
+                            teacher = teachers.firstOrNull { it.name == defaultLesson.teacher }?.id
                         )
                     }
                 }
@@ -183,7 +184,7 @@ class SetUpSchoolDataUseCase(
                         DefaultLesson(
                             id = id,
                             subject = defaultLessons.first().subject,
-                            groups = defaultLessons.flatMap { it.groups }.distinctBy { it.getItemId() },
+                            groups = defaultLessons.flatMap { it.groups }.distinct(),
                             course = defaultLessons.firstOrNull { it.course != null }?.course,
                             teacher = defaultLessons.firstOrNull { it.teacher != null }?.teacher
                         )

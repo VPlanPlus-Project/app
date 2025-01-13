@@ -12,5 +12,5 @@ interface TimetableRepository {
 
     fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>>
     fun getById(id: Uuid): Flow<Lesson.TimetableLesson?>
-    fun getForSchool(schoolId: Int, minWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<Uuid>>
+    fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<Uuid>>
 }

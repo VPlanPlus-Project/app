@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import kotlinx.datetime.LocalTime
+import plus.vplan.app.domain.model.LessonTime
 
 @Entity(
     tableName = "lesson_times",
@@ -30,4 +31,13 @@ data class DbLessonTime(
     @ColumnInfo(name = "lesson_number") val lessonNumber: Int,
     @ColumnInfo(name = "group_id") val groupId: Int,
     @ColumnInfo(name = "interpolated") val interpolated: Boolean
-)
+) {
+    fun toModel() = LessonTime(
+        id = id,
+        start = startTime,
+        end = endTime,
+        lessonNumber = lessonNumber,
+        group = groupId,
+        interpolated = interpolated
+    )
+}

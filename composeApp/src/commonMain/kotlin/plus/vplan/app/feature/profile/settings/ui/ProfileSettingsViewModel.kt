@@ -7,7 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
+import plus.vplan.app.App
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
 import plus.vplan.app.feature.profile.settings.domain.usecase.CheckIfVppIdIsStillConnectedUseCase
 import plus.vplan.app.feature.profile.settings.domain.usecase.RenameProfileUseCase
@@ -31,7 +34,7 @@ class ProfileSettingsViewModel(
                 logger.d { "Got profile $profile" }
                 state = state.copy(profile = profile)
                 if (profile is Profile.StudentProfile && profile.vppId != null) {
-                    checkIfVppIdIsStillConnectedUseCase(profile.vppId.toValueOrNull()!!).let {
+                    checkIfVppIdIsStillConnectedUseCase(App.vppIdSource.getById(profile.vppId).getFirstValue() as VppId.Active).let {
                         state = state.copy(isVppIdStillConnected = it)
                     }
                 }
