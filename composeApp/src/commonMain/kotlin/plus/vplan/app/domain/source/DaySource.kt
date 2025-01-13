@@ -14,6 +14,7 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
@@ -39,10 +40,16 @@ class DaySource(
                     dayRepository.getBySchool(date, schoolId)
                 ) { weeks, holidays, dayInfo ->
                     val dayWeek = weeks.firstOrNull { date in it.start..it.end } ?: weeks.last { it.start < date }
+                    MetaEmitting(
+                        dayWeek = dayWeek,
+                        dayInfo = dayInfo,
+                        holidays = holidays
+                    )
+                }.collectLatest { meta ->
                     val findNextRegularSchoolDayAfter: (LocalDate) -> LocalDate? = findNextRegularSchoolDayAfter@{ startDate ->
-                        if (holidays.isEmpty()) return@findNextRegularSchoolDayAfter null
+                        if (meta.holidays.isEmpty()) return@findNextRegularSchoolDayAfter null
                         var nextSchoolDay = startDate + 1.days
-                        while (holidays.maxOf { it } > nextSchoolDay && !(holidays.none { it == nextSchoolDay } && nextSchoolDay.dayOfWeek.isoDayNumber < ((school as? School.IndiwareSchool)?.daysPerWeek ?: 5))) {
+                        while (meta.holidays.maxOf { it } > nextSchoolDay && !(meta.holidays.none { it == nextSchoolDay } && nextSchoolDay.dayOfWeek.isoDayNumber < ((school as? School.IndiwareSchool)?.daysPerWeek ?: 5))) {
                             nextSchoolDay += 1.days
                         }
                         nextSchoolDay
@@ -50,16 +57,16 @@ class DaySource(
                     timetableRepository.getForSchool(
                         schoolId = schoolId,
                         dayOfWeek = date.dayOfWeek,
-                        minWeekIndex = dayWeek.weekIndex,
+                        weekIndex = meta.dayWeek.weekIndex,
                     ).collectLatest { timetable ->
                         send(CacheState.Done(Day(
                             id = id,
                             date = date,
                             school = schoolId,
-                            week = dayWeek.id,
-                            info = dayInfo?.info,
+                            week = meta.dayWeek.id,
+                            info = meta.dayInfo?.info,
                             dayType =
-                            if (date in holidays) Day.DayType.HOLIDAY
+                            if (date in meta.holidays) Day.DayType.HOLIDAY
                             else if (date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY) {
                                 var friday = date
                                 while (friday.dayOfWeek != DayOfWeek.FRIDAY) {
@@ -69,7 +76,7 @@ class DaySource(
                                 while (monday.dayOfWeek != DayOfWeek.MONDAY) {
                                     monday += 1.days
                                 }
-                                if (holidays.any { it == friday } || holidays.any { it == monday }) Day.DayType.HOLIDAY
+                                if (meta.holidays.any { it == friday } || meta.holidays.any { it == monday }) Day.DayType.HOLIDAY
                                 else Day.DayType.WEEKEND
                             }
                             else if (timetable.isNotEmpty()) Day.DayType.REGULAR
@@ -84,3 +91,9 @@ class DaySource(
         }
     }
 }
+
+private data class MetaEmitting(
+    val dayWeek: Week,
+    val dayInfo: Day?,
+    val holidays: List<LocalDate>
+)

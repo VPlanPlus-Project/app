@@ -1,9 +1,13 @@
 package plus.vplan.app.data.repository
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
@@ -79,26 +83,14 @@ class TimetableRepositoryImpl(
         }
     }
 
-    override fun getById(id: Uuid): Flow<Lesson.TimetableLesson?> = channelFlow {
-        vppDatabase.timetableDao.getById(id.toHexString()).collectLatest {
-            if (it.isEmpty()) return@collectLatest send(null)
-            val schoolId = vppDatabase.weekDao.getById(it.first().timetableLesson.weekId).first()!!.schoolId
-            vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).collectLatest { versionFlow ->
-                val currentVersion = versionFlow?.toIntOrNull() ?: -1
-                vppDatabase.timetableDao.getById(id.toHexString(), "${schoolId}_$currentVersion").collect { timetableLesson ->
-                    send(timetableLesson?.toModel())
-                }
-            }
-        }
+    override fun getById(id: Uuid): Flow<Lesson.TimetableLesson?> {
+        return vppDatabase.timetableDao.getById(id.toString()).map { it?.toModel() }
     }
 
-    override fun getForSchool(schoolId: Int, minWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<Uuid>> = channelFlow {
-        vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).collectLatest { versionFlow ->
-            val currentVersion = versionFlow?.toIntOrNull() ?: -1
-            val allowedWeeks = vppDatabase.weekDao.getBySchool(schoolId).first().filter { it.weekIndex >= minWeekIndex }
-            vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion", allowedWeeks.map { it.id }).collectLatest collectLessons@{
-                send(it.map { it.timetableLesson.id })
-            }
-        }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<Uuid>> = vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).flatMapLatest { versionFlow ->
+        val currentVersion = versionFlow?.toIntOrNull() ?: -1
+        val weeks = vppDatabase.timetableDao.getWeekIds("${schoolId}_$currentVersion", weekIndex).ifEmpty { return@flatMapLatest flowOf(emptyList()) }
+        vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion", weeks.last(), dayOfWeek)
     }
 }

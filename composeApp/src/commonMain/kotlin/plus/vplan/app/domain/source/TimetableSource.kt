@@ -20,7 +20,7 @@ class TimetableSource(
         }
     }
 
-    fun getById(id: Uuid): Flow<CacheState<Lesson>> {
+    fun getById(id: Uuid): Flow<CacheState<Lesson.TimetableLesson>> {
         return cache.getOrPut(id) {
             timetableRepository.getById(id).map { if (it == null) CacheState.NotExisting(id.toHexString()) else CacheState.Done(it) }
         }

@@ -12,9 +12,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.combine
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -24,6 +27,9 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.model.Teacher
@@ -75,10 +81,13 @@ fun FollowingLesson(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    val defaultLessonState = lesson.defaultLesson?.let {
+                        App.defaultLessonSource.getById(it).collectAsLoadingState(it)
+                    }
                     Text(
                         text = buildString {
                             if (lesson.subject != null) append(lesson.subject)
-//                            else if (lesson.defaultLesson != null) append(lesson.defaultLesson?.toValueOrNull()?.subject + " entfällt")
+                            else if (defaultLessonState?.value is CacheState.Done) append((defaultLessonState.value as CacheState.Done).data.subject + " entfällt")
                             else append("Entfall")
                         },
                         style = headerFont(),
@@ -86,19 +95,23 @@ fun FollowingLesson(
                         if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface
                     )
-                    if (lesson.rooms != null) Text(
-                        text = buildString {
-//                            append(lesson.rooms.orEmpty().filterIsInstance<Cacheable.Loaded<Room>>().joinToString { it.value.name })
-                            if (lesson.rooms.orEmpty().isEmpty()) append("Kein Raum")
-                        },
-                        style = headerFont(),
-                        color =
-                        if (lesson is Lesson.SubstitutionPlanLesson && lesson.isRoomChanged) MaterialTheme.colorScheme.error
-                        else MaterialTheme.colorScheme.onSurface
-                    )
+                    if (lesson.rooms != null) {
+                        val rooms by combine(lesson.rooms.orEmpty().map { App.roomSource.getById(it) }) { it.toList() }.collectAsState(emptyList())
+                        Text(
+                            text = buildString {
+                            append(rooms.filterIsInstance<CacheState.Done<Room>>().joinToString { it.data.name })
+                                if (lesson.rooms.orEmpty().isEmpty()) append("Kein Raum")
+                            },
+                            style = headerFont(),
+                            color =
+                            if (lesson is Lesson.SubstitutionPlanLesson && lesson.isRoomChanged) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    val teachers by combine(lesson.teachers.map { App.teacherSource.getById(it) }) { it.toList() }.collectAsState(emptyList())
                     Text(
                         text = buildString {
-//                            append(lesson.teachers.filterIsInstance<Cacheable.Loaded<Teacher>>().joinToString { it.value.name })
+                            append(teachers.filterIsInstance<CacheState.Done<Teacher>>().joinToString { it.data.name })
                             if (lesson.teachers.isEmpty()) append("Keine Lehrkraft")
                         },
                         style = headerFont(),
@@ -107,17 +120,20 @@ fun FollowingLesson(
                         else MaterialTheme.colorScheme.onSurface
                     )
                 }
-                Text(
-                    text = buildString {
-//                        append(lesson.lessonTime.toValueOrNull()!!.lessonNumber)
-                        append(". Stunde $DOT ")
-//                        append(lesson.lessonTime.toValueOrNull()!!.start.atDate(date).format())
-                        append(" - ")
-//                        append(lesson.lessonTime.toValueOrNull()!!.end.atDate(date).format())
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                val lessonTime by App.lessonTimeSource.getById(lesson.lessonTime).collectAsState(null)
+                (lessonTime as? CacheState.Done)?.data?.let { lessonTimeData ->
+                    Text(
+                        text = buildString {
+                            append(lessonTimeData.lessonNumber)
+                            append(". Stunde $DOT ")
+                            append(lessonTimeData.start.atDate(date).format())
+                            append(" - ")
+                            append(lessonTimeData.end.atDate(date).format())
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {

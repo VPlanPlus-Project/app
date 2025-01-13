@@ -17,6 +17,7 @@ import plus.vplan.app.domain.source.DaySource
 import plus.vplan.app.domain.source.DefaultLessonSource
 import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
+import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.ProfileSource
 import plus.vplan.app.domain.source.RoomSource
 import plus.vplan.app.domain.source.SchoolSource
@@ -61,6 +62,7 @@ object App {
     lateinit var courseSource: CourseSource
     lateinit var teacherSource: TeacherSource
     lateinit var roomSource: RoomSource
+    lateinit var lessonTimeSource: LessonTimeSource
 }
 
 @Composable
@@ -80,6 +82,7 @@ fun App(task: StartTask?) {
             App.courseSource = CourseSource(koinInject())
             App.teacherSource = TeacherSource(koinInject())
             App.roomSource = RoomSource(koinInject())
+            App.lessonTimeSource = LessonTimeSource(koinInject())
 
             Surface(
                 modifier = Modifier

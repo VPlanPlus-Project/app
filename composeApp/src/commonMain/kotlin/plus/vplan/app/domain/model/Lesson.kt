@@ -2,7 +2,9 @@ package plus.vplan.app.domain.model
 
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
 
 sealed interface Lesson : Item {
@@ -17,6 +19,9 @@ sealed interface Lesson : Item {
 
     override fun getEntityId(): String = this.id.toHexString()
 
+    suspend fun getLessonTimeItem(): LessonTime
+    val lessonTimeItem: LessonTime?
+
     data class TimetableLesson(
         override val id: Uuid,
         val dayOfWeek: DayOfWeek,
@@ -29,6 +34,13 @@ sealed interface Lesson : Item {
         val weekType: String?
     ) : Lesson {
         override val defaultLesson = null
+
+        override var lessonTimeItem: LessonTime? = null
+            private set
+
+        override suspend fun getLessonTimeItem(): LessonTime {
+            return lessonTimeItem ?: App.lessonTimeSource.getById(lessonTime).getFirstValue().also { lessonTimeItem = it }
+        }
 
         constructor(
             dayOfWeek: DayOfWeek,
@@ -66,5 +78,12 @@ sealed interface Lesson : Item {
         override val defaultLesson: String?,
         override val lessonTime: String,
         val info: String?
-    ) : Lesson
+    ) : Lesson {
+        override var lessonTimeItem: LessonTime? = null
+            private set
+
+        override suspend fun getLessonTimeItem(): LessonTime {
+            return lessonTimeItem ?: App.lessonTimeSource.getById(lessonTime).getFirstValue().also { lessonTimeItem = it }
+        }
+    }
 }

@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
@@ -93,12 +94,12 @@ private fun HomeContent(
                     pageCount = { 2 }
                 )
 
-                LaunchedEffect(state.currentDay?.nextSchoolDay) {
-//                    if (state.currentDay?.nextSchoolDay !is Cacheable.Loaded<Day>) return@LaunchedEffect
-//                    if (state.currentDay.nextSchoolDay.value.dayType != Day.DayType.REGULAR) return@LaunchedEffect
-//                    if (state.currentDay.substitutionPlan.ifEmpty { state.currentDay.timetable }.all { it is Cacheable.Loaded && it.value.lessonTime is Cacheable.Loaded && it.value.lessonTime.toValueOrNull()!!.end < state.currentTime.time }) {
-//                        pagerState.animateScrollToPage(1)
-//                    }
+                LaunchedEffect(state.nextDay) {
+                    if (state.nextDay == null || state.currentDay == null) return@LaunchedEffect
+                    if (state.nextDay.day.dayType != Day.DayType.REGULAR) return@LaunchedEffect
+                    if (state.currentDay.timetable.all { it.getLessonTimeItem().end < state.currentTime.time }) {
+                        pagerState.animateScrollToPage(1)
+                    }
                 }
                 Box(
                     modifier = Modifier
@@ -110,31 +111,32 @@ private fun HomeContent(
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState()),
                         pageSize = PageSize.Fill,
+                        beyondViewportPageCount = 2,
                         verticalAlignment = Alignment.Top
                     ) { page ->
-//                        val day = if (page == 0) state.currentDay else state.currentDay?.nextSchoolDay?.toValueOrNull()
-//                        when (day?.dayType) {
-//                            Day.DayType.HOLIDAY, Day.DayType.WEEKEND -> HolidayScreen(isWeekend = day.dayType == Day.DayType.WEEKEND, nextRegularSchoolDay = day.nextSchoolDay?.toValueOrNull()?.date)
-//                            Day.DayType.UNKNOWN -> Text("Unbekannter Tag")
-//                            Day.DayType.REGULAR -> {
-//                                if (page == 0) CurrentDayView(
-//                                    day = day,
-//                                    contextTime = LocalDateTime(2025, 1, 6, 8, 0, 0)
-//                                )
-//                                else NextDayView(day)
-//                            }
-//                            null -> Text("Nicht geladen")
-//                        }
+                        val day = if (page == 0) state.currentDay else state.nextDay
+                        when (day?.day?.dayType) {
+                            Day.DayType.HOLIDAY, Day.DayType.WEEKEND -> HolidayScreen(isWeekend = day.day.dayType == Day.DayType.WEEKEND, nextRegularSchoolDay = day.day.nextSchoolDay?.split("/")?.let { LocalDate.parse(it[1]) })
+                            Day.DayType.UNKNOWN -> Text("Unbekannter Tag")
+                            Day.DayType.REGULAR -> {
+                                if (page == 0) CurrentDayView(
+                                    day = day,
+                                    contextTime = LocalDateTime(2025, 1, 6, 8, 0, 0)
+                                )
+                                else NextDayView(day)
+                            }
+                            null -> Text("Nicht geladen")
+                        }
                     }
 
-//                    if (state.currentDay?.nextSchoolDay?.toValueOrNull() != null) PagerSwitcher(
-//                        modifier = Modifier
-//                            .align(Alignment.BottomCenter)
-//                            .padding(bottom = 8.dp),
-//                        swipeProgress = pagerState.currentPage + pagerState.currentPageOffsetFraction,
-//                        nextDate = state.currentDay.nextSchoolDay.toValueOrNull()!!.date,
-//                        onSelectPage = { scope.launch { pagerState.animateScrollToPage(it) } }
-//                    )
+                    if (state.nextDay != null) PagerSwitcher(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 8.dp),
+                        swipeProgress = pagerState.currentPage + pagerState.currentPageOffsetFraction,
+                        nextDate = state.nextDay.day.date,
+                        onSelectPage = { scope.launch { pagerState.animateScrollToPage(it) } }
+                    )
                 }
             }
         }

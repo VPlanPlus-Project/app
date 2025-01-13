@@ -7,7 +7,7 @@ class UuidTypeConverter {
 
     @TypeConverter
     fun toUuid(value: String): Uuid {
-        return Uuid.parse(value)
+        return if (value.contains("-")) Uuid.parse(value) else Uuid.parseHex(value)
     }
 
     @TypeConverter

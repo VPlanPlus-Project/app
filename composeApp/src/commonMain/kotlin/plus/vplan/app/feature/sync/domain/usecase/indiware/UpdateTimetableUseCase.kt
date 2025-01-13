@@ -36,8 +36,8 @@ class UpdateTimetableUseCase(
         val weeks = weekRepository.getBySchool(indiwareSchool.id).latest()
 
         val weeksInPastOrCurrent = weeks
-            .filter { it.end > Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
-            .sortedBy { it.calendarWeek }
+            .filter { it.start < Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
+            .sortedBy { it.weekIndex }
 
         val currentWeek = weeks.firstOrNull { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date in it.start..it.end }
 
@@ -55,11 +55,12 @@ class UpdateTimetableUseCase(
             )
             when {
                 timetable is Response.Error.OnlineError.NotFound -> {
-                    LOGGER.i { "Timetable not found for indiware school ${indiwareSchool.id} and week ${weeksInPastOrCurrent[weekIndex].calendarWeek} (retrying $weekIndex times)" }
+                    LOGGER.i { "Timetable not found for indiware school ${indiwareSchool.id} and week CW${weeksInPastOrCurrent[weekIndex].calendarWeek} (${weeksInPastOrCurrent[weekIndex].weekIndex} week of school year) (retrying $weekIndex times)" }
                     weekIndex -= 1
                 }
                 timetable !is Response.Success && timetable is Response.Error -> return timetable
                 timetable is Response.Success -> {
+                    LOGGER.i { "Timetable found for indiware school ${indiwareSchool.id} in week CW${weeksInPastOrCurrent[weekIndex].calendarWeek} (${weeksInPastOrCurrent[weekIndex].weekIndex} week of school year)" }
                     downloadedTimetable = timetable.data
                     break
                 }

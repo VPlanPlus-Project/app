@@ -3,6 +3,7 @@ package plus.vplan.app.domain.model
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
@@ -25,6 +26,11 @@ abstract class Profile : Item {
         val vppId: Int?
     ) : Profile() {
         override val profileType = ProfileType.STUDENT
+
+        private val defaultLessonCache = hashMapOf<String, DefaultLesson>()
+        suspend fun getDefaultLesson(id: String): DefaultLesson {
+            return defaultLessonCache.getOrPut(id) { App.defaultLessonSource.getById(id).filterIsInstance<CacheState.Done<DefaultLesson>>().first().data }
+        }
 
         @OptIn(ExperimentalCoroutinesApi::class)
         override fun getSchool(): Flow<CacheState<School>> {
