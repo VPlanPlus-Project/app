@@ -37,7 +37,13 @@ class NewHomeworkViewModel(
                 isVppIdBannerAllowedUseCase()
             ) { currentProfile, canShowVppIdBanner ->
                 state.copy(
-                    currentProfile = currentProfile as? Profile.StudentProfile,
+                    currentProfile = (currentProfile as? Profile.StudentProfile).also {
+                        it?.getGroupItem()
+                        it?.getDefaultLessons()?.onEach { defaultLesson ->
+                            defaultLesson.getTeacherItem()
+                            defaultLesson.getCourseItem()
+                        }
+                    },
                     isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppId == null) null else true,
                     canShowVppIdBanner = canShowVppIdBanner
                 )
@@ -51,7 +57,11 @@ class NewHomeworkViewModel(
                 is NewHomeworkEvent.AddTask -> state = state.copy(tasks = state.tasks.plus(Uuid.random() to event.task))
                 is NewHomeworkEvent.UpdateTask -> state = state.copy(tasks = state.tasks.plus(event.taskId to event.task))
                 is NewHomeworkEvent.RemoveTask -> state = state.copy(tasks = state.tasks.minus(event.taskId))
-                is NewHomeworkEvent.SelectDefaultLesson -> state = state.copy(selectedDefaultLesson = event.defaultLesson)
+                is NewHomeworkEvent.SelectDefaultLesson -> state = state.copy(selectedDefaultLesson = event.defaultLesson.also {
+                    it?.getCourseItem()
+                    it?.getTeacherItem()
+                    it?.getGroupItems()
+                })
                 is NewHomeworkEvent.SelectDate -> state = state.copy(selectedDate = event.date)
                 is NewHomeworkEvent.SetVisibility -> state = state.copy(isPublic = event.isPublic)
                 is NewHomeworkEvent.AddFile -> {

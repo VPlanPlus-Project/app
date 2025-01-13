@@ -18,9 +18,25 @@ data class DefaultLesson(
 
     var courseItem: Course? = null
         private set
+
+    var teacherItem: Teacher? = null
+        private set
+
+    var groupItems: List<Group>? = null
+        private set
+
     suspend fun getCourseItem(): Course? {
         if (course == null) return null
         return courseItem ?: App.courseSource.getById(course).getFirstValue().also { courseItem = it }
+    }
+
+    suspend fun getTeacherItem(): Teacher? {
+        if (this.teacher == null) return null
+        return teacherItem ?: App.teacherSource.getById(this.teacher).getFirstValue().also { teacherItem = it }
+    }
+
+    suspend fun getGroupItems(): List<Group> {
+        return groupItems ?: this.groups.map { App.groupSource.getById(it).getFirstValue() }.also { groupItems = it }
     }
 }
 

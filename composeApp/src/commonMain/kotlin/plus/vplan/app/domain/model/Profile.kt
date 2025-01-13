@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
 
 abstract class Profile : Item {
@@ -27,9 +28,30 @@ abstract class Profile : Item {
     ) : Profile() {
         override val profileType = ProfileType.STUDENT
 
+        var groupItem: Group? = null
+            private set
+
+        var vppIdItem: VppId? = null
+            private set
+
         private val defaultLessonCache = hashMapOf<String, DefaultLesson>()
+        val defaultLessonItems: List<DefaultLesson>
+            get() = this.defaultLessonCache.values.toList()
         suspend fun getDefaultLesson(id: String): DefaultLesson {
             return defaultLessonCache.getOrPut(id) { App.defaultLessonSource.getById(id).filterIsInstance<CacheState.Done<DefaultLesson>>().first().data }
+        }
+
+        suspend fun getGroupItem(): Group {
+            return groupItem ?: App.groupSource.getById(group).getFirstValue().also { groupItem = it }
+        }
+
+        suspend fun getVppIdItem(): VppId? {
+            if (this.vppId == null) return null
+            return vppIdItem ?: App.vppIdSource.getById(vppId).getFirstValue().also { this.vppIdItem = it }
+        }
+
+        suspend fun getDefaultLessons(): List<DefaultLesson> {
+            return this.defaultLessons.keys.map { getDefaultLesson(it) }
         }
 
         @OptIn(ExperimentalCoroutinesApi::class)

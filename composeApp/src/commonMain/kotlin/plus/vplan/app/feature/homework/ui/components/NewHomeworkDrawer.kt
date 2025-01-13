@@ -101,7 +101,6 @@ import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.user
 import vplanplus.composeapp.generated.resources.users
 import vplanplus.composeapp.generated.resources.x
-import kotlin.time.Duration.Companion.days
 
 @Composable
 fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
@@ -249,13 +248,13 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
-//                                Text(
-//                                    text = selectedDefaultLesson?.let { defaultLesson ->
-//                                        "${defaultLesson.subject} $DOT ${defaultLesson.teacher?.toValueOrNull()?.name ?: "Kein Lehrer"}"
-//                                    } ?: "Klasse ${state.currentProfile?.group?.toValueOrNull()?.name}",
-//                                    style = MaterialTheme.typography.bodySmall,
-//                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                                )
+                                Text(
+                                    text = selectedDefaultLesson?.let { defaultLesson ->
+                                        "${defaultLesson.subject} $DOT ${defaultLesson.teacherItem?.name ?: "Kein Lehrer"}"
+                                    } ?: "Klasse ${state.currentProfile?.groupItem?.name}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             }
                         }
                     }
@@ -382,13 +381,13 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
                                     modifier = Modifier.size(24.dp),
                                     tint = if (displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                                 )
-//                                Text(
-//                                    text =
-//                                    if ((state.selectedDefaultLesson?.groups?.size ?: 0) > 1) "Klassen ${state.selectedDefaultLesson?.groups.orEmpty().mapNotNull { it.toValueOrNull() }.joinToString { it.name }}"
-//                                    else "Klasse ${state.currentProfile?.group?.toValueOrNull()?.name}",
-//                                    style = MaterialTheme.typography.titleSmall,
-//                                    color = if (displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-//                                )
+                                Text(
+                                    text =
+                                    if ((state.selectedDefaultLesson?.groupItems?.size ?: 0) > 1) "Klassen ${state.selectedDefaultLesson?.groupItems.orEmpty().joinToString { it.name }}"
+                                    else "Klasse ${state.currentProfile?.groupItem?.name}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = if (displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
                     }
@@ -641,13 +640,13 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
     }
 
     if (showLessonSelectDrawer) {
-//        LessonSelectDrawer(
-//            group = (state.currentProfile as Profile.StudentProfile).group,
-//            defaultLessons = state.currentProfile.defaultLessons.filterValues { it }.keys.sortedBy { it.toValueOrNull()?.subject }.mapNotNull { it.toValueOrNull() },
-//            selectedDefaultLesson = state.selectedDefaultLesson,
-//            onSelectDefaultLesson = { viewModel.onEvent(NewHomeworkEvent.SelectDefaultLesson(it)) },
-//            onDismiss = { showLessonSelectDrawer = false }
-//        )
+        LessonSelectDrawer(
+            group = (state.currentProfile as Profile.StudentProfile).groupItem!!,
+            defaultLessons = state.currentProfile.defaultLessonItems.filter { defaultLesson -> state.currentProfile.defaultLessons.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
+            selectedDefaultLesson = state.selectedDefaultLesson,
+            onSelectDefaultLesson = { viewModel.onEvent(NewHomeworkEvent.SelectDefaultLesson(it)) },
+            onDismiss = { showLessonSelectDrawer = false }
+        )
     }
 
     if (showDateSelectDrawer) {
