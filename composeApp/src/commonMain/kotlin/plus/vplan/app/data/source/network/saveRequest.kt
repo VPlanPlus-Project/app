@@ -1,5 +1,6 @@
 package plus.vplan.app.data.source.network
 
+import co.touchlab.kermit.Logger
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ServerResponseException
@@ -13,6 +14,7 @@ inline fun safeRequest(
     try {
         request()
     } catch (e: Exception) {
+        Logger.e { "Error: ${e.stackTraceToString()}" }
         onError(
             when (e) {
                 is ClientRequestException, is ConnectionException, is HttpRequestTimeoutException -> Response.Error.OnlineError.ConnectionError

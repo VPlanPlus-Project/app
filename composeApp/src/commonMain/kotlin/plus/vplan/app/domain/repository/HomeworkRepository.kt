@@ -11,9 +11,10 @@ import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.feature.homework.ui.components.File
 
 interface HomeworkRepository {
-    suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>)
+    suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
     suspend fun getByGroup(groupId: Int): Flow<List<Homework>>
     suspend fun getByGroup(authentication: SchoolApiAccess, groupId: Int, from: LocalDateTime? = null, to: LocalDate? = null): Response<List<HomeworkResponse>>
     fun getById(id: Int): Flow<CacheState<Homework>>
@@ -24,6 +25,7 @@ interface HomeworkRepository {
 
     suspend fun getIdForNewLocalHomework(): Int
     suspend fun getIdForNewLocalHomeworkTask(): Int
+    suspend fun getIdForNewLocalHomeworkFile(): Int
 
     suspend fun download(
         schoolApiAccess: SchoolApiAccess,
@@ -41,6 +43,12 @@ interface HomeworkRepository {
         isPublic: Boolean,
         tasks: List<String>,
     ): Response<CreateHomeworkResponse>
+
+    suspend fun uploadHomeworkDocument(
+        vppId: VppId.Active,
+        homeworkId: Int,
+        document: File
+    ): Response<Int>
 }
 
 data class CreateHomeworkResponse(

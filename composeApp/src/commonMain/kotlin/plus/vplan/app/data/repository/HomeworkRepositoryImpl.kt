@@ -4,14 +4,17 @@ import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
@@ -28,6 +31,7 @@ import plus.vplan.app.VPP_PROTOCOL
 import plus.vplan.app.VPP_ROOT_URL
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbHomework
+import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.saveRequest
@@ -44,15 +48,16 @@ import plus.vplan.app.domain.repository.CreateHomeworkResponse
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.HomeworkResponse
 import plus.vplan.app.domain.repository.HomeworkTaskResponse
+import plus.vplan.app.feature.homework.ui.components.File
 import plus.vplan.app.utils.sha256
 
 private val logger = Logger.withTag("HomeworkRepositoryImpl")
 
 class HomeworkRepositoryImpl(
     private val httpClient: HttpClient,
-    private val vppDatabase: VppDatabase
+    private val vppDatabase: VppDatabase,
 ) : HomeworkRepository {
-    override suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>) {
+    override suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>) {
         vppDatabase.homeworkDao.upsertMany(
             homework = homework.map { homeworkItem ->
                 DbHomework(
@@ -75,14 +80,20 @@ class HomeworkRepositoryImpl(
                     dueTo = homeworkItem.dueTo,
                 )
             },
-            homeworkTask = homework.flatMap { homeworkItem ->
-                tasks.map { homeworkTask ->
-                    DbHomeworkTask(
-                        id = homeworkTask.id,
-                        homeworkId = homeworkItem.id,
-                        content = homeworkTask.content
-                    )
-                }
+            homeworkTask = tasks.map { homeworkTask ->
+                DbHomeworkTask(
+                    id = homeworkTask.id,
+                    homeworkId = homeworkTask.homework,
+                    content = homeworkTask.content
+                )
+            },
+            files = files.map {
+                DbHomeworkFile(
+                    id = it.id,
+                    homeworkId = it.homework,
+                    size = it.size,
+                    fileName = it.name
+                )
             }
         )
     }
@@ -194,7 +205,8 @@ class HomeworkRepositoryImpl(
                             content = task.description,
                             homeworkId = id
                         )
-                    }
+                    },
+                    files = emptyList() // TODO
                 )
             }
 
@@ -216,6 +228,10 @@ class HomeworkRepositoryImpl(
 
     override suspend fun getIdForNewLocalHomeworkTask(): Int {
         return (vppDatabase.homeworkDao.getMinTaskId().first() ?: 0).coerceAtMost(-1)
+    }
+
+    override suspend fun getIdForNewLocalHomeworkFile(): Int {
+        return (vppDatabase.homeworkDao.getMinFileId().first() ?: 0).coerceAtMost(-1)
     }
 
     override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<String>): Response.Error? {
@@ -256,7 +272,8 @@ class HomeworkRepositoryImpl(
                             content = homeworkTask.content
                         )
                     }
-                }.flatten()
+                }.flatten(),
+                emptyList() // TODO
             )
 
             return null
@@ -306,6 +323,21 @@ class HomeworkRepositoryImpl(
                 )
             )
         }
+    }
+
+    override suspend fun uploadHomeworkDocument(vppId: VppId.Active, homeworkId: Int, document: File): Response<Int> {
+        safeRequest(onError = {return it}) {
+            val response = httpClient.post("$VPP_ROOT_URL/api/v2.2/homework/$homeworkId/documents") {
+                header("File-Name", document.name)
+                header(HttpHeaders.ContentType, ContentType.Application.OctetStream.toString())
+                header(HttpHeaders.ContentLength, document.size.toString())
+                bearerAuth(vppId.accessToken)
+                setBody(ByteReadChannel(document.platformFile.readBytes()))
+            }
+            if (response.status != HttpStatusCode.OK) return response.toErrorResponse<Int>()
+            return ResponseDataWrapper.fromJson<Int>(response.bodyAsText())?.let { Response.Success(it) } ?: Response.Error.ParsingError(response.bodyAsText())
+        }
+        return Response.Error.Cancelled
     }
 }
 

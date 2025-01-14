@@ -30,7 +30,7 @@ import plus.vplan.app.ui.theme.AppTheme
 
 const val SERVER_IP = "192.168.3.102"
 val VPP_PROTOCOL = URLProtocol.HTTP
-const val VPP_PORT = 8000
+const val VPP_PORT = 8001
 val VPP_ROOT_URL = "${VPP_PROTOCOL.name}://$SERVER_IP:$VPP_PORT"
 const val VPP_SP24_URL = "http://$SERVER_IP:8080"
 const val APP_ID = "4"

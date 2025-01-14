@@ -11,6 +11,7 @@ sealed class Homework : Item {
     abstract val tasks: List<Int>
     abstract val defaultLesson: String?
     abstract val group: Int?
+    abstract val files: List<Int>
     override fun getEntityId(): String = this.id.toString()
 
     data class HomeworkTask(
@@ -22,6 +23,15 @@ sealed class Homework : Item {
         override fun getEntityId(): String = this.id.toString()
     }
 
+    data class HomeworkFile(
+        val id: Int,
+        val name: String,
+        val homework: Int,
+        val size: Long,
+    ) : Item {
+        override fun getEntityId(): String = this.id.toString()
+    }
+
     data class CloudHomework(
         override val id: Int,
         override val createdAt: Instant,
@@ -29,6 +39,7 @@ sealed class Homework : Item {
         override val tasks: List<Int>,
         override val defaultLesson: String?,
         override val group: Int?,
+        override val files: List<Int>,
         val isPublic: Boolean,
         val createdBy: Int,
     ) : Homework() {
@@ -49,6 +60,7 @@ sealed class Homework : Item {
         override val dueTo: Instant,
         override val tasks: List<Int>,
         override val defaultLesson: String?,
+        override val files: List<Int>,
         val createdByProfile: Uuid
     ) : Homework() {
         override val group: Int
