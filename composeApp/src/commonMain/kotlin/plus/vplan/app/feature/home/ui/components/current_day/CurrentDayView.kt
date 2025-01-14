@@ -167,6 +167,12 @@ fun CurrentDayView(
                     date = day.day.date,
                     lessons = lessonsGroupedByLessonNumber
                 )
+            } else Column {
+                FollowingLessons(
+                    showFirstGradient = false,
+                    date = day.day.date,
+                    lessons = day.timetable.ifEmpty { day.timetable }.groupBy { it.lessonTimeItem!!.lessonNumber }
+                )
             }
         }
     }

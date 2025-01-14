@@ -114,6 +114,7 @@ private suspend fun Lesson.isRelevantForProfile(profile: Profile): Boolean {
             if (this is Lesson.TimetableLesson) {
                 val defaultLessons = profile.defaultLessons.mapKeys { profile.getDefaultLesson(it.key) }
                 if (defaultLessons.filterValues { !it }.any { it.key.getCourseItem()?.name == this.subject }) return false
+                if (defaultLessons.filterValues { !it }.any { it.key.course == null && it.key.subject == this.subject }) return false
                 defaultLessons.isEmpty()
             }
         }

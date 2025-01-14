@@ -98,7 +98,7 @@ fun MainScreenHost(
             navController = navController,
             startDestination = MainScreen.MainHome
         ) {
-            composable<MainScreen.MainHome> { HomeScreen(homeViewModel) }
+            composable<MainScreen.MainHome> { HomeScreen(contentPadding, homeViewModel) }
             composable<MainScreen.MainCalendar> { CalendarScreen(navController, calendarViewModel) }
             composable<MainScreen.MainSearch> { Text("Search") }
             composable<MainScreen.MainChat> { Text("Chat") }
