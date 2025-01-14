@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.home.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -19,6 +20,7 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -98,61 +100,76 @@ private fun HomeContent(
                 )
             }
             Spacer(Modifier.height(4.dp))
-            val pagerState = rememberPagerState(
-                initialPage = 0,
-                pageCount = { 2 }
-            )
-
-            LaunchedEffect(state.nextDay) {
-                if (state.nextDay == null || state.currentDay == null) return@LaunchedEffect
-                if (state.nextDay.day.dayType != Day.DayType.REGULAR) return@LaunchedEffect
-                if (state.currentDay.timetable.all { it.getLessonTimeItem().end < state.currentTime.time }) {
-                    pagerState.animateScrollToPage(1)
+            AnimatedContent(
+                targetState = state.initDone
+            ) { initDone ->
+                if (!initDone) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                    return@AnimatedContent
                 }
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    pageSize = PageSize.Fill,
-                    beyondViewportPageCount = 2,
-                    verticalAlignment = Alignment.Top
-                ) { page ->
-                    val day = if (page == 0) state.currentDay else state.nextDay
-                    when (day?.day?.dayType) {
-                        Day.DayType.HOLIDAY, Day.DayType.WEEKEND -> HolidayScreen(isWeekend = day.day.dayType == Day.DayType.WEEKEND, nextRegularSchoolDay = day.day.nextSchoolDay?.split("/")?.let { LocalDate.parse(it[1]) })
-                        Day.DayType.UNKNOWN -> Text("Unbekannter Tag")
-                        Day.DayType.REGULAR -> {
-                            if (page == 0) CurrentDayView(
-                                day = day,
-                                contextTime = LocalDateTime(2025, 1, 6, 8, 0, 0)
-                            )
-                            else NextDayView(day)
-                        }
-                        null -> Text("Nicht geladen")
+                val pagerState = rememberPagerState(
+                    initialPage = 0,
+                    pageCount = { 2 }
+                )
+
+                LaunchedEffect(state.nextDay) {
+                    if (state.nextDay == null || state.currentDay == null) return@LaunchedEffect
+                    if (state.nextDay.day.dayType != Day.DayType.REGULAR) return@LaunchedEffect
+                    if (state.currentDay.timetable.all { it.getLessonTimeItem().end < state.currentTime.time }) {
+                        pagerState.animateScrollToPage(1)
                     }
                 }
 
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = state.nextDay != null,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                    enter = slideInVertically(spring(stiffness = Spring.StiffnessHigh)) { it/2 } + fadeIn(),
-                    exit = slideOutVertically(spring(stiffness = Spring.StiffnessHigh)) { it/2 } + fadeOut(),
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
                 ) {
-                    val nextDayDate by remember { mutableStateOf(state.nextDay!!.day.date) }
-                    PagerSwitcher(
-                        modifier = Modifier.align(Alignment.Center).padding(bottom = 8.dp),
-                        swipeProgress = pagerState.currentPage + pagerState.currentPageOffsetFraction,
-                        nextDate = nextDayDate,
-                        onSelectPage = { scope.launch { pagerState.animateScrollToPage(it) } }
-                    )
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        pageSize = PageSize.Fill,
+                        beyondViewportPageCount = 2,
+                        verticalAlignment = Alignment.Top
+                    ) { page ->
+                        val day = if (page == 0) state.currentDay else state.nextDay
+                        when (day?.day?.dayType) {
+                            Day.DayType.HOLIDAY, Day.DayType.WEEKEND -> HolidayScreen(isWeekend = day.day.dayType == Day.DayType.WEEKEND, nextRegularSchoolDay = day.day.nextSchoolDay?.split("/")?.let { LocalDate.parse(it[1]) })
+                            Day.DayType.UNKNOWN -> Text("Unbekannter Tag")
+                            Day.DayType.REGULAR -> {
+                                if (page == 0) CurrentDayView(
+                                    day = day,
+                                    contextTime = LocalDateTime(2025, 1, 6, 8, 0, 0)
+                                )
+                                else NextDayView(day)
+                            }
+                            null -> Text("Nicht geladen")
+                        }
+                    }
+
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = state.nextDay != null,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        enter = slideInVertically(spring(stiffness = Spring.StiffnessHigh)) { it/2 } + fadeIn(),
+                        exit = slideOutVertically(spring(stiffness = Spring.StiffnessHigh)) { it/2 } + fadeOut(),
+                    ) {
+                        val nextDayDate by remember { mutableStateOf(state.nextDay!!.day.date) }
+                        PagerSwitcher(
+                            modifier = Modifier.align(Alignment.Center).padding(bottom = 8.dp),
+                            swipeProgress = pagerState.currentPage + pagerState.currentPageOffsetFraction,
+                            nextDate = nextDayDate,
+                            onSelectPage = { scope.launch { pagerState.animateScrollToPage(it) } }
+                        )
+                    }
                 }
             }
+
         }
     }
 }

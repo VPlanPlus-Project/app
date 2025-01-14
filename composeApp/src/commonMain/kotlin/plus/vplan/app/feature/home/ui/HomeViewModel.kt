@@ -53,13 +53,18 @@ class HomeViewModel(
                     .collectLatest { day ->
                         state = state.copy(currentDay = HomeViewDay(
                             day = day,
-                            timetable = day.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() }
+                            timetable = day.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() },
+                            substitutionPlan = day.substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() }.ifEmpty { null }
                         ))
                         if (day.nextSchoolDay != null)getDayUseCase(profile, LocalDate.parse(day.nextSchoolDay.split("/")[1])).collectLatest { nextDay ->
-                            state = state.copy(nextDay = HomeViewDay(
-                                day = nextDay,
-                                timetable = nextDay.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() }
-                            ))
+                            state = state.copy(
+                                nextDay = HomeViewDay(
+                                    day = nextDay,
+                                    timetable = nextDay.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() },
+                                    substitutionPlan = nextDay.substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() }.ifEmpty { null }
+                                ),
+                                initDone = true
+                            )
                         }
                     }
             }
@@ -92,6 +97,7 @@ class HomeViewModel(
 data class HomeState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+    val initDone: Boolean = false,
     val currentDay: HomeViewDay? = null,
     val nextDay: HomeViewDay? = null,
     val isUpdating: Boolean = false
@@ -103,7 +109,8 @@ sealed class HomeEvent {
 
 data class HomeViewDay(
     val day: Day,
-    val timetable: List<Lesson.TimetableLesson>
+    val timetable: List<Lesson.TimetableLesson>,
+    val substitutionPlan: List<Lesson.SubstitutionPlanLesson>?
 )
 
 private suspend fun Lesson.isRelevantForProfile(profile: Profile): Boolean {
@@ -116,6 +123,8 @@ private suspend fun Lesson.isRelevantForProfile(profile: Profile): Boolean {
                 if (defaultLessons.filterValues { !it }.any { it.key.getCourseItem()?.name == this.subject }) return false
                 if (defaultLessons.filterValues { !it }.any { it.key.course == null && it.key.subject == this.subject }) return false
                 defaultLessons.isEmpty()
+            } else if (this is Lesson.SubstitutionPlanLesson) {
+                if (this.defaultLesson != null && this.defaultLesson in profile.defaultLessons.filterValues { !it }) return false
             }
         }
         is Profile.TeacherProfile -> {

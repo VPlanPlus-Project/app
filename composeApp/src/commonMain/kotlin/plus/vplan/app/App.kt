@@ -21,6 +21,7 @@ import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.ProfileSource
 import plus.vplan.app.domain.source.RoomSource
 import plus.vplan.app.domain.source.SchoolSource
+import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.VppIdSource
@@ -63,6 +64,7 @@ object App {
     lateinit var teacherSource: TeacherSource
     lateinit var roomSource: RoomSource
     lateinit var lessonTimeSource: LessonTimeSource
+    lateinit var substitutionPlanSource: SubstitutionPlanSource
 }
 
 @Composable
@@ -76,13 +78,14 @@ fun App(task: StartTask?) {
             App.groupSource = GroupSource(koinInject())
             App.schoolSource = SchoolSource(koinInject())
             App.defaultLessonSource = DefaultLessonSource(koinInject())
-            App.daySource = DaySource(koinInject(), koinInject(), koinInject())
+            App.daySource = DaySource(koinInject(), koinInject(), koinInject(), koinInject())
             App.timetableSource = TimetableSource(koinInject())
             App.weekSource = WeekSource(koinInject())
             App.courseSource = CourseSource(koinInject())
             App.teacherSource = TeacherSource(koinInject())
             App.roomSource = RoomSource(koinInject())
             App.lessonTimeSource = LessonTimeSource(koinInject())
+            App.substitutionPlanSource = SubstitutionPlanSource(koinInject())
 
             Surface(
                 modifier = Modifier

@@ -11,6 +11,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitut
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSubstitutionPlanLesson
+import kotlin.uuid.Uuid
 
 @Dao
 interface SubstitutionPlanDao {
@@ -48,7 +49,10 @@ interface SubstitutionPlanDao {
     @Query("DELETE FROM substitution_plan_lesson WHERE version = :version")
     suspend fun deleteSubstitutionPlanByVersion(version: String)
 
+    @Query("SELECT substitution_plan_lesson.id FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id LEFT JOIN day ON day.id = day_id LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId AND substitution_plan_lesson.version = :version AND day.date = :date")
+    fun getTimetableLessons(schoolId: Int, version: String, date: LocalDate): Flow<List<Uuid>>
+
     @Transaction
-    @Query("SELECT * FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id LEFT JOIN day ON day.id = day_id LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId AND substitution_plan_lesson.version = :version AND day.date = :date")
-    fun getTimetableLessons(schoolId: Int, version: String, date: LocalDate): Flow<List<EmbeddedSubstitutionPlanLesson>>
+    @Query("SELECT * FROM substitution_plan_lesson WHERE id = :id")
+    fun getById(id: Uuid): Flow<EmbeddedSubstitutionPlanLesson?>
 }

@@ -1,15 +1,9 @@
 package plus.vplan.app.data.source.database.model.embedded
 
 import androidx.room.Embedded
-import androidx.room.Junction
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbDay
-import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
-import plus.vplan.app.data.source.database.model.database.DbGroup
-import plus.vplan.app.data.source.database.model.database.DbLessonTime
-import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
-import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
@@ -19,44 +13,19 @@ data class EmbeddedSubstitutionPlanLesson(
     @Embedded val substitutionPlanLesson: DbSubstitutionPlanLesson,
     @Relation(
         parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(
-            parentColumn = "substitution_plan_lesson_id",
-            entityColumn = "teacher_id",
-            value = DbSubstitutionPlanTeacherCrossover::class
-        ),
-        entity = DbTeacher::class
-    ) val teachers: List<DbTeacher>,
+        entityColumn = "substitution_plan_lesson_id",
+        entity = DbSubstitutionPlanTeacherCrossover::class
+    ) val teachers: List<DbSubstitutionPlanTeacherCrossover>,
     @Relation(
         parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(
-            parentColumn = "substitution_plan_lesson_id",
-            entityColumn = "room_id",
-            value = DbSubstitutionPlanRoomCrossover::class
-        ),
-        entity = DbRoom::class
-    ) val rooms: List<DbRoom>,
+        entityColumn = "substitution_plan_lesson_id",
+        entity = DbSubstitutionPlanRoomCrossover::class
+    ) val rooms: List<DbSubstitutionPlanRoomCrossover>,
     @Relation(
         parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(
-            parentColumn = "substitution_plan_lesson_id",
-            entityColumn = "group_id",
-            value = DbSubstitutionPlanGroupCrossover::class
-        ),
-        entity = DbGroup::class
-    ) val groups: List<EmbeddedGroup>,
-    @Relation(
-        parentColumn = "lesson_time_id",
-        entityColumn = "id",
-        entity = DbLessonTime::class
-    ) val lessonTime: DbLessonTime,
-    @Relation(
-        parentColumn = "default_lesson_id",
-        entityColumn = "id",
-        entity = DbDefaultLesson::class
-    ) val defaultLesson: EmbeddedDefaultLesson?,
+        entityColumn = "substitution_plan_lesson_id",
+        entity = DbSubstitutionPlanGroupCrossover::class
+    ) val groups: List<DbSubstitutionPlanGroupCrossover>,
     @Relation(
         parentColumn = "day_id",
         entityColumn = "id",
@@ -70,13 +39,13 @@ data class EmbeddedSubstitutionPlanLesson(
             week = day.weekId,
             subject = substitutionPlanLesson.subject,
             isSubjectChanged = substitutionPlanLesson.isSubjectChanged,
-            teachers = teachers.map { it.id },
+            teachers = teachers.map { it.teacherId },
             isTeacherChanged = substitutionPlanLesson.isTeacherChanged,
-            rooms = rooms.map { it.id },
+            rooms = rooms.map { it.roomId },
             isRoomChanged = substitutionPlanLesson.isRoomChanged,
-            groups = groups.map { it.group.id },
-            defaultLesson = defaultLesson?.defaultLesson?.id,
-            lessonTime = lessonTime.id,
+            groups = groups.map { it.groupId },
+            defaultLesson = substitutionPlanLesson.defaultLessonId,
+            lessonTime = substitutionPlanLesson.lessonTimeId,
             info = substitutionPlanLesson.info
         )
     }

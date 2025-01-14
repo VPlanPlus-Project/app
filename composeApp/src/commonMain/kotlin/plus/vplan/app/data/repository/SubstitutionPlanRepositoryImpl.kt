@@ -14,6 +14,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitut
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
+import kotlin.uuid.Uuid
 
 class SubstitutionPlanRepositoryImpl(
     private val vppDatabase: VppDatabase
@@ -71,11 +72,13 @@ class SubstitutionPlanRepositoryImpl(
     override fun getSubstitutionPlanBySchool(
         schoolId: Int,
         date: LocalDate
-    ): Flow<List<Lesson.SubstitutionPlanLesson>> = channelFlow {
+    ): Flow<List<Uuid>> = channelFlow {
         vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.collectLatest { version ->
-            vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version", date).collect { lessons ->
-                send(lessons.map { it.toModel() })
-            }
+            vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version", date).collect { lessons -> send(lessons) }
         }
+    }
+
+    override fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?> {
+        return vppDatabase.substitutionPlanDao.getById(id).map { it?.toModel() }
     }
 }

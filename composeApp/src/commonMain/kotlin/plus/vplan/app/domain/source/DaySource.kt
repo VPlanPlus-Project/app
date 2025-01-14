@@ -16,6 +16,7 @@ import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.DayRepository
+import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.minus
@@ -25,7 +26,8 @@ import kotlin.time.Duration.Companion.days
 class DaySource(
     private val dayRepository: DayRepository,
     private val weekRepository: WeekRepository,
-    private val timetableRepository: TimetableRepository
+    private val timetableRepository: TimetableRepository,
+    private val substitutionPlanRepository: SubstitutionPlanRepository
 ) {
     private val cache = hashMapOf<String, Flow<CacheState<Day>>>()
     fun getById(id: String): Flow<CacheState<Day>> {
@@ -54,11 +56,14 @@ class DaySource(
                         }
                         nextSchoolDay
                     }
-                    timetableRepository.getForSchool(
-                        schoolId = schoolId,
-                        dayOfWeek = date.dayOfWeek,
-                        weekIndex = meta.dayWeek.weekIndex,
-                    ).collectLatest { timetable ->
+                    combine(
+                        timetableRepository.getForSchool(
+                            schoolId = schoolId,
+                            dayOfWeek = date.dayOfWeek,
+                            weekIndex = meta.dayWeek.weekIndex,
+                        ),
+                        substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
+                    ) { timetable, substitutionPlan ->
                         send(CacheState.Done(Day(
                             id = id,
                             date = date,
@@ -82,10 +87,10 @@ class DaySource(
                             else if (timetable.isNotEmpty()) Day.DayType.REGULAR
                             else Day.DayType.UNKNOWN,
                             timetable = timetable,
-                            substitutionPlan = emptyList(),
+                            substitutionPlan = substitutionPlan,
                             nextSchoolDay = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
                         )))
-                    }
+                    }.collectLatest {  }
                 }
             }
         }
