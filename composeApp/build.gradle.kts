@@ -37,6 +37,7 @@ kotlin {
 
     compilerOptions {
         optIn.add("kotlin.uuid.ExperimentalUuidApi")
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
     
     sourceSets {
