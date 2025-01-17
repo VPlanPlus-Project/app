@@ -13,7 +13,7 @@ data class EmbeddedHomework(
         parentColumn = "id",
         entityColumn = "homework_id",
         entity = DbHomeworkTask::class
-    ) val tasks: List<EmbeddedHomeworkTask>,
+    ) val tasks: List<DbHomeworkTask>,
     @Relation(
         parentColumn = "id",
         entityColumn = "homework_id",
@@ -29,7 +29,7 @@ data class EmbeddedHomework(
                 createdByProfile = homework.createdByProfileId!!,
                 defaultLesson = homework.defaultLessonId,
                 files = files.map { it.id },
-                tasks = tasks.map { it.homeworkTask.id }
+                tasks = tasks.map { it.id }
             )
         }
         return Homework.CloudHomework(
@@ -41,7 +41,7 @@ data class EmbeddedHomework(
             group = homework.groupId,
             isPublic = homework.isPublic,
             files = files.map { it.id },
-            tasks = tasks.map { it.homeworkTask.id }
+            tasks = tasks.map { it.id }
         )
     }
 }

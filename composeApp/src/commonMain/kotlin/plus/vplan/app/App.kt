@@ -17,6 +17,7 @@ import plus.vplan.app.domain.source.DaySource
 import plus.vplan.app.domain.source.DefaultLessonSource
 import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
+import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.ProfileSource
 import plus.vplan.app.domain.source.RoomSource
@@ -53,6 +54,7 @@ val VPP_ID_AUTH_URL = URLBuilder(
 object App {
     lateinit var vppIdSource: VppIdSource
     lateinit var homeworkSource: HomeworkSource
+    lateinit var homeworkTaskSource: HomeworkTaskSource
     lateinit var profileSource: ProfileSource
     lateinit var groupSource: GroupSource
     lateinit var schoolSource: SchoolSource
@@ -74,6 +76,7 @@ fun App(task: StartTask?) {
         KoinContext {
             App.vppIdSource = VppIdSource(koinInject())
             App.homeworkSource = HomeworkSource(koinInject())
+            App.homeworkTaskSource = HomeworkTaskSource(koinInject())
             App.profileSource = ProfileSource(koinInject())
             App.groupSource = GroupSource(koinInject())
             App.schoolSource = SchoolSource(koinInject())

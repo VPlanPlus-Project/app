@@ -1,7 +1,9 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.datetime.Instant
+import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
 
 sealed class Homework : Item {
@@ -13,6 +15,31 @@ sealed class Homework : Item {
     abstract val group: Int?
     abstract val files: List<Int>
     override fun getEntityId(): String = this.id.toString()
+
+    var defaultLessonItem: DefaultLesson? = null
+        private set
+
+    suspend fun getDefaultLessonItem(): DefaultLesson? {
+        return defaultLessonItem ?: defaultLesson?.let { defaultLessonId ->
+            App.defaultLessonSource.getSingleById(defaultLessonId).also { defaultLessonItem = it }
+        }
+    }
+
+    var groupItem: Group? = null
+        private set
+
+    suspend fun getGroupItem(): Group? {
+        return groupItem ?: group?.let { groupId ->
+            App.groupSource.getSingleById(groupId).also { groupItem = it }
+        }
+    }
+
+    var taskItems: List<HomeworkTask>? = null
+        private set
+
+    suspend fun getTaskItems(): List<HomeworkTask> {
+        return taskItems ?: tasks.map { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
+    }
 
     data class HomeworkTask(
         val id: Int,
@@ -51,6 +78,15 @@ sealed class Homework : Item {
                 defaultLesson = defaultLesson,
                 group = group
             )
+        }
+
+        var createdByItem: VppId? = null
+            private set
+
+        suspend fun getCreatedBy(): VppId {
+            return createdByItem ?: createdBy.let { createdById ->
+                App.vppIdSource.getSingleById(createdById).also { createdByItem = it }
+            }
         }
     }
 

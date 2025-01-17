@@ -151,6 +151,10 @@ class HomeworkRepositoryImpl(
         }
     }
 
+    override fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>> {
+        return vppDatabase.homeworkDao.getTaskById(id).map { it?.toModel() }.map { if (it == null) CacheState.NotExisting(id.toString()) else CacheState.Done(it) }
+    }
+
     override fun getAll(): Flow<List<CacheState<Homework>>> {
         return vppDatabase.homeworkDao.getAll().map { it.map { CacheState.Done(it.toModel()) } }
     }

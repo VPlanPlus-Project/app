@@ -17,6 +17,9 @@ interface HomeworkRepository {
     suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
     suspend fun getByGroup(groupId: Int): Flow<List<Homework>>
     suspend fun getByGroup(authentication: SchoolApiAccess, groupId: Int, from: LocalDateTime? = null, to: LocalDate? = null): Response<List<HomeworkResponse>>
+
+    fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
+
     fun getById(id: Int): Flow<CacheState<Homework>>
     fun getAll(): Flow<List<CacheState<Homework>>>
 

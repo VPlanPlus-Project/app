@@ -56,6 +56,10 @@ interface HomeworkDao {
     fun getMinFileId(): Flow<Int?>
 
     @Transaction
+    @Query("SELECT * FROM homework_task WHERE id = :id")
+    fun getTaskById(id: Int): Flow<DbHomeworkTask?>
+
+    @Transaction
     @Query("DELETE FROM homework")
     suspend fun deleteAll()
 }

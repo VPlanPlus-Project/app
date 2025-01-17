@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
@@ -35,17 +37,9 @@ class DevViewModel(
             }
         }
         viewModelScope.launch {
-//            App.homeworkSource.getAll(
-//                configuration = Homework.Fetch(
-//                    vppId = VppId.Fetch(),
-//                    defaultLesson = DefaultLesson.Fetch(
-//                        groups = Group.Fetch()
-//                    ),
-//                    group = Group.Fetch()
-//                )
-//            ).collect {
-//                state = state.copy(homework = it)
-//            }
+            App.homeworkSource.getAll().filterIsInstance<List<CacheState.Done<Homework>>>().map { it.map { it.data } }.onEach { it.onEach { it.prefetch() } }.collect {
+                state = state.copy(homework = it)
+            }
         }
     }
 
@@ -71,11 +65,18 @@ class DevViewModel(
 
 data class DevState(
     val profile: Profile? = null,
-    val homework: List<CacheState<Homework>> = emptyList(),
+    val homework: List<Homework> = emptyList(),
     val updateResponse: Response.Error? = null
 )
 
 sealed class DevEvent {
     data object Refresh : DevEvent()
     data object Clear : DevEvent()
+}
+
+private suspend fun Homework.prefetch() {
+    this.getDefaultLessonItem()
+    this.getGroupItem()
+    this.getTaskItems()
+    if (this is Homework.CloudHomework) this.getCreatedBy()
 }
