@@ -12,6 +12,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
@@ -52,7 +53,7 @@ infix fun LocalDate.untilText(other: LocalDate): String {
         2 -> return "Übermorgen"
         else -> {
             if (days > 0) return "In $days Tagen"
-            return "Vor $days Tagen"
+            return "Vor ${abs(days)} Tagen"
         }
     }
 }

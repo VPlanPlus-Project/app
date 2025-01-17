@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.homework.domain.usecase
+package plus.vplan.app.domain.usecase
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.filterIsInstance

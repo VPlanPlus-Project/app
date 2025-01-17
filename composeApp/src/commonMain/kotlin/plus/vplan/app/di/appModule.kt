@@ -43,6 +43,7 @@ import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.di.calendarModule
 import plus.vplan.app.feature.dev.devModule
 import plus.vplan.app.feature.home.di.homeModule
@@ -87,6 +88,8 @@ val appModule = module(createdAtStart = true) {
     singleOf(::SubstitutionPlanRepositoryImpl).bind<SubstitutionPlanRepository>()
     singleOf(::VppIdRepositoryImpl).bind<VppIdRepository>()
     singleOf(::HomeworkRepositoryImpl).bind<HomeworkRepository>()
+
+    singleOf(::GetCurrentProfileUseCase)
 }
 
 fun initKoin(configuration: KoinAppDeclaration? = null) {

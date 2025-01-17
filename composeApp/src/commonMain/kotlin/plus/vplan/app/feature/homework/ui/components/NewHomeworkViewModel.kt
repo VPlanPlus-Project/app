@@ -14,7 +14,7 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
-import plus.vplan.app.feature.homework.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
 import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
 import plus.vplan.app.utils.getBitmapFromBytes

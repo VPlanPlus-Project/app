@@ -113,30 +113,6 @@ data class HomeViewDay(
     val substitutionPlan: List<Lesson.SubstitutionPlanLesson>?
 )
 
-private suspend fun Lesson.isRelevantForProfile(profile: Profile): Boolean {
-    when (profile) {
-        is Profile.StudentProfile -> {
-            if (profile.group !in this.groups) return false
-            if (profile.defaultLessons.filterValues { false }.any { it.key == this.defaultLesson }) return false
-            if (this is Lesson.TimetableLesson) {
-                val defaultLessons = profile.defaultLessons.mapKeys { profile.getDefaultLesson(it.key) }
-                if (defaultLessons.filterValues { !it }.any { it.key.getCourseItem()?.name == this.subject }) return false
-                if (defaultLessons.filterValues { !it }.any { it.key.course == null && it.key.subject == this.subject }) return false
-                defaultLessons.isEmpty()
-            } else if (this is Lesson.SubstitutionPlanLesson) {
-                if (this.defaultLesson != null && this.defaultLesson in profile.defaultLessons.filterValues { !it }) return false
-            }
-        }
-        is Profile.TeacherProfile -> {
-            if (profile.teacher !in this.teachers) return false
-        }
-        is Profile.RoomProfile -> {
-            if (profile.room !in this.rooms.orEmpty()) return false
-        }
-    }
-    return true
-}
-
 private suspend fun Lesson.prefetch() {
     this.getLessonTimeItem()
 }
