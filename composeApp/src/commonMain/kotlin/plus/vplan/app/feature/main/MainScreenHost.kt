@@ -26,6 +26,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -99,7 +100,7 @@ fun MainScreenHost(
             startDestination = MainScreen.MainHome
         ) {
             composable<MainScreen.MainHome> { HomeScreen(contentPadding, homeViewModel) }
-            composable<MainScreen.MainCalendar> { CalendarScreen(navController, calendarViewModel) }
+            composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
             composable<MainScreen.MainSearch> { Text("Search") }
             composable<MainScreen.MainChat> { Text("Chat") }
             composable<MainScreen.MainDev> { DevScreen(contentPadding, toggleBottomBar) }
@@ -124,6 +125,7 @@ fun MainScreenHost(
                     .onSizeChanged {
                         with(localDensity) { bottomBarHeight = it.height.toDp() }
                     }
+                    .shadow(elevation = 4.dp)
             ) {
                 NavigationBarItem(
                     selected = currentDestination == "_Home",

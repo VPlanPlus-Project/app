@@ -22,6 +22,15 @@ operator fun LocalTime.plus(duration: Duration): LocalTime {
     return instant.plus(duration).toLocalDateTime(TimeZone.UTC).time
 }
 
+operator fun LocalTime.minus(duration: Duration): LocalTime {
+    val instant = atDate(LocalDate.fromEpochDays(0)).toInstant(TimeZone.UTC)
+    return instant.minus(duration).toLocalDateTime(TimeZone.UTC).time
+}
+
+fun LocalTime.inWholeMinutes(): Int {
+    return this.toSecondOfDay() / 60
+}
+
 infix fun LocalTime.progressIn(range: ClosedRange<LocalTime>): Double {
     val start = range.start.toSecondOfDay()
     val end = range.endInclusive.toSecondOfDay()
