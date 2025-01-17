@@ -351,7 +351,10 @@ private fun CalendarScreenContent(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
-                                                Text(text = lesson.subject.toString(), style = MaterialTheme.typography.bodyMedium)
+                                                Text(text = buildString {
+                                                     if (lessonsThatOverlapStartAndAreAlreadyDisplayed.isEmpty()) append("${lesson.lessonTimeItem!!.lessonNumber}. ")
+                                                    append(lesson.subject.toString())
+                                                }, style = MaterialTheme.typography.bodyMedium)
                                                 if (lesson.roomItems != null) Text(
                                                     text = lesson.roomItems.orEmpty().joinToString { it.name },
                                                     style = MaterialTheme.typography.bodySmall
