@@ -96,14 +96,14 @@ class CalendarViewModel(
                     if (syncJobs.any { it.date == event.date && !it.syncLessons }) {
                         syncJobs.find { it.date == event.date && it.syncLessons }?.job?.cancel()
                         syncJobs.removeAll { it.date == event.date && it.syncLessons }
-                        syncJobs.add(
-                            SyncJob(
-                                job = launchSyncJob(event.date, true),
-                                date = event.date,
-                                syncLessons = true
-                            )
-                        )
                     }
+                    syncJobs.add(
+                        SyncJob(
+                            job = launchSyncJob(event.date, true),
+                            date = event.date,
+                            syncLessons = true
+                        )
+                    )
                 }
             }
         }

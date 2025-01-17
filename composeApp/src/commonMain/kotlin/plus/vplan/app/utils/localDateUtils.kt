@@ -12,6 +12,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.until
 import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -44,8 +45,7 @@ fun LocalDate.atStartOfMonth(): LocalDate {
 }
 
 infix fun LocalDate.untilText(other: LocalDate): String {
-    val days = (other - this).days
-    when (days) {
+    when (val days = this.until(other, DateTimeUnit.DAY)) {
         -2 -> return "Vorgestern"
         -1 -> return "Gestern"
         0 -> return "Heute"

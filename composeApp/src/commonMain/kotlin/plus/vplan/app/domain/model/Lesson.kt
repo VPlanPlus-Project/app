@@ -4,7 +4,6 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Item
-import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
 
 sealed interface Lesson : Item {
@@ -50,15 +49,15 @@ sealed interface Lesson : Item {
             private set
 
         override suspend fun getLessonTimeItem(): LessonTime {
-            return lessonTimeItem ?: App.lessonTimeSource.getById(lessonTime).getFirstValue().also { lessonTimeItem = it }
+            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTime).also { lessonTimeItem = it }
         }
 
         override suspend fun getRoomItems(): List<Room>? {
-            return roomItems ?: rooms?.map { App.roomSource.getById(it).getFirstValue() }?.also { roomItems = it }
+            return roomItems ?: rooms?.map { App.roomSource.getSingleById(it) }?.also { roomItems = it }
         }
 
         override suspend fun getTeacherItems(): List<Teacher> {
-            return teacherItems ?: teachers.map { App.teacherSource.getById(it).getFirstValue() }.also { teacherItems = it }
+            return teacherItems ?: teachers.map { App.teacherSource.getSingleById(it) }.also { teacherItems = it }
         }
 
         constructor(
@@ -108,15 +107,15 @@ sealed interface Lesson : Item {
             private set
 
         override suspend fun getLessonTimeItem(): LessonTime {
-            return lessonTimeItem ?: App.lessonTimeSource.getById(lessonTime).getFirstValue().also { lessonTimeItem = it }
+            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTime).also { lessonTimeItem = it }
         }
 
         override suspend fun getRoomItems(): List<Room> {
-            return roomItems ?: rooms.map { App.roomSource.getById(it).getFirstValue() }.also { roomItems = it }
+            return roomItems ?: rooms.map { App.roomSource.getSingleById(it) }.also { roomItems = it }
         }
 
         override suspend fun getTeacherItems(): List<Teacher> {
-            return teacherItems ?: teachers.map { App.teacherSource.getById(it).getFirstValue() }.also { teacherItems = it }
+            return teacherItems ?: teachers.map { App.teacherSource.getSingleById(it) }.also { teacherItems = it }
         }
     }
 
