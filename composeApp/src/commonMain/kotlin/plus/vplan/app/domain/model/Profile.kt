@@ -19,6 +19,13 @@ abstract class Profile : Item {
     override fun getEntityId(): String = this.id.toHexString()
     abstract fun getSchool(): Flow<CacheState<School>>
 
+    var schoolItem: School? = null
+        private set
+
+    suspend fun getSchoolItem(): School {
+        return schoolItem ?: getSchool().getFirstValue().also { schoolItem = it }
+    }
+
     data class StudentProfile(
         override val id: Uuid,
         override val name: String,
@@ -31,7 +38,7 @@ abstract class Profile : Item {
         var groupItem: Group? = null
             private set
 
-        var vppIdItem: VppId? = null
+        var vppIdItem: VppId.Active? = null
             private set
 
         private val defaultLessonCache = hashMapOf<String, DefaultLesson>()
@@ -47,7 +54,7 @@ abstract class Profile : Item {
 
         suspend fun getVppIdItem(): VppId? {
             if (this.vppId == null) return null
-            return vppIdItem ?: App.vppIdSource.getById(vppId).getFirstValue().also { this.vppIdItem = it }
+            return vppIdItem ?: App.vppIdSource.getById(vppId).getFirstValue().let { it as? VppId.Active }.also { this.vppIdItem = it }
         }
 
         suspend fun getDefaultLessons(): List<DefaultLesson> {
