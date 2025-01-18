@@ -32,7 +32,7 @@ class ProfileSettingsViewModel(
             logger.d { "Init profile settings for profile $profileId" }
             getProfileByIdUseCase(Uuid.parse(profileId)).collect { profile ->
                 logger.d { "Got profile $profile" }
-                state = state.copy(profile = profile)
+                state = state.copy(profile = profile.also { it?.prefetch() })
                 if (profile is Profile.StudentProfile && profile.vppId != null) {
                     checkIfVppIdIsStillConnectedUseCase(App.vppIdSource.getById(profile.vppId).getFirstValue() as VppId.Active).let {
                         state = state.copy(isVppIdStillConnected = it)
@@ -58,4 +58,9 @@ data class ProfileSettingsState(
 
 sealed class ProfileSettingsEvent {
     data class RenameProfile(val newName: String) : ProfileSettingsEvent()
+}
+
+private suspend fun Profile.prefetch() {
+    this.getSchoolItem()
+    if (this is Profile.StudentProfile) this.getVppIdItem()
 }

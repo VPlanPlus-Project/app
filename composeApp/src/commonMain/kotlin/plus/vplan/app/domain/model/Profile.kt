@@ -19,6 +19,13 @@ abstract class Profile : Item {
     override fun getEntityId(): String = this.id.toHexString()
     abstract fun getSchool(): Flow<CacheState<School>>
 
+    var schoolItem: School? = null
+        private set
+
+    suspend fun getSchoolItem(): School {
+        return schoolItem ?: getSchool().getFirstValue().also { schoolItem = it }
+    }
+
     data class StudentProfile(
         override val id: Uuid,
         override val name: String,
