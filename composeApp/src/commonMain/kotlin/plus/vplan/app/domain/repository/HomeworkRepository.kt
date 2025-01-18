@@ -9,6 +9,7 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.feature.homework.ui.components.File
@@ -29,6 +30,8 @@ interface HomeworkRepository {
     suspend fun getIdForNewLocalHomework(): Int
     suspend fun getIdForNewLocalHomeworkTask(): Int
     suspend fun getIdForNewLocalHomeworkFile(): Int
+
+    suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile)
 
     /**
      * @return List of ids of the created homework

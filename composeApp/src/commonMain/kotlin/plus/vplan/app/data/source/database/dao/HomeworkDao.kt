@@ -9,6 +9,7 @@ import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedHomework
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedHomeworkTask
 
@@ -78,4 +79,10 @@ interface HomeworkDao {
     @Transaction
     @Query("DELETE FROM homework WHERE id > 0")
     suspend fun deleteCache()
+
+    @Upsert
+    suspend fun upsertTaskDoneAccount(taskDoneAccount: DbHomeworkTaskDoneAccount)
+
+    @Upsert
+    suspend fun upsertTaskDoneProfile(taskDoneProfile: DbHomeworkTaskDoneProfile)
 }

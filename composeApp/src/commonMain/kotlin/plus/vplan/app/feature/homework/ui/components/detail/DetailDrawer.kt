@@ -26,6 +26,6 @@ fun HomeworkDetailDrawer(
         onDismissRequest = onDismiss,
         sheetState = sheetState
     ) {
-        DetailPage(state.homework)
+        DetailPage(state, viewModel::onEvent)
     }
 }

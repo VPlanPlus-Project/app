@@ -19,11 +19,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -35,8 +37,11 @@ import plus.vplan.app.ui.components.Badge
 
 @Composable
 fun DetailPage(
-    homework: Homework
+    state: DetailState,
+    onEvent: (event: DetailEvent) -> Unit
 ) {
+    val homework = state.homework ?: return
+    val profile = state.profile ?: return
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,17 +192,18 @@ fun DetailPage(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
         ) {
-            homework.taskItems!!.forEach { task ->
+            homework.getTasksFlow().collectAsState(emptyList()).value.forEach { task ->
+                Logger.d { "Task ${task.id}, done: ${task.isDone(profile)}" }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable {  }
+                        .clickable { onEvent(DetailEvent.ToggleTaskDone(task)) }
                         .padding(end = 8.dp),
                 ) {
                     Checkbox(
-                        checked = task.isDone,
-                        onCheckedChange = { }
+                        checked = task.isDone(profile),
+                        onCheckedChange = { onEvent(DetailEvent.ToggleTaskDone(task)) }
                     )
                     Spacer(Modifier.width(8.dp))
                     Box(

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "5f1354f1a3ac155ae0e5cc7d1b7504bc",
+    "identityHash": "c5f4c65ca64b26e4f2661bd9727a4844",
     "entities": [
       {
         "tableName": "schools",
@@ -2333,7 +2333,7 @@
       },
       {
         "tableName": "homework_task_done_profile",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` INTEGER NOT NULL, `profile_id` TEXT NOT NULL, PRIMARY KEY(`task_id`, `profile_id`), FOREIGN KEY(`task_id`) REFERENCES `homework_task`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` INTEGER NOT NULL, `profile_id` TEXT NOT NULL, `is_done` INTEGER NOT NULL, PRIMARY KEY(`task_id`, `profile_id`), FOREIGN KEY(`task_id`) REFERENCES `homework_task`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "taskId",
@@ -2345,6 +2345,12 @@
             "fieldPath": "profileId",
             "columnName": "profile_id",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDone",
+            "columnName": "is_done",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -2582,7 +2588,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5f1354f1a3ac155ae0e5cc7d1b7504bc')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c5f4c65ca64b26e4f2661bd9727a4844')"
     ]
   }
 }

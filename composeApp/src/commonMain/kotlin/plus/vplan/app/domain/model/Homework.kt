@@ -1,7 +1,10 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
 import kotlin.uuid.Uuid
 
@@ -36,6 +39,8 @@ sealed class Homework : Item {
     var taskItems: List<HomeworkTask>? = null
         private set
 
+    fun getTasksFlow() = combine(tasks.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheState.Done<HomeworkTask>>() }) { it.toList().map { it.data } }
+
     suspend fun getTaskItems(): List<HomeworkTask> {
         return taskItems ?: tasks.mapNotNull { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
     }
@@ -49,14 +54,7 @@ sealed class Homework : Item {
     ) : Item {
         override fun getEntityId(): String = this.id.toString()
 
-        /**
-         * Used by viewModels to prepare for the UI by setting this value to the done state of the current profile or vpp.ID
-         */
-        var isDone: Boolean = false
-
-        fun setIsDone(profile: Profile.StudentProfile) {
-            isDone = profile.id in doneByProfiles || profile.vppId in doneByVppIds
-        }
+        fun isDone(profile: Profile.StudentProfile) = profile.id in doneByProfiles || profile.vppId in doneByVppIds
     }
 
     data class HomeworkFile(

@@ -26,7 +26,7 @@ sealed class VppId : Item {
         val accessToken: String,
         val schulverwalterAccessToken: String?
     ) : VppId() {
-        fun buildSchoolApiAccess(schoolId: Int): SchoolApiAccess.VppIdAccess {
+        fun buildSchoolApiAccess(schoolId: Int = -1): SchoolApiAccess.VppIdAccess {
             return SchoolApiAccess.VppIdAccess(schoolId, accessToken, id)
         }
     }

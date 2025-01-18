@@ -14,9 +14,11 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
 
 class DetailViewModel(
-    private val getCurrentProfileUseCase: GetCurrentProfileUseCase
+    private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
+    private val toggleTaskDoneUseCase: ToggleTaskDoneUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -31,15 +33,26 @@ class DetailViewModel(
                 val homework = homeworkData.data
                 homework.getDefaultLessonItem()
                 homework.getGroupItem()
-                homework.getTaskItems()
-                homework.taskItems!!.onEach { it.setIsDone(profile) }
                 if (homework is Homework.CloudHomework) homework.getCreatedBy()
-                state.copy(homework = homework)
+                state.copy(homework = homework, profile = profile)
             }.filterNotNull().collectLatest { state = it }
+        }
+    }
+
+    fun onEvent(event: DetailEvent) {
+        viewModelScope.launch {
+            when (event) {
+                is DetailEvent.ToggleTaskDone -> toggleTaskDoneUseCase(event.task, state.profile!!)
+            }
         }
     }
 }
 
 data class DetailState(
-    val homework: Homework? = null
+    val homework: Homework? = null,
+    val profile: Profile.StudentProfile? = null
 )
+
+sealed class DetailEvent {
+    data class ToggleTaskDone(val task: Homework.HomeworkTask) : DetailEvent()
+}

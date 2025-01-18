@@ -32,5 +32,6 @@ import kotlin.uuid.Uuid
 )
 data class DbHomeworkTaskDoneProfile(
     @ColumnInfo(name = "task_id") val taskId: Int,
-    @ColumnInfo(name = "profile_id") val profileId: Uuid
+    @ColumnInfo(name = "profile_id") val profileId: Uuid,
+    @ColumnInfo(name = "is_done") val isDone: Boolean
 )

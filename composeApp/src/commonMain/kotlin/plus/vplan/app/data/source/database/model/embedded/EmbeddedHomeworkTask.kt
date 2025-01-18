@@ -24,7 +24,7 @@ data class EmbeddedHomeworkTask(
         return HomeworkTask(
             id = homeworkTask.id,
             content = homeworkTask.content,
-            doneByProfiles = doneProfiles.filter { true }.map { it.profileId },
+            doneByProfiles = doneProfiles.filter { it.isDone }.map { it.profileId },
             doneByVppIds = doneAccounts.filter { it.isDone }.map { it.vppId },
             homework = homeworkTask.homeworkId,
         )

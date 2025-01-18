@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -14,6 +15,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -34,6 +36,7 @@ import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
@@ -43,6 +46,7 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.CreateHomeworkResponse
@@ -247,6 +251,29 @@ class HomeworkRepositoryImpl(
         return (vppDatabase.homeworkDao.getMinFileId().first() ?: 0).coerceAtMost(-1)
     }
 
+    override suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile) {
+        val oldState = task.isDone(profile)
+        val newState = !oldState
+        if (profile.getVppIdItem() == null) {
+            vppDatabase.homeworkDao.upsertTaskDoneProfile(DbHomeworkTaskDoneProfile(task.id, profile.id, newState))
+            return
+        }
+        vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId!!, newState))
+        safeRequest(onError = { vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId, oldState)) }) {
+            val response = httpClient.patch(URLBuilder(
+                protocol = VPP_PROTOCOL,
+                host = SERVER_IP,
+                port = VPP_PORT,
+                pathSegments = listOf("api", "v2.2", "homework", "task", task.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(HomeworkTaskUpdateDoneStateRequest(isDone = newState))
+            }
+            if (!response.status.isSuccess()) vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId, oldState))
+        }
+    }
+
     override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<String>): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get(URLBuilder(
@@ -426,4 +453,9 @@ data class HomeworkGetResponseTask(
     @SerialName("id") val id: Int,
     @SerialName("content") val content: String,
     @SerialName("done") val done: Boolean?
+)
+
+@Serializable
+data class HomeworkTaskUpdateDoneStateRequest(
+    @SerialName("is_done") val isDone: Boolean
 )
