@@ -4,7 +4,6 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import plus.vplan.app.domain.model.Homework
 
 @Entity(
     tableName = "homework_task",
@@ -27,13 +26,4 @@ data class DbHomeworkTask(
     @ColumnInfo(name = "id") val id: Int,
     @ColumnInfo(name = "homework_id") val homeworkId: Int,
     @ColumnInfo(name = "content") val content: String,
-) {
-    fun toModel(): Homework.HomeworkTask {
-        return Homework.HomeworkTask(
-            id = id,
-            content = content,
-            homework = homeworkId,
-            isDone = null
-        )
-    }
-}
+)

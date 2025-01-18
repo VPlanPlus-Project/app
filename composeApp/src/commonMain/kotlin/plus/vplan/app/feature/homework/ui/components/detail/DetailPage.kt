@@ -196,7 +196,7 @@ fun DetailPage(
                         .padding(end = 8.dp),
                 ) {
                     Checkbox(
-                        checked = false,
+                        checked = task.isDone,
                         onCheckedChange = { }
                     )
                     Spacer(Modifier.width(8.dp))

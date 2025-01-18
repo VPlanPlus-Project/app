@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.dev.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,6 +31,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawerContent
+import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.FullscreenDrawer
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.x
@@ -44,6 +46,7 @@ fun DevScreen(
     val state = viewModel.state
 
     var isDrawerOpen by rememberSaveable { mutableStateOf(false) }
+    var clickedHomeworkId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Column(
         modifier = Modifier
@@ -74,6 +77,7 @@ fun DevScreen(
             Column(
                 modifier = Modifier
                     .padding(vertical = 4.dp)
+                    .clickable { clickedHomeworkId = homework.id }
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -119,5 +123,5 @@ fun DevScreen(
         }
     )
 
-//    HomeworkDetailDrawer(12) {}
+    if (clickedHomeworkId != null) HomeworkDetailDrawer(clickedHomeworkId!!) { clickedHomeworkId = null }
 }

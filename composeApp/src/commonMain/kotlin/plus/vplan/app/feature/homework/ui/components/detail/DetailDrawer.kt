@@ -14,15 +14,18 @@ fun HomeworkDetailDrawer(
     onDismiss: () -> Unit
 ) {
     val viewModel = koinViewModel<DetailViewModel>()
+    val state = viewModel.state
+
     LaunchedEffect(homeworkId) {
         viewModel.init(homeworkId)
     }
 
+    if (state.homework == null) return
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState
     ) {
-        viewModel.state.homework?.let { DetailPage(it) }
+        DetailPage(state.homework)
     }
 }

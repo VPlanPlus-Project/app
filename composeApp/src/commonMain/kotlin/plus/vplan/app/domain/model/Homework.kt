@@ -43,10 +43,20 @@ sealed class Homework : Item {
     data class HomeworkTask(
         val id: Int,
         val content: String,
-        val isDone: Boolean?,
-        val homework: Int
+        val doneByProfiles: List<Uuid>,
+        val doneByVppIds: List<Int>,
+        val homework: Int,
     ) : Item {
         override fun getEntityId(): String = this.id.toString()
+
+        /**
+         * Used by viewModels to prepare for the UI by setting this value to the done state of the current profile or vpp.ID
+         */
+        var isDone: Boolean = false
+
+        fun setIsDone(profile: Profile.StudentProfile) {
+            isDone = profile.id in doneByProfiles || profile.vppId in doneByVppIds
+        }
     }
 
     data class HomeworkFile(

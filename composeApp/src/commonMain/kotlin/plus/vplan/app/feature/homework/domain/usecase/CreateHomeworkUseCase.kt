@@ -62,7 +62,7 @@ class CreateHomeworkUseCase(
                 files = emptyList(),
                 tasks = taskIds.map { it.value }
             )
-            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, isDone = null) }
+            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList()) }
 
             files = selectedFiles.mapNotNull {
                 val documentId = homeworkRepository.uploadHomeworkDocument(
@@ -96,7 +96,7 @@ class CreateHomeworkUseCase(
                 tasks = taskIds.map { it.value },
                 files = files.map { it.id }
             )
-            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, isDone = null) }
+            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList()) }
         }
 
         homeworkRepository.upsert(listOf(homework), homeworkTasks, files)

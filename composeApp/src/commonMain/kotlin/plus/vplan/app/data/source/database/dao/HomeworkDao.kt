@@ -10,6 +10,7 @@ import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedHomework
+import plus.vplan.app.data.source.database.model.embedded.EmbeddedHomeworkTask
 
 @Dao
 interface HomeworkDao {
@@ -68,7 +69,7 @@ interface HomeworkDao {
 
     @Transaction
     @Query("SELECT * FROM homework_task WHERE id = :id")
-    fun getTaskById(id: Int): Flow<DbHomeworkTask?>
+    fun getTaskById(id: Int): Flow<EmbeddedHomeworkTask?>
 
     @Transaction
     @Query("DELETE FROM homework")
