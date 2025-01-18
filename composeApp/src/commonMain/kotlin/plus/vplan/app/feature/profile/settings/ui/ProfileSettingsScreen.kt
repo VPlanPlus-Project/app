@@ -189,7 +189,7 @@ private fun ProfileSettingsContent(
                     }
                     append(state.profile.name)
                     append(" $DOT ")
-//                    append(state.profile.school.toValueOrNull()!!.name)
+                    append(state.profile.schoolItem!!.name)
                 },
                 modifier = Modifier.padding(horizontal = 16.dp),
                 style = MaterialTheme.typography.labelMedium,
@@ -224,11 +224,11 @@ private fun ProfileSettingsContent(
                             modifier = Modifier.size(32.dp)
                         )
                         Column {
-//                            Text(
-//                                text = displayVppId.toValueOrNull()!!.name,
-//                                style = MaterialTheme.typography.titleMedium,
-//                                color = MaterialTheme.colorScheme.onSurface
-//                            )
+                            Text(
+                                text = state.profile.vppIdItem!!.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                             Text(
                                 text = "vpp.ID verwalten",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -278,10 +278,10 @@ private fun ProfileSettingsContent(
         if (isVppIdManagementDrawerVisible &&
             state.profile is Profile.StudentProfile &&
             state.profile.vppId != null) {
-//            VppIdManagementDrawer(
-//                vppId = state.profile.vppId.toValueOrNull()!!,
-//                onDismiss = { isVppIdManagementDrawerVisible = false }
-//            )
+            VppIdManagementDrawer(
+                vppId = state.profile.vppIdItem!!,
+                onDismiss = { isVppIdManagementDrawerVisible = false }
+            )
         }
     }
 }
