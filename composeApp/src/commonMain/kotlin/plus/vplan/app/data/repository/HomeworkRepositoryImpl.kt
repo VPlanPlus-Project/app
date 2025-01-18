@@ -286,7 +286,7 @@ class HomeworkRepositoryImpl(
     }
 
     override suspend fun clearCache() {
-        vppDatabase.homeworkDao.deleteAll()
+        vppDatabase.homeworkDao.deleteCache()
     }
 
     override suspend fun createHomeworkOnline(

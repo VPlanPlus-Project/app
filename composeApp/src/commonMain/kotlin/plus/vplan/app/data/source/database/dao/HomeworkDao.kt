@@ -62,4 +62,8 @@ interface HomeworkDao {
     @Transaction
     @Query("DELETE FROM homework")
     suspend fun deleteAll()
+
+    @Transaction
+    @Query("DELETE FROM homework WHERE id > 0")
+    suspend fun deleteCache()
 }

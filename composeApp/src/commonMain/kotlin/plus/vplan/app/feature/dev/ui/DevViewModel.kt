@@ -38,13 +38,12 @@ class DevViewModel(
                     .collectLatest { state = state.copy(profile = it.data) }
             }
         }
+
         viewModelScope.launch {
             App.homeworkSource.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { it.data } }.collect {
                 state = state.copy(homework = it.onEachIndexed { index, homework ->
                     homework.prefetch()
-                    Logger.d { "Prefetched $index/${it.size}" }
                 })
-                Logger.d { "${it.size} homework fetched" }
             }
         }
     }
@@ -76,15 +75,10 @@ sealed class DevEvent {
 }
 
 private suspend fun Homework.prefetch() {
-    Logger.d { "Prefetching homework $id" }
     this.getDefaultLessonItem()
-    Logger.d { "Prefetched default lesson for homework $id" }
     this.getGroupItem()
-    Logger.d { "Prefetched group for homework $id" }
     this.getTaskItems()
-    Logger.d { "Prefetched tasks for homework $id" }
     if (this is Homework.CloudHomework) {
         this.getCreatedBy()
-        Logger.d { "Prefetched created by for homework $id" }
     }
 }

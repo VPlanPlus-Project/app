@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import plus.vplan.app.domain.cache.CacheState
@@ -23,7 +24,8 @@ class HomeworkSource(
     fun getAll(updateRemote: Boolean = false): Flow<List<CacheState<Homework>>> {
         if (updateRemote) TODO("Not yet implemented")
         return homeworkRepository.getAll().map { it.map { it.entityId.toInt() } }.flatMapLatest { ids ->
-            combine(ids.map { getById(it) }) { it.toList() }
+            if (ids.isEmpty()) flowOf(emptyList())
+            else combine(ids.map { getById(it) }) { it.toList() }
         }
     }
 }
