@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.dev
+package plus.vplan.app.feature.dev.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
@@ -40,8 +39,12 @@ class DevViewModel(
             }
         }
         viewModelScope.launch {
-            App.homeworkSource.getAll().filterIsInstance<List<CacheState.Done<Homework>>>().map { it.map { it.data } }.onEach { it.onEach { it.prefetch() } }.collect {
-                state = state.copy(homework = it)
+            App.homeworkSource.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { it.data } }.collect {
+                state = state.copy(homework = it.onEachIndexed { index, homework ->
+                    homework.prefetch()
+                    Logger.d { "Prefetched $index/${it.size}" }
+                })
+                Logger.d { "${it.size} homework fetched" }
             }
         }
     }
@@ -73,8 +76,15 @@ sealed class DevEvent {
 }
 
 private suspend fun Homework.prefetch() {
+    Logger.d { "Prefetching homework $id" }
     this.getDefaultLessonItem()
+    Logger.d { "Prefetched default lesson for homework $id" }
     this.getGroupItem()
+    Logger.d { "Prefetched group for homework $id" }
     this.getTaskItems()
-    if (this is Homework.CloudHomework) this.getCreatedBy()
+    Logger.d { "Prefetched tasks for homework $id" }
+    if (this is Homework.CloudHomework) {
+        this.getCreatedBy()
+        Logger.d { "Prefetched created by for homework $id" }
+    }
 }

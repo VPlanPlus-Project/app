@@ -18,7 +18,7 @@ class LessonTimeSource(
         }
     }
 
-    suspend fun getSingleById(id: String): LessonTime {
+    suspend fun getSingleById(id: String): LessonTime? {
         return (cacheItems[id] as? CacheState.Done<LessonTime>)?.data ?: getById(id).getFirstValue()
     }
 }

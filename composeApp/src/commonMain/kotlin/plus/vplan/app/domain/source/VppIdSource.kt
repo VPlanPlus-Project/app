@@ -15,7 +15,7 @@ class VppIdSource(
         return cache.getOrPut(id) { vppIdRepository.getVppIdById(id) }
     }
 
-    suspend fun getSingleById(id: Int): VppId {
+    suspend fun getSingleById(id: Int): VppId? {
         return (cacheItems[id] as? CacheState.Done<VppId>)?.data ?: getById(id).getFirstValue()
     }
 }

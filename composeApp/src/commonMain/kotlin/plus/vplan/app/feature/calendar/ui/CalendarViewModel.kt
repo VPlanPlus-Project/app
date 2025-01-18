@@ -41,7 +41,7 @@ class CalendarViewModel(
 
     private fun launchSyncJob(date: LocalDate, syncLessons: Boolean): Job {
         return viewModelScope.launch {
-            App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue().id.toString() + "/$date").filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
+            App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date").filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
                 if (!syncLessons) state = state.copy(days = state.days + (date to CalendarDay(day)))
                 else {
                     val timetable = day.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { it.data }.first() }.filter { it.isRelevantForProfile(state.currentProfile!!) }.onEach { it.prefetch() }

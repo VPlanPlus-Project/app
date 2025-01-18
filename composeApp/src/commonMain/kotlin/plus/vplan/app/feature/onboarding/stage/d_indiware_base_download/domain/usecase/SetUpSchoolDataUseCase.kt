@@ -73,7 +73,7 @@ class SetUpSchoolDataUseCase(
                     downloadMode = baseData.data.downloadMode
                 )
                 onboardingRepository.setSchoolId(it.id)
-                schoolRepository.getById(it.id).getFirstValue()
+                schoolRepository.getById(it.id).getFirstValue()!!
             }
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE

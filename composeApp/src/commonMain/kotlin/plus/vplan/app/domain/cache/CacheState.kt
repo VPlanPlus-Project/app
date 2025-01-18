@@ -3,7 +3,7 @@ package plus.vplan.app.domain.cache
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.data.Response
 
@@ -18,6 +18,6 @@ interface Item {
     fun getEntityId(): String
 }
 
-suspend fun <T: Item> Flow<CacheState<T>>.getFirstValue() = this.filterIsInstance<CacheState.Done<T>>().first().data
+suspend fun <T: Item> Flow<CacheState<T>>.getFirstValue() = (this.filter { it is CacheState.NotExisting || it is CacheState.Done }.first() as? CacheState.Done<T>)?.data
 @Composable
 fun <T: Item> Flow<CacheState<T>>.collectAsLoadingState(id: String) = this.collectAsState(CacheState.Loading(id))

@@ -16,7 +16,7 @@ class DefaultLessonSource(
         return cache.getOrPut(id) { defaultLessonRepository.getById(id) }
     }
 
-    suspend fun getSingleById(id: String): DefaultLesson {
+    suspend fun getSingleById(id: String): DefaultLesson? {
         return (cacheItems[id] as? CacheState.Done<DefaultLesson>)?.data ?: getById(id).getFirstValue()
     }
 }

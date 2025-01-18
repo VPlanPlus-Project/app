@@ -16,7 +16,7 @@ class GroupSource(
         return cache.getOrPut(id) { groupRepository.getById(id) }
     }
 
-    suspend fun getSingleById(id: Int): Group {
+    suspend fun getSingleById(id: Int): Group? {
         return (cacheItems[id] as? CacheState.Done<Group>)?.data ?: getById(id).getFirstValue()
     }
 }

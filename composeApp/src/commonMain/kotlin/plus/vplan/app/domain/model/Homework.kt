@@ -3,7 +3,6 @@ package plus.vplan.app.domain.model
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Item
-import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
 
 sealed class Homework : Item {
@@ -38,7 +37,7 @@ sealed class Homework : Item {
         private set
 
     suspend fun getTaskItems(): List<HomeworkTask> {
-        return taskItems ?: tasks.map { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
+        return taskItems ?: tasks.mapNotNull { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
     }
 
     data class HomeworkTask(
@@ -85,7 +84,7 @@ sealed class Homework : Item {
 
         suspend fun getCreatedBy(): VppId {
             return createdByItem ?: createdBy.let { createdById ->
-                App.vppIdSource.getSingleById(createdById).also { createdByItem = it }
+                App.vppIdSource.getSingleById(createdById)!!.also { createdByItem = it }
             }
         }
     }

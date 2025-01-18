@@ -13,7 +13,7 @@ class GetProfilesUseCase {
                 flowEmission
                     .filterIsInstance<CacheState.Done<Profile>>()
                     .map { it.data }
-                    .groupBy { it.getSchool().getFirstValue() }
+                    .groupBy { it.getSchool().getFirstValue()!! }
                     .mapValues { profilesBySchool ->
                         profilesBySchool.value.sortedBy { it.profileType.ordinal.toString() + it.name }
                     }

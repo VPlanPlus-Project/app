@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.dev
+package plus.vplan.app.feature.dev.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

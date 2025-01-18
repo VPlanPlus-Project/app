@@ -23,7 +23,7 @@ abstract class Profile : Item {
         private set
 
     suspend fun getSchoolItem(): School {
-        return schoolItem ?: getSchool().getFirstValue().also { schoolItem = it }
+        return schoolItem ?: getSchool().getFirstValue()!!.also { schoolItem = it }
     }
 
     data class StudentProfile(
@@ -49,7 +49,7 @@ abstract class Profile : Item {
         }
 
         suspend fun getGroupItem(): Group {
-            return groupItem ?: App.groupSource.getById(group).getFirstValue().also { groupItem = it }
+            return groupItem ?: App.groupSource.getById(group).getFirstValue()!!.also { groupItem = it }
         }
 
         suspend fun getVppIdItem(): VppId.Active? {

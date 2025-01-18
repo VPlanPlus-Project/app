@@ -38,7 +38,7 @@ class HomeworkTaskSource(
         return cache.getOrPut(id) { homeworkRepository.getTaskById(id).onEach { cacheItems[id] = it } }
     }
 
-    suspend fun getSingleById(id: Int): Homework.HomeworkTask {
+    suspend fun getSingleById(id: Int): Homework.HomeworkTask? {
         return (cacheItems[id] as? CacheState.Done<Homework.HomeworkTask>)?.data ?: getById(id).getFirstValue()
     }
 }

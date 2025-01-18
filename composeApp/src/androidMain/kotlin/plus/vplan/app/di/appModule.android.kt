@@ -2,7 +2,7 @@ package plus.vplan.app.di
 
 import android.content.Context
 import androidx.room.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.driver.AndroidSQLiteDriver
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -16,7 +16,7 @@ actual fun platformModule(): Module = module(createdAtStart = true) {
             context = get(),
             name = get<Context>().getDatabasePath("data.db").absolutePath
         )
-            .setDriver(BundledSQLiteDriver())
+            .setDriver(AndroidSQLiteDriver())
             .fallbackToDestructiveMigration(true)
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()

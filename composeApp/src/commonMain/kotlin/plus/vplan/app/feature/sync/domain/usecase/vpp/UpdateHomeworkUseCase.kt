@@ -18,7 +18,7 @@ class UpdateHomeworkUseCase(
         profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>().forEach { studentProfile ->
             ids.addAll(
                 (homeworkRepository.download(
-                    schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess() ?: studentProfile.getSchool().getFirstValue().getSchoolApiAccess(),
+                    schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess() ?: studentProfile.getSchool().getFirstValue()!!.getSchoolApiAccess(),
                     groupId = studentProfile.group,
                     defaultLessonIds = studentProfile.defaultLessons.map { it.key },
                 ) as? Response.Success)?.data.orEmpty()
