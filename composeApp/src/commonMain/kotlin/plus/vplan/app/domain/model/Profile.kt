@@ -31,7 +31,7 @@ abstract class Profile : Item {
         var groupItem: Group? = null
             private set
 
-        var vppIdItem: VppId? = null
+        var vppIdItem: VppId.Active? = null
             private set
 
         private val defaultLessonCache = hashMapOf<String, DefaultLesson>()
@@ -45,9 +45,9 @@ abstract class Profile : Item {
             return groupItem ?: App.groupSource.getById(group).getFirstValue().also { groupItem = it }
         }
 
-        suspend fun getVppIdItem(): VppId? {
+        suspend fun getVppIdItem(): VppId.Active? {
             if (this.vppId == null) return null
-            return vppIdItem ?: App.vppIdSource.getById(vppId).getFirstValue().also { this.vppIdItem = it }
+            return vppIdItem ?: App.vppIdSource.getById(vppId).getFirstValue().let { it as? VppId.Active }.also { this.vppIdItem = it }
         }
 
         suspend fun getDefaultLessons(): List<DefaultLesson> {

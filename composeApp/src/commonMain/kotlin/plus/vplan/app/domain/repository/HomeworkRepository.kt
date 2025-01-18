@@ -30,11 +30,14 @@ interface HomeworkRepository {
     suspend fun getIdForNewLocalHomeworkTask(): Int
     suspend fun getIdForNewLocalHomeworkFile(): Int
 
+    /**
+     * @return List of ids of the created homework
+     */
     suspend fun download(
         schoolApiAccess: SchoolApiAccess,
         groupId: Int,
         defaultLessonIds: List<String>
-    ): Response.Error?
+    ): Response<List<Int>>
 
     suspend fun clearCache()
 

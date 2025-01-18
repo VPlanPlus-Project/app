@@ -238,7 +238,7 @@ class HomeworkRepositoryImpl(
         return (vppDatabase.homeworkDao.getMinFileId().first() ?: 0).coerceAtMost(-1)
     }
 
-    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<String>): Response.Error? {
+    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<String>): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get(URLBuilder(
                 protocol = VPP_PROTOCOL,
@@ -280,9 +280,9 @@ class HomeworkRepositoryImpl(
                 emptyList() // TODO
             )
 
-            return null
+            return Response.Success(data.map { it.id })
         }
-        return null
+        return Response.Error.Cancelled
     }
 
     override suspend fun clearCache() {

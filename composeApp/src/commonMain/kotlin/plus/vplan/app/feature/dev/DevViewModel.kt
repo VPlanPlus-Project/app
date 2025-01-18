@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
@@ -19,11 +20,13 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import kotlin.uuid.Uuid
 
 class DevViewModel(
     private val homeworkRepository: HomeworkRepository,
-    private val keyValueRepository: KeyValueRepository
+    private val keyValueRepository: KeyValueRepository,
+    private val updateHomeworkUseCase: UpdateHomeworkUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
         private set
@@ -47,14 +50,9 @@ class DevViewModel(
         viewModelScope.launch {
             when (event) {
                 DevEvent.Refresh -> {
-                    state = state.copy(updateResponse = null)
-//                    homeworkRepository.download(
-//                        state.profile!!.school.toValueOrNull()!!.getSchoolApiAccess(),
-//                        groupId = (state.profile as Profile.StudentProfile).group.toValueOrNull()!!.id,
-//                        (state.profile as Profile.StudentProfile).defaultLessons.map { it.key.toValueOrNull()!!.id }).let {
-//                        state = state.copy(updateResponse = it)
-//                    }
-
+                    Logger.d { "Homework update started" }
+                    updateHomeworkUseCase()
+                    Logger.d { "Homework updated" }
                 }
 
                 DevEvent.Clear -> homeworkRepository.clearCache()
