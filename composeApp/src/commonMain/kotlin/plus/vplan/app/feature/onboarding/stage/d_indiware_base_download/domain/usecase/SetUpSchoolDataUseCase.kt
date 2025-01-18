@@ -2,8 +2,12 @@ package plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.takeWhile
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
@@ -60,11 +64,12 @@ class SetUpSchoolDataUseCase(
 
             val schoolId = schoolRepository.getIdFromSp24Id(sp24Id.toInt())
             if (schoolId !is Response.Success) throw IllegalStateException("$prefix school-Lookup by sp24 was not successful: $schoolId")
-            val school = (schoolRepository.getWithCachingById(schoolId.data).let {
-                (it as? Response.Success)?.data?.first() ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix school-Lookup was not successful: $it"))
-            }).let {
+            val schoolFlow = (schoolRepository.getById(schoolId.data))
+            schoolFlow.takeWhile { it is CacheState.Loading }.collect()
+            val school = schoolFlow.first().let {
+                if (it !is CacheState.Done) return@flow emit(SetUpSchoolDataResult.Error("$prefix school-Lookup was not successful: $it"))
                 schoolRepository.setSp24Info(
-                    school = it,
+                    school = it.data,
                     sp24Id = sp24Id.toInt(),
                     username = username,
                     password = password,
@@ -72,8 +77,8 @@ class SetUpSchoolDataUseCase(
                     studentsHaveFullAccess = baseData.data.studentsHaveFullAccess,
                     downloadMode = baseData.data.downloadMode
                 )
-                onboardingRepository.setSchoolId(it.id)
-                schoolRepository.getById(it.id).getFirstValue()!!
+                onboardingRepository.setSchoolId(it.data.id)
+                schoolRepository.getById(it.data.id).onEach { Logger.d { it.toString() } }.getFirstValue()!!
             }
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE

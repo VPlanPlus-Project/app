@@ -35,7 +35,8 @@ import plus.vplan.app.data.source.database.model.database.DbHoliday
 import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
-import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDone
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
 import plus.vplan.app.data.source.database.model.database.DbIndiwareHasTimetableInWeek
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
@@ -108,7 +109,8 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGr
 
         DbHomework::class,
         DbHomeworkTask::class,
-        DbHomeworkTaskDone::class,
+        DbHomeworkTaskDoneProfile::class,
+        DbHomeworkTaskDoneAccount::class,
         DbHomeworkFile::class,
 
         FKSchoolGroup::class

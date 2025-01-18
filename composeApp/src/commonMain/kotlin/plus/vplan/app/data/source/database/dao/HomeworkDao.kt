@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedHomework
 
 @Dao
@@ -28,9 +29,19 @@ interface HomeworkDao {
     suspend fun upsertFiles(files: List<DbHomeworkFile>)
 
     @Transaction
-    suspend fun upsertMany(homework: List<DbHomework>, homeworkTask: List<DbHomeworkTask>, files: List<DbHomeworkFile>) {
+    @Upsert
+    suspend fun upsertTaskDoneAccountMany(homeworkTaskDoneAccount: List<DbHomeworkTaskDoneAccount>)
+
+    @Transaction
+    suspend fun upsertMany(
+        homework: List<DbHomework>,
+        homeworkTask: List<DbHomeworkTask>,
+        homeworkTaskDoneAccount: List<DbHomeworkTaskDoneAccount>,
+        files: List<DbHomeworkFile>
+    ) {
         upsertMany(homework)
         upsertTaskMany(homeworkTask)
+        upsertTaskDoneAccountMany(homeworkTaskDoneAccount)
         upsertFiles(files)
     }
 

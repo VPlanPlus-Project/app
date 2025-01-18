@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "948062ac876dabd6c6d57d4db3f7ab49",
+    "identityHash": "5f1354f1a3ac155ae0e5cc7d1b7504bc",
     "entities": [
       {
         "tableName": "schools",
@@ -2332,7 +2332,7 @@
         ]
       },
       {
-        "tableName": "homework_task_done",
+        "tableName": "homework_task_done_profile",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` INTEGER NOT NULL, `profile_id` TEXT NOT NULL, PRIMARY KEY(`task_id`, `profile_id`), FOREIGN KEY(`task_id`) REFERENCES `homework_task`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
@@ -2357,22 +2357,22 @@
         },
         "indices": [
           {
-            "name": "index_homework_task_done_task_id",
+            "name": "index_homework_task_done_profile_task_id",
             "unique": false,
             "columnNames": [
               "task_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_task_id` ON `${TABLE_NAME}` (`task_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_profile_task_id` ON `${TABLE_NAME}` (`task_id`)"
           },
           {
-            "name": "index_homework_task_done_profile_id",
+            "name": "index_homework_task_done_profile_profile_id",
             "unique": false,
             "columnNames": [
               "profile_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_profile_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
           }
         ],
         "foreignKeys": [
@@ -2393,6 +2393,81 @@
             "onUpdate": "CASCADE",
             "columns": [
               "profile_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "homework_task_done_account",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` INTEGER NOT NULL, `vpp_id` INTEGER NOT NULL, `is_done` INTEGER NOT NULL, PRIMARY KEY(`task_id`, `vpp_id`), FOREIGN KEY(`task_id`) REFERENCES `homework_task`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`vpp_id`) REFERENCES `vpp_id`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "taskId",
+            "columnName": "task_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vppId",
+            "columnName": "vpp_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDone",
+            "columnName": "is_done",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "task_id",
+            "vpp_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_homework_task_done_account_task_id",
+            "unique": false,
+            "columnNames": [
+              "task_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_account_task_id` ON `${TABLE_NAME}` (`task_id`)"
+          },
+          {
+            "name": "index_homework_task_done_account_vpp_id",
+            "unique": false,
+            "columnNames": [
+              "vpp_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_account_vpp_id` ON `${TABLE_NAME}` (`vpp_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "homework_task",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "task_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "vpp_id",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "vpp_id"
             ],
             "referencedColumns": [
               "id"
@@ -2507,7 +2582,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '948062ac876dabd6c6d57d4db3f7ab49')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5f1354f1a3ac155ae0e5cc7d1b7504bc')"
     ]
   }
 }

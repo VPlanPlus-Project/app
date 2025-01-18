@@ -5,6 +5,8 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -23,6 +25,7 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.OnlineSchool
 import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.utils.sendAll
 
 class SchoolRepositoryImpl(
     private val httpClient: HttpClient,
@@ -59,8 +62,14 @@ class SchoolRepositoryImpl(
         }
     }
 
-    override fun getById(id: Int): Flow<CacheState<School>> {
-        return vppDatabase.schoolDao.findById(id).map { it?.toModel()?.let { model -> CacheState.Done(model) } ?: CacheState.NotExisting(id.toString()) }
+    override fun getById(id: Int): Flow<CacheState<School>> = channelFlow {
+        vppDatabase.schoolDao.findById(id).collectLatest {
+            if (it != null) return@collectLatest send(CacheState.Done(it.toModel()))
+            val onlineResponse = getWithCachingById(id)
+            if (onlineResponse is Response.Success) return@collectLatest sendAll(onlineResponse.data.map { if (it != null) CacheState.Done(it) else CacheState.NotExisting(id.toString()) })
+            if (onlineResponse is Response.Error.OnlineError.NotFound) return@collectLatest send(CacheState.NotExisting(id.toString()))
+            if (onlineResponse is Response.Error) return@collectLatest send(CacheState.Error(id.toString(), onlineResponse))
+        }
     }
 
     override suspend fun getIdFromSp24Id(sp24Id: Int): Response<Int> {

@@ -68,7 +68,8 @@ sealed class SchoolApiAccess(
 
     class VppIdAccess(
         schoolId: Int,
-        val accessToken: String
+        val accessToken: String,
+        val id: Int
     ) : SchoolApiAccess(schoolId) {
         override fun authentication(builder: HttpRequestBuilder) {
             builder.bearerAuth(accessToken)

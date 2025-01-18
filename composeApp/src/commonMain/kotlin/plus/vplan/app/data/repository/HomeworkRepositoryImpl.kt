@@ -33,6 +33,7 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
+import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
@@ -87,6 +88,7 @@ class HomeworkRepositoryImpl(
                     content = homeworkTask.content
                 )
             },
+            homeworkTaskDoneAccount = emptyList(),
             files = files.map {
                 DbHomeworkFile(
                     id = it.id,
@@ -210,6 +212,13 @@ class HomeworkRepositoryImpl(
                             homeworkId = id
                         )
                     },
+                    homeworkTaskDoneAccount = if (vppId == null) emptyList() else data.tasks.mapNotNull {
+                        DbHomeworkTaskDoneAccount(
+                            taskId = it.id,
+                            vppId = vppId.id,
+                            isDone = it.done ?: return@mapNotNull null
+                        )
+                    },
                     files = emptyList() // TODO
                 )
             }
@@ -277,7 +286,16 @@ class HomeworkRepositoryImpl(
                         )
                     }
                 }.flatten(),
-                emptyList() // TODO
+                homeworkTaskDoneAccount = if (schoolApiAccess !is SchoolApiAccess.VppIdAccess) emptyList() else data.flatMap { homework ->
+                    homework.tasks.mapNotNull {
+                        DbHomeworkTaskDoneAccount(
+                            taskId = it.id,
+                            vppId = schoolApiAccess.id,
+                            isDone = it.done ?: return@mapNotNull null
+                        )
+                    }
+                },
+                emptyList()
             )
 
             return Response.Success(data.map { it.id })
@@ -381,7 +399,8 @@ private data class HomeworkPostResponseItem(
 @Serializable
 private data class HomeworkTaskResponseItem(
     @SerialName("id") val id: Int,
-    @SerialName("description") val description: String
+    @SerialName("description") val description: String,
+    @SerialName("is_done") val done: Boolean?
 )
 
 @Serializable
