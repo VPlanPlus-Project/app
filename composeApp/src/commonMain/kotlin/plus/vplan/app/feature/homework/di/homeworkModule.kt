@@ -7,6 +7,7 @@ import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
 import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkViewModel
+import plus.vplan.app.feature.homework.ui.components.detail.DetailViewModel
 
 val homeworkModule = module {
     singleOf(::IsVppIdBannerAllowedUseCase)
@@ -14,4 +15,5 @@ val homeworkModule = module {
     singleOf(::CreateHomeworkUseCase)
 
     viewModelOf(::NewHomeworkViewModel)
+    viewModelOf(::DetailViewModel)
 }

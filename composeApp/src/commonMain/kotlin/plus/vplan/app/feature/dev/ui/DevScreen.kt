@@ -30,6 +30,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawerContent
+import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.FullscreenDrawer
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.x
@@ -118,4 +119,6 @@ fun DevScreen(
             NewHomeworkDrawerContent()
         }
     )
+
+    HomeworkDetailDrawer(12) {}
 }
