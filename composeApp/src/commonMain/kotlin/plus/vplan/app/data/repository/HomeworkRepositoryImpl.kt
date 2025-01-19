@@ -220,7 +220,7 @@ class HomeworkRepositoryImpl(
     override suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile) {
         val oldState = task.isDone(profile)
         val newState = !oldState
-        if (profile.getVppIdItem() == null) {
+        if (profile.getVppIdItem() == null || task.id < 0) {
             vppDatabase.homeworkDao.upsertTaskDoneProfile(DbHomeworkTaskDoneProfile(task.id, profile.id, newState))
             return
         }
@@ -305,7 +305,7 @@ class HomeworkRepositoryImpl(
 
     override suspend fun addTask(homework: Homework, task: String, profile: Profile.StudentProfile): Response.Error? {
         if (homework.id < 0 || profile.getVppIdItem() == null) {
-            val id = getIdForNewLocalHomeworkTask()
+            val id = getIdForNewLocalHomeworkTask() - 1
             vppDatabase.homeworkDao.upsertTaskMany(listOf(DbHomeworkTask(content = task, homeworkId = homework.id, id = id)))
             return null
         }

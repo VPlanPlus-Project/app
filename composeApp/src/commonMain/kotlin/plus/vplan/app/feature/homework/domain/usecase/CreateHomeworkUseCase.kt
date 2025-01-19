@@ -82,9 +82,9 @@ class CreateHomeworkUseCase(
                 )
             }
         } else {
-            id = homeworkRepository.getIdForNewLocalHomework()
-            val taskIdStart = homeworkRepository.getIdForNewLocalHomeworkTask()
-            val fileIdStart = homeworkRepository.getIdForNewLocalHomeworkFile()
+            id = homeworkRepository.getIdForNewLocalHomework() - 1
+            val taskIdStart = homeworkRepository.getIdForNewLocalHomeworkTask() - 1
+            val fileIdStart = homeworkRepository.getIdForNewLocalHomeworkFile() - 1
             taskIds = tasks.mapIndexed { index, s -> s to (taskIdStart - index) }.toMap()
             files = selectedFiles.mapIndexed { index, file -> Homework.HomeworkFile(fileIdStart - index, file.name, id, file.size) }
             homework = Homework.LocalHomework(

@@ -29,7 +29,14 @@ class AddFileUseCase(
             if (response !is Response.Success) return false
             id = response.data
         } else {
-            id = homeworkRepository.getIdForNewLocalHomeworkFile()
+            id = homeworkRepository.getIdForNewLocalHomeworkFile() - 1
+            fileRepository.upsert(plus.vplan.app.domain.model.File(
+                id = id,
+                name = file.name,
+                size = file.getSize() ?: 0L,
+                isOfflineReady = true,
+                getBitmap = { null }
+            ))
         }
 
         localFileRepository.writeFile("./homework_files/$id", file.readBytes())

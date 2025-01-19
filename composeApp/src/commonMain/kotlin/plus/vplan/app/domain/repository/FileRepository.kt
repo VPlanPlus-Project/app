@@ -9,6 +9,7 @@ import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 
 interface FileRepository {
+    suspend fun upsert(file: File)
     fun getById(id: Int): Flow<CacheState<File>>
     fun cacheFile(file: File, schoolApiAccess: SchoolApiAccess): Flow<FileDownloadProgress>
     suspend fun setOfflineReady(file: File, isOfflineReady: Boolean)

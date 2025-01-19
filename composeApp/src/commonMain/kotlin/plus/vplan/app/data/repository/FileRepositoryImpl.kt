@@ -40,12 +40,25 @@ class FileRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase
 ) : FileRepository {
+    override suspend fun upsert(file: File) {
+        vppDatabase.fileDao.upsert(
+            DbFile(
+                id = file.id,
+                createdAt = Clock.System.now(),
+                createdByVppId = null,
+                fileName = file.name,
+                size = file.size,
+                isOfflineReady = file.isOfflineReady
+            )
+        )
+    }
+
     override fun getById(id: Int): Flow<CacheState<File>> {
         val fileFlow = vppDatabase.fileDao.getById(id).map { it?.toModel() }
         return channelFlow {
             var hadData = false
             sendAll(fileFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
-            if (hadData) return@channelFlow
+            if (hadData || id < 0) return@channelFlow
             send(CacheState.Loading(id.toString()))
             val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/file/$id")
             if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<File>()))
@@ -107,9 +120,9 @@ class FileRepositoryImpl(
         }
         if (!response.status.isSuccess()) return@channelFlow send(FileDownloadProgress.Error(response.toErrorResponse<File>()))
         val data = response.bodyAsBytes()
-        return@channelFlow send(FileDownloadProgress.Done(data, {
+        return@channelFlow send(FileDownloadProgress.Done(data) {
             vppDatabase.fileDao.setOfflineReady(file.id, true)
-        }))
+        })
     }
 
     override suspend fun setOfflineReady(file: File, isOfflineReady: Boolean) {
