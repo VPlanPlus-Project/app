@@ -363,6 +363,26 @@ class HomeworkRepositoryImpl(
         return Response.Error.Cancelled
     }
 
+    override suspend fun editHomeworkTask(task: Homework.HomeworkTask, newContent: String, profile: Profile.StudentProfile) {
+        val oldContent = task.content
+        vppDatabase.homeworkDao.updateTaskContent(task.id, newContent)
+
+        if (task.id < 0 || profile.getVppIdItem() == null) return
+        safeRequest(onError = { vppDatabase.homeworkDao.updateTaskContent(task.id, oldContent) }) {
+            val response = httpClient.patch(URLBuilder(
+                protocol = VPP_PROTOCOL,
+                host = SERVER_IP,
+                port = VPP_PORT,
+                pathSegments = listOf("api", "v2.2", "homework", "task", task.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(HomeworkTaskUpdateContentRequest(content = newContent))
+            }
+            if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateTaskContent(task.id, oldContent)
+        }
+    }
+
     override suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error? {
         if (homework.id < 0 || profile.getVppIdItem() == null) {
             vppDatabase.homeworkDao.deleteById(listOf(homework.id))
@@ -379,6 +399,27 @@ class HomeworkRepositoryImpl(
             }
             if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
             vppDatabase.homeworkDao.deleteById(listOf(homework.id))
+            return null
+        }
+        return Response.Error.Cancelled
+    }
+
+    override suspend fun deleteHomeworkTask(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Response.Error? {
+        if (task.id < 0 || profile.getVppIdItem() == null) {
+            vppDatabase.homeworkDao.deleteTaskById(listOf(task.id))
+            return null
+        }
+        safeRequest(onError = { return it }) {
+            val response = httpClient.delete(URLBuilder(
+                protocol = VPP_PROTOCOL,
+                host = SERVER_IP,
+                port = VPP_PORT,
+                pathSegments = listOf("api", "v2.2", "homework", "task", task.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+            }
+            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            vppDatabase.homeworkDao.deleteTaskById(listOf(task.id))
             return null
         }
         return Response.Error.Cancelled
@@ -589,4 +630,9 @@ data class HomeworkUpdateVisibilityRequest(
 @Serializable
 data class HomeworkAddTaskRequest(
     @SerialName("task") val task: String,
+)
+
+@Serializable
+data class HomeworkTaskUpdateContentRequest(
+    @SerialName("content") val content: String,
 )

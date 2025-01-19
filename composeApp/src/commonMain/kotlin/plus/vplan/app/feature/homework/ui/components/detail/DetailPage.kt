@@ -4,8 +4,10 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,8 +46,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
@@ -59,16 +65,20 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.feature.homework.ui.components.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.LessonSelectDrawer
+import plus.vplan.app.ui.components.BackHandler
 import plus.vplan.app.ui.components.Badge
 import plus.vplan.app.ui.subjectIcon
+import plus.vplan.app.utils.tryNoCatch
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
+import vplanplus.composeapp.generated.resources.ellipsis_vertical
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.plus
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.trash_2
 import vplanplus.composeapp.generated.resources.x
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DetailPage(
     state: DetailState,
@@ -81,6 +91,8 @@ fun DetailPage(
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
+
+    var taskToEdit by rememberSaveable { mutableStateOf<Homework.HomeworkTask?>(null) }
 
     Column(
         modifier = Modifier
@@ -384,26 +396,149 @@ fun DetailPage(
 
             homework.getTasksFlow().collectAsState(emptyList()).value.forEach { task ->
                 Logger.d { "Task ${task.id}, done: ${task.isDone(profile)}" }
-                Row(
+                var isDropdownOpen by remember { mutableStateOf(false) }
+                val isEditing = taskToEdit?.id == task.id
+                var newContent by remember(task.id) { mutableStateOf(TextFieldValue(text = task.content, selection = TextRange(task.content.length))) }
+                BackHandler(
+                    enabled = isEditing,
+                    onBack = { taskToEdit = null }
+                )
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable { onEvent(DetailEvent.ToggleTaskDone(task)) }
-                        .padding(end = 8.dp),
+                        .combinedClickable(
+                            enabled = !isEditing,
+                            onLongClick = if (!state.canEdit) null else {
+                                { isDropdownOpen = true }
+                            },
+                            onClick = { onEvent(DetailEvent.ToggleTaskDone(task)) }
+                        ),
                 ) {
-                    Checkbox(
-                        checked = task.isDone(profile),
-                        onCheckedChange = { onEvent(DetailEvent.ToggleTaskDone(task)) }
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .heightIn(min = 48.dp),
-                        contentAlignment = Alignment.CenterStart
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) taskContent@{
+                        AnimatedContent(
+                            targetState = isEditing,
+                        ) { displayEdit ->
+                            if (displayEdit) {
+                                IconButton(
+                                    onClick = {
+                                        onEvent(DetailEvent.UpdateTask(task, newContent.text))
+                                        taskToEdit = null
+                                    },
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.check),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp).padding(2.dp)
+                                    )
+                                }
+                                return@AnimatedContent
+                            }
+                            AnimatedContent(
+                                targetState = state.taskDeleteState[task.id] == UnoptimisticTaskState.InProgress,
+                            ) { isDeleting ->
+                                if (isDeleting) {
+                                    Box(
+                                        modifier = Modifier.size(48.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp).padding(2.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                    }
+                                }
+                                else Checkbox(
+                                    checked = task.isDone(profile),
+                                    onCheckedChange = { onEvent(DetailEvent.ToggleTaskDone(task)) }
+                                )
+                            }
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        AnimatedContent(
+                            targetState = isEditing,
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = 48.dp)
+                                .padding(end = 8.dp)
+                        ) { displayEdit ->
+                            if (displayEdit) {
+                                val focusRequester = remember { FocusRequester() }
+                                TextField(
+                                    value = newContent,
+                                    onValueChange = { newContent = it },
+                                    modifier = Modifier
+                                        .focusRequester(focusRequester)
+                                        .weight(1f),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent,
+                                        disabledContainerColor = Color.Transparent,
+                                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedIndicatorColor = Color.Transparent,
+                                        disabledIndicatorColor = MaterialTheme.colorScheme.outline,
+                                    ),
+                                    placeholder = { Text(text = task.content) },
+                                )
+                                LaunchedEffect(Unit) { tryNoCatch { focusRequester.requestFocus() } }
+                                return@AnimatedContent
+                            }
+                            Box(
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Text(
+                                    text = task.content,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                        AnimatedContent(
+                            targetState = taskToEdit == task,
+                        ) { displayEdit ->
+                            if (displayEdit) {
+                                IconButton(
+                                    onClick = { taskToEdit = null },
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.x),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp).padding(2.dp)
+                                    )
+                                }
+                                return@AnimatedContent
+                            }
+                            if (state.canEdit) {
+                                IconButton(
+                                    onClick = { isDropdownOpen = true },
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ellipsis_vertical),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp).padding(2.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    DropdownMenu(
+                        expanded = isDropdownOpen,
+                        onDismissRequest = { isDropdownOpen = false }
                     ) {
-                        Text(
-                            text = task.content,
-                            style = MaterialTheme.typography.bodyMedium
+                        DropdownMenuItem(
+                            text = { Text("Bearbeiten") },
+                            onClick = {
+                                taskToEdit = task
+                                isDropdownOpen = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Löschen") },
+                            onClick = {
+                                onEvent(DetailEvent.DeleteTask(task))
+                                isDropdownOpen = false
+                            }
                         )
                     }
                 }

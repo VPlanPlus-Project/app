@@ -7,12 +7,13 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
 actual fun BackHandler(
+    enabled: Boolean,
     onProgress: (progress: Float) -> Unit,
     onStart: () -> Unit,
     onEnd: () -> Unit,
     onBack: () -> Unit
 ) {
-    PredictiveBackHandler(true) { progress ->
+    PredictiveBackHandler(enabled) { progress ->
         onStart()
         try {
             progress.collect { progressData ->

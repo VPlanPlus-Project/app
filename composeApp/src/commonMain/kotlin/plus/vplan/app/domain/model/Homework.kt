@@ -6,6 +6,7 @@ import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
 
 sealed class Homework : Item {
@@ -53,6 +54,13 @@ sealed class Homework : Item {
         val homework: Int,
     ) : Item {
         override fun getEntityId(): String = this.id.toString()
+
+        var homeworkItem: Homework? = null
+            private set
+
+        suspend fun getHomeworkItem(): Homework? {
+            return homeworkItem ?: App.homeworkSource.getById(homework).getFirstValue().also { homeworkItem = it }
+        }
 
         fun isDone(profile: Profile.StudentProfile) = profile.id in doneByProfiles || profile.vppId in doneByVppIds
     }

@@ -60,6 +60,10 @@ interface HomeworkDao {
     @Query("DELETE FROM homework WHERE id IN (:ids)")
     suspend fun deleteById(ids: List<Int>)
 
+    @Transaction
+    @Query("DELETE FROM homework_task WHERE id IN (:ids)")
+    suspend fun deleteTaskById(ids: List<Int>)
+
     @Query("SELECT MIN(id) FROM homework")
     fun getMinId(): Flow<Int?>
 
@@ -95,4 +99,7 @@ interface HomeworkDao {
 
     @Query("UPDATE homework SET is_public = :isPublic WHERE id = :homeworkId")
     suspend fun updateVisibility(homeworkId: Int, isPublic: Boolean)
+
+    @Query("UPDATE homework_task SET content = :content WHERE id = :taskId")
+    suspend fun updateTaskContent(taskId: Int, content: String)
 }

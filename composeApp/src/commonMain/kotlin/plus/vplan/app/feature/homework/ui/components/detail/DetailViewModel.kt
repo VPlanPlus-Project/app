@@ -18,11 +18,13 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
+import plus.vplan.app.feature.homework.domain.usecase.DeleteTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDefaultLessonUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDueToUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkVisibilityUseCase
 import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateHomeworkUseCase
+import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
 
 class DetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
@@ -32,7 +34,9 @@ class DetailViewModel(
     private val editHomeworkDueToUseCase: EditHomeworkDueToUseCase,
     private val editHomeworkVisibilityUseCase: EditHomeworkVisibilityUseCase,
     private val deleteHomeworkUseCase: DeleteHomeworkUseCase,
-    private val addTaskUseCase: AddTaskUseCase
+    private val addTaskUseCase: AddTaskUseCase,
+    private val updateTaskUseCase: UpdateTaskUseCase,
+    private val deleteTaskUseCase: DeleteTaskUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -75,16 +79,27 @@ class DetailViewModel(
                 is DetailEvent.DeleteHomework -> {
                     state = state.copy(deleteState = UnoptimisticTaskState.InProgress)
                     val result = deleteHomeworkUseCase(state.homework!!, state.profile!!)
-                    if (result) {
-                        state = state.copy(deleteState = UnoptimisticTaskState.Success)
+                    state = if (result) {
+                        state.copy(deleteState = UnoptimisticTaskState.Success)
                     } else {
-                        state = state.copy(deleteState = UnoptimisticTaskState.Error)
+                        state.copy(deleteState = UnoptimisticTaskState.Error)
                     }
                 }
                 is DetailEvent.AddTask -> {
                     state = state.copy(newTaskState = UnoptimisticTaskState.InProgress)
                     val result = addTaskUseCase(state.homework!!, event.task, state.profile!!)
                     state = if (result) state.copy(newTaskState = UnoptimisticTaskState.Success) else state.copy(newTaskState = UnoptimisticTaskState.Error)
+                }
+                is DetailEvent.UpdateTask -> updateTaskUseCase(event.task, event.newContent, state.profile!!)
+                is DetailEvent.DeleteTask -> {
+                    if (state.homework!!.tasks.size == 1) return@launch onEvent(DetailEvent.DeleteHomework)
+                    state = state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.InProgress))
+                    val result = deleteTaskUseCase(event.task, state.profile!!)
+                    state = if (result) {
+                        state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.Success))
+                    } else {
+                        state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.Error))
+                    }
                 }
             }
         }
@@ -99,6 +114,7 @@ data class DetailState(
     val deleteState: UnoptimisticTaskState? = null,
     val initDone: Boolean = false,
     val newTaskState: UnoptimisticTaskState? = null,
+    val taskDeleteState: Map<Int, UnoptimisticTaskState> = emptyMap(),
 )
 
 sealed class DetailEvent {
@@ -107,6 +123,8 @@ sealed class DetailEvent {
     data class UpdateDueTo(val dueTo: LocalDate) : DetailEvent()
     data class UpdateVisibility(val isPublic: Boolean) : DetailEvent()
     data class AddTask(val task: String) : DetailEvent()
+    data class UpdateTask(val task: Homework.HomeworkTask, val newContent: String) : DetailEvent()
+    data class DeleteTask(val task: Homework.HomeworkTask) : DetailEvent()
     data object DeleteHomework : DetailEvent()
     data object Reload : DetailEvent()
 }
