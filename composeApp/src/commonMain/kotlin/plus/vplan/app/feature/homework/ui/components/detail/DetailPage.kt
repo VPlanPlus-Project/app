@@ -1,12 +1,14 @@
 package plus.vplan.app.feature.homework.ui.components.detail
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -18,6 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -25,6 +29,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,9 +49,11 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.feature.homework.ui.components.DateSelectDrawer
+import plus.vplan.app.feature.homework.ui.components.LessonSelectDrawer
 import plus.vplan.app.ui.components.Badge
+import plus.vplan.app.ui.subjectIcon
 import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.pencil
 import vplanplus.composeapp.generated.resources.rotate_cw
 
 @Composable
@@ -52,6 +63,10 @@ fun DetailPage(
 ) {
     val homework = state.homework ?: return
     val profile = state.profile ?: return
+
+    var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
+    var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -73,15 +88,6 @@ fun DetailPage(
                     overflow = TextOverflow.Clip,
                     modifier = Modifier.weight(1f)
                 )
-                if (state.canEdit) {
-                    FilledTonalIconButton(onClick = {}) {
-                        Icon(
-                            painter = painterResource(Res.drawable.pencil),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp).padding(2.dp)
-                        )
-                    }
-                }
                 FilledTonalIconButton(
                     enabled = !state.isReloading,
                     onClick = { onEvent(DetailEvent.Reload) }
@@ -107,36 +113,54 @@ fun DetailPage(
             val tableNameStyle = MaterialTheme.typography.bodyLarge.copy(Color.Gray)
             val tableValueStyle = MaterialTheme.typography.bodyMedium
             val tableCellModifier = Modifier.weight(1f, true)
-            if (homework.defaultLesson != null) TableRow(
+            TableRow(
                 key = {
                     Text(
-                        text = "Fach",
+                        text = "Klasse/Fach",
                         style = tableNameStyle,
                         modifier = tableCellModifier
                     )
                 },
                 value = {
-                    Text(
-                        text = homework.defaultLessonItem!!.subject,
-                        style = tableValueStyle,
-                        modifier = tableCellModifier
-                    )
-                }
-            )
-            else TableRow(
-                key = {
-                    Text(
-                        text = "Klasse",
-                        style = tableNameStyle,
-                        modifier = tableCellModifier
-                    )
-                },
-                value = {
-                    Text(
-                        text = homework.groupItem!!.name,
-                        style = tableValueStyle,
-                        modifier = tableCellModifier
-                    )
+                    val content: @Composable () -> Unit = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            if (homework.defaultLessonItem != null) {
+                                Icon(
+                                    painter = painterResource(homework.defaultLessonItem!!.subject.subjectIcon()),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(12.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = homework.defaultLessonItem!!.subject,
+                                    style = tableValueStyle,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            } else {
+                                Text(
+                                    text = homework.groupItem!!.name,
+                                    style = tableValueStyle,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                    Box(tableCellModifier) {
+                        if (state.canEdit) Box(
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = 32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable(state.canEdit) { showLessonSelectDrawer = true }
+                                .padding(4.dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            content()
+                        } else content()
+                    }
                 }
             )
             TableRow(
@@ -148,19 +172,98 @@ fun DetailPage(
                     )
                 },
                 value = {
-                    Text(
-                        text = homework.dueTo.toLocalDateTime(TimeZone.currentSystemDefault()).format(LocalDateTime.Format {
-                            dayOfMonth(Padding.ZERO)
-                            char('.')
-                            monthNumber(Padding.ZERO)
-                            char('.')
-                            year(Padding.ZERO)
-                        }),
-                        style = tableValueStyle,
-                        modifier = tableCellModifier
-                    )
+                    val content: @Composable () -> Unit = {
+                        Text(
+                            text = homework.dueTo.toLocalDateTime(TimeZone.currentSystemDefault()).format(LocalDateTime.Format {
+                                dayOfMonth(Padding.ZERO)
+                                char('.')
+                                monthNumber(Padding.ZERO)
+                                char('.')
+                                year(Padding.ZERO)
+                            }),
+                            style = tableValueStyle,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
+                    Box(tableCellModifier) {
+                        if (state.canEdit) Box(
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = 32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable(state.canEdit) { showDateSelectDrawer = true }
+                                .padding(4.dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            content()
+                        } else content()
+                    }
                 }
             )
+            if (homework is Homework.CloudHomework) {
+                TableRow(
+                    key = {
+                        Text(
+                            text = "Freigabe",
+                            style = tableNameStyle,
+                            modifier = tableCellModifier
+                        )
+                    },
+                    value = {
+                        val content: @Composable () -> Unit = {
+                            Text(
+                                text = if (homework.isPublic) "Geteilt" else "Privat",
+                                style = tableValueStyle,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Box(tableCellModifier) {
+                            if (state.canEdit) {
+                                var expanded by remember { mutableStateOf(false) }
+                                Box(
+                                    modifier = Modifier
+                                        .defaultMinSize(minHeight = 32.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .clickable(state.canEdit) { expanded = true }
+                                        .padding(4.dp),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    content()
+                                    DropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false },
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text("Teilen") },
+                                            onClick = {
+                                                onEvent(DetailEvent.UpdateVisibility(true))
+                                                expanded = false
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Privat") },
+                                            onClick = {
+                                                onEvent(DetailEvent.UpdateVisibility(false))
+                                                expanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            } else content()
+                        }
+                    }
+                )
+            }
+            if (state.canEdit) {
+                Text(
+                    text = "Tippe einen Wert an, um ihn zu bearbeiten",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+            }
             TableRow(
                 key = {
                     Text(
@@ -268,6 +371,24 @@ fun DetailPage(
             }
         }
     }
+
+    if (showLessonSelectDrawer) {
+        LessonSelectDrawer(
+            group = profile.groupItem!!,
+            defaultLessons = profile.defaultLessonItems.filter { defaultLesson -> profile.defaultLessons.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
+            selectedDefaultLesson = homework.defaultLessonItem,
+            onSelectDefaultLesson = { onEvent(DetailEvent.UpdateDefaultLesson(it)) },
+            onDismiss = { showLessonSelectDrawer = false }
+        )
+    }
+
+    if (showDateSelectDrawer) {
+        DateSelectDrawer(
+            selectedDate = homework.dueTo.toLocalDateTime(TimeZone.currentSystemDefault()).date,
+            onSelectDate = { onEvent(DetailEvent.UpdateDueTo(it)) },
+            onDismiss = { showDateSelectDrawer = false }
+        )
+    }
 }
 
 @Composable
@@ -276,8 +397,9 @@ private fun TableRow(
     value: @Composable () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.padding(vertical = 2.dp).fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         key()
         value()

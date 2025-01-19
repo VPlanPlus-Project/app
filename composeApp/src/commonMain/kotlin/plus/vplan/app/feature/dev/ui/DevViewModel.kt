@@ -44,7 +44,6 @@ class DevViewModel(
                 state = state.copy(homework = it.onEachIndexed { index, homework ->
                     homework.prefetch()
                 })
-                Logger.d { "UI initial homework fetched" }
             }
         }
     }

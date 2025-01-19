@@ -162,7 +162,7 @@ class HomeworkRepositoryImpl(
     }
 
     override fun getAll(): Flow<List<CacheState<Homework>>> {
-        return vppDatabase.homeworkDao.getAll().map { it.map { CacheState.Done(it.toModel()) } }
+        return vppDatabase.homeworkDao.getAll().map { it.map { embeddedHomework -> CacheState.Done(embeddedHomework.toModel()) } }
     }
 
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Homework>> {
@@ -274,6 +274,69 @@ class HomeworkRepositoryImpl(
         }
     }
 
+    override suspend fun editHomeworkDefaultLesson(homework: Homework, defaultLesson: DefaultLesson?, group: Group?, profile: Profile.StudentProfile) {
+        require((defaultLesson == null) xor (group == null)) { "Either defaultLesson or group must not be null" }
+        val oldDefaultLesson = homework.getDefaultLessonItem()
+        val oldGroup = homework.getGroupItem()
+        vppDatabase.homeworkDao.updateDefaultLessonAndGroup(homework.id, defaultLesson?.id, group?.id)
+
+        if (homework.id < 0 || profile.getVppIdItem() == null) return
+        safeRequest(onError = { vppDatabase.homeworkDao.updateDefaultLessonAndGroup(homework.id, oldDefaultLesson?.id, oldGroup?.id) }) {
+            val response = httpClient.patch(URLBuilder(
+                protocol = VPP_PROTOCOL,
+                host = SERVER_IP,
+                port = VPP_PORT,
+                pathSegments = listOf("api", "v2.2", "homework", homework.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(HomeworkUpdateDefaultLessonRequest(defaultLesson = defaultLesson?.id, groupId = group?.id))
+            }
+            if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateDefaultLessonAndGroup(homework.id, oldDefaultLesson?.id, oldGroup?.id)
+        }
+    }
+
+    override suspend fun editHomeworkDueTo(homework: Homework, dueTo: LocalDate, profile: Profile.StudentProfile) {
+        val oldDueTo = homework.dueTo
+        val newDueTo = Instant.fromEpochSeconds(dueTo.toEpochDays() * 24 * 60 * 60L)
+        vppDatabase.homeworkDao.updateDueTo(homework.id, newDueTo)
+
+        if (homework.id < 0 || profile.getVppIdItem() == null) return
+        safeRequest(onError = { vppDatabase.homeworkDao.updateDueTo(homework.id, oldDueTo) }) {
+            val response = httpClient.patch(URLBuilder(
+                protocol = VPP_PROTOCOL,
+                host = SERVER_IP,
+                port = VPP_PORT,
+                pathSegments = listOf("api", "v2.2", "homework", homework.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(HomeworkUpdateDueToRequest(dueTo = newDueTo.epochSeconds))
+            }
+            if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateDueTo(homework.id, oldDueTo)
+        }
+    }
+
+    override suspend fun editHomeworkVisibility(homework: Homework.CloudHomework, isPublic: Boolean, profile: Profile.StudentProfile) {
+        val oldVisibility = homework.isPublic
+        vppDatabase.homeworkDao.updateVisibility(homework.id, isPublic)
+
+        if (homework.id < 0 || profile.getVppIdItem() == null) return
+        safeRequest(onError = { vppDatabase.homeworkDao.updateVisibility(homework.id, oldVisibility) }) {
+            val response = httpClient.patch(URLBuilder(
+                protocol = VPP_PROTOCOL,
+                host = SERVER_IP,
+                port = VPP_PORT,
+                pathSegments = listOf("api", "v2.2", "homework", homework.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(HomeworkUpdateVisibilityRequest(isPublic = isPublic))
+            }
+            if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateVisibility(homework.id, oldVisibility)
+        }
+    }
+
     override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<String>): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get(URLBuilder(
@@ -303,7 +366,7 @@ class HomeworkRepositoryImpl(
                         createdByProfileId = null,
                         isPublic = homework.isPublic
                     )
-                }.also { Logger.d { "${it.size} homework upserted" } },
+                },
                 homeworkTask = data.map { homework ->
                     homework.tasks.map { homeworkTask ->
                         DbHomeworkTask(
@@ -458,4 +521,20 @@ data class HomeworkGetResponseTask(
 @Serializable
 data class HomeworkTaskUpdateDoneStateRequest(
     @SerialName("is_done") val isDone: Boolean
+)
+
+@Serializable
+data class HomeworkUpdateDefaultLessonRequest(
+    @SerialName("default_lesson_id") val defaultLesson: String?,
+    @SerialName("group_id") val groupId: Int?,
+)
+
+@Serializable
+data class HomeworkUpdateDueToRequest(
+    @SerialName("due_to") val dueTo: Long,
+)
+
+@Serializable
+data class HomeworkUpdateVisibilityRequest(
+    @SerialName("is_public") val isPublic: Boolean,
 )

@@ -20,7 +20,7 @@ fun HomeworkDetailDrawer(
         viewModel.init(homeworkId)
     }
 
-    if (state.homework == null) return
+    if (!state.initDone) return
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(
         onDismissRequest = onDismiss,

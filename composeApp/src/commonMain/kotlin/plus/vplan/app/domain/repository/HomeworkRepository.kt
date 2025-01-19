@@ -32,6 +32,9 @@ interface HomeworkRepository {
     suspend fun getIdForNewLocalHomeworkFile(): Int
 
     suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile)
+    suspend fun editHomeworkDefaultLesson(homework: Homework, defaultLesson: DefaultLesson?, group: Group?, profile: Profile.StudentProfile)
+    suspend fun editHomeworkDueTo(homework: Homework, dueTo: LocalDate, profile: Profile.StudentProfile)
+    suspend fun editHomeworkVisibility(homework: Homework.CloudHomework, isPublic: Boolean, profile: Profile.StudentProfile)
 
     /**
      * @return List of ids of the created homework
