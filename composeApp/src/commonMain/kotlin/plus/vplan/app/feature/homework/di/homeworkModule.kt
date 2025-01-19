@@ -3,6 +3,7 @@ package plus.vplan.app.feature.homework.di
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
+import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDefaultLessonUseCase
@@ -25,6 +26,7 @@ val homeworkModule = module {
     singleOf(::EditHomeworkDueToUseCase)
     singleOf(::EditHomeworkVisibilityUseCase)
     singleOf(::DeleteHomeworkUseCase)
+    singleOf(::AddTaskUseCase)
 
     viewModelOf(::NewHomeworkViewModel)
     viewModelOf(::DetailViewModel)

@@ -1,6 +1,9 @@
 package plus.vplan.app.feature.homework.ui.components.detail
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,9 +28,13 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
@@ -56,8 +64,10 @@ import plus.vplan.app.ui.subjectIcon
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.info
+import vplanplus.composeapp.generated.resources.plus
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.trash_2
+import vplanplus.composeapp.generated.resources.x
 
 @Composable
 fun DetailPage(
@@ -66,6 +76,8 @@ fun DetailPage(
 ) {
     val homework = state.homework ?: return
     val profile = state.profile ?: return
+
+    val localKeyboardController = LocalSoftwareKeyboardController.current
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
@@ -78,6 +90,7 @@ fun DetailPage(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -97,16 +110,16 @@ fun DetailPage(
                             targetState = state.deleteState,
                         ) { deleteState ->
                             when (deleteState) {
-                                DeleteHomeworkDialogState.Deleting -> CircularProgressIndicator(
+                                UnoptimisticTaskState.InProgress -> CircularProgressIndicator(
                                     modifier = Modifier.size(24.dp).padding(2.dp),
                                     strokeWidth = 2.dp
                                 )
-                                DeleteHomeworkDialogState.Error -> Icon(
+                                UnoptimisticTaskState.Error -> Icon(
                                     painter = painterResource(Res.drawable.info),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp).padding(2.dp)
                                 )
-                                DeleteHomeworkDialogState.Success -> Icon(
+                                UnoptimisticTaskState.Success -> Icon(
                                     painter = painterResource(Res.drawable.check),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp).padding(2.dp)
@@ -368,13 +381,7 @@ fun DetailPage(
                 }
             )
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-        }
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-        ) {
+
             homework.getTasksFlow().collectAsState(emptyList()).value.forEach { task ->
                 Logger.d { "Task ${task.id}, done: ${task.isDone(profile)}" }
                 Row(
@@ -399,6 +406,70 @@ fun DetailPage(
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
+                }
+            }
+            if (state.canEdit) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    var newTask by remember { mutableStateOf("") }
+                    val cancel = {
+                        newTask = ""
+                        localKeyboardController?.hide()
+                        Unit
+                    }
+                    IconButton(
+                        onClick = { onEvent(DetailEvent.AddTask(newTask)) },
+                        enabled = newTask.isNotBlank() && state.newTaskState != UnoptimisticTaskState.InProgress
+                    ) {
+                        AnimatedContent(
+                            targetState = state.newTaskState,
+                        ) { newTaskState ->
+                            when (newTaskState) {
+                                UnoptimisticTaskState.InProgress -> CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp).padding(2.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                else -> Icon(
+                                    painter = painterResource(Res.drawable.plus),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp).padding(2.dp)
+                                )
+                            }
+                        }
+                    }
+                    TextField(
+                        value = newTask,
+                        onValueChange = { newTask = it },
+                        modifier = Modifier.weight(1f),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = MaterialTheme.colorScheme.outline,
+                        ),
+                        placeholder = { Text(text = "Weitere Aufgaben hinzufügen") },
+                    )
+                    AnimatedVisibility(
+                        visible = newTask.isNotBlank(),
+                        enter = expandHorizontally(),
+                        exit = shrinkHorizontally(),
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        IconButton(
+                            onClick = cancel,
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.x),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp).padding(2.dp)
+                            )
+                        }
+                    }
+                    LaunchedEffect(state.newTaskState) { if (state.newTaskState == UnoptimisticTaskState.Success) cancel() }
                 }
             }
         }

@@ -36,6 +36,8 @@ interface HomeworkRepository {
     suspend fun editHomeworkDueTo(homework: Homework, dueTo: LocalDate, profile: Profile.StudentProfile)
     suspend fun editHomeworkVisibility(homework: Homework.CloudHomework, isPublic: Boolean, profile: Profile.StudentProfile)
 
+    suspend fun addTask(homework: Homework, task: String, profile: Profile.StudentProfile): Response.Error?
+
     suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error?
 
     /**

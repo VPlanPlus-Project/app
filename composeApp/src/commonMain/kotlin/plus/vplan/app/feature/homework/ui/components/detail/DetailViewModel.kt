@@ -16,6 +16,7 @@ import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDefaultLessonUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDueToUseCase
@@ -30,7 +31,8 @@ class DetailViewModel(
     private val editHomeworkDefaultLessonUseCase: EditHomeworkDefaultLessonUseCase,
     private val editHomeworkDueToUseCase: EditHomeworkDueToUseCase,
     private val editHomeworkVisibilityUseCase: EditHomeworkVisibilityUseCase,
-    private val deleteHomeworkUseCase: DeleteHomeworkUseCase
+    private val deleteHomeworkUseCase: DeleteHomeworkUseCase,
+    private val addTaskUseCase: AddTaskUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -71,13 +73,18 @@ class DetailViewModel(
                     updateHomeworkUseCase(state.homework!!.id)
                 }
                 is DetailEvent.DeleteHomework -> {
-                    state = state.copy(deleteState = DeleteHomeworkDialogState.Deleting)
+                    state = state.copy(deleteState = UnoptimisticTaskState.InProgress)
                     val result = deleteHomeworkUseCase(state.homework!!, state.profile!!)
                     if (result) {
-                        state = state.copy(deleteState = DeleteHomeworkDialogState.Success)
+                        state = state.copy(deleteState = UnoptimisticTaskState.Success)
                     } else {
-                        state = state.copy(deleteState = DeleteHomeworkDialogState.Error)
+                        state = state.copy(deleteState = UnoptimisticTaskState.Error)
                     }
+                }
+                is DetailEvent.AddTask -> {
+                    state = state.copy(newTaskState = UnoptimisticTaskState.InProgress)
+                    val result = addTaskUseCase(state.homework!!, event.task, state.profile!!)
+                    state = if (result) state.copy(newTaskState = UnoptimisticTaskState.Success) else state.copy(newTaskState = UnoptimisticTaskState.Error)
                 }
             }
         }
@@ -89,8 +96,9 @@ data class DetailState(
     val profile: Profile.StudentProfile? = null,
     val canEdit: Boolean = false,
     val isReloading: Boolean = false,
-    val deleteState: DeleteHomeworkDialogState? = null,
+    val deleteState: UnoptimisticTaskState? = null,
     val initDone: Boolean = false,
+    val newTaskState: UnoptimisticTaskState? = null,
 )
 
 sealed class DetailEvent {
@@ -98,6 +106,7 @@ sealed class DetailEvent {
     data class UpdateDefaultLesson(val defaultLesson: DefaultLesson?) : DetailEvent()
     data class UpdateDueTo(val dueTo: LocalDate) : DetailEvent()
     data class UpdateVisibility(val isPublic: Boolean) : DetailEvent()
+    data class AddTask(val task: String) : DetailEvent()
     data object DeleteHomework : DetailEvent()
     data object Reload : DetailEvent()
 }
@@ -116,6 +125,6 @@ private suspend fun Homework.prefetch() {
     if (this is Homework.CloudHomework) this.getCreatedBy()
 }
 
-enum class DeleteHomeworkDialogState {
-    Deleting, Error, Success
+enum class UnoptimisticTaskState {
+    InProgress, Error, Success
 }

@@ -15,14 +15,14 @@ fun HomeworkDetailDrawer(
 ) {
     val viewModel = koinViewModel<DetailViewModel>()
     val state = viewModel.state
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     LaunchedEffect(homeworkId) {
         viewModel.init(homeworkId)
     }
 
     LaunchedEffect(state.deleteState) {
-        if (state.deleteState == DeleteHomeworkDialogState.Success) {
+        if (state.deleteState == UnoptimisticTaskState.Success) {
             sheetState.hide()
             onDismiss()
         }

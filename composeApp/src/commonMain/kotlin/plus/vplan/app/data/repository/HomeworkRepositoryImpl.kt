@@ -338,6 +338,31 @@ class HomeworkRepositoryImpl(
         }
     }
 
+    override suspend fun addTask(homework: Homework, task: String, profile: Profile.StudentProfile): Response.Error? {
+        if (homework.id < 0 || profile.getVppIdItem() == null) {
+            val id = getIdForNewLocalHomeworkTask()
+            vppDatabase.homeworkDao.upsertTaskMany(listOf(DbHomeworkTask(content = task, homeworkId = homework.id, id = id)))
+            return null
+        }
+        safeRequest(onError = { return it }) {
+            val response = httpClient.post(URLBuilder(
+                protocol = VPP_PROTOCOL,
+                host = SERVER_IP,
+                port = VPP_PORT,
+                pathSegments = listOf("api", "v2.2", "homework", homework.id.toString(), "tasks")
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(HomeworkAddTaskRequest(task = task))
+            }
+            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            val id = ResponseDataWrapper.fromJson<Int>(response.bodyAsText()) ?: return Response.Error.ParsingError(response.bodyAsText())
+            vppDatabase.homeworkDao.upsertTaskMany(listOf(DbHomeworkTask(content = task, homeworkId = homework.id, id = id)))
+            return null
+        }
+        return Response.Error.Cancelled
+    }
+
     override suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error? {
         if (homework.id < 0 || profile.getVppIdItem() == null) {
             vppDatabase.homeworkDao.deleteById(listOf(homework.id))
@@ -559,4 +584,9 @@ data class HomeworkUpdateDueToRequest(
 @Serializable
 data class HomeworkUpdateVisibilityRequest(
     @SerialName("is_public") val isPublic: Boolean,
+)
+
+@Serializable
+data class HomeworkAddTaskRequest(
+    @SerialName("task") val task: String,
 )
