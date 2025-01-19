@@ -21,7 +21,7 @@ interface HomeworkRepository {
 
     fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
 
-    fun getById(id: Int): Flow<CacheState<Homework>>
+    fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<Homework>>
     fun getAll(): Flow<List<CacheState<Homework>>>
 
     suspend fun deleteById(id: Int)

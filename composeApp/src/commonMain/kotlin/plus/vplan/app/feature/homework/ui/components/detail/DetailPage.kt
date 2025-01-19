@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.homework.ui.components.detail
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,12 +11,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import kotlinx.datetime.LocalDateTime
@@ -32,8 +38,12 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.ui.components.Badge
+import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.pencil
+import vplanplus.composeapp.generated.resources.rotate_cw
 
 @Composable
 fun DetailPage(
@@ -51,10 +61,48 @@ fun DetailPage(
                 .padding(horizontal = 16.dp)
                 .fillMaxWidth()
         ) {
-            Text(
-                text = "Hausaufgabe",
-                style = MaterialTheme.typography.headlineLarge,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Hausaufgabe",
+                    style = MaterialTheme.typography.headlineLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip,
+                    modifier = Modifier.weight(1f)
+                )
+                if (state.canEdit) {
+                    FilledTonalIconButton(onClick = {}) {
+                        Icon(
+                            painter = painterResource(Res.drawable.pencil),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp).padding(2.dp)
+                        )
+                    }
+                }
+                FilledTonalIconButton(
+                    enabled = !state.isReloading,
+                    onClick = { onEvent(DetailEvent.Reload) }
+                ) {
+                    AnimatedContent(
+                        targetState = state.isReloading,
+                    ) { isReloading ->
+                        if (isReloading) CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp).padding(2.dp),
+                            strokeWidth = 2.dp
+                        )
+                        else {
+                            Icon(
+                                painter = painterResource(Res.drawable.rotate_cw),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp).padding(2.dp)
+                            )
+                        }
+                    }
+                }
+            }
             Spacer(Modifier.height(16.dp))
             val tableNameStyle = MaterialTheme.typography.bodyLarge.copy(Color.Gray)
             val tableValueStyle = MaterialTheme.typography.bodyMedium

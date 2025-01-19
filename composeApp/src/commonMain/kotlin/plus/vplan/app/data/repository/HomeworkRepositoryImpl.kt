@@ -18,9 +18,8 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -54,6 +53,7 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.HomeworkResponse
 import plus.vplan.app.domain.repository.HomeworkTaskResponse
 import plus.vplan.app.feature.homework.ui.components.File
+import plus.vplan.app.utils.sendAll
 import plus.vplan.app.utils.sha256
 
 private val logger = Logger.withTag("HomeworkRepositoryImpl")
@@ -165,27 +165,27 @@ class HomeworkRepositoryImpl(
         return vppDatabase.homeworkDao.getAll().map { it.map { CacheState.Done(it.toModel()) } }
     }
 
-    override fun getById(id: Int): Flow<CacheState<Homework>> {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Homework>> {
         if (id < 0) return vppDatabase.homeworkDao.getById(id).map {
             if (it == null) CacheState.NotExisting(id.toString())
             else CacheState.Done(it.toModel())
         }
-        return flow {
+        return channelFlow {
             val databaseObject = vppDatabase.homeworkDao.getById(id)
-            if (databaseObject.first() != null) return@flow emitAll(databaseObject.map {
+            if (!forceReload && databaseObject.first() != null) return@channelFlow sendAll(databaseObject.map {
                 if (it == null) CacheState.NotExisting(id.toString())
                 else CacheState.Done(it.toModel())
             })
 
             safeRequest(
-                onError = { return@flow emit(CacheState.Error(id.toString(), it)) }
+                onError = { return@channelFlow send(CacheState.Error(id.toString(), it)) }
             ) {
                 val metadataResponse = httpClient.get("$VPP_ROOT_URL/api/v2.2/homework/$id")
-                if (metadataResponse.status == HttpStatusCode.NotFound) return@flow emit(CacheState.NotExisting(id.toString()))
-                if (metadataResponse.status != HttpStatusCode.OK) return@flow emit(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
+                if (metadataResponse.status == HttpStatusCode.NotFound) return@channelFlow send(CacheState.NotExisting(id.toString()))
+                if (metadataResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
 
                 val metadataResponseData = ResponseDataWrapper.fromJson<HomeworkMetadataResponse>(metadataResponse.bodyAsText())
-                    ?: return@flow emit(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
 
                 val vppId = vppDatabase.vppIdDao.getById(metadataResponseData.createdBy).first()?.toModel() as? VppId.Active
                 val school = vppDatabase.schoolDao.findById(metadataResponseData.schoolId).first()?.toModel()
@@ -193,9 +193,9 @@ class HomeworkRepositoryImpl(
                 val homeworkResponse = httpClient.get("$VPP_ROOT_URL/api/v2.2/homework/$id") {
                     vppId?.let { bearerAuth(it.accessToken) } ?: school?.getSchoolApiAccess()?.authentication(this)
                 }
-                if (homeworkResponse.status != HttpStatusCode.OK) return@flow emit(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
+                if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
                 val data = ResponseDataWrapper.fromJson<HomeworkResponseItem>(homeworkResponse.bodyAsText())
-                    ?: return@flow emit(CacheState.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
 
                 vppDatabase.homeworkDao.upsertMany(
                     homework = listOf(
@@ -223,11 +223,11 @@ class HomeworkRepositoryImpl(
                             isDone = it.done ?: return@mapNotNull null
                         )
                     },
-                    files = emptyList() // TODO
+                    files = emptyList() // TODO files
                 )
             }
 
-            return@flow emitAll(getById(id))
+            return@channelFlow sendAll(getById(id))
         }
     }
 
@@ -322,7 +322,7 @@ class HomeworkRepositoryImpl(
                         )
                     }
                 },
-                emptyList()
+                files = emptyList() // TODO
             )
 
             return Response.Success(data.map { it.id })

@@ -15,10 +15,12 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
+import plus.vplan.app.feature.homework.domain.usecase.UpdateHomeworkUseCase
 
 class DetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
-    private val toggleTaskDoneUseCase: ToggleTaskDoneUseCase
+    private val toggleTaskDoneUseCase: ToggleTaskDoneUseCase,
+    private val updateHomeworkUseCase: UpdateHomeworkUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -34,7 +36,12 @@ class DetailViewModel(
                 homework.getDefaultLessonItem()
                 homework.getGroupItem()
                 if (homework is Homework.CloudHomework) homework.getCreatedBy()
-                state.copy(homework = homework, profile = profile)
+                state.copy(
+                    homework = homework,
+                    profile = profile,
+                    canEdit = (homework is Homework.CloudHomework && homework.createdBy == profile.vppId) || (homework is Homework.LocalHomework && homework.createdByProfile == profile.id),
+                    isReloading = false
+                )
             }.filterNotNull().collectLatest { state = it }
         }
     }
@@ -43,6 +50,10 @@ class DetailViewModel(
         viewModelScope.launch {
             when (event) {
                 is DetailEvent.ToggleTaskDone -> toggleTaskDoneUseCase(event.task, state.profile!!)
+                is DetailEvent.Reload -> {
+                    state = state.copy(isReloading = true)
+                    updateHomeworkUseCase(state.homework!!.id)
+                }
             }
         }
     }
@@ -50,9 +61,12 @@ class DetailViewModel(
 
 data class DetailState(
     val homework: Homework? = null,
-    val profile: Profile.StudentProfile? = null
+    val profile: Profile.StudentProfile? = null,
+    val canEdit: Boolean = false,
+    val isReloading: Boolean = false
 )
 
 sealed class DetailEvent {
     data class ToggleTaskDone(val task: Homework.HomeworkTask) : DetailEvent()
+    data object Reload : DetailEvent()
 }
