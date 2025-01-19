@@ -16,6 +16,7 @@ import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDefaultLessonUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDueToUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkVisibilityUseCase
@@ -28,7 +29,8 @@ class DetailViewModel(
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val editHomeworkDefaultLessonUseCase: EditHomeworkDefaultLessonUseCase,
     private val editHomeworkDueToUseCase: EditHomeworkDueToUseCase,
-    private val editHomeworkVisibilityUseCase: EditHomeworkVisibilityUseCase
+    private val editHomeworkVisibilityUseCase: EditHomeworkVisibilityUseCase,
+    private val deleteHomeworkUseCase: DeleteHomeworkUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -68,6 +70,15 @@ class DetailViewModel(
                     state = state.copy(isReloading = true)
                     updateHomeworkUseCase(state.homework!!.id)
                 }
+                is DetailEvent.DeleteHomework -> {
+                    state = state.copy(deleteState = DeleteHomeworkDialogState.Deleting)
+                    val result = deleteHomeworkUseCase(state.homework!!, state.profile!!)
+                    if (result) {
+                        state = state.copy(deleteState = DeleteHomeworkDialogState.Success)
+                    } else {
+                        state = state.copy(deleteState = DeleteHomeworkDialogState.Error)
+                    }
+                }
             }
         }
     }
@@ -78,7 +89,8 @@ data class DetailState(
     val profile: Profile.StudentProfile? = null,
     val canEdit: Boolean = false,
     val isReloading: Boolean = false,
-    val initDone: Boolean = false
+    val deleteState: DeleteHomeworkDialogState? = null,
+    val initDone: Boolean = false,
 )
 
 sealed class DetailEvent {
@@ -86,6 +98,7 @@ sealed class DetailEvent {
     data class UpdateDefaultLesson(val defaultLesson: DefaultLesson?) : DetailEvent()
     data class UpdateDueTo(val dueTo: LocalDate) : DetailEvent()
     data class UpdateVisibility(val isPublic: Boolean) : DetailEvent()
+    data object DeleteHomework : DetailEvent()
     data object Reload : DetailEvent()
 }
 
@@ -101,4 +114,8 @@ private suspend fun Homework.prefetch() {
     this.getGroupItem()
     this.getDefaultLessonItem()
     if (this is Homework.CloudHomework) this.getCreatedBy()
+}
+
+enum class DeleteHomeworkDialogState {
+    Deleting, Error, Success
 }

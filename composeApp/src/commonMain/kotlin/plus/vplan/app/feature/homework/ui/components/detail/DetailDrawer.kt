@@ -15,13 +15,20 @@ fun HomeworkDetailDrawer(
 ) {
     val viewModel = koinViewModel<DetailViewModel>()
     val state = viewModel.state
+    val sheetState = rememberModalBottomSheetState()
 
     LaunchedEffect(homeworkId) {
         viewModel.init(homeworkId)
     }
 
+    LaunchedEffect(state.deleteState) {
+        if (state.deleteState == DeleteHomeworkDialogState.Success) {
+            sheetState.hide()
+            onDismiss()
+        }
+    }
+
     if (!state.initDone) return
-    val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState

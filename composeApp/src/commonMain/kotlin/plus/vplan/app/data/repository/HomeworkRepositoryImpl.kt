@@ -3,6 +3,7 @@ package plus.vplan.app.data.repository
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.patch
@@ -335,6 +336,27 @@ class HomeworkRepositoryImpl(
             }
             if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateVisibility(homework.id, oldVisibility)
         }
+    }
+
+    override suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error? {
+        if (homework.id < 0 || profile.getVppIdItem() == null) {
+            vppDatabase.homeworkDao.deleteById(listOf(homework.id))
+            return null
+        }
+        safeRequest(onError = { return it }) {
+            val response = httpClient.delete(URLBuilder(
+                protocol = VPP_PROTOCOL,
+                host = SERVER_IP,
+                port = VPP_PORT,
+                pathSegments = listOf("api", "v2.2", "homework", homework.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+            }
+            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            vppDatabase.homeworkDao.deleteById(listOf(homework.id))
+            return null
+        }
+        return Response.Error.Cancelled
     }
 
     override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<String>): Response<List<Int>> {

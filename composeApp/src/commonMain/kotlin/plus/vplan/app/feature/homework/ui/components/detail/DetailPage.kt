@@ -54,7 +54,10 @@ import plus.vplan.app.feature.homework.ui.components.LessonSelectDrawer
 import plus.vplan.app.ui.components.Badge
 import plus.vplan.app.ui.subjectIcon
 import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.check
+import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.rotate_cw
+import vplanplus.composeapp.generated.resources.trash_2
 
 @Composable
 fun DetailPage(
@@ -88,6 +91,35 @@ fun DetailPage(
                     overflow = TextOverflow.Clip,
                     modifier = Modifier.weight(1f)
                 )
+                if (state.canEdit) {
+                    FilledTonalIconButton(onClick = { onEvent(DetailEvent.DeleteHomework) }) {
+                        AnimatedContent(
+                            targetState = state.deleteState,
+                        ) { deleteState ->
+                            when (deleteState) {
+                                DeleteHomeworkDialogState.Deleting -> CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp).padding(2.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                DeleteHomeworkDialogState.Error -> Icon(
+                                    painter = painterResource(Res.drawable.info),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp).padding(2.dp)
+                                )
+                                DeleteHomeworkDialogState.Success -> Icon(
+                                    painter = painterResource(Res.drawable.check),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp).padding(2.dp)
+                                )
+                                null -> Icon(
+                                    painter = painterResource(Res.drawable.trash_2),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp).padding(2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
                 FilledTonalIconButton(
                     enabled = !state.isReloading,
                     onClick = { onEvent(DetailEvent.Reload) }

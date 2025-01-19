@@ -36,6 +36,8 @@ interface HomeworkRepository {
     suspend fun editHomeworkDueTo(homework: Homework, dueTo: LocalDate, profile: Profile.StudentProfile)
     suspend fun editHomeworkVisibility(homework: Homework.CloudHomework, isPublic: Boolean, profile: Profile.StudentProfile)
 
+    suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error?
+
     /**
      * @return List of ids of the created homework
      */
