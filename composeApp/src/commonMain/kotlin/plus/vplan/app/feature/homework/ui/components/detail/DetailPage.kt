@@ -14,12 +14,15 @@ import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -75,6 +78,8 @@ fun DetailPage(
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
 
+    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+
     var taskToEdit by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val filePickerLauncher = rememberFilePickerLauncher(
@@ -121,7 +126,7 @@ fun DetailPage(
                     modifier = Modifier.weight(1f)
                 )
                 if (state.canEdit) {
-                    FilledTonalIconButton(onClick = { onEvent(DetailEvent.DeleteHomework) }) {
+                    FilledTonalIconButton(onClick = { showDeleteDialog = true }) {
                         AnimatedContent(
                             targetState = state.deleteState,
                         ) { deleteState ->
@@ -220,7 +225,10 @@ fun DetailPage(
                     onSetTaskToEdit = { taskToEdit = it },
                     onToggleTaskDone = { onEvent(DetailEvent.ToggleTaskDone(task)) },
                     onUpdateTask = { onEvent(DetailEvent.UpdateTask(task, it)) },
-                    onDeleteTask = { onEvent(DetailEvent.DeleteTask(task)) }
+                    onDeleteTask = {
+                        if (homework.tasks.size == 1) showDeleteDialog = true
+                        else onEvent(DetailEvent.DeleteTask(task))
+                    }
                 )
             }
             if (state.canEdit) NewTaskRow(
@@ -247,7 +255,7 @@ fun DetailPage(
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -290,6 +298,40 @@ fun DetailPage(
             selectedDate = homework.dueTo.toLocalDateTime(TimeZone.currentSystemDefault()).date,
             onSelectDate = { onEvent(DetailEvent.UpdateDueTo(it)) },
             onDismiss = { showDateSelectDrawer = false }
+        )
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.trash_2),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            title = { Text("Hausaufgabe löschen") },
+            text = {
+                Text("Bist du sicher, dass du die Hausaufgabe löschen möchtest? Dies kann nicht rückgängig gemacht werden.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { onEvent(DetailEvent.DeleteHomework) },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Löschen")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("Abbrechen")
+                }
+            }
         )
     }
 }

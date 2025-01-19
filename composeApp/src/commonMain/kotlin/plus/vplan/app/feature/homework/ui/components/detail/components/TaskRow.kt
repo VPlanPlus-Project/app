@@ -45,6 +45,8 @@ import plus.vplan.app.utils.tryNoCatch
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.ellipsis_vertical
+import vplanplus.composeapp.generated.resources.pencil
+import vplanplus.composeapp.generated.resources.trash_2
 import vplanplus.composeapp.generated.resources.x
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -191,16 +193,34 @@ fun TaskRow(
             onDismissRequest = { isDropdownOpen = false }
         ) {
             DropdownMenuItem(
-                text = { Text("Bearbeiten") },
+                text = { Text(
+                    text = "Löschen",
+                    color = MaterialTheme.colorScheme.error
+                ) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.trash_2),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                },
                 onClick = {
-                    onSetTaskToEdit(task.id)
+                    onDeleteTask()
                     isDropdownOpen = false
                 }
             )
             DropdownMenuItem(
-                text = { Text("Löschen") },
+                text = { Text("Bearbeiten") },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.pencil),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
                 onClick = {
-                    onDeleteTask()
+                    onSetTaskToEdit(task.id)
                     isDropdownOpen = false
                 }
             )

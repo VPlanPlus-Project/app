@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.SERVER_IP
@@ -52,8 +51,6 @@ import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.CreateHomeworkResponse
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.domain.repository.HomeworkResponse
-import plus.vplan.app.domain.repository.HomeworkTaskResponse
 import plus.vplan.app.feature.homework.ui.components.File
 import plus.vplan.app.utils.sendAll
 import plus.vplan.app.utils.sha256

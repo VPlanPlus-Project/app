@@ -1,7 +1,6 @@
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
@@ -72,20 +71,4 @@ interface HomeworkRepository {
 data class CreateHomeworkResponse(
     val id: Int,
     val taskIds: Map<String, Int>
-)
-
-data class HomeworkResponse(
-    val id: Int,
-    val createdBy: Int,
-    val createdAt: Instant,
-    val dueTo: Instant,
-    val isPublic: Boolean,
-    val group: Int?,
-    val defaultLesson: String?,
-    val tasks: List<HomeworkTaskResponse>
-)
-
-data class HomeworkTaskResponse(
-    val id: Int,
-    val content: String
 )

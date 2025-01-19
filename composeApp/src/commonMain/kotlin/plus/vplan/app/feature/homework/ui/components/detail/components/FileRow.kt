@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -53,7 +55,9 @@ import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.cloud_download
 import vplanplus.composeapp.generated.resources.ellipsis_vertical
 import vplanplus.composeapp.generated.resources.file_text
+import vplanplus.composeapp.generated.resources.pencil
 import vplanplus.composeapp.generated.resources.square_arrow_out_up_right
+import vplanplus.composeapp.generated.resources.trash_2
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -66,6 +70,7 @@ fun FileRow(
     onDeleteClick: () -> Unit
 ) {
     var isDropdownOpen by remember { mutableStateOf(false) }
+    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -87,7 +92,8 @@ fun FileRow(
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(8.dp)),
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer),
             contentAlignment = Alignment.Center
         ) {
             if (file.preview != null) {
@@ -153,14 +159,32 @@ fun FileRow(
             onDismissRequest = { isDropdownOpen = false }
         ) {
             DropdownMenuItem(
-                text = { Text("Löschen") },
+                text = { Text(
+                    text = "Löschen",
+                    color = MaterialTheme.colorScheme.error
+                ) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.trash_2),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                },
                 onClick = {
-                    onDeleteClick()
+                    showDeleteDialog = true
                     isDropdownOpen = false
                 }
             )
             DropdownMenuItem(
                 text = { Text("Umbenennen") },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.pencil),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
                 onClick = {
                     isRenameOpen = true
                     isDropdownOpen = false
@@ -222,5 +246,39 @@ fun FileRow(
                 }
             )
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.trash_2),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            title = { Text("Datei löschen") },
+            text = {
+                Text("Bist du sicher, dass du die Datei löschen möchtest? Dies kann nicht rückgängig gemacht werden.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { onDeleteClick(); showDeleteDialog = false },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Löschen")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("Abbrechen")
+                }
+            }
+        )
     }
 }
