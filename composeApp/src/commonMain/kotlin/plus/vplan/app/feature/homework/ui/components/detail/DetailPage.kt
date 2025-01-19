@@ -42,7 +42,6 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.feature.homework.ui.components.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.File
 import plus.vplan.app.feature.homework.ui.components.LessonSelectDrawer
-import plus.vplan.app.feature.homework.ui.components.NewHomeworkEvent
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
@@ -253,7 +252,7 @@ fun DetailPage(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
-                    modifier = Modifier.weight(1f).height(72.dp),
+                    modifier = Modifier.weight(1f).height(64.dp),
                     text = "Aus Dateien hinzufügen",
                     icon = Res.drawable.file,
                     state = ButtonState.Enabled,
