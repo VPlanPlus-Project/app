@@ -76,9 +76,12 @@ sealed class DevEvent {
 
 private suspend fun Homework.prefetch() {
     this.getDefaultLessonItem()
-    this.getGroupItem()
     this.getTaskItems()
     if (this is Homework.CloudHomework) {
         this.getCreatedBy()
+        this.getGroupItem()
+    }
+    if (this is Homework.LocalHomework) {
+        this.getCreatedByProfile().getGroupItem()
     }
 }

@@ -25,6 +25,17 @@ class UpdateHomeworkUseCase(
             )
         }
 
-        homeworkRepository.deleteById(homeworkRepository.getAll().first().filterIsInstance<CacheState.Done<Homework.CloudHomework>>().map { it.data }.filter { it.id !in ids }.map { it.id })
+        homeworkRepository.deleteById(
+            homeworkRepository
+                .getAll()
+                .first()
+                .asSequence()
+                .filterIsInstance<CacheState.Done<Homework>>()
+                .map { it.data }
+                .filterIsInstance<Homework.CloudHomework>()
+                .filter { it.id !in ids }
+                .map { it.id }
+                .toList()
+        )
     }
 }

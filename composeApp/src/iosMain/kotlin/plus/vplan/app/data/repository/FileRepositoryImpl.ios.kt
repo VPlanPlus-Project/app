@@ -1,9 +1,13 @@
 package plus.vplan.app.data.repository
 
-import plus.vplan.app.domain.repository.FileRepository
+import plus.vplan.app.domain.repository.LocalFileRepository
 
-actual class FileRepositoryImpl : FileRepository {
+actual class LocalFileRepositoryImpl : LocalFileRepository {
     override suspend fun writeFile(path: String, content: ByteArray) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getFile(path: String): ByteArray? {
         TODO("Not yet implemented")
     }
 }

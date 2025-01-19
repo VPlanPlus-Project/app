@@ -7,6 +7,7 @@ import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteTaskUseCase
+import plus.vplan.app.feature.homework.domain.usecase.DownloadFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDefaultLessonUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDueToUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkVisibilityUseCase
@@ -31,6 +32,7 @@ val homeworkModule = module {
     singleOf(::AddTaskUseCase)
     singleOf(::UpdateTaskUseCase)
     singleOf(::DeleteTaskUseCase)
+    singleOf(::DownloadFileUseCase)
 
     viewModelOf(::NewHomeworkViewModel)
     viewModelOf(::DetailViewModel)

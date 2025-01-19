@@ -33,10 +33,11 @@ import plus.vplan.app.VPP_PROTOCOL
 import plus.vplan.app.VPP_ROOT_URL
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbHomework
-import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
+import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
@@ -69,7 +70,7 @@ class HomeworkRepositoryImpl(
                 DbHomework(
                     id = homeworkItem.id,
                     defaultLessonId = homeworkItem.defaultLesson,
-                    groupId = homeworkItem.group,
+                    groupId = (homeworkItem as? Homework.LocalHomework)?.getCreatedByProfile()?.group ?: homeworkItem.group,
                     createdAt = homeworkItem.createdAt,
                     createdByProfileId = when (homeworkItem) {
                         is Homework.CloudHomework -> null
@@ -94,12 +95,20 @@ class HomeworkRepositoryImpl(
                 )
             },
             homeworkTaskDoneAccount = emptyList(),
-            files = files.map {
-                DbHomeworkFile(
-                    id = it.id,
+            files = files.map { file ->
+                DbFile(
+                    id = file.id,
+                    size = file.size,
+                    createdAt = homework.first { file.homework == it.id }.createdAt,
+                    createdByVppId = (homework.first { file.homework == it.id } as? Homework.CloudHomework)?.createdBy,
+                    fileName = file.name,
+                    isOfflineReady = true
+                )
+            },
+            fileHomeworkConnections = files.map {
+                FKHomeworkFile(
                     homeworkId = it.homework,
-                    size = it.size,
-                    fileName = it.name
+                    fileId = it.id
                 )
             }
         )
@@ -224,7 +233,8 @@ class HomeworkRepositoryImpl(
                             isDone = it.done ?: return@mapNotNull null
                         )
                     },
-                    files = emptyList() // TODO files
+                    files = emptyList(), // TODO files
+                    fileHomeworkConnections = emptyList() // TODO files
                 )
             }
 
@@ -473,7 +483,15 @@ class HomeworkRepositoryImpl(
                         )
                     }
                 },
-                files = emptyList() // TODO
+                files = emptyList(), // TODO
+                fileHomeworkConnections = data.flatMap { homework ->
+                    homework.files.map {
+                        FKHomeworkFile(
+                            homeworkId = homework.id,
+                            fileId = it
+                        )
+                    }
+                }
             )
 
             return Response.Success(data.map { it.id })
@@ -597,6 +615,7 @@ data class HomeworkGetResponse(
     @SerialName("group") val group: Int,
     @SerialName("default_lesson") val defaultLesson: String?,
     @SerialName("tasks") val tasks: List<HomeworkGetResponseTask>,
+    @SerialName("files") val files: List<Int>,
 )
 
 @Serializable

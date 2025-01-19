@@ -12,7 +12,7 @@ import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.repository.FileRepository
+import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -22,7 +22,7 @@ import kotlin.uuid.Uuid
 class CreateHomeworkUseCase(
     private val homeworkRepository: HomeworkRepository,
     private val keyValueRepository: KeyValueRepository,
-    private val fileRepository: FileRepository
+    private val localFileRepository: LocalFileRepository
 ) {
     suspend operator fun invoke(
         tasks: List<String>,
@@ -101,7 +101,7 @@ class CreateHomeworkUseCase(
 
         homeworkRepository.upsert(listOf(homework), homeworkTasks, files)
         files.forEach { file ->
-            fileRepository.writeFile("./homework_files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
+            localFileRepository.writeFile("./homework_files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
         }
 
         return true

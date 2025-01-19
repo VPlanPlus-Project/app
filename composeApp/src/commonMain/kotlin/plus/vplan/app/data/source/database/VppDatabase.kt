@@ -11,6 +11,7 @@ import plus.vplan.app.data.source.database.converters.UuidTypeConverter
 import plus.vplan.app.data.source.database.dao.CourseDao
 import plus.vplan.app.data.source.database.dao.DayDao
 import plus.vplan.app.data.source.database.dao.DefaultLessonDao
+import plus.vplan.app.data.source.database.dao.FileDao
 import plus.vplan.app.data.source.database.dao.GroupDao
 import plus.vplan.app.data.source.database.dao.HolidayDao
 import plus.vplan.app.data.source.database.dao.HomeworkDao
@@ -33,7 +34,7 @@ import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
 import plus.vplan.app.data.source.database.model.database.DbHoliday
 import plus.vplan.app.data.source.database.model.database.DbHomework
-import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
+import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
@@ -62,6 +63,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 
 @Database(
@@ -111,7 +113,9 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGr
         DbHomeworkTask::class,
         DbHomeworkTaskDoneProfile::class,
         DbHomeworkTaskDoneAccount::class,
-        DbHomeworkFile::class,
+        FKHomeworkFile::class,
+
+        DbFile::class,
 
         FKSchoolGroup::class
     ],
@@ -144,4 +148,5 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val substitutionPlanDao: SubstitutionPlanDao
     abstract val vppIdDao: VppIdDao
     abstract val homeworkDao: HomeworkDao
+    abstract val fileDao: FileDao
 }

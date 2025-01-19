@@ -7,10 +7,11 @@ import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 import plus.vplan.app.data.source.database.model.database.DbHomework
-import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
+import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedHomework
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedHomeworkTask
 
@@ -29,23 +30,29 @@ interface HomeworkDao {
 
     @Transaction
     @Upsert
-    suspend fun upsertFiles(files: List<DbHomeworkFile>)
+    suspend fun upsertFiles(files: List<DbFile>)
 
     @Transaction
     @Upsert
     suspend fun upsertTaskDoneAccountMany(homeworkTaskDoneAccount: List<DbHomeworkTaskDoneAccount>)
 
     @Transaction
+    @Upsert
+    suspend fun upsertFileHomeworkConnections(fileHomeworkConnections: List<FKHomeworkFile>)
+
+    @Transaction
     suspend fun upsertMany(
         homework: List<DbHomework>,
         homeworkTask: List<DbHomeworkTask>,
         homeworkTaskDoneAccount: List<DbHomeworkTaskDoneAccount>,
-        files: List<DbHomeworkFile>
+        files: List<DbFile>,
+        fileHomeworkConnections: List<FKHomeworkFile>
     ) {
         upsertMany(homework)
         upsertTaskMany(homeworkTask)
         upsertTaskDoneAccountMany(homeworkTaskDoneAccount)
         upsertFiles(files)
+        upsertFileHomeworkConnections(fileHomeworkConnections)
     }
 
     @Transaction
@@ -70,7 +77,7 @@ interface HomeworkDao {
     @Query("SELECT MIN(id) FROM homework_task")
     fun getMinTaskId(): Flow<Int?>
 
-    @Query("SELECT MIN(id) FROM homework_file")
+    @Query("SELECT MIN(id) FROM file")
     fun getMinFileId(): Flow<Int?>
 
     @Transaction

@@ -15,6 +15,7 @@ import org.koin.compose.koinInject
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
 import plus.vplan.app.domain.source.DefaultLessonSource
+import plus.vplan.app.domain.source.FileSource
 import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.HomeworkTaskSource
@@ -67,6 +68,7 @@ object App {
     lateinit var roomSource: RoomSource
     lateinit var lessonTimeSource: LessonTimeSource
     lateinit var substitutionPlanSource: SubstitutionPlanSource
+    lateinit var fileSource: FileSource
 }
 
 @Composable
@@ -89,6 +91,7 @@ fun App(task: StartTask?) {
             App.roomSource = RoomSource(koinInject())
             App.lessonTimeSource = LessonTimeSource(koinInject())
             App.substitutionPlanSource = SubstitutionPlanSource(koinInject())
+            App.fileSource = FileSource(koinInject(), koinInject())
 
             Surface(
                 modifier = Modifier

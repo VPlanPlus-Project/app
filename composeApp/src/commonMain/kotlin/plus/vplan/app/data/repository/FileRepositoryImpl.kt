@@ -1,5 +1,126 @@
 package plus.vplan.app.data.repository
 
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.onDownload
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsBytes
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.datetime.Clock
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import plus.vplan.app.VPP_ROOT_URL
+import plus.vplan.app.data.source.database.VppDatabase
+import plus.vplan.app.data.source.database.model.database.DbFile
+import plus.vplan.app.data.source.network.toErrorResponse
+import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.model.File
+import plus.vplan.app.domain.model.SchoolApiAccess
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.FileRepository
+import plus.vplan.app.utils.sendAll
 
-expect class FileRepositoryImpl : FileRepository
+class FileRepositoryImpl(
+    private val httpClient: HttpClient,
+    private val vppDatabase: VppDatabase
+) : FileRepository {
+    override fun getById(id: Int): Flow<CacheState<File>> {
+        val fileFlow = vppDatabase.fileDao.getById(id).map { it?.toModel() }
+        return channelFlow {
+            var hadData = false
+            sendAll(fileFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
+            if (hadData) return@channelFlow
+            send(CacheState.Loading(id.toString()))
+            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/file/$id")
+            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<File>()))
+            val data = ResponseDataWrapper.fromJson<FileItemSimpleGetRequest>(response.bodyAsText())
+                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+
+            val creator = vppDatabase.vppIdDao.getById(data.createdBy).first()?.toModel() as? VppId.Active
+            if (creator != null) {
+                val fileResponse = httpClient.get("$VPP_ROOT_URL/api/v2.2/file/$id") {
+                    creator.buildSchoolApiAccess().authentication(this)
+                }
+                if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
+                val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
+                vppDatabase.fileDao.upsert(
+                    DbFile(
+                        id = id,
+                        createdAt = Clock.System.now(),
+                        createdByVppId = data.createdBy,
+                        fileName = fileData.fileName,
+                        size = fileData.size,
+                        isOfflineReady = false
+                    )
+                )
+                return@channelFlow sendAll(getById(id))
+            }
+            val schools = vppDatabase.schoolDao.getAll().first().distinctBy { it.school.id }.filter { it.school.id in data.schoolIds }.mapNotNull { try { it.toModel().getSchoolApiAccess() } catch (e: Exception) { null } }
+            schools.forEach { school ->
+                val fileResponse = httpClient.get("$VPP_ROOT_URL/api/v2.2/file/$id") {
+                    school.authentication(this)
+                }
+                if (fileResponse.status == HttpStatusCode.Forbidden) return@forEach
+                if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
+                val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
+                vppDatabase.fileDao.upsert(
+                    DbFile(
+                        id = id,
+                        createdAt = Clock.System.now(),
+                        createdByVppId = data.createdBy,
+                        fileName = fileData.fileName,
+                        size = fileData.size,
+                        isOfflineReady = false
+                    )
+                )
+                return@channelFlow sendAll(getById(id))
+            }
+            return@channelFlow send(CacheState.NotExisting(id.toString()))
+        }
+    }
+
+    override fun cacheFile(file: File, schoolApiAccess: SchoolApiAccess): Flow<FileDownloadProgress> = channelFlow {
+        val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/file/${file.id}/download") {
+            schoolApiAccess.authentication(this)
+            onDownload { bytesSentTotal, contentLength ->
+                if (contentLength == null) send(FileDownloadProgress.InProgress(0f))
+                else send(FileDownloadProgress.InProgress((bytesSentTotal.toFloat() / contentLength.toFloat())))
+            }
+        }
+        if (!response.status.isSuccess()) return@channelFlow send(FileDownloadProgress.Error(response.toErrorResponse<File>()))
+        val data = response.bodyAsBytes()
+        return@channelFlow send(FileDownloadProgress.Done(data, {
+            vppDatabase.fileDao.setOfflineReady(file.id, true)
+        }))
+    }
+}
+
+@Serializable
+data class FileItemSimpleGetRequest(
+    @SerialName("created_by") val createdBy: Int,
+    @SerialName("school_ids") val schoolIds: List<Int>,
+)
+
+@Serializable
+data class FileItemGetRequest(
+    @SerialName("created_by") val createdBy: Int,
+    @SerialName("file_name") val fileName: String,
+    @SerialName("size") val size: Long,
+)
+
+sealed class FileDownloadProgress {
+    data class InProgress(val progress: Float) : FileDownloadProgress()
+    data class Error(val error: Response.Error) : FileDownloadProgress()
+    class Done(val content: ByteArray, val onFileSaved: suspend () -> Unit) : FileDownloadProgress()
+}

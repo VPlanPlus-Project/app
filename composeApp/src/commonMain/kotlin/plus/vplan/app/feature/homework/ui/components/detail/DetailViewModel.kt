@@ -14,12 +14,14 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteTaskUseCase
+import plus.vplan.app.feature.homework.domain.usecase.DownloadFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDefaultLessonUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDueToUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkVisibilityUseCase
@@ -37,7 +39,8 @@ class DetailViewModel(
     private val deleteHomeworkUseCase: DeleteHomeworkUseCase,
     private val addTaskUseCase: AddTaskUseCase,
     private val updateTaskUseCase: UpdateTaskUseCase,
-    private val deleteTaskUseCase: DeleteTaskUseCase
+    private val deleteTaskUseCase: DeleteTaskUseCase,
+    private val downloadFileUseCase: DownloadFileUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -105,6 +108,12 @@ class DetailViewModel(
                         state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.Error))
                     }
                 }
+                is DetailEvent.DownloadFile -> {
+                    downloadFileUseCase(event.file, state.profile!!).collectLatest {
+                        state = state.copy(fileDownloadState = state.fileDownloadState.plus(event.file.id to it))
+                    }
+                    state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
+                }
             }
         }
     }
@@ -119,6 +128,7 @@ data class DetailState(
     val initDone: Boolean = false,
     val newTaskState: UnoptimisticTaskState? = null,
     val taskDeleteState: Map<Int, UnoptimisticTaskState> = emptyMap(),
+    val fileDownloadState: Map<Int, Float> = emptyMap(),
 )
 
 sealed class DetailEvent {
@@ -130,6 +140,7 @@ sealed class DetailEvent {
     data class UpdateTask(val task: Homework.HomeworkTask, val newContent: String) : DetailEvent()
     data class DeleteTask(val task: Homework.HomeworkTask) : DetailEvent()
     data object DeleteHomework : DetailEvent()
+    data class DownloadFile(val file: File) : DetailEvent()
     data object Reload : DetailEvent()
 }
 
@@ -144,6 +155,7 @@ private suspend fun Profile.StudentProfile.prefetch() {
 private suspend fun Homework.prefetch() {
     this.getGroupItem()
     this.getDefaultLessonItem()
+    this.getFileItems()
     if (this is Homework.CloudHomework) this.getCreatedBy()
 }
 

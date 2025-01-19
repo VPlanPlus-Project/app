@@ -1,11 +1,15 @@
 package plus.vplan.app.data.repository
 
 import android.content.Context
-import plus.vplan.app.domain.repository.FileRepository
+import plus.vplan.app.domain.repository.LocalFileRepository
 
-actual class FileRepositoryImpl(private val context: Context) : FileRepository {
+actual class LocalFileRepositoryImpl(private val context: Context) : LocalFileRepository {
     override suspend fun writeFile(path: String, content: ByteArray) {
         context.filesDir.resolve(path).parentFile?.mkdirs()
         context.filesDir.resolve(path).writeBytes(content)
+    }
+
+    override suspend fun getFile(path: String): ByteArray? {
+        return context.filesDir.resolve(path).readBytes()
     }
 }

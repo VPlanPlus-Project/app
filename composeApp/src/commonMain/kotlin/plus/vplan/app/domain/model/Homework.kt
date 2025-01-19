@@ -2,7 +2,9 @@ package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
@@ -42,15 +44,25 @@ sealed class Homework : Item {
     var taskItems: List<HomeworkTask>? = null
         private set
 
-    fun getTasksFlow() = combine(tasks.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheState.Done<HomeworkTask>>() }) { it.toList().map { it.data } }
+    var fileItems: List<File>? = null
+        private set
+
+    fun getTasksFlow() = combine(tasks.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheState.Done<HomeworkTask>>() }) { it.toList().map { it.data }.also { taskItems = it } }
     fun getStatusFlow(profile: Profile.StudentProfile) = getTasksFlow().map { tasks ->
         if (tasks.all { it.isDone(profile) }) HomeworkStatus.DONE
         else if (Clock.System.now() > dueTo) HomeworkStatus.OVERDUE
         else HomeworkStatus.PENDING
     }
 
+    fun getFilesFlow() = combine(files.map { App.fileSource.getById(it).filterIsInstance<CacheState.Done<File>>() }) { it.toList().map { it.data } }
+
     suspend fun getTaskItems(): List<HomeworkTask> {
         return taskItems ?: tasks.mapNotNull { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
+    }
+
+    suspend fun getFileItems(): List<File> {
+        if (files.isEmpty()) return emptyList()
+        return fileItems ?: combine(files.map { App.fileSource.getById(it) }) { it.toList().mapNotNull { (it as? CacheState.Done<File>)?.data } }.first().also { fileItems = it }
     }
 
     data class HomeworkTask(
@@ -122,7 +134,18 @@ sealed class Homework : Item {
         val createdByProfile: Uuid
     ) : Homework() {
         override val group: Int
-            get() = throw IllegalStateException("Please use the profile to get the group")
+            get() = groupId ?: runBlocking { getCreatedByProfile().group }
+
+        var groupId: Int? = null
+            private set
+
+        private var createdByProfileItem: Profile.StudentProfile? = null
+
+        suspend fun getCreatedByProfile(): Profile.StudentProfile {
+            return createdByProfileItem ?: createdByProfile.let { createdByProfileId ->
+                App.profileSource.getById(createdByProfileId).getFirstValue().let { it as Profile.StudentProfile }.also { createdByProfileItem = it; groupId = it.group }
+            }
+        }
 
         override fun copyBase(createdAt: Instant, dueTo: Instant, tasks: List<Int>, defaultLesson: String?, group: Int?): Homework {
             return this.copy(

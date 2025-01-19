@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c5f4c65ca64b26e4f2661bd9727a4844",
+    "identityHash": "bef7bcce5270d5fcce10417c40efc311",
     "entities": [
       {
         "tableName": "schools",
@@ -2482,8 +2482,53 @@
         ]
       },
       {
-        "tableName": "homework_file",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `homework_id` INTEGER NOT NULL, `file_name` TEXT NOT NULL, `size` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`homework_id`) REFERENCES `homework`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "fk_homework_file",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`homework_id` INTEGER NOT NULL, `file_id` INTEGER NOT NULL, PRIMARY KEY(`homework_id`, `file_id`))",
+        "fields": [
+          {
+            "fieldPath": "homeworkId",
+            "columnName": "homework_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileId",
+            "columnName": "file_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "homework_id",
+            "file_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_fk_homework_file_homework_id",
+            "unique": false,
+            "columnNames": [
+              "homework_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_homework_file_homework_id` ON `${TABLE_NAME}` (`homework_id`)"
+          },
+          {
+            "name": "index_fk_homework_file_file_id",
+            "unique": false,
+            "columnNames": [
+              "file_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_homework_file_file_id` ON `${TABLE_NAME}` (`file_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "file",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `created_by_vpp_id` INTEGER, `file_name` TEXT NOT NULL, `size` INTEGER NOT NULL, `is_offline_ready` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -2492,10 +2537,15 @@
             "notNull": true
           },
           {
-            "fieldPath": "homeworkId",
-            "columnName": "homework_id",
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "createdByVppId",
+            "columnName": "created_by_vpp_id",
+            "affinity": "INTEGER"
           },
           {
             "fieldPath": "fileName",
@@ -2508,6 +2558,12 @@
             "columnName": "size",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "isOfflineReady",
+            "columnName": "is_offline_ready",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -2518,26 +2574,13 @@
         },
         "indices": [
           {
-            "name": "index_homework_file_id",
+            "name": "index_file_id",
             "unique": false,
             "columnNames": [
               "id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_file_id` ON `${TABLE_NAME}` (`id`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "homework",
-            "onDelete": "CASCADE",
-            "onUpdate": "CASCADE",
-            "columns": [
-              "homework_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_file_id` ON `${TABLE_NAME}` (`id`)"
           }
         ]
       },
@@ -2588,7 +2631,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c5f4c65ca64b26e4f2661bd9727a4844')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bef7bcce5270d5fcce10417c40efc311')"
     ]
   }
 }
