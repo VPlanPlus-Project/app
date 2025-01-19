@@ -56,7 +56,7 @@ class HomeViewModel(
                             timetable = day.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() },
                             substitutionPlan = day.substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() }.ifEmpty { null }
                         ))
-                        if (day.nextSchoolDay != null)getDayUseCase(profile, LocalDate.parse(day.nextSchoolDay.split("/")[1])).collectLatest { nextDay ->
+                        if (day.nextSchoolDay != null) getDayUseCase(profile, LocalDate.parse(day.nextSchoolDay.split("/")[1])).collectLatest { nextDay ->
                             state = state.copy(
                                 nextDay = HomeViewDay(
                                     day = nextDay,
@@ -65,7 +65,7 @@ class HomeViewModel(
                                 ),
                                 initDone = true
                             )
-                        }
+                        } else state = state.copy(initDone = true)
                     }
             }
         }
