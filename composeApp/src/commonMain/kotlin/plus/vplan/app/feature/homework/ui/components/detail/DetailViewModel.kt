@@ -19,12 +19,14 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
+import plus.vplan.app.feature.homework.domain.usecase.DeleteFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DownloadFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDefaultLessonUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDueToUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkVisibilityUseCase
+import plus.vplan.app.feature.homework.domain.usecase.RenameFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
@@ -40,7 +42,9 @@ class DetailViewModel(
     private val addTaskUseCase: AddTaskUseCase,
     private val updateTaskUseCase: UpdateTaskUseCase,
     private val deleteTaskUseCase: DeleteTaskUseCase,
-    private val downloadFileUseCase: DownloadFileUseCase
+    private val downloadFileUseCase: DownloadFileUseCase,
+    private val renameFileUseCase: RenameFileUseCase,
+    private val deleteFileUseCase: DeleteFileUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -114,6 +118,8 @@ class DetailViewModel(
                     }
                     state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
                 }
+                is DetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
+                is DetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.profile!!)
             }
         }
     }
@@ -141,6 +147,9 @@ sealed class DetailEvent {
     data class DeleteTask(val task: Homework.HomeworkTask) : DetailEvent()
     data object DeleteHomework : DetailEvent()
     data class DownloadFile(val file: File) : DetailEvent()
+
+    data class RenameFile(val file: File, val newName: String) : DetailEvent()
+    data class DeleteFile(val file: File) : DetailEvent()
     data object Reload : DetailEvent()
 }
 

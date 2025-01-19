@@ -5,6 +5,7 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
+import plus.vplan.app.feature.homework.domain.usecase.DeleteFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DownloadFileUseCase
@@ -13,6 +14,7 @@ import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDueToUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkVisibilityUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
 import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
+import plus.vplan.app.feature.homework.domain.usecase.RenameFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
@@ -33,6 +35,8 @@ val homeworkModule = module {
     singleOf(::UpdateTaskUseCase)
     singleOf(::DeleteTaskUseCase)
     singleOf(::DownloadFileUseCase)
+    singleOf(::RenameFileUseCase)
+    singleOf(::DeleteFileUseCase)
 
     viewModelOf(::NewHomeworkViewModel)
     viewModelOf(::DetailViewModel)

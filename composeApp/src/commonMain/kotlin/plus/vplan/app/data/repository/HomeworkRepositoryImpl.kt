@@ -233,8 +233,8 @@ class HomeworkRepositoryImpl(
                             isDone = it.done ?: return@mapNotNull null
                         )
                     },
-                    files = emptyList(), // TODO files
-                    fileHomeworkConnections = emptyList() // TODO files
+                    files = emptyList(),
+                    fileHomeworkConnections = data.files.map { FKHomeworkFile(fileId = it, homeworkId = data.id) }
                 )
             }
 
@@ -483,7 +483,7 @@ class HomeworkRepositoryImpl(
                         )
                     }
                 },
-                files = emptyList(), // TODO
+                files = emptyList(),
                 fileHomeworkConnections = data.flatMap { homework ->
                     homework.files.map {
                         FKHomeworkFile(
@@ -578,6 +578,7 @@ private data class HomeworkResponseItem(
     @SerialName("group_id") val group: Int?,
     @SerialName("default_lesson") val defaultLesson: String?,
     @SerialName("tasks") val tasks: List<HomeworkTaskResponseItem>,
+    @SerialName("files") val files: List<Int>,
 )
 
 @Serializable

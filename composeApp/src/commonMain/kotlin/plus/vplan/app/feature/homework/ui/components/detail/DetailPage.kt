@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -201,12 +201,15 @@ fun DetailPage(
             homework.getFilesFlow().onEach { it.onEach { file -> if (file.isOfflineReady) file.getPreview() } }.collectAsState(emptyList()).value.forEach { file ->
                 FileRow(
                     file = file,
+                    canEdit = state.canEdit,
                     downloadProgress = state.fileDownloadState[file.id],
-                    onDownloadClick = { onEvent(DetailEvent.DownloadFile(file)) }
+                    onDownloadClick = { onEvent(DetailEvent.DownloadFile(file)) },
+                    onRenameClick = { newName -> onEvent(DetailEvent.RenameFile(file, newName)) },
+                    onDeleteClick = { onEvent(DetailEvent.DeleteFile(file)) }
                 )
             }
 
-            Spacer(Modifier.height(WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()))
+            Spacer(Modifier.height(WindowInsets.safeContent.asPaddingValues().calculateBottomPadding()))
         }
     }
 

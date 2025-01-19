@@ -9,7 +9,11 @@ actual class LocalFileRepositoryImpl(private val context: Context) : LocalFileRe
         context.filesDir.resolve(path).writeBytes(content)
     }
 
-    override suspend fun getFile(path: String): ByteArray? {
+    override suspend fun deleteFile(path: String) {
+        context.filesDir.resolve(path).delete()
+    }
+
+    override suspend fun getFile(path: String): ByteArray {
         return context.filesDir.resolve(path).readBytes()
     }
 }

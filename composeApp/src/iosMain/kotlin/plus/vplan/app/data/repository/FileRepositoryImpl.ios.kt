@@ -7,6 +7,10 @@ actual class LocalFileRepositoryImpl : LocalFileRepository {
         TODO("Not yet implemented")
     }
 
+    override suspend fun deleteFile(path: String) {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun getFile(path: String): ByteArray? {
         TODO("Not yet implemented")
     }

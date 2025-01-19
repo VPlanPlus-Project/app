@@ -3,26 +3,46 @@ package plus.vplan.app.feature.homework.ui.components.detail.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
@@ -32,24 +52,35 @@ import plus.vplan.app.utils.toHumanSize
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.cloud_download
 import vplanplus.composeapp.generated.resources.ellipsis_vertical
+import vplanplus.composeapp.generated.resources.file_text
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FileRow(
     file: File,
+    canEdit: Boolean,
     downloadProgress: Float?,
-    onDownloadClick: () -> Unit
+    onDownloadClick: () -> Unit,
+    onRenameClick: (String) -> Unit,
+    onDeleteClick: () -> Unit
 ) {
+    var isDropdownOpen by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .clickable {
-                if (!file.isOfflineReady) {
-                    onDownloadClick()
-                    return@clickable
+            .combinedClickable(
+                onClick = {
+                    if (!file.isOfflineReady) {
+                        onDownloadClick()
+                        return@combinedClickable
+                    }
+                    openFile(file)
+                },
+                onLongClick = if (!canEdit) null else {
+                    { isDropdownOpen = true }
                 }
-                openFile(file)
-            },
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -100,11 +131,88 @@ fun FileRow(
                 )
             }
         }
-        IconButton(onClick = {}) {
+        IconButton(onClick = { isDropdownOpen = true }) {
             Icon(
                 painter = painterResource(Res.drawable.ellipsis_vertical),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp).padding(2.dp)
+            )
+        }
+
+        var isRenameOpen by rememberSaveable { mutableStateOf(false) }
+
+        DropdownMenu(
+            expanded = isDropdownOpen,
+            onDismissRequest = { isDropdownOpen = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Löschen") },
+                onClick = {
+                    onDeleteClick()
+                    isDropdownOpen = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Umbenennen") },
+                onClick = {
+                    isRenameOpen = true
+                    isDropdownOpen = false
+                }
+            )
+        }
+
+        if (isRenameOpen) {
+            var newName by remember { mutableStateOf(TextFieldValue(text = file.name, selection = TextRange(file.name.length))) }
+            AlertDialog(
+                onDismissRequest = { isRenameOpen = false },
+                icon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.file_text),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
+                title = { Text("Datei umbenennen") },
+                text = {
+                    val focusRequester = remember { FocusRequester() }
+                    Column {
+                        TextField(
+                            value = newName,
+                            onValueChange = { newName = it },
+                            label = { Text("Name") },
+                            placeholder = { Text(file.name) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { isRenameOpen = false }),
+                            trailingIcon = {
+                                Text(
+                                    text = ".${file.name.substringAfterLast(".")}",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.outline,
+                                )
+                            },
+                            modifier = Modifier.focusRequester(focusRequester)
+                        )
+                    }
+                    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            onRenameClick(newName.text.ifBlank { file.name })
+                            isRenameOpen = false
+                        }
+                    ) {
+                        Text("Speichern")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { isRenameOpen = false }
+                    ) {
+                        Text("Abbrechen")
+                    }
+                }
             )
         }
     }

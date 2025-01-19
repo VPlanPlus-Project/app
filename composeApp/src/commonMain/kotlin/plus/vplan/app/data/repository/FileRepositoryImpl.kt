@@ -2,10 +2,16 @@ package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.onDownload
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.patch
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsBytes
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -20,6 +26,7 @@ import kotlinx.serialization.Serializable
 import plus.vplan.app.VPP_ROOT_URL
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbFile
+import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
@@ -104,6 +111,40 @@ class FileRepositoryImpl(
             vppDatabase.fileDao.setOfflineReady(file.id, true)
         }))
     }
+
+    override suspend fun renameFile(file: File, newName: String, vppId: VppId.Active?) {
+        val oldName = file.name
+        vppDatabase.fileDao.updateName(file.id, newName)
+        if (file.id < 0 || vppId == null) return
+        safeRequest(onError = { vppDatabase.fileDao.updateName(file.id, oldName) }) {
+            val response = httpClient.patch("$VPP_ROOT_URL/api/v2.2/file/${file.id}") {
+                bearerAuth(vppId.accessToken)
+                contentType(ContentType.Application.Json)
+                setBody(FileUpdateNameRequest(newName))
+            }
+            if (!response.status.isSuccess()) vppDatabase.fileDao.updateName(file.id, oldName)
+        }
+    }
+
+    override suspend fun deleteFile(file: File, vppId: VppId.Active?): Response.Error? {
+        val delete: suspend () -> Unit = {
+            vppDatabase.fileDao.deleteById(file.id)
+            vppDatabase.fileDao.deleteHomeworkFileConnections(file.id)
+        }
+        if (file.id < 0 || vppId == null) {
+            delete()
+            return null
+        }
+        safeRequest(onError = { return it }) {
+            val response = httpClient.delete("$VPP_ROOT_URL/api/v2.2/file/${file.id}") {
+                bearerAuth(vppId.accessToken)
+            }
+            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            delete()
+            return null
+        }
+        return Response.Error.Cancelled
+    }
 }
 
 @Serializable
@@ -117,6 +158,11 @@ data class FileItemGetRequest(
     @SerialName("created_by") val createdBy: Int,
     @SerialName("file_name") val fileName: String,
     @SerialName("size") val size: Long,
+)
+
+@Serializable
+data class FileUpdateNameRequest(
+    @SerialName("file_name") val fileName: String,
 )
 
 sealed class FileDownloadProgress {
