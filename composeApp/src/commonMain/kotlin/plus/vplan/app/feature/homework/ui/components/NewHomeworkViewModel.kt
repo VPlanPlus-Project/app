@@ -177,6 +177,8 @@ abstract class File {
         override fun copyBase(platformFile: PlatformFile, bitmap: ImageBitmap?, size: Long, name: String): Other {
             return copy(platformFile = platformFile, bitmap = bitmap, size = size, name = name)
         }
+
+        constructor(platformFile: PlatformFile) : this(platformFile, null, platformFile.getSize() ?: 0L, platformFile.name)
     }
 
     abstract fun copyBase(

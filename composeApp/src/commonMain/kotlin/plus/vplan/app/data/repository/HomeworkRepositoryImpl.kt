@@ -65,6 +65,7 @@ class HomeworkRepositoryImpl(
     private val vppDatabase: VppDatabase,
 ) : HomeworkRepository {
     override suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>) {
+        vppDatabase.homeworkDao.deleteFileHomeworkConnections(homework.map { it.id })
         vppDatabase.homeworkDao.upsertMany(
             homework = homework.map { homeworkItem ->
                 DbHomework(
@@ -123,50 +124,6 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override suspend fun getByGroup(authentication: SchoolApiAccess, groupId: Int, from: LocalDateTime?, to: LocalDate?): Response<List<HomeworkResponse>> {
-        return saveRequest {
-            val response = httpClient.get(
-                URLBuilder(
-                    protocol = VPP_PROTOCOL,
-                    host = SERVER_IP,
-                    port = VPP_PORT,
-                    pathSegments = listOf("api", "v2.2", "school", authentication.schoolId.toString(), "homework"),
-                    parameters = Parameters.build {
-                        append("filter_until", from?.toString().orEmpty() + ".." + to?.toString().orEmpty())
-                        append("filter_group", groupId.toString())
-                    }
-                ).build()
-            ) {
-                authentication.authentication(this)
-            }
-            if (response.status != HttpStatusCode.OK) {
-                logger.e { "Error getting homework: $response" }
-                return response.toResponse()
-            }
-
-            val data = ResponseDataWrapper.fromJson<List<HomeworkResponseItem>>(response.bodyAsText())
-                ?: return Response.Error.ParsingError(response.bodyAsText())
-
-            return Response.Success(data.map { homeworkResponseItem ->
-                HomeworkResponse(
-                    id = homeworkResponseItem.id,
-                    createdBy = homeworkResponseItem.createdBy,
-                    createdAt = Instant.fromEpochSeconds(homeworkResponseItem.createdAt),
-                    dueTo = Instant.fromEpochSeconds(homeworkResponseItem.dueTo),
-                    isPublic = homeworkResponseItem.isPublic,
-                    group = homeworkResponseItem.group,
-                    defaultLesson = homeworkResponseItem.defaultLesson,
-                    tasks = homeworkResponseItem.tasks.map { homeworkTaskResponseItem ->
-                        HomeworkTaskResponse(
-                            id = homeworkTaskResponseItem.id,
-                            content = homeworkTaskResponseItem.description
-                        )
-                    }
-                )
-            })
-        }
-    }
-
     override fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>> {
         return vppDatabase.homeworkDao.getTaskById(id).map { it?.toModel() }.map { if (it == null) CacheState.NotExisting(id.toString()) else CacheState.Done(it) }
     }
@@ -207,6 +164,7 @@ class HomeworkRepositoryImpl(
                 val data = ResponseDataWrapper.fromJson<HomeworkResponseItem>(homeworkResponse.bodyAsText())
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
 
+                vppDatabase.homeworkDao.deleteFileHomeworkConnections(listOf(id))
                 vppDatabase.homeworkDao.upsertMany(
                     homework = listOf(
                         DbHomework(
@@ -391,6 +349,10 @@ class HomeworkRepositoryImpl(
             }
             if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateTaskContent(task.id, oldContent)
         }
+    }
+
+    override suspend fun linkHomeworkFileLocally(homework: Homework, file: plus.vplan.app.domain.model.File) {
+        vppDatabase.homeworkDao.upsertFileHomeworkConnections(listOf(FKHomeworkFile(homeworkId = homework.id, fileId = file.id)))
     }
 
     override suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error? {

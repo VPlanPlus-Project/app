@@ -112,6 +112,10 @@ class FileRepositoryImpl(
         }))
     }
 
+    override suspend fun setOfflineReady(file: File, isOfflineReady: Boolean) {
+        vppDatabase.fileDao.setOfflineReady(file.id, isOfflineReady)
+    }
+
     override suspend fun renameFile(file: File, newName: String, vppId: VppId.Active?) {
         val oldName = file.name
         vppDatabase.fileDao.updateName(file.id, newName)

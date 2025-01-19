@@ -30,13 +30,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
+import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.core.PickerMode
+import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.feature.homework.ui.components.DateSelectDrawer
+import plus.vplan.app.feature.homework.ui.components.File
 import plus.vplan.app.feature.homework.ui.components.LessonSelectDrawer
+import plus.vplan.app.feature.homework.ui.components.NewHomeworkEvent
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
@@ -47,8 +53,14 @@ import plus.vplan.app.feature.homework.ui.components.detail.components.ShareStat
 import plus.vplan.app.feature.homework.ui.components.detail.components.StatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.TaskRow
+import plus.vplan.app.ui.components.Button
+import plus.vplan.app.ui.components.ButtonSize
+import plus.vplan.app.ui.components.ButtonState
+import plus.vplan.app.ui.components.ButtonType
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
+import vplanplus.composeapp.generated.resources.file
+import vplanplus.composeapp.generated.resources.image
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.trash_2
@@ -65,6 +77,27 @@ fun DetailPage(
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
 
     var taskToEdit by rememberSaveable { mutableStateOf<Int?>(null) }
+
+    val filePickerLauncher = rememberFilePickerLauncher(
+        mode = PickerMode.Multiple(),
+        type = PickerType.File()
+    ) { files ->
+        // Handle picked files
+        Logger.d { "Picked files: ${files?.map { it.path }}" }
+        files?.forEach { file ->
+            onEvent(DetailEvent.AddFile(File.Other(file)))
+        }
+    }
+
+    val imagePickerLauncher = rememberFilePickerLauncher(
+        mode = PickerMode.Multiple(),
+        type = PickerType.Image
+    ) { images ->
+        Logger.d { "Picked images: ${images?.map { it.path }}" }
+        images?.forEach { image ->
+            onEvent(DetailEvent.AddFile(File.Other(image)))
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -198,14 +231,44 @@ fun DetailPage(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            homework.getFilesFlow().onEach { it.onEach { file -> if (file.isOfflineReady) file.getPreview() } }.collectAsState(emptyList()).value.forEach { file ->
-                FileRow(
-                    file = file,
-                    canEdit = state.canEdit,
-                    downloadProgress = state.fileDownloadState[file.id],
-                    onDownloadClick = { onEvent(DetailEvent.DownloadFile(file)) },
-                    onRenameClick = { newName -> onEvent(DetailEvent.RenameFile(file, newName)) },
-                    onDeleteClick = { onEvent(DetailEvent.DeleteFile(file)) }
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                homework.getFilesFlow().onEach { it.onEach { file -> if (file.isOfflineReady) file.getPreview() } }.collectAsState(emptyList()).value.forEach { file ->
+                    FileRow(
+                        file = file,
+                        canEdit = state.canEdit,
+                        downloadProgress = state.fileDownloadState[file.id],
+                        onDownloadClick = { onEvent(DetailEvent.DownloadFile(file)) },
+                        onRenameClick = { newName -> onEvent(DetailEvent.RenameFile(file, newName)) },
+                        onDeleteClick = { onEvent(DetailEvent.DeleteFile(file)) }
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    modifier = Modifier.weight(1f).height(72.dp),
+                    text = "Aus Dateien hinzufügen",
+                    icon = Res.drawable.file,
+                    state = ButtonState.Enabled,
+                    size = ButtonSize.Small,
+                    type = ButtonType.Secondary,
+                    onClick = { filePickerLauncher.launch() }
+                )
+                Button(
+                    modifier = Modifier.weight(1f).height(64.dp),
+                    text = "Aus Galerie hinzufügen",
+                    icon = Res.drawable.image,
+                    state = ButtonState.Enabled,
+                    size = ButtonSize.Small,
+                    type = ButtonType.Secondary,
+                    onClick = { imagePickerLauncher.launch() }
                 )
             }
 

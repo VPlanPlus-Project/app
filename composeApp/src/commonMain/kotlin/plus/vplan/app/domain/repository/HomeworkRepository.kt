@@ -3,7 +3,6 @@ package plus.vplan.app.domain.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.DefaultLesson
@@ -17,7 +16,6 @@ import plus.vplan.app.feature.homework.ui.components.File
 interface HomeworkRepository {
     suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
     suspend fun getByGroup(groupId: Int): Flow<List<Homework>>
-    suspend fun getByGroup(authentication: SchoolApiAccess, groupId: Int, from: LocalDateTime? = null, to: LocalDate? = null): Response<List<HomeworkResponse>>
 
     fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
 
@@ -38,6 +36,8 @@ interface HomeworkRepository {
 
     suspend fun addTask(homework: Homework, task: String, profile: Profile.StudentProfile): Response.Error?
     suspend fun editHomeworkTask(task: Homework.HomeworkTask, newContent: String, profile: Profile.StudentProfile)
+
+    suspend fun linkHomeworkFileLocally(homework: Homework, file: plus.vplan.app.domain.model.File)
 
     suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error?
     suspend fun deleteHomeworkTask(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Response.Error?

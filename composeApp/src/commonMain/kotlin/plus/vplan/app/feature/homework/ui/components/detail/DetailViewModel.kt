@@ -18,6 +18,7 @@ import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.homework.domain.usecase.AddFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
@@ -44,7 +45,8 @@ class DetailViewModel(
     private val deleteTaskUseCase: DeleteTaskUseCase,
     private val downloadFileUseCase: DownloadFileUseCase,
     private val renameFileUseCase: RenameFileUseCase,
-    private val deleteFileUseCase: DeleteFileUseCase
+    private val deleteFileUseCase: DeleteFileUseCase,
+    private val addFileUseCase: AddFileUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -120,6 +122,7 @@ class DetailViewModel(
                 }
                 is DetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
                 is DetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.profile!!)
+                is DetailEvent.AddFile -> addFileUseCase(state.homework!!, event.file.platformFile, state.profile!!)
             }
         }
     }
@@ -150,6 +153,7 @@ sealed class DetailEvent {
 
     data class RenameFile(val file: File, val newName: String) : DetailEvent()
     data class DeleteFile(val file: File) : DetailEvent()
+    data class AddFile(val file: plus.vplan.app.feature.homework.ui.components.File) : DetailEvent()
     data object Reload : DetailEvent()
 }
 

@@ -53,6 +53,7 @@ import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.cloud_download
 import vplanplus.composeapp.generated.resources.ellipsis_vertical
 import vplanplus.composeapp.generated.resources.file_text
+import vplanplus.composeapp.generated.resources.square_arrow_out_up_right
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -95,6 +96,12 @@ fun FileRow(
                     contentDescription = null,
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.Crop
+                )
+            } else if (file.isOfflineReady) {
+                Icon(
+                    painter = painterResource(Res.drawable.square_arrow_out_up_right),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
                 )
             } else {
                 Icon(
