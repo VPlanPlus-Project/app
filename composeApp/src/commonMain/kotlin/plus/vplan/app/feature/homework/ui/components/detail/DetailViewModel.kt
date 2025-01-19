@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -41,9 +42,12 @@ class DetailViewModel(
     var state by mutableStateOf(DetailState())
         private set
 
+    private var mainJob: Job? = null
+
     fun init(homeworkId: Int) {
         state = DetailState()
-        viewModelScope.launch {
+        mainJob?.cancel()
+        mainJob = viewModelScope.launch {
             combine(
                 getCurrentProfileUseCase(),
                 App.homeworkSource.getById(homeworkId)

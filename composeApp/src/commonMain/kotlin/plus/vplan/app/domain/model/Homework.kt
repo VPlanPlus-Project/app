@@ -2,6 +2,8 @@ package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
@@ -41,6 +43,11 @@ sealed class Homework : Item {
         private set
 
     fun getTasksFlow() = combine(tasks.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheState.Done<HomeworkTask>>() }) { it.toList().map { it.data } }
+    fun getStatusFlow(profile: Profile.StudentProfile) = getTasksFlow().map { tasks ->
+        if (tasks.all { it.isDone(profile) }) HomeworkStatus.DONE
+        else if (Clock.System.now() > dueTo) HomeworkStatus.OVERDUE
+        else HomeworkStatus.PENDING
+    }
 
     suspend fun getTaskItems(): List<HomeworkTask> {
         return taskItems ?: tasks.mapNotNull { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
@@ -134,4 +141,8 @@ sealed class Homework : Item {
         defaultLesson: String? = this.defaultLesson,
         group: Int? = this.group
     ): Homework
+}
+
+enum class HomeworkStatus {
+    DONE, PENDING, OVERDUE
 }

@@ -112,8 +112,8 @@ fun Button(
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
                 ButtonType.Secondary -> ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
+                    containerColor = MaterialTheme.colorScheme.surfaceDim,
+                    contentColor = MaterialTheme.colorScheme.onSurface
                 )
                 ButtonType.TERTIARY -> ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.tertiary,

@@ -5,6 +5,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atDate
+import kotlinx.datetime.format.Padding
+import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
@@ -36,4 +38,10 @@ infix fun LocalTime.progressIn(range: ClosedRange<LocalTime>): Double {
     val end = range.endInclusive.toSecondOfDay()
     val current = this.toSecondOfDay().toDouble()
     return (current - start) / (end - start)
+}
+
+val regularTimeFormat = LocalTime.Format {
+    hour(Padding.ZERO)
+    char(':')
+    minute(Padding.ZERO)
 }
