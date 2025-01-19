@@ -25,7 +25,11 @@ sealed class VppId : Item {
         override val cachedAt: LocalDateTime,
         val accessToken: String,
         val schulverwalterAccessToken: String?
-    ) : VppId()
+    ) : VppId() {
+        fun buildSchoolApiAccess(schoolId: Int = -1): SchoolApiAccess.VppIdAccess {
+            return SchoolApiAccess.VppIdAccess(schoolId, accessToken, id)
+        }
+    }
 
     override fun hashCode(): Int {
         var result = id.hashCode()

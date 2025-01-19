@@ -20,7 +20,7 @@ class RoomSource(
         }.onEach { cacheItems[id] = it } }
     }
 
-    suspend fun getSingleById(id: Int): Room {
+    suspend fun getSingleById(id: Int): Room? {
         return (cacheItems[id] as? CacheState.Done<Room>)?.data ?: getById(id).getFirstValue()
     }
 }

@@ -3,8 +3,8 @@ package plus.vplan.app.data.source.database.model.embedded
 import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbHomework
-import plus.vplan.app.data.source.database.model.database.DbHomeworkFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.domain.model.Homework
 
 data class EmbeddedHomework(
@@ -13,12 +13,12 @@ data class EmbeddedHomework(
         parentColumn = "id",
         entityColumn = "homework_id",
         entity = DbHomeworkTask::class
-    ) val tasks: List<EmbeddedHomeworkTask>,
+    ) val tasks: List<DbHomeworkTask>,
     @Relation(
         parentColumn = "id",
         entityColumn = "homework_id",
-        entity = DbHomeworkFile::class
-    ) val files: List<DbHomeworkFile>
+        entity = FKHomeworkFile::class
+    ) val files: List<FKHomeworkFile>
 ) {
     fun toModel(): Homework {
         if (homework.id < 0) {
@@ -28,8 +28,8 @@ data class EmbeddedHomework(
                 createdAt = homework.createdAt,
                 createdByProfile = homework.createdByProfileId!!,
                 defaultLesson = homework.defaultLessonId,
-                files = files.map { it.id },
-                tasks = tasks.map { it.homeworkTask.id }
+                files = files.map { it.fileId },
+                tasks = tasks.map { it.id }
             )
         }
         return Homework.CloudHomework(
@@ -40,8 +40,8 @@ data class EmbeddedHomework(
             defaultLesson = homework.defaultLessonId,
             group = homework.groupId,
             isPublic = homework.isPublic,
-            files = files.map { it.id },
-            tasks = tasks.map { it.homeworkTask.id }
+            files = files.map { it.fileId },
+            tasks = tasks.map { it.id }
         )
     }
 }

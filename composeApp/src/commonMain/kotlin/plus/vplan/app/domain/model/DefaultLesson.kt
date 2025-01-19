@@ -36,7 +36,7 @@ data class DefaultLesson(
     }
 
     suspend fun getGroupItems(): List<Group> {
-        return groupItems ?: this.groups.map { App.groupSource.getById(it).getFirstValue() }.also { groupItems = it }
+        return groupItems ?: this.groups.mapNotNull { App.groupSource.getById(it).getFirstValue() }.also { groupItems = it }
     }
 }
 

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "948062ac876dabd6c6d57d4db3f7ab49",
+    "identityHash": "bef7bcce5270d5fcce10417c40efc311",
     "entities": [
       {
         "tableName": "schools",
@@ -2332,8 +2332,8 @@
         ]
       },
       {
-        "tableName": "homework_task_done",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` INTEGER NOT NULL, `profile_id` TEXT NOT NULL, PRIMARY KEY(`task_id`, `profile_id`), FOREIGN KEY(`task_id`) REFERENCES `homework_task`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "homework_task_done_profile",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` INTEGER NOT NULL, `profile_id` TEXT NOT NULL, `is_done` INTEGER NOT NULL, PRIMARY KEY(`task_id`, `profile_id`), FOREIGN KEY(`task_id`) REFERENCES `homework_task`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "taskId",
@@ -2346,6 +2346,12 @@
             "columnName": "profile_id",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "isDone",
+            "columnName": "is_done",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -2357,22 +2363,22 @@
         },
         "indices": [
           {
-            "name": "index_homework_task_done_task_id",
+            "name": "index_homework_task_done_profile_task_id",
             "unique": false,
             "columnNames": [
               "task_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_task_id` ON `${TABLE_NAME}` (`task_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_profile_task_id` ON `${TABLE_NAME}` (`task_id`)"
           },
           {
-            "name": "index_homework_task_done_profile_id",
+            "name": "index_homework_task_done_profile_profile_id",
             "unique": false,
             "columnNames": [
               "profile_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_profile_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
           }
         ],
         "foreignKeys": [
@@ -2401,8 +2407,128 @@
         ]
       },
       {
-        "tableName": "homework_file",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `homework_id` INTEGER NOT NULL, `file_name` TEXT NOT NULL, `size` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`homework_id`) REFERENCES `homework`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "homework_task_done_account",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`task_id` INTEGER NOT NULL, `vpp_id` INTEGER NOT NULL, `is_done` INTEGER NOT NULL, PRIMARY KEY(`task_id`, `vpp_id`), FOREIGN KEY(`task_id`) REFERENCES `homework_task`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`vpp_id`) REFERENCES `vpp_id`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "taskId",
+            "columnName": "task_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vppId",
+            "columnName": "vpp_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDone",
+            "columnName": "is_done",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "task_id",
+            "vpp_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_homework_task_done_account_task_id",
+            "unique": false,
+            "columnNames": [
+              "task_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_account_task_id` ON `${TABLE_NAME}` (`task_id`)"
+          },
+          {
+            "name": "index_homework_task_done_account_vpp_id",
+            "unique": false,
+            "columnNames": [
+              "vpp_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_task_done_account_vpp_id` ON `${TABLE_NAME}` (`vpp_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "homework_task",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "task_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "vpp_id",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "vpp_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "fk_homework_file",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`homework_id` INTEGER NOT NULL, `file_id` INTEGER NOT NULL, PRIMARY KEY(`homework_id`, `file_id`))",
+        "fields": [
+          {
+            "fieldPath": "homeworkId",
+            "columnName": "homework_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileId",
+            "columnName": "file_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "homework_id",
+            "file_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_fk_homework_file_homework_id",
+            "unique": false,
+            "columnNames": [
+              "homework_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_homework_file_homework_id` ON `${TABLE_NAME}` (`homework_id`)"
+          },
+          {
+            "name": "index_fk_homework_file_file_id",
+            "unique": false,
+            "columnNames": [
+              "file_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_homework_file_file_id` ON `${TABLE_NAME}` (`file_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "file",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `created_by_vpp_id` INTEGER, `file_name` TEXT NOT NULL, `size` INTEGER NOT NULL, `is_offline_ready` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -2411,10 +2537,15 @@
             "notNull": true
           },
           {
-            "fieldPath": "homeworkId",
-            "columnName": "homework_id",
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "createdByVppId",
+            "columnName": "created_by_vpp_id",
+            "affinity": "INTEGER"
           },
           {
             "fieldPath": "fileName",
@@ -2427,6 +2558,12 @@
             "columnName": "size",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "isOfflineReady",
+            "columnName": "is_offline_ready",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -2437,26 +2574,13 @@
         },
         "indices": [
           {
-            "name": "index_homework_file_id",
+            "name": "index_file_id",
             "unique": false,
             "columnNames": [
               "id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_file_id` ON `${TABLE_NAME}` (`id`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "homework",
-            "onDelete": "CASCADE",
-            "onUpdate": "CASCADE",
-            "columns": [
-              "homework_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_file_id` ON `${TABLE_NAME}` (`id`)"
           }
         ]
       },
@@ -2507,7 +2631,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '948062ac876dabd6c6d57d4db3f7ab49')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bef7bcce5270d5fcce10417c40efc311')"
     ]
   }
 }

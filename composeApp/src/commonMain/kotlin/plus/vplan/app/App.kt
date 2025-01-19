@@ -15,8 +15,10 @@ import org.koin.compose.koinInject
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
 import plus.vplan.app.domain.source.DefaultLessonSource
+import plus.vplan.app.domain.source.FileSource
 import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
+import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.ProfileSource
 import plus.vplan.app.domain.source.RoomSource
@@ -53,6 +55,7 @@ val VPP_ID_AUTH_URL = URLBuilder(
 object App {
     lateinit var vppIdSource: VppIdSource
     lateinit var homeworkSource: HomeworkSource
+    lateinit var homeworkTaskSource: HomeworkTaskSource
     lateinit var profileSource: ProfileSource
     lateinit var groupSource: GroupSource
     lateinit var schoolSource: SchoolSource
@@ -65,6 +68,7 @@ object App {
     lateinit var roomSource: RoomSource
     lateinit var lessonTimeSource: LessonTimeSource
     lateinit var substitutionPlanSource: SubstitutionPlanSource
+    lateinit var fileSource: FileSource
 }
 
 @Composable
@@ -74,6 +78,7 @@ fun App(task: StartTask?) {
         KoinContext {
             App.vppIdSource = VppIdSource(koinInject())
             App.homeworkSource = HomeworkSource(koinInject())
+            App.homeworkTaskSource = HomeworkTaskSource(koinInject())
             App.profileSource = ProfileSource(koinInject())
             App.groupSource = GroupSource(koinInject())
             App.schoolSource = SchoolSource(koinInject())
@@ -86,6 +91,7 @@ fun App(task: StartTask?) {
             App.roomSource = RoomSource(koinInject())
             App.lessonTimeSource = LessonTimeSource(koinInject())
             App.substitutionPlanSource = SubstitutionPlanSource(koinInject())
+            App.fileSource = FileSource(koinInject(), koinInject())
 
             Surface(
                 modifier = Modifier

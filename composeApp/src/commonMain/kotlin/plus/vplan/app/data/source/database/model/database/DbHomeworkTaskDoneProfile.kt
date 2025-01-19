@@ -7,7 +7,7 @@ import androidx.room.Index
 import kotlin.uuid.Uuid
 
 @Entity(
-    tableName = "homework_task_done",
+    tableName = "homework_task_done_profile",
     primaryKeys = ["task_id", "profile_id"],
     indices = [
         Index("task_id"),
@@ -30,7 +30,8 @@ import kotlin.uuid.Uuid
         )
     ]
 )
-data class DbHomeworkTaskDone(
+data class DbHomeworkTaskDoneProfile(
     @ColumnInfo(name = "task_id") val taskId: Int,
-    @ColumnInfo(name = "profile_id") val profileId: Uuid
+    @ColumnInfo(name = "profile_id") val profileId: Uuid,
+    @ColumnInfo(name = "is_done") val isDone: Boolean
 )

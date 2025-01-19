@@ -27,14 +27,14 @@ class SelectProfileUseCase(
         onboardingRepository.setSelectedProfile(onboardingProfile)
         val profile = when (onboardingProfile) {
             is OnboardingProfile.StudentProfile -> {
-                val group = groupRepository.getById(onboardingProfile.id).getFirstValue()
+                val group = groupRepository.getById(onboardingProfile.id).getFirstValue()!!
                 profileRepository.upsert(
                     group = group,
                     disabledDefaultLessons = defaultLessons.filterValues { !it }.keys.toList()
                 )
             }
             is OnboardingProfile.TeacherProfile -> {
-                val teacher = teacherRepository.getById(onboardingProfile.id).getFirstValue()
+                val teacher = teacherRepository.getById(onboardingProfile.id).getFirstValue()!!
                 profileRepository.upsert(teacher)
             }
             is OnboardingProfile.RoomProfile -> {

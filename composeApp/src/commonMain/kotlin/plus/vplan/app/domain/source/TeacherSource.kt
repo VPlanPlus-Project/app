@@ -16,7 +16,7 @@ class TeacherSource(
         return cache.getOrPut(id) { teacherRepository.getById(id) }
     }
 
-    suspend fun getSingleById(id: Int): Teacher {
+    suspend fun getSingleById(id: Int): Teacher? {
         return (cacheItems[id] as? CacheState.Done<Teacher>)?.data ?: getById(id).getFirstValue()
     }
 }

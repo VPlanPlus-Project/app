@@ -2,6 +2,7 @@ package plus.vplan.app.domain.model
 
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.basicAuth
+import io.ktor.client.request.bearerAuth
 import plus.vplan.app.domain.cache.Item
 
 sealed interface School: Item {
@@ -62,6 +63,16 @@ sealed class SchoolApiAccess(
     ) : SchoolApiAccess(schoolId) {
         override fun authentication(builder: HttpRequestBuilder) {
             builder.basicAuth("$username@$sp24id", password)
+        }
+    }
+
+    class VppIdAccess(
+        schoolId: Int,
+        val accessToken: String,
+        val id: Int
+    ) : SchoolApiAccess(schoolId) {
+        override fun authentication(builder: HttpRequestBuilder) {
+            builder.bearerAuth(accessToken)
         }
     }
 }

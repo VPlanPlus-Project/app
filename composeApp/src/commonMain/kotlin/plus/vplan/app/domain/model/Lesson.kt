@@ -49,15 +49,15 @@ sealed interface Lesson : Item {
             private set
 
         override suspend fun getLessonTimeItem(): LessonTime {
-            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTime).also { lessonTimeItem = it }
+            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTime)!!.also { lessonTimeItem = it }
         }
 
         override suspend fun getRoomItems(): List<Room>? {
-            return roomItems ?: rooms?.map { App.roomSource.getSingleById(it) }?.also { roomItems = it }
+            return roomItems ?: rooms?.mapNotNull { App.roomSource.getSingleById(it) }?.also { roomItems = it }
         }
 
         override suspend fun getTeacherItems(): List<Teacher> {
-            return teacherItems ?: teachers.map { App.teacherSource.getSingleById(it) }.also { teacherItems = it }
+            return teacherItems ?: teachers.mapNotNull { App.teacherSource.getSingleById(it) }.also { teacherItems = it }
         }
 
         constructor(
@@ -107,15 +107,15 @@ sealed interface Lesson : Item {
             private set
 
         override suspend fun getLessonTimeItem(): LessonTime {
-            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTime).also { lessonTimeItem = it }
+            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTime)!!.also { lessonTimeItem = it }
         }
 
         override suspend fun getRoomItems(): List<Room> {
-            return roomItems ?: rooms.map { App.roomSource.getSingleById(it) }.also { roomItems = it }
+            return roomItems ?: rooms.mapNotNull { App.roomSource.getSingleById(it) }.also { roomItems = it }
         }
 
         override suspend fun getTeacherItems(): List<Teacher> {
-            return teacherItems ?: teachers.map { App.teacherSource.getSingleById(it) }.also { teacherItems = it }
+            return teacherItems ?: teachers.mapNotNull { App.teacherSource.getSingleById(it) }.also { teacherItems = it }
         }
     }
 

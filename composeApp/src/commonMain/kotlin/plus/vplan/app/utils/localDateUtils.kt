@@ -7,6 +7,8 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
+import kotlinx.datetime.format.Padding
+import kotlinx.datetime.format.char
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
@@ -72,4 +74,12 @@ infix fun LocalDate.untilRelativeText(other: LocalDate): String? {
 
 fun LocalDate.atStartOfDay(): LocalDateTime {
     return this.atTime(LocalTime.fromSecondOfDay(0))
+}
+
+val regularDateFormat = LocalDate.Format {
+    dayOfMonth(Padding.ZERO)
+    char('.')
+    monthNumber(Padding.ZERO)
+    char('.')
+    year(Padding.ZERO)
 }

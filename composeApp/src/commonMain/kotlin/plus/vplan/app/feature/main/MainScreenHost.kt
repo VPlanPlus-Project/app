@@ -42,7 +42,7 @@ import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
-import plus.vplan.app.feature.dev.DevScreen
+import plus.vplan.app.feature.dev.ui.DevScreen
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
 import plus.vplan.app.feature.profile.page.ui.ProfileScreen

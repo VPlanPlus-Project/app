@@ -12,7 +12,7 @@ import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.repository.FileRepository
+import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -22,7 +22,7 @@ import kotlin.uuid.Uuid
 class CreateHomeworkUseCase(
     private val homeworkRepository: HomeworkRepository,
     private val keyValueRepository: KeyValueRepository,
-    private val fileRepository: FileRepository
+    private val localFileRepository: LocalFileRepository
 ) {
     suspend operator fun invoke(
         tasks: List<String>,
@@ -62,7 +62,7 @@ class CreateHomeworkUseCase(
                 files = emptyList(),
                 tasks = taskIds.map { it.value }
             )
-            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, isDone = null) }
+            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList()) }
 
             files = selectedFiles.mapNotNull {
                 val documentId = homeworkRepository.uploadHomeworkDocument(
@@ -82,9 +82,9 @@ class CreateHomeworkUseCase(
                 )
             }
         } else {
-            id = homeworkRepository.getIdForNewLocalHomework()
-            val taskIdStart = homeworkRepository.getIdForNewLocalHomeworkTask()
-            val fileIdStart = homeworkRepository.getIdForNewLocalHomeworkFile()
+            id = homeworkRepository.getIdForNewLocalHomework() - 1
+            val taskIdStart = homeworkRepository.getIdForNewLocalHomeworkTask() - 1
+            val fileIdStart = homeworkRepository.getIdForNewLocalHomeworkFile() - 1
             taskIds = tasks.mapIndexed { index, s -> s to (taskIdStart - index) }.toMap()
             files = selectedFiles.mapIndexed { index, file -> Homework.HomeworkFile(fileIdStart - index, file.name, id, file.size) }
             homework = Homework.LocalHomework(
@@ -96,12 +96,12 @@ class CreateHomeworkUseCase(
                 tasks = taskIds.map { it.value },
                 files = files.map { it.id }
             )
-            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, isDone = null) }
+            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList()) }
         }
 
         homeworkRepository.upsert(listOf(homework), homeworkTasks, files)
         files.forEach { file ->
-            fileRepository.writeFile("./homework_files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
+            localFileRepository.writeFile("./homework_files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
         }
 
         return true

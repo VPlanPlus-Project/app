@@ -53,6 +53,7 @@ kotlin {
             implementation(libs.androidx.browser)
 
             implementation(libs.androidx.material)
+            implementation(libs.androidx.sqlite.framework)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
