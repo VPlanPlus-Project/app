@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.File
+import plus.vplan.app.domain.model.openFile
 import plus.vplan.app.utils.toHumanSize
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.cloud_download
@@ -42,7 +43,13 @@ fun FileRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .clickable { onDownloadClick() },
+            .clickable {
+                if (!file.isOfflineReady) {
+                    onDownloadClick()
+                    return@clickable
+                }
+                openFile(file)
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
