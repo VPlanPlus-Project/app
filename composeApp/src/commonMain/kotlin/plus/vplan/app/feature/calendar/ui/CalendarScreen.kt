@@ -29,10 +29,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +54,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
@@ -66,6 +71,7 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
 import plus.vplan.app.ui.components.InfoCard
@@ -335,6 +341,7 @@ private fun CalendarScreenContent(
                                     val lessonsThatOverlapStartAndAreAlreadyDisplayed = lessons.filterIndexed { index, lessonCompare -> start in lessonCompare.lessonTimeItem!!.start..lessonCompare.lessonTimeItem!!.end && index < i }
 
                                     val y = start.inWholeMinutes().toFloat() * minute
+                                    val lessonIsCancelled = lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null
                                     Box(
                                         modifier = Modifier
                                             .width(availableWidth / lessonsThatOverlapStart.size)
@@ -343,26 +350,36 @@ private fun CalendarScreenContent(
                                             .offset(y = y, x = (availableWidth / lessonsThatOverlapStart.size) * lessonsThatOverlapStartAndAreAlreadyDisplayed.size)
                                             .clip(RoundedCornerShape(8.dp))
                                             .clickable {  }
-                                            .background(customColors[ColorToken.GreenContainer]!!.get())
+                                            .background(
+                                                if (lessonIsCancelled) MaterialTheme.colorScheme.errorContainer
+                                                else customColors[ColorToken.GreenContainer]!!.get())
                                             .padding(4.dp)
                                     ) {
-                                        Column {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                Text(text = buildString {
-                                                     if (lessonsThatOverlapStartAndAreAlreadyDisplayed.isEmpty()) append("${lesson.lessonTimeItem!!.lessonNumber}. ")
-                                                    append(lesson.subject.toString())
-                                                }, style = MaterialTheme.typography.bodyMedium)
-                                                if (lesson.roomItems != null) Text(
-                                                    text = lesson.roomItems.orEmpty().joinToString { it.name },
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                                Text(
-                                                    text = lesson.teacherItems.orEmpty().joinToString { it.name },
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
+                                        CompositionLocalProvider(
+                                            LocalContentColor provides if (lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
+                                        ) {
+                                            Column {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    Text(text = buildAnnotatedString {
+                                                        withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
+                                                            if (lessonsThatOverlapStartAndAreAlreadyDisplayed.isEmpty()) append("${lesson.lessonTimeItem!!.lessonNumber}. ")
+                                                            if (lessonIsCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
+                                                                append((lesson as Lesson.SubstitutionPlanLesson).defaultLessonItem!!.subject)
+                                                            } else append(lesson.subject.toString())
+                                                        }
+                                                    }, style = MaterialTheme.typography.bodyMedium)
+                                                    if (lesson.roomItems != null) Text(
+                                                        text = lesson.roomItems.orEmpty().joinToString { it.name },
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                    Text(
+                                                        text = lesson.teacherItems.orEmpty().joinToString { it.name },
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                }
                                             }
                                         }
                                     }

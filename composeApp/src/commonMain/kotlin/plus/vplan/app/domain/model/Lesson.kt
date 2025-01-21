@@ -106,6 +106,13 @@ sealed interface Lesson : Item {
         override var teacherItems: List<Teacher>? = null
             private set
 
+        var defaultLessonItem: DefaultLesson? = null
+            private set
+
+        suspend fun getDefaultLesson(): DefaultLesson? {
+            return defaultLessonItem ?: if (defaultLesson == null) null else App.defaultLessonSource.getSingleById(defaultLesson).also { defaultLessonItem = it }
+        }
+
         override suspend fun getLessonTimeItem(): LessonTime {
             return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTime)!!.also { lessonTimeItem = it }
         }
