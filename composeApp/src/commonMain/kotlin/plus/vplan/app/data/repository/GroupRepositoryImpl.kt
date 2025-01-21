@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.VPP_ROOT_URL
+import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
@@ -36,7 +36,7 @@ class GroupRepositoryImpl(
         if (flow.first().isNotEmpty()) return Response.Success(flow)
 
         return saveRequest {
-            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/school/${school.id}/group") {
+            val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/group") {
                 school.getSchoolApiAccess().authentication(this)
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
@@ -68,7 +68,7 @@ class GroupRepositoryImpl(
         val cached = vppDatabase.groupDao.getById(id).map { it?.toModel() }
         if (cached.first() != null) return Response.Success(cached)
         return saveRequest {
-            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/group/$id") {
+            val response = httpClient.get("${api.url}/api/v2.2/group/$id") {
                 school.getSchoolApiAccess().authentication(this)
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())

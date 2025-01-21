@@ -31,18 +31,39 @@ import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
 
-const val SERVER_IP = "192.168.3.102"
-val VPP_PROTOCOL = URLProtocol.HTTP
-const val VPP_PORT = 8001
-val VPP_ROOT_URL = "${VPP_PROTOCOL.name}://$SERVER_IP:$VPP_PORT"
-const val VPP_SP24_URL = "http://$SERVER_IP:8080"
+data class Host(
+    val protocol: URLProtocol = URLProtocol.HTTPS,
+    val host: String,
+    val port: Int = 443,
+) {
+    val url = "${protocol.name}://$host:$port"
+}
+
+val api = Host(
+    protocol = URLProtocol.HTTPS,
+    host = "vplan.plus",
+    port = 443
+)
+
+val sp24Service = Host(
+    protocol = URLProtocol.HTTPS,
+    host = "sp24.microservices.vplan.plus",
+    port = 443
+)
+
+val auth = Host(
+    protocol = URLProtocol.HTTPS,
+    host = "auth.vplan.plus",
+    port = 443
+)
+
 const val APP_ID = "4"
-const val APP_SECRET = "secret"
+const val APP_SECRET = "crawling-mom-yesterday-jazz-populace-napkin"
 const val APP_REDIRECT_URI = "vpp://app/auth/"
 val VPP_ID_AUTH_URL = URLBuilder(
-    protocol = URLProtocol.HTTP,
-    host = SERVER_IP,
-    port = 5174,
+    protocol = auth.protocol,
+    host = auth.host,
+    port = auth.port,
     pathSegments = listOf("authorize"),
     parameters = Parameters.build {
         append("client_id", APP_ID)

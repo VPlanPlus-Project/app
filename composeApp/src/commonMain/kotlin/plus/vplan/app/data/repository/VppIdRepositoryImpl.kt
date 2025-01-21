@@ -20,7 +20,7 @@ import kotlinx.serialization.json.Json
 import plus.vplan.app.APP_ID
 import plus.vplan.app.APP_REDIRECT_URI
 import plus.vplan.app.APP_SECRET
-import plus.vplan.app.VPP_ROOT_URL
+import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
@@ -46,7 +46,7 @@ class VppIdRepositoryImpl(
     override suspend fun getAccessToken(code: String): Response<String> {
         return saveRequest {
             val response = httpClient.submitForm(
-                url = "$VPP_ROOT_URL/api/v2.2/auth/token",
+                url = "${api.url}/api/v2.2/auth/token",
                 formParameters = Parameters.build {
                     append("grant_type", "authorization_code")
                     append("code", code)
@@ -68,7 +68,7 @@ class VppIdRepositoryImpl(
 
     override suspend fun getUserByToken(token: String, upsert: Boolean): Response<VppId.Active> {
         return saveRequest {
-            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/me") {
+            val response = httpClient.get("${api.url}/api/v2.2/user/me") {
                 bearerAuth(token)
             }
             if (response.status != HttpStatusCode.OK) {
@@ -109,7 +109,7 @@ class VppIdRepositoryImpl(
         return flow {
             val databaseItem = vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
             if (databaseItem.first() != null) return@flow emitAll(databaseItem.map { CacheState.Done(it!!) })
-            val schools = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/$id")
+            val schools = httpClient.get("${api.url}/api/v2.2/user/$id")
             if (schools.status != HttpStatusCode.OK) return@flow emit(CacheState.Error(id.toString(), schools.toErrorResponse<VppId>()))
             val schoolIds = ResponseDataWrapper.fromJson<UserSchoolResponse>(schools.bodyAsText()) ?: return@flow emit(CacheState.Error(id.toString(), Response.Error.ParsingError(schools.bodyAsText())))
             vppDatabase.schoolDao
@@ -120,7 +120,7 @@ class VppIdRepositoryImpl(
                 .filterIsInstance<School.IndiwareSchool>()
                 .map { it.getSchoolApiAccess() }
                 .forEachBreakable { schoolAccess ->
-                    val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/$id") {
+                    val response = httpClient.get("${api.url}/api/v2.2/user/$id") {
                         schoolAccess.authentication(this)
                     }
                     if (response.status != HttpStatusCode.OK) return@forEachBreakable false
@@ -155,7 +155,7 @@ class VppIdRepositoryImpl(
 
     override suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>> {
         return saveRequest {
-            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/user/me/session") {
+            val response = httpClient.get("${api.url}/api/v2.2/user/me/session") {
                 bearerAuth(vppId.accessToken)
             }
             if (response.status != HttpStatusCode.OK) {
@@ -172,7 +172,7 @@ class VppIdRepositoryImpl(
 
     override suspend fun logoutDevice(vppId: VppId.Active, deviceId: Int): Response<Unit> {
         return saveRequest {
-            val response = httpClient.delete("$VPP_ROOT_URL/api/v2.2/user/me/session/$deviceId") {
+            val response = httpClient.delete("${api.url}/api/v2.2/user/me/session/$deviceId") {
                 bearerAuth(vppId.accessToken)
             }
             if (response.status != HttpStatusCode.OK) {
@@ -185,7 +185,7 @@ class VppIdRepositoryImpl(
 
     override suspend fun logout(token: String): Response<Unit> {
         return saveRequest {
-            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/auth/logout") {
+            val response = httpClient.get("${api.url}/api/v2.2/auth/logout") {
                 bearerAuth(token)
             }
             if (response.status != HttpStatusCode.OK) {

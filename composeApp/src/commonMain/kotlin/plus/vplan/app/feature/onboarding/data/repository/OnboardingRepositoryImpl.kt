@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.VPP_SP24_URL
 import plus.vplan.app.data.repository.ResponseDataWrapper
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toResponse
@@ -23,6 +22,7 @@ import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.domain.repository.Sp24Credentials
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.Sp24CredentialsState
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
+import plus.vplan.app.sp24Service
 
 class OnboardingRepositoryImpl(
     private val onboardingDatabase: OnboardingDatabase,
@@ -90,7 +90,7 @@ class OnboardingRepositoryImpl(
         val password = onboardingDatabase.keyValueDao.get("indiware.password").first() ?: return Response.Error.Other("password is null")
         return saveRequest {
             val result = httpClient.get {
-                url("$VPP_SP24_URL/school/sp24/$sp24Id/initialize")
+                url("${sp24Service.url}/school/sp24/$sp24Id/initialize")
                 basicAuth("$username@$sp24Id", password)
             }
             if (result.status.isSuccess()) {
@@ -110,7 +110,7 @@ class OnboardingRepositoryImpl(
         val sp24Id = onboardingDatabase.keyValueDao.get("indiware.sp24_id").first() ?: return Response.Error.Other("schoolId is null")
         return saveRequest {
             val response = httpClient.get {
-                url("$VPP_SP24_URL/school/sp24/$sp24Id/status/$jobId")
+                url("${sp24Service.url}/school/sp24/$sp24Id/status/$jobId")
                 basicAuth("$username@$sp24Id", password)
             }
             if (response.status.isSuccess()) {

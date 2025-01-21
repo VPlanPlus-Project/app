@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.VPP_ROOT_URL
+import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.network.safeRequest
@@ -60,14 +60,14 @@ class FileRepositoryImpl(
             sendAll(fileFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
             if (hadData || id < 0) return@channelFlow
             send(CacheState.Loading(id.toString()))
-            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/file/$id")
+            val response = httpClient.get("${api.url}/api/v2.2/file/$id")
             if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<File>()))
             val data = ResponseDataWrapper.fromJson<FileItemSimpleGetRequest>(response.bodyAsText())
                 ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
             val creator = vppDatabase.vppIdDao.getById(data.createdBy).first()?.toModel() as? VppId.Active
             if (creator != null) {
-                val fileResponse = httpClient.get("$VPP_ROOT_URL/api/v2.2/file/$id") {
+                val fileResponse = httpClient.get("${api.url}/api/v2.2/file/$id") {
                     creator.buildSchoolApiAccess().authentication(this)
                 }
                 if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
@@ -87,7 +87,7 @@ class FileRepositoryImpl(
             }
             val schools = vppDatabase.schoolDao.getAll().first().distinctBy { it.school.id }.filter { it.school.id in data.schoolIds }.mapNotNull { try { it.toModel().getSchoolApiAccess() } catch (e: Exception) { null } }
             schools.forEach { school ->
-                val fileResponse = httpClient.get("$VPP_ROOT_URL/api/v2.2/file/$id") {
+                val fileResponse = httpClient.get("${api.url}/api/v2.2/file/$id") {
                     school.authentication(this)
                 }
                 if (fileResponse.status == HttpStatusCode.Forbidden) return@forEach
@@ -111,7 +111,7 @@ class FileRepositoryImpl(
     }
 
     override fun cacheFile(file: File, schoolApiAccess: SchoolApiAccess): Flow<FileDownloadProgress> = channelFlow {
-        val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/file/${file.id}/download") {
+        val response = httpClient.get("${api.url}/api/v2.2/file/${file.id}/download") {
             schoolApiAccess.authentication(this)
             onDownload { bytesSentTotal, contentLength ->
                 if (contentLength == null) send(FileDownloadProgress.InProgress(0f))
@@ -134,7 +134,7 @@ class FileRepositoryImpl(
         vppDatabase.fileDao.updateName(file.id, newName)
         if (file.id < 0 || vppId == null) return
         safeRequest(onError = { vppDatabase.fileDao.updateName(file.id, oldName) }) {
-            val response = httpClient.patch("$VPP_ROOT_URL/api/v2.2/file/${file.id}") {
+            val response = httpClient.patch("${api.url}/api/v2.2/file/${file.id}") {
                 bearerAuth(vppId.accessToken)
                 contentType(ContentType.Application.Json)
                 setBody(FileUpdateNameRequest(newName))
@@ -153,7 +153,7 @@ class FileRepositoryImpl(
             return null
         }
         safeRequest(onError = { return it }) {
-            val response = httpClient.delete("$VPP_ROOT_URL/api/v2.2/file/${file.id}") {
+            val response = httpClient.delete("${api.url}/api/v2.2/file/${file.id}") {
                 bearerAuth(vppId.accessToken)
             }
             if (!response.status.isSuccess()) return response.toErrorResponse<Any>()

@@ -13,8 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.VPP_ROOT_URL
-import plus.vplan.app.VPP_SP24_URL
+import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
@@ -25,6 +24,7 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.OnlineSchool
 import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.sp24Service
 import plus.vplan.app.utils.sendAll
 
 class SchoolRepositoryImpl(
@@ -33,7 +33,7 @@ class SchoolRepositoryImpl(
 ) : SchoolRepository {
     override suspend fun fetchAllOnline(): Response<List<OnlineSchool>> {
         return saveRequest {
-            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/school")
+            val response = httpClient.get("${api.url}/api/v2.2/school")
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<List<OnlineSchoolResponse>>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
@@ -46,7 +46,7 @@ class SchoolRepositoryImpl(
         val cached = vppDatabase.schoolDao.findById(id).map { it?.toModel() }
         if (cached.first() != null) return Response.Success(cached)
         return saveRequest {
-            val response = httpClient.get("$VPP_ROOT_URL/api/v2.2/school/$id")
+            val response = httpClient.get("${api.url}/api/v2.2/school/$id")
             if (!response.status.isSuccess()) return response.toResponse()
             val data = ResponseDataWrapper.fromJson<SchoolItemResponse>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
@@ -80,7 +80,7 @@ class SchoolRepositoryImpl(
             .firstOrNull { it.sp24Id == sp24Id.toString() }
         if (indiwareSchool != null) return Response.Success(indiwareSchool.id)
         return saveRequest {
-            val response = httpClient.get("$VPP_SP24_URL/school/sp24/$sp24Id")
+            val response = httpClient.get("${sp24Service.url}/school/sp24/$sp24Id")
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<Int>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
