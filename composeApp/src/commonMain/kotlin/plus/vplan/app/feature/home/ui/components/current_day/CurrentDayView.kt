@@ -81,10 +81,11 @@ fun CurrentDayView(
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        var currentLessons = remember { emptyList<Pair<Lesson, List<Lesson>>>() }
+        val currentLessons = remember { mutableListOf<Pair<Lesson, List<Lesson>>>() }
         LaunchedEffect("${contextTime.hour}:${contextTime.minute}") {
             val contextZoned = contextTime.toInstant(TimeZone.currentSystemDefault())
-            currentLessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+            currentLessons.clear()
+            currentLessons.addAll(day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
                 .filter {
                     val lessonTime = it.getLessonTimeItem()
                     val start =
@@ -104,7 +105,7 @@ fun CurrentDayView(
                                     && it.getLessonTimeItem().lessonNumber > currentLesson.getLessonTimeItem().lessonNumber
                         }.sortedBy { it.lessonTimeItem!!.lessonNumber }
                         .takeContinuousBy { it.lessonTimeItem!!.lessonNumber }
-                }
+                })
         }
         if (currentLessons.isNotEmpty()) Column currentLessons@{
             SectionTitle(

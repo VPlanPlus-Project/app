@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Day
@@ -145,7 +144,7 @@ private fun HomeContent(
                             Day.DayType.REGULAR -> {
                                 if (page == 0) CurrentDayView(
                                     day = day,
-                                    contextTime = LocalDateTime(2025, 1, 6, 8, 0, 0)
+                                    contextTime = state.currentTime
                                 )
                                 else NextDayView(day)
                             }
