@@ -95,7 +95,7 @@ fun FollowingLesson(
                         if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface
                     )
-                    if (lesson.rooms != null) {
+                    if (lesson.rooms != null && !lesson.isCancelled) {
                         val rooms by combine(lesson.rooms.orEmpty().map { App.roomSource.getById(it) }) { it.toList() }.collectAsState(emptyList())
                         Text(
                             text = buildString {
@@ -109,7 +109,7 @@ fun FollowingLesson(
                         )
                     }
                     val teachers by combine(lesson.teachers.map { App.teacherSource.getById(it) }) { it.toList() }.collectAsState(emptyList())
-                    Text(
+                    if (!lesson.isCancelled) Text(
                         text = buildString {
                             append(teachers.filterIsInstance<CacheState.Done<Teacher>>().joinToString { it.data.name })
                             if (lesson.teachers.isEmpty()) append("Keine Lehrkraft")

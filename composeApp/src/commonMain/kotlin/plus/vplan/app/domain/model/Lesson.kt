@@ -27,6 +27,8 @@ sealed interface Lesson : Item {
     suspend fun getTeacherItems(): List<Teacher>
     val teacherItems: List<Teacher>?
 
+    val isCancelled: Boolean
+
     data class TimetableLesson(
         override val id: Uuid,
         val dayOfWeek: DayOfWeek,
@@ -39,6 +41,7 @@ sealed interface Lesson : Item {
         val weekType: String?
     ) : Lesson {
         override val defaultLesson = null
+        override val isCancelled: Boolean = false
         override var roomItems: List<Room>? = null
             private set
 
@@ -97,6 +100,9 @@ sealed interface Lesson : Item {
         override val lessonTime: String,
         val info: String?
     ) : Lesson {
+        override val isCancelled: Boolean
+            get() = subject == null && defaultLesson != null
+
         override var lessonTimeItem: LessonTime? = null
             private set
 

@@ -342,7 +342,6 @@ private fun CalendarScreenContent(
                                     val lessonsThatOverlapStartAndAreAlreadyDisplayed = lessons.filterIndexed { index, lessonCompare -> start in lessonCompare.lessonTimeItem!!.start..lessonCompare.lessonTimeItem!!.end && index < i }
 
                                     val y = start.inWholeMinutes().toFloat() * minute
-                                    val lessonIsCancelled = lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null
                                     Box(
                                         modifier = Modifier
                                             .width(availableWidth / lessonsThatOverlapStart.size)
@@ -352,7 +351,7 @@ private fun CalendarScreenContent(
                                             .clip(RoundedCornerShape(8.dp))
                                             .clickable {  }
                                             .background(
-                                                if (lessonIsCancelled) MaterialTheme.colorScheme.errorContainer
+                                                if (lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
                                                 else customColors[ColorToken.GreenContainer]!!.get())
                                             .padding(4.dp)
                                     ) {
@@ -367,7 +366,7 @@ private fun CalendarScreenContent(
                                                     Text(text = buildAnnotatedString {
                                                         withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
                                                             if (lessonsThatOverlapStartAndAreAlreadyDisplayed.isEmpty()) append("${lesson.lessonTimeItem!!.lessonNumber}. ")
-                                                            if (lessonIsCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
+                                                            if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
                                                                 append((lesson as Lesson.SubstitutionPlanLesson).defaultLessonItem!!.subject)
                                                             } else append(lesson.subject.toString())
                                                         }
