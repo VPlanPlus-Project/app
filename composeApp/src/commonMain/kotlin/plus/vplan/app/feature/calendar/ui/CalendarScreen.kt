@@ -56,6 +56,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
@@ -379,6 +380,25 @@ private fun CalendarScreenContent(
                                                         text = lesson.teacherItems.orEmpty().joinToString { it.name },
                                                         style = MaterialTheme.typography.bodySmall
                                                     )
+                                                }
+                                                if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(Res.drawable.info),
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(8.dp),
+                                                            tint = MaterialTheme.colorScheme.onSurface
+                                                        )
+                                                        Text(
+                                                            text = lesson.info,
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
