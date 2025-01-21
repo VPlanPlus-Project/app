@@ -81,11 +81,11 @@ fun CurrentDayView(
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        val currentLessons = remember { mutableListOf<Pair<Lesson, List<Lesson>>>() }
+        val currentOrNextLesson = remember { mutableListOf<Pair<Lesson, List<Lesson>>>() }
         LaunchedEffect("${contextTime.hour}:${contextTime.minute}") {
             val contextZoned = contextTime.toInstant(TimeZone.currentSystemDefault())
-            currentLessons.clear()
-            currentLessons.addAll(day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+            currentOrNextLesson.clear()
+            currentOrNextLesson.addAll(day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
                 .filter {
                     val lessonTime = it.getLessonTimeItem()
                     val start =
@@ -107,19 +107,19 @@ fun CurrentDayView(
                         .takeContinuousBy { it.lessonTimeItem!!.lessonNumber }
                 })
         }
-        if (currentLessons.isNotEmpty()) Column currentLessons@{
+        if (currentOrNextLesson.isNotEmpty()) Column currentLessons@{
             SectionTitle(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                title = "Aktuelle Stunde" + if (currentLessons.size > 1) "n" else "",
+                title = (if (currentOrNextLesson.any { it.first.lessonTimeItem!!.start <= contextTime.time }) "Aktuelle Stunde" else "Nächste Stunde") + (if (currentOrNextLesson.size > 1) "n" else "") + if (currentOrNextLesson.size > 1) "n" else "",
                 subtitle = "${
-                    currentLessons.map { it.first.lessonTimeItem!!.lessonNumber }.distinct().sorted()
+                    currentOrNextLesson.map { it.first.lessonTimeItem!!.lessonNumber }.distinct().sorted()
                         .joinToString { "$it." }
                 } Stunde"
             )
 
-            if (currentLessons.all { it.first.subject == null }) {
+            if (currentOrNextLesson.all { it.first.subject == null }) {
                 val nextActualLesson = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
-                    .firstOrNull { lesson -> lesson.subject != null && lesson.lessonTimeItem!!.start > currentLessons.maxOf { it.first.lessonTimeItem!!.end } }
+                    .firstOrNull { lesson -> lesson.subject != null && lesson.lessonTimeItem!!.start > currentOrNextLesson.maxOf { it.first.lessonTimeItem!!.end } }
                 InfoCard(
                     imageVector = Res.drawable.lightbulb,
                     modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp),
@@ -139,7 +139,7 @@ fun CurrentDayView(
                     .clip(RoundedCornerShape(16.dp)),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                currentLessons.forEach { (currentLessons, followingConnected) ->
+                currentOrNextLesson.forEach { (currentLessons, followingConnected) ->
                     CurrentLessonCard(currentLessons, followingConnected, contextTime)
                 }
             }
@@ -156,14 +156,14 @@ fun CurrentDayView(
             )
             if (day.day.info != null) DayInfoCard(Modifier.padding(vertical = 4.dp), info = day.day.info)
             val followingLessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
-                .filter { it.lessonTimeItem!!.lessonNumber > (currentLessons.lastOrNull()?.first?.lessonTimeItem?.lessonNumber ?: Int.MAX_VALUE) }
+                .filter { it.lessonTimeItem!!.lessonNumber > (currentOrNextLesson.lastOrNull()?.first?.lessonTimeItem?.lessonNumber ?: Int.MAX_VALUE) }
                 .sortedBy { it.lessonTimeItem!!.start }
             if (followingLessons.isNotEmpty()) Column {
                 val lessonsGroupedByLessonNumber =
                     followingLessons.groupBy { it.lessonTimeItem!!.lessonNumber }
                 FollowingLessons(
                     showFirstGradient =
-                    lessonsGroupedByLessonNumber.keys.min() > (currentLessons.minOfOrNull { it.first.lessonTimeItem!!.lessonNumber }
+                    lessonsGroupedByLessonNumber.keys.min() > (currentOrNextLesson.minOfOrNull { it.first.lessonTimeItem!!.lessonNumber }
                         ?: -1),
                     date = day.day.date,
                     lessons = lessonsGroupedByLessonNumber
