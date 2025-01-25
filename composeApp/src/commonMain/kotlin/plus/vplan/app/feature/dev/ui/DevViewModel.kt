@@ -16,6 +16,7 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -25,7 +26,8 @@ import kotlin.uuid.Uuid
 class DevViewModel(
     private val homeworkRepository: HomeworkRepository,
     private val keyValueRepository: KeyValueRepository,
-    private val updateHomeworkUseCase: UpdateHomeworkUseCase
+    private val updateHomeworkUseCase: UpdateHomeworkUseCase,
+    private val assessmentRepository: AssessmentRepository
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
         private set
