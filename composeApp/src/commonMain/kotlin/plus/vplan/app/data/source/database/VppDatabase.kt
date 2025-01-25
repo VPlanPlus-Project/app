@@ -29,6 +29,7 @@ import plus.vplan.app.data.source.database.dao.WeekDao
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbDay
 import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
+import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
@@ -117,7 +118,9 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGr
 
         DbFile::class,
 
-        FKSchoolGroup::class
+        FKSchoolGroup::class,
+
+        DbAssessment::class
     ],
     version = 1,
 )
