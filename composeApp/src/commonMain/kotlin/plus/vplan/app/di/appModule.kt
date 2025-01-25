@@ -10,6 +10,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DayRepositoryImpl
 import plus.vplan.app.data.repository.DefaultLessonRepositoryImpl
@@ -28,6 +29,7 @@ import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
 import plus.vplan.app.domain.di.domainModule
+import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
@@ -91,6 +93,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::VppIdRepositoryImpl).bind<VppIdRepository>()
     singleOf(::HomeworkRepositoryImpl).bind<HomeworkRepository>()
     singleOf(::FileRepositoryImpl).bind<FileRepository>()
+    singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
 
     singleOf(::GetCurrentProfileUseCase)
 }
