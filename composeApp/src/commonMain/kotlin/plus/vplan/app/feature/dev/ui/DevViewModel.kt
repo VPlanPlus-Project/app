@@ -54,9 +54,12 @@ class DevViewModel(
         viewModelScope.launch {
             when (event) {
                 DevEvent.Refresh -> {
-                    Logger.d { "Homework update started" }
-                    updateHomeworkUseCase()
-                    Logger.d { "Homework updated" }
+                    Logger.d { "Assessment update started" }
+                    assessmentRepository.download(schoolApiAccess = (state.profile as Profile.StudentProfile).let {
+                        it.getVppIdItem()?.buildSchoolApiAccess() ?: it.getSchoolItem().getSchoolApiAccess()
+                    },
+                        defaultLessonIds = (state.profile as Profile.StudentProfile).getDefaultLessons().map { it.id })
+                    Logger.d { "Assessment updated" }
                 }
 
                 DevEvent.Clear -> homeworkRepository.clearCache()

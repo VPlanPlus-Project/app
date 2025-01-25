@@ -8,6 +8,7 @@ import plus.vplan.app.data.source.database.converters.LocalDateConverter
 import plus.vplan.app.data.source.database.converters.LocalDateTimeConverter
 import plus.vplan.app.data.source.database.converters.LocalTimeConverter
 import plus.vplan.app.data.source.database.converters.UuidTypeConverter
+import plus.vplan.app.data.source.database.dao.AssessmentDao
 import plus.vplan.app.data.source.database.dao.CourseDao
 import plus.vplan.app.data.source.database.dao.DayDao
 import plus.vplan.app.data.source.database.dao.DefaultLessonDao
@@ -152,4 +153,5 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val vppIdDao: VppIdDao
     abstract val homeworkDao: HomeworkDao
     abstract val fileDao: FileDao
+    abstract val assessmentDao: AssessmentDao
 }
