@@ -48,6 +48,7 @@ import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.assessment.di.assessmentModule
 import plus.vplan.app.feature.calendar.di.calendarModule
 import plus.vplan.app.feature.dev.di.devModule
 import plus.vplan.app.feature.home.di.homeModule
@@ -111,6 +112,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             homeModule,
             calendarModule,
             homeworkModule,
+            assessmentModule,
             profileModule,
             profileSettingsModule,
             vppIdModule,

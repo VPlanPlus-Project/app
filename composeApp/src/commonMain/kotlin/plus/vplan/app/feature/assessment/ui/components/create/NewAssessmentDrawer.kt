@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.homework.ui.components
+package plus.vplan.app.feature.assessment.ui.components.create
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.size
@@ -21,7 +21,7 @@ import vplanplus.composeapp.generated.resources.x
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewHomeworkDrawer(
+fun NewAssessmentDrawer(
     onDismissRequest: () -> Unit
 ) {
     val density = LocalDensity.current
@@ -32,7 +32,7 @@ fun NewHomeworkDrawer(
         topAppBar = { onCloseClicked, modifier, scrollProgress ->
             TopAppBar(
                 modifier = modifier,
-                title = { Text("Neue Hausaufgabe") },
+                title = { Text("Neue Leistungserhebung") },
                 navigationIcon = {
                     IconButton(onClick = { onCloseClicked() }) {
                         Icon(
@@ -49,9 +49,8 @@ fun NewHomeworkDrawer(
                     bottom = TopAppBarDefaults.windowInsets.getBottom(density).let { with(density) { it.toDp() } }
                 )
             )
-        },
-        content = {
-            NewHomeworkDrawerContent()
         }
-    )
+    ) {
+        NewAssessmentDrawerContent()
+    }
 }
