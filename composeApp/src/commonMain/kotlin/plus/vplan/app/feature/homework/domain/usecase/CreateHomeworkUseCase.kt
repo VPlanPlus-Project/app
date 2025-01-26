@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class, ExperimentalUuidApi::class)
+
 package plus.vplan.app.feature.homework.domain.usecase
 
 import kotlinx.coroutines.flow.filterNotNull
@@ -16,7 +18,8 @@ import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.feature.homework.ui.components.File
+import plus.vplan.app.ui.common.AttachedFile
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class CreateHomeworkUseCase(
@@ -29,7 +32,7 @@ class CreateHomeworkUseCase(
         isPublic: Boolean?,
         date: LocalDate,
         defaultLesson: DefaultLesson?,
-        selectedFiles: List<File>
+        selectedFiles: List<AttachedFile>
     ): Boolean {
         val profile = keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().first().let { App.profileSource.getById(Uuid.parseHex(it)).getFirstValue() as? Profile.StudentProfile } ?: return false
         val id: Int

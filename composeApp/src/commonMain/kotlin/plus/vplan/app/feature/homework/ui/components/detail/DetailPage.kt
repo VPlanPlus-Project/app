@@ -43,7 +43,6 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
-import plus.vplan.app.feature.homework.ui.components.File
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
@@ -55,6 +54,7 @@ import plus.vplan.app.feature.homework.ui.components.detail.components.ShareStat
 import plus.vplan.app.feature.homework.ui.components.detail.components.StatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.TaskRow
+import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
@@ -89,7 +89,7 @@ fun DetailPage(
         // Handle picked files
         Logger.d { "Picked files: ${files?.map { it.path }}" }
         files?.forEach { file ->
-            onEvent(DetailEvent.AddFile(File.Other(file)))
+            onEvent(DetailEvent.AddFile(AttachedFile.Other(file)))
         }
     }
 
@@ -99,7 +99,7 @@ fun DetailPage(
     ) { images ->
         Logger.d { "Picked images: ${images?.map { it.path }}" }
         images?.forEach { image ->
-            onEvent(DetailEvent.AddFile(File.Other(image)))
+            onEvent(DetailEvent.AddFile(AttachedFile.Other(image)))
         }
     }
 

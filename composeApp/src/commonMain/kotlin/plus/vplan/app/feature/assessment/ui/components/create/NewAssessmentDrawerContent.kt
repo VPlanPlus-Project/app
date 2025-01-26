@@ -16,20 +16,28 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
+import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.core.PickerMode
+import io.github.vinceglb.filekit.core.PickerType
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
+import plus.vplan.app.feature.homework.ui.components.create.FileItem
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
+import plus.vplan.app.feature.homework.ui.components.create.RenameFileDialog
 import plus.vplan.app.feature.homework.ui.components.create.SubjectAndDateTile
 import plus.vplan.app.feature.homework.ui.components.create.VisibilityTile
 import plus.vplan.app.feature.homework.ui.components.create.VppIdBanner
+import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
@@ -44,6 +52,28 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
+    var fileToRename by rememberSaveable { mutableStateOf<AttachedFile?>(null) }
+
+    val filePickerLauncher = rememberFilePickerLauncher(
+        mode = PickerMode.Multiple(),
+        type = PickerType.File()
+    ) { files ->
+        // Handle picked files
+        Logger.d { "Picked files: ${files?.map { it.path }}" }
+        files?.forEach { file ->
+            viewModel.onEvent(NewAssessmentEvent.AddFile(file))
+        }
+    }
+
+    val imagePickerLauncher = rememberFilePickerLauncher(
+        mode = PickerMode.Multiple(),
+        type = PickerType.Image
+    ) { images ->
+        Logger.d { "Picked images: ${images?.map { it.path }}" }
+        images?.forEach { image ->
+            viewModel.onEvent(NewAssessmentEvent.AddFile(image))
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -108,11 +138,21 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
             Spacer(Modifier.height(16.dp))
 
             FileButtons(
-                onClickAddFile = {},
-                onClickAddPicture = {}
+                onClickAddFile = { filePickerLauncher.launch() },
+                onClickAddPicture = { imagePickerLauncher.launch() }
             )
 
             Spacer(Modifier.height(16.dp))
+
+            state.files.forEach { file ->
+                key(file.platformFile.path.hashCode()) {
+                    FileItem(
+                        file = file,
+                        onRenameClicked = { fileToRename = file },
+                        onDeleteClicked = { viewModel.onEvent(NewAssessmentEvent.RemoveFile(file)) }
+                    )
+                }
+            }
         }
 
         Button(
@@ -122,6 +162,14 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
             state = ButtonState.Enabled,
             size = ButtonSize.Normal,
             onClick = { viewModel.onEvent(NewAssessmentEvent.Save) }
+        )
+    }
+
+    fileToRename?.let { file ->
+        RenameFileDialog(
+            file = file,
+            onDismissRequest = { fileToRename = null },
+            onRename = { viewModel.onEvent(NewAssessmentEvent.UpdateFile(fileToRename!!.copyBase(name = it))) }
         )
     }
 
