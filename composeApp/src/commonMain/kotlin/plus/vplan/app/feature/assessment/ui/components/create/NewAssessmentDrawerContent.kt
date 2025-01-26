@@ -15,20 +15,35 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
+import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.create.SubjectAndDateTile
 import plus.vplan.app.feature.homework.ui.components.create.VisibilityTile
 import plus.vplan.app.feature.homework.ui.components.create.VppIdBanner
+import plus.vplan.app.ui.components.Button
+import plus.vplan.app.ui.components.ButtonSize
+import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.FullscreenDrawerContext
+import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.check
 
 @Composable
 fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
     val viewModel = koinViewModel<NewAssessmentViewModel>()
     val state = viewModel.state
+
+    var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
+    var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -50,7 +65,7 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
             )
             TextField(
                 value = state.description,
-                onValueChange = {},
+                onValueChange = { viewModel.onEvent(NewAssessmentEvent.UpdateDescription(it)) },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
@@ -75,18 +90,19 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
                 selectedDate = state.selectedDate,
                 group = state.currentProfile.groupItem!!,
                 isAssessment = true,
-                onClickDefaultLesson = {},
-                onClickDate = {}
+                onClickDefaultLesson = { showLessonSelectDrawer = true },
+                onClickDate = { showDateSelectDrawer = true }
             )
 
             if (state.isVisible != null) VisibilityTile(
                 isPublic = state.isVisible,
                 selectedDefaultLesson = state.selectedDefaultLesson,
                 group = state.currentProfile.groupItem!!,
-                onSetVisibility = {}
+                onSetVisibility = { isPublic -> viewModel.onEvent(NewAssessmentEvent.SetVisibility(isPublic)) }
             ) else VppIdBanner(
                 canShow = state.canShowVppIdBanner,
-                onHide = {}
+                isAssessment = true,
+                onHide = { viewModel.onEvent(NewAssessmentEvent.HideVppIdBanner) }
             )
 
             Spacer(Modifier.height(16.dp))
@@ -98,5 +114,30 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
 
             Spacer(Modifier.height(16.dp))
         }
+
+        Button(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            text = "Speichern",
+            icon = Res.drawable.check,
+            state = ButtonState.Enabled,
+            size = ButtonSize.Normal,
+            onClick = { viewModel.onEvent(NewAssessmentEvent.Save) }
+        )
     }
+
+    if (showLessonSelectDrawer) LessonSelectDrawer(
+        group = (state.currentProfile as Profile.StudentProfile).groupItem!!,
+        allowGroup = false,
+        defaultLessons = state.currentProfile.defaultLessonItems.filter { defaultLesson -> state.currentProfile.defaultLessons.filterValues { !it }.none { it.key == defaultLesson.id } }
+            .sortedBy { it.subject },
+        selectedDefaultLesson = state.selectedDefaultLesson,
+        onSelectDefaultLesson = { if (it == null) return@LessonSelectDrawer; viewModel.onEvent(NewAssessmentEvent.SelectDefaultLesson(it)) },
+        onDismiss = { showLessonSelectDrawer = false }
+    )
+
+    if (showDateSelectDrawer) DateSelectDrawer(
+        selectedDate = state.selectedDate,
+        onSelectDate = { viewModel.onEvent(NewAssessmentEvent.SelectDate(it)) },
+        onDismiss = { showDateSelectDrawer = false }
+    )
 }

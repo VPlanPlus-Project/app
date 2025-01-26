@@ -42,9 +42,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.feature.homework.ui.components.DateSelectDrawer
+import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.File
-import plus.vplan.app.feature.homework.ui.components.LessonSelectDrawer
+import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
@@ -286,6 +286,7 @@ fun DetailPage(
     if (showLessonSelectDrawer) {
         LessonSelectDrawer(
             group = profile.groupItem!!,
+            allowGroup = true,
             defaultLessons = profile.defaultLessonItems.filter { defaultLesson -> profile.defaultLessons.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
             selectedDefaultLesson = homework.defaultLessonItem,
             onSelectDefaultLesson = { onEvent(DetailEvent.UpdateDefaultLesson(it)) },

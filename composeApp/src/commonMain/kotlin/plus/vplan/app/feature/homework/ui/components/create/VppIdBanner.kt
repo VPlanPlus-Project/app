@@ -19,6 +19,7 @@ import vplanplus.composeapp.generated.resources.info
 @Composable
 fun VppIdBanner(
     canShow: Boolean,
+    isAssessment: Boolean,
     onHide: () -> Unit
 ) {
     AnimatedVisibility(
@@ -32,7 +33,10 @@ fun VppIdBanner(
                 .padding(horizontal = 16.dp),
             imageVector = Res.drawable.info,
             title = "Cloud-Speicherung",
-            text = "Teile Hausaufgaben mit deiner Klasse, wenn du dich mit einer vpp.ID anmeldest.",
+            text = run {
+                if (isAssessment) "Teile Leistungserhebungen mit deiner Klasse, wenn du dich mit einer vpp.ID anmeldest."
+                else "Teile Hausaufgaben mit deiner Klasse, wenn du dich mit einer vpp.ID anmeldest."
+            },
             buttonText2 = "Ignorieren",
             buttonAction2 = onHide,
             buttonText1 = "Anmelden",

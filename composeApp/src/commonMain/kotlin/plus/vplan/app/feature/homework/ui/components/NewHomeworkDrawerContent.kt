@@ -61,7 +61,9 @@ import io.github.vinceglb.filekit.core.extension
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
+import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.create.SubjectAndDateTile
 import plus.vplan.app.feature.homework.ui.components.create.VisibilityTile
 import plus.vplan.app.feature.homework.ui.components.create.VppIdBanner
@@ -79,7 +81,9 @@ import vplanplus.composeapp.generated.resources.file_text
 import vplanplus.composeapp.generated.resources.pencil
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.x
+import kotlin.uuid.ExperimentalUuidApi
 
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
     val viewModel = koinViewModel<NewHomeworkViewModel>()
@@ -208,6 +212,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
             )
             else VppIdBanner(
                 canShow = state.canShowVppIdBanner,
+                isAssessment = false,
                 onHide = { viewModel.onEvent(NewHomeworkEvent.HideVppIdBanner) }
             )
 
@@ -411,6 +416,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
     if (showLessonSelectDrawer) {
         LessonSelectDrawer(
             group = (state.currentProfile as Profile.StudentProfile).groupItem!!,
+            allowGroup = true,
             defaultLessons = state.currentProfile.defaultLessonItems.filter { defaultLesson -> state.currentProfile.defaultLessons.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
             selectedDefaultLesson = state.selectedDefaultLesson,
             onSelectDefaultLesson = { viewModel.onEvent(NewHomeworkEvent.SelectDefaultLesson(it)) },
