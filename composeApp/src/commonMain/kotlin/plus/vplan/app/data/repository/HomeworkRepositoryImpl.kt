@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.data.repository
 
 import co.touchlab.kermit.Logger
@@ -48,9 +50,10 @@ import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.CreateHomeworkResponse
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.feature.homework.ui.components.File
+import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.utils.sendAll
 import plus.vplan.app.utils.sha256
+import kotlin.uuid.ExperimentalUuidApi
 
 private val logger = Logger.withTag("HomeworkRepositoryImpl")
 
@@ -499,7 +502,7 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override suspend fun uploadHomeworkDocument(vppId: VppId.Active, homeworkId: Int, document: File): Response<Int> {
+    override suspend fun uploadHomeworkDocument(vppId: VppId.Active, homeworkId: Int, document: AttachedFile): Response<Int> {
         safeRequest(onError = {return it}) {
             val response = httpClient.post("${api.url}/api/v2.2/homework/$homeworkId/documents") {
                 header("File-Name", document.name)
