@@ -17,6 +17,7 @@ data class EmbeddedCourse(
     fun toModel(): Course {
         return Course(
             id = course.id,
+            indiwareId = course.indiwareId,
             name = course.name,
             teacher = course.teacherId,
             groups = groups.map { it.groupId }

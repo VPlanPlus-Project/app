@@ -33,7 +33,7 @@ class TeacherRepositoryImpl(
         if (flow.first().isNotEmpty()) return Response.Success(flow)
         return saveRequest {
             val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/teacher") {
-                school.getSchoolApiAccess().authentication(this)
+                school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<List<SchoolItemTeachersResponse>>(response.bodyAsText())
@@ -61,7 +61,7 @@ class TeacherRepositoryImpl(
         if (cached.first() != null) return Response.Success(cached)
         return saveRequest {
             val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/teacher/$id") {
-                school.getSchoolApiAccess().authentication(this)
+                school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<SchoolItemTeachersResponse>(response.bodyAsText())

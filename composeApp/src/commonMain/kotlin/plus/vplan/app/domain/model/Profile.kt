@@ -30,7 +30,7 @@ abstract class Profile : Item {
         override val id: Uuid,
         override val name: String,
         val group: Int,
-        val defaultLessons: Map<String, Boolean>,
+        val defaultLessons: Map<Int, Boolean>,
         val vppId: Int?
     ) : Profile() {
         override val profileType = ProfileType.STUDENT
@@ -41,10 +41,10 @@ abstract class Profile : Item {
         var vppIdItem: VppId.Active? = null
             private set
 
-        private val defaultLessonCache = hashMapOf<String, DefaultLesson>()
+        private val defaultLessonCache = hashMapOf<Int, DefaultLesson>()
         val defaultLessonItems: List<DefaultLesson>
             get() = this.defaultLessonCache.values.toList()
-        suspend fun getDefaultLesson(id: String): DefaultLesson {
+        suspend fun getDefaultLesson(id: Int): DefaultLesson {
             return defaultLessonCache.getOrPut(id) { App.defaultLessonSource.getById(id).filterIsInstance<CacheState.Done<DefaultLesson>>().first().data }
         }
 

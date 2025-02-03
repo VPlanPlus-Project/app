@@ -9,7 +9,7 @@ data class Assessment(
     val createdAt: LocalDateTime,
     val date: LocalDate,
     val isPublic: Boolean,
-    val defaultLessonId: String,
+    val defaultLessonId: Int,
     val description: String,
     val type: Type,
 ) {

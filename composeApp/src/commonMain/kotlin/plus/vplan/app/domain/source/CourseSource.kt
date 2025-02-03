@@ -9,8 +9,8 @@ import plus.vplan.app.domain.repository.CourseRepository
 class CourseSource(
     private val courseRepository: CourseRepository
 ) {
-    private val cache = hashMapOf<String, Flow<CacheState<Course>>>()
-    fun getById(id: String): Flow<CacheState<Course>> {
+    private val cache = hashMapOf<Int, Flow<CacheState<Course>>>()
+    fun getById(id: Int): Flow<CacheState<Course>> {
         return cache.getOrPut(id) { courseRepository.getById(id).distinctUntilChanged() }
     }
 }

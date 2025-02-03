@@ -18,7 +18,7 @@ sealed class Homework : Item {
     abstract val createdAt: Instant
     abstract val dueTo: Instant
     abstract val tasks: List<Int>
-    abstract val defaultLesson: String?
+    abstract val defaultLesson: Int?
     abstract val group: Int?
     abstract val files: List<Int>
     override fun getEntityId(): String = this.id.toString()
@@ -98,13 +98,13 @@ sealed class Homework : Item {
         override val createdAt: Instant,
         override val dueTo: Instant,
         override val tasks: List<Int>,
-        override val defaultLesson: String?,
+        override val defaultLesson: Int?,
         override val group: Int?,
         override val files: List<Int>,
         val isPublic: Boolean,
         val createdBy: Int,
     ) : Homework() {
-        override fun copyBase(createdAt: Instant, dueTo: Instant, tasks: List<Int>, defaultLesson: String?, group: Int?): Homework {
+        override fun copyBase(createdAt: Instant, dueTo: Instant, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
@@ -129,7 +129,7 @@ sealed class Homework : Item {
         override val createdAt: Instant,
         override val dueTo: Instant,
         override val tasks: List<Int>,
-        override val defaultLesson: String?,
+        override val defaultLesson: Int?,
         override val files: List<Int>,
         val createdByProfile: Uuid
     ) : Homework() {
@@ -147,7 +147,7 @@ sealed class Homework : Item {
             }
         }
 
-        override fun copyBase(createdAt: Instant, dueTo: Instant, tasks: List<Int>, defaultLesson: String?, group: Int?): Homework {
+        override fun copyBase(createdAt: Instant, dueTo: Instant, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
@@ -161,7 +161,7 @@ sealed class Homework : Item {
         createdAt: Instant = this.createdAt,
         dueTo: Instant = this.dueTo,
         tasks: List<Int> = this.tasks,
-        defaultLesson: String? = this.defaultLesson,
+        defaultLesson: Int? = this.defaultLesson,
         group: Int? = this.group
     ): Homework
 }

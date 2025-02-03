@@ -25,7 +25,11 @@ interface CourseDao {
 
     @Transaction
     @Query("SELECT * FROM courses WHERE id = :id")
-    fun getById(id: String): Flow<EmbeddedCourse?>
+    fun getById(id: Int): Flow<EmbeddedCourse?>
+
+    @Transaction
+    @Query("SELECT * FROM courses WHERE indiware_id = :indiwareId")
+    fun getByIndiwareId(indiwareId: String): Flow<EmbeddedCourse?>
 
     @Upsert
     suspend fun upsert(course: DbCourse)
@@ -40,10 +44,10 @@ interface CourseDao {
     }
 
     @Query("DELETE FROM courses WHERE id = :id")
-    suspend fun deleteById(id: String)
+    suspend fun deleteById(id: Int)
 
     @Transaction
-    suspend fun deleteById(ids: List<String>) {
+    suspend fun deleteById(ids: List<Int>) {
         ids.forEach { deleteById(it) }
     }
 }

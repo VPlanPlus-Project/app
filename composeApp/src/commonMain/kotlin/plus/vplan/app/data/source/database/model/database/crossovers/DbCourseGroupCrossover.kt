@@ -32,6 +32,6 @@ import plus.vplan.app.data.source.database.model.database.DbGroup
     ]
 )
 data class DbCourseGroupCrossover(
-    @ColumnInfo(name = "course_id") val courseId: String,
+    @ColumnInfo(name = "course_id") val courseId: Int,
     @ColumnInfo(name = "group_id") val groupId: Int
 )

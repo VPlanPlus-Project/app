@@ -37,7 +37,7 @@ class GroupRepositoryImpl(
 
         return saveRequest {
             val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/group") {
-                school.getSchoolApiAccess().authentication(this)
+                school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data =
@@ -69,7 +69,7 @@ class GroupRepositoryImpl(
         if (cached.first() != null) return Response.Success(cached)
         return saveRequest {
             val response = httpClient.get("${api.url}/api/v2.2/group/$id") {
-                school.getSchoolApiAccess().authentication(this)
+                school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<SchoolItemGroupsResponse>(response.bodyAsText())

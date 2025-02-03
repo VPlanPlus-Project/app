@@ -256,7 +256,7 @@ class HomeworkRepositoryImpl(
             ).build()) {
                 profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
                 contentType(ContentType.Application.Json)
-                setBody(HomeworkUpdateDefaultLessonRequest(defaultLesson = defaultLesson?.id, groupId = group?.id))
+                setBody(HomeworkUpdateDefaultLessonRequest(subjectInstanceId = defaultLesson?.id, groupId = group?.id))
             }
             if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateDefaultLessonAndGroup(homework.id, oldDefaultLesson?.id, oldGroup?.id)
         }
@@ -394,7 +394,7 @@ class HomeworkRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<String>): Response<List<Int>> {
+    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<Int>): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get(URLBuilder(
                 protocol = api.protocol,
@@ -520,7 +520,7 @@ class HomeworkRepositoryImpl(
 
 @Serializable
 data class HomeworkPostRequest(
-    @SerialName("default_lesson") val defaultLesson: String? = null,
+    @SerialName("subject_instance") val defaultLesson: Int? = null,
     @SerialName("group_id") val groupId: Int? = null,
     @SerialName("due_to") val dueTo: Long,
     @SerialName("is_public") val isPublic: Boolean,
@@ -535,7 +535,7 @@ private data class HomeworkResponseItem(
     @SerialName("due_to") val dueTo: Long,
     @SerialName("is_public") val isPublic: Boolean,
     @SerialName("group_id") val group: Int?,
-    @SerialName("default_lesson") val defaultLesson: String?,
+    @SerialName("default_lesson") val defaultLesson: Int?,
     @SerialName("tasks") val tasks: List<HomeworkTaskResponseItem>,
     @SerialName("files") val files: List<Int>,
 )
@@ -573,7 +573,7 @@ data class HomeworkGetResponse(
     @SerialName("due_to") val dueTo: Long,
     @SerialName("is_public") val isPublic: Boolean,
     @SerialName("group") val group: Int,
-    @SerialName("default_lesson") val defaultLesson: String?,
+    @SerialName("subject_instance") val defaultLesson: Int?,
     @SerialName("tasks") val tasks: List<HomeworkGetResponseTask>,
     @SerialName("files") val files: List<Int>,
 )
@@ -592,7 +592,7 @@ data class HomeworkTaskUpdateDoneStateRequest(
 
 @Serializable
 data class HomeworkUpdateDefaultLessonRequest(
-    @SerialName("default_lesson_id") val defaultLesson: String?,
+    @SerialName("subject_instance_id") val subjectInstanceId: Int?,
     @SerialName("group_id") val groupId: Int?,
 )
 

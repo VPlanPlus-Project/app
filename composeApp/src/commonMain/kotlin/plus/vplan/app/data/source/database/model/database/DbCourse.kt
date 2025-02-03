@@ -23,7 +23,8 @@ import androidx.room.Index
     ]
 )
 data class DbCourse(
-    @ColumnInfo(name = "id") val id: String,
+    @ColumnInfo(name = "id") val id: Int,
+    @ColumnInfo(name = "indiware_id") val indiwareId: String?,
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "teacher_id") val teacherId: Int?
 )

@@ -9,9 +9,11 @@ import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.CreateAssessmentUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
 import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
 import plus.vplan.app.ui.common.AttachedFile
@@ -19,7 +21,8 @@ import plus.vplan.app.ui.common.AttachedFile
 class NewAssessmentViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val isVppIdBannerAllowedUseCase: IsVppIdBannerAllowedUseCase,
-    private val hideVppIdBannerUseCase: HideVppIdBannerUseCase
+    private val hideVppIdBannerUseCase: HideVppIdBannerUseCase,
+    private val createAssessmentUseCase: CreateAssessmentUseCase
 ) : ViewModel() {
     var state by mutableStateOf(NewAssessmentState())
         private set
@@ -27,14 +30,17 @@ class NewAssessmentViewModel(
     init {
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
-                state = state.copy(currentProfile = (profile as? Profile.StudentProfile).also {
-                    it?.getGroupItem()
-                    it?.getDefaultLessons()?.onEach { defaultLesson ->
-                        defaultLesson.getTeacherItem()
-                        defaultLesson.getCourseItem()
-                        defaultLesson.getGroupItems()
-                    }
-                })
+                state = state.copy(
+                    currentProfile = (profile as? Profile.StudentProfile).also {
+                        it?.getGroupItem()
+                        it?.getDefaultLessons()?.onEach { defaultLesson ->
+                            defaultLesson.getTeacherItem()
+                            defaultLesson.getCourseItem()
+                            defaultLesson.getGroupItems()
+                        }
+                    },
+                    isVisible = if ((profile as? Profile.StudentProfile)?.getVppIdItem() != null) true else null
+                )
             }
         }
         viewModelScope.launch vppIdBanner@{
@@ -62,7 +68,14 @@ class NewAssessmentViewModel(
                 is NewAssessmentEvent.RemoveFile -> {
                     state = state.copy(files = state.files.filter { it.platformFile.path.hashCode() != event.file.platformFile.path.hashCode() })
                 }
-                NewAssessmentEvent.Save -> Unit
+                NewAssessmentEvent.Save -> createAssessmentUseCase(
+                    text = state.description,
+                    isPublic = state.isVisible,
+                    date = state.selectedDate!!,
+                    defaultLesson = state.selectedDefaultLesson!!,
+                    type = Assessment.Type.OTHER, // TODO
+                    selectedFiles = state.files
+                )
             }
         }
     }

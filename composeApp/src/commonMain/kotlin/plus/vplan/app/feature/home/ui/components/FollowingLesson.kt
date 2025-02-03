@@ -82,7 +82,7 @@ fun FollowingLesson(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val defaultLessonState = lesson.defaultLesson?.let {
-                        App.defaultLessonSource.getById(it).collectAsLoadingState(it)
+                        App.defaultLessonSource.getById(it).collectAsLoadingState(it.toString())
                     }
                     Text(
                         text = buildString {

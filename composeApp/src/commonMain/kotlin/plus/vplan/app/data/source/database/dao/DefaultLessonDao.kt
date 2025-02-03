@@ -24,7 +24,7 @@ interface DefaultLessonDao {
 
     @Transaction
     @Query("SELECT * FROM default_lessons WHERE id = :id")
-    fun getById(id: String): Flow<EmbeddedDefaultLesson?>
+    fun getById(id: Int): Flow<EmbeddedDefaultLesson?>
 
     @Upsert
     suspend fun upsert(entity: DbDefaultLesson)
@@ -39,10 +39,13 @@ interface DefaultLessonDao {
     }
 
     @Query("DELETE FROM default_lessons WHERE id = :id")
-    suspend fun deleteById(id: String)
+    suspend fun deleteById(id: Int)
+
+    @Query("SELECT * FROM default_lessons WHERE indiware_id = :indiwareId")
+    fun getByIndiwareId(indiwareId: String): Flow<EmbeddedDefaultLesson?>
 
     @Transaction
-    suspend fun deleteById(ids: List<String>) {
+    suspend fun deleteById(ids: List<Int>) {
         ids.forEach { deleteById(it) }
     }
 }

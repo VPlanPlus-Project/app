@@ -36,7 +36,7 @@ data class DbAssessment(
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "date") val date: LocalDate,
     @ColumnInfo(name = "is_public") val isPublic: Boolean,
-    @ColumnInfo(name = "default_lesson_id") val defaultLessonId: String,
+    @ColumnInfo(name = "default_lesson_id") val defaultLessonId: Int,
     @ColumnInfo(name = "description") val description: String,
     @ColumnInfo(name = "type") val type: Int,
 ) {

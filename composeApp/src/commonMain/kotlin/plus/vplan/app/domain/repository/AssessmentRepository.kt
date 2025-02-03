@@ -1,11 +1,26 @@
 package plus.vplan.app.domain.repository
 
+import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.SchoolApiAccess
+import plus.vplan.app.domain.model.VppId
 
 interface AssessmentRepository {
     suspend fun download(
         schoolApiAccess: SchoolApiAccess,
-        defaultLessonIds: List<String>
+        defaultLessonIds: List<Int>
     ): Response.Error?
+
+    suspend fun createAssessmentOnline(
+        vppId: VppId.Active,
+        date: LocalDate,
+        type: Assessment.Type,
+        defaultLessonId: Int,
+        isPublic: Boolean,
+        content: String
+    ): Response<Int>
+
+    suspend fun getIdForNewLocalAssessment(): Int
+    suspend fun upsert(assessments: List<Assessment>)
 }

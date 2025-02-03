@@ -123,7 +123,7 @@ private fun OnboardingSelectProfileScreen(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         courses.forEach { courseId ->
-                                            val course by App.courseSource.getById(courseId).collectAsLoadingState(courseId)
+                                            val course by App.courseSource.getById(courseId).collectAsLoadingState(courseId.toString())
                                             val isCourseFullySelected = state.defaultLessons.filterKeys { it.course == courseId }.values.all { it }
                                             val isCoursePartiallySelected = state.defaultLessons.filterKeys { it.course == courseId }.values.any { it }
                                             Row (
@@ -217,7 +217,7 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                     if (defaultLesson.course == null) return@subjectAndCourse
-                                                    val defaultLessonState by App.courseSource.getById(defaultLesson.course).collectAsLoadingState(defaultLesson.course)
+                                                    val defaultLessonState by App.courseSource.getById(defaultLesson.course).collectAsLoadingState(defaultLesson.course.toString())
                                                     if (defaultLessonState is CacheState.Done) Text(
                                                         text = (defaultLessonState as CacheState.Done).data.name,
                                                         style = MaterialTheme.typography.bodySmall,

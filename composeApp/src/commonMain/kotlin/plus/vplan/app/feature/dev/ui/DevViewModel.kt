@@ -55,9 +55,10 @@ class DevViewModel(
             when (event) {
                 DevEvent.Refresh -> {
                     Logger.d { "Assessment update started" }
-                    assessmentRepository.download(schoolApiAccess = (state.profile as Profile.StudentProfile).let {
-                        it.getVppIdItem()?.buildSchoolApiAccess() ?: it.getSchoolItem().getSchoolApiAccess()
-                    },
+                    assessmentRepository.download(
+                        schoolApiAccess = (state.profile as Profile.StudentProfile).let {
+                            it.getVppIdItem()?.buildSchoolApiAccess() ?: it.getSchoolItem().getSchoolApiAccess()
+                        } ?: return@launch,
                         defaultLessonIds = (state.profile as Profile.StudentProfile).getDefaultLessons().map { it.id })
                     Logger.d { "Assessment updated" }
                 }
