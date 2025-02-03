@@ -9,14 +9,14 @@ import plus.vplan.app.domain.repository.DefaultLessonRepository
 class DefaultLessonSource(
     private val defaultLessonRepository: DefaultLessonRepository
 ) {
-    private val cache = hashMapOf<String, Flow<CacheState<DefaultLesson>>>()
-    private val cacheItems = hashMapOf<String, CacheState<DefaultLesson>>()
+    private val cache = hashMapOf<Int, Flow<CacheState<DefaultLesson>>>()
+    private val cacheItems = hashMapOf<Int, CacheState<DefaultLesson>>()
 
-    fun getById(id: String): Flow<CacheState<DefaultLesson>> {
+    fun getById(id: Int): Flow<CacheState<DefaultLesson>> {
         return cache.getOrPut(id) { defaultLessonRepository.getById(id) }
     }
 
-    suspend fun getSingleById(id: String): DefaultLesson? {
+    suspend fun getSingleById(id: Int): DefaultLesson? {
         return (cacheItems[id] as? CacheState.Done<DefaultLesson>)?.data ?: getById(id).getFirstValue()
     }
 }

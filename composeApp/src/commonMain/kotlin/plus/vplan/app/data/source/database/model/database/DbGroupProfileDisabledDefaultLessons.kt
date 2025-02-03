@@ -32,5 +32,5 @@ import kotlin.uuid.Uuid
 )
 data class DbGroupProfileDisabledDefaultLessons(
     @ColumnInfo(name = "profile_id") val profileId: Uuid,
-    @ColumnInfo(name = "default_lesson_id") val defaultLessonId: String,
+    @ColumnInfo(name = "default_lesson_id") val defaultLessonId: Int,
 )

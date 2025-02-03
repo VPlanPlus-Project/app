@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "70abd8a8769bdd0bb2ecaebade452490",
+    "identityHash": "5a874f0e537ed0dcfdb2028ce100aa42",
     "entities": [
       {
         "tableName": "schools",
@@ -495,7 +495,7 @@
       },
       {
         "tableName": "profiles_group_disabled_default_lessons",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `default_lesson_id` TEXT NOT NULL, PRIMARY KEY(`profile_id`, `default_lesson_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `default_lesson_id` INTEGER NOT NULL, PRIMARY KEY(`profile_id`, `default_lesson_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "profileId",
@@ -506,7 +506,7 @@
           {
             "fieldPath": "defaultLessonId",
             "columnName": "default_lesson_id",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -700,13 +700,18 @@
       },
       {
         "tableName": "default_lessons",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `subject` TEXT NOT NULL, `teacher_id` INTEGER, `course_id` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `indiware_id` TEXT, `subject` TEXT NOT NULL, `teacher_id` INTEGER, `course_id` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "indiwareId",
+            "columnName": "indiware_id",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "subject",
@@ -722,7 +727,7 @@
           {
             "fieldPath": "courseId",
             "columnName": "course_id",
-            "affinity": "TEXT"
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -754,12 +759,12 @@
       },
       {
         "tableName": "default_lesson_group_crossover",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`default_lesson_id` TEXT NOT NULL, `group_id` INTEGER NOT NULL, PRIMARY KEY(`default_lesson_id`, `group_id`), FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`default_lesson_id` INTEGER NOT NULL, `group_id` INTEGER NOT NULL, PRIMARY KEY(`default_lesson_id`, `group_id`), FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "defaultLessonId",
             "columnName": "default_lesson_id",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -823,13 +828,18 @@
       },
       {
         "tableName": "courses",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `teacher_id` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`teacher_id`) REFERENCES `school_teachers`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `indiware_id` TEXT, `name` TEXT NOT NULL, `teacher_id` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`teacher_id`) REFERENCES `school_teachers`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "indiwareId",
+            "columnName": "indiware_id",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "name",
@@ -885,12 +895,12 @@
       },
       {
         "tableName": "course_group_crossover",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`course_id` TEXT NOT NULL, `group_id` INTEGER NOT NULL, PRIMARY KEY(`course_id`, `group_id`), FOREIGN KEY(`course_id`) REFERENCES `courses`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`course_id` INTEGER NOT NULL, `group_id` INTEGER NOT NULL, PRIMARY KEY(`course_id`, `group_id`), FOREIGN KEY(`course_id`) REFERENCES `courses`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "courseId",
             "columnName": "course_id",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -1462,7 +1472,7 @@
       },
       {
         "tableName": "substitution_plan_lesson",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `day_id` TEXT NOT NULL, `lesson_time_id` TEXT NOT NULL, `subject` TEXT, `is_subject_changed` INTEGER NOT NULL, `info` TEXT, `default_lesson_id` TEXT, `version` TEXT NOT NULL, `is_room_changed` INTEGER NOT NULL, `is_teacher_changed` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`day_id`) REFERENCES `day`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`lesson_time_id`) REFERENCES `lesson_times`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `day_id` TEXT NOT NULL, `lesson_time_id` TEXT NOT NULL, `subject` TEXT, `is_subject_changed` INTEGER NOT NULL, `info` TEXT, `default_lesson_id` INTEGER, `version` TEXT NOT NULL, `is_room_changed` INTEGER NOT NULL, `is_teacher_changed` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`day_id`) REFERENCES `day`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`lesson_time_id`) REFERENCES `lesson_times`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1501,7 +1511,7 @@
           {
             "fieldPath": "defaultLessonId",
             "columnName": "default_lesson_id",
-            "affinity": "TEXT"
+            "affinity": "INTEGER"
           },
           {
             "fieldPath": "version",
@@ -2154,7 +2164,7 @@
       },
       {
         "tableName": "homework",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `default_lesson_id` TEXT, `group_id` INTEGER, `created_at` INTEGER NOT NULL, `due_to` INTEGER NOT NULL, `created_by_vpp_id` INTEGER, `created_by_profile_id` TEXT, `is_public` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`created_by_profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `default_lesson_id` INTEGER, `group_id` INTEGER, `created_at` INTEGER NOT NULL, `due_to` INTEGER NOT NULL, `created_by_vpp_id` INTEGER, `created_by_profile_id` TEXT, `is_public` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`created_by_profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -2165,7 +2175,7 @@
           {
             "fieldPath": "defaultLessonId",
             "columnName": "default_lesson_id",
-            "affinity": "TEXT"
+            "affinity": "INTEGER"
           },
           {
             "fieldPath": "groupId",
@@ -2630,7 +2640,7 @@
       },
       {
         "tableName": "assessments",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `created_by` INTEGER, `created_by_profile` TEXT, `created_at` INTEGER NOT NULL, `date` TEXT NOT NULL, `is_public` INTEGER NOT NULL, `default_lesson_id` TEXT NOT NULL, `description` TEXT NOT NULL, `type` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`created_by_profile`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `created_by` INTEGER, `created_by_profile` TEXT, `created_at` INTEGER NOT NULL, `date` TEXT NOT NULL, `is_public` INTEGER NOT NULL, `default_lesson_id` INTEGER NOT NULL, `description` TEXT NOT NULL, `type` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`created_by_profile`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -2669,7 +2679,7 @@
           {
             "fieldPath": "defaultLessonId",
             "columnName": "default_lesson_id",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -2719,7 +2729,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '70abd8a8769bdd0bb2ecaebade452490')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5a874f0e537ed0dcfdb2028ce100aa42')"
     ]
   }
 }

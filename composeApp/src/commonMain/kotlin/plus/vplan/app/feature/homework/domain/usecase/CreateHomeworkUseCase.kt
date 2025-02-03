@@ -56,7 +56,7 @@ class CreateHomeworkUseCase(
             taskIds = idMapping.taskIds
             homework = Homework.CloudHomework(
                 id = id,
-                defaultLesson = defaultLesson?.getEntityId(),
+                defaultLesson = defaultLesson?.id,
                 group = profile.group,
                 createdAt = Clock.System.now(),
                 createdBy = profile.vppId!!,

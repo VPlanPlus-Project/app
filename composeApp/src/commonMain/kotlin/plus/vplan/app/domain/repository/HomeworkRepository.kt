@@ -47,7 +47,7 @@ interface HomeworkRepository {
     suspend fun download(
         schoolApiAccess: SchoolApiAccess,
         groupId: Int,
-        defaultLessonIds: List<String>
+        defaultLessonIds: List<Int>
     ): Response<List<Int>>
 
     suspend fun clearCache()

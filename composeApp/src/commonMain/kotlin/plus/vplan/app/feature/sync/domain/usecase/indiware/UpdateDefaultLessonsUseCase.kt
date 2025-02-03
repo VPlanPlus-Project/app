@@ -2,15 +2,14 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.DefaultLesson
-import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -21,7 +20,6 @@ private val LOGGER = Logger.withTag("UpdateDefaultLessonsUseCase")
 class UpdateDefaultLessonsUseCase(
     private val indiwareRepository: IndiwareRepository,
     private val defaultLessonRepository: DefaultLessonRepository,
-    private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val courseRepository: CourseRepository
 ) {
@@ -30,25 +28,20 @@ class UpdateDefaultLessonsUseCase(
         if (baseData is Response.Error) return baseData
         if (baseData !is Response.Success) throw IllegalStateException("baseData is not successful: $baseData")
 
-        val groups = groupRepository.getBySchool(schoolId = school.id).first()
         val teachers = teacherRepository.getBySchool(schoolId = school.id).first()
-        val existingCourses = courseRepository.getBySchool(schoolId = school.id)
-        val existingDefaultLessons = defaultLessonRepository.getBySchool(schoolId = school.id)
+        val existingCourses = courseRepository.getBySchool(schoolId = school.id, false)
+        val existingDefaultLessons = defaultLessonRepository.getBySchool(schoolId = school.id, false)
 
         updateCourses(
             school = school,
             baseData = baseData.data,
             existingCourses = existingCourses.latest(),
-            groups = groups,
             teachers = teachers
         )
 
         updateDefaultLessons(
             baseData = baseData.data,
-            courses = existingCourses.latest(),
             existingDefaultLessons = existingDefaultLessons.latest(),
-            groups = groups,
-            teachers = teachers
         )
 
         return null
@@ -58,29 +51,12 @@ class UpdateDefaultLessonsUseCase(
         school: School.IndiwareSchool,
         baseData: IndiwareBaseData,
         existingCourses: List<Course>,
-        groups: List<Group>,
         teachers: List<Teacher>
     ) {
-        val downloadedCourses = baseData.classes.flatMap { baseDataClass ->
-            val group = groups.firstOrNull { it.name == baseDataClass.name } ?: throw NoSuchElementException("Group ${baseDataClass.name} not found")
-            baseDataClass.defaultLessons.mapNotNull { it.course }.map { course ->
-                Course.fromIndiware(
-                    sp24SchoolId = school.sp24Id,
-                    groups = listOf(group.id),
-                    name = course.name,
-                    teacher = if (course.teacher.isNullOrBlank()) null else teachers.firstOrNull { it.name == course.teacher }
-                )
-            }
-        }
-            .groupBy { it.id }
-            .map { (id, courses) ->
-                Course(
-                    id = id,
-                    groups = courses.flatMap { it.groups }.distinct(),
-                    name = courses.first().name,
-                    teacher = courses.first().teacher
-                )
-            }
+        val downloadedCourses = baseData.classes
+            .flatMap { baseDataClass -> baseDataClass.defaultLessons.mapNotNull { it.course }.map { Course.fromIndiware(school.sp24Id, it.name, teachers.firstOrNull { t -> t.name == it.teacher }) } }
+            .distinct()
+            .mapNotNull { courseRepository.getByIndiwareId(it).getFirstValue() }
 
         downloadedCourses.let {
             val existingCourseIds = existingCourses.map { it.id }
@@ -96,35 +72,13 @@ class UpdateDefaultLessonsUseCase(
 
     private suspend fun updateDefaultLessons(
         baseData: IndiwareBaseData,
-        courses: List<Course>,
         existingDefaultLessons: List<DefaultLesson>,
-        groups: List<Group>,
-        teachers: List<Teacher>
     ) {
         val downloadedDefaultLessons = baseData.classes
             .flatMap { baseDataClass ->
-                val group = groups.firstOrNull { it.name == baseDataClass.name } ?: throw NoSuchElementException("Group ${baseDataClass.name} not found")
-                baseDataClass.defaultLessons.map { defaultLesson ->
-                    DefaultLesson(
-                        id = defaultLesson.defaultLessonNumber,
-                        subject = defaultLesson.subject,
-                        groups = listOf(group.id),
-                        course = courses.firstOrNull { it.name == defaultLesson.course?.name }?.id,
-                        teacher = teachers.firstOrNull { it.name == defaultLesson.teacher }?.id
-                    )
-                }
-            }
-            .groupBy { it.id }
-            .map { (id, defaultLessons) ->
-                defaultLessonRepository.upsert(
-                    DefaultLesson(
-                        id = id,
-                        subject = defaultLessons.first().subject,
-                        groups = defaultLessons.flatMap { it.groups }.distinct(),
-                        course = defaultLessons.firstOrNull { it.course != null }?.course,
-                        teacher = defaultLessons.firstOrNull { it.teacher != null }?.teacher
-                    )
-                )
+                baseDataClass.defaultLessons.map { it.defaultLessonNumber }
+                    .distinct()
+                    .mapNotNull { defaultLessonRepository.getByIndiwareId(it).getFirstValue() }
             }
 
         downloadedDefaultLessons.let {

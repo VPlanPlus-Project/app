@@ -13,8 +13,9 @@ import androidx.room.Index
     ]
 )
 data class DbDefaultLesson(
-    @ColumnInfo(name = "id") val id: String,
+    @ColumnInfo(name = "id") val id: Int,
+    @ColumnInfo("indiware_id") val indiwareId: String?,
     @ColumnInfo(name = "subject") val subject: String,
     @ColumnInfo(name = "teacher_id") val teacherId: Int?,
-    @ColumnInfo(name = "course_id") val courseId: String?
+    @ColumnInfo(name = "course_id") val courseId: Int?
 )

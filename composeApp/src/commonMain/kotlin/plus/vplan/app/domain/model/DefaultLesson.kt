@@ -8,13 +8,14 @@ import plus.vplan.app.domain.cache.getFirstValue
  * @param id The id of the default lesson. If it originates from indiware, it will be prefixed with `sp24.` followed by the indiware group name and the default lesson number separated with a dot, e.g. `sp24.6c.146`
  */
 data class DefaultLesson(
-    val id: String,
+    val id: Int,
+    val indiwareId: String?,
     val subject: String,
-    val course: String?,
+    val course: Int?,
     val teacher: Int?,
     val groups: List<Int>
 ) : Item {
-    override fun getEntityId(): String = this.id
+    override fun getEntityId(): String = this.id.toString()
 
     var courseItem: Course? = null
         private set
@@ -41,5 +42,5 @@ data class DefaultLesson(
 }
 
 fun Collection<DefaultLesson>.findByIndiwareId(indiwareId: String): DefaultLesson? {
-    return firstOrNull { it.id.matches(Regex("^sp24\\..*\\.$indiwareId\$")) }
+    return firstOrNull { it.indiwareId.orEmpty().matches(Regex("^sp24\\..*\\.$indiwareId\$")) }
 }

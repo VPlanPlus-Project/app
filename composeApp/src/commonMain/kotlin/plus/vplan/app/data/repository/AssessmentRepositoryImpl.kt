@@ -24,7 +24,7 @@ class AssessmentRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase
 ) : AssessmentRepository {
-    override suspend fun download(schoolApiAccess: SchoolApiAccess, defaultLessonIds: List<String>): Response.Error? {
+    override suspend fun download(schoolApiAccess: SchoolApiAccess, defaultLessonIds: List<Int>): Response.Error? {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url {
@@ -67,7 +67,7 @@ class AssessmentRepositoryImpl(
 @Serializable
 private data class AssessmentGetResponse(
     @SerialName("id") val id: Int,
-    @SerialName("subject") val subject: String,
+    @SerialName("subject_instance_id") val subject: Int,
     @SerialName("description") val description: String = "",
     @SerialName("group") val group: Int,
     @SerialName("is_public") val isPublic: Boolean,

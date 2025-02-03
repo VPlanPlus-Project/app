@@ -13,7 +13,7 @@ sealed interface Lesson : Item {
     val teachers: List<Int>
     val rooms: List<Int>?
     val groups: List<Int>
-    val defaultLesson: String?
+    val defaultLesson: Int?
     val lessonTime: String
 
     override fun getEntityId(): String = this.id.toHexString()
@@ -96,7 +96,7 @@ sealed interface Lesson : Item {
         override val rooms: List<Int>,
         val isRoomChanged: Boolean,
         override val groups: List<Int>,
-        override val defaultLesson: String?,
+        override val defaultLesson: Int?,
         override val lessonTime: String,
         val info: String?
     ) : Lesson {

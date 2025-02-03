@@ -102,7 +102,7 @@ interface HomeworkDao {
     suspend fun upsertTaskDoneProfile(taskDoneProfile: DbHomeworkTaskDoneProfile)
 
     @Query("UPDATE homework SET default_lesson_id = :defaultLessonId, group_id = :groupId WHERE id = :homeworkId")
-    suspend fun updateDefaultLessonAndGroup(homeworkId: Int, defaultLessonId: String?, groupId: Int?)
+    suspend fun updateDefaultLessonAndGroup(homeworkId: Int, defaultLessonId: Int?, groupId: Int?)
 
     @Query("UPDATE homework SET due_to = :dueTo WHERE id = :homeworkId")
     suspend fun updateDueTo(homeworkId: Int, dueTo: Instant)
