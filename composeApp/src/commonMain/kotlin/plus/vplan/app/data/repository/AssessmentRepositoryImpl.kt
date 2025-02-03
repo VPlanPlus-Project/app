@@ -6,8 +6,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.api
@@ -48,7 +47,7 @@ class AssessmentRepositoryImpl(
                         id = assessment.id,
                         createdBy = assessment.createdBy,
                         createdByProfile = null,
-                        date = Instant.fromEpochSeconds(assessment.date).toLocalDateTime(TimeZone.UTC).date,
+                        date = LocalDate.parse(assessment.date),
                         isPublic = assessment.isPublic,
                         defaultLessonId = assessment.subject,
                         description = assessment.description,
@@ -68,10 +67,9 @@ class AssessmentRepositoryImpl(
 private data class AssessmentGetResponse(
     @SerialName("id") val id: Int,
     @SerialName("subject_instance_id") val subject: Int,
-    @SerialName("description") val description: String = "",
-    @SerialName("group") val group: Int,
+    @SerialName("content") val description: String = "",
     @SerialName("is_public") val isPublic: Boolean,
-    @SerialName("date") val date: Long,
+    @SerialName("date") val date: String,
     @SerialName("type") val type: String,
     @SerialName("created_at") val createdAt: Long,
     @SerialName("created_by") val createdBy: Int,
