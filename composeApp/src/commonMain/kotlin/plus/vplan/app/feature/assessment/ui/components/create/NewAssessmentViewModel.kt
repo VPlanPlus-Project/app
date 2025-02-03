@@ -30,14 +30,17 @@ class NewAssessmentViewModel(
     init {
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
-                state = state.copy(currentProfile = (profile as? Profile.StudentProfile).also {
-                    it?.getGroupItem()
-                    it?.getDefaultLessons()?.onEach { defaultLesson ->
-                        defaultLesson.getTeacherItem()
-                        defaultLesson.getCourseItem()
-                        defaultLesson.getGroupItems()
-                    }
-                })
+                state = state.copy(
+                    currentProfile = (profile as? Profile.StudentProfile).also {
+                        it?.getGroupItem()
+                        it?.getDefaultLessons()?.onEach { defaultLesson ->
+                            defaultLesson.getTeacherItem()
+                            defaultLesson.getCourseItem()
+                            defaultLesson.getGroupItems()
+                        }
+                    },
+                    isVisible = if ((profile as? Profile.StudentProfile)?.getVppIdItem() != null) true else null
+                )
             }
         }
         viewModelScope.launch vppIdBanner@{

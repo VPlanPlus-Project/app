@@ -98,7 +98,8 @@ class AssessmentRepositoryImpl(
                     subjectInstance = defaultLessonId,
                     date = date.toString(),
                     isPublic = isPublic,
-                    content = content
+                    content = content,
+                    type = type.name
                 ))
             }
 
@@ -153,5 +154,6 @@ private data class AssessmentPostRequest(
     @SerialName("subject_instance") val subjectInstance: Int,
     @SerialName("date") val date: String,
     @SerialName("is_public") val isPublic: Boolean,
-    @SerialName("content") val content: String
+    @SerialName("content") val content: String,
+    @SerialName("type") val type: String
 )
