@@ -14,7 +14,8 @@ import kotlinx.coroutines.launch
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -40,9 +41,9 @@ class DevViewModel(
         }
 
         viewModelScope.launch {
-            App.homeworkSource.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { it.data } }.collect {
-                state = state.copy(homework = it.onEachIndexed { index, homework ->
-                    homework.prefetch()
+            App.assessmentSource.getAll().map { it.filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }.collect {
+                state = state.copy(assessments = it.onEachIndexed { index, assessment ->
+                    assessment.prefetch()
                 })
             }
         }
@@ -69,7 +70,7 @@ class DevViewModel(
 
 data class DevState(
     val profile: Profile? = null,
-    val homework: List<Homework> = emptyList(),
+    val assessments: List<Assessment> = emptyList(),
     val updateResponse: Response.Error? = null
 )
 
@@ -78,14 +79,10 @@ sealed class DevEvent {
     data object Clear : DevEvent()
 }
 
-private suspend fun Homework.prefetch() {
-    this.getDefaultLessonItem()
-    this.getTaskItems()
-    if (this is Homework.CloudHomework) {
-        this.getCreatedBy()
-        this.getGroupItem()
-    }
-    if (this is Homework.LocalHomework) {
-        this.getCreatedByProfile().getGroupItem()
+private suspend fun Assessment.prefetch() {
+    this.getSubjectInstanceItem()
+    when (this.creator) {
+        is AppEntity.VppId -> this.getCreatedByVppIdItem()
+        is AppEntity.Profile -> this.getCreatedByProfileItem()!!.getGroupItem()
     }
 }

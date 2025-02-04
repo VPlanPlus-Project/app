@@ -23,6 +23,7 @@ interface AssessmentRepository {
         content: String
     ): Response<Int>
 
+    fun getAll(): Flow<List<Assessment>>
     fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Assessment>>
 
     suspend fun getIdForNewLocalAssessment(): Int

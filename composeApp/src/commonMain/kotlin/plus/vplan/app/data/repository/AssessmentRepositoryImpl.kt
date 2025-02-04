@@ -14,8 +14,12 @@ import io.ktor.http.isSuccess
 import io.ktor.http.parameters
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -122,6 +126,10 @@ class AssessmentRepositoryImpl(
         return Response.Error.Cancelled
     }
 
+    override fun getAll(): Flow<List<Assessment>> {
+        return vppDatabase.assessmentDao.getAll().map { it.map { item -> item.toModel() } }
+    }
+
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Assessment>> {
         if (id < 0) {
             return vppDatabase.assessmentDao.getById(id).map {
@@ -131,7 +139,14 @@ class AssessmentRepositoryImpl(
         }
 
         return channelFlow {
-            safeRequest(
+            var hadData = false
+            vppDatabase.assessmentDao.getById(id)
+                .takeWhile { it != null }
+                .filterNotNull()
+                .onEach { hadData = true; send(CacheState.Done(it.toModel())) }
+                .collect()
+
+            if (!hadData) safeRequest(
                 onError = { return@channelFlow send(CacheState.Error(id.toString(), it)) }
             ) {
                 val metadataResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id")

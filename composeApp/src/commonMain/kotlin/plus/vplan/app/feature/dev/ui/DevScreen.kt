@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 
@@ -32,7 +32,7 @@ fun DevScreen(
     val state = viewModel.state
 
     var isDrawerOpen by rememberSaveable { mutableStateOf(false) }
-    var clickedHomeworkId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var clickAssessmentId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Column(
         modifier = Modifier
@@ -59,21 +59,24 @@ fun DevScreen(
                 Text("Clear Cache")
             }
         }
-        state.homework.forEach { homework ->
+        state.assessments.forEach { assessment ->
             Column(
                 modifier = Modifier
                     .padding(vertical = 4.dp)
-                    .clickable { clickedHomeworkId = homework.id }
+                    .clickable { clickAssessmentId = assessment.id }
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("ID: ${homework.id}")
-                    Text(homework.defaultLessonItem?.subject ?: homework.groupItem?.name ?: "wtf")
-                    Text(homework.dueTo.toString())
-                    if (homework is Homework.CloudHomework) Text(homework.createdByItem?.name ?: "User ${homework.createdBy}")
+                    Text("ID: ${assessment.id}")
+                    Text(assessment.subjectInstanceItem!!.subject)
+                    Text(assessment.date.toString())
+                    when (assessment.creator) {
+                        is AppEntity.VppId -> Text(assessment.createdByVppId!!.name)
+                        is AppEntity.Profile -> Text(assessment.createdByProfile!!.groupItem!!.name)
+                    }
                 }
-                Text(homework.taskItems!!.joinToString("\n") { it.content })
+                Text(assessment.description)
             }
         }
     }
@@ -81,5 +84,5 @@ fun DevScreen(
         onDismissRequest = { isDrawerOpen = false; onToggleBottomBar(true) }
     )
 
-    if (clickedHomeworkId != null) HomeworkDetailDrawer(clickedHomeworkId!!) { clickedHomeworkId = null }
+    if (clickAssessmentId != null) HomeworkDetailDrawer(clickAssessmentId!!) { clickAssessmentId = null }
 }

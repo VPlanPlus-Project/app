@@ -22,4 +22,7 @@ interface AssessmentDao {
 
     @Query("SELECT * FROM assessments WHERE id = :id")
     fun getById(id: Int): Flow<DbAssessment?>
+
+    @Query("SELECT * FROM assessments")
+    fun getAll(): Flow<List<DbAssessment>>
 }
