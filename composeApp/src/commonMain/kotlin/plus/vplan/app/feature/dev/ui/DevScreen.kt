@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
-import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
+import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 
 @Composable
 fun DevScreen(
@@ -84,5 +84,5 @@ fun DevScreen(
         onDismissRequest = { isDrawerOpen = false; onToggleBottomBar(true) }
     )
 
-    if (clickAssessmentId != null) HomeworkDetailDrawer(clickAssessmentId!!) { clickAssessmentId = null }
+    if (clickAssessmentId != null) AssessmentDetailDrawer(clickAssessmentId!!) { clickAssessmentId = null }
 }

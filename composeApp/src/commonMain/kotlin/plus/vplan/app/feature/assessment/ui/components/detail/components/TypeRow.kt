@@ -1,26 +1,25 @@
-package plus.vplan.app.feature.homework.ui.components.detail.components
+package plus.vplan.app.feature.assessment.ui.components.detail.components
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
-import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.utils.regularDateFormat
+import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataRow
+import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataValueContainer
+import plus.vplan.app.feature.homework.ui.components.detail.components.tableNameStyle
+import plus.vplan.app.feature.homework.ui.components.detail.components.tableValueStyle
+import plus.vplan.app.utils.toName
 
 @Composable
-fun DueToRow(
+fun TypeRow(
     canEdit: Boolean,
-    isHomework: Boolean,
     onClick: () -> Unit,
-    dueTo: Instant
+    type: Assessment.Type
 ) {
-    val date = dueTo.toLocalDateTime(TimeZone.currentSystemDefault()).date
     MetadataRow(
         key = {
             Text(
-                text = if (isHomework) "Fällig" else "Datum",
+                text = "Kategorie",
                 style = tableNameStyle()
             )
         },
@@ -30,7 +29,7 @@ fun DueToRow(
                 onClick = onClick
             ) {
                 Text(
-                    text = date.format(regularDateFormat),
+                    text = type.toName(),
                     style = tableValueStyle(),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1

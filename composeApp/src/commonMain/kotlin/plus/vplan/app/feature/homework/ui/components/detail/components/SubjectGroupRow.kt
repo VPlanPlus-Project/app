@@ -18,14 +18,15 @@ import plus.vplan.app.ui.subjectIcon
 @Composable
 fun SubjectGroupRow(
     canEdit: Boolean,
+    allowGroup: Boolean,
     onClick: () -> Unit,
     defaultLesson: DefaultLesson?,
-    group: Group?
+    group: Group? = null
 ) {
     MetadataRow(
         key = {
             Text(
-                text = "Klasse/Fach",
+                text = if (allowGroup) "Klasse/Fach" else "Fach",
                 style = tableNameStyle()
             )
         },
@@ -52,7 +53,7 @@ fun SubjectGroupRow(
                         )
                     } else {
                         Text(
-                            text = group!!.name,
+                            text = if (allowGroup) group!!.name else "Kein Fach",
                             style = tableValueStyle(),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
