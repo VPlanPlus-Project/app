@@ -1,15 +1,23 @@
 package plus.vplan.app.feature.assessment.ui.components.create
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -20,13 +28,16 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
@@ -42,8 +53,10 @@ import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.FullscreenDrawerContext
+import plus.vplan.app.utils.toName
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
+import vplanplus.composeapp.generated.resources.shapes
 
 @Composable
 fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
@@ -52,6 +65,7 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
+    var showTypeSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var fileToRename by rememberSaveable { mutableStateOf<AttachedFile?>(null) }
 
     val filePickerLauncher = rememberFilePickerLauncher(
@@ -136,6 +150,39 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
             )
 
             Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Kategorie",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxSize()
+                    .defaultMinSize(minHeight = 48.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { showTypeSelectDrawer = true }
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.shapes),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                )
+                AnimatedContent(
+                    targetState = state.type
+                ) { displayType ->
+                    Text(
+                        text = displayType?.toName() ?: "Keine Kategorie",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
 
             FileButtons(
                 onClickAddFile = { filePickerLauncher.launch() },
@@ -187,5 +234,11 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
         selectedDate = state.selectedDate,
         onSelectDate = { viewModel.onEvent(NewAssessmentEvent.SelectDate(it)) },
         onDismiss = { showDateSelectDrawer = false }
+    )
+
+    if (showTypeSelectDrawer) TypeDrawer(
+        selectedType = state.type,
+        onSelectType = { viewModel.onEvent(NewAssessmentEvent.UpdateType(it)) },
+        onDismiss = { showTypeSelectDrawer = false }
     )
 }

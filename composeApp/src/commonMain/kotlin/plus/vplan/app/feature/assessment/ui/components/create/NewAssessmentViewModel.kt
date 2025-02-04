@@ -62,18 +62,15 @@ class NewAssessmentViewModel(
                     val file = AttachedFile.fromFile(event.file)
                     state = state.copy(files = state.files + file)
                 }
-                is NewAssessmentEvent.UpdateFile -> {
-                    state = state.copy(files = state.files.map { file -> if (file.platformFile.path.hashCode() == event.file.platformFile.path.hashCode()) event.file else file })
-                }
-                is NewAssessmentEvent.RemoveFile -> {
-                    state = state.copy(files = state.files.filter { it.platformFile.path.hashCode() != event.file.platformFile.path.hashCode() })
-                }
+                is NewAssessmentEvent.UpdateFile -> state = state.copy(files = state.files.map { file -> if (file.platformFile.path.hashCode() == event.file.platformFile.path.hashCode()) event.file else file })
+                is NewAssessmentEvent.RemoveFile -> state = state.copy(files = state.files.filter { it.platformFile.path.hashCode() != event.file.platformFile.path.hashCode() })
+                is NewAssessmentEvent.UpdateType -> state = state.copy(type = event.type)
                 NewAssessmentEvent.Save -> createAssessmentUseCase(
                     text = state.description,
                     isPublic = state.isVisible,
                     date = state.selectedDate!!,
                     defaultLesson = state.selectedDefaultLesson!!,
-                    type = Assessment.Type.OTHER, // TODO
+                    type = state.type!!,
                     selectedFiles = state.files
                 )
             }
@@ -88,6 +85,7 @@ data class NewAssessmentState(
     val selectedDate: LocalDate? = null,
     val description: String = "",
     val isVisible: Boolean? = null,
+    val type: Assessment.Type? = null,
     val files: List<AttachedFile> = emptyList(),
 )
 
@@ -97,6 +95,7 @@ sealed class NewAssessmentEvent {
     data class SelectDate(val date: LocalDate) : NewAssessmentEvent()
     data class SetVisibility(val isVisible: Boolean) : NewAssessmentEvent()
     data class UpdateDescription(val description: String) : NewAssessmentEvent()
+    data class UpdateType(val type: Assessment.Type) : NewAssessmentEvent()
     data object Save : NewAssessmentEvent()
 
     data class AddFile(val file: PlatformFile) : NewAssessmentEvent()
