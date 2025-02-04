@@ -152,10 +152,11 @@ class HomeworkRepositoryImpl(
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
 
                 val vppId = vppDatabase.vppIdDao.getById(metadataResponseData.createdBy).first()?.toModel() as? VppId.Active
-                val school = vppDatabase.schoolDao.findById(metadataResponseData.schoolId).first()?.toModel()
+                val schools = vppDatabase.schoolDao.getAll().first().filter { it.school.id in metadataResponseData.schoolIds }.map { it.toModel() }
+                val school = schools.first()
 
                 val homeworkResponse = httpClient.get("${api.url}/api/v2.2/homework/$id") {
-                    vppId?.let { bearerAuth(it.accessToken) } ?: school?.getSchoolApiAccess()?.authentication(this)
+                    vppId?.let { bearerAuth(it.accessToken) } ?: school.getSchoolApiAccess()?.authentication(this)
                 }
                 if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
                 val data = ResponseDataWrapper.fromJson<HomeworkResponseItem>(homeworkResponse.bodyAsText())
@@ -561,7 +562,7 @@ private data class HomeworkTaskResponseItem(
 
 @Serializable
 private data class HomeworkMetadataResponse(
-    @SerialName("school_id") val schoolId: Int,
+    @SerialName("school_ids") val schoolIds: List<Int>,
     @SerialName("created_by") val createdBy: Int
 )
 

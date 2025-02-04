@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
+import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 
 @Dao
@@ -18,4 +19,7 @@ interface AssessmentDao {
 
     @Query("SELECT MIN(id) FROM assessments WHERE id < 0")
     suspend fun getSmallestId(): Int?
+
+    @Query("SELECT * FROM assessments WHERE id = :id")
+    fun getById(id: Int): Flow<DbAssessment?>
 }

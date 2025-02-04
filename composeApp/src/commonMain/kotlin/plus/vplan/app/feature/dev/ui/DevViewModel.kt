@@ -20,13 +20,11 @@ import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import kotlin.uuid.Uuid
 
 class DevViewModel(
     private val homeworkRepository: HomeworkRepository,
     private val keyValueRepository: KeyValueRepository,
-    private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val assessmentRepository: AssessmentRepository
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
