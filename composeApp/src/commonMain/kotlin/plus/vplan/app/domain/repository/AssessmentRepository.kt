@@ -23,6 +23,12 @@ interface AssessmentRepository {
         content: String
     ): Response<Int>
 
+    suspend fun linkFileToAssessmentOnline(
+        vppId: VppId.Active,
+        assessmentId: Int,
+        fileId: Int
+    ): Response.Error?
+
     fun getAll(): Flow<List<Assessment>>
     fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Assessment>>
 

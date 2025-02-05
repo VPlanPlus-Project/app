@@ -65,6 +65,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 
@@ -121,7 +122,8 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGr
 
         FKSchoolGroup::class,
 
-        DbAssessment::class
+        DbAssessment::class,
+        FKAssessmentFile::class
     ],
     version = 1,
 )

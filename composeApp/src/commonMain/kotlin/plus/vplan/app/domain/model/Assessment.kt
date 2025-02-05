@@ -1,8 +1,11 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 
@@ -15,6 +18,7 @@ data class Assessment(
     val defaultLessonId: Int,
     val description: String,
     val type: Type,
+    val files: List<Int>
 ): Item {
     override fun getEntityId(): String = this.id.toString()
 
@@ -43,5 +47,16 @@ data class Assessment(
     suspend fun getCreatedByProfileItem(): Profile.StudentProfile? {
         if (this.creator !is AppEntity.Profile) return null
         return this.createdByProfile ?: (App.profileSource.getById(this.creator.id).getFirstValue() as? Profile.StudentProfile)?.also { createdByProfile = it }
+    }
+
+    fun getFilesFlow() = combine(files.map { App.fileSource.getById(it).filterIsInstance<CacheState.Done<File>>() }) { it.toList().map { it.data } }
+
+    data class AssessmentFile(
+        val id: Int,
+        val name: String,
+        val assessment: Int,
+        val size: Long
+    ): Item {
+        override fun getEntityId(): String = this.id.toString()
     }
 }

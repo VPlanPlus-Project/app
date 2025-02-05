@@ -5,10 +5,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Assessment
 import kotlin.uuid.Uuid
 
 @Entity(
@@ -38,18 +34,5 @@ data class DbAssessment(
     @ColumnInfo(name = "is_public") val isPublic: Boolean,
     @ColumnInfo(name = "default_lesson_id") val defaultLessonId: Int,
     @ColumnInfo(name = "description") val description: String,
-    @ColumnInfo(name = "type") val type: Int,
-) {
-    fun toModel(): Assessment {
-        return Assessment(
-            id = id,
-            creator = if (createdBy != null) AppEntity.VppId(createdBy) else AppEntity.Profile(createdByProfile!!),
-            createdAt = createdAt.toLocalDateTime(TimeZone.currentSystemDefault()),
-            date = date,
-            isPublic = isPublic,
-            defaultLessonId = defaultLessonId,
-            description = description,
-            type = Assessment.Type.entries[type]
-        )
-    }
-}
+    @ColumnInfo(name = "type") val type: Int
+)

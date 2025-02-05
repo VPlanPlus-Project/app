@@ -504,7 +504,7 @@ class HomeworkRepositoryImpl(
     }
 
     override suspend fun uploadHomeworkDocument(vppId: VppId.Active, homeworkId: Int, document: AttachedFile): Response<Int> {
-        safeRequest(onError = {return it}) {
+        safeRequest(onError = { return it }) {
             val response = httpClient.post("${api.url}/api/v2.2/homework/$homeworkId/documents") {
                 header("File-Name", document.name)
                 header(HttpHeaders.ContentType, ContentType.Application.OctetStream.toString())

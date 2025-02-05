@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -37,6 +38,7 @@ import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
+import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
@@ -49,6 +51,7 @@ import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskStat
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
+import plus.vplan.app.feature.homework.ui.components.detail.components.FileRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SavedLocalRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.ShareStatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
@@ -228,16 +231,16 @@ fun DetailPage(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-//                assessment.getFilesFlow().onEach { it.onEach { file -> if (file.isOfflineReady) file.getPreview() } }.collectAsState(emptyList()).value.forEach { file ->
-//                    FileRow(
-//                        file = file,
-//                        canEdit = state.canEdit,
-//                        downloadProgress = state.fileDownloadState[file.id],
-//                        onDownloadClick = { onEvent(DetailEvent.DownloadFile(file)) },
-//                        onRenameClick = { newName -> onEvent(DetailEvent.RenameFile(file, newName)) },
-//                        onDeleteClick = { onEvent(DetailEvent.DeleteFile(file)) }
-//                    )
-//                }
+                assessment.getFilesFlow().onEach { it.onEach { file -> if (file.isOfflineReady) file.getPreview() } }.collectAsState(emptyList()).value.forEach { file ->
+                    FileRow(
+                        file = file,
+                        canEdit = state.canEdit,
+                        downloadProgress = state.fileDownloadState[file.id],
+                        onDownloadClick = { onEvent(DetailEvent.DownloadFile(file)) },
+                        onRenameClick = { newName -> onEvent(DetailEvent.RenameFile(file, newName)) },
+                        onDeleteClick = { onEvent(DetailEvent.DeleteFile(file)) }
+                    )
+                }
             }
 
             Row(

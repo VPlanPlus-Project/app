@@ -29,6 +29,7 @@ import kotlinx.serialization.Serializable
 import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbAssessment
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
@@ -126,6 +127,28 @@ class AssessmentRepositoryImpl(
         return Response.Error.Cancelled
     }
 
+    override suspend fun linkFileToAssessmentOnline(
+        vppId: VppId.Active,
+        assessmentId: Int,
+        fileId: Int
+    ): Response.Error? {
+        safeRequest(onError = { return it }) {
+            val response = httpClient.post {
+                url {
+                    protocol = api.protocol
+                    host = api.host
+                    port = api.port
+                    pathSegments = listOf("api", "v2.2", "assessment", assessmentId.toString(), "file")
+                }
+                contentType(ContentType.Application.Json)
+                setBody(AssessmentFileLinkRequest(fileId))
+            }
+            if (response.status.isSuccess()) return null
+            return response.toErrorResponse<Any>()
+        }
+        return Response.Error.Cancelled
+    }
+
     override fun getAll(): Flow<List<Assessment>> {
         return vppDatabase.assessmentDao.getAll().map { it.map { item -> item.toModel() } }
     }
@@ -199,7 +222,13 @@ class AssessmentRepositoryImpl(
                 defaultLessonId = it.defaultLessonId,
                 description = it.description,
                 type = it.type.ordinal
-            ) }
+            ) },
+            files = assessments.flatMap { assessment ->
+                assessment.files.map { fileId -> FKAssessmentFile(
+                    fileId = fileId,
+                    assessmentId = assessment.id
+                ) }
+            }
         )
     }
 }
@@ -214,6 +243,7 @@ private data class AssessmentGetResponse(
     @SerialName("type") val type: String,
     @SerialName("created_at") val createdAt: Long,
     @SerialName("created_by") val createdBy: Int,
+    @SerialName("files") val files: List<Int>
 )
 
 @Serializable
@@ -229,4 +259,9 @@ private data class AssessmentPostRequest(
 private data class AssessmentMetadataResponse(
     @SerialName("school_ids") val schoolIds: List<Int>,
     @SerialName("created_by") val createdBy: Int
+)
+
+@Serializable
+data class AssessmentFileLinkRequest(
+    @SerialName("file_id") val fileId: Int,
 )

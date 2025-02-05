@@ -6,6 +6,8 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbAssessment
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
+import plus.vplan.app.data.source.database.model.embedded.EmbeddedAssessment
 
 @Dao
 interface AssessmentDao {
@@ -15,14 +17,14 @@ interface AssessmentDao {
 
     @Upsert
     @Transaction
-    suspend fun upsert(assessments: List<DbAssessment>)
+    suspend fun upsert(assessments: List<DbAssessment>, files: List<FKAssessmentFile>)
 
     @Query("SELECT MIN(id) FROM assessments WHERE id < 0")
     suspend fun getSmallestId(): Int?
 
     @Query("SELECT * FROM assessments WHERE id = :id")
-    fun getById(id: Int): Flow<DbAssessment?>
+    fun getById(id: Int): Flow<EmbeddedAssessment?>
 
     @Query("SELECT * FROM assessments")
-    fun getAll(): Flow<List<DbAssessment>>
+    fun getAll(): Flow<List<EmbeddedAssessment>>
 }

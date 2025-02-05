@@ -15,6 +15,7 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
@@ -84,6 +85,9 @@ sealed class DetailEvent {
     data class AddFile(val file: AttachedFile): DetailEvent()
     data class UpdateVisibility(val isPublic: Boolean): DetailEvent()
     data class UpdateDate(val date: LocalDate): DetailEvent()
+    data class DownloadFile(val file: File): DetailEvent()
+    data class RenameFile(val file: File, val newName: String): DetailEvent()
+    data class DeleteFile(val file: File): DetailEvent()
 
     data object Reload : DetailEvent()
     data object Delete : DetailEvent()

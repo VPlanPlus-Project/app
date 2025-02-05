@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "5a874f0e537ed0dcfdb2028ce100aa42",
+    "identityHash": "5ca75ec16cb22cbdbbecbdfb70c2bc44",
     "entities": [
       {
         "tableName": "schools",
@@ -2725,11 +2725,56 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "fk_assessment_file",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`assessment_id` INTEGER NOT NULL, `file_id` INTEGER NOT NULL, PRIMARY KEY(`assessment_id`, `file_id`))",
+        "fields": [
+          {
+            "fieldPath": "assessmentId",
+            "columnName": "assessment_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileId",
+            "columnName": "file_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "assessment_id",
+            "file_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_fk_assessment_file_assessment_id",
+            "unique": false,
+            "columnNames": [
+              "assessment_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_assessment_file_assessment_id` ON `${TABLE_NAME}` (`assessment_id`)"
+          },
+          {
+            "name": "index_fk_assessment_file_file_id",
+            "unique": false,
+            "columnNames": [
+              "file_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_assessment_file_file_id` ON `${TABLE_NAME}` (`file_id`)"
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5a874f0e537ed0dcfdb2028ce100aa42')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5ca75ec16cb22cbdbbecbdfb70c2bc44')"
     ]
   }
 }

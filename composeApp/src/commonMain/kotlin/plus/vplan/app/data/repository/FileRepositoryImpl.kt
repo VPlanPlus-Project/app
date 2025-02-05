@@ -5,14 +5,18 @@ import io.ktor.client.plugins.onDownload
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.patch
+import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsBytes
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -34,6 +38,7 @@ import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.FileRepository
+import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.utils.sendAll
 
 class FileRepositoryImpl(
@@ -123,6 +128,29 @@ class FileRepositoryImpl(
         return@channelFlow send(FileDownloadProgress.Done(data) {
             vppDatabase.fileDao.setOfflineReady(file.id, true)
         })
+    }
+
+    override suspend fun uploadFile(
+        vppId: VppId.Active,
+        assessmentId: Int,
+        document: AttachedFile
+    ): Response<Int> {
+        safeRequest(onError = { return it }) {
+            val response = httpClient.post("${api.url}/api/v2.2/file") {
+                vppId.buildSchoolApiAccess().authentication(this)
+                header("File-Name", document.name)
+                header(HttpHeaders.ContentType, ContentType.Application.OctetStream.toString())
+                header(HttpHeaders.ContentLength, document.size.toString())
+                setBody(ByteReadChannel(document.platformFile.readBytes()))
+            }
+            if (response.status != HttpStatusCode.OK) return response.toErrorResponse<Int>()
+            return ResponseDataWrapper.fromJson<Int>(response.bodyAsText())?.let { Response.Success(it) } ?: Response.Error.ParsingError(response.bodyAsText())
+        }
+        return Response.Error.Cancelled
+    }
+
+    override suspend fun getMinIdForLocalFile(): Int {
+        return (vppDatabase.fileDao.getLocalMinId() ?: -1).coerceAtMost(-1)
     }
 
     override suspend fun setOfflineReady(file: File, isOfflineReady: Boolean) {
