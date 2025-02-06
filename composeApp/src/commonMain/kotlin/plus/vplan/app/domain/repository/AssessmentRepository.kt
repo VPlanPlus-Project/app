@@ -37,4 +37,22 @@ interface AssessmentRepository {
 
     suspend fun getIdForNewLocalAssessment(): Int
     suspend fun upsert(assessments: List<Assessment>)
+
+    suspend fun changeType(
+        assessment: Assessment,
+        type: Assessment.Type,
+        profile: Profile.StudentProfile,
+    )
+
+    suspend fun changeDate(
+        assessment: Assessment,
+        date: LocalDate,
+        profile: Profile.StudentProfile
+    )
+
+    suspend fun changeVisibility(
+        assessment: Assessment,
+        isPublic: Boolean,
+        profile: Profile.StudentProfile
+    )
 }

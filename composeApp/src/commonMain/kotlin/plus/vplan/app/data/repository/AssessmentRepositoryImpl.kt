@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -285,6 +286,77 @@ class AssessmentRepositoryImpl(
             }
         )
     }
+
+    override suspend fun changeType(
+        assessment: Assessment,
+        type: Assessment.Type,
+        profile: Profile.StudentProfile
+    ) {
+        val oldType = assessment.type
+        vppDatabase.assessmentDao.updateType(assessment.id, type.ordinal)
+
+        if (assessment.id < 0 || profile.getVppIdItem() == null) return
+        safeRequest(onError = { vppDatabase.assessmentDao.updateType(assessment.id, oldType.ordinal) }) {
+            val response = httpClient.patch(URLBuilder(
+                protocol = api.protocol,
+                host = api.host,
+                port = api.port,
+                pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(AssessmentUpdateTypeRequest(type = type.name))
+            }
+            if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateType(assessment.id, oldType.ordinal)
+        }
+    }
+
+    override suspend fun changeDate(
+        assessment: Assessment,
+        date: LocalDate,
+        profile: Profile.StudentProfile
+    ) {
+        val oldDate = assessment.date
+        vppDatabase.assessmentDao.updateDate(assessment.id, date)
+
+        if (assessment.id < 0 || profile.getVppIdItem() == null) return
+        safeRequest(onError = { vppDatabase.assessmentDao.updateDate(assessment.id, oldDate) }) {
+            val response = httpClient.patch(URLBuilder(
+                protocol = api.protocol,
+                host = api.host,
+                port = api.port,
+                pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(AssessmentUpdateDateRequest(date = date.toString()))
+            }
+            if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateDate(assessment.id, oldDate)
+        }
+    }
+
+    override suspend fun changeVisibility(
+        assessment: Assessment,
+        isPublic: Boolean,
+        profile: Profile.StudentProfile
+    ) {
+        if (assessment.id < 0 || profile.getVppIdItem() == null) return
+        val oldIsPublic = assessment.isPublic
+        vppDatabase.assessmentDao.updateVisibility(assessment.id, isPublic)
+        safeRequest(onError = { vppDatabase.assessmentDao.updateVisibility(assessment.id, oldIsPublic) }) {
+            val response = httpClient.patch(URLBuilder(
+                protocol = api.protocol,
+                host = api.host,
+                port = api.port,
+                pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(AssessmentUpdateVisibilityRequest(isPublic = isPublic))
+            }
+            if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateVisibility(assessment.id, oldIsPublic)
+        }
+    }
 }
 
 @Serializable
@@ -318,4 +390,19 @@ private data class AssessmentMetadataResponse(
 @Serializable
 data class AssessmentFileLinkRequest(
     @SerialName("file_id") val fileId: Int,
+)
+
+@Serializable
+data class AssessmentUpdateTypeRequest(
+    @SerialName("type") val type: String
+)
+
+@Serializable
+data class AssessmentUpdateDateRequest(
+    @SerialName("date") val date: String
+)
+
+@Serializable
+data class AssessmentUpdateVisibilityRequest(
+    @SerialName("is_public") val isPublic: Boolean
 )

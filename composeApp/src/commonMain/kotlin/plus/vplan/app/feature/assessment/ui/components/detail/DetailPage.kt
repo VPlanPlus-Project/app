@@ -294,7 +294,7 @@ fun DetailPage(
 
     if (showTypeSelectDrawer) TypeDrawer(
         selectedType = assessment.type,
-        onSelectType = {},
+        onSelectType = { onEvent(DetailEvent.UpdateType(it)) },
         onDismiss = { showTypeSelectDrawer = false }
     )
 

@@ -19,6 +19,9 @@ import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentDateUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentTypeUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentVisibilityUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.DeleteAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
@@ -28,7 +31,10 @@ import plus.vplan.app.ui.common.AttachedFile
 class DetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateAssessmentUseCase: UpdateAssessmentUseCase,
-    private val deleteAssessmentUseCase: DeleteAssessmentUseCase
+    private val deleteAssessmentUseCase: DeleteAssessmentUseCase,
+    private val changeAssessmentTypeUseCase: ChangeAssessmentTypeUseCase,
+    private val changeAssessmentDateUseCase: ChangeAssessmentDateUseCase,
+    private val changeAssessmentVisibilityUseCase: ChangeAssessmentVisibilityUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -86,6 +92,9 @@ class DetailViewModel(
                     val result = deleteAssessmentUseCase(state.assessment!!, state.profile!!)
                     state = state.copy(deleteState = if (result) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error)
                 }
+                is DetailEvent.UpdateType -> changeAssessmentTypeUseCase(state.assessment!!, event.type, state.profile!!)
+                is DetailEvent.UpdateDate -> changeAssessmentDateUseCase(state.assessment!!, event.date, state.profile!!)
+                is DetailEvent.UpdateVisibility -> changeAssessmentVisibilityUseCase(state.assessment!!, event.isPublic, state.profile!!)
                 else -> TODO()
             }
         }
@@ -120,6 +129,7 @@ private suspend fun Assessment.prefetch() {
 
 sealed class DetailEvent {
     data class AddFile(val file: AttachedFile): DetailEvent()
+    data class UpdateType(val type: Assessment.Type): DetailEvent()
     data class UpdateVisibility(val isPublic: Boolean): DetailEvent()
     data class UpdateDate(val date: LocalDate): DetailEvent()
     data class DownloadFile(val file: File): DetailEvent()

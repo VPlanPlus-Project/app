@@ -5,6 +5,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.LocalDate
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedAssessment
@@ -30,4 +31,13 @@ interface AssessmentDao {
 
     @Query("DELETE FROM assessments WHERE id IN (:ids)")
     suspend fun deleteById(ids: List<Int>)
+
+    @Query("UPDATE assessments SET type = :type WHERE id = :id")
+    suspend fun updateType(id: Int, type: Int)
+
+    @Query("UPDATE assessments SET date = :date WHERE id = :id")
+    suspend fun updateDate(id: Int, date: LocalDate)
+
+    @Query("UPDATE assessments SET is_public = :isPublic WHERE id = :id")
+    suspend fun updateVisibility(id: Int, isPublic: Boolean)
 }
