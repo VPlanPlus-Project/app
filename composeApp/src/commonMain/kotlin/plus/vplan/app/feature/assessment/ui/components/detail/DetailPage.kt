@@ -154,18 +154,28 @@ fun DetailPage(
                     }
                 }
                 FilledTonalIconButton(
-                    enabled = !state.isReloading,
+                    enabled = state.reloadingState != UnoptimisticTaskState.InProgress,
                     onClick = { onEvent(DetailEvent.Reload) }
                 ) {
                     AnimatedContent(
-                        targetState = state.isReloading,
-                    ) { isReloading ->
-                        if (isReloading) CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp).padding(2.dp),
-                            strokeWidth = 2.dp
-                        )
-                        else {
-                            Icon(
+                        targetState = state.reloadingState,
+                    ) { reloadingState ->
+                        when (reloadingState) {
+                            UnoptimisticTaskState.InProgress -> CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp).padding(2.dp),
+                                strokeWidth = 2.dp
+                            )
+                            UnoptimisticTaskState.Error -> Icon(
+                                painter = painterResource(Res.drawable.info),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp).padding(2.dp)
+                            )
+                            UnoptimisticTaskState.Success -> Icon(
+                                painter = painterResource(Res.drawable.check),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp).padding(2.dp)
+                            )
+                            null -> Icon(
                                 painter = painterResource(Res.drawable.rotate_cw),
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp).padding(2.dp)

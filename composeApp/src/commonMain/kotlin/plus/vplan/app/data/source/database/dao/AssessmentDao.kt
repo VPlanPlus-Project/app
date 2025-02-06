@@ -27,4 +27,7 @@ interface AssessmentDao {
 
     @Query("SELECT * FROM assessments")
     fun getAll(): Flow<List<EmbeddedAssessment>>
+
+    @Query("DELETE FROM assessments WHERE id IN (:ids)")
+    suspend fun deleteById(ids: List<Int>)
 }

@@ -3,15 +3,19 @@ package plus.vplan.app.data.repository
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
+import kotlinx.coroutines.channels.onClosed
+import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
@@ -37,6 +41,7 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository
@@ -162,36 +167,57 @@ class AssessmentRepositoryImpl(
         }
 
         return channelFlow {
+            var canSend = true
             if (!forceReload) {
                 var hadData = false
                 vppDatabase.assessmentDao.getById(id)
-                    .takeWhile { it != null }
+                    .takeWhile { it != null && canSend }
                     .filterNotNull()
-                    .onEach { hadData = true; send(CacheState.Done(it.toModel())) }
+                    .onEach { hadData = true; trySend(CacheState.Done(it.toModel())).onClosed { canSend = false } }
                     .collect()
-                if (hadData) return@channelFlow
+                if (hadData || !canSend) return@channelFlow
             }
             safeRequest(
-                onError = { return@channelFlow send(CacheState.Error(id.toString(), it)) }
+                onError = { trySend(CacheState.Error(id.toString(), it)); return@channelFlow }
             ) {
-                send(CacheState.Loading(id.toString()))
+                trySend(CacheState.Loading(id.toString())).onFailure { return@channelFlow }
                 val metadataResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id")
-                if (metadataResponse.status == HttpStatusCode.NotFound) return@channelFlow send(CacheState.NotExisting(id.toString()))
-                if (metadataResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
+                if (metadataResponse.status == HttpStatusCode.NotFound) {
+                    trySend(CacheState.NotExisting(id.toString()))
+                    vppDatabase.assessmentDao.deleteById(listOf(id))
+                    return@channelFlow
+                }
+
+                if (metadataResponse.status != HttpStatusCode.OK) {
+                    trySend(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
+                    return@channelFlow
+                }
 
                 val metadataResponseData = ResponseDataWrapper.fromJson<AssessmentMetadataResponse>(metadataResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
+                    ?: run {
+                        trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
+                        return@channelFlow
+                    }
 
                 val vppId = vppDatabase.vppIdDao.getById(metadataResponseData.createdBy).first()?.toModel() as? VppId.Active
                 val school = vppDatabase.schoolDao.getAll().first().firstOrNull { it.school.id in metadataResponseData.schoolIds }?.toModel()
-                    ?: return@channelFlow send(CacheState.NotExisting(id.toString()))
+                    ?: run {
+                        trySend(CacheState.NotExisting(id.toString()))
+                        return@channelFlow
+                    }
 
                 val assessmentResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id") {
                     vppId?.let { bearerAuth(it.accessToken) } ?: school.getSchoolApiAccess()?.authentication(this)
                 }
-                if (assessmentResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
+                if (assessmentResponse.status != HttpStatusCode.OK) {
+                    trySend(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
+                    return@channelFlow
+                }
                 val data = ResponseDataWrapper.fromJson<AssessmentGetResponse>(assessmentResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(assessmentResponse.bodyAsText())))
+                    ?: run {
+                        trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(assessmentResponse.bodyAsText())))
+                        return@channelFlow
+                    }
 
                 vppDatabase.assessmentDao.upsert(DbAssessment(
                     id = id,
@@ -204,9 +230,34 @@ class AssessmentRepositoryImpl(
                     description = data.description,
                     type = (Assessment.Type.entries.firstOrNull { it.name == data.type } ?: Assessment.Type.OTHER).ordinal
                 ))
-                return@channelFlow sendAll(getById(id, false))
+                sendAll(getById(id, false))
             }
         }
+    }
+
+    override suspend fun deleteAssessment(
+        assessment: Assessment,
+        profile: Profile.StudentProfile
+    ): Response.Error? {
+        if (assessment.id < 0 || profile.getVppIdItem() == null) {
+            vppDatabase.assessmentDao.deleteById(listOf(assessment.id))
+            return null
+        }
+        safeRequest(onError = { return it }) {
+            val response = httpClient.delete(
+                URLBuilder(
+                protocol = api.protocol,
+                host = api.host,
+                port = api.port,
+                pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
+            ).build()) {
+                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+            }
+            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            vppDatabase.assessmentDao.deleteById(listOf(assessment.id))
+            return null
+        }
+        return Response.Error.Cancelled
     }
 
     override suspend fun getIdForNewLocalAssessment(): Int {

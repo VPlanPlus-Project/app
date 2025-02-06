@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 
@@ -31,6 +32,8 @@ interface AssessmentRepository {
 
     fun getAll(): Flow<List<Assessment>>
     fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Assessment>>
+
+    suspend fun deleteAssessment(assessment: Assessment, profile: Profile.StudentProfile): Response.Error?
 
     suspend fun getIdForNewLocalAssessment(): Int
     suspend fun upsert(assessments: List<Assessment>)

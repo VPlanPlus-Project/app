@@ -7,7 +7,15 @@ import plus.vplan.app.domain.repository.AssessmentRepository
 class UpdateAssessmentUseCase(
     private val assessmentRepository: AssessmentRepository
 ) {
-    suspend operator fun invoke(id: Int) {
-        assessmentRepository.getById(id, true).first { it !is CacheState.Loading }
+    suspend operator fun invoke(id: Int): UpdateResult {
+        return when(assessmentRepository.getById(id, true).first { it !is CacheState.Loading }) {
+            is CacheState.Done -> UpdateResult.SUCCESS
+            is CacheState.NotExisting -> UpdateResult.DOES_NOT_EXIST
+            else -> UpdateResult.ERROR
+        }
     }
+}
+
+enum class UpdateResult {
+    SUCCESS, ERROR, DOES_NOT_EXIST
 }

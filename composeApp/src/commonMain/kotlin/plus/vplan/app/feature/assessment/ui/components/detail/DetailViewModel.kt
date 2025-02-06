@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -18,13 +19,16 @@ import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.DeleteAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 
 class DetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
-    private val updateAssessmentUseCase: UpdateAssessmentUseCase
+    private val updateAssessmentUseCase: UpdateAssessmentUseCase,
+    private val deleteAssessmentUseCase: DeleteAssessmentUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -45,11 +49,14 @@ class DetailViewModel(
                 assessment.prefetch()
                 profile.prefetch()
 
+                val isOtherAssessment = state.assessment?.id != assessmentId
+
                 state.copy(
                     assessment = assessment,
                     profile = profile,
                     canEdit = (assessment.creator is AppEntity.VppId && profile.vppId == assessment.creator.id) || (assessment.creator is AppEntity.Profile && profile.id == assessment.creator.id),
-                    isReloading = false,
+                    reloadingState = if (isOtherAssessment) null else state.reloadingState,
+                    deleteState = if (isOtherAssessment) null else state.deleteState,
                     initDone = true
                 )
             }.filterNotNull().collectLatest { state = it }
@@ -60,9 +67,24 @@ class DetailViewModel(
         viewModelScope.launch {
             when (event) {
                 is DetailEvent.Reload -> {
-                    state = state.copy(isReloading = true)
-                    updateAssessmentUseCase(state.assessment!!.id)
-                    state = state.copy(isReloading = false)
+                    state = state.copy(reloadingState = UnoptimisticTaskState.InProgress)
+                    val result = updateAssessmentUseCase(state.assessment!!.id)
+                    when (result) {
+                        UpdateResult.SUCCESS -> {
+                            state = state.copy(reloadingState = UnoptimisticTaskState.Success)
+                            viewModelScope.launch {
+                                delay(2000)
+                                if (state.reloadingState == UnoptimisticTaskState.Success) state = state.copy(reloadingState = null)
+                            }
+                        }
+                        UpdateResult.ERROR -> state = state.copy(reloadingState = UnoptimisticTaskState.Error)
+                        UpdateResult.DOES_NOT_EXIST -> state = state.copy(reloadingState = UnoptimisticTaskState.Success, deleteState = UnoptimisticTaskState.Success)
+                    }
+                }
+                is DetailEvent.Delete -> {
+                    state = state.copy(deleteState = UnoptimisticTaskState.InProgress)
+                    val result = deleteAssessmentUseCase(state.assessment!!, state.profile!!)
+                    state = state.copy(deleteState = if (result) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error)
                 }
                 else -> TODO()
             }
@@ -74,7 +96,7 @@ data class DetailState(
     val assessment: Assessment? = null,
     val profile: Profile.StudentProfile? = null,
     val canEdit: Boolean = false,
-    val isReloading: Boolean = false,
+    val reloadingState: UnoptimisticTaskState? = UnoptimisticTaskState.Success,
     val deleteState: UnoptimisticTaskState? = null,
     val initDone: Boolean = false,
     val fileDownloadState: Map<Int, Float> = emptyMap()
