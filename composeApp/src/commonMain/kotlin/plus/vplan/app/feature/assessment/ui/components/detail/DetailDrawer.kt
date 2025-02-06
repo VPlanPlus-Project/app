@@ -34,6 +34,6 @@ fun AssessmentDetailDrawer(
         onDismissRequest = onDismiss,
         sheetState = sheetState
     ) {
-        DetailPage(state, {}/*, viewModel::onEvent*/)
+        DetailPage(state, viewModel::onEvent)
     }
 }

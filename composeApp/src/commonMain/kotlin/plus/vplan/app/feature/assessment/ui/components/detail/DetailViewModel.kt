@@ -18,11 +18,13 @@ import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 
 class DetailViewModel(
-    private val getCurrentProfileUseCase: GetCurrentProfileUseCase
+    private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
+    private val updateAssessmentUseCase: UpdateAssessmentUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -51,6 +53,19 @@ class DetailViewModel(
                     initDone = true
                 )
             }.filterNotNull().collectLatest { state = it }
+        }
+    }
+
+    fun onEvent(event: DetailEvent) {
+        viewModelScope.launch {
+            when (event) {
+                is DetailEvent.Reload -> {
+                    state = state.copy(isReloading = true)
+                    updateAssessmentUseCase(state.assessment!!.id)
+                    state = state.copy(isReloading = false)
+                }
+                else -> TODO()
+            }
         }
     }
 }

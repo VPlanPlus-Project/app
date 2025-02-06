@@ -45,6 +45,7 @@ import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
 import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
@@ -75,6 +76,7 @@ fun DetailPage(
 ) {
     val assessment = state.assessment ?: return
 
+    var showTypeSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
 
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
@@ -182,7 +184,7 @@ fun DetailPage(
             TypeRow(
                 canEdit = state.canEdit,
                 type = assessment.type,
-                onClick = {}
+                onClick = { showTypeSelectDrawer = true }
             )
             DueToRow(
                 canEdit = state.canEdit,
@@ -279,6 +281,12 @@ fun DetailPage(
             onDismiss = { showDateSelectDrawer = false }
         )
     }
+
+    if (showTypeSelectDrawer) TypeDrawer(
+        selectedType = assessment.type,
+        onSelectType = {},
+        onDismiss = { showTypeSelectDrawer = false }
+    )
 
     if (showDeleteDialog) {
         AlertDialog(

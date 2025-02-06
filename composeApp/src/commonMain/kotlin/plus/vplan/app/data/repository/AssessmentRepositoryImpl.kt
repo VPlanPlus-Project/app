@@ -162,16 +162,19 @@ class AssessmentRepositoryImpl(
         }
 
         return channelFlow {
-            var hadData = false
-            vppDatabase.assessmentDao.getById(id)
-                .takeWhile { it != null }
-                .filterNotNull()
-                .onEach { hadData = true; send(CacheState.Done(it.toModel())) }
-                .collect()
-
-            if (!hadData) safeRequest(
+            if (!forceReload) {
+                var hadData = false
+                vppDatabase.assessmentDao.getById(id)
+                    .takeWhile { it != null }
+                    .filterNotNull()
+                    .onEach { hadData = true; send(CacheState.Done(it.toModel())) }
+                    .collect()
+                if (hadData) return@channelFlow
+            }
+            safeRequest(
                 onError = { return@channelFlow send(CacheState.Error(id.toString(), it)) }
             ) {
+                send(CacheState.Loading(id.toString()))
                 val metadataResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id")
                 if (metadataResponse.status == HttpStatusCode.NotFound) return@channelFlow send(CacheState.NotExisting(id.toString()))
                 if (metadataResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
