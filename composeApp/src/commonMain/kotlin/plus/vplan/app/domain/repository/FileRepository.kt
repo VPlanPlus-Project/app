@@ -11,7 +11,7 @@ import plus.vplan.app.ui.common.AttachedFile
 
 interface FileRepository {
     suspend fun upsert(file: File)
-    fun getById(id: Int): Flow<CacheState<File>>
+    fun getById(id: Int, forceReload: Boolean): Flow<CacheState<File>>
     fun cacheFile(file: File, schoolApiAccess: SchoolApiAccess): Flow<FileDownloadProgress>
     suspend fun uploadFile(
         vppId: VppId.Active,

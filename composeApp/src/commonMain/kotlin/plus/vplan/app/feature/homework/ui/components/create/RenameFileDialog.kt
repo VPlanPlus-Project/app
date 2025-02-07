@@ -6,6 +6,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -21,26 +22,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import io.github.vinceglb.filekit.core.extension
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.ui.common.AttachedFile
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.file_text
 
 @Composable
 fun RenameFileDialog(
-    file: AttachedFile,
+    originalFileName: String,
     onDismissRequest: () -> Unit,
     onRename: (String) -> Unit,
 ) {
+    val extension = if ('.' in originalFileName) originalFileName.substringAfterLast(".") else null
+    val originalName = if ('.' in originalFileName) originalFileName.substringBeforeLast(".") else originalFileName
     val confirm: (String) -> Unit = { fileNameValue ->
-        onRename(fileNameValue + "." + file.platformFile.extension)
+        onRename((fileNameValue + (extension?.let { ".$it" } ?: "")).trim())
         onDismissRequest()
     }
-    var fileNameValue by rememberSaveable { mutableStateOf((file.name).substringBeforeLast(".")) }
+    var fileNameValue by rememberSaveable { mutableStateOf(originalName) }
     var fileName by remember {
         mutableStateOf(
             TextFieldValue(
@@ -63,23 +69,36 @@ fun RenameFileDialog(
         title = { Text("Datei umbenennen") },
         text = {
             val focusRequester = remember { FocusRequester() }
+            val textStyle = LocalTextStyle.current
+            val extensionColor = MaterialTheme.colorScheme.outline
             Column {
                 TextField(
                     value = fileName,
                     onValueChange = { fileName = it },
                     label = { Text("Name") },
-                    placeholder = { Text(file.name) },
+                    placeholder = { Text(originalName) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { confirm(fileName.text) }),
-                    trailingIcon = {
-                        Text(
-                            text = ".${file.platformFile.extension}",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.focusRequester(focusRequester),
+                    visualTransformation = if (extension == null) VisualTransformation.None else VisualTransformation {
+                        return@VisualTransformation TransformedText(
+                            text = buildAnnotatedString {
+                                append(fileName.text)
+                                withStyle(textStyle.copy(color = extensionColor).toSpanStyle()) {
+                                    append(".$extension")
+                                }
+                            },
+                            offsetMapping = object : OffsetMapping {
+                                override fun originalToTransformed(offset: Int): Int {
+                                    return offset.coerceAtMost(fileName.text.length)
+                                }
+                                override fun transformedToOriginal(offset: Int): Int {
+                                    return offset.coerceAtMost(fileName.text.length)
+                                }
+                            }
                         )
-                    },
-                    modifier = Modifier.focusRequester(focusRequester)
+                    }
                 )
             }
             LaunchedEffect(Unit) { focusRequester.requestFocus() }
@@ -87,6 +106,7 @@ fun RenameFileDialog(
         confirmButton = {
             TextButton(
                 onClick = { confirm(fileName.text) },
+                enabled = fileName.text.isNotBlank()
             ) {
                 Text("Speichern")
             }

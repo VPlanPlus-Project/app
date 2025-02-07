@@ -222,7 +222,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
 
         fileToRename?.let { file ->
             RenameFileDialog(
-                file = file,
+                originalFileName = file.name,
                 onDismissRequest = { fileToRename = null },
                 onRename = { viewModel.onEvent(NewHomeworkEvent.UpdateFile(fileToRename!!.copyBase(name = it))) }
             )

@@ -17,7 +17,7 @@ class FileSource(
     private val bitmapCache = hashMapOf<Int, ImageBitmap?>()
 
     fun getById(id: Int): Flow<CacheState<File>> {
-        return cache.getOrPut(id) { fileRepository.getById(id).map {
+        return cache.getOrPut(id) { fileRepository.getById(id, forceReload = false).map {
             if (it is CacheState.Done<File>) {
                 it.copy(
                     data = it.data.copy(

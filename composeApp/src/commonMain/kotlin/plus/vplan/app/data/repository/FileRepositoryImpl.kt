@@ -58,12 +58,14 @@ class FileRepositoryImpl(
         )
     }
 
-    override fun getById(id: Int): Flow<CacheState<File>> {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<File>> {
         val fileFlow = vppDatabase.fileDao.getById(id).map { it?.toModel() }
         return channelFlow {
-            var hadData = false
-            sendAll(fileFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
-            if (hadData || id < 0) return@channelFlow
+            if (!forceReload) {
+                var hadData = false
+                sendAll(fileFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
+                if (hadData || id < 0) return@channelFlow
+            }
             send(CacheState.Loading(id.toString()))
             val response = httpClient.get("${api.url}/api/v2.2/file/$id")
             if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<File>()))
@@ -78,6 +80,7 @@ class FileRepositoryImpl(
                 if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
                 val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
+                val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
                 vppDatabase.fileDao.upsert(
                     DbFile(
                         id = id,
@@ -85,10 +88,10 @@ class FileRepositoryImpl(
                         createdByVppId = data.createdBy,
                         fileName = fileData.fileName,
                         size = fileData.size,
-                        isOfflineReady = false
+                        isOfflineReady = existing?.isOfflineReady ?: false
                     )
                 )
-                return@channelFlow sendAll(getById(id))
+                return@channelFlow sendAll(getById(id, false))
             }
             val schools = vppDatabase.schoolDao.getAll().first().distinctBy { it.school.id }.filter { it.school.id in data.schoolIds }.mapNotNull { try { it.toModel().getSchoolApiAccess() } catch (e: Exception) { null } }
             schools.forEach { school ->
@@ -99,6 +102,7 @@ class FileRepositoryImpl(
                 if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
                 val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
+                val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
                 vppDatabase.fileDao.upsert(
                     DbFile(
                         id = id,
@@ -106,10 +110,10 @@ class FileRepositoryImpl(
                         createdByVppId = data.createdBy,
                         fileName = fileData.fileName,
                         size = fileData.size,
-                        isOfflineReady = false
+                        isOfflineReady = existing?.isOfflineReady ?: false
                     )
                 )
-                return@channelFlow sendAll(getById(id))
+                return@channelFlow sendAll(getById(id, false))
             }
             return@channelFlow send(CacheState.NotExisting(id.toString()))
         }

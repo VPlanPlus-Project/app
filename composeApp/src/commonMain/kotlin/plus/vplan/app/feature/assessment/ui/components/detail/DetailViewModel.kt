@@ -28,6 +28,7 @@ import plus.vplan.app.feature.assessment.domain.usecase.DeleteAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.homework.domain.usecase.DownloadFileUseCase
+import plus.vplan.app.feature.homework.domain.usecase.RenameFileUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 
@@ -40,7 +41,8 @@ class DetailViewModel(
     private val changeAssessmentVisibilityUseCase: ChangeAssessmentVisibilityUseCase,
     private val changeAssessmentContentUseCase: ChangeAssessmentContentUseCase,
     private val addAssessmentFileUseCase: AddAssessmentFileUseCase,
-    private val downloadFileUseCase: DownloadFileUseCase
+    private val downloadFileUseCase: DownloadFileUseCase,
+    private val renameFileUseCase: RenameFileUseCase,
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -109,6 +111,7 @@ class DetailViewModel(
                     }
                     state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
                 }
+                is DetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
                 else -> TODO()
             }
         }

@@ -214,7 +214,7 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
 
     fileToRename?.let { file ->
         RenameFileDialog(
-            file = file,
+            originalFileName = file.name,
             onDismissRequest = { fileToRename = null },
             onRename = { viewModel.onEvent(NewAssessmentEvent.UpdateFile(fileToRename!!.copyBase(name = it))) }
         )

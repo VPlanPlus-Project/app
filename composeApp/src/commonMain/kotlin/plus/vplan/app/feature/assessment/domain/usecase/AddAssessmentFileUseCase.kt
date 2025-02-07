@@ -41,7 +41,7 @@ class AddAssessmentFileUseCase(
             getBitmap = { null }
         ))
 
-        val fileItem = fileRepository.getById(id).filterIsInstance<CacheState.Done<plus.vplan.app.domain.model.File>>().first().data
+        val fileItem = fileRepository.getById(id, forceReload = false).filterIsInstance<CacheState.Done<plus.vplan.app.domain.model.File>>().first().data
         if (id > 0) assessmentRepository.linkFileToAssessmentOnline(profile.getVppIdItem()!!, assessment.id, fileItem.id)
         assessmentRepository.linkFileToAssessment(assessment.id, fileItem.id)
         return true
