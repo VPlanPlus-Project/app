@@ -49,4 +49,7 @@ interface AssessmentDao {
 
     @Query("DELETE FROM assessments WHERE id > 0")
     suspend fun clearCache()
+
+    @Query("DELETE FROM fk_assessment_file WHERE assessment_id IN (:assessmentIds)")
+    suspend fun deleteFileLinks(assessmentIds: List<Int>)
 }

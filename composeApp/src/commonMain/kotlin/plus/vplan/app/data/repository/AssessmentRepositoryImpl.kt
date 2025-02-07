@@ -15,13 +15,10 @@ import io.ktor.http.URLBuilder
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.channels.onFailure
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -82,21 +79,25 @@ class AssessmentRepositoryImpl(
             val assessments = ResponseDataWrapper.fromJson<List<AssessmentGetResponse>>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
 
-            assessments.forEach { assessment ->
-                vppDatabase.assessmentDao.upsert(
-                    DbAssessment(
-                        id = assessment.id,
-                        createdBy = assessment.createdBy,
-                        createdByProfile = null,
-                        date = LocalDate.parse(assessment.date),
-                        isPublic = assessment.isPublic,
-                        defaultLessonId = assessment.subject,
-                        description = assessment.description,
-                        type = (Assessment.Type.entries.firstOrNull { it.name == assessment.type } ?: Assessment.Type.OTHER).ordinal,
-                        createdAt = Instant.fromEpochSeconds(assessment.createdAt)
-                    )
-                )
-            }
+            vppDatabase.assessmentDao.deleteFileLinks(assessments.map { it.id })
+            vppDatabase.assessmentDao.upsert(
+                assessments = assessments.map { assessment -> DbAssessment(
+                    id = assessment.id,
+                    createdBy = assessment.createdBy,
+                    createdByProfile = null,
+                    createdAt = Instant.fromEpochSeconds(assessment.createdAt),
+                    date = LocalDate.parse(assessment.date),
+                    isPublic = assessment.isPublic,
+                    defaultLessonId = assessment.subject,
+                    description = assessment.description,
+                    type = (Assessment.Type.entries.firstOrNull { it.name == assessment.type } ?: Assessment.Type.OTHER).ordinal,
+                ) },
+                files = assessments.flatMap { assessment ->
+                    assessment.files.map {
+                        FKAssessmentFile(assessment.id, it)
+                    }
+                }
+            )
 
             return null
         }
@@ -235,17 +236,21 @@ class AssessmentRepositoryImpl(
                         return@channelFlow
                     }
 
-                vppDatabase.assessmentDao.upsert(DbAssessment(
-                    id = id,
-                    createdBy = data.createdBy,
-                    createdByProfile = null,
-                    createdAt = Instant.fromEpochSeconds(data.createdAt),
-                    date = LocalDate.parse(data.date),
-                    isPublic = data.isPublic,
-                    defaultLessonId = data.subject,
-                    description = data.description,
-                    type = (Assessment.Type.entries.firstOrNull { it.name == data.type } ?: Assessment.Type.OTHER).ordinal
-                ))
+                vppDatabase.assessmentDao.deleteFileLinks(listOf(id))
+                vppDatabase.assessmentDao.upsert(
+                    assessments = listOf(DbAssessment(
+                        id = id,
+                        createdBy = data.createdBy,
+                        createdByProfile = null,
+                        createdAt = Instant.fromEpochSeconds(data.createdAt),
+                        date = LocalDate.parse(data.date),
+                        isPublic = data.isPublic,
+                        defaultLessonId = data.subject,
+                        description = data.description,
+                        type = (Assessment.Type.entries.firstOrNull { it.name == data.type } ?: Assessment.Type.OTHER).ordinal
+                    )),
+                    files = data.files.map { FKAssessmentFile(id, it) }
+                )
                 sendAll(getById(id, false))
             }
         }
