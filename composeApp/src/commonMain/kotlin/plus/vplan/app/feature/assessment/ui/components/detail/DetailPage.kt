@@ -229,7 +229,7 @@ fun DetailPage(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             if (state.canEdit) {
-                var text by rememberSaveable(assessment.id) { mutableStateOf(assessment.description) }
+                var text by rememberSaveable(assessment.id, state.reloadingState == UnoptimisticTaskState.Success) { mutableStateOf(assessment.description) }
                 TextField(
                     value = text,
                     enabled = state.canEdit,
