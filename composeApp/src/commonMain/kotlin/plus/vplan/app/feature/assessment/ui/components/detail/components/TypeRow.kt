@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.assessment.ui.components.detail.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,12 +29,14 @@ fun TypeRow(
                 canEdit = canEdit,
                 onClick = onClick
             ) {
-                Text(
-                    text = type.toName(),
-                    style = tableValueStyle(),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
-                )
+                AnimatedContent(targetState = type.toName()) { displayType ->
+                    Text(
+                        text = displayType,
+                        style = tableValueStyle(),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
             }
         }
     )

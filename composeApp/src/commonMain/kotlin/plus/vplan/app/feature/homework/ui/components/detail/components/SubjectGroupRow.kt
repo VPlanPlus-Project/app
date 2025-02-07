@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.homework.ui.components.detail.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -35,28 +36,32 @@ fun SubjectGroupRow(
                 canEdit = canEdit,
                 onClick = onClick
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    if (defaultLesson != null) {
-                        Icon(
-                            painter = painterResource(defaultLesson.subject.subjectIcon()),
-                            contentDescription = null,
-                            modifier = Modifier.size(12.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = defaultLesson.subject,
-                            style = tableValueStyle(),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    } else {
-                        Text(
-                            text = if (allowGroup) group!!.name else "Kein Fach",
-                            style = tableValueStyle(),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                AnimatedContent(
+                    targetState = defaultLesson?.subject?.subjectIcon() to defaultLesson?.subject
+                ) { (subjectIcon, subject) ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        if (subjectIcon != null && subject != null) {
+                            Icon(
+                                painter = painterResource(subjectIcon),
+                                contentDescription = null,
+                                modifier = Modifier.size(12.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = subject,
+                                style = tableValueStyle(),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        } else {
+                            Text(
+                                text = if (allowGroup) group!!.name else "Kein Fach",
+                                style = tableValueStyle(),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }
