@@ -307,6 +307,7 @@ class AssessmentRepositoryImpl(
         )
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override suspend fun changeType(
         assessment: Assessment,
         type: Assessment.Type,
@@ -376,6 +377,7 @@ class AssessmentRepositoryImpl(
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override suspend fun changeVisibility(
         assessment: Assessment,
         isPublic: Boolean,
@@ -410,6 +412,7 @@ class AssessmentRepositoryImpl(
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override suspend fun changeContent(
         assessment: Assessment,
         profile: Profile.StudentProfile,
