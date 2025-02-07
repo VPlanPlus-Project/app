@@ -58,6 +58,7 @@ import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
 import plus.vplan.app.feature.profile.page.di.profileModule
 import plus.vplan.app.feature.profile.settings.di.profileSettingsModule
+import plus.vplan.app.feature.search.di.searchModule
 import plus.vplan.app.feature.sync.di.syncModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
 
@@ -117,6 +118,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             calendarModule,
             homeworkModule,
             assessmentModule,
+            searchModule,
             profileModule,
             profileSettingsModule,
             vppIdModule,
