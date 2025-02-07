@@ -51,6 +51,7 @@ import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
 import plus.vplan.app.feature.profile.page.ui.components.ProfileSwitcher
 import plus.vplan.app.feature.profile.settings.ui.ProfileSettingsScreen
 import plus.vplan.app.feature.search.ui.main.SearchScreen
+import plus.vplan.app.feature.search.ui.main.SearchViewModel
 import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.bug_play
@@ -79,6 +80,7 @@ fun MainScreenHost(
 
     val homeViewModel = koinViewModel<HomeViewModel>()
     val calendarViewModel = koinViewModel<CalendarViewModel>()
+    val searchViewModel = koinViewModel<SearchViewModel>()
     val profileViewModel = koinViewModel<ProfileViewModel>()
 
     val localDensity = LocalDensity.current
@@ -102,7 +104,7 @@ fun MainScreenHost(
         ) {
             composable<MainScreen.MainHome> { HomeScreen(contentPadding, homeViewModel) }
             composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
-            composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding) }
+            composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel, toggleBottomBar) }
             composable<MainScreen.MainChat> { Text("Chat") }
             composable<MainScreen.MainDev> { DevScreen(contentPadding, toggleBottomBar) }
             composable<MainScreen.MainProfile> { ProfileScreen(contentPadding, profileViewModel) }
