@@ -1,7 +1,6 @@
 package plus.vplan.app.di
 
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
@@ -68,12 +67,6 @@ val appModule = module(createdAtStart = true) {
     single<HttpClient> {
         val appLogger = co.touchlab.kermit.Logger.withTag("Ktor Client")
         HttpClient {
-            install(HttpTimeout) {
-                socketTimeoutMillis = 5_000
-                connectTimeoutMillis = 5_000
-                requestTimeoutMillis = 5_000
-            }
-
             install(ContentNegotiation) {
                 json()
             }
