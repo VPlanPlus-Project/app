@@ -43,7 +43,7 @@ fun RenameFileDialog(
     val extension = if ('.' in originalFileName) originalFileName.substringAfterLast(".") else null
     val originalName = if ('.' in originalFileName) originalFileName.substringBeforeLast(".") else originalFileName
     val confirm: (String) -> Unit = { fileNameValue ->
-        onRename((fileNameValue + (extension?.let { ".$it" } ?: "")).trim())
+        onRename(fileNameValue.trim() + (extension?.let { ".$it" } ?: ""))
         onDismissRequest()
     }
     var fileNameValue by rememberSaveable { mutableStateOf(originalName) }
