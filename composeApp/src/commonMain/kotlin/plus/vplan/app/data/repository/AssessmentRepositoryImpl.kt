@@ -314,6 +314,7 @@ class AssessmentRepositoryImpl(
         profile: Profile.StudentProfile
     ) {
         val oldType = assessment.type
+        if (oldType == type) return
         vppDatabase.assessmentDao.updateType(assessment.id, type.ordinal)
 
         if (assessment.id < 0 || profile.getVppIdItem() == null) return
@@ -348,6 +349,7 @@ class AssessmentRepositoryImpl(
         profile: Profile.StudentProfile
     ) {
         val oldDate = assessment.date
+        if (oldDate == date) return
         vppDatabase.assessmentDao.updateDate(assessment.id, date)
 
         if (assessment.id < 0 || profile.getVppIdItem() == null) return
@@ -385,6 +387,7 @@ class AssessmentRepositoryImpl(
     ) {
         if (assessment.id < 0 || profile.getVppIdItem() == null) return
         val oldIsPublic = assessment.isPublic
+        if (oldIsPublic == isPublic) return
         vppDatabase.assessmentDao.updateVisibility(assessment.id, isPublic)
 
         onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Visibility }
@@ -419,6 +422,7 @@ class AssessmentRepositoryImpl(
         content: String
     ) {
         val oldContent = assessment.description
+        if (oldContent == content) return
         vppDatabase.assessmentDao.updateContent(assessment.id, content)
 
         if (assessment.id < 0 || profile.getVppIdItem() == null) return
