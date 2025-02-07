@@ -19,6 +19,7 @@ import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentContentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentDateUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentTypeUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentVisibilityUseCase
@@ -34,7 +35,8 @@ class DetailViewModel(
     private val deleteAssessmentUseCase: DeleteAssessmentUseCase,
     private val changeAssessmentTypeUseCase: ChangeAssessmentTypeUseCase,
     private val changeAssessmentDateUseCase: ChangeAssessmentDateUseCase,
-    private val changeAssessmentVisibilityUseCase: ChangeAssessmentVisibilityUseCase
+    private val changeAssessmentVisibilityUseCase: ChangeAssessmentVisibilityUseCase,
+    private val changeAssessmentContentUseCase: ChangeAssessmentContentUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -95,6 +97,7 @@ class DetailViewModel(
                 is DetailEvent.UpdateType -> changeAssessmentTypeUseCase(state.assessment!!, event.type, state.profile!!)
                 is DetailEvent.UpdateDate -> changeAssessmentDateUseCase(state.assessment!!, event.date, state.profile!!)
                 is DetailEvent.UpdateVisibility -> changeAssessmentVisibilityUseCase(state.assessment!!, event.isPublic, state.profile!!)
+                is DetailEvent.UpdateContent -> changeAssessmentContentUseCase(state.assessment!!, event.content, state.profile!!)
                 else -> TODO()
             }
         }
@@ -135,6 +138,8 @@ sealed class DetailEvent {
     data class DownloadFile(val file: File): DetailEvent()
     data class RenameFile(val file: File, val newName: String): DetailEvent()
     data class DeleteFile(val file: File): DetailEvent()
+
+    data class UpdateContent(val content: String): DetailEvent()
 
     data object Reload : DetailEvent()
     data object Delete : DetailEvent()

@@ -15,8 +15,14 @@ import io.ktor.http.URLBuilder
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.channels.onFailure
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
@@ -25,6 +31,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -54,6 +61,9 @@ class AssessmentRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase
 ) : AssessmentRepository {
+
+    private val onlineChangeRequests = mutableListOf<OnlineChangeRequest>()
+
     override suspend fun download(schoolApiAccess: SchoolApiAccess, defaultLessonIds: List<Int>): Response.Error? {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
@@ -296,21 +306,31 @@ class AssessmentRepositoryImpl(
         vppDatabase.assessmentDao.updateType(assessment.id, type.ordinal)
 
         if (assessment.id < 0 || profile.getVppIdItem() == null) return
-        safeRequest(onError = { vppDatabase.assessmentDao.updateType(assessment.id, oldType.ordinal) }) {
-            val response = httpClient.patch(URLBuilder(
-                protocol = api.protocol,
-                host = api.host,
-                port = api.port,
-                pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
-            ).build()) {
-                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
-                contentType(ContentType.Application.Json)
-                setBody(AssessmentUpdateTypeRequest(type = type.name))
+
+        onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Type }
+        val request = OnlineChangeRequest.Type(assessment, profile, type)
+        onlineChangeRequests.add(request)
+        GlobalScope.launch {
+            delay(5000)
+            if (request !in onlineChangeRequests) return@launch
+            onlineChangeRequests.remove(request)
+            safeRequest(onError = { vppDatabase.assessmentDao.updateType(assessment.id, oldType.ordinal) }) {
+                val response = httpClient.patch(URLBuilder(
+                    protocol = api.protocol,
+                    host = api.host,
+                    port = api.port,
+                    pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
+                ).build()) {
+                    profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                    contentType(ContentType.Application.Json)
+                    setBody(AssessmentUpdateTypeRequest(type = type.name))
+                }
+                if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateType(assessment.id, oldType.ordinal)
             }
-            if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateType(assessment.id, oldType.ordinal)
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override suspend fun changeDate(
         assessment: Assessment,
         date: LocalDate,
@@ -320,18 +340,29 @@ class AssessmentRepositoryImpl(
         vppDatabase.assessmentDao.updateDate(assessment.id, date)
 
         if (assessment.id < 0 || profile.getVppIdItem() == null) return
-        safeRequest(onError = { vppDatabase.assessmentDao.updateDate(assessment.id, oldDate) }) {
-            val response = httpClient.patch(URLBuilder(
-                protocol = api.protocol,
-                host = api.host,
-                port = api.port,
-                pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
-            ).build()) {
-                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
-                contentType(ContentType.Application.Json)
-                setBody(AssessmentUpdateDateRequest(date = date.toString()))
+
+        onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Date }
+        val request = OnlineChangeRequest.Date(assessment, profile, date)
+        onlineChangeRequests.add(request)
+
+        GlobalScope.launch {
+            delay(5000)
+            if (request !in onlineChangeRequests) return@launch
+            onlineChangeRequests.remove(request)
+
+            safeRequest(onError = { vppDatabase.assessmentDao.updateDate(assessment.id, oldDate) }) {
+                val response = httpClient.patch(URLBuilder(
+                    protocol = api.protocol,
+                    host = api.host,
+                    port = api.port,
+                    pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
+                ).build()) {
+                    profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                    contentType(ContentType.Application.Json)
+                    setBody(AssessmentUpdateDateRequest(date = date.toString()))
+                }
+                if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateDate(assessment.id, oldDate)
             }
-            if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateDate(assessment.id, oldDate)
         }
     }
 
@@ -343,18 +374,64 @@ class AssessmentRepositoryImpl(
         if (assessment.id < 0 || profile.getVppIdItem() == null) return
         val oldIsPublic = assessment.isPublic
         vppDatabase.assessmentDao.updateVisibility(assessment.id, isPublic)
-        safeRequest(onError = { vppDatabase.assessmentDao.updateVisibility(assessment.id, oldIsPublic) }) {
-            val response = httpClient.patch(URLBuilder(
-                protocol = api.protocol,
-                host = api.host,
-                port = api.port,
-                pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
-            ).build()) {
-                profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
-                contentType(ContentType.Application.Json)
-                setBody(AssessmentUpdateVisibilityRequest(isPublic = isPublic))
+
+        onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Visibility }
+        val request = OnlineChangeRequest.Visibility(assessment, profile, isPublic)
+        onlineChangeRequests.add(request)
+
+        GlobalScope.launch {
+            delay(5000)
+            if (request !in onlineChangeRequests) return@launch
+            onlineChangeRequests.remove(request)
+
+            safeRequest(onError = { vppDatabase.assessmentDao.updateVisibility(assessment.id, oldIsPublic) }) {
+                val response = httpClient.patch(URLBuilder(
+                    protocol = api.protocol,
+                    host = api.host,
+                    port = api.port,
+                    pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
+                ).build()) {
+                    profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                    contentType(ContentType.Application.Json)
+                    setBody(AssessmentUpdateVisibilityRequest(isPublic = isPublic))
+                }
+                if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateVisibility(assessment.id, oldIsPublic)
             }
-            if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateVisibility(assessment.id, oldIsPublic)
+        }
+    }
+
+    override suspend fun changeContent(
+        assessment: Assessment,
+        profile: Profile.StudentProfile,
+        content: String
+    ) {
+        val oldContent = assessment.description
+        vppDatabase.assessmentDao.updateContent(assessment.id, content)
+
+        if (assessment.id < 0 || profile.getVppIdItem() == null) return
+
+        onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Content }
+        val request = OnlineChangeRequest.Content(assessment, profile, content)
+        onlineChangeRequests.add(request)
+
+        GlobalScope.launch {
+            delay(5000)
+            if (request !in onlineChangeRequests) return@launch
+            onlineChangeRequests.remove(request)
+
+            safeRequest(onError = { vppDatabase.assessmentDao.updateContent(assessment.id, oldContent) }) {
+                val response = httpClient.patch(URLBuilder(
+                    protocol = api.protocol,
+                    host = api.host,
+                    port = api.port,
+                    pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
+                ).build()) {
+                    profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
+                    contentType(ContentType.Application.Json)
+                    setBody(AssessmentUpdateContentRequest(content = content))
+                }
+                if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateContent(assessment.id, oldContent)
+            }
         }
     }
 }
@@ -406,3 +483,19 @@ data class AssessmentUpdateDateRequest(
 data class AssessmentUpdateVisibilityRequest(
     @SerialName("is_public") val isPublic: Boolean
 )
+
+@Serializable
+data class AssessmentUpdateContentRequest(
+    @SerialName("content") val content: String
+)
+
+private sealed class OnlineChangeRequest(
+    val assessment: Assessment,
+    val profile: Profile.StudentProfile,
+    val name: String,
+) {
+    class Content(assessment: Assessment, profile: Profile.StudentProfile, val newContent: String): OnlineChangeRequest(assessment, profile, "content")
+    class Type(assessment: Assessment, profile: Profile.StudentProfile, val type: Assessment.Type): OnlineChangeRequest(assessment, profile, "type")
+    class Date(assessment: Assessment, profile: Profile.StudentProfile, val date: LocalDate): OnlineChangeRequest(assessment, profile, "date")
+    class Visibility(assessment: Assessment, profile: Profile.StudentProfile, val isPublic: Boolean): OnlineChangeRequest(assessment, profile, "visibility")
+}

@@ -228,13 +228,16 @@ fun DetailPage(
             CreatedAtRow(createdAt = assessment.createdAt.toInstant(TimeZone.UTC))
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            if (state.canEdit) TextField(
-                value = assessment.description,
-                enabled = state.canEdit,
-                onValueChange = {},
-                minLines = 5,
-                modifier = Modifier.fillMaxWidth(),
-            ) else Text(
+            if (state.canEdit) {
+                var text by rememberSaveable(assessment.id) { mutableStateOf(assessment.description) }
+                TextField(
+                    value = text,
+                    enabled = state.canEdit,
+                    onValueChange = { text = it; onEvent(DetailEvent.UpdateContent(it)) },
+                    minLines = 5,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else Text(
                 text = assessment.description
             )
             HorizontalDivider(Modifier.padding(vertical = 8.dp))

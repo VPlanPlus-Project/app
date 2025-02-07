@@ -55,4 +55,10 @@ interface AssessmentRepository {
         isPublic: Boolean,
         profile: Profile.StudentProfile
     )
+
+    suspend fun changeContent(
+        assessment: Assessment,
+        profile: Profile.StudentProfile,
+        content: String
+    )
 }

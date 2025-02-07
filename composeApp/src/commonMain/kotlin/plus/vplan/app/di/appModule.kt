@@ -3,6 +3,8 @@ package plus.vplan.app.di
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -64,6 +66,7 @@ expect fun platformModule(): Module
 
 val appModule = module(createdAtStart = true) {
     single<HttpClient> {
+        val appLogger = co.touchlab.kermit.Logger.withTag("Ktor Client")
         HttpClient {
             install(HttpTimeout) {
                 socketTimeoutMillis = 5_000
@@ -73,6 +76,14 @@ val appModule = module(createdAtStart = true) {
 
             install(ContentNegotiation) {
                 json()
+            }
+
+            install(Logging) {
+                logger = object : Logger {
+                    override fun log(message: String) {
+                        appLogger.i { message }
+                    }
+                }
             }
         }
     }

@@ -40,4 +40,7 @@ interface AssessmentDao {
 
     @Query("UPDATE assessments SET is_public = :isPublic WHERE id = :id")
     suspend fun updateVisibility(id: Int, isPublic: Boolean)
+
+    @Query("UPDATE assessments SET description = :content WHERE id = :id")
+    suspend fun updateContent(id: Int, content: String)
 }
