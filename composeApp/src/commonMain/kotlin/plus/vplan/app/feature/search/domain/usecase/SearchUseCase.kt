@@ -25,7 +25,8 @@ class SearchUseCase(
     private val substitutionPlanRepository: SubstitutionPlanRepository
 ) {
     operator fun invoke(searchQuery: String) = channelFlow {
-        val query = searchQuery.lowercase()
+        if (searchQuery.isBlank()) return@channelFlow send(emptyMap())
+        val query = searchQuery.lowercase().trim()
         val profile = getCurrentProfileUseCase().first()
         val school = profile.getSchoolItem()
 
