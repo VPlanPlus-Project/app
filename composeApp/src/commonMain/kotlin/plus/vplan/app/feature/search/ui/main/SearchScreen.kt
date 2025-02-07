@@ -60,8 +60,11 @@ private fun SearchScreenContent(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            state.results.forEach {
-                Text(it.toString())
+            state.results.forEach { (type, results) ->
+                Text(type.name)
+                results.forEach { result ->
+                    Text(result.toString())
+                }
             }
         }
     }

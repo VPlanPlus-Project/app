@@ -8,6 +8,7 @@ import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 
 class SearchUseCase(
@@ -16,7 +17,7 @@ class SearchUseCase(
     private val roomRepository: RoomRepository,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase
 ) {
-    operator fun invoke(searchQuery: String) = channelFlow<List<SearchResult>> {
+    operator fun invoke(searchQuery: String) = channelFlow<Map<Result, List<SearchResult>>> {
         val query = searchQuery.lowercase()
         val profile = getCurrentProfileUseCase().first()
         val school = profile.getSchoolItem()
@@ -29,7 +30,6 @@ class SearchUseCase(
             groups
                 .filter { query in it.name.lowercase() }
                 .map { SearchResult.SchoolEntity.Group(it) }+
-
                     teachers
                         .filter { query in it.name.lowercase() }
                         .map { SearchResult.SchoolEntity.Teacher(it) } +
@@ -38,7 +38,7 @@ class SearchUseCase(
                         .filter { query in it.name.lowercase() }
                         .map { SearchResult.SchoolEntity.Room(it) }
         }.collectLatest {
-            send(it)
+            send(it.groupBy { it.type })
         }
     }
 }

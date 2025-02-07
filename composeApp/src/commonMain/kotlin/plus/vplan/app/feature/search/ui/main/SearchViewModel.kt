@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
 
@@ -43,7 +44,7 @@ class SearchViewModel(
 
 data class SearchState(
     val query: String = "",
-    val results: List<SearchResult> = emptyList()
+    val results: Map<Result, List<SearchResult>> = emptyMap()
 )
 
 sealed class SearchEvent {
