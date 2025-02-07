@@ -15,7 +15,6 @@ interface FileRepository {
     fun cacheFile(file: File, schoolApiAccess: SchoolApiAccess): Flow<FileDownloadProgress>
     suspend fun uploadFile(
         vppId: VppId.Active,
-        assessmentId: Int,
         document: AttachedFile
     ): Response<Int>
     suspend fun getMinIdForLocalFile(): Int

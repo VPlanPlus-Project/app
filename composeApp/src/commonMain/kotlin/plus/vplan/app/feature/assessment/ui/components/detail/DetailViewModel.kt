@@ -19,6 +19,7 @@ import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.AddAssessmentFileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentContentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentDateUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentTypeUseCase
@@ -36,7 +37,8 @@ class DetailViewModel(
     private val changeAssessmentTypeUseCase: ChangeAssessmentTypeUseCase,
     private val changeAssessmentDateUseCase: ChangeAssessmentDateUseCase,
     private val changeAssessmentVisibilityUseCase: ChangeAssessmentVisibilityUseCase,
-    private val changeAssessmentContentUseCase: ChangeAssessmentContentUseCase
+    private val changeAssessmentContentUseCase: ChangeAssessmentContentUseCase,
+    private val addAssessmentFileUseCase: AddAssessmentFileUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -98,6 +100,7 @@ class DetailViewModel(
                 is DetailEvent.UpdateDate -> changeAssessmentDateUseCase(state.assessment!!, event.date, state.profile!!)
                 is DetailEvent.UpdateVisibility -> changeAssessmentVisibilityUseCase(state.assessment!!, event.isPublic, state.profile!!)
                 is DetailEvent.UpdateContent -> changeAssessmentContentUseCase(state.assessment!!, event.content, state.profile!!)
+                is DetailEvent.AddFile -> addAssessmentFileUseCase(state.assessment!!, event.file.platformFile, state.profile!!)
                 else -> TODO()
             }
         }

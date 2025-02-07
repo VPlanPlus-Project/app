@@ -18,13 +18,11 @@ import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository
-import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import kotlin.uuid.Uuid
 
 class DevViewModel(
-    private val homeworkRepository: HomeworkRepository,
     private val keyValueRepository: KeyValueRepository,
     private val assessmentRepository: AssessmentRepository
 ) : ViewModel() {
@@ -62,7 +60,7 @@ class DevViewModel(
                     Logger.d { "Assessment updated" }
                 }
 
-                DevEvent.Clear -> homeworkRepository.clearCache()
+                DevEvent.Clear -> assessmentRepository.clearCache()
             }
         }
     }

@@ -55,7 +55,6 @@ class CreateAssessmentUseCase(
             selectedFiles.forEach {
                 val fileId = fileRepository.uploadFile(
                     vppId = profile.getVppIdItem()!!,
-                    assessmentId = result.data,
                     document = it
                 )
                 if (fileId !is Response.Success) return@forEach

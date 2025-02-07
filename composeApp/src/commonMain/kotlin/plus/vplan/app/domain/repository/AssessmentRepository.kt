@@ -30,6 +30,11 @@ interface AssessmentRepository {
         fileId: Int
     ): Response.Error?
 
+    suspend fun linkFileToAssessment(
+        assessmentId: Int,
+        fileId: Int
+    )
+
     fun getAll(): Flow<List<Assessment>>
     fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Assessment>>
 
@@ -61,4 +66,6 @@ interface AssessmentRepository {
         profile: Profile.StudentProfile,
         content: String
     )
+
+    suspend fun clearCache()
 }

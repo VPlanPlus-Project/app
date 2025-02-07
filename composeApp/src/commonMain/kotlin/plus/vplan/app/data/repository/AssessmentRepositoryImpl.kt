@@ -158,11 +158,16 @@ class AssessmentRepositoryImpl(
                 }
                 contentType(ContentType.Application.Json)
                 setBody(AssessmentFileLinkRequest(fileId))
+                vppId.buildSchoolApiAccess().authentication(this)
             }
             if (response.status.isSuccess()) return null
             return response.toErrorResponse<Any>()
         }
         return Response.Error.Cancelled
+    }
+
+    override suspend fun linkFileToAssessment(assessmentId: Int, fileId: Int) {
+        vppDatabase.assessmentDao.upsert(FKAssessmentFile(assessmentId, fileId))
     }
 
     override fun getAll(): Flow<List<Assessment>> {
@@ -433,6 +438,10 @@ class AssessmentRepositoryImpl(
                 if (!response.status.isSuccess()) vppDatabase.assessmentDao.updateContent(assessment.id, oldContent)
             }
         }
+    }
+
+    override suspend fun clearCache() {
+        vppDatabase.assessmentDao.clearCache()
     }
 }
 

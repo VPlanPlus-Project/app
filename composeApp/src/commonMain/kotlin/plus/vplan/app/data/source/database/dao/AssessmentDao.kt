@@ -20,6 +20,9 @@ interface AssessmentDao {
     @Transaction
     suspend fun upsert(assessments: List<DbAssessment>, files: List<FKAssessmentFile>)
 
+    @Upsert
+    suspend fun upsert(fk: FKAssessmentFile)
+
     @Query("SELECT MIN(id) FROM assessments WHERE id < 0")
     suspend fun getSmallestId(): Int?
 
@@ -43,4 +46,7 @@ interface AssessmentDao {
 
     @Query("UPDATE assessments SET description = :content WHERE id = :id")
     suspend fun updateContent(id: Int, content: String)
+
+    @Query("DELETE FROM assessments WHERE id > 0")
+    suspend fun clearCache()
 }

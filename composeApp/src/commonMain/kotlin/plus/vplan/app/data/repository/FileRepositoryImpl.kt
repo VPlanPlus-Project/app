@@ -132,7 +132,6 @@ class FileRepositoryImpl(
 
     override suspend fun uploadFile(
         vppId: VppId.Active,
-        assessmentId: Int,
         document: AttachedFile
     ): Response<Int> {
         safeRequest(onError = { return it }) {

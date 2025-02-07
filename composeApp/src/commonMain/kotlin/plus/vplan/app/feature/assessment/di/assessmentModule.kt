@@ -3,6 +3,7 @@ package plus.vplan.app.feature.assessment.di
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
+import plus.vplan.app.feature.assessment.domain.usecase.AddAssessmentFileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentContentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentTypeUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentDateUseCase
@@ -21,6 +22,7 @@ val assessmentModule = module {
     singleOf(::ChangeAssessmentDateUseCase)
     singleOf(::ChangeAssessmentVisibilityUseCase)
     singleOf(::ChangeAssessmentContentUseCase)
+    singleOf(::AddAssessmentFileUseCase)
 
     viewModelOf(::NewAssessmentViewModel)
     viewModelOf(::DetailViewModel)
