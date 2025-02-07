@@ -12,6 +12,7 @@ import io.ktor.http.URLProtocol
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
+import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
 import plus.vplan.app.domain.source.DefaultLessonSource
@@ -41,19 +42,19 @@ data class Host(
 
 val api = Host(
     protocol = URLProtocol.HTTPS,
-    host = "vplan.plus",
+    host = "development.vplan.plus",
     port = 443
 )
 
 val sp24Service = Host(
     protocol = URLProtocol.HTTPS,
-    host = "sp24.microservices.vplan.plus",
+    host = "sp24.microservices.development.vplan.plus",
     port = 443
 )
 
 val auth = Host(
     protocol = URLProtocol.HTTPS,
-    host = "auth.vplan.plus",
+    host = "development.auth.vplan.plus",
     port = 443
 )
 
@@ -89,6 +90,7 @@ object App {
     lateinit var roomSource: RoomSource
     lateinit var lessonTimeSource: LessonTimeSource
     lateinit var substitutionPlanSource: SubstitutionPlanSource
+    lateinit var assessmentSource: AssessmentSource
     lateinit var fileSource: FileSource
 }
 
@@ -112,6 +114,7 @@ fun App(task: StartTask?) {
             App.roomSource = RoomSource(koinInject())
             App.lessonTimeSource = LessonTimeSource(koinInject())
             App.substitutionPlanSource = SubstitutionPlanSource(koinInject())
+            App.assessmentSource = AssessmentSource(koinInject())
             App.fileSource = FileSource(koinInject(), koinInject())
 
             Surface(

@@ -10,7 +10,7 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.feature.homework.ui.components.File
+import plus.vplan.app.ui.common.AttachedFile
 
 interface HomeworkRepository {
     suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
@@ -47,7 +47,7 @@ interface HomeworkRepository {
     suspend fun download(
         schoolApiAccess: SchoolApiAccess,
         groupId: Int,
-        defaultLessonIds: List<String>
+        defaultLessonIds: List<Int>
     ): Response<List<Int>>
 
     suspend fun clearCache()
@@ -64,7 +64,7 @@ interface HomeworkRepository {
     suspend fun uploadHomeworkDocument(
         vppId: VppId.Active,
         homeworkId: Int,
-        document: File
+        document: AttachedFile
     ): Response<Int>
 }
 

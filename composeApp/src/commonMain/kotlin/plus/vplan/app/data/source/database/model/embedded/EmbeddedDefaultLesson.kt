@@ -17,6 +17,7 @@ data class EmbeddedDefaultLesson(
     fun toModel(): DefaultLesson {
         return DefaultLesson(
             id = defaultLesson.id,
+            indiwareId = defaultLesson.indiwareId,
             subject = defaultLesson.subject,
             teacher = defaultLesson.teacherId,
             groups = groups.map { it.groupId },

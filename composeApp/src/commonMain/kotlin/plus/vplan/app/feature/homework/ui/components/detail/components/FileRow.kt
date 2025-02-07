@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -28,9 +26,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,22 +35,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.openFile
+import plus.vplan.app.feature.homework.ui.components.create.RenameFileDialog
 import plus.vplan.app.utils.toHumanSize
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.cloud_download
 import vplanplus.composeapp.generated.resources.ellipsis_vertical
-import vplanplus.composeapp.generated.resources.file_text
 import vplanplus.composeapp.generated.resources.pencil
 import vplanplus.composeapp.generated.resources.square_arrow_out_up_right
 import vplanplus.composeapp.generated.resources.trash_2
@@ -192,60 +183,11 @@ fun FileRow(
             )
         }
 
-        if (isRenameOpen) {
-            var newName by remember { mutableStateOf(TextFieldValue(text = file.name, selection = TextRange(file.name.length))) }
-            AlertDialog(
-                onDismissRequest = { isRenameOpen = false },
-                icon = {
-                    Icon(
-                        painter = painterResource(Res.drawable.file_text),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                },
-                title = { Text("Datei umbenennen") },
-                text = {
-                    val focusRequester = remember { FocusRequester() }
-                    Column {
-                        TextField(
-                            value = newName,
-                            onValueChange = { newName = it },
-                            label = { Text("Name") },
-                            placeholder = { Text(file.name) },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { isRenameOpen = false }),
-                            trailingIcon = {
-                                Text(
-                                    text = ".${file.name.substringAfterLast(".")}",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.outline,
-                                )
-                            },
-                            modifier = Modifier.focusRequester(focusRequester)
-                        )
-                    }
-                    LaunchedEffect(Unit) { focusRequester.requestFocus() }
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            onRenameClick(newName.text.ifBlank { file.name })
-                            isRenameOpen = false
-                        }
-                    ) {
-                        Text("Speichern")
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { isRenameOpen = false }
-                    ) {
-                        Text("Abbrechen")
-                    }
-                }
-            )
-        }
+        if (isRenameOpen) RenameFileDialog(
+            originalFileName = file.name,
+            onDismissRequest = { isRenameOpen = false },
+            onRename = { onRenameClick(it) }
+        )
     }
 
     if (showDeleteDialog) {

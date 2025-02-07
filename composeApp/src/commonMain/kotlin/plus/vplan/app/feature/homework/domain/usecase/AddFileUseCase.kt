@@ -10,7 +10,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
-import plus.vplan.app.feature.homework.ui.components.File
+import plus.vplan.app.ui.common.AttachedFile
 
 class AddFileUseCase(
     private val localFileRepository: LocalFileRepository,
@@ -20,7 +20,7 @@ class AddFileUseCase(
     suspend operator fun invoke(homework: Homework, file: PlatformFile, profile: Profile.StudentProfile): Boolean {
         val id: Int
         if (homework.id > 0 && profile.getVppIdItem() != null) {
-            val response = homeworkRepository.uploadHomeworkDocument(profile.getVppIdItem()!!, homework.id, File.Other(
+            val response = homeworkRepository.uploadHomeworkDocument(profile.getVppIdItem()!!, homework.id, AttachedFile.Other(
                 platformFile = file,
                 bitmap = null,
                 size = file.getSize() ?: 0L,
@@ -40,7 +40,7 @@ class AddFileUseCase(
         }
 
         localFileRepository.writeFile("./homework_files/$id", file.readBytes())
-        val fileItem = fileRepository.getById(id).filterIsInstance<CacheState.Done<plus.vplan.app.domain.model.File>>().first().data
+        val fileItem = fileRepository.getById(id, false).filterIsInstance<CacheState.Done<plus.vplan.app.domain.model.File>>().first().data
         fileRepository.setOfflineReady(fileItem, true)
         homeworkRepository.linkHomeworkFileLocally(homework, fileItem)
         return true

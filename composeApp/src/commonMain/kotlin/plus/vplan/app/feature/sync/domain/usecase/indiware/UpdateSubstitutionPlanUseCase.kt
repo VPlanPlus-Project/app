@@ -36,7 +36,7 @@ class UpdateSubstitutionPlanUseCase(
         val teachers = teacherRepository.getBySchool(indiwareSchool.id).latest()
         val rooms = roomRepository.getBySchool(indiwareSchool.id).latest()
         val groups = groupRepository.getBySchool(indiwareSchool.id).latest()
-        val defaultLessons = defaultLessonRepository.getBySchool(indiwareSchool.id).latest()
+        val defaultLessons = defaultLessonRepository.getBySchool(indiwareSchool.id, false).latest()
         val week = weekRepository.getBySchool(indiwareSchool.id).latest().firstOrNull { date in it.start..it.end } ?: return Response.Error.Other("Week for $date not found")
 
         val substitutionPlanResponse = indiwareRepository.getSubstitutionPlan(

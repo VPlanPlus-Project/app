@@ -13,7 +13,7 @@ sealed interface School: Item {
 
     val name: String
 
-    fun getSchoolApiAccess(): SchoolApiAccess
+    fun getSchoolApiAccess(): SchoolApiAccess?
 
     data class IndiwareSchool(
         override val id: Int,
@@ -45,9 +45,7 @@ sealed interface School: Item {
         override val name: String,
         override val groups: List<Int>
     ) : School {
-        override fun getSchoolApiAccess(): SchoolApiAccess {
-            throw IllegalStateException("Default schools cannot be accessed via api")
-        }
+        override fun getSchoolApiAccess(): SchoolApiAccess? = null
     }
 }
 

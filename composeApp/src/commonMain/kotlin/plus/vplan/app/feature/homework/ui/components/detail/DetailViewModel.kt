@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.feature.homework.ui.components.detail
 
 import androidx.compose.runtime.getValue
@@ -31,6 +33,8 @@ import plus.vplan.app.feature.homework.domain.usecase.RenameFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
+import plus.vplan.app.ui.common.AttachedFile
+import kotlin.uuid.ExperimentalUuidApi
 
 class DetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
@@ -153,7 +157,7 @@ sealed class DetailEvent {
 
     data class RenameFile(val file: File, val newName: String) : DetailEvent()
     data class DeleteFile(val file: File) : DetailEvent()
-    data class AddFile(val file: plus.vplan.app.feature.homework.ui.components.File) : DetailEvent()
+    data class AddFile(val file: AttachedFile) : DetailEvent()
     data object Reload : DetailEvent()
 }
 

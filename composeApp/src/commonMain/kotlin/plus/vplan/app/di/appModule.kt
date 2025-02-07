@@ -1,8 +1,9 @@
 package plus.vplan.app.di
 
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -10,6 +11,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DayRepositoryImpl
 import plus.vplan.app.data.repository.DefaultLessonRepositoryImpl
@@ -28,6 +30,7 @@ import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
 import plus.vplan.app.domain.di.domainModule
+import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
@@ -46,6 +49,7 @@ import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.assessment.di.assessmentModule
 import plus.vplan.app.feature.calendar.di.calendarModule
 import plus.vplan.app.feature.dev.di.devModule
 import plus.vplan.app.feature.home.di.homeModule
@@ -61,15 +65,18 @@ expect fun platformModule(): Module
 
 val appModule = module(createdAtStart = true) {
     single<HttpClient> {
+        val appLogger = co.touchlab.kermit.Logger.withTag("Ktor Client")
         HttpClient {
-            install(HttpTimeout) {
-                socketTimeoutMillis = 5_000
-                connectTimeoutMillis = 5_000
-                requestTimeoutMillis = 5_000
-            }
-
             install(ContentNegotiation) {
                 json()
+            }
+
+            install(Logging) {
+                logger = object : Logger {
+                    override fun log(message: String) {
+                        appLogger.i { message }
+                    }
+                }
             }
         }
     }
@@ -91,6 +98,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::VppIdRepositoryImpl).bind<VppIdRepository>()
     singleOf(::HomeworkRepositoryImpl).bind<HomeworkRepository>()
     singleOf(::FileRepositoryImpl).bind<FileRepository>()
+    singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
 
     singleOf(::GetCurrentProfileUseCase)
 }
@@ -108,6 +116,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             homeModule,
             calendarModule,
             homeworkModule,
+            assessmentModule,
             profileModule,
             profileSettingsModule,
             vppIdModule,

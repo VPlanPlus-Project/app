@@ -99,7 +99,7 @@ class ProfileRepositoryImpl(
 
     override suspend fun setDefaultLessonEnabled(
         profileId: Uuid,
-        defaultLessonId: String,
+        defaultLessonId: Int,
         enable: Boolean
     ) {
         if (enable) vppDatabase.profileDao.deleteDisabledDefaultLesson(profileId, defaultLessonId)

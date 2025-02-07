@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.homework.ui.components
+package plus.vplan.app.feature.homework.ui.components.create
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -48,6 +48,7 @@ import vplanplus.composeapp.generated.resources.users
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LessonSelectDrawer(
     group: Group,
+    allowGroup: Boolean,
     defaultLessons: List<DefaultLesson>,
     selectedDefaultLesson: DefaultLesson?,
     onSelectDefaultLesson: (DefaultLesson?) -> Unit,
@@ -62,6 +63,7 @@ import vplanplus.composeapp.generated.resources.users
     ) {
         LessonSelectContent(
             group = group,
+            allowGroup = allowGroup,
             defaultLessons = defaultLessons,
             selectedDefaultLesson = selectedDefaultLesson,
             onSelectDefaultLesson = { onSelectDefaultLesson(it); hideSheet() }
@@ -72,6 +74,7 @@ import vplanplus.composeapp.generated.resources.users
 @Composable
 private fun LessonSelectContent(
     group: Group,
+    allowGroup: Boolean,
     defaultLessons: List<DefaultLesson>,
     selectedDefaultLesson: DefaultLesson?,
     onSelectDefaultLesson: (DefaultLesson?) -> Unit
@@ -82,43 +85,45 @@ private fun LessonSelectContent(
             .padding(horizontal = 16.dp)
             .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
     ) {
-        AnimatedContent(
-            targetState = selectedDefaultLesson == null,
-            transitionSpec = { fadeIn() togetherWith  fadeOut() }
-        ) { isDefaultLessonNotSelected ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 48.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .thenIf(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) { isDefaultLessonNotSelected }
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
-                    .clickable { onSelectDefaultLesson(null) }
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.users),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = if (isDefaultLessonNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                )
-                Column {
-                    Text(
-                        text = "Kein Fach",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = if (isDefaultLessonNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+        if (allowGroup) {
+            AnimatedContent(
+                targetState = selectedDefaultLesson == null,
+                transitionSpec = { fadeIn() togetherWith  fadeOut() }
+            ) { isDefaultLessonNotSelected ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .thenIf(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) { isDefaultLessonNotSelected }
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                        .clickable { onSelectDefaultLesson(null) }
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.users),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = if (isDefaultLessonNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = "Für Klasse ${group.name}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (isDefaultLessonNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                    )
+                    Column {
+                        Text(
+                            text = "Kein Fach",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = if (isDefaultLessonNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = "Für Klasse ${group.name}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (isDefaultLessonNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
                 }
             }
+            Spacer(Modifier.height(16.dp))
         }
-        Spacer(Modifier.height(16.dp))
         Column(
             modifier = Modifier
                 .fillMaxWidth()

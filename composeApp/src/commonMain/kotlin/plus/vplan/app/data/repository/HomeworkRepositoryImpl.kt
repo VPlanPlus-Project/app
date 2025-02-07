@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.data.repository
 
 import co.touchlab.kermit.Logger
@@ -48,9 +50,10 @@ import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.CreateHomeworkResponse
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.feature.homework.ui.components.File
+import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.utils.sendAll
 import plus.vplan.app.utils.sha256
+import kotlin.uuid.ExperimentalUuidApi
 
 private val logger = Logger.withTag("HomeworkRepositoryImpl")
 
@@ -149,10 +152,11 @@ class HomeworkRepositoryImpl(
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
 
                 val vppId = vppDatabase.vppIdDao.getById(metadataResponseData.createdBy).first()?.toModel() as? VppId.Active
-                val school = vppDatabase.schoolDao.findById(metadataResponseData.schoolId).first()?.toModel()
+                val schools = vppDatabase.schoolDao.getAll().first().filter { it.school.id in metadataResponseData.schoolIds }.map { it.toModel() }
+                val school = schools.first()
 
                 val homeworkResponse = httpClient.get("${api.url}/api/v2.2/homework/$id") {
-                    vppId?.let { bearerAuth(it.accessToken) } ?: school?.getSchoolApiAccess()?.authentication(this)
+                    vppId?.let { bearerAuth(it.accessToken) } ?: school.getSchoolApiAccess()?.authentication(this)
                 }
                 if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
                 val data = ResponseDataWrapper.fromJson<HomeworkResponseItem>(homeworkResponse.bodyAsText())
@@ -253,7 +257,7 @@ class HomeworkRepositoryImpl(
             ).build()) {
                 profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
                 contentType(ContentType.Application.Json)
-                setBody(HomeworkUpdateDefaultLessonRequest(defaultLesson = defaultLesson?.id, groupId = group?.id))
+                setBody(HomeworkUpdateDefaultLessonRequest(subjectInstanceId = defaultLesson?.id, groupId = group?.id))
             }
             if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateDefaultLessonAndGroup(homework.id, oldDefaultLesson?.id, oldGroup?.id)
         }
@@ -391,7 +395,7 @@ class HomeworkRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<String>): Response<List<Int>> {
+    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<Int>): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get(URLBuilder(
                 protocol = api.protocol,
@@ -499,8 +503,8 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override suspend fun uploadHomeworkDocument(vppId: VppId.Active, homeworkId: Int, document: File): Response<Int> {
-        safeRequest(onError = {return it}) {
+    override suspend fun uploadHomeworkDocument(vppId: VppId.Active, homeworkId: Int, document: AttachedFile): Response<Int> {
+        safeRequest(onError = { return it }) {
             val response = httpClient.post("${api.url}/api/v2.2/homework/$homeworkId/documents") {
                 header("File-Name", document.name)
                 header(HttpHeaders.ContentType, ContentType.Application.OctetStream.toString())
@@ -517,7 +521,7 @@ class HomeworkRepositoryImpl(
 
 @Serializable
 data class HomeworkPostRequest(
-    @SerialName("default_lesson") val defaultLesson: String? = null,
+    @SerialName("subject_instance") val defaultLesson: Int? = null,
     @SerialName("group_id") val groupId: Int? = null,
     @SerialName("due_to") val dueTo: Long,
     @SerialName("is_public") val isPublic: Boolean,
@@ -532,7 +536,7 @@ private data class HomeworkResponseItem(
     @SerialName("due_to") val dueTo: Long,
     @SerialName("is_public") val isPublic: Boolean,
     @SerialName("group_id") val group: Int?,
-    @SerialName("default_lesson") val defaultLesson: String?,
+    @SerialName("default_lesson") val defaultLesson: Int?,
     @SerialName("tasks") val tasks: List<HomeworkTaskResponseItem>,
     @SerialName("files") val files: List<Int>,
 )
@@ -558,7 +562,7 @@ private data class HomeworkTaskResponseItem(
 
 @Serializable
 private data class HomeworkMetadataResponse(
-    @SerialName("school_id") val schoolId: Int,
+    @SerialName("school_ids") val schoolIds: List<Int>,
     @SerialName("created_by") val createdBy: Int
 )
 
@@ -570,7 +574,7 @@ data class HomeworkGetResponse(
     @SerialName("due_to") val dueTo: Long,
     @SerialName("is_public") val isPublic: Boolean,
     @SerialName("group") val group: Int,
-    @SerialName("default_lesson") val defaultLesson: String?,
+    @SerialName("subject_instance") val defaultLesson: Int?,
     @SerialName("tasks") val tasks: List<HomeworkGetResponseTask>,
     @SerialName("files") val files: List<Int>,
 )
@@ -589,7 +593,7 @@ data class HomeworkTaskUpdateDoneStateRequest(
 
 @Serializable
 data class HomeworkUpdateDefaultLessonRequest(
-    @SerialName("default_lesson_id") val defaultLesson: String?,
+    @SerialName("subject_instance_id") val subjectInstanceId: Int?,
     @SerialName("group_id") val groupId: Int?,
 )
 

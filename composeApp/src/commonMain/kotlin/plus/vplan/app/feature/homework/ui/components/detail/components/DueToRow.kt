@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.homework.ui.components.detail.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,6 +13,7 @@ import plus.vplan.app.utils.regularDateFormat
 @Composable
 fun DueToRow(
     canEdit: Boolean,
+    isHomework: Boolean,
     onClick: () -> Unit,
     dueTo: Instant
 ) {
@@ -19,7 +21,7 @@ fun DueToRow(
     MetadataRow(
         key = {
             Text(
-                text = "Fällig",
+                text = if (isHomework) "Fällig" else "Datum",
                 style = tableNameStyle()
             )
         },
@@ -28,12 +30,14 @@ fun DueToRow(
                 canEdit = canEdit,
                 onClick = onClick
             ) {
-                Text(
-                    text = date.format(regularDateFormat),
-                    style = tableValueStyle(),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
-                )
+                AnimatedContent(targetState = date.format(regularDateFormat)) { displayDate ->
+                    Text(
+                        text = displayDate,
+                        style = tableValueStyle(),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
             }
         }
     )

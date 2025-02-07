@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.homework.ui.components.detail.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -29,11 +30,13 @@ fun ShareStatusRow(
                 canEdit = canEdit,
                 onClick = { isDropdownOpen = true }
             ) {
-                Text(
-                    text = if (isPublic) "Geteilt" else "Privat",
-                    style = tableValueStyle(),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                AnimatedContent(targetState = isPublic) { displayIsPublic ->
+                    Text(
+                        text = if (displayIsPublic) "Geteilt" else "Privat",
+                        style = tableValueStyle(),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 DropdownMenu(
                     expanded = isDropdownOpen,
                     onDismissRequest = { isDropdownOpen = false },

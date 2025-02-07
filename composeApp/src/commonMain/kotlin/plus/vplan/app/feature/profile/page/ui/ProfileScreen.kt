@@ -102,7 +102,7 @@ private fun ProfileContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 val defaultLessons by combine(state.currentProfile.defaultLessons.map { App.defaultLessonSource.getById(it.key).filterIsInstance<CacheState.Done<DefaultLesson>>().map { it.data.also { it.getCourseItem() } } }) { it.toList().sortedBy { it.subject + "_" + it.courseItem?.name} }.collectAsState(emptyList())
-                defaultLessons.associateWith { state.currentProfile.defaultLessons[it.getEntityId()] ?: false }.forEach { (defaultLesson, isEnabled) ->
+                defaultLessons.associateWith { state.currentProfile.defaultLessons[it.id] ?: false }.forEach { (defaultLesson, isEnabled) ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

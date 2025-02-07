@@ -16,7 +16,7 @@ class DownloadFileUseCase(
     private val localFileRepository: LocalFileRepository
 ) {
     suspend operator fun invoke(file: File, profile: Profile.StudentProfile): Flow<Float> =
-        fileRepository.cacheFile(file, profile.getVppIdItem()?.buildSchoolApiAccess(-1) ?: profile.getSchool().getFirstValue()!!.getSchoolApiAccess()).onEach {
+        fileRepository.cacheFile(file, profile.getVppIdItem()?.buildSchoolApiAccess(-1) ?: profile.getSchool().getFirstValue()!!.getSchoolApiAccess()!!).onEach {
             if (it is FileDownloadProgress.Done) {
                 localFileRepository.writeFile("./homework_files/${file.id}", it.content)
                 it.onFileSaved()

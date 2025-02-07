@@ -32,7 +32,7 @@ class RoomRepositoryImpl(
 
         return saveRequest {
             val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/room") {
-                school.getSchoolApiAccess().authentication(this)
+                school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<List<SchoolItemRoomsResponse>>(response.bodyAsText())
@@ -61,7 +61,7 @@ class RoomRepositoryImpl(
 
         return saveRequest {
             val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/room/$id") {
-                school.getSchoolApiAccess().authentication(this)
+                school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<SchoolItemRoomsResponse>(response.bodyAsText())

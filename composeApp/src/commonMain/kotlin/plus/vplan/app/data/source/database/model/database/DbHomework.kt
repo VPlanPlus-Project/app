@@ -29,7 +29,7 @@ import kotlin.uuid.Uuid
 )
 data class DbHomework(
     @ColumnInfo(name = "id") val id: Int,
-    @ColumnInfo(name = "default_lesson_id") val defaultLessonId: String?,
+    @ColumnInfo(name = "default_lesson_id") val defaultLessonId: Int?,
     @ColumnInfo(name = "group_id") val groupId: Int?,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "due_to") val dueTo: Instant,
