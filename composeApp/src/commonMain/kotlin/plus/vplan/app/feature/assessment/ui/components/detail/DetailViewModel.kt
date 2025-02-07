@@ -27,6 +27,7 @@ import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentVisibili
 import plus.vplan.app.feature.assessment.domain.usecase.DeleteAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
+import plus.vplan.app.feature.homework.domain.usecase.DownloadFileUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 
@@ -38,7 +39,8 @@ class DetailViewModel(
     private val changeAssessmentDateUseCase: ChangeAssessmentDateUseCase,
     private val changeAssessmentVisibilityUseCase: ChangeAssessmentVisibilityUseCase,
     private val changeAssessmentContentUseCase: ChangeAssessmentContentUseCase,
-    private val addAssessmentFileUseCase: AddAssessmentFileUseCase
+    private val addAssessmentFileUseCase: AddAssessmentFileUseCase,
+    private val downloadFileUseCase: DownloadFileUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DetailState())
         private set
@@ -101,6 +103,12 @@ class DetailViewModel(
                 is DetailEvent.UpdateVisibility -> changeAssessmentVisibilityUseCase(state.assessment!!, event.isPublic, state.profile!!)
                 is DetailEvent.UpdateContent -> changeAssessmentContentUseCase(state.assessment!!, event.content, state.profile!!)
                 is DetailEvent.AddFile -> addAssessmentFileUseCase(state.assessment!!, event.file.platformFile, state.profile!!)
+                is DetailEvent.DownloadFile -> {
+                    downloadFileUseCase(event.file, state.profile!!).collectLatest {
+                        state = state.copy(fileDownloadState = state.fileDownloadState.plus(event.file.id to it))
+                    }
+                    state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
+                }
                 else -> TODO()
             }
         }
