@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlin.uuid.Uuid
 
 @Entity(
@@ -32,7 +33,7 @@ data class DbHomework(
     @ColumnInfo(name = "default_lesson_id") val defaultLessonId: Int?,
     @ColumnInfo(name = "group_id") val groupId: Int?,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
-    @ColumnInfo(name = "due_to") val dueTo: Instant,
+    @ColumnInfo(name = "due_to") val dueTo: LocalDate,
     @ColumnInfo(name = "created_by_vpp_id") val createdBy: Int?,
     @ColumnInfo(name = "created_by_profile_id") val createdByProfileId: Uuid?,
     @ColumnInfo(name = "is_public") val isPublic: Boolean,

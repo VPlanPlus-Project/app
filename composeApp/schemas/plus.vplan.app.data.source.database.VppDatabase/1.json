@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "5ca75ec16cb22cbdbbecbdfb70c2bc44",
+    "identityHash": "c8b8aa8a926128e5b8310805956b5290",
     "entities": [
       {
         "tableName": "schools",
@@ -2164,7 +2164,7 @@
       },
       {
         "tableName": "homework",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `default_lesson_id` INTEGER, `group_id` INTEGER, `created_at` INTEGER NOT NULL, `due_to` INTEGER NOT NULL, `created_by_vpp_id` INTEGER, `created_by_profile_id` TEXT, `is_public` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`created_by_profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `default_lesson_id` INTEGER, `group_id` INTEGER, `created_at` INTEGER NOT NULL, `due_to` TEXT NOT NULL, `created_by_vpp_id` INTEGER, `created_by_profile_id` TEXT, `is_public` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`created_by_profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -2191,7 +2191,7 @@
           {
             "fieldPath": "dueTo",
             "columnName": "due_to",
-            "affinity": "INTEGER",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -2774,7 +2774,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5ca75ec16cb22cbdbbecbdfb70c2bc44')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c8b8aa8a926128e5b8310805956b5290')"
     ]
   }
 }

@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.search.ui.main
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,9 +17,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +30,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.LessonRow
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
@@ -64,6 +68,8 @@ private fun SearchScreenContent(
 ) {
     val localDensity = LocalDensity.current
     var width by remember { mutableStateOf(0.dp) }
+
+    var visibleHomework by rememberSaveable<MutableState<Int?>> { mutableStateOf(null) }
 
     Column(
         modifier = Modifier
@@ -124,8 +130,19 @@ private fun SearchScreenContent(
                         )
                         HorizontalDivider()
                     }
+                    if (result is SearchResult.Homework) {
+                        Text(
+                            text = result.homework.toString(),
+                            modifier = Modifier.clickable { visibleHomework = result.homework.id }
+                        )
+                    }
                 }
             }
         }
     }
+
+    visibleHomework?.let { HomeworkDetailDrawer(
+        homeworkId = it,
+        onDismiss = { visibleHomework = null }
+    ) }
 }

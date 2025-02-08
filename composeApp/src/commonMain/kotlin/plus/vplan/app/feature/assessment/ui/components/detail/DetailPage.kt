@@ -39,9 +39,7 @@ import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.flow.onEach
-import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.AppEntity
@@ -199,7 +197,7 @@ fun DetailPage(
             DueToRow(
                 canEdit = state.canEdit,
                 isHomework = false,
-                dueTo = assessment.date.atTime(LocalTime(0, 0)).toInstant(TimeZone.UTC),
+                dueTo = assessment.date,
                 onClick = { showDateSelectDrawer = true },
             )
             if (assessment.creator is AppEntity.VppId) ShareStatusRow(

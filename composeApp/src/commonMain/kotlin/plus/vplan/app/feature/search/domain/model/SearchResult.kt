@@ -27,8 +27,10 @@ sealed class SearchResult(val type: Result) {
             override val lessons: List<Lesson>
         ) : SchoolEntity(Result.Room, room.name, room.school!!)
     }
+
+    data class Homework(val homework: plus.vplan.app.domain.model.Homework): SearchResult(Result.Homework)
 }
 
 enum class Result {
-    Group, Teacher, Room
+    Group, Teacher, Room, Homework
 }

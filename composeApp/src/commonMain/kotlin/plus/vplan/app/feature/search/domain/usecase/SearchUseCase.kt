@@ -8,9 +8,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.repository.GroupRepository
+import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -22,10 +25,12 @@ class SearchUseCase(
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
-    private val substitutionPlanRepository: SubstitutionPlanRepository
+    private val substitutionPlanRepository: SubstitutionPlanRepository,
+    private val homeworkRepository: HomeworkRepository
 ) {
 
     val lessons = mutableListOf<Lesson>()
+    val homework = mutableListOf<Homework>()
 
     operator fun invoke(searchQuery: String, date: LocalDate) = channelFlow {
         if (searchQuery.isBlank()) return@channelFlow send(emptyMap())
@@ -62,25 +67,31 @@ class SearchUseCase(
                 } }
                 .first())
 
-            val result = entityResult.map { schoolEntity ->
+            val result: MutableList<SearchResult> = entityResult.map { schoolEntity ->
                 when (schoolEntity) {
                     is SearchResult.SchoolEntity.Group -> {
                         schoolEntity.copy(
                             lessons = lessons.filter { schoolEntity.group.id in it.groups }
                         )
                     }
+
                     is SearchResult.SchoolEntity.Teacher -> {
                         schoolEntity.copy(
                             lessons = lessons.filter { schoolEntity.teacher.id in it.teachers }
                         )
                     }
+
                     is SearchResult.SchoolEntity.Room -> {
                         schoolEntity.copy(
                             lessons = lessons.filter { schoolEntity.room.id in it.rooms.orEmpty() }
                         )
                     }
                 }
-            }
+            }.toMutableList()
+            send(result)
+
+            val homeworkItems = homework.ifEmpty { homeworkRepository.getAll().first().filterIsInstance<CacheState.Done<Homework>>().map { it.data }.onEach { it.getTaskItems() }.also { homework.addAll(it) } }
+            result += homeworkItems.filter { it.taskItems!!.any { query in it.content.lowercase() } }.map { SearchResult.Homework(it) }
             send(result)
         }
     }

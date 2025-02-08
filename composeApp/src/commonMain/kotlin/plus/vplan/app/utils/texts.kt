@@ -15,4 +15,5 @@ fun Result.toName() = when (this) {
     Result.Group -> "Klassen"
     Result.Teacher -> "Lehrer"
     Result.Room -> "Räume"
+    Result.Homework -> "Hausaufgaben"
 }
