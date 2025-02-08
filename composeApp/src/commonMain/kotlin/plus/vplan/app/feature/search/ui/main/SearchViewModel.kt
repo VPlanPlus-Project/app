@@ -8,7 +8,12 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
@@ -17,13 +22,20 @@ import plus.vplan.app.utils.now
 import kotlin.time.Duration.Companion.days
 
 class SearchViewModel(
-    private val searchUseCase: SearchUseCase
+    private val searchUseCase: SearchUseCase,
+    private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase
 ) : ViewModel() {
 
     var state by mutableStateOf(SearchState())
         private set
 
-    var searchJob: Job? = null
+    private var searchJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            getCurrentDateTimeUseCase().collectLatest { state = state.copy(currentTime = it) }
+        }
+    }
 
     fun onEvent(event: SearchEvent) {
         viewModelScope.launch {
@@ -48,7 +60,8 @@ class SearchViewModel(
 
 data class SearchState(
     val query: String = "",
-    val results: Map<Result, List<SearchResult>> = emptyMap()
+    val results: Map<Result, List<SearchResult>> = emptyMap(),
+    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 )
 
 sealed class SearchEvent {

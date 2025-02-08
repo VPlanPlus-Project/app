@@ -32,6 +32,8 @@ import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.until
 
+val hourWidth = 92.dp
+
 @Composable
 fun LessonRow(
     referenceTime: LocalDateTime,
@@ -39,7 +41,6 @@ fun LessonRow(
     scrollState: ScrollState
 ) {
     if (lessons.isEmpty()) return
-    val hourWidth = 92.dp
     val lessonHeight = 32.dp
     val lessonVerticalPadding = 2.dp
     var fullHeight by remember { mutableStateOf(0.dp) }

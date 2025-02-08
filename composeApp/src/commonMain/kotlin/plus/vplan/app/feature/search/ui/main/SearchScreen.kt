@@ -17,17 +17,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.LessonRow
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
+import plus.vplan.app.feature.search.ui.main.components.hourWidth
 import plus.vplan.app.ui.keyboardAsState
 import plus.vplan.app.utils.toName
 
@@ -57,10 +60,14 @@ private fun SearchScreenContent(
     onEvent: (event: SearchEvent) -> Unit,
     contentPadding: PaddingValues,
 ) {
+    val localDensity = LocalDensity.current
+    var width by remember { mutableStateOf(0.dp) }
+
     Column(
         modifier = Modifier
             .padding(top = contentPadding.calculateTopPadding())
             .fillMaxSize()
+            .onSizeChanged { with(localDensity) { width = it.width.toDp() } }
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 8.dp)
@@ -78,6 +85,9 @@ private fun SearchScreenContent(
             Spacer(Modifier.height(16.dp))
 
             val lessonScroller = rememberScrollState()
+            LaunchedEffect(width) {
+                lessonScroller.scrollTo(with(localDensity) { (state.currentTime.hour * 60 + state.currentTime.minute) * (hourWidth/60).roundToPx() - (width / 2).roundToPx() }.coerceAtLeast(0))
+            }
 
             state.results.forEach { (type, results) ->
                 Text(
@@ -106,7 +116,7 @@ private fun SearchScreenContent(
                             )
                         }
                         LessonRow(
-                            referenceTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+                            referenceTime = state.currentTime,
                             lessons = result.lessons,
                             scrollState = lessonScroller
                         )
