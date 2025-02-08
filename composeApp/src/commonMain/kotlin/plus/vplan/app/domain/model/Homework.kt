@@ -142,7 +142,8 @@ sealed class Homework : Item {
         var groupId: Int? = null
             private set
 
-        private var createdByProfileItem: Profile.StudentProfile? = null
+        var createdByProfileItem: Profile.StudentProfile? = null
+            private set
 
         suspend fun getCreatedByProfile(): Profile.StudentProfile {
             return createdByProfileItem ?: createdByProfile.let { createdByProfileId ->

@@ -2,6 +2,7 @@ package plus.vplan.app.feature.search.ui.main
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,9 +11,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,17 +30,27 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import kotlinx.datetime.format
+import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.LessonRow
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
 import plus.vplan.app.feature.search.ui.main.components.hourWidth
 import plus.vplan.app.ui.keyboardAsState
+import plus.vplan.app.ui.subjectIcon
+import plus.vplan.app.utils.DOT
+import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toName
 
 @Composable
@@ -128,14 +143,70 @@ private fun SearchScreenContent(
                             lessons = result.lessons,
                             scrollState = lessonScroller
                         )
-                        HorizontalDivider()
                     }
                     if (result is SearchResult.Homework) {
-                        Text(
-                            text = result.homework.toString(),
-                            modifier = Modifier.clickable { visibleHomework = result.homework.id }
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { visibleHomework = result.homework.id }
+                                .padding(horizontal = 8.dp),
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(24.dp)) {
+                                    result.homework.defaultLessonItem?.let { defaultLesson ->
+                                        Icon(
+                                            painter = painterResource(defaultLesson.subject.subjectIcon()),
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentDescription = null
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                Column {
+                                    Row {
+                                        Text(
+                                            text = result.homework.defaultLessonItem?.subject ?: result.homework.groupItem?.name ?: "Unbekannte Zuweisung",
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                                        )
+                                        Text(
+                                            text = " $DOT ${result.homework.dueTo.format(regularDateFormat)}",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                    Text(
+                                        text = when (result.homework) {
+                                            is Homework.CloudHomework -> result.homework.createdByItem!!.name
+                                            is Homework.LocalHomework -> result.homework.createdByProfileItem!!.name
+                                        },
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                            }
+                            result.homework.taskItems!!.forEach { task ->
+                                Row(
+                                    modifier = Modifier
+                                        .padding(start = 16.dp, end = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Text(
+                                        text = DOT,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Text(
+                                        text = task.content,
+                                        style = MaterialTheme.typography.bodySmall.let {
+                                            if (state.currentProfile is Profile.StudentProfile && task.isDone(state.currentProfile)) it.copy(textDecoration = TextDecoration.LineThrough)
+                                            else it
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
+
+                    HorizontalDivider()
+                    Spacer(Modifier.height(8.dp))
                 }
             }
         }

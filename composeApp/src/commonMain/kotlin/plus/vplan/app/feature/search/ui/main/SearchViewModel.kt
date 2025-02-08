@@ -13,17 +13,20 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
+import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
-import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.now
+import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
 class SearchViewModel(
     private val searchUseCase: SearchUseCase,
-    private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase
+    private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
+    private val getCurrentProfileUseCase: GetCurrentProfileUseCase
 ) : ViewModel() {
 
     var state by mutableStateOf(SearchState())
@@ -34,6 +37,10 @@ class SearchViewModel(
     init {
         viewModelScope.launch {
             getCurrentDateTimeUseCase().collectLatest { state = state.copy(currentTime = it) }
+        }
+
+        viewModelScope.launch {
+            getCurrentProfileUseCase().collectLatest { state = state.copy(currentProfile = it) }
         }
     }
 
@@ -51,7 +58,7 @@ class SearchViewModel(
     private fun restartSearch() {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            searchUseCase(state.query, LocalDate.now().minus(1.days)).collectLatest {
+            searchUseCase(state.query, LocalDate.now().plus(2.days)).collectLatest {
                 state = state.copy(results = it)
             }
         }
@@ -61,6 +68,7 @@ class SearchViewModel(
 data class SearchState(
     val query: String = "",
     val results: Map<Result, List<SearchResult>> = emptyMap(),
+    val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 )
 
