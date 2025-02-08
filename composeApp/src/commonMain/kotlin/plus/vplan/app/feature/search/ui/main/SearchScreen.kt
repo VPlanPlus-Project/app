@@ -42,6 +42,8 @@ fun SearchScreen(
     onToggleBottomBar: (visible: Boolean) -> Unit
 ) {
 
+    LaunchedEffect(Unit) { viewModel.onEvent(SearchEvent.UpdateQuery("")) }
+
     val isKeyboardVisible by keyboardAsState()
     LaunchedEffect(isKeyboardVisible) {
         onToggleBottomBar(!isKeyboardVisible)
