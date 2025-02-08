@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
@@ -23,6 +24,9 @@ class SearchUseCase(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val substitutionPlanRepository: SubstitutionPlanRepository
 ) {
+
+    val lessons = mutableListOf<Lesson>()
+
     operator fun invoke(searchQuery: String, date: LocalDate) = channelFlow {
         if (searchQuery.isBlank()) return@channelFlow send(emptyMap())
         val query = searchQuery.lowercase().trim()
@@ -50,30 +54,34 @@ class SearchUseCase(
         }.collectLatest { entityResult ->
             val send: suspend (results: List<SearchResult>) -> Unit = { send(it.groupBy { entityResult -> entityResult.type }) }
             send(entityResult)
-            substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, date)
-                .map { lessonIds -> lessonIds.map { lessonId -> App.substitutionPlanSource.getById(lessonId).getFirstValue() }.fastFilterNotNull() }
-                .collectLatest { lessons ->
-                    val result = entityResult.map { schoolEntity ->
-                        when (schoolEntity) {
-                            is SearchResult.SchoolEntity.Group -> {
-                                schoolEntity.copy(
-                                    lessons = lessons.filter { schoolEntity.group.id in it.groups }
-                                )
-                            }
-                            is SearchResult.SchoolEntity.Teacher -> {
-                                schoolEntity.copy(
-                                    lessons = lessons.filter { schoolEntity.teacher.id in it.teachers }
-                                )
-                            }
-                            is SearchResult.SchoolEntity.Room -> {
-                                schoolEntity.copy(
-                                    lessons = lessons.filter { schoolEntity.room.id in it.rooms }
-                                )
-                            }
-                        }
+            if (lessons.isEmpty()) lessons.addAll(substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, date)
+                .map { lessonIds -> lessonIds.map { lessonId -> App.substitutionPlanSource.getById(lessonId).getFirstValue() }.fastFilterNotNull().filter { it.subject != null }.onEach {
+                    it.getLessonTimeItem()
+                    it.getRoomItems()
+                    it.getTeacherItems()
+                } }
+                .first())
+
+            val result = entityResult.map { schoolEntity ->
+                when (schoolEntity) {
+                    is SearchResult.SchoolEntity.Group -> {
+                        schoolEntity.copy(
+                            lessons = lessons.filter { schoolEntity.group.id in it.groups }
+                        )
                     }
-                    send(result)
+                    is SearchResult.SchoolEntity.Teacher -> {
+                        schoolEntity.copy(
+                            lessons = lessons.filter { schoolEntity.teacher.id in it.teachers }
+                        )
+                    }
+                    is SearchResult.SchoolEntity.Room -> {
+                        schoolEntity.copy(
+                            lessons = lessons.filter { schoolEntity.room.id in it.rooms.orEmpty() }
+                        )
+                    }
                 }
+            }
+            send(result)
         }
     }
 }

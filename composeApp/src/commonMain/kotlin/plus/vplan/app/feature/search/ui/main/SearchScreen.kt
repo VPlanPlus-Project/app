@@ -22,7 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.feature.search.domain.model.SearchResult
+import plus.vplan.app.feature.search.ui.main.components.LessonRow
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
 import plus.vplan.app.ui.keyboardAsState
 import plus.vplan.app.utils.toName
@@ -72,6 +76,9 @@ private fun SearchScreenContent(
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(Modifier.height(16.dp))
+
+            val lessonScroller = rememberScrollState()
+
             state.results.forEach { (type, results) ->
                 Text(
                     text = type.toName(),
@@ -98,7 +105,11 @@ private fun SearchScreenContent(
                                 style = MaterialTheme.typography.labelMedium
                             )
                         }
-                        Text(result.toString())
+                        LessonRow(
+                            referenceTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+                            lessons = result.lessons,
+                            scrollState = lessonScroller
+                        )
                         HorizontalDivider()
                     }
                 }
