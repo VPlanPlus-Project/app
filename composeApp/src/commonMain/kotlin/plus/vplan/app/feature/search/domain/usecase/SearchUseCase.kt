@@ -15,7 +15,6 @@ import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.search.domain.model.SearchResult
-import plus.vplan.app.utils.now
 
 class SearchUseCase(
     private val groupRepository: GroupRepository,
@@ -24,7 +23,7 @@ class SearchUseCase(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val substitutionPlanRepository: SubstitutionPlanRepository
 ) {
-    operator fun invoke(searchQuery: String) = channelFlow {
+    operator fun invoke(searchQuery: String, date: LocalDate) = channelFlow {
         if (searchQuery.isBlank()) return@channelFlow send(emptyMap())
         val query = searchQuery.lowercase().trim()
         val profile = getCurrentProfileUseCase().first()
@@ -37,18 +36,21 @@ class SearchUseCase(
         ) { groups, teachers, rooms ->
             groups
                 .filter { query in it.name.lowercase() }
+                .onEach { it.getSchoolItem() }
                 .map { SearchResult.SchoolEntity.Group(it, emptyList()) } +
                     teachers
                         .filter { query in it.name.lowercase() }
+                        .onEach { it.getSchoolItem() }
                         .map { SearchResult.SchoolEntity.Teacher(it, emptyList()) } +
 
                     rooms
                         .filter { query in it.name.lowercase() }
+                        .onEach { it.getSchoolItem() }
                         .map { SearchResult.SchoolEntity.Room(it, emptyList()) }
         }.collectLatest { entityResult ->
             val send: suspend (results: List<SearchResult>) -> Unit = { send(it.groupBy { entityResult -> entityResult.type }) }
             send(entityResult)
-            substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, LocalDate.now())
+            substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, date)
                 .map { lessonIds -> lessonIds.map { lessonId -> App.substitutionPlanSource.getById(lessonId).getFirstValue() }.fastFilterNotNull() }
                 .collectLatest { lessons ->
                     val result = entityResult.map { schoolEntity ->

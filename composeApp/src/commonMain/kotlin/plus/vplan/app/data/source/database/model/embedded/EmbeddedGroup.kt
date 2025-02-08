@@ -18,7 +18,7 @@ data class EmbeddedGroup(
         return Group(
             id = group.id,
             name = group.name,
-            school = school.schoolId
+            schoolId = school.schoolId
         )
     }
 }

@@ -31,7 +31,7 @@ data class DbRoom(
     fun toModel(): Room {
         return Room(
             id = id,
-            school = schoolId,
+            schoolId = schoolId,
             name = name
         )
     }

@@ -36,7 +36,7 @@ class ProfileRepositoryImpl(
         vppDatabase.profileDao.upsert(
             DbProfile(
                 id = id,
-                schoolId = group.school,
+                schoolId = group.schoolId,
                 displayName = group.name
             )
         )
@@ -62,7 +62,7 @@ class ProfileRepositoryImpl(
         vppDatabase.profileDao.upsert(
             DbProfile(
                 id = id,
-                schoolId = teacher.school,
+                schoolId = teacher.schoolId,
                 displayName = teacher.name
             )
         )
@@ -82,7 +82,7 @@ class ProfileRepositoryImpl(
         vppDatabase.profileDao.upsert(
             DbProfile(
                 id = id,
-                schoolId = room.school,
+                schoolId = room.schoolId,
                 displayName = room.name
             )
         )
