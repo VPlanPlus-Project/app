@@ -62,7 +62,6 @@ fun SearchScreen(
     viewModel: SearchViewModel,
     onToggleBottomBar: (visible: Boolean) -> Unit
 ) {
-
     LaunchedEffect(Unit) { viewModel.onEvent(SearchEvent.UpdateQuery("")) }
 
     val isKeyboardVisible by keyboardAsState()
@@ -99,8 +98,10 @@ private fun SearchScreenContent(
             modifier = Modifier.padding(horizontal = 8.dp)
         ) {
             SearchBar(
-                state.query,
-                { onEvent(SearchEvent.UpdateQuery(it)) }
+                value = state.query,
+                selectedDate = state.selectedDate,
+                onQueryChange = { onEvent(SearchEvent.UpdateQuery(it)) },
+                onSelectDate = { onEvent(SearchEvent.SelectDate(it)) }
             )
         }
         Column(

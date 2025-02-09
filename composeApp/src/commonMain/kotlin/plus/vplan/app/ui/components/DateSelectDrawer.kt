@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.homework.ui.components.create
+package plus.vplan.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +16,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
@@ -47,6 +48,7 @@ import kotlin.time.Duration.Companion.days
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateSelectDrawer(
+    configuration: DateSelectConfiguration,
     selectedDate: LocalDate?,
     onSelectDate: (LocalDate) -> Unit,
     onDismiss: () -> Unit
@@ -59,6 +61,7 @@ fun DateSelectDrawer(
         sheetState = modalState
     ) {
         DateSelectDrawerContent(
+            configuration = configuration,
             selectedDate = selectedDate,
             onSelectDate = { onSelectDate(it); hideSheet() }
         )
@@ -68,6 +71,7 @@ fun DateSelectDrawer(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DateSelectDrawerContent(
+    configuration: DateSelectConfiguration,
     selectedDate: LocalDate?,
     onSelectDate: (LocalDate) -> Unit
 ) {
@@ -77,6 +81,23 @@ private fun DateSelectDrawerContent(
             .verticalScroll(rememberScrollState())
             .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
     ) {
+
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+        ) {
+            if (configuration.title != null) Text(
+                text = configuration.title,
+                style = MaterialTheme.typography.headlineLarge,
+            )
+
+            if (configuration.subtitle != null) Text(
+                text = configuration.subtitle,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -86,7 +107,7 @@ private fun DateSelectDrawerContent(
         ) {
             item { Spacer(Modifier.width(8.dp)) }
             items(7) { days ->
-                val date = LocalDate.now() + days.days
+                val date = LocalDate.now() + (days - if (configuration.allowDatesInPast) 7/2 else 0).days
                 FilterChip(
                     selected = date == selectedDate,
                     onClick = { onSelectDate(date) },
@@ -109,12 +130,13 @@ private fun DateSelectDrawerContent(
             initialSelectedDateMillis = selectedDate?.atStartOfDay()?.toInstant(TimeZone.UTC)?.toEpochMilliseconds(),
             selectableDates = object : SelectableDates {
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    if (configuration.allowDatesInPast) return true
                     val date = Instant.fromEpochMilliseconds(utcTimeMillis).toLocalDateTime(TimeZone.UTC).date
                     return date >= LocalDate.now()
                 }
 
                 override fun isSelectableYear(year: Int): Boolean {
-                    return year >= LocalDate.now().year
+                    return configuration.allowDatesInPast || year >= LocalDate.now().year
                 }
             }
         )
@@ -129,3 +151,9 @@ private fun DateSelectDrawerContent(
         )
     }
 }
+
+data class DateSelectConfiguration(
+    val allowDatesInPast: Boolean,
+    val title: String? = null,
+    val subtitle: String? = null
+)

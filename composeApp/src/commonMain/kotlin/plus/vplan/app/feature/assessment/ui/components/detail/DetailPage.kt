@@ -45,7 +45,7 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
-import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
+import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
@@ -59,6 +59,7 @@ import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
+import plus.vplan.app.ui.components.DateSelectConfiguration
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.file
@@ -287,6 +288,9 @@ fun DetailPage(
 
     if (showDateSelectDrawer) {
         DateSelectDrawer(
+            configuration = DateSelectConfiguration(
+                allowDatesInPast = false
+            ),
             selectedDate = assessment.date,
             onSelectDate = { onEvent(DetailEvent.UpdateDate(it)) },
             onDismiss = { showDateSelectDrawer = false }
