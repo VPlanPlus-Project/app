@@ -42,19 +42,19 @@ data class Host(
 
 val api = Host(
     protocol = URLProtocol.HTTPS,
-    host = "development.vplan.plus",
+    host = "vplan.plus",
     port = 443
 )
 
 val sp24Service = Host(
     protocol = URLProtocol.HTTPS,
-    host = "sp24.microservices.development.vplan.plus",
+    host = "sp24.microservices.vplan.plus",
     port = 443
 )
 
 val auth = Host(
     protocol = URLProtocol.HTTPS,
-    host = "development.auth.vplan.plus",
+    host = "auth.vplan.plus",
     port = 443
 )
 

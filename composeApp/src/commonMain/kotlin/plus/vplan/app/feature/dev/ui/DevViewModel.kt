@@ -18,13 +18,15 @@ import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository
+import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import kotlin.uuid.Uuid
 
 class DevViewModel(
     private val keyValueRepository: KeyValueRepository,
-    private val assessmentRepository: AssessmentRepository
+    private val assessmentRepository: AssessmentRepository,
+    private val homeworkRepository: HomeworkRepository
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
         private set
@@ -57,7 +59,17 @@ class DevViewModel(
                             it.getVppIdItem()?.buildSchoolApiAccess() ?: it.getSchoolItem().getSchoolApiAccess()
                         } ?: return@launch,
                         defaultLessonIds = (state.profile as Profile.StudentProfile).getDefaultLessons().map { it.id })
-                    Logger.d { "Assessment updated" }
+                    Logger.d { "Assessments updated" }
+
+                    Logger.d { "Homework update started" }
+                    homeworkRepository.download(
+                        schoolApiAccess = (state.profile as Profile.StudentProfile).let {
+                            it.getVppIdItem()?.buildSchoolApiAccess() ?: it.getSchoolItem().getSchoolApiAccess()
+                        } ?: return@launch,
+                        groupId = (state.profile as Profile.StudentProfile).group,
+                        defaultLessonIds = (state.profile as Profile.StudentProfile).getDefaultLessons().map { it.id }
+                    )
+                    Logger.d { "Homework updated" }
                 }
 
                 DevEvent.Clear -> assessmentRepository.clearCache()

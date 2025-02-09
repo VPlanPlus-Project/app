@@ -38,8 +38,6 @@ import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.flow.onEach
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
@@ -298,7 +296,7 @@ fun DetailPage(
 
     if (showDateSelectDrawer) {
         DateSelectDrawer(
-            selectedDate = homework.dueTo.toLocalDateTime(TimeZone.currentSystemDefault()).date,
+            selectedDate = homework.dueTo,
             onSelectDate = { onEvent(DetailEvent.UpdateDueTo(it)) },
             onDismiss = { showDateSelectDrawer = false }
         )

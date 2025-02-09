@@ -159,7 +159,7 @@ class HomeworkRepositoryImpl(
                     vppId?.let { bearerAuth(it.accessToken) } ?: school.getSchoolApiAccess()?.authentication(this)
                 }
                 if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
-                val data = ResponseDataWrapper.fromJson<HomeworkResponseItem>(homeworkResponse.bodyAsText())
+                val data = ResponseDataWrapper.fromJson<HomeworkGetResponse>(homeworkResponse.bodyAsText())
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
 
                 vppDatabase.homeworkDao.deleteFileHomeworkConnections(listOf(id))
@@ -167,22 +167,22 @@ class HomeworkRepositoryImpl(
                     homework = listOf(
                         DbHomework(
                             id = id,
-                            defaultLessonId = data.defaultLesson,
-                            groupId = data.group,
+                            defaultLessonId = data.subjectInstance?.id,
+                            groupId = if (data.subjectInstance == null) data.group.id else null,
                             createdAt = Instant.fromEpochSeconds(data.createdAt),
-                            dueTo = Instant.fromEpochSeconds(data.dueTo),
-                            createdBy = data.createdBy,
+                            dueTo = LocalDate.parse(data.dueTo),
+                            createdBy = data.createdBy.id,
                             createdByProfileId = null,
                             isPublic = data.isPublic
                         )),
-                    homeworkTask = data.tasks.map { task ->
+                    homeworkTask = data.tasks.map { it.value }.map { task ->
                         DbHomeworkTask(
                             id = task.id,
-                            content = task.description,
+                            content = task.content,
                             homeworkId = id
                         )
                     },
-                    homeworkTaskDoneAccount = if (vppId == null) emptyList() else data.tasks.mapNotNull {
+                    homeworkTaskDoneAccount = if (vppId == null) emptyList() else data.tasks.map { it.value }.mapNotNull {
                         DbHomeworkTaskDoneAccount(
                             taskId = it.id,
                             vppId = vppId.id,
@@ -190,7 +190,7 @@ class HomeworkRepositoryImpl(
                         )
                     },
                     files = emptyList(),
-                    fileHomeworkConnections = data.files.map { FKHomeworkFile(fileId = it, homeworkId = data.id) }
+                    fileHomeworkConnections = data.files.map { FKHomeworkFile(fileId = it.id, homeworkId = data.id) }
                 )
             }
 
@@ -265,8 +265,7 @@ class HomeworkRepositoryImpl(
 
     override suspend fun editHomeworkDueTo(homework: Homework, dueTo: LocalDate, profile: Profile.StudentProfile) {
         val oldDueTo = homework.dueTo
-        val newDueTo = Instant.fromEpochSeconds(dueTo.toEpochDays() * 24 * 60 * 60L)
-        vppDatabase.homeworkDao.updateDueTo(homework.id, newDueTo)
+        vppDatabase.homeworkDao.updateDueTo(homework.id, dueTo)
 
         if (homework.id < 0 || profile.getVppIdItem() == null) return
         safeRequest(onError = { vppDatabase.homeworkDao.updateDueTo(homework.id, oldDueTo) }) {
@@ -278,7 +277,7 @@ class HomeworkRepositoryImpl(
             ).build()) {
                 profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
                 contentType(ContentType.Application.Json)
-                setBody(HomeworkUpdateDueToRequest(dueTo = newDueTo.epochSeconds))
+                setBody(HomeworkUpdateDueToRequest(dueTo = dueTo.toString()))
             }
             if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateDueTo(homework.id, oldDueTo)
         }
@@ -405,6 +404,8 @@ class HomeworkRepositoryImpl(
                 parameters = Parameters.build {
                     append("filter_groups", groupId.toString())
                     append("filter_default_lessons", defaultLessonIds.joinToString(","))
+                    append("include_tasks", "true")
+                    append("include_files", "true")
                 }
             ).build()) { schoolApiAccess.authentication(this) }
 
@@ -416,17 +417,17 @@ class HomeworkRepositoryImpl(
                 homework = data.map { homework ->
                     DbHomework(
                         id = homework.id,
-                        defaultLessonId = homework.defaultLesson,
-                        groupId = if (homework.defaultLesson == null) homework.group else null,
+                        defaultLessonId = homework.subjectInstance?.id,
+                        groupId = if (homework.subjectInstance == null) homework.group.id else null,
                         createdAt = Instant.fromEpochSeconds(homework.createdAt),
-                        dueTo = Instant.fromEpochSeconds(homework.dueTo),
-                        createdBy = homework.createdBy,
+                        dueTo = LocalDate.parse(homework.dueTo),
+                        createdBy = homework.createdBy.id,
                         createdByProfileId = null,
                         isPublic = homework.isPublic
                     )
                 },
                 homeworkTask = data.map { homework ->
-                    homework.tasks.map { homeworkTask ->
+                    homework.tasks.map { it.value }.map { homeworkTask ->
                         DbHomeworkTask(
                             id = homeworkTask.id,
                             homeworkId = homework.id,
@@ -435,7 +436,7 @@ class HomeworkRepositoryImpl(
                     }
                 }.flatten(),
                 homeworkTaskDoneAccount = if (schoolApiAccess !is SchoolApiAccess.VppIdAccess) emptyList() else data.flatMap { homework ->
-                    homework.tasks.mapNotNull {
+                    homework.tasks.map { it.value }.mapNotNull {
                         DbHomeworkTaskDoneAccount(
                             taskId = it.id,
                             vppId = schoolApiAccess.id,
@@ -448,7 +449,7 @@ class HomeworkRepositoryImpl(
                     homework.files.map {
                         FKHomeworkFile(
                             homeworkId = homework.id,
-                            fileId = it
+                            fileId = it.id
                         )
                     }
                 }
@@ -529,19 +530,6 @@ data class HomeworkPostRequest(
 )
 
 @Serializable
-private data class HomeworkResponseItem(
-    @SerialName("id") val id: Int,
-    @SerialName("created_by") val createdBy: Int,
-    @SerialName("created_at") val createdAt: Long,
-    @SerialName("due_to") val dueTo: Long,
-    @SerialName("is_public") val isPublic: Boolean,
-    @SerialName("group_id") val group: Int?,
-    @SerialName("default_lesson") val defaultLesson: Int?,
-    @SerialName("tasks") val tasks: List<HomeworkTaskResponseItem>,
-    @SerialName("files") val files: List<Int>,
-)
-
-@Serializable
 private data class HomeworkPostResponse(
     @SerialName("id") val id: Int,
     @SerialName("tasks") val tasks: List<HomeworkPostResponseItem>,
@@ -554,33 +542,36 @@ private data class HomeworkPostResponseItem(
 )
 
 @Serializable
-private data class HomeworkTaskResponseItem(
-    @SerialName("id") val id: Int,
-    @SerialName("description") val description: String,
-    @SerialName("is_done") val done: Boolean?
-)
-
-@Serializable
 private data class HomeworkMetadataResponse(
     @SerialName("school_ids") val schoolIds: List<Int>,
     @SerialName("created_by") val createdBy: Int
 )
 
 @Serializable
-data class HomeworkGetResponse(
+private data class HomeworkGetResponse(
     @SerialName("id") val id: Int,
-    @SerialName("created_by") val createdBy: Int,
+    @SerialName("created_by") val createdBy: EntityId,
     @SerialName("created_at") val createdAt: Long,
-    @SerialName("due_to") val dueTo: Long,
+    @SerialName("due_to") val dueTo: String,
     @SerialName("is_public") val isPublic: Boolean,
-    @SerialName("group") val group: Int,
-    @SerialName("subject_instance") val defaultLesson: Int?,
-    @SerialName("tasks") val tasks: List<HomeworkGetResponseTask>,
-    @SerialName("files") val files: List<Int>,
+    @SerialName("group") val group: EntityId,
+    @SerialName("subject_instance") val subjectInstance: EntityId?,
+    @SerialName("tasks") val tasks: List<HomeworkGetResponseTaskItem>,
+    @SerialName("files") val files: List<EntityId>,
 )
 
 @Serializable
-data class HomeworkGetResponseTask(
+private data class EntityId(
+    @SerialName("id") val id: Int
+)
+
+@Serializable
+private data class HomeworkGetResponseTaskItem(
+    @SerialName("value") val value: HomeworkGetResponseTask
+)
+
+@Serializable
+private data class HomeworkGetResponseTask(
     @SerialName("id") val id: Int,
     @SerialName("content") val content: String,
     @SerialName("done") val done: Boolean?
@@ -599,7 +590,7 @@ data class HomeworkUpdateDefaultLessonRequest(
 
 @Serializable
 data class HomeworkUpdateDueToRequest(
-    @SerialName("due_to") val dueTo: Long,
+    @SerialName("due_to") val dueTo: String,
 )
 
 @Serializable

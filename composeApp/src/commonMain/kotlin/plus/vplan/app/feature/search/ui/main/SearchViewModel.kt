@@ -5,24 +5,71 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
+import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.search.domain.model.Result
+import plus.vplan.app.feature.search.domain.model.SearchResult
+import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
+import plus.vplan.app.utils.now
+import plus.vplan.app.utils.plus
+import kotlin.time.Duration.Companion.days
 
-class SearchViewModel : ViewModel() {
+class SearchViewModel(
+    private val searchUseCase: SearchUseCase,
+    private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
+    private val getCurrentProfileUseCase: GetCurrentProfileUseCase
+) : ViewModel() {
 
     var state by mutableStateOf(SearchState())
         private set
 
+    private var searchJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            getCurrentDateTimeUseCase().collectLatest { state = state.copy(currentTime = it) }
+        }
+
+        viewModelScope.launch {
+            getCurrentProfileUseCase().collectLatest { state = state.copy(currentProfile = it) }
+        }
+    }
+
     fun onEvent(event: SearchEvent) {
         viewModelScope.launch {
             when (event) {
-                is SearchEvent.UpdateQuery -> state = state.copy(query = event.query)
+                is SearchEvent.UpdateQuery -> {
+                    state = state.copy(query = event.query)
+                    restartSearch()
+                }
+            }
+        }
+    }
+
+    private fun restartSearch() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            searchUseCase(state.query, LocalDate.now().plus(2.days)).collectLatest {
+                state = state.copy(results = it)
             }
         }
     }
 }
 
 data class SearchState(
-    val query: String = ""
+    val query: String = "",
+    val results: Map<Result, List<SearchResult>> = emptyMap(),
+    val currentProfile: Profile? = null,
+    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 )
 
 sealed class SearchEvent {

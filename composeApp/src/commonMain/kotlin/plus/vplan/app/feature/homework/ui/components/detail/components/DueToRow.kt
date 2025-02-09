@@ -4,10 +4,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
-import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.utils.regularDateFormat
 
 @Composable
@@ -15,9 +13,8 @@ fun DueToRow(
     canEdit: Boolean,
     isHomework: Boolean,
     onClick: () -> Unit,
-    dueTo: Instant
+    dueTo: LocalDate
 ) {
-    val date = dueTo.toLocalDateTime(TimeZone.currentSystemDefault()).date
     MetadataRow(
         key = {
             Text(
@@ -30,7 +27,7 @@ fun DueToRow(
                 canEdit = canEdit,
                 onClick = onClick
             ) {
-                AnimatedContent(targetState = date.format(regularDateFormat)) { displayDate ->
+                AnimatedContent(targetState = dueTo.format(regularDateFormat)) { displayDate ->
                     Text(
                         text = displayDate,
                         style = tableValueStyle(),
