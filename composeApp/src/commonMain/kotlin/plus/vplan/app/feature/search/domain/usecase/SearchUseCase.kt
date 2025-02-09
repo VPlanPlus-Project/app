@@ -36,7 +36,8 @@ class SearchUseCase(
     private val assessmentRepository: AssessmentRepository
 ) {
 
-    val lessons = mutableListOf<Lesson>()
+    private val lessons = mutableListOf<Lesson>()
+    private var lessonDate: LocalDate? = null
 
     operator fun invoke(searchQuery: String, date: LocalDate) = channelFlow {
         if (searchQuery.isBlank()) return@channelFlow send(emptyMap<Result, List<SearchResult>>())
@@ -44,7 +45,8 @@ class SearchUseCase(
         val profile = getCurrentProfileUseCase().first()
         val school = profile.getSchoolItem()
 
-        if (lessons.isEmpty()) {
+        if (lessons.isEmpty() || lessonDate != date) {
+            lessons.clear()
             lessons.addAll(substitutionPlanRepository
                 .getSubstitutionPlanBySchool(school.id, date).map {
                     it

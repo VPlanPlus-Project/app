@@ -19,9 +19,6 @@ import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
-import plus.vplan.app.utils.now
-import plus.vplan.app.utils.plus
-import kotlin.time.Duration.Companion.days
 
 class SearchViewModel(
     private val searchUseCase: SearchUseCase,
@@ -51,6 +48,10 @@ class SearchViewModel(
                     state = state.copy(query = event.query)
                     restartSearch()
                 }
+                is SearchEvent.SelectDate -> {
+                    state = state.copy(selectedDate = event.date)
+                    restartSearch()
+                }
             }
         }
     }
@@ -58,7 +59,7 @@ class SearchViewModel(
     private fun restartSearch() {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            searchUseCase(state.query, LocalDate.now().plus(2.days)).collectLatest {
+            searchUseCase(state.query, state.selectedDate).collectLatest {
                 state = state.copy(results = it)
             }
         }
@@ -67,6 +68,7 @@ class SearchViewModel(
 
 data class SearchState(
     val query: String = "",
+    val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
     val results: Map<Result, List<SearchResult>> = emptyMap(),
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
@@ -74,4 +76,5 @@ data class SearchState(
 
 sealed class SearchEvent {
     data class UpdateQuery(val query: String): SearchEvent()
+    data class SelectDate(val date: LocalDate): SearchEvent()
 }

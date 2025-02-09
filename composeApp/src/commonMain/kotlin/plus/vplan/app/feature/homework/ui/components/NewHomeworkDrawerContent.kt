@@ -42,7 +42,7 @@ import io.github.vinceglb.filekit.core.PickerType
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
+import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
@@ -54,6 +54,7 @@ import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
+import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.FullscreenDrawerContext
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
@@ -242,6 +243,9 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
 
     if (showDateSelectDrawer) {
         DateSelectDrawer(
+            configuration = DateSelectConfiguration(
+                allowDatesInPast = false
+            ),
             selectedDate = state.selectedDate,
             onSelectDate = { viewModel.onEvent(NewHomeworkEvent.SelectDate(it)) },
             onDismiss = { showDateSelectDrawer = false }

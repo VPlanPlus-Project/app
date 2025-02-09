@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.homework.ui.components.create
+package plus.vplan.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,6 +47,7 @@ import kotlin.time.Duration.Companion.days
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateSelectDrawer(
+    configuration: DateSelectConfiguration,
     selectedDate: LocalDate?,
     onSelectDate: (LocalDate) -> Unit,
     onDismiss: () -> Unit
@@ -59,6 +60,7 @@ fun DateSelectDrawer(
         sheetState = modalState
     ) {
         DateSelectDrawerContent(
+            configuration = configuration,
             selectedDate = selectedDate,
             onSelectDate = { onSelectDate(it); hideSheet() }
         )
@@ -68,6 +70,7 @@ fun DateSelectDrawer(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DateSelectDrawerContent(
+    configuration: DateSelectConfiguration,
     selectedDate: LocalDate?,
     onSelectDate: (LocalDate) -> Unit
 ) {
@@ -86,7 +89,7 @@ private fun DateSelectDrawerContent(
         ) {
             item { Spacer(Modifier.width(8.dp)) }
             items(7) { days ->
-                val date = LocalDate.now() + days.days
+                val date = LocalDate.now() + (days - if (configuration.allowDatesInPast) 7/2 else 0).days
                 FilterChip(
                     selected = date == selectedDate,
                     onClick = { onSelectDate(date) },
@@ -109,12 +112,13 @@ private fun DateSelectDrawerContent(
             initialSelectedDateMillis = selectedDate?.atStartOfDay()?.toInstant(TimeZone.UTC)?.toEpochMilliseconds(),
             selectableDates = object : SelectableDates {
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    if (configuration.allowDatesInPast) return true
                     val date = Instant.fromEpochMilliseconds(utcTimeMillis).toLocalDateTime(TimeZone.UTC).date
                     return date >= LocalDate.now()
                 }
 
                 override fun isSelectableYear(year: Int): Boolean {
-                    return year >= LocalDate.now().year
+                    return configuration.allowDatesInPast || year >= LocalDate.now().year
                 }
             }
         )
@@ -129,3 +133,7 @@ private fun DateSelectDrawerContent(
         )
     }
 }
+
+data class DateSelectConfiguration(
+    val allowDatesInPast: Boolean
+)

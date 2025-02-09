@@ -40,7 +40,7 @@ import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.feature.homework.ui.components.create.DateSelectDrawer
+import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
@@ -57,6 +57,7 @@ import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
+import plus.vplan.app.ui.components.DateSelectConfiguration
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.file
@@ -296,6 +297,9 @@ fun DetailPage(
 
     if (showDateSelectDrawer) {
         DateSelectDrawer(
+            configuration = DateSelectConfiguration(
+                allowDatesInPast = false
+            ),
             selectedDate = homework.dueTo,
             onSelectDate = { onEvent(DetailEvent.UpdateDueTo(it)) },
             onDismiss = { showDateSelectDrawer = false }
