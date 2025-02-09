@@ -29,8 +29,9 @@ sealed class SearchResult(val type: Result) {
     }
 
     data class Homework(val homework: plus.vplan.app.domain.model.Homework): SearchResult(Result.Homework)
+    data class Assessment(val assessment: plus.vplan.app.domain.model.Assessment): SearchResult(Result.Assessment)
 }
 
 enum class Result {
-    Group, Teacher, Room, Homework
+    Group, Teacher, Room, Homework, Assessment
 }

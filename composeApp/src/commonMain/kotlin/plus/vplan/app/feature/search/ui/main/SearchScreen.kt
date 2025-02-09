@@ -40,8 +40,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.LessonRow
@@ -79,12 +81,13 @@ fun SearchScreen(
 private fun SearchScreenContent(
     state: SearchState,
     onEvent: (event: SearchEvent) -> Unit,
-    contentPadding: PaddingValues,
+    contentPadding: PaddingValues
 ) {
     val localDensity = LocalDensity.current
     var width by remember { mutableStateOf(0.dp) }
 
     var visibleHomework by rememberSaveable<MutableState<Int?>> { mutableStateOf(null) }
+    var visibleAssessment by rememberSaveable<MutableState<Int?>> { mutableStateOf(null) }
 
     Column(
         modifier = Modifier
@@ -204,6 +207,52 @@ private fun SearchScreenContent(
                             }
                         }
                     }
+                    if (result is SearchResult.Assessment) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { visibleAssessment = result.assessment.id }
+                                .padding(horizontal = 8.dp),
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(24.dp)) {
+                                    result.assessment.subjectInstanceItem?.let { defaultLesson ->
+                                        Icon(
+                                            painter = painterResource(defaultLesson.subject.subjectIcon()),
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentDescription = null
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                Column {
+                                    Row {
+                                        Text(
+                                            text = result.assessment.subjectInstanceItem!!.subject,
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                                        )
+                                        Text(
+                                            text = " $DOT ${result.assessment.date.format(regularDateFormat)}",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                    Text(
+                                        text = when (result.assessment.creator) {
+                                            is AppEntity.VppId -> result.assessment.createdByVppId!!.name
+                                            is AppEntity.Profile -> result.assessment.createdByProfile!!.name
+                                        },
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                            }
+                            Text(
+                                text = result.assessment.description,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(start = 32.dp, end = 8.dp)
+                            )
+                        }
+                    }
 
                     HorizontalDivider()
                     Spacer(Modifier.height(8.dp))
@@ -215,5 +264,10 @@ private fun SearchScreenContent(
     visibleHomework?.let { HomeworkDetailDrawer(
         homeworkId = it,
         onDismiss = { visibleHomework = null }
+    ) }
+
+    visibleAssessment?.let { AssessmentDetailDrawer(
+        assessmentId = it,
+        onDismiss = { visibleAssessment = null }
     ) }
 }

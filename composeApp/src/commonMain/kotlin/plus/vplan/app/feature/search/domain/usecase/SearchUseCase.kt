@@ -7,13 +7,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -29,7 +32,8 @@ class SearchUseCase(
     private val roomRepository: RoomRepository,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
-    private val homeworkRepository: HomeworkRepository
+    private val homeworkRepository: HomeworkRepository,
+    private val assessmentRepository: AssessmentRepository
 ) {
 
     val lessons = mutableListOf<Lesson>()
@@ -92,15 +96,30 @@ class SearchUseCase(
         }
 
         launch {
-            val homeworkItems = homeworkRepository.getAll().first().filterIsInstance<CacheState.Done<Homework>>().map { it.data }.onEach { it.getTaskItems() }
-            results.value = results.value.plus(Result.Homework to homeworkItems.filter { it.taskItems!!.any { task -> query in task.content.lowercase() } }.onEach {
+            homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
+                val homework = homeworkList.onEach { it.getTaskItems() }
+                results.value = results.value.plus(Result.Homework to homework.filter { it.taskItems!!.any { task -> query in task.content.lowercase() } }.onEach {
                     it.getDefaultLessonItem() ?: it.getGroupItem()
                     when (it) {
                         is Homework.CloudHomework -> it.getCreatedBy()
                         is Homework.LocalHomework -> it.getCreatedByProfile()
                     }
-                }.map { SearchResult.Homework(it) }
-            )
+                }.map { SearchResult.Homework(it) })
+            }
+        }
+
+        launch {
+            assessmentRepository.getAll().collectLatest { assessmentList ->
+                val assessments = assessmentList.filter { query in it.description.lowercase() }
+                    .onEach { assessment ->
+                        assessment.getSubjectInstanceItem()
+                        when (assessment.creator) {
+                            is AppEntity.VppId -> assessment.getCreatedByVppIdItem()
+                            is AppEntity.Profile -> assessment.getCreatedByProfileItem()
+                        }
+                    }
+                results.value = results.value.plus(Result.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
+            }
         }
     }
 }
