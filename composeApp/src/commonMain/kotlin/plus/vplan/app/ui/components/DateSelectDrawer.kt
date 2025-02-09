@@ -16,6 +16,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
@@ -80,6 +81,23 @@ private fun DateSelectDrawerContent(
             .verticalScroll(rememberScrollState())
             .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
     ) {
+
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+        ) {
+            if (configuration.title != null) Text(
+                text = configuration.title,
+                style = MaterialTheme.typography.headlineLarge,
+            )
+
+            if (configuration.subtitle != null) Text(
+                text = configuration.subtitle,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -135,5 +153,7 @@ private fun DateSelectDrawerContent(
 }
 
 data class DateSelectConfiguration(
-    val allowDatesInPast: Boolean
+    val allowDatesInPast: Boolean,
+    val title: String? = null,
+    val subtitle: String? = null
 )

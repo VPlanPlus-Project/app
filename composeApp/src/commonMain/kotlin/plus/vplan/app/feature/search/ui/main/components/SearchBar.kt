@@ -144,7 +144,9 @@ fun SearchBar(
 
     if (showDateSelectDrawer) DateSelectDrawer(
         configuration = DateSelectConfiguration(
-            allowDatesInPast = true
+            allowDatesInPast = true,
+            title = "Suchdatum auswählen",
+            subtitle = "Dieses Datum beinflusst die Darstellung der Stunden von Klassen, Lehrern und Räumen, sie nimmt jedoch keinen Einfluss auf Hausaufgaben oder Leistungserhebungen."
         ),
         selectedDate = selectedDate,
         onSelectDate = { onSelectDate(it) },
