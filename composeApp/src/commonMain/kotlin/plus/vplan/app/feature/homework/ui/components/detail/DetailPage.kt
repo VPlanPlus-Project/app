@@ -46,12 +46,16 @@ import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAt
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.FileRow
+import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.NewTaskRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SavedLocalRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.ShareStatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.StatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.TaskRow
+import plus.vplan.app.feature.homework.ui.components.detail.components.tableNameStyle
+import plus.vplan.app.feature.homework.ui.components.detail.components.tableValueStyle
+import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
@@ -213,6 +217,11 @@ fun DetailPage(
             else SavedLocalRow()
 
             CreatedAtRow(createdAt = homework.createdAt)
+
+            if (isDeveloperMode) MetadataRow(
+                key = { Text(text = "ID", style = tableNameStyle()) },
+                value = { Text(text = state.homework.id.toString(), style = tableValueStyle()) }
+            )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 

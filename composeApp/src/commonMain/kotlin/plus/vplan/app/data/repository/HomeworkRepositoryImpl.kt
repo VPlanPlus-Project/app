@@ -112,7 +112,7 @@ class HomeworkRepositoryImpl(
         )
     }
 
-    override suspend fun getByGroup(groupId: Int): Flow<List<Homework>> {
+    override fun getByGroup(groupId: Int): Flow<List<Homework>> {
         return vppDatabase.homeworkDao.getAll().map { flowData ->
             val defaultLessons = vppDatabase.defaultLessonDao.getByGroup(groupId).first()
             flowData.filter {

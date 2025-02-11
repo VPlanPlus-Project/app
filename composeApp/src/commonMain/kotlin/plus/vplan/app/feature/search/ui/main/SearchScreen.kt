@@ -48,6 +48,7 @@ import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.LessonRow
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
+import plus.vplan.app.feature.search.ui.main.components.StartScreen
 import plus.vplan.app.feature.search.ui.main.components.hourWidth
 import plus.vplan.app.ui.keyboardAsState
 import plus.vplan.app.ui.subjectIcon
@@ -104,6 +105,13 @@ private fun SearchScreenContent(
                 onSelectDate = { onEvent(SearchEvent.SelectDate(it)) }
             )
         }
+        if (state.query.isBlank()) StartScreen(
+            currentProfile = state.currentProfile,
+            homework = state.homework,
+            latestAssessments = state.assessments,
+            onHomeworkClick = { visibleHomework = it },
+            onAssessmentClick = { visibleAssessment = it },
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()

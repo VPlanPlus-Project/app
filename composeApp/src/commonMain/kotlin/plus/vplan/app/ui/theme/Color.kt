@@ -83,6 +83,34 @@ val yellowLight = Color(0xFF705D00)
 val onYellowLight = Color(0xFFFFFFFF)
 val yellowContainerLight = Color(0xFFFFDC4F)
 val onYellowContainerLight = Color(0xFF534400)
+val cyanLight = Color(0xFF176475)
+val onCyanLight = Color(0xFFFFFFFF)
+val cyanContainerLight = Color(0xFF387D8F)
+val onCyanContainerLight = Color(0xFFF9FDFF)
+val darkPurpleLight = Color(0xFF33003E)
+val onDarkPurpleLight = Color(0xFFFFFFFF)
+val darkPurpleContainerLight = Color(0xFF4C1757)
+val onDarkPurpleContainerLight = Color(0xFFBF81C7)
+val redLight = Color(0xFFBB001A)
+val onRedLight = Color(0xFFFFFFFF)
+val redContainerLight = Color(0xFFEA0023)
+val onRedContainerLight = Color(0xFFFFFBFF)
+val greenGrayLight = Color(0xFF4D5D50)
+val onGreenGrayLight = Color(0xFFFFFFFF)
+val greenGrayContainerLight = Color(0xFF657668)
+val onGreenGrayContainerLight = Color(0xFFEAFDEB)
+val violetLight = Color(0xFF673CD1)
+val onVioletLight = Color(0xFFFFFFFF)
+val violetContainerLight = Color(0xFF8058EC)
+val onVioletContainerLight = Color(0xFFFFFBFF)
+val wineRedLight = Color(0xFF8B003F)
+val onWineRedLight = Color(0xFFFFFFFF)
+val wineRedContainerLight = Color(0xFFB60255)
+val onWineRedContainerLight = Color(0xFFFFC6D2)
+val blueLight = Color(0xFF006191)
+val onBlueLight = Color(0xFFFFFFFF)
+val blueContainerLight = Color(0xFF007BB6)
+val onBlueContainerLight = Color(0xFFFCFCFF)
 
 val greenDark = Color(0xFF89EF86)
 val onGreenDark = Color(0xFF00390A)
@@ -92,11 +120,43 @@ val yellowDark = Color(0xFFFFFFFF)
 val onYellowDark = Color(0xFF3A3000)
 val yellowContainerDark = Color(0xFFFAD100)
 val onYellowContainerDark = Color(0xFF4C3E00)
+val cyanDark = Color(0xFF8ED1E4)
+val onCyanDark = Color(0xFF003641)
+val cyanContainerDark = Color(0xFF579AAC)
+val onCyanContainerDark = Color(0xFF001E25)
+val darkPurpleDark = Color(0xFFF2B0FA)
+val onDarkPurpleDark = Color(0xFF4E1958)
+val darkPurpleContainerDark = Color(0xFF4C1757)
+val onDarkPurpleContainerDark = Color(0xFFBF81C7)
+val redDark = Color(0xFFFFB3AD)
+val onRedDark = Color(0xFF680009)
+val redContainerDark = Color(0xFFFF5450)
+val onRedContainerDark = Color(0xFF340002)
+val greenGrayDark = Color(0xFFB9CBBB)
+val onGreenGrayDark = Color(0xFF243428)
+val greenGrayContainerDark = Color(0xFF657668)
+val onGreenGrayContainerDark = Color(0xFFEAFDEB)
+val violetDark = Color(0xFFCEBDFF)
+val onVioletDark = Color(0xFF390094)
+val violetContainerDark = Color(0xFF9C7AFF)
+val onVioletContainerDark = Color(0xFF250066)
+val wineRedDark = Color(0xFFFFB1C3)
+val onWineRedDark = Color(0xFF66002C)
+val wineRedContainerDark = Color(0xFFB60255)
+val onWineRedContainerDark = Color(0xFFFFC6D2)
+val blueDark = Color(0xFF8FCDFF)
+val onBlueDark = Color(0xFF003450)
+val blueContainerDark = Color(0xFF007BB6)
+val onBlueContainerDark = Color(0xFFFCFCFF)
 
 
 enum class ColorToken {
     Green, OnGreen, GreenContainer, OnGreenContainer,
     Yellow, OnYellow, YellowContainer, OnYellowContainer
+}
+
+enum class CustomColor {
+    Green, Yellow, Cyan, DarkPurple, Red, GreenGray, Violet, WineRed, Blue
 }
 
 val customColors = mapOf(
@@ -145,3 +205,147 @@ data class ColorTokens(
         false -> light
     }
 }
+
+data class ColorGroup(
+    val color: Color,
+    val onColor: Color,
+    val container: Color,
+    val onContainer: Color
+)
+
+data class ColorTheme(
+    val dark: ColorGroup,
+    val light: ColorGroup
+) {
+    @Composable
+    fun getGroup() = if (isSystemInDarkTheme()) dark else light
+}
+
+val colors = mapOf(
+    CustomColor.Yellow to ColorTheme(
+        dark = ColorGroup(
+            color = yellowDark,
+            onColor = onYellowDark,
+            container = yellowContainerDark,
+            onContainer = onYellowContainerDark
+        ),
+        light = ColorGroup(
+            color = yellowLight,
+            onColor = onYellowLight,
+            container = yellowContainerLight,
+            onContainer = onYellowContainerLight
+        )
+    ),
+    CustomColor.Green to ColorTheme(
+        dark = ColorGroup(
+            color = greenDark,
+            onColor = onGreenDark,
+            container = greenContainerDark,
+            onContainer = onGreenContainerDark
+        ),
+        light = ColorGroup(
+            color = greenLight,
+            onColor = onGreenLight,
+            container = greenContainerLight,
+            onContainer = onGreenContainerLight
+        )
+    ),
+    CustomColor.Cyan to ColorTheme(
+        dark = ColorGroup(
+            color = cyanDark,
+            onColor = onCyanDark,
+            container = cyanContainerDark,
+            onContainer = onCyanContainerDark
+        ),
+        light = ColorGroup(
+            color = cyanLight,
+            onColor = onCyanLight,
+            container = cyanContainerLight,
+            onContainer = onCyanContainerLight
+        )
+    ),
+    CustomColor.DarkPurple to ColorTheme(
+        dark = ColorGroup(
+            color = darkPurpleDark,
+            onColor = onDarkPurpleDark,
+            container = darkPurpleContainerDark,
+            onContainer = onDarkPurpleContainerDark
+        ),
+        light = ColorGroup(
+            color = darkPurpleLight,
+            onColor = onDarkPurpleLight,
+            container = darkPurpleContainerLight,
+            onContainer = onDarkPurpleContainerLight
+        )
+    ),
+    CustomColor.Red to ColorTheme(
+        dark = ColorGroup(
+            color = redDark,
+            onColor = onRedDark,
+            container = redContainerDark,
+            onContainer = onRedContainerDark
+        ),
+        light = ColorGroup(
+            color = redLight,
+            onColor = onRedLight,
+            container = redContainerLight,
+            onContainer = onRedContainerLight
+        )
+    ),
+    CustomColor.GreenGray to ColorTheme(
+        dark = ColorGroup(
+            color = greenGrayDark,
+            onColor = onGreenGrayDark,
+            container = greenGrayContainerDark,
+            onContainer = onGreenGrayContainerDark
+        ),
+        light = ColorGroup(
+            color = greenGrayLight,
+            onColor = onGreenGrayLight,
+            container = greenGrayContainerLight,
+            onContainer = onGreenGrayContainerLight
+        )
+    ),
+    CustomColor.Violet to ColorTheme(
+        dark = ColorGroup(
+            color = violetDark,
+            onColor = onVioletDark,
+            container = violetContainerDark,
+            onContainer = onVioletContainerDark
+        ),
+        light = ColorGroup(
+            color = violetLight,
+            onColor = onVioletLight,
+            container = violetContainerLight,
+            onContainer = onVioletContainerLight
+        )
+    ),
+    CustomColor.WineRed to ColorTheme(
+        dark = ColorGroup(
+            color = wineRedDark,
+            onColor = onWineRedDark,
+            container = wineRedContainerDark,
+            onContainer = onWineRedContainerDark
+        ),
+        light = ColorGroup(
+            color = wineRedLight,
+            onColor = onWineRedLight,
+            container = wineRedContainerLight,
+            onContainer = onWineRedContainerLight
+        )
+    ),
+    CustomColor.Blue to ColorTheme(
+        dark = ColorGroup(
+            color = blueDark,
+            onColor = onBlueDark,
+            container = blueContainerDark,
+            onContainer = onBlueContainerDark
+        ),
+        light = ColorGroup(
+            color = blueLight,
+            onColor = onBlueLight,
+            container = blueContainerLight,
+            onContainer = onBlueContainerLight
+        )
+    )
+)

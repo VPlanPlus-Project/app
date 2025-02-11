@@ -34,3 +34,8 @@ fun String.splitWithKnownValuesBySpace(values: List<String>): List<String> {
 }
 
 expect fun String.sha256(): String
+
+infix operator fun String.times(number: Int): String {
+    if (number < 0) throw IllegalArgumentException("Number must not be smaller than zero")
+    return this.repeat(number)
+}

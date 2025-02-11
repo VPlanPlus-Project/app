@@ -7,23 +7,30 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
+import plus.vplan.app.feature.search.domain.usecase.GetAssessmentsForProfileUseCase
+import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
 
 class SearchViewModel(
     private val searchUseCase: SearchUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
-    private val getCurrentProfileUseCase: GetCurrentProfileUseCase
+    private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
+    private val getHomeworkForProfileUseCase: GetHomeworkForProfileUseCase,
+    private val getAssessmentsForProfileUseCase: GetAssessmentsForProfileUseCase
 ) : ViewModel() {
 
     var state by mutableStateOf(SearchState())
@@ -37,7 +44,17 @@ class SearchViewModel(
         }
 
         viewModelScope.launch {
-            getCurrentProfileUseCase().collectLatest { state = state.copy(currentProfile = it) }
+            var homeworkJob: Job? = null
+            var assessmentJob: Job? = null
+            getCurrentProfileUseCase().collectLatest { currentProfile ->
+                state = state.copy(currentProfile = currentProfile)
+                homeworkJob?.cancel()
+                assessmentJob?.cancel()
+                if (currentProfile is Profile.StudentProfile) {
+                    homeworkJob = launch { getHomeworkForProfileUseCase(currentProfile).collectLatest { state = state.copy(homework = it) } }
+                    assessmentJob = launch { getAssessmentsForProfileUseCase(currentProfile).collectLatest { state = state.copy(assessments = it) } }
+                }
+            }
         }
     }
 
@@ -70,6 +87,8 @@ data class SearchState(
     val query: String = "",
     val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
     val results: Map<Result, List<SearchResult>> = emptyMap(),
+    val homework: List<Homework> = emptyList(),
+    val assessments: List<Assessment> = emptyList(),
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 )
