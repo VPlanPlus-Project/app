@@ -27,6 +27,9 @@ sealed interface Lesson : Item {
     suspend fun getTeacherItems(): List<Teacher>
     val teacherItems: List<Teacher>?
 
+    suspend fun getGroupItems(): List<Group>
+    val groupItems: List<Group>?
+
     val isCancelled: Boolean
 
     data class TimetableLesson(
@@ -51,6 +54,9 @@ sealed interface Lesson : Item {
         override var lessonTimeItem: LessonTime? = null
             private set
 
+        override var groupItems: List<Group>? = null
+            private set
+
         override suspend fun getLessonTimeItem(): LessonTime {
             return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTime)!!.also { lessonTimeItem = it }
         }
@@ -61,6 +67,10 @@ sealed interface Lesson : Item {
 
         override suspend fun getTeacherItems(): List<Teacher> {
             return teacherItems ?: teachers.mapNotNull { App.teacherSource.getSingleById(it) }.also { teacherItems = it }
+        }
+
+        override suspend fun getGroupItems(): List<Group> {
+            return groupItems ?: groups.mapNotNull { App.groupSource.getSingleById(it) }.also { groupItems = it }
         }
 
         constructor(
@@ -115,6 +125,9 @@ sealed interface Lesson : Item {
         var defaultLessonItem: DefaultLesson? = null
             private set
 
+        override var groupItems: List<Group>? = null
+            private set
+
         suspend fun getDefaultLesson(): DefaultLesson? {
             return defaultLessonItem ?: if (defaultLesson == null) null else App.defaultLessonSource.getSingleById(defaultLesson).also { defaultLessonItem = it }
         }
@@ -129,6 +142,10 @@ sealed interface Lesson : Item {
 
         override suspend fun getTeacherItems(): List<Teacher> {
             return teacherItems ?: teachers.mapNotNull { App.teacherSource.getSingleById(it) }.also { teacherItems = it }
+        }
+
+        override suspend fun getGroupItems(): List<Group> {
+            return groupItems ?: groups.mapNotNull { App.groupSource.getSingleById(it) }.also { groupItems = it }
         }
     }
 

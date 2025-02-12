@@ -7,7 +7,7 @@ import vplanplus.composeapp.generated.resources.microscope
 import vplanplus.composeapp.generated.resources.flask_conical
 import vplanplus.composeapp.generated.resources.book_marked
 import vplanplus.composeapp.generated.resources.union_jack
-import vplanplus.composeapp.generated.resources.brain_cog
+import vplanplus.composeapp.generated.resources.heart_handshake
 import vplanplus.composeapp.generated.resources.croissant
 import vplanplus.composeapp.generated.resources.scroll_text
 import vplanplus.composeapp.generated.resources.earth
@@ -29,7 +29,7 @@ fun String?.subjectIcon(): DrawableResource {
         "ch", "cha", "chemie" -> Res.drawable.flask_conical
         "daz", "de", "deu", "deutsch" -> Res.drawable.book_marked
         "en", "eng", "englisch" -> Res.drawable.union_jack
-        "eth", "ethik" -> Res.drawable.brain_cog
+        "eth", "ethik" -> Res.drawable.heart_handshake
         "fr", "fra", "französisch" -> Res.drawable.croissant
         "ge", "geschichte" -> Res.drawable.scroll_text
         "geo", "geographie", "geografie" -> Res.drawable.earth
