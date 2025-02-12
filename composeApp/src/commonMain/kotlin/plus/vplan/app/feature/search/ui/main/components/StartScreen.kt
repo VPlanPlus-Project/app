@@ -8,7 +8,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,13 +42,11 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.ui.subjectColor
-import plus.vplan.app.ui.subjectIcon
+import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.times
@@ -76,10 +72,8 @@ fun StartScreen(
             enter = fadeIn() + slideInVertically { it / 3 },
             exit = fadeOut() + slideOutVertically { it / 3 }
         ) homework@{
-            Column(
-                modifier = Modifier.padding(start = 8.dp)
-            ) {
-                Row {
+            Column {
+                Row(Modifier.padding(start = 8.dp)) {
                     Text(
                         text = "Neueste Hausaufgaben",
                         style = MaterialTheme.typography.titleLarge,
@@ -96,6 +90,7 @@ fun StartScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    item {}
                     items(homework) { homeworkItem ->
                         if (currentProfile == null) return@items
                         HomeworkCard(
@@ -114,9 +109,9 @@ fun StartScreen(
             exit = fadeOut() + slideOutVertically { it / 3 }
         ) assessments@{
             Column(
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = Modifier.padding(top = 8.dp)
             ) {
-                Row {
+                Row(Modifier.padding(start = 8.dp)) {
                     Text(
                         text = "Neueste Leistungserhebungen",
                         style = MaterialTheme.typography.titleLarge,
@@ -133,6 +128,7 @@ fun StartScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    item {}
                     items(latestAssessments) { assessmentItem ->
                         if (currentProfile == null) return@items
                         AssessmentCard(
@@ -171,32 +167,19 @@ fun HomeworkCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                if (homework.defaultLessonItem != null) {
+                    SubjectIcon(Modifier.size(24.dp), homework.defaultLessonItem!!.subject)
+                    Text(
+                        text = homework.defaultLessonItem!!.subject,
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                }
                 if (profile is Profile.StudentProfile) CircularProgressIndicator(
                     modifier = Modifier.padding(end = 4.dp).size(24.dp),
                     progress = { tasks.count { it.isDone(profile) }.toFloat() / homework.tasks.size },
                     trackColor = MaterialTheme.colorScheme.outlineVariant,
                     color = MaterialTheme.colorScheme.tertiary
                 )
-                if (homework.defaultLessonItem != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(homework.defaultLessonItem!!.subject.subjectColor().getGroup().container)
-                            .padding(4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(homework.defaultLessonItem!!.subject.subjectIcon()),
-                            contentDescription = null,
-                            tint = homework.defaultLessonItem!!.subject.subjectColor().getGroup().onContainer
-                        )
-                    }
-                    Text(
-                        text = homework.defaultLessonItem!!.subject,
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                }
                 Column(Modifier.padding(start = 4.dp)) {
                     Text(
                         text = "Bis " + (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.untilRelativeText(homework.dueTo) ?: homework.dueTo.format(regularDateFormat)),
@@ -212,7 +195,7 @@ fun HomeworkCard(
                 }
             }
             val maxTasks = 2
-            Column(Modifier.padding(horizontal = 8.dp)) {
+            Column {
                 tasks.take(maxTasks).forEach { task ->
                     Text(
                         text = "$DOT ${task.content}",
@@ -258,20 +241,7 @@ fun AssessmentCard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 if (assessment.subjectInstanceItem != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(assessment.subjectInstanceItem!!.subject.subjectColor().getGroup().container)
-                            .padding(4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(assessment.subjectInstanceItem!!.subject.subjectIcon()),
-                            contentDescription = null,
-                            tint = assessment.subjectInstanceItem!!.subject.subjectColor().getGroup().onContainer
-                        )
-                    }
+                    SubjectIcon(Modifier.size(24.dp), assessment.subjectInstanceItem!!.subject)
                     Text(
                         text = assessment.subjectInstanceItem!!.subject,
                         style = MaterialTheme.typography.headlineSmall
@@ -291,7 +261,7 @@ fun AssessmentCard(
                     )
                 }
             }
-            Column(Modifier.padding(horizontal = 8.dp)) {
+            Column {
                 Text(
                     text = assessment.description + "\n" * (3 - assessment.description.count { it == '\n' }).coerceAtLeast(0),
                     style = MaterialTheme.typography.bodySmall,

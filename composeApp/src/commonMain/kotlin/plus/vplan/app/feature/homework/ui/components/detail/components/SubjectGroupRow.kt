@@ -4,16 +4,15 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
+import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectIcon
 
 @Composable
@@ -44,12 +43,7 @@ fun SubjectGroupRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         if (subjectIcon != null && subject != null) {
-                            Icon(
-                                painter = painterResource(subjectIcon),
-                                contentDescription = null,
-                                modifier = Modifier.size(12.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            SubjectIcon(Modifier.size(18.dp), defaultLesson?.subject)
                             Text(
                                 text = subject,
                                 style = tableValueStyle(),
