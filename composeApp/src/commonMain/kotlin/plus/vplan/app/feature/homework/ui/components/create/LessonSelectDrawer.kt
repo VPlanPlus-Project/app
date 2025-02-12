@@ -34,12 +34,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
-import plus.vplan.app.ui.subjectIcon
+import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.thenIf
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.users
@@ -142,12 +143,8 @@ private fun LessonSelectContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        painter = painterResource(defaultLesson.subject.subjectIcon()),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                    )
+                    if (selectedDefaultLesson == defaultLesson) SubjectIcon(Modifier.size(24.dp), defaultLesson.subject, containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+                    else SubjectIcon(Modifier.size(24.dp), defaultLesson.subject)
                     Column {
                         Text(
                             text = buildString {

@@ -74,6 +74,8 @@ val VPP_ID_AUTH_URL = URLBuilder(
     }
 ).build().toString()
 
+const val isDeveloperMode = true
+
 object App {
     lateinit var vppIdSource: VppIdSource
     lateinit var homeworkSource: HomeworkSource

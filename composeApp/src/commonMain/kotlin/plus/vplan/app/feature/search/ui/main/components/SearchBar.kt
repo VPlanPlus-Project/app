@@ -57,7 +57,7 @@ fun SearchBar(
     onQueryChange: (to: String) -> Unit,
     onSelectDate: (date: LocalDate) -> Unit,
 ) {
-    val searchObjects = remember { listOf("Räumen", "Lehrern", "Klassen", "Nutzern", "Hausaufgaben", "Leistungserhebungen").shuffled() }
+    val searchObjects = remember { listOf("Räumen", "Lehrern", "Klassen", "Hausaufgaben", "Leistungserhebungen").shuffled() }
     val infiniteTransition = rememberInfiniteTransition(label = "infinite placeholder")
     val index by infiniteTransition.animateFloat(
         initialValue = 0f,
