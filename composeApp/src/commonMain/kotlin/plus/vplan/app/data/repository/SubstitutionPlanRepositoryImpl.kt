@@ -1,9 +1,9 @@
 package plus.vplan.app.data.repository
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.data.source.database.VppDatabase
@@ -69,13 +69,12 @@ class SubstitutionPlanRepositoryImpl(
         vppDatabase.substitutionPlanDao.deleteSubstitutionPlanByVersion("${schoolId}_$version")
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getSubstitutionPlanBySchool(
         schoolId: Int,
         date: LocalDate
-    ): Flow<List<Uuid>> = channelFlow {
-        vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.collectLatest { version ->
-            vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version", date).collect { lessons -> send(lessons) }
-        }
+    ): Flow<List<Uuid>> = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.flatMapLatest { version ->
+        vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version", date)
     }
 
     override fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?> {

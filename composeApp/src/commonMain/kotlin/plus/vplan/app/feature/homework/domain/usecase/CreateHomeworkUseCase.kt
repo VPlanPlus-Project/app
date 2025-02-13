@@ -5,7 +5,6 @@ package plus.vplan.app.feature.homework.domain.usecase
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValue
@@ -14,10 +13,10 @@ import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -61,7 +60,7 @@ class CreateHomeworkUseCase(
                 createdAt = Clock.System.now(),
                 createdBy = profile.vppId!!,
                 isPublic = isPublic ?: false,
-                dueTo = Instant.fromEpochSeconds(date.toEpochDays() * 24 * 60 * 60L),
+                dueTo = date,
                 files = emptyList(),
                 tasks = taskIds.map { it.value }
             )
@@ -95,7 +94,7 @@ class CreateHomeworkUseCase(
                 defaultLesson = defaultLesson?.id,
                 createdAt = Clock.System.now(),
                 createdByProfile = profile.id,
-                dueTo = Instant.fromEpochSeconds(date.toEpochDays() * 24 * 60 * 60L),
+                dueTo = date,
                 tasks = taskIds.map { it.value },
                 files = files.map { it.id }
             )

@@ -14,7 +14,7 @@ import plus.vplan.app.ui.common.AttachedFile
 
 interface HomeworkRepository {
     suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
-    suspend fun getByGroup(groupId: Int): Flow<List<Homework>>
+    fun getByGroup(groupId: Int): Flow<List<Homework>>
 
     fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
 

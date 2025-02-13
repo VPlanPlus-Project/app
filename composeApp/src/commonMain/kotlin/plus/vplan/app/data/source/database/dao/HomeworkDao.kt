@@ -5,9 +5,9 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Instant
-import plus.vplan.app.data.source.database.model.database.DbHomework
+import kotlinx.datetime.LocalDate
 import plus.vplan.app.data.source.database.model.database.DbFile
+import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
@@ -105,7 +105,7 @@ interface HomeworkDao {
     suspend fun updateDefaultLessonAndGroup(homeworkId: Int, defaultLessonId: Int?, groupId: Int?)
 
     @Query("UPDATE homework SET due_to = :dueTo WHERE id = :homeworkId")
-    suspend fun updateDueTo(homeworkId: Int, dueTo: Instant)
+    suspend fun updateDueTo(homeworkId: Int, dueTo: LocalDate)
 
     @Query("UPDATE homework SET is_public = :isPublic WHERE id = :homeworkId")
     suspend fun updateVisibility(homeworkId: Int, isPublic: Boolean)

@@ -5,6 +5,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -58,6 +59,7 @@ import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
 import plus.vplan.app.feature.profile.page.di.profileModule
 import plus.vplan.app.feature.profile.settings.di.profileSettingsModule
+import plus.vplan.app.feature.search.di.searchModule
 import plus.vplan.app.feature.sync.di.syncModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
 
@@ -68,7 +70,9 @@ val appModule = module(createdAtStart = true) {
         val appLogger = co.touchlab.kermit.Logger.withTag("Ktor Client")
         HttpClient {
             install(ContentNegotiation) {
-                json()
+                json(Json {
+                    ignoreUnknownKeys = true
+                })
             }
 
             install(Logging) {
@@ -117,6 +121,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             calendarModule,
             homeworkModule,
             assessmentModule,
+            searchModule,
             profileModule,
             profileSettingsModule,
             vppIdModule,

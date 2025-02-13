@@ -63,7 +63,7 @@ abstract class Profile : Item {
 
         @OptIn(ExperimentalCoroutinesApi::class)
         override fun getSchool(): Flow<CacheState<School>> {
-            return App.groupSource.getById(group).filterIsInstance<CacheState.Done<Group>>().flatMapLatest { App.schoolSource.getById(it.data.school) }
+            return App.groupSource.getById(group).filterIsInstance<CacheState.Done<Group>>().flatMapLatest { App.schoolSource.getById(it.data.schoolId) }
         }
 
         override fun copyBase(id: Uuid, name: String, profileType: ProfileType): Profile {
@@ -84,7 +84,7 @@ abstract class Profile : Item {
 
         @OptIn(ExperimentalCoroutinesApi::class)
         override fun getSchool(): Flow<CacheState<School>> {
-            return App.teacherSource.getById(teacher).filterIsInstance<CacheState.Done<Teacher>>().flatMapLatest { App.schoolSource.getById(it.data.school) }
+            return App.teacherSource.getById(teacher).filterIsInstance<CacheState.Done<Teacher>>().flatMapLatest { App.schoolSource.getById(it.data.schoolId) }
         }
 
         override fun copyBase(id: Uuid, name: String, profileType: ProfileType): Profile {
@@ -105,7 +105,7 @@ abstract class Profile : Item {
 
         @OptIn(ExperimentalCoroutinesApi::class)
         override fun getSchool(): Flow<CacheState<School>> {
-            return App.roomSource.getById(room).filterIsInstance<CacheState.Done<Room>>().flatMapLatest { App.schoolSource.getById(it.data.school) }
+            return App.roomSource.getById(room).filterIsInstance<CacheState.Done<Room>>().flatMapLatest { App.schoolSource.getById(it.data.schoolId) }
         }
 
         override fun copyBase(id: Uuid, name: String, profileType: ProfileType): Profile {

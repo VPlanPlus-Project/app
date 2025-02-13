@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
@@ -16,7 +19,7 @@ import kotlin.uuid.Uuid
 sealed class Homework : Item {
     abstract val id: Int
     abstract val createdAt: Instant
-    abstract val dueTo: Instant
+    abstract val dueTo: LocalDate
     abstract val tasks: List<Int>
     abstract val defaultLesson: Int?
     abstract val group: Int?
@@ -50,7 +53,7 @@ sealed class Homework : Item {
     fun getTasksFlow() = combine(tasks.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheState.Done<HomeworkTask>>() }) { it.toList().map { it.data }.also { taskItems = it } }
     fun getStatusFlow(profile: Profile.StudentProfile) = getTasksFlow().map { tasks ->
         if (tasks.all { it.isDone(profile) }) HomeworkStatus.DONE
-        else if (Clock.System.now() > dueTo) HomeworkStatus.OVERDUE
+        else if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date > dueTo) HomeworkStatus.OVERDUE
         else HomeworkStatus.PENDING
     }
 
@@ -96,7 +99,7 @@ sealed class Homework : Item {
     data class CloudHomework(
         override val id: Int,
         override val createdAt: Instant,
-        override val dueTo: Instant,
+        override val dueTo: LocalDate,
         override val tasks: List<Int>,
         override val defaultLesson: Int?,
         override val group: Int?,
@@ -104,7 +107,7 @@ sealed class Homework : Item {
         val isPublic: Boolean,
         val createdBy: Int,
     ) : Homework() {
-        override fun copyBase(createdAt: Instant, dueTo: Instant, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
+        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
@@ -127,7 +130,7 @@ sealed class Homework : Item {
     data class LocalHomework(
         override val id: Int,
         override val createdAt: Instant,
-        override val dueTo: Instant,
+        override val dueTo: LocalDate,
         override val tasks: List<Int>,
         override val defaultLesson: Int?,
         override val files: List<Int>,
@@ -139,7 +142,8 @@ sealed class Homework : Item {
         var groupId: Int? = null
             private set
 
-        private var createdByProfileItem: Profile.StudentProfile? = null
+        var createdByProfileItem: Profile.StudentProfile? = null
+            private set
 
         suspend fun getCreatedByProfile(): Profile.StudentProfile {
             return createdByProfileItem ?: createdByProfile.let { createdByProfileId ->
@@ -147,7 +151,7 @@ sealed class Homework : Item {
             }
         }
 
-        override fun copyBase(createdAt: Instant, dueTo: Instant, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
+        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
@@ -159,7 +163,7 @@ sealed class Homework : Item {
 
     abstract fun copyBase(
         createdAt: Instant = this.createdAt,
-        dueTo: Instant = this.dueTo,
+        dueTo: LocalDate = this.dueTo,
         tasks: List<Int> = this.tasks,
         defaultLesson: Int? = this.defaultLesson,
         group: Int? = this.group

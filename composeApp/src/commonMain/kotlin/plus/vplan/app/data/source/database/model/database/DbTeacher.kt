@@ -31,7 +31,7 @@ data class DbTeacher(
     fun toModel(): Teacher {
         return Teacher(
             id = id,
-            school = schoolId,
+            schoolId = schoolId,
             name = name
         )
     }
