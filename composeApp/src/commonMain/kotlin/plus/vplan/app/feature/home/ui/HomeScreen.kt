@@ -1,12 +1,14 @@
 package plus.vplan.app.feature.home.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,11 +17,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -46,6 +47,7 @@ import plus.vplan.app.feature.home.ui.components.HolidayScreen
 import plus.vplan.app.feature.home.ui.components.PagerSwitcher
 import plus.vplan.app.feature.home.ui.components.current_day.CurrentDayView
 import plus.vplan.app.feature.home.ui.components.next_day.NextDayView
+import plus.vplan.app.ui.thenIf
 
 @Composable
 fun HomeScreen(
@@ -59,7 +61,7 @@ fun HomeScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun HomeContent(
     state: HomeState,
@@ -124,47 +126,53 @@ private fun HomeContent(
                     }
                 }
 
-                Box(
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                 ) {
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
-                        pageSize = PageSize.Fill,
-                        beyondViewportPageCount = 2,
-                        verticalAlignment = Alignment.Top
-                    ) { page ->
-                        val day = if (page == 0) state.currentDay else state.nextDay
-                        when (day?.day?.dayType) {
-                            Day.DayType.HOLIDAY, Day.DayType.WEEKEND -> HolidayScreen(isWeekend = day.day.dayType == Day.DayType.WEEKEND, nextRegularSchoolDay = day.day.nextSchoolDay?.split("/")?.let { LocalDate.parse(it[1]) })
-                            Day.DayType.UNKNOWN -> Text("Unbekannter Tag")
-                            Day.DayType.REGULAR -> {
-                                if (page == 0) CurrentDayView(
-                                    day = day,
-                                    contextTime = state.currentTime
-                                )
-                                else NextDayView(day)
+                    item timetable@{
+                        Box(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateContentSize()
+                                    .thenIf(Modifier.padding(bottom = 56.dp)) { state.nextDay != null },
+                                pageSize = PageSize.Fill,
+                                beyondViewportPageCount = 0,
+                                verticalAlignment = Alignment.Top
+                            ) { page ->
+                                val day = if (page == 0) state.currentDay else state.nextDay
+                                when (day?.day?.dayType) {
+                                    Day.DayType.HOLIDAY, Day.DayType.WEEKEND -> HolidayScreen(isWeekend = day.day.dayType == Day.DayType.WEEKEND, nextRegularSchoolDay = day.day.nextSchoolDay?.split("/")?.let { LocalDate.parse(it[1]) })
+                                    Day.DayType.UNKNOWN -> Text("Unbekannter Tag")
+                                    Day.DayType.REGULAR -> {
+                                        if (page == 0) CurrentDayView(
+                                            day = day,
+                                            contextTime = state.currentTime
+                                        )
+                                        else NextDayView(day)
+                                    }
+                                    null -> Text("Nicht geladen")
+                                }
                             }
-                            null -> Text("Nicht geladen")
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = state.nextDay != null,
+                                modifier = Modifier.align(Alignment.BottomCenter),
+                                enter = slideInVertically(spring(stiffness = Spring.StiffnessHigh)) { it/2 } + fadeIn(),
+                                exit = slideOutVertically(spring(stiffness = Spring.StiffnessHigh)) { it/2 } + fadeOut(),
+                            ) {
+                                val nextDayDate by remember { mutableStateOf(state.nextDay!!.day.date) }
+                                PagerSwitcher(
+                                    modifier = Modifier.align(Alignment.Center).padding(bottom = 8.dp),
+                                    swipeProgress = pagerState.currentPage + pagerState.currentPageOffsetFraction,
+                                    nextDate = nextDayDate,
+                                    onSelectPage = { scope.launch { pagerState.animateScrollToPage(it) } }
+                                )
+                            }
                         }
-                    }
-
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = state.nextDay != null,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                        enter = slideInVertically(spring(stiffness = Spring.StiffnessHigh)) { it/2 } + fadeIn(),
-                        exit = slideOutVertically(spring(stiffness = Spring.StiffnessHigh)) { it/2 } + fadeOut(),
-                    ) {
-                        val nextDayDate by remember { mutableStateOf(state.nextDay!!.day.date) }
-                        PagerSwitcher(
-                            modifier = Modifier.align(Alignment.Center).padding(bottom = 8.dp),
-                            swipeProgress = pagerState.currentPage + pagerState.currentPageOffsetFraction,
-                            nextDate = nextDayDate,
-                            onSelectPage = { scope.launch { pagerState.animateScrollToPage(it) } }
-                        )
                     }
                 }
             }

@@ -33,7 +33,7 @@ import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.model.Teacher
-import plus.vplan.app.ui.subjectIcon
+import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
@@ -66,13 +66,15 @@ fun FollowingLesson(
             .padding(top = paddingTop, start = 8.dp, end = 8.dp, bottom = 8.dp)
     ) {
         Row {
-            Icon(
-                painter = painterResource(lesson.subject.subjectIcon()),
-                contentDescription = null,
+            if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) SubjectIcon(
                 modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                tint =
-                    if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurface
+                subject = lesson.subject,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            )
+            else SubjectIcon(
+                modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                subject = lesson.subject
             )
             Spacer(Modifier.width(8.dp))
             Column {
@@ -96,11 +98,12 @@ fun FollowingLesson(
                         else MaterialTheme.colorScheme.onSurface
                     )
                     if (lesson.rooms != null && !lesson.isCancelled) {
-                        val rooms by combine(lesson.rooms.orEmpty().map { App.roomSource.getById(it) }) { it.toList() }.collectAsState(emptyList())
+                        val rooms by combine(lesson.rooms.orEmpty().map { App.roomSource.getById(it) }) { it.toList() }.collectAsState(null)
                         Text(
                             text = buildString {
-                            append(rooms.filterIsInstance<CacheState.Done<Room>>().joinToString { it.data.name })
-                                if (lesson.rooms.orEmpty().isEmpty()) append("Kein Raum")
+                                if (rooms == null) return@buildString
+                                append(rooms!!.filterIsInstance<CacheState.Done<Room>>().joinToString { it.data.name })
+                                if (rooms!!.isEmpty()) append("Kein Raum")
                             },
                             style = headerFont(),
                             color =
@@ -108,11 +111,12 @@ fun FollowingLesson(
                             else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    val teachers by combine(lesson.teachers.map { App.teacherSource.getById(it) }) { it.toList() }.collectAsState(emptyList())
+                    val teachers by combine(lesson.teachers.map { App.teacherSource.getById(it) }) { it.toList() }.collectAsState(null)
                     if (!lesson.isCancelled) Text(
                         text = buildString {
-                            append(teachers.filterIsInstance<CacheState.Done<Teacher>>().joinToString { it.data.name })
-                            if (lesson.teachers.isEmpty()) append("Keine Lehrkraft")
+                            if (teachers == null) return@buildString
+                            append(teachers!!.filterIsInstance<CacheState.Done<Teacher>>().joinToString { it.data.name })
+                            if (teachers!!.isEmpty()) append("Keine Lehrkraft")
                         },
                         style = headerFont(),
                         color =

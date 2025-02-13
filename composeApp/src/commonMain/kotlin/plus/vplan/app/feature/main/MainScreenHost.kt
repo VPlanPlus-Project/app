@@ -53,12 +53,12 @@ import plus.vplan.app.feature.profile.settings.ui.ProfileSettingsScreen
 import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
+import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.bug_play
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.house
-import vplanplus.composeapp.generated.resources.message_square
 import vplanplus.composeapp.generated.resources.search
 import vplanplus.composeapp.generated.resources.user
 
@@ -73,7 +73,6 @@ fun MainScreenHost(
             if (destination.route.orEmpty().startsWith(MainScreen.MainHome::class.qualifiedName ?: "__")) "_Home"
             else if (destination.route.orEmpty().startsWith(MainScreen.MainCalendar::class.qualifiedName ?: "__")) "_Calendar"
             else if (destination.route.orEmpty().startsWith(MainScreen.MainSearch::class.qualifiedName ?: "__")) "_Search"
-            else if (destination.route.orEmpty().startsWith(MainScreen.MainChat::class.qualifiedName ?: "__")) "_Chat"
             else if (destination.route.orEmpty().startsWith(MainScreen.MainDev::class.qualifiedName ?: "__")) "_Dev"
             else if (destination.route.orEmpty().startsWith(MainScreen.MainProfile::class.qualifiedName ?: "__")) "_Profile"
             else null
@@ -106,7 +105,6 @@ fun MainScreenHost(
             composable<MainScreen.MainHome> { HomeScreen(contentPadding, homeViewModel) }
             composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
             composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel, toggleBottomBar) }
-            composable<MainScreen.MainChat> { Text("Chat") }
             composable<MainScreen.MainDev> { DevScreen(contentPadding, toggleBottomBar) }
             composable<MainScreen.MainProfile> { ProfileScreen(contentPadding, profileViewModel) }
 
@@ -151,13 +149,7 @@ fun MainScreenHost(
                     icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
                     onClick = { navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) } }
                 )
-                NavigationBarItem(
-                    selected = currentDestination == "_Chat",
-                    label = { Text("Chat") },
-                    icon = { Icon(painter = painterResource(Res.drawable.message_square), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainChat) { popUpTo(MainScreen.MainHome) } }
-                )
-                NavigationBarItem(
+                if (isDeveloperMode) NavigationBarItem(
                     selected = currentDestination == "_Dev",
                     label = { Text("Dev") },
                     icon = { Icon(painter = painterResource(Res.drawable.bug_play), contentDescription = null, modifier = Modifier.size(20.dp)) },
@@ -198,7 +190,6 @@ sealed class MainScreen(val name: String) {
     @Serializable data object MainHome : MainScreen("_Home")
     @Serializable data object MainCalendar : MainScreen("_Calendar")
     @Serializable data object MainSearch : MainScreen("_Search")
-    @Serializable data object MainChat : MainScreen("_Chat")
     @Serializable data object MainDev : MainScreen("_Dev")
     @Serializable data object MainProfile : MainScreen("_Profile")
 

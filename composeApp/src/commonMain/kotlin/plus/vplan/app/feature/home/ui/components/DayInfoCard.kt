@@ -17,6 +17,7 @@ fun DayInfoCard(
         modifier = modifier.padding(horizontal = 16.dp),
         title = "Informationen deiner Schule",
         text = info,
-        imageVector = Res.drawable.info
+        imageVector = Res.drawable.info,
+        shadow = false
     )
 }

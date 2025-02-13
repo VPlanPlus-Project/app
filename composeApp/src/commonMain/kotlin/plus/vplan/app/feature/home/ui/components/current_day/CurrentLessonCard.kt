@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.ui.subjectIcon
+import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.progressIn
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
@@ -40,13 +40,15 @@ fun CurrentLessonCard(
             .padding(top = 8.dp),
     ) {
         Row {
-            Icon(
-                painter = painterResource(currentLesson.subject.subjectIcon()),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp).padding(2.dp),
-                tint =
-                if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.onSurface
+            if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) SubjectIcon(
+                modifier = Modifier.size(24.dp),
+                subject = currentLesson.subject,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            )
+            else SubjectIcon(
+                modifier = Modifier.size(24.dp),
+                subject = currentLesson.subject
             )
             Column(
                 modifier = Modifier
@@ -109,9 +111,9 @@ fun CurrentLessonCard(
                                 buildString {
                                     append(it.subject ?: "Entfall")
                                     append(" ")
-                                    append(it.teacherItems!!.joinToString { it.name })
-                                    append(" ")
                                     append(it.roomItems!!.joinToString { it.name })
+                                    append(" ")
+                                    append(it.teacherItems!!.joinToString { it.name })
                                 }
                             },
                             style = MaterialTheme.typography.labelMedium

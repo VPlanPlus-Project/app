@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.toBlackAndWhite
 
 @Composable
@@ -34,12 +35,13 @@ fun InfoCard(
     buttonAction1: () -> Unit = {},
     buttonText2: String? = null,
     buttonAction2: () -> Unit = {},
-    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
-    textColor: Color = MaterialTheme.colorScheme.onPrimaryContainer
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    textColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    shadow: Boolean = true
 ) {
     Column(
         modifier = modifier
-            .shadow(5.dp, shape = RoundedCornerShape(16.dp))
+            .thenIf(Modifier.shadow(5.dp, shape = RoundedCornerShape(16.dp))) { shadow }
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
             .padding(start = 4.dp)
