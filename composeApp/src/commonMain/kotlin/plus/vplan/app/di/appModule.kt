@@ -5,6 +5,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -69,7 +70,9 @@ val appModule = module(createdAtStart = true) {
         val appLogger = co.touchlab.kermit.Logger.withTag("Ktor Client")
         HttpClient {
             install(ContentNegotiation) {
-                json()
+                json(Json {
+                    ignoreUnknownKeys = true
+                })
             }
 
             install(Logging) {
