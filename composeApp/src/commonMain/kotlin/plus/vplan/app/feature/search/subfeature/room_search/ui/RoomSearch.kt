@@ -6,24 +6,30 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
@@ -84,11 +90,20 @@ fun RoomSearch(
             Row {
                 Column {
                     state.rooms.keys.forEach {
-                        Box(
-                            modifier = Modifier
-                                .width(roomNameColumnWidth)
-                                .height(lineHeight)
-                        ) { Text(it.name) }
+                        Column(Modifier.width(roomNameColumnWidth)) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(lineHeight),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = it.name,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                            HorizontalDivider()
+                        }
                     }
                 }
                 Column (
@@ -107,17 +122,22 @@ fun RoomSearch(
                                 val width = occupancy.start.time.until(occupancy.end.time).inWholeMinutes.toFloat() * hourWidth / 60
                                 Box(
                                     modifier = Modifier
-                                        .offset(x = startOffset)
+                                        .offset(x = startOffset, y = 2.dp)
+                                        .height(lineHeight - 4.dp)
                                         .width(width)
-                                        .background(Color.Red),
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    when (occupancy) {
-                                        is Occupancy.Lesson -> Text(occupancy.lesson.groupItems!!.joinToString { it.name })
+                                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+                                        when (occupancy) {
+                                            is Occupancy.Lesson -> Text(occupancy.lesson.groupItems!!.joinToString { it.name })
+                                        }
                                     }
                                 }
                             }
                         }
+                        HorizontalDivider(Modifier.width(uiStart.until(uiEnd).inWholeMinutes.toFloat() * hourWidth / 60))
                     }
                 }
             }
