@@ -15,12 +15,11 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.GetLessonTimesForProfileUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.GetRoomOccupationMapUseCase
-import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.Occupancy
+import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.OccupancyMapRecord
 
 class RoomSearchViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
@@ -40,20 +39,32 @@ class RoomSearchViewModel(
                     getRoomOccupationMapUseCase(currentProfile, Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date),
                     getLessonTimesForProfileUseCase(currentProfile)
                 ) { map, lessonTimes ->
-                    state = state.copy(rooms = map, lessonTimes = lessonTimes, initDone = true)
+                    state = state.copy(rooms = map, lessonTimes = lessonTimes.associateWith { false }, initDone = true)
                 }.collect()
+            }
+        }
+    }
+
+    fun onEvent(event: RoomSearchEvent) {
+        viewModelScope.launch {
+            when (event) {
+                is RoomSearchEvent.ToggleLessonTimeSelection -> state = state.copy(lessonTimes = state.lessonTimes.plus(event.lessonTime to (state.lessonTimes[event.lessonTime]?.not() ?: false)))
             }
         }
     }
 }
 
 data class RoomSearchState(
-    val rooms: Map<Room, Set<Occupancy>> = emptyMap(),
+    val rooms: List<OccupancyMapRecord> = emptyList(),
     val initDone: Boolean = false,
     val currentProfile: Profile? = null,
-    val lessonTimes: List<LessonTime> = emptyList(),
+    val lessonTimes: Map<LessonTime, Boolean> = emptyMap(),
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 ) {
-    val startTime = rooms.values.flatten().minOfOrNull { it.start }
-    val endTime = rooms.values.flatten().maxOfOrNull { it.end }
+    val startTime = rooms.map { it.occupancies }.flatten().minOfOrNull { it.start }
+    val endTime = rooms.map { it.occupancies }.flatten().maxOfOrNull { it.end }
+}
+
+sealed class RoomSearchEvent {
+    data class ToggleLessonTimeSelection(val lessonTime: LessonTime): RoomSearchEvent()
 }

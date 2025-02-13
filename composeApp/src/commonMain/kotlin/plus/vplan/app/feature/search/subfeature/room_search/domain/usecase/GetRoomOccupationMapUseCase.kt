@@ -17,12 +17,14 @@ import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.utils.overlaps
 
 class GetRoomOccupationMapUseCase(
     private val roomRepository: RoomRepository,
@@ -31,7 +33,7 @@ class GetRoomOccupationMapUseCase(
     private val weekRepository: WeekRepository
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
-    operator fun invoke(profile: Profile, date: LocalDate): Flow<Map<Room, Set<Occupancy>>> = channelFlow {
+    operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> = channelFlow {
         val schoolId = profile.getSchool().first().entityId.toInt()
         combine(
             roomRepository.getBySchool(schoolId),
@@ -58,7 +60,7 @@ class GetRoomOccupationMapUseCase(
                         is Lesson.TimetableLesson -> Occupancy.Lesson(it, date)
                     }
                 }.toSet()
-            }.let { send(it) }
+            }.let { map -> send(map.map { OccupancyMapRecord(it.key, it.value) }) }
         }
     }
 }
@@ -67,9 +69,15 @@ sealed class Occupancy(
     val start: LocalDateTime,
     val end: LocalDateTime
 ) {
-
     data class Lesson private constructor(val lesson: plus.vplan.app.domain.model.Lesson, val date: LocalDate) : Occupancy(lesson.lessonTimeItem!!.start.atDate(date), lesson.lessonTimeItem!!.end.atDate(date)) {
         constructor(lesson: plus.vplan.app.domain.model.Lesson.SubstitutionPlanLesson): this(lesson, lesson.date)
         constructor(lesson: plus.vplan.app.domain.model.Lesson.TimetableLesson, contextDate: LocalDate): this(lesson, date = contextDate)
     }
+}
+
+data class OccupancyMapRecord(
+    val room: Room,
+    val occupancies: Set<Occupancy>
+) {
+    fun isAvailableAtLessonTime(lessonTime: LessonTime): Boolean = this.occupancies.none { (lessonTime.start..lessonTime.end) overlaps (it.start.time..it.end.time) }
 }

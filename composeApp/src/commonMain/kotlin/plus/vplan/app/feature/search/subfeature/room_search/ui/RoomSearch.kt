@@ -1,12 +1,17 @@
 package plus.vplan.app.feature.search.subfeature.room_search.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +64,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.Occupancy
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
+import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.minusWithCapAtMidnight
 import plus.vplan.app.utils.plusWithCapAtMidnight
 import plus.vplan.app.utils.regularTimeFormat
@@ -115,7 +121,7 @@ fun RoomSearch(
         ) {
             val roomNameColumnWidth = 48.dp
             val lineHeight = 32.dp
-            val headerHeight = 48.dp
+            val headerHeight = 52.dp
             val hourWidth = 64.dp
 
             val uiStart = state.startTime?.time?.minusWithCapAtMidnight(1.hours) ?: LocalTime(0, 0)
@@ -127,7 +133,7 @@ fun RoomSearch(
             val horizontalScrollState = rememberScrollState(with(localDensity) { (currentTimeXOffset - hourWidth).coerceAtMost(0.dp).roundToPx() })
 
             val timeDivider: @Composable () -> Unit = {
-                state.lessonTimes.forEach { lessonTime ->
+                state.lessonTimes.keys.forEach { lessonTime ->
                     val startOffset = uiStart.until(lessonTime.start).inWholeMinutes.toFloat() * hourWidth / 60
                     val endOffset = uiStart.until(lessonTime.end).inWholeMinutes.toFloat() * hourWidth / 60
                     val color = MaterialTheme.colorScheme.outline
@@ -187,20 +193,26 @@ fun RoomSearch(
                     .padding(top = headerHeight)
             ) map@{
                 Column {
-                    state.rooms.keys.forEach {
-                        Column(Modifier.width(roomNameColumnWidth)) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(lineHeight),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = it.name,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
+                    state.rooms.forEach { occupancyMapRecord ->
+                        AnimatedVisibility(
+                            visible = state.lessonTimes.filter { it.value }.keys.all { occupancyMapRecord.isAvailableAtLessonTime(it) },
+                            enter = expandVertically(animationSpec = tween(), expandFrom = Alignment.CenterVertically),
+                            exit = shrinkVertically(animationSpec = tween(), shrinkTowards = Alignment.CenterVertically)
+                        ) {
+                            Column(Modifier.width(roomNameColumnWidth)) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(lineHeight),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = occupancyMapRecord.room.name,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                                HorizontalDivider()
                             }
-                            HorizontalDivider()
                         }
                     }
                 }
@@ -209,35 +221,43 @@ fun RoomSearch(
                         .fillMaxSize()
                         .horizontalScroll(horizontalScrollState)
                 ) {
-                    state.rooms.values.forEach { occupancies ->
-                        Box(
-                            modifier = Modifier
-                                .width(bodyWidth)
-                                .height(lineHeight)
+                    state.rooms.forEach { occupancyMapRecord ->
+                        AnimatedVisibility(
+                            visible = state.lessonTimes.filter { it.value }.keys.all { occupancyMapRecord.isAvailableAtLessonTime(it) },
+                            enter = expandVertically(animationSpec = tween(), expandFrom = Alignment.CenterVertically),
+                            exit = shrinkVertically(animationSpec = tween(), shrinkTowards = Alignment.CenterVertically)
                         ) {
-                            timeDivider()
-
-                            occupancies.forEach { occupancy ->
-                                val startOffset = uiStart.until(occupancy.start.time).inWholeMinutes.toFloat() * hourWidth / 60
-                                val width = occupancy.start.time.until(occupancy.end.time).inWholeMinutes.toFloat() * hourWidth / 60
+                            Column {
                                 Box(
                                     modifier = Modifier
-                                        .offset(x = startOffset, y = 2.dp)
-                                        .height(lineHeight - 4.dp)
-                                        .width(width)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center
+                                        .width(bodyWidth)
+                                        .height(lineHeight)
                                 ) {
-                                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
-                                        when (occupancy) {
-                                            is Occupancy.Lesson -> Text(occupancy.lesson.groupItems!!.joinToString { it.name })
+                                    timeDivider()
+
+                                    occupancyMapRecord.occupancies.forEach { occupancy ->
+                                        val startOffset = uiStart.until(occupancy.start.time).inWholeMinutes.toFloat() * hourWidth / 60
+                                        val width = occupancy.start.time.until(occupancy.end.time).inWholeMinutes.toFloat() * hourWidth / 60
+                                        Box(
+                                            modifier = Modifier
+                                                .offset(x = startOffset, y = 2.dp)
+                                                .height(lineHeight - 4.dp)
+                                                .width(width)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+                                                when (occupancy) {
+                                                    is Occupancy.Lesson -> Text(occupancy.lesson.groupItems!!.joinToString { it.name })
+                                                }
+                                            }
                                         }
                                     }
                                 }
+                                HorizontalDivider(Modifier.width(uiStart.until(uiEnd).inWholeMinutes.toFloat() * hourWidth / 60))
                             }
                         }
-                        HorizontalDivider(Modifier.width(uiStart.until(uiEnd).inWholeMinutes.toFloat() * hourWidth / 60))
                     }
                 }
             }
@@ -255,26 +275,41 @@ fun RoomSearch(
                         .width(bodyWidth)
                 ) {
 
-                    state.lessonTimes.forEach { lessonTime ->
+                    state.lessonTimes.forEach { (lessonTime, selected) ->
                         val startOffset = uiStart.until(lessonTime.start).inWholeMinutes.toFloat() * hourWidth / 60
                         val width = lessonTime.start.until(lessonTime.end).inWholeMinutes.toFloat() * hourWidth / 60
                         Box(
                             modifier = Modifier
                                 .offset(x = startOffset, y = 4.dp)
-                                .width(width),
-                            contentAlignment = Alignment.Center
+                                .width(width)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { viewModel.onEvent(RoomSearchEvent.ToggleLessonTimeSelection(lessonTime)) }
                         ) {
-                            Text(
-                                text = buildString {
-                                    append(lessonTime.lessonNumber)
-                                    append(".\n")
-                                    append(lessonTime.start.format(regularTimeFormat))
-                                    append(" -\n")
-                                    append(lessonTime.end.format(regularTimeFormat))
-                                },
-                                style = MaterialTheme.typography.labelSmall,
-                                textAlign = TextAlign.Center
-                            )
+                            AnimatedContent(
+                                targetState = selected,
+                                modifier = Modifier.fillMaxSize()
+                            ) { displaySelected ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .thenIf(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) { displaySelected },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CompositionLocalProvider(LocalContentColor provides if (displaySelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface) {
+                                        Text(
+                                            text = buildString {
+                                                append(lessonTime.lessonNumber)
+                                                append(".\n")
+                                                append(lessonTime.start.format(regularTimeFormat))
+                                                append(" -\n")
+                                                append(lessonTime.end.format(regularTimeFormat))
+                                            },
+                                            style = MaterialTheme.typography.labelSmall,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
 
