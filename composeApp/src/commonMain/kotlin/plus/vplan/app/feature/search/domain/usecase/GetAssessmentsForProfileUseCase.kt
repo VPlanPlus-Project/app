@@ -19,5 +19,6 @@ class GetAssessmentsForProfileUseCase(
                     it.getCreatedByVppIdItem()
                     it.getSubjectInstanceItem()
                 }
+                .sortedByDescending { it.createdAt }
         }
 }
