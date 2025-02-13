@@ -12,6 +12,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 infix fun LocalTime.until(other: LocalTime): Duration {
     val start = this.atDate(LocalDate.fromEpochDays(0)).toInstant(TimeZone.UTC)
@@ -27,6 +28,22 @@ operator fun LocalTime.plus(duration: Duration): LocalTime {
 operator fun LocalTime.minus(duration: Duration): LocalTime {
     val instant = atDate(LocalDate.fromEpochDays(0)).toInstant(TimeZone.UTC)
     return instant.minus(duration).toLocalDateTime(TimeZone.UTC).time
+}
+
+operator fun LocalTime.minus(other: LocalTime): LocalTime {
+    return this.minus(other.toSecondOfDay().seconds)
+}
+
+fun LocalTime.minusWithCapAtMidnight(duration: Duration): LocalTime {
+    val seconds = this.toSecondOfDay()
+    val newSeconds = (seconds - duration.inWholeSeconds).coerceAtLeast(0)
+    return LocalTime.fromSecondOfDay(newSeconds.toInt())
+}
+
+fun LocalTime.plusWithCapAtMidnight(duration: Duration): LocalTime {
+    val seconds = this.toSecondOfDay()
+    val newSeconds = (seconds + duration.inWholeSeconds).coerceAtMost(24 * 60 * 60)
+    return LocalTime.fromSecondOfDay(newSeconds.toInt())
 }
 
 fun LocalTime.inWholeMinutes(): Int {

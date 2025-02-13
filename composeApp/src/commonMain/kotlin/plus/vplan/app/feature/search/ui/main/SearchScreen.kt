@@ -45,6 +45,7 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
+import plus.vplan.app.feature.main.MainScreen
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.LessonRow
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
@@ -73,7 +74,8 @@ fun SearchScreen(
     SearchScreenContent(
         state = viewModel.state,
         onEvent = viewModel::onEvent,
-        contentPadding = contentPadding
+        contentPadding = contentPadding,
+        onRoomSearchClicked = { navHostController.navigate(MainScreen.RoomSearch) }
     )
 }
 
@@ -81,6 +83,7 @@ fun SearchScreen(
 private fun SearchScreenContent(
     state: SearchState,
     onEvent: (event: SearchEvent) -> Unit,
+    onRoomSearchClicked: () -> Unit,
     contentPadding: PaddingValues
 ) {
     val localDensity = LocalDensity.current
@@ -102,7 +105,8 @@ private fun SearchScreenContent(
                 value = state.query,
                 selectedDate = state.selectedDate,
                 onQueryChange = { onEvent(SearchEvent.UpdateQuery(it)) },
-                onSelectDate = { onEvent(SearchEvent.SelectDate(it)) }
+                onSelectDate = { onEvent(SearchEvent.SelectDate(it)) },
+                onRoomSearchClicked = onRoomSearchClicked
             )
         }
         if (state.query.isBlank()) StartScreen(

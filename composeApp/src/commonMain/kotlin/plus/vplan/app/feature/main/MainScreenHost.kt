@@ -50,6 +50,7 @@ import plus.vplan.app.feature.profile.page.ui.ProfileScreenEvent
 import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
 import plus.vplan.app.feature.profile.page.ui.components.ProfileSwitcher
 import plus.vplan.app.feature.profile.settings.ui.ProfileSettingsScreen
+import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
 import plus.vplan.app.utils.BrowserIntent
@@ -113,6 +114,8 @@ fun MainScreenHost(
                 val args = it.toRoute<MainScreen.ProfileSettings>()
                 ProfileSettingsScreen(args.profileId, navController)
             }
+
+            composable<MainScreen.RoomSearch> { RoomSearch(navController) }
         }
 
         AnimatedVisibility(
@@ -200,4 +203,5 @@ sealed class MainScreen(val name: String) {
     @Serializable data object MainProfile : MainScreen("_Profile")
 
     @Serializable data class ProfileSettings(val profileId: String) : MainScreen("ProfileSettings")
+    @Serializable data object RoomSearch : MainScreen("RoomSearch")
 }

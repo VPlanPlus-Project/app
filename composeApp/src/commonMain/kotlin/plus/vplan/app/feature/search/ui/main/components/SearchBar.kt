@@ -56,6 +56,7 @@ fun SearchBar(
     selectedDate: LocalDate,
     onQueryChange: (to: String) -> Unit,
     onSelectDate: (date: LocalDate) -> Unit,
+    onRoomSearchClicked: () -> Unit,
 ) {
     val searchObjects = remember { listOf("Räumen", "Lehrern", "Klassen", "Hausaufgaben", "Leistungserhebungen").shuffled() }
     val infiniteTransition = rememberInfiniteTransition(label = "infinite placeholder")
@@ -107,7 +108,7 @@ fun SearchBar(
         ) {
             item {
                 AssistChip(
-                    onClick = {},
+                    onClick = onRoomSearchClicked,
                     label = { Text("Freie Räume") },
                     leadingIcon = {
                         Icon(
