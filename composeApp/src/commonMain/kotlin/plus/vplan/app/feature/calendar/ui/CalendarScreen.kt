@@ -52,6 +52,8 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.buildAnnotatedString
@@ -62,7 +64,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
-import co.touchlab.kermit.Logger
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -139,7 +140,6 @@ private fun CalendarScreenContent(
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val day = state.days[state.selectedDate]
-                Logger.d { "${state.selectedDate}: $day"}
                 val lessons = day?.substitutionPlan.orEmpty().ifEmpty { day?.timetable }
                 val isContentAtTop = (contentScrollState.value == 0 && lessons.isNullOrEmpty()) || (lessons.orEmpty().isNotEmpty() && with(localDensity) { contentScrollState.value <= ((lessons.orEmpty().minOf { it.lessonTimeItem!!.start }.inWholeMinutes().toFloat() - 60) * minute).roundToPx() })
                 val y = (with(localDensity) { available.y.toDp() }) / (5 * weekHeight)
@@ -165,15 +165,29 @@ private fun CalendarScreenContent(
             .fillMaxSize()
             .nestedScroll(scrollConnection)
     ) {
+        val dateSelectorVelocityTracker = remember { VelocityTracker() }
         Column (
             modifier = Modifier
                 .fillMaxWidth()
                 .pointerInput(Unit) {
                     detectVerticalDragGestures(
                         onDragStart = { isUserScrolling = true },
-                        onDragEnd = { isUserScrolling = false; scrollProgress = scrollProgress.roundToInt().toFloat() },
-                        onDragCancel = { isUserScrolling = false; scrollProgress = scrollProgress.roundToInt().toFloat() },
-                    ) { _, dragAmount ->
+                        onDragEnd = {
+                            isUserScrolling = false
+                            val velocity = dateSelectorVelocityTracker.calculateVelocity().y
+                            val threshold = 700
+                            scrollProgress = if (velocity > threshold) 1f
+                            else if (velocity < -threshold) 0f
+                            else scrollProgress.roundToInt().toFloat()
+                            dateSelectorVelocityTracker.resetTracking()
+                        },
+                        onDragCancel = {
+                            isUserScrolling = false
+                            scrollProgress = scrollProgress.roundToInt().toFloat()
+                            dateSelectorVelocityTracker.resetTracking()
+                        },
+                    ) { event, dragAmount ->
+                        dateSelectorVelocityTracker.addPointerInputChange(event)
                         val y = (with(localDensity) { dragAmount.toDp() }) / (5 * weekHeight)
                         scrollProgress = (scrollProgress + y).coerceIn(0f, 1f)
                     }
