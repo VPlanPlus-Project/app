@@ -76,12 +76,15 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
+import plus.vplan.app.feature.home.ui.components.headerFont
 import plus.vplan.app.ui.components.InfoCard
-import plus.vplan.app.ui.theme.ColorToken
-import plus.vplan.app.ui.theme.customColors
+import plus.vplan.app.ui.components.SubjectIcon
+import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
+import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.shortMonthNames
+import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.until
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
@@ -133,7 +136,7 @@ private fun CalendarScreenContent(
     val displayScrollProgress = if (isUserScrolling) scrollProgress else animatedScrollProgress
 
     // calendar content
-    val minute = 1.dp
+    val minute = 1.25.dp
     var availableWidth by remember { mutableStateOf(0.dp) }
 
     val scrollConnection = remember(state.days[state.selectedDate]) {
@@ -362,56 +365,84 @@ private fun CalendarScreenContent(
                                             .padding(horizontal = 8.dp)
                                             .height(start.until(end).inWholeMinutes.toFloat() * minute)
                                             .offset(y = y, x = (availableWidth / lessonsThatOverlapStart.size) * lessonsThatOverlapStartAndAreAlreadyDisplayed.size)
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .clip(RoundedCornerShape(6.dp))
                                             .clickable {  }
                                             .background(
                                                 if (lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
-                                                else customColors[ColorToken.GreenContainer]!!.get())
+                                                else MaterialTheme.colorScheme.surfaceVariant)
                                             .padding(4.dp)
                                     ) {
                                         CompositionLocalProvider(
-                                            LocalContentColor provides if (lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
+                                            LocalContentColor provides if (lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                         ) {
                                             Column {
                                                 Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    verticalAlignment = Alignment.Top,
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                                 ) {
-                                                    Text(text = buildAnnotatedString {
-                                                        withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
-                                                            if (lessonsThatOverlapStartAndAreAlreadyDisplayed.isEmpty()) append("${lesson.lessonTimeItem!!.lessonNumber}. ")
-                                                            if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                append((lesson as Lesson.SubstitutionPlanLesson).defaultLessonItem!!.subject)
-                                                            } else append(lesson.subject.toString())
+                                                    if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) SubjectIcon(
+                                                        modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                                                        subject = lesson.subject,
+                                                        contentColor = MaterialTheme.colorScheme.onError,
+                                                        containerColor = MaterialTheme.colorScheme.error
+                                                    )
+                                                    else SubjectIcon(
+                                                        modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                                                        subject = lesson.subject
+                                                    )
+                                                    Column {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                        ) {
+                                                            Text(text = buildAnnotatedString {
+                                                                withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
+                                                                    if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
+                                                                        append((lesson as Lesson.SubstitutionPlanLesson).defaultLessonItem!!.subject)
+                                                                    } else append(lesson.subject.toString())
+                                                                }
+                                                            }, style = MaterialTheme.typography.bodySmall)
+                                                            if (lesson.roomItems != null) Text(
+                                                                text = lesson.roomItems.orEmpty().joinToString { it.name },
+                                                                style = MaterialTheme.typography.labelMedium
+                                                            )
+                                                            Text(
+                                                                text = lesson.teacherItems.orEmpty().joinToString { it.name },
+                                                                style = MaterialTheme.typography.labelMedium
+                                                            )
                                                         }
-                                                    }, style = MaterialTheme.typography.bodyMedium)
-                                                    if (lesson.roomItems != null) Text(
-                                                        text = lesson.roomItems.orEmpty().joinToString { it.name },
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                    Text(
-                                                        text = lesson.teacherItems.orEmpty().joinToString { it.name },
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                }
-                                                if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) {
-                                                    Row(
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                                    ) {
-                                                        Icon(
-                                                            painter = painterResource(Res.drawable.info),
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(8.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurface
-                                                        )
                                                         Text(
-                                                            text = lesson.info,
-                                                            style = MaterialTheme.typography.bodySmall,
+                                                            buildString {
+                                                                append(lesson.lessonTimeItem!!.lessonNumber)
+                                                                append(". $DOT ")
+                                                                append(lesson.lessonTimeItem!!.start.format(regularTimeFormat))
+                                                                append(" - ")
+                                                                append(lesson.lessonTimeItem!!.end.format(regularTimeFormat))
+                                                            },
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                             maxLines = 1,
                                                             overflow = TextOverflow.Ellipsis
                                                         )
                                                     }
+                                                }
+                                                if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                    modifier = Modifier.padding(start = 16.dp)
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(Res.drawable.info),
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(8.dp),
+                                                        tint = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                    Text(
+                                                        text = lesson.info,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
                                                 }
                                             }
                                         }
