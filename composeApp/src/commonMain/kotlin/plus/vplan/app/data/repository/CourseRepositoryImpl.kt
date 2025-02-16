@@ -65,7 +65,7 @@ class CourseRepositoryImpl(
                     courseGroupCrossovers = data.flatMap {
                         it.groups.map { groupId ->
                             DbCourseGroupCrossover(
-                                groupId = groupId,
+                                groupId = groupId.group,
                                 courseId = it.courseId
                             )
                         }
@@ -118,7 +118,7 @@ class CourseRepositoryImpl(
                     courseGroupCrossovers = data.groups.map {
                         DbCourseGroupCrossover(
                             courseId = data.courseId,
-                            groupId = it
+                            groupId = it.group
                         )
                     }
                 )
@@ -167,7 +167,7 @@ private data class CourseItemResponse(
     @SerialName("id") val courseId: Int,
     @SerialName("course_name") val name: String,
     @SerialName("teacher") val teacher: TeacherItemWrapper?,
-    @SerialName("groups") val groups: List<Int>
+    @SerialName("groups") val groups: List<GroupItemWrapper>
 ) {
     @Serializable
     data class TeacherItemWrapper(
@@ -179,4 +179,9 @@ private data class CourseItemResponse(
             @SerialName("name") val name: String
         )
     }
+
+    @Serializable
+    data class GroupItemWrapper(
+        @SerialName("id") val group: Int,
+    )
 }

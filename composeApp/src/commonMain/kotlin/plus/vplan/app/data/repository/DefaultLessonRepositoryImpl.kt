@@ -67,7 +67,7 @@ class DefaultLessonRepositoryImpl(
                 },
                 defaultLessonGroupCrossovers = data.flatMap {
                     it.groups.map { groupId ->
-                        DbDefaultLessonGroupCrossover(defaultLessonId = it.subjectInstanceId, groupId = groupId)
+                        DbDefaultLessonGroupCrossover(defaultLessonId = it.subjectInstanceId, groupId = groupId.id)
                     }
                 }
             )
@@ -123,7 +123,7 @@ class DefaultLessonRepositoryImpl(
                         )
                     ),
                     defaultLessonGroupCrossovers = data.groups.map { groupId ->
-                        DbDefaultLessonGroupCrossover(data.subjectInstanceId, groupId)
+                        DbDefaultLessonGroupCrossover(data.subjectInstanceId, groupId.id)
                     }
                 )
                 sendAll(getByIndiwareId(indiwareId))
@@ -170,11 +170,11 @@ class DefaultLessonRepositoryImpl(
 @Serializable
 private data class SubjectInstanceResponseWithSubject(
     @SerialName("school_ids") val schoolIds: List<Int>,
-    @SerialName("subject_instance_id") val subjectInstanceId: Int,
+    @SerialName("id") val subjectInstanceId: Int,
     @SerialName("subject") val subject: SubjectResponseWrapper,
     @SerialName("teacher") val teacher: TeacherResponse?,
     @SerialName("course") val course: CourseResponse?,
-    @SerialName("groups") val groups: List<Int>,
+    @SerialName("groups") val groups: List<GroupResponse>,
     @SerialName("sp24_id") val sp24Id: Int?,
 )
 
@@ -195,5 +195,10 @@ private data class CourseResponse(
 
 @Serializable
 private data class TeacherResponse(
+    @SerialName("id") val id: Int
+)
+
+@Serializable
+private data class GroupResponse(
     @SerialName("id") val id: Int
 )
