@@ -32,7 +32,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +56,7 @@ import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
@@ -69,6 +69,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
@@ -83,7 +84,6 @@ import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularTimeFormat
-import plus.vplan.app.utils.shortMonthNames
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.until
 import plus.vplan.app.utils.untilText
@@ -199,33 +199,40 @@ private fun CalendarScreenContent(
         ) {
             Row(
                 modifier = Modifier
-                    .padding(vertical = 4.dp)
+                    .padding(vertical = 4.dp, horizontal = 8.dp)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                AnimatedContent(
-                    targetState = state.selectedDate.format(LocalDate.Format {
-                        monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
-                        char(' ')
-                        yearTwoDigits(2000)
-                    }),
-                ) { displayDate ->
-                    Text(
-                        text = displayDate,
-                        style = MaterialTheme.typography.headlineSmall
-                    )
+                Column(Modifier.padding(horizontal = 8.dp)) {
+                    AnimatedContent(
+                        targetState = state.selectedDate
+                    ) { displayDate ->
+                        Text(
+                            text = state.currentTime.date untilText displayDate,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
+                    AnimatedContent(
+                        targetState = state.selectedDate
+                    ) { displayDate ->
+                        Text(
+                            text = displayDate.format(LocalDate.Format {
+                                dayOfMonth(Padding.ZERO)
+                                chars(". ")
+                                monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
+                                char(' ')
+                                yearTwoDigits(2000)
+                            }),
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
                 }
-                IconButton(
-                    onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) },
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.calendar),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
+                IconButton(onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) }) {
+                    Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(24.dp))
                 }
             }
+            Spacer(modifier = Modifier.height(8.dp))
             ScrollableDateSelector(
                 scrollProgress = displayScrollProgress,
                 allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
@@ -265,32 +272,6 @@ private fun CalendarScreenContent(
         ) { page ->
             val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
             Column {
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) date@{
-                    Text(
-                        text = date.format(LocalDate.Format {
-                            dayOfMonth()
-                            chars(". ")
-                            monthName(shortMonthNames)
-                            char('.')
-                        }),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.Gray
-                    )
-                    VerticalDivider(
-                        modifier = Modifier.height(16.dp),
-                        color = Color.Gray,
-                    )
-                    Text(
-                        text = LocalDate.now().untilText(date),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.Gray
-                    )
-                }
                 val day = state.days[date]
                 if (day != null) {
                     Column(
