@@ -95,7 +95,7 @@ fun MainScreenHost(
         val top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
         val left = WindowInsets.systemBars.asPaddingValues().calculateLeftPadding(localLayoutDirection)
         val right = WindowInsets.systemBars.asPaddingValues().calculateRightPadding(localLayoutDirection)
-        val bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + bottomBarHeight
+        val bottom = bottomBarHeight.let { if (it == 0.dp) WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() else it }
         val contentPadding = PaddingValues(left, top, right, bottom)
         NavHost(
             modifier = Modifier.fillMaxSize(),

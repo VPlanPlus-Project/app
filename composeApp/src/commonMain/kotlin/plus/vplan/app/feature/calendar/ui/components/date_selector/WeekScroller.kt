@@ -22,6 +22,7 @@ const val WEEK_PAGER_SIZE = Int.MAX_VALUE
 @Composable
 fun WeekScroller(
     selectedDate: LocalDate,
+    scrollProgress: Float,
     onChangeSelectedDate: (LocalDate) -> Unit
 ) {
     val referenceWeek = LocalDate.now().atStartOfWeek()
@@ -51,7 +52,8 @@ fun WeekScroller(
             startDate = startDate,
             selectedDate = selectedDate,
             onDateSelected = onChangeSelectedDate,
-            height = 56.dp
+            height = 56.dp,
+            scrollProgress = scrollProgress
         )
     }
 }

@@ -32,7 +32,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -52,9 +51,12 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
@@ -62,12 +64,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
-import co.touchlab.kermit.Logger
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
@@ -75,12 +77,14 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
+import plus.vplan.app.feature.home.ui.components.headerFont
 import plus.vplan.app.ui.components.InfoCard
-import plus.vplan.app.ui.theme.ColorToken
-import plus.vplan.app.ui.theme.customColors
+import plus.vplan.app.ui.components.SubjectIcon
+import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
-import plus.vplan.app.utils.shortMonthNames
+import plus.vplan.app.utils.regularTimeFormat
+import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.until
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
@@ -132,14 +136,13 @@ private fun CalendarScreenContent(
     val displayScrollProgress = if (isUserScrolling) scrollProgress else animatedScrollProgress
 
     // calendar content
-    val minute = 1.dp
+    val minute = 1.25.dp
     var availableWidth by remember { mutableStateOf(0.dp) }
 
     val scrollConnection = remember(state.days[state.selectedDate]) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val day = state.days[state.selectedDate]
-                Logger.d { "${state.selectedDate}: $day"}
                 val lessons = day?.substitutionPlan.orEmpty().ifEmpty { day?.timetable }
                 val isContentAtTop = (contentScrollState.value == 0 && lessons.isNullOrEmpty()) || (lessons.orEmpty().isNotEmpty() && with(localDensity) { contentScrollState.value <= ((lessons.orEmpty().minOf { it.lessonTimeItem!!.start }.inWholeMinutes().toFloat() - 60) * minute).roundToPx() })
                 val y = (with(localDensity) { available.y.toDp() }) / (5 * weekHeight)
@@ -165,15 +168,29 @@ private fun CalendarScreenContent(
             .fillMaxSize()
             .nestedScroll(scrollConnection)
     ) {
+        val dateSelectorVelocityTracker = remember { VelocityTracker() }
         Column (
             modifier = Modifier
                 .fillMaxWidth()
                 .pointerInput(Unit) {
                     detectVerticalDragGestures(
                         onDragStart = { isUserScrolling = true },
-                        onDragEnd = { isUserScrolling = false; scrollProgress = scrollProgress.roundToInt().toFloat() },
-                        onDragCancel = { isUserScrolling = false; scrollProgress = scrollProgress.roundToInt().toFloat() },
-                    ) { _, dragAmount ->
+                        onDragEnd = {
+                            isUserScrolling = false
+                            val velocity = dateSelectorVelocityTracker.calculateVelocity().y
+                            val threshold = 700
+                            scrollProgress = if (velocity > threshold) 1f
+                            else if (velocity < -threshold) 0f
+                            else scrollProgress.roundToInt().toFloat()
+                            dateSelectorVelocityTracker.resetTracking()
+                        },
+                        onDragCancel = {
+                            isUserScrolling = false
+                            scrollProgress = scrollProgress.roundToInt().toFloat()
+                            dateSelectorVelocityTracker.resetTracking()
+                        },
+                    ) { event, dragAmount ->
+                        dateSelectorVelocityTracker.addPointerInputChange(event)
                         val y = (with(localDensity) { dragAmount.toDp() }) / (5 * weekHeight)
                         scrollProgress = (scrollProgress + y).coerceIn(0f, 1f)
                     }
@@ -182,33 +199,40 @@ private fun CalendarScreenContent(
         ) {
             Row(
                 modifier = Modifier
-                    .padding(vertical = 4.dp)
+                    .padding(vertical = 4.dp, horizontal = 8.dp)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                AnimatedContent(
-                    targetState = state.selectedDate.format(LocalDate.Format {
-                        monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
-                        char(' ')
-                        yearTwoDigits(2000)
-                    }),
-                ) { displayDate ->
-                    Text(
-                        text = displayDate,
-                        style = MaterialTheme.typography.headlineSmall
-                    )
+                Column(Modifier.padding(horizontal = 8.dp)) {
+                    AnimatedContent(
+                        targetState = state.selectedDate
+                    ) { displayDate ->
+                        Text(
+                            text = state.currentTime.date untilText displayDate,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
+                    AnimatedContent(
+                        targetState = state.selectedDate
+                    ) { displayDate ->
+                        Text(
+                            text = displayDate.format(LocalDate.Format {
+                                dayOfMonth(Padding.ZERO)
+                                chars(". ")
+                                monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
+                                char(' ')
+                                yearTwoDigits(2000)
+                            }),
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
                 }
-                IconButton(
-                    onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) },
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.calendar),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
+                IconButton(onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) }) {
+                    Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(24.dp))
                 }
             }
+            Spacer(modifier = Modifier.height(8.dp))
             ScrollableDateSelector(
                 scrollProgress = displayScrollProgress,
                 allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
@@ -248,35 +272,9 @@ private fun CalendarScreenContent(
         ) { page ->
             val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
             Column {
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) date@{
-                    Text(
-                        text = date.format(LocalDate.Format {
-                            dayOfMonth()
-                            chars(". ")
-                            monthName(shortMonthNames)
-                            char('.')
-                        }),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.Gray
-                    )
-                    VerticalDivider(
-                        modifier = Modifier.height(16.dp),
-                        color = Color.Gray,
-                    )
-                    Text(
-                        text = LocalDate.now().untilText(date),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.Gray
-                    )
-                }
                 val day = state.days[date]
                 if (day != null) {
-                    Column(
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
                     ) {
@@ -284,7 +282,6 @@ private fun CalendarScreenContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onSizeChanged { availableWidth = with(localDensity) { it.width.toDp() } - 2 * 8.dp - 32.dp }
-                                .weight(1f)
                                 .verticalScroll(contentScrollState)
                         ) {
                             Box(
@@ -348,56 +345,84 @@ private fun CalendarScreenContent(
                                             .padding(horizontal = 8.dp)
                                             .height(start.until(end).inWholeMinutes.toFloat() * minute)
                                             .offset(y = y, x = (availableWidth / lessonsThatOverlapStart.size) * lessonsThatOverlapStartAndAreAlreadyDisplayed.size)
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .clip(RoundedCornerShape(6.dp))
                                             .clickable {  }
                                             .background(
                                                 if (lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
-                                                else customColors[ColorToken.GreenContainer]!!.get())
+                                                else MaterialTheme.colorScheme.surfaceVariant)
                                             .padding(4.dp)
                                     ) {
                                         CompositionLocalProvider(
-                                            LocalContentColor provides if (lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
+                                            LocalContentColor provides if (lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                         ) {
                                             Column {
                                                 Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    verticalAlignment = Alignment.Top,
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                                 ) {
-                                                    Text(text = buildAnnotatedString {
-                                                        withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
-                                                            if (lessonsThatOverlapStartAndAreAlreadyDisplayed.isEmpty()) append("${lesson.lessonTimeItem!!.lessonNumber}. ")
-                                                            if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                append((lesson as Lesson.SubstitutionPlanLesson).defaultLessonItem!!.subject)
-                                                            } else append(lesson.subject.toString())
+                                                    if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) SubjectIcon(
+                                                        modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                                                        subject = lesson.subject,
+                                                        contentColor = MaterialTheme.colorScheme.onError,
+                                                        containerColor = MaterialTheme.colorScheme.error
+                                                    )
+                                                    else SubjectIcon(
+                                                        modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                                                        subject = lesson.subject
+                                                    )
+                                                    Column {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                        ) {
+                                                            Text(text = buildAnnotatedString {
+                                                                withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
+                                                                    if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
+                                                                        append((lesson as Lesson.SubstitutionPlanLesson).defaultLessonItem!!.subject)
+                                                                    } else append(lesson.subject.toString())
+                                                                }
+                                                            }, style = MaterialTheme.typography.bodySmall)
+                                                            if (lesson.roomItems != null) Text(
+                                                                text = lesson.roomItems.orEmpty().joinToString { it.name },
+                                                                style = MaterialTheme.typography.labelMedium
+                                                            )
+                                                            Text(
+                                                                text = lesson.teacherItems.orEmpty().joinToString { it.name },
+                                                                style = MaterialTheme.typography.labelMedium
+                                                            )
                                                         }
-                                                    }, style = MaterialTheme.typography.bodyMedium)
-                                                    if (lesson.roomItems != null) Text(
-                                                        text = lesson.roomItems.orEmpty().joinToString { it.name },
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                    Text(
-                                                        text = lesson.teacherItems.orEmpty().joinToString { it.name },
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                }
-                                                if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) {
-                                                    Row(
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                                    ) {
-                                                        Icon(
-                                                            painter = painterResource(Res.drawable.info),
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(8.dp),
-                                                            tint = MaterialTheme.colorScheme.onSurface
-                                                        )
                                                         Text(
-                                                            text = lesson.info,
-                                                            style = MaterialTheme.typography.bodySmall,
+                                                            buildString {
+                                                                append(lesson.lessonTimeItem!!.lessonNumber)
+                                                                append(". $DOT ")
+                                                                append(lesson.lessonTimeItem!!.start.format(regularTimeFormat))
+                                                                append(" - ")
+                                                                append(lesson.lessonTimeItem!!.end.format(regularTimeFormat))
+                                                            },
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                             maxLines = 1,
                                                             overflow = TextOverflow.Ellipsis
                                                         )
                                                     }
+                                                }
+                                                if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                    modifier = Modifier.padding(start = 16.dp)
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(Res.drawable.info),
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(8.dp),
+                                                        tint = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                    Text(
+                                                        text = lesson.info,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
                                                 }
                                             }
                                         }
@@ -408,7 +433,9 @@ private fun CalendarScreenContent(
 
                         if (day.day.info != null) {
                             InfoCard(
-                                modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(vertical = 4.dp, horizontal = 8.dp),
                                 imageVector = Res.drawable.info,
                                 title = "Informationen deiner Schule",
                                 text = day.day.info,

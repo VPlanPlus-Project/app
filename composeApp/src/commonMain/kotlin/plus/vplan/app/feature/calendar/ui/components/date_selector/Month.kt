@@ -9,7 +9,7 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
-val weekHeight = 56.dp
+val weekHeight = 64.dp
 
 @Composable
 fun Month(
@@ -29,7 +29,8 @@ fun Month(
                 startDate = date,
                 height = if (keepWeek == date) weekHeight else weekHeight * scrollProgress,
                 selectedDate = selectedDate,
-                onDateSelected = onDateSelected
+                onDateSelected = onDateSelected,
+                scrollProgress = scrollProgress
             )
         }
     }

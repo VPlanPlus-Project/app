@@ -15,7 +15,8 @@ fun Week(
     startDate: LocalDate,
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit = {},
-    height: Dp
+    height: Dp,
+    scrollProgress: Float
 ) {
     Row(
         modifier = Modifier
@@ -26,10 +27,11 @@ fun Week(
             val date = startDate + it.days
             Day(
                 date = date,
-                isSelected = selectedDate == date,
+                selectedDate = selectedDate,
                 onClick = { onDateSelected(date) },
                 height = height,
-                isOtherMonth = false
+                isOtherMonth = false,
+                scrollProgress = scrollProgress
             )
         }
     }

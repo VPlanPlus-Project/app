@@ -14,6 +14,7 @@ fun ScrollableDateSelector(
 ) {
     if (scrollProgress == 0f && allowInteractions) WeekScroller(
         selectedDate = selectedDate,
+        scrollProgress = scrollProgress,
         onChangeSelectedDate = onSelectDate
     )
     else if (scrollProgress in 0f..1f && !allowInteractions) Month(
