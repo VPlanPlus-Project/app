@@ -1,6 +1,7 @@
 package plus.vplan.app.feature.calendar.ui.components.date_selector
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,20 +9,24 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import plus.vplan.app.ui.grayScale
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.toDp
 
@@ -44,8 +49,10 @@ fun RowScope.Day(
         Column (
             modifier = Modifier
                 .fillMaxSize()
-                .clickable { onClick() }
-                .thenIf(Modifier.grayScale()) { isOtherMonth },
+                .thenIf(Modifier.grayScale()) { isOtherMonth }
+                .thenIf(Modifier.border(1.dp, if (showSelection) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))) { date == LocalDate.now() }
+                .clip(RoundedCornerShape(4.dp))
+                .clickable { onClick() },
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
