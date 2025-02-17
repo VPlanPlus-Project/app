@@ -274,7 +274,7 @@ private fun CalendarScreenContent(
             Column {
                 val day = state.days[date]
                 if (day != null) {
-                    Column(
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
                     ) {
@@ -282,7 +282,6 @@ private fun CalendarScreenContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onSizeChanged { availableWidth = with(localDensity) { it.width.toDp() } - 2 * 8.dp - 32.dp }
-                                .weight(1f)
                                 .verticalScroll(contentScrollState)
                         ) {
                             Box(
@@ -434,7 +433,9 @@ private fun CalendarScreenContent(
 
                         if (day.day.info != null) {
                             InfoCard(
-                                modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(vertical = 4.dp, horizontal = 8.dp),
                                 imageVector = Res.drawable.info,
                                 title = "Informationen deiner Schule",
                                 text = day.day.info,
