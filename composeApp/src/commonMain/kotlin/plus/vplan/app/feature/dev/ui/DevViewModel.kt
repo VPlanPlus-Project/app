@@ -21,12 +21,14 @@ import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import kotlin.uuid.Uuid
 
 class DevViewModel(
     private val keyValueRepository: KeyValueRepository,
     private val assessmentRepository: AssessmentRepository,
-    private val homeworkRepository: HomeworkRepository
+    private val homeworkRepository: HomeworkRepository,
+    private val fullSyncUseCase: FullSyncUseCase,
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
         private set
@@ -73,6 +75,7 @@ class DevViewModel(
                 }
 
                 DevEvent.Clear -> assessmentRepository.clearCache()
+                DevEvent.Sync -> fullSyncUseCase()
             }
         }
     }
@@ -87,6 +90,8 @@ data class DevState(
 sealed class DevEvent {
     data object Refresh : DevEvent()
     data object Clear : DevEvent()
+
+    data object Sync : DevEvent()
 }
 
 private suspend fun Assessment.prefetch() {

@@ -9,6 +9,7 @@ interface SchoolRepository {
     suspend fun fetchAllOnline(): Response<List<OnlineSchool>>
     suspend fun getWithCachingById(id: Int): Response<Flow<School?>>
     fun getById(id: Int): Flow<CacheState<School>>
+    suspend fun getAll(): Flow<List<School>>
 
     suspend fun getIdFromSp24Id(sp24Id: Int): Response<Int>
 

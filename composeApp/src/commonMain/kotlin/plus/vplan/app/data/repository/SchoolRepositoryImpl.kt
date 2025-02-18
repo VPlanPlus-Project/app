@@ -72,6 +72,10 @@ class SchoolRepositoryImpl(
         }
     }
 
+    override suspend fun getAll(): Flow<List<School>> {
+        return vppDatabase.schoolDao.getAll().map { results -> results.map { it.toModel() } }
+    }
+
     override suspend fun getIdFromSp24Id(sp24Id: Int): Response<Int> {
         val indiwareSchool = vppDatabase.schoolDao
             .getAll().first()
