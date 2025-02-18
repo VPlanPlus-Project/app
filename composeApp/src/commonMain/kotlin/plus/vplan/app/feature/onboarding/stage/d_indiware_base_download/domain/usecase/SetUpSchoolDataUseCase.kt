@@ -150,6 +150,8 @@ class SetUpSchoolDataUseCase(
                 .distinct()
                 .onEach { courseRepository.getByIndiwareId(it).getFirstValue() }
 
+            defaultLessonRepository.download(school.id, school.getSchoolApiAccess()!!)
+
             defaultLessonRepository.getBySchool(school.id, true).first()
             val defaultLessons = baseData.data.classes
                 .flatMap { baseDataClass -> baseDataClass.defaultLessons.map { it.defaultLessonNumber } }
