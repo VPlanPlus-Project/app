@@ -64,7 +64,7 @@ fun OnboardingSelectProfileScreen(
 
     LaunchedEffect(state.saveState) {
         if (state.saveState == OnboardingProfileSelectionSaveState.DONE) {
-            navController.navigate(OnboardingScreen.OnboardingFinished)
+            navController.navigate(OnboardingScreen.OnboardingPermission)
         }
     }
 
