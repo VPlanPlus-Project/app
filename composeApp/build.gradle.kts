@@ -66,6 +66,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.navigation.compose)
 
+            implementation(libs.cmp.easy.permission)
+
             implementation(libs.filekit.compose)
 
             implementation(libs.kermit)

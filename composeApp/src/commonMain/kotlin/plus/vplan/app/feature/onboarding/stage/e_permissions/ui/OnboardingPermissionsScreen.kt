@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.onboarding.stage.e_finished.ui
+package plus.vplan.app.feature.onboarding.stage.e_permissions.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,20 +14,29 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import network.chaintech.cmpeasypermission.PermissionState
+import network.chaintech.cmpeasypermission.RequestPermission
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
+import vplanplus.composeapp.generated.resources.arrow_right
+import vplanplus.composeapp.generated.resources.bell_ring
 
 @Composable
-fun OnboardingFinishedScreen(
-    onFinish: () -> Unit,
+fun OnboardingPermissionsScreen(
+    navHostController: NavHostController,
 ) {
     Column(
         modifier = Modifier
@@ -43,25 +52,28 @@ fun OnboardingFinishedScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                painter = painterResource(Res.drawable.check),
+                painter = painterResource(Res.drawable.bell_ring),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.size(8.dp))
             Text(
-                text = "VPlanPlus ist fertig eingerichtet",
+                text = "Wir benötigen deine Zustimmung",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "Vielen Dank für die Nutzung von VPlanPlus.",
+                text = "Bitte erlaube VPlanPlus, Benachrichtigungen zu senden.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
         }
+
+        var requestPermission by rememberSaveable { mutableStateOf(false) }
+
         Column(
             modifier = Modifier
                 .padding(horizontal = 8.dp)
@@ -69,13 +81,21 @@ fun OnboardingFinishedScreen(
                 .fillMaxWidth()
         ) {
             Button(
-                text = "Fertig",
+                text = "Weiter",
                 state = ButtonState.Enabled,
-                icon = Res.drawable.check,
+                icon = Res.drawable.arrow_right,
                 size = ButtonSize.Big,
                 onlyEventOnActive = true,
-                onClick = onFinish
+                onClick = { requestPermission = true }
             )
         }
+
+        if (requestPermission) RequestPermission(
+            permission = PermissionState.POST_NOTIFICATIONS,
+            openSetting = false,
+            deniedDialogTitle = "",
+            deniedDialogDesc = "",
+            isGranted = { navHostController.navigate(OnboardingScreen.OnboardingFinished) }
+        )
     }
 }
