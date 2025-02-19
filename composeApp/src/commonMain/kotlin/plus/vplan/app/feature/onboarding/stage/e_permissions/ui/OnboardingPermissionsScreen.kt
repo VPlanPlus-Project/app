@@ -14,6 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,6 +27,7 @@ import androidx.navigation.NavHostController
 import network.chaintech.cmpeasypermission.PermissionState
 import network.chaintech.cmpeasypermission.RequestPermission
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
@@ -38,6 +40,7 @@ import vplanplus.composeapp.generated.resources.bell_ring
 fun OnboardingPermissionsScreen(
     navHostController: NavHostController,
 ) {
+    val viewModel = koinViewModel<OnboardingPermissionViewModel>()
     Column(
         modifier = Modifier
             .padding(WindowInsets.systemBars.asPaddingValues())
@@ -95,7 +98,13 @@ fun OnboardingPermissionsScreen(
             openSetting = false,
             deniedDialogTitle = "",
             deniedDialogDesc = "",
-            isGranted = { navHostController.navigate(OnboardingScreen.OnboardingFinished) }
+            isGranted = {
+                viewModel.onNotificationGranted()
+            }
         )
+
+        LaunchedEffect(viewModel.state.canContinue) {
+            if (viewModel.state.canContinue) navHostController.navigate(OnboardingScreen.OnboardingFinished)
+        }
     }
 }

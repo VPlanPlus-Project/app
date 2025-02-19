@@ -23,6 +23,7 @@ import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.ui.Onboa
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.GetProfileOptionsUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.SelectProfileUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileViewModel
+import plus.vplan.app.feature.onboarding.stage.e_permissions.ui.OnboardingPermissionViewModel
 import plus.vplan.app.feature.onboarding.ui.OnboardingHostViewModel
 
 expect fun onboardingDatabaseModule(): Module
@@ -50,4 +51,5 @@ val onboardingModule = module {
     viewModelOf(::OnboardingIndiwareInitViewModel)
     viewModelOf(::OnboardingIndiwareDataDownloadViewModel)
     viewModelOf(::OnboardingSelectProfileViewModel)
+    viewModelOf(::OnboardingPermissionViewModel)
 }
