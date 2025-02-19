@@ -59,6 +59,11 @@ fun DevScreen(
                 Text("New Assessment")
             }
             Button(
+                onClick = { viewModel.onEvent(DevEvent.Notify) }
+            ) {
+                Text("NTF")
+            }
+            Button(
                 onClick = { viewModel.onEvent(DevEvent.Clear) }
             ) {
                 Text("Clear Cache")

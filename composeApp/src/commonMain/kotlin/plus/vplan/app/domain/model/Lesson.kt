@@ -16,6 +16,8 @@ sealed interface Lesson : Item {
     val defaultLesson: Int?
     val lessonTime: String
 
+    fun getLessonSignature(): String
+
     override fun getEntityId(): String = this.id.toHexString()
 
     suspend fun getLessonTimeItem(): LessonTime
@@ -71,6 +73,10 @@ sealed interface Lesson : Item {
 
         override suspend fun getGroupItems(): List<Group> {
             return groupItems ?: groups.mapNotNull { App.groupSource.getSingleById(it) }.also { groupItems = it }
+        }
+
+        override fun getLessonSignature(): String {
+            return "$subject/$teachers/$rooms/$groups/$lessonTime/$dayOfWeek/$weekType"
         }
 
         constructor(
@@ -130,6 +136,10 @@ sealed interface Lesson : Item {
 
         suspend fun getDefaultLesson(): DefaultLesson? {
             return defaultLessonItem ?: if (defaultLesson == null) null else App.defaultLessonSource.getSingleById(defaultLesson).also { defaultLessonItem = it }
+        }
+
+        override fun getLessonSignature(): String {
+            return "$subject/$teachers/$rooms/$groups/$lessonTime/$date/$defaultLesson"
         }
 
         override suspend fun getLessonTimeItem(): LessonTime {
