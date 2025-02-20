@@ -53,6 +53,7 @@ import plus.vplan.app.feature.profile.settings.ui.ProfileSettingsScreen
 import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
+import plus.vplan.app.feature.settings.ui.SettingsScreen
 import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
@@ -115,7 +116,7 @@ fun MainScreenHost(
 
             composable<MainScreen.RoomSearch> { RoomSearch(navController) }
 
-            composable<MainScreen.Settings> { Text("Settings") }
+            composable<MainScreen.Settings> { SettingsScreen(navController) }
         }
 
         AnimatedVisibility(
