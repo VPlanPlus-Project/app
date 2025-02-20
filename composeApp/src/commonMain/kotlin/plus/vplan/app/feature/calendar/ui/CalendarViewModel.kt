@@ -5,7 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
@@ -42,6 +44,7 @@ class CalendarViewModel(
     private fun launchSyncJob(date: LocalDate, syncLessons: Boolean): Job {
         return viewModelScope.launch {
             App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date").filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
+                Logger.d { "Synced day $date (lessons: $syncLessons)" }
                 if (!syncLessons) state = state.copy(days = state.days + (date to CalendarDay(day)))
                 else {
                     val timetable = day.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { it.data }.first() }.filter { it.isRelevantForProfile(state.currentProfile!!) }.onEach { it.prefetch() }
@@ -83,6 +86,17 @@ class CalendarViewModel(
                         )
                     )
                 }
+
+                if (syncJobs.none { it.syncLessons && it.date == state.selectedDate }) {
+                    syncJobs.filter { it.date == state.selectedDate }.forEach { it.job.cancel(); syncJobs.remove(it) }
+                    syncJobs.add(
+                        SyncJob(
+                            job = launchSyncJob(state.selectedDate, true),
+                            date = state.selectedDate,
+                            syncLessons = true
+                        )
+                    )
+                }
             }
 
         }
@@ -92,6 +106,10 @@ class CalendarViewModel(
         viewModelScope.launch {
             when (event) {
                 is CalendarEvent.SelectDate -> {
+                    while (state.currentProfile == null) {
+                        delay(10)
+                        Logger.d { "Waiting for profile" }
+                    }
                     state = state.copy(selectedDate = event.date)
                     if (syncJobs.any { it.date == event.date && !it.syncLessons }) {
                         syncJobs.find { it.date == event.date && it.syncLessons }?.job?.cancel()

@@ -8,8 +8,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
+import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.main.MainScreenHost
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.feature.vpp_id.ui.VppIdSetupScreen
@@ -21,9 +23,14 @@ fun NavigationHost(task: StartTask?) {
     val state = viewModel.state
     if (state.hasProfile == null) return
 
+    val setCurrentProfileUseCase = koinInject<SetCurrentProfileUseCase>()
+
     LaunchedEffect(task) {
         when (task) {
             is StartTask.VppIdLogin -> navigationHostController.navigate(AppScreen.VppIdLogin(task.token))
+            is StartTask.NavigateTo -> {
+                if (task.profileId != null) setCurrentProfileUseCase(task.profileId)
+            }
             else -> Unit
         }
     }
@@ -38,9 +45,9 @@ fun NavigationHost(task: StartTask?) {
         }
 
         composable<AppScreen.MainScreen> {
-            MainScreenHost {
+            MainScreenHost(onNavigateToOnboarding = {
                 navigationHostController.navigate(AppScreen.Onboarding(it?.id))
-            }
+            }, navigationTask = task as? StartTask.NavigateTo)
         }
 
         composable<AppScreen.VppIdLogin> { route ->
