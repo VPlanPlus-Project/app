@@ -4,6 +4,9 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
@@ -153,7 +156,23 @@ class UpdateSubstitutionPlanUseCase(
                             if (new.info != null) append("\n\nℹ\uFE0F ${new.info}")
                         }.dropLastWhile { it == '\n' }.dropWhile { it == '\n' },
                         category = profile.name,
-                        isLarge = true
+                        isLarge = true,
+                        onClickData = Json.encodeToString(
+                            StartTaskJson(
+                                type = "navigate_to",
+                                value = Json.encodeToString(
+                                    StartTaskJson.StartTaskNavigateTo(
+                                        screen = "calendar",
+                                        profileId = profile.id.toString(),
+                                        value = Json.encodeToString(
+                                            StartTaskJson.StartTaskNavigateTo.StartTaskCalendar(
+                                                date = date.toString()
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ).also { Logger.d { "Task: $it" } }
                     )
                 }
             }

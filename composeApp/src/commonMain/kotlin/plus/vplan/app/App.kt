@@ -9,6 +9,9 @@ import androidx.compose.ui.Modifier
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
@@ -31,6 +34,7 @@ import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
+import kotlin.uuid.Uuid
 
 data class Host(
     val protocol: URLProtocol = URLProtocol.HTTPS,
@@ -136,4 +140,25 @@ fun App(task: StartTask?) {
 
 sealed class StartTask {
     data class VppIdLogin(val token: String) : StartTask()
+    sealed class NavigateTo(val profileId: Uuid? = null): StartTask() {
+        class Calendar(profileId: Uuid? = null, val date: LocalDate): NavigateTo(profileId)
+    }
+}
+
+@Serializable
+data class StartTaskJson(
+    @SerialName("type") val type: String,
+    @SerialName("value") val value: String
+) {
+    @Serializable
+    data class StartTaskNavigateTo(
+        @SerialName("screen") val screen: String,
+        @SerialName("profile_id") val profileId: String? = null,
+        @SerialName("payload") val value: String
+    ) {
+        @Serializable
+        data class StartTaskCalendar(
+            @SerialName("date") val date: String
+        )
+    }
 }

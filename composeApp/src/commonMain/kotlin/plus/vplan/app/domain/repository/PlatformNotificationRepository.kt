@@ -8,5 +8,6 @@ interface PlatformNotificationRepository {
         category: String? = null,
         isLarge: Boolean = false,
         largeText: String? = null,
+        onClickData: String? = null
     )
 }

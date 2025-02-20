@@ -18,6 +18,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,8 +39,10 @@ import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.StartTask
 import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.feature.calendar.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
 import plus.vplan.app.feature.dev.ui.DevScreen
@@ -64,7 +67,8 @@ import vplanplus.composeapp.generated.resources.user
 
 @Composable
 fun MainScreenHost(
-    onNavigateToOnboarding: (school: School?) -> Unit
+    onNavigateToOnboarding: (school: School?) -> Unit,
+    navigationTask: StartTask.NavigateTo?
 ) {
     val navController = rememberNavController()
     var currentDestination by rememberSaveable<MutableState<String?>> { mutableStateOf("Home") }
@@ -89,6 +93,7 @@ fun MainScreenHost(
     var isBottomBarVisible by rememberSaveable { mutableStateOf(true) }
     val toggleBottomBar = remember<(Boolean) -> Unit> { { isBottomBarVisible = it } }
     var bottomBarHeight by remember { mutableStateOf(0.dp) }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -179,6 +184,16 @@ fun MainScreenHost(
                 navController.navigate(MainScreen.ProfileSettings(activeProfile.id.toString()))
             }
         )
+    }
+
+    LaunchedEffect(navigationTask) {
+        if (navigationTask == null) return@LaunchedEffect
+        when (navigationTask) {
+            is StartTask.NavigateTo.Calendar -> {
+                calendarViewModel.onEvent(CalendarEvent.SelectDate(navigationTask.date))
+                navController.navigate(MainScreen.MainCalendar)
+            }
+        }
     }
 }
 
