@@ -12,9 +12,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun Badge(color: Color, text: String) {
+fun Badge(
+    modifier: Modifier = Modifier,
+    color: Color,
+    text: String
+) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .padding(4.dp)
             .border(1.dp, color, RoundedCornerShape(25))
     ) {

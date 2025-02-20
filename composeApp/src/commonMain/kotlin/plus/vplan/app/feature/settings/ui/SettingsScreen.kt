@@ -15,11 +15,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.feature.main.MainScreen
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
@@ -30,14 +32,16 @@ fun SettingsScreen(
     navHostController: NavHostController,
 ) {
     SettingsContent(
-        onBack = navHostController::navigateUp
+        onBack = navHostController::navigateUp,
+        onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings) } }
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsContent(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenSchoolSettings: () -> Unit
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
 
@@ -70,7 +74,7 @@ private fun SettingsContent(
                 title = "Schulen",
                 subtitle = "Zugänge für Schulen verwalten",
                 icon = painterResource(Res.drawable.school),
-                onClick = {}
+                onClick = onOpenSchoolSettings
             )
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         }
