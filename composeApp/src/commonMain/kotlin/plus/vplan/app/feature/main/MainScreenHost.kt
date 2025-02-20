@@ -106,7 +106,7 @@ fun MainScreenHost(
             composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
             composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel, toggleBottomBar) }
             composable<MainScreen.MainDev> { DevScreen(contentPadding, toggleBottomBar) }
-            composable<MainScreen.MainProfile> { ProfileScreen(contentPadding, profileViewModel) }
+            composable<MainScreen.MainProfile> { ProfileScreen(contentPadding, navController, profileViewModel) }
 
             composable<MainScreen.ProfileSettings> {
                 val args = it.toRoute<MainScreen.ProfileSettings>()
@@ -114,6 +114,8 @@ fun MainScreenHost(
             }
 
             composable<MainScreen.RoomSearch> { RoomSearch(navController) }
+
+            composable<MainScreen.Settings> { Text("Settings") }
         }
 
         AnimatedVisibility(
@@ -195,4 +197,6 @@ sealed class MainScreen(val name: String) {
 
     @Serializable data class ProfileSettings(val profileId: String) : MainScreen("ProfileSettings")
     @Serializable data object RoomSearch : MainScreen("RoomSearch")
+
+    @Serializable data object Settings : MainScreen("Settings")
 }
