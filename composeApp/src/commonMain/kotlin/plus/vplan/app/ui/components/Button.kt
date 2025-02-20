@@ -33,7 +33,7 @@ fun Button(
     icon: DrawableResource? = null,
     state: ButtonState = ButtonState.Enabled,
     size: ButtonSize = ButtonSize.Big,
-    type: ButtonType = ButtonType.PRIMARY,
+    type: ButtonType = ButtonType.Primary,
     onlyEventOnActive: Boolean = true,
     center: Boolean = false,
     onClick: () -> Unit
@@ -61,7 +61,7 @@ fun Button(
                 contentAlignment = if (center) Alignment.Center else Alignment.CenterEnd
             ) {
                 when (displayState) {
-                    ButtonState.LOADING -> CircularProgressIndicator(
+                    ButtonState.Loading -> CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(24.dp)
                     )
@@ -107,7 +107,7 @@ fun Button(
             shape = shape,
             modifier = buttonModifier,
             colors = when (type) {
-                ButtonType.PRIMARY -> ButtonDefaults.buttonColors(
+                ButtonType.Primary -> ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
@@ -136,9 +136,9 @@ enum class ButtonSize {
 }
 
 enum class ButtonType {
-    PRIMARY, Secondary, TERTIARY, Outlined, OutlinedOnSheet, Danger
+    Primary, Secondary, TERTIARY, Outlined, OutlinedOnSheet, Danger
 }
 
 enum class ButtonState {
-    Enabled, Disabled, LOADING
+    Enabled, Disabled, Loading
 }

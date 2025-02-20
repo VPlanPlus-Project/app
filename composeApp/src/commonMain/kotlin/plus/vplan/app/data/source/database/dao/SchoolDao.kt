@@ -29,6 +29,9 @@ interface SchoolDao {
     @Upsert
     suspend fun upsertSp24SchoolDetails(details: DbSp24SchoolDetails)
 
+    @Query("UPDATE schools_sp24details SET username = :username, password = :password WHERE school_id = :schoolId")
+    suspend fun updateIndiwareSchoolDetails(schoolId: Int, username: String, password: String)
+
     @Query("DELETE FROM schools_sp24details WHERE school_id = :schoolId AND username = :username")
     suspend fun deleteIndiwareSchoolDetails(schoolId: Uuid, username: String)
 }

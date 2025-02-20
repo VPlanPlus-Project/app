@@ -33,6 +33,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +47,7 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.feature.settings.page.school.ui.components.IndiwareCredentialSheet
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.check
@@ -69,6 +74,7 @@ private fun SchoolSettingsContent(
     onBack: () -> Unit
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
+    var visibleIndiwareCredentialSchoolId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = {
@@ -116,7 +122,7 @@ private fun SchoolSettingsContent(
                     Column(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable {  }
+                            .clickable { visibleIndiwareCredentialSchoolId = school.school.id }
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                             .fillMaxWidth()
                     ) {
@@ -125,7 +131,7 @@ private fun SchoolSettingsContent(
                         ) {
                             Text(
                                 text = school.school.name,
-                                style = MaterialTheme.typography.headlineMedium,
+                                style = MaterialTheme.typography.headlineSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -195,5 +201,12 @@ private fun SchoolSettingsContent(
                 }
             }
         }
+    }
+
+    visibleIndiwareCredentialSchoolId?.let { selectedSchoolId ->
+        IndiwareCredentialSheet(
+            schoolId = selectedSchoolId,
+            onDismiss = { visibleIndiwareCredentialSchoolId = null }
+        )
     }
 }
