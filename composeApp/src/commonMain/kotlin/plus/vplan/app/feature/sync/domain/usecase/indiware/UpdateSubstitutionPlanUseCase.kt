@@ -160,10 +160,10 @@ class UpdateSubstitutionPlanUseCase(
                         onClickData = Json.encodeToString(
                             StartTaskJson(
                                 type = "navigate_to",
+                                profileId = profile.id.toString(),
                                 value = Json.encodeToString(
                                     StartTaskJson.StartTaskNavigateTo(
                                         screen = "calendar",
-                                        profileId = profile.id.toString(),
                                         value = Json.encodeToString(
                                             StartTaskJson.StartTaskNavigateTo.StartTaskCalendar(
                                                 date = date.toString()

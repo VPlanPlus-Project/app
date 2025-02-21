@@ -48,6 +48,7 @@ import plus.vplan.app.feature.calendar.ui.CalendarViewModel
 import plus.vplan.app.feature.dev.ui.DevScreen
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
+import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.feature.profile.page.ui.ProfileScreen
 import plus.vplan.app.feature.profile.page.ui.ProfileScreenEvent
 import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
@@ -70,7 +71,7 @@ import vplanplus.composeapp.generated.resources.user
 @Composable
 fun MainScreenHost(
     onNavigateToOnboarding: (school: School?) -> Unit,
-    navigationTask: StartTask.NavigateTo?
+    navigationTask: StartTask?
 ) {
     val navController = rememberNavController()
     var currentDestination by rememberSaveable<MutableState<String?>> { mutableStateOf("Home") }
@@ -197,6 +198,8 @@ fun MainScreenHost(
         )
     }
 
+    var homeworkSheetHomeworkId by rememberSaveable { mutableStateOf<Int?>(null) }
+
     LaunchedEffect(navigationTask) {
         if (navigationTask == null) return@LaunchedEffect
         when (navigationTask) {
@@ -207,8 +210,18 @@ fun MainScreenHost(
             is StartTask.NavigateTo.SchoolSettings -> {
                 navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId))
             }
+            is StartTask.Open.Homework -> {
+                homeworkSheetHomeworkId = navigationTask.homeworkId
+            }
+
+            else -> Unit
         }
     }
+
+    if (homeworkSheetHomeworkId != null) HomeworkDetailDrawer(
+        homeworkId = homeworkSheetHomeworkId!!,
+        onDismiss = { homeworkSheetHomeworkId = null }
+    )
 }
 
 /**

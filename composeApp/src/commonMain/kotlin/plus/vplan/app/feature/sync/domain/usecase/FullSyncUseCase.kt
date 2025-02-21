@@ -85,7 +85,7 @@ class FullSyncUseCase(
             updateSubstitutionPlanUseCase(school, nextDay, true)
 
         }
-        updateHomeworkUseCase()
+        updateHomeworkUseCase(true)
         updateAssessmentUseCase()
     }
 }

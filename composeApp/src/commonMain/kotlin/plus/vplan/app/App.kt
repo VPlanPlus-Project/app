@@ -138,23 +138,38 @@ fun App(task: StartTask?) {
     }
 }
 
-sealed class StartTask {
+sealed class StartTask(val profileId: Uuid? = null) {
     data class VppIdLogin(val token: String) : StartTask()
-    sealed class NavigateTo(val profileId: Uuid? = null): StartTask() {
-        class Calendar(profileId: Uuid? = null, val date: LocalDate): NavigateTo(profileId)
-        class SchoolSettings(val openIndiwareSettingsSchoolId: Int? = null): NavigateTo()
+    sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
+        class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
+        class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Int? = null): NavigateTo(profileId)
+    }
+
+    sealed class Open(profileId: Uuid?): StartTask(profileId) {
+        class Homework(profileId: Uuid?, val homeworkId: Int): Open(profileId)
     }
 }
 
 @Serializable
 data class StartTaskJson(
     @SerialName("type") val type: String,
+    @SerialName("profile_id") val profileId: String? = null,
     @SerialName("value") val value: String
 ) {
     @Serializable
+    data class StartTaskOpen(
+        @SerialName("type") val type: String,
+        @SerialName("payload") val value: String
+    ) {
+        @Serializable
+        data class Homework(
+            @SerialName("homework_id") val homeworkId: Int
+        )
+    }
+
+    @Serializable
     data class StartTaskNavigateTo(
         @SerialName("screen") val screen: String,
-        @SerialName("profile_id") val profileId: String? = null,
         @SerialName("payload") val value: String
     ) {
         @Serializable
