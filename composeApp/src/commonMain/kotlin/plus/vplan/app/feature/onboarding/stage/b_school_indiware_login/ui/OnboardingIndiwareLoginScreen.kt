@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -66,16 +67,21 @@ private fun OnboardingIndiwareLoginContent(
             UsernameField(
                 username = state.username,
                 isUsernameValid = state.isUsernameValid,
-                areCredentialsInValid = state.sp24CredentialsState == Sp24CredentialsState.INVALID,
-                onEvent = onEvent,
-                onFocusPassword = { passwordFocusRequester.requestFocus() }
+                areCredentialsInvalid = state.sp24CredentialsState == Sp24CredentialsState.INVALID,
+                onUsernameChanged = { onEvent(OnboardingIndiwareLoginEvent.OnUsernameChanged(it)) },
+                onFocusPassword = { passwordFocusRequester.requestFocus() },
+                hideBottomLine = true,
+                shape = RoundedCornerShape(8.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             PasswordField(
                 password = state.password,
                 passwordFocusRequester = passwordFocusRequester,
                 areCredentialsInvalid = state.sp24CredentialsState == Sp24CredentialsState.INVALID,
-                onEvent = onEvent
+                onPasswordChanged = { onEvent(OnboardingIndiwareLoginEvent.OnPasswordChanged(it)) },
+                onCheckCredentials = { onEvent(OnboardingIndiwareLoginEvent.OnCheckClicked) },
+                hideBottomLine = true,
+                shape = RoundedCornerShape(8.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
 

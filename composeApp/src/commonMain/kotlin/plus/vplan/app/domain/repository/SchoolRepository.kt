@@ -21,6 +21,12 @@ interface SchoolRepository {
         studentsHaveFullAccess: Boolean,
         downloadMode: School.IndiwareSchool.SchoolDownloadMode
     )
+
+    suspend fun updateSp24Access(
+        school: School,
+        username: String,
+        password: String
+    )
 }
 
 data class OnlineSchool(

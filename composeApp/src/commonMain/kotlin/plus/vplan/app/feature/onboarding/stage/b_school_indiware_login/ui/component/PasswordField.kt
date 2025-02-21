@@ -7,7 +7,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
@@ -25,13 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.OnboardingIndiwareLoginEvent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.eye
 import vplanplus.composeapp.generated.resources.eye_off
@@ -42,28 +41,31 @@ fun PasswordField(
     password: String,
     passwordFocusRequester: FocusRequester,
     areCredentialsInvalid: Boolean,
-    onEvent: (OnboardingIndiwareLoginEvent) -> Unit,
+    onPasswordChanged: (String) -> Unit,
+    onCheckCredentials: () -> Unit,
+    hideBottomLine: Boolean,
+    shape: Shape = TextFieldDefaults.shape
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     TextField(
         value = password,
-        onValueChange = { onEvent(OnboardingIndiwareLoginEvent.OnPasswordChanged(it)) },
+        onValueChange = { onPasswordChanged(it) },
         label = { Text("Passwort") },
         modifier = Modifier
             .fillMaxWidth()
             .focusRequester(passwordFocusRequester),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Password),
         keyboardActions = KeyboardActions(
-            onDone = { onEvent(OnboardingIndiwareLoginEvent.OnCheckClicked) }
+            onDone = { onCheckCredentials() }
         ),
         isError = areCredentialsInvalid,
-        colors = TextFieldDefaults.colors(
+        colors = if (hideBottomLine) TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
             errorIndicatorColor = Color.Transparent,
-        ),
-        shape = RoundedCornerShape(8.dp),
+        ) else TextFieldDefaults.colors(),
+        shape = shape,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         leadingIcon = {
             Icon(

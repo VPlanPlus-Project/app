@@ -7,7 +7,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
@@ -24,13 +23,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.OnboardingIndiwareLoginEvent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left_right
 import vplanplus.composeapp.generated.resources.user
@@ -39,15 +38,17 @@ import vplanplus.composeapp.generated.resources.user
 fun UsernameField(
     username: String,
     isUsernameValid: Boolean,
-    areCredentialsInValid: Boolean,
-    onEvent: (OnboardingIndiwareLoginEvent) -> Unit,
+    areCredentialsInvalid: Boolean,
+    onUsernameChanged: (String) -> Unit,
     onFocusPassword: () -> Unit,
+    hideBottomLine: Boolean,
+    shape: Shape = TextFieldDefaults.shape
 ) {
     var textFieldValueState by remember {
         mutableStateOf(TextFieldValue(text = username))
     }
     LaunchedEffect(textFieldValueState.text) {
-        onEvent(OnboardingIndiwareLoginEvent.OnUsernameChanged(textFieldValueState.text))
+        onUsernameChanged(textFieldValueState.text)
     }
     LaunchedEffect(username) {
         if (username == textFieldValueState.text) return@LaunchedEffect
@@ -59,16 +60,16 @@ fun UsernameField(
         label = { Text("Nutzername") },
         modifier = Modifier
             .fillMaxWidth(),
-        colors = TextFieldDefaults.colors(
+        colors = if (hideBottomLine) TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
             errorIndicatorColor = Color.Transparent,
-        ),
-        shape = RoundedCornerShape(8.dp),
+        ) else TextFieldDefaults.colors(),
+        shape = shape,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { onFocusPassword() }),
-        isError = !isUsernameValid || areCredentialsInValid,
+        isError = !isUsernameValid || areCredentialsInvalid,
         leadingIcon = {
             Icon(
                 painter = painterResource(Res.drawable.user),
@@ -83,7 +84,7 @@ fun UsernameField(
                     clickCount++
                     val newUsername = if (username == "lehrer") "schueler" else "lehrer"
                     textFieldValueState = TextFieldValue(text = newUsername, selection = TextRange(newUsername.length))
-                    onEvent(OnboardingIndiwareLoginEvent.OnUsernameChanged(newUsername))
+                    onUsernameChanged(newUsername)
                 }
             ) {
                 val rotation by animateFloatAsState(targetValue = clickCount * 180f)

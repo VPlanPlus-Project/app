@@ -189,7 +189,7 @@ fun ProfileSwitcher(
                     text = "Profileinstellungen",
                     state = ButtonState.Enabled,
                     size = ButtonSize.Normal,
-                    type = ButtonType.PRIMARY,
+                    type = ButtonType.Primary,
                     center = true,
                     onClick = { hideSheet(); onOpenProfileSettings() },
                     modifier = Modifier.weight(1f, true)
