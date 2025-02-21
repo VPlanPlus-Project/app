@@ -47,6 +47,7 @@ kotlin {
 
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
+            implementation(libs.koin.androidx.workmanager)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.kotlinx.coroutines.android)
 
@@ -54,6 +55,7 @@ kotlin {
 
             implementation(libs.androidx.material)
             implementation(libs.androidx.sqlite.framework)
+            implementation(libs.androidx.work.runtime.ktx)
         }
         commonMain.dependencies {
             implementation(compose.runtime)

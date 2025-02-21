@@ -19,7 +19,9 @@ import plus.vplan.app.domain.repository.PlatformNotificationRepository
 class PlatformNotificationImpl(
     private val context: Context
 ) : PlatformNotificationRepository {
-    private val channelId = "VPlanPlus"
+    companion object {
+        val channelId = "VPlanPlus"
+    }
     override suspend fun initialize() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "VPlanPlus Benachrichtigungen"
