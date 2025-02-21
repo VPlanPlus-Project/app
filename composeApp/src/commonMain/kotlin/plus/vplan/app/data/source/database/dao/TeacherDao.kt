@@ -18,6 +18,12 @@ interface TeacherDao {
     @Query("SELECT * FROM school_teachers WHERE id = :id")
     fun getById(id: Int): Flow<DbTeacher?>
 
+    @Query("SELECT id FROM school_teachers")
+    fun getAll(): Flow<List<Int>>
+
+    @Query("DELETE FROM school_teachers WHERE id IN (:ids)")
+    suspend fun deleteById(ids: List<Int>)
+
     @Upsert
     suspend fun upsertTeacher(teacher: DbTeacher)
 }

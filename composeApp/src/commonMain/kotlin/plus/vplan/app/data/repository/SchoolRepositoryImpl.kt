@@ -6,10 +6,11 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -18,7 +19,7 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
 import plus.vplan.app.data.source.network.saveRequest
-import plus.vplan.app.data.source.network.toResponse
+import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
@@ -42,34 +43,35 @@ class SchoolRepositoryImpl(
         }
     }
 
-    override suspend fun getWithCachingById(id: Int): Response<Flow<School?>> {
-        val cached = vppDatabase.schoolDao.findById(id).map { it?.toModel() }
-        if (cached.first() != null) return Response.Success(cached)
-        return saveRequest {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<School>> {
+        val schoolFlow = vppDatabase.schoolDao.findById(id).map { it?.toModel() }
+        return channelFlow {
+            if (!forceReload) {
+                var hadData = false
+                sendAll(schoolFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
+                if (hadData) return@channelFlow
+            }
+            send(CacheState.Loading(id.toString()))
+
             val response = httpClient.get("${api.url}/api/v2.2/school/$id")
-            if (!response.status.isSuccess()) return response.toResponse()
+            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<School>()))
             val data = ResponseDataWrapper.fromJson<SchoolItemResponse>(response.bodyAsText())
-                ?: return Response.Error.ParsingError(response.bodyAsText())
+                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
             vppDatabase.schoolDao.upsertSchool(
                 DbSchool(
-                    id = id,
+                    id = data.id,
                     name = data.name,
                     cachedAt = Clock.System.now()
                 )
             )
-            return Response.Success(getById(id).filterIsInstance())
+
+            return@channelFlow sendAll(getById(id, false))
         }
     }
 
-    override fun getById(id: Int): Flow<CacheState<School>> = channelFlow {
-        vppDatabase.schoolDao.findById(id).collectLatest {
-            if (it != null) return@collectLatest send(CacheState.Done(it.toModel()))
-            val onlineResponse = getWithCachingById(id)
-            if (onlineResponse is Response.Success) return@collectLatest sendAll(onlineResponse.data.map { if (it != null) CacheState.Done(it) else CacheState.NotExisting(id.toString()) })
-            if (onlineResponse is Response.Error.OnlineError.NotFound) return@collectLatest send(CacheState.NotExisting(id.toString()))
-            if (onlineResponse is Response.Error) return@collectLatest send(CacheState.Error(id.toString(), onlineResponse))
-        }
+    override fun getAllIds(): Flow<List<Int>> {
+        return vppDatabase.schoolDao.getAll().map { it.map { school -> school.school.id } }
     }
 
     override suspend fun getAll(): Flow<List<School>> {

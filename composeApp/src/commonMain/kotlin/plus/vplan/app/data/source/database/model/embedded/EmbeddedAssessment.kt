@@ -26,6 +26,7 @@ data class EmbeddedAssessment(
         defaultLessonId = assessment.defaultLessonId,
         description = assessment.description,
         type = Assessment.Type.entries[assessment.type],
-        files = files.map { it.fileId }
+        files = files.map { it.fileId },
+        cachedAt = assessment.cachedAt
     )
 }

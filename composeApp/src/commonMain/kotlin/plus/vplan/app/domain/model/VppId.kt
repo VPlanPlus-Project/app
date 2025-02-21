@@ -1,13 +1,13 @@
 package plus.vplan.app.domain.model
 
-import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Instant
 import plus.vplan.app.domain.cache.Item
 
 sealed class VppId : Item {
     abstract val id: Int
     abstract val name: String
     abstract val groups: List<Int>
-    abstract val cachedAt: LocalDateTime
+    abstract val cachedAt: Instant
 
     override fun getEntityId(): String = this.id.toString()
 
@@ -15,14 +15,14 @@ sealed class VppId : Item {
         override val id: Int,
         override val name: String,
         override val groups: List<Int>,
-        override val cachedAt: LocalDateTime
+        override val cachedAt: Instant
     ) : VppId()
 
     data class Active(
         override val id: Int,
         override val name: String,
         override val groups: List<Int>,
-        override val cachedAt: LocalDateTime,
+        override val cachedAt: Instant,
         val accessToken: String,
         val schulverwalterAccessToken: String?
     ) : VppId() {

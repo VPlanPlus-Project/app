@@ -33,7 +33,7 @@ fun SettingsScreen(
 ) {
     SettingsContent(
         onBack = navHostController::navigateUp,
-        onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings) } }
+        onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings()) } }
     )
 }
 

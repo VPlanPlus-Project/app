@@ -32,14 +32,16 @@ data class EmbeddedSchool(
                 daysPerWeek = sp24SchoolDetails.daysPerWeek,
                 studentsHaveFullAccess = sp24SchoolDetails.studentsHaveFullAccess,
                 schoolDownloadMode = sp24SchoolDetails.downloadMode,
-                credentialsValid = sp24SchoolDetails.credentialsValid
+                credentialsValid = sp24SchoolDetails.credentialsValid,
+                cachedAt = school.cachedAt
             )
         }
 
         return School.DefaultSchool(
             id = school.id,
             name = school.name,
-            groups = groups.map { it.groupId }
+            groups = groups.map { it.groupId },
+            cachedAt = school.cachedAt
         )
     }
 }

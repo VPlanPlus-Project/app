@@ -3,6 +3,7 @@ package plus.vplan.app.feature.homework.domain.usecase
 import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.Clock
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
@@ -35,7 +36,8 @@ class AddFileUseCase(
                 name = file.name,
                 size = file.getSize() ?: 0L,
                 isOfflineReady = true,
-                getBitmap = { null }
+                getBitmap = { null },
+                cachedAt = Clock.System.now()
             ))
         }
 

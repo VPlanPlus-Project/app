@@ -12,6 +12,6 @@ class SchoolSource(
     fun getById(
         id: Int,
     ): Flow<CacheState<School>> {
-        return cache.getOrPut(id) { schoolRepository.getById(id) }
+        return cache.getOrPut(id) { schoolRepository.getById(id, false) }
     }
 }

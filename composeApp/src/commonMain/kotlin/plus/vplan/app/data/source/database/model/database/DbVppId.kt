@@ -2,7 +2,7 @@ package plus.vplan.app.data.source.database.model.database
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "vpp_id",
@@ -11,5 +11,5 @@ import kotlinx.datetime.LocalDateTime
 data class DbVppId(
     @ColumnInfo(name = "id") val id: Int,
     @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "cached_at") val cachedAt: LocalDateTime
+    @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )
