@@ -300,7 +300,7 @@ class AssessmentRepositoryImpl(
                 defaultLessonId = it.defaultLessonId,
                 description = it.description,
                 type = it.type.ordinal,
-                cachedAt = Clock.System.now()
+                cachedAt = it.cachedAt
             ) },
             files = assessments.flatMap { assessment ->
                 assessment.files.map { fileId -> FKAssessmentFile(

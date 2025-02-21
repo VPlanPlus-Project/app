@@ -26,7 +26,8 @@ data class DbFile(
             name = fileName,
             size = size,
             isOfflineReady = isOfflineReady,
-            getBitmap = { null }
+            getBitmap = { null },
+            cachedAt = cachedAt
         )
     }
 }

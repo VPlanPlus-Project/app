@@ -54,7 +54,7 @@ class FileRepositoryImpl(
                 fileName = file.name,
                 size = file.size,
                 isOfflineReady = file.isOfflineReady,
-                cachedAt = Clock.System.now()
+                cachedAt = file.cachedAt
             )
         )
     }

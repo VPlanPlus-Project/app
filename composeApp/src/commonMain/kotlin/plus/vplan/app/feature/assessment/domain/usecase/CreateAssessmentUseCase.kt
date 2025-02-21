@@ -79,7 +79,8 @@ class CreateAssessmentUseCase(
                 defaultLessonId = defaultLesson.id,
                 description = text,
                 type = type,
-                files = files.map { it.id }.toList()
+                files = files.map { it.id }.toList(),
+                cachedAt = Clock.System.now()
             )
         } else {
             id = assessmentRepository.getIdForNewLocalAssessment() - 1
@@ -100,7 +101,8 @@ class CreateAssessmentUseCase(
                 defaultLessonId = defaultLesson.id,
                 description = text,
                 type = type,
-                files = files.map { it.id }.toList()
+                files = files.map { it.id }.toList(),
+                cachedAt = Clock.System.now()
             )
         }
 
@@ -111,7 +113,8 @@ class CreateAssessmentUseCase(
                 id = file.id,
                 isOfflineReady = true,
                 size = file.size,
-                getBitmap = { null }
+                getBitmap = { null },
+                cachedAt = Clock.System.now()
             ))
         }
         assessmentRepository.upsert(listOf(assessment))

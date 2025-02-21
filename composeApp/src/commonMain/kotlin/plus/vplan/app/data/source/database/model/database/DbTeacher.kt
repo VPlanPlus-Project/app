@@ -34,7 +34,8 @@ data class DbTeacher(
         return Teacher(
             id = id,
             schoolId = schoolId,
-            name = name
+            name = name,
+            cachedAt = cachedAt
         )
     }
 }

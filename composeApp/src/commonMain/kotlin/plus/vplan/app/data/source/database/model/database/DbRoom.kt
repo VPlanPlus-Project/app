@@ -34,7 +34,8 @@ data class DbRoom(
         return Room(
             id = id,
             schoolId = schoolId,
-            name = name
+            name = name,
+            cachedAt = cachedAt
         )
     }
 }
