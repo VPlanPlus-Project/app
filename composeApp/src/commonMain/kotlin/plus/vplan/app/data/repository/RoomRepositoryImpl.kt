@@ -7,6 +7,7 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.api
@@ -43,7 +44,8 @@ class RoomRepositoryImpl(
                     DbRoom(
                         id = room.id,
                         schoolId = school.id,
-                        name = room.name
+                        name = room.name,
+                        cachedAt = Clock.System.now()
                     )
                 )
             }
@@ -70,7 +72,8 @@ class RoomRepositoryImpl(
                 DbRoom(
                     id = data.id,
                     schoolId = school.id,
-                    name = data.name
+                    name = data.name,
+                    cachedAt = Clock.System.now()
                 )
             )
             return Response.Success(getById(id))

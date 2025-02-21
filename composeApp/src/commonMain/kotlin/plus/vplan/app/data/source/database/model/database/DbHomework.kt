@@ -37,4 +37,5 @@ data class DbHomework(
     @ColumnInfo(name = "created_by_vpp_id") val createdBy: Int?,
     @ColumnInfo(name = "created_by_profile_id") val createdByProfileId: Uuid?,
     @ColumnInfo(name = "is_public") val isPublic: Boolean,
+    @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )

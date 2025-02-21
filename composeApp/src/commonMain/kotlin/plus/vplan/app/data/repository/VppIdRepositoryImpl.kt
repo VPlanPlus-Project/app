@@ -9,7 +9,12 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -82,7 +87,7 @@ class VppIdRepositoryImpl(
                 vppId = DbVppId(
                     id = data.id,
                     name = data.name,
-                    cachedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+                    cachedAt = Clock.System.now()
                 ),
                 vppIdAccess = DbVppIdAccess(
                     vppId = data.id,
@@ -131,7 +136,7 @@ class VppIdRepositoryImpl(
                         vppId = DbVppId(
                             id = data.id,
                             name = data.username,
-                            cachedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+                            cachedAt = Clock.System.now()
                         ),
                         groupCrossovers = data.groups.map {
                             DbVppIdGroupCrossover(

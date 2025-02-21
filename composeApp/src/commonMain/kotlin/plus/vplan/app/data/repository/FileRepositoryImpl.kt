@@ -53,7 +53,8 @@ class FileRepositoryImpl(
                 createdByVppId = null,
                 fileName = file.name,
                 size = file.size,
-                isOfflineReady = file.isOfflineReady
+                isOfflineReady = file.isOfflineReady,
+                cachedAt = Clock.System.now()
             )
         )
     }
@@ -88,7 +89,8 @@ class FileRepositoryImpl(
                         createdByVppId = data.createdBy,
                         fileName = fileData.fileName,
                         size = fileData.size,
-                        isOfflineReady = existing?.isOfflineReady ?: false
+                        isOfflineReady = existing?.isOfflineReady ?: false,
+                        cachedAt = Clock.System.now()
                     )
                 )
                 return@channelFlow sendAll(getById(id, false))
@@ -110,7 +112,8 @@ class FileRepositoryImpl(
                         createdByVppId = data.createdBy,
                         fileName = fileData.fileName,
                         size = fileData.size,
-                        isOfflineReady = existing?.isOfflineReady ?: false
+                        isOfflineReady = existing?.isOfflineReady ?: false,
+                        cachedAt = Clock.System.now()
                     )
                 )
                 return@channelFlow sendAll(getById(id, false))
