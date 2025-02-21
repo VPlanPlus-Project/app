@@ -41,6 +41,10 @@ class MainActivity : ComponentActivity() {
                                 val payload = json.decodeFromString<StartTaskJson.StartTaskNavigateTo.StartTaskCalendar>(navigationJson.value)
                                 task = StartTask.NavigateTo.Calendar(navigationJson.profileId?.let { profileId -> Uuid.parse(profileId) }, LocalDate.parse(payload.date))
                             }
+                            "settings/school" -> {
+                                val payload = json.decodeFromString<StartTaskJson.StartTaskNavigateTo.SchoolSettings>(navigationJson.value)
+                                task = StartTask.NavigateTo.SchoolSettings(payload.openIndiwareSettingsSchoolId)
+                            }
                         }
                     }
                 }

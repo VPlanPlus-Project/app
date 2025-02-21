@@ -24,7 +24,8 @@ sealed interface School: Item {
         val password: String,
         val daysPerWeek: Int = 5,
         val studentsHaveFullAccess: Boolean = false,
-        val schoolDownloadMode: SchoolDownloadMode = SchoolDownloadMode.INDIWARE_WOCHENPLAN_6
+        val schoolDownloadMode: SchoolDownloadMode = SchoolDownloadMode.INDIWARE_WOCHENPLAN_6,
+        val credentialsValid: Boolean
     ) : School {
         enum class SchoolDownloadMode {
             INDIWARE_WOCHENPLAN_6, INDIWARE_MOBIL

@@ -28,6 +28,8 @@ interface SchoolRepository {
         username: String,
         password: String
     )
+
+    suspend fun setIndiwareAccessValidState(school: School, valid: Boolean)
 }
 
 data class OnlineSchool(

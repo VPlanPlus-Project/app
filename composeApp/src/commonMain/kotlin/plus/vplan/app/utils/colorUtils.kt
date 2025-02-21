@@ -16,7 +16,7 @@ fun Color.toBlackAndWhite(): Color {
         else if (cMax == g) 60*(2+(b-r)/(cMax-cMin))
         else 60*(4+(r-g)/(cMax-cMin))
 
-    val color = Color.hsl(h, 0f, l, this.alpha)
+    val color = Color.hsl(h.coerceAtLeast(0f), 0f, l.coerceAtLeast(0f), this.alpha.coerceAtLeast(0f))
     return color
 }
 

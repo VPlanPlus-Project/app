@@ -4,11 +4,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +24,7 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -33,39 +35,51 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.feature.home.ui.components.Greeting
 import plus.vplan.app.feature.home.ui.components.HolidayScreen
 import plus.vplan.app.feature.home.ui.components.PagerSwitcher
 import plus.vplan.app.feature.home.ui.components.current_day.CurrentDayView
 import plus.vplan.app.feature.home.ui.components.next_day.NextDayView
+import plus.vplan.app.feature.main.MainScreen
+import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.thenIf
+import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.key_round
 
 @Composable
 fun HomeScreen(
     contentPadding: PaddingValues,
+    navHostController: NavHostController,
     homeViewModel: HomeViewModel
 ) {
     HomeContent(
         state = homeViewModel.state,
         contentPadding = contentPadding,
+        onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings(openIndiwareSettingsSchoolId = it)) } },
         onEvent = homeViewModel::onEvent
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeContent(
     state: HomeState,
     contentPadding: PaddingValues,
+    onOpenSchoolSettings: (schoolId: Int) -> Unit,
     onEvent: (event: HomeEvent) -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -126,10 +140,38 @@ private fun HomeContent(
                     }
                 }
 
+                val school = (state.currentProfile)?.getSchool()?.filterIsInstance<CacheState.Done<School>>()?.map { it.data }?.collectAsState(null)?.value
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                 ) {
+                    item {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = school is School.IndiwareSchool && !school.credentialsValid,
+                            enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
+                            exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            var displaySchool by remember { mutableStateOf<School?>(null) }
+                            LaunchedEffect(school) {
+                                if (school is School.IndiwareSchool && !school.credentialsValid) displaySchool = school
+                            }
+                            if (displaySchool != null) InfoCard(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                                title = "Schulzugangsdaten abgelaufen",
+                                text = "Die Schulzugangsdaten für ${displaySchool!!.name} sind abgelaufen. Bitte aktualisiere sie, um weiterhin auf dem neuesten Stand zu bleiben.",
+                                textColor = MaterialTheme.colorScheme.onErrorContainer,
+                                backgroundColor = MaterialTheme.colorScheme.errorContainer,
+                                shadow = true,
+                                buttonAction1 = { onOpenSchoolSettings(displaySchool!!.id) },
+                                buttonText1 = "Aktualisieren",
+                                imageVector = Res.drawable.key_round
+                            )
+                        }
+                    }
                     item timetable@{
                         Box(
                             modifier = Modifier.fillMaxWidth()

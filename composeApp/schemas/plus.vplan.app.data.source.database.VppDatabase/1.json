@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c8b8aa8a926128e5b8310805956b5290",
+    "identityHash": "86121287d0869dca4363103d426bc5f5",
     "entities": [
       {
         "tableName": "schools",
@@ -46,8 +46,8 @@
         ]
       },
       {
-        "tableName": "schools_sp24details",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`school_id` INTEGER NOT NULL, `sp24_school_id` TEXT NOT NULL, `username` TEXT NOT NULL, `password` TEXT NOT NULL, `days_per_week` INTEGER NOT NULL, `students_have_full_access` INTEGER NOT NULL, `download_mode` TEXT NOT NULL, PRIMARY KEY(`school_id`), FOREIGN KEY(`school_id`) REFERENCES `schools`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "school_indiware_access",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`school_id` INTEGER NOT NULL, `sp24_school_id` TEXT NOT NULL, `username` TEXT NOT NULL, `password` TEXT NOT NULL, `days_per_week` INTEGER NOT NULL, `students_have_full_access` INTEGER NOT NULL, `download_mode` TEXT NOT NULL, `credentials_valid` INTEGER NOT NULL, PRIMARY KEY(`school_id`), FOREIGN KEY(`school_id`) REFERENCES `schools`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "schoolId",
@@ -90,6 +90,12 @@
             "columnName": "download_mode",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "credentialsValid",
+            "columnName": "credentials_valid",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -100,13 +106,13 @@
         },
         "indices": [
           {
-            "name": "index_schools_sp24details_school_id",
+            "name": "index_school_indiware_access_school_id",
             "unique": true,
             "columnNames": [
               "school_id"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_schools_sp24details_school_id` ON `${TABLE_NAME}` (`school_id`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_school_indiware_access_school_id` ON `${TABLE_NAME}` (`school_id`)"
           }
         ],
         "foreignKeys": [
@@ -2774,7 +2780,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c8b8aa8a926128e5b8310805956b5290')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '86121287d0869dca4363103d426bc5f5')"
     ]
   }
 }

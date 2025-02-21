@@ -1,11 +1,18 @@
 package plus.vplan.app.feature.sync.domain.usecase
 
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.DayRepository
+import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
+import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateDefaultLessonsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
@@ -25,9 +32,42 @@ class FullSyncUseCase(
     private val updateDefaultLessonsUseCase: UpdateDefaultLessonsUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val updateAssessmentUseCase: UpdateAssessmentUseCase,
+    private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
+    private val platformNotificationRepository: PlatformNotificationRepository
 ) {
     suspend operator fun invoke() {
         schoolRepository.getAll().first().filterIsInstance<School.IndiwareSchool>().forEach { school ->
+            if (!school.credentialsValid) return@forEach
+
+            when (checkSp24CredentialsUseCase(school.sp24Id.toInt(), school.username, school.password)) {
+                SchoolSettingsCredentialsState.Error -> return@forEach
+                SchoolSettingsCredentialsState.Invalid -> {
+                    schoolRepository.setIndiwareAccessValidState(school, false)
+                    platformNotificationRepository.sendNotification(
+                        title = "Schulzugangsdaten abgelaufen",
+                        message = "Die Schulzugangsdaten für ${school.name} sind abgelaufen. Tippe, um sie zu aktualisieren.",
+                        category = school.name,
+                        isLarge = false,
+                        onClickData = Json.encodeToString(
+                            StartTaskJson(
+                                type = "navigate_to",
+                                value = Json.encodeToString(
+                                    StartTaskJson.StartTaskNavigateTo(
+                                        screen = "settings/school",
+                                        value = Json.encodeToString(
+                                            StartTaskJson.StartTaskNavigateTo.SchoolSettings(
+                                                openIndiwareSettingsSchoolId = school.id
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ).also { Logger.d { "Task: $it" } }
+                    )
+                    return@forEach
+                }
+                else -> Unit
+            }
             updateDefaultLessonsUseCase(school)
             updateHolidaysUseCase(school)
             updateWeeksUseCase(school)

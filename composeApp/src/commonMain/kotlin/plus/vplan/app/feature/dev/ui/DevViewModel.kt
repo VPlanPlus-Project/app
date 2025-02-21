@@ -11,22 +11,18 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import kotlin.uuid.Uuid
 
 class DevViewModel(
@@ -35,7 +31,6 @@ class DevViewModel(
     private val homeworkRepository: HomeworkRepository,
     private val fullSyncUseCase: FullSyncUseCase,
     private val platformNotificationRepository: PlatformNotificationRepository,
-    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
         private set
@@ -82,7 +77,7 @@ class DevViewModel(
                 }
 
                 DevEvent.Clear -> assessmentRepository.clearCache()
-                DevEvent.Sync -> updateSubstitutionPlanUseCase(state.profile!!.getSchool().getFirstValue() as School.IndiwareSchool, LocalDate(2025, 2, 14), allowNotification = true)
+                DevEvent.Sync -> fullSyncUseCase()
                 DevEvent.Notify -> platformNotificationRepository.sendNotification("Test", "Test", "Profil")
             }
         }

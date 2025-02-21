@@ -142,6 +142,7 @@ sealed class StartTask {
     data class VppIdLogin(val token: String) : StartTask()
     sealed class NavigateTo(val profileId: Uuid? = null): StartTask() {
         class Calendar(profileId: Uuid? = null, val date: LocalDate): NavigateTo(profileId)
+        class SchoolSettings(val openIndiwareSettingsSchoolId: Int? = null): NavigateTo()
     }
 }
 
@@ -159,6 +160,11 @@ data class StartTaskJson(
         @Serializable
         data class StartTaskCalendar(
             @SerialName("date") val date: String
+        )
+
+        @Serializable
+        data class SchoolSettings(
+            @SerialName("open_indiware_settings_school_id") val openIndiwareSettingsSchoolId: Int? = null,
         )
     }
 }

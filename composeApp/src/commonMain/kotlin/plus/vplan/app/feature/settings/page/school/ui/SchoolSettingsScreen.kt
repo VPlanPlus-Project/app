@@ -56,13 +56,15 @@ import vplanplus.composeapp.generated.resources.x
 
 @Composable
 fun SchoolSettingsScreen(
-    navHostController: NavHostController
+    navHostController: NavHostController,
+    openIndiwareSettingsSchoolId: Int? = null
 ) {
     val viewModel = koinViewModel<SchoolSettingsViewModel>()
     val state = viewModel.state
 
     SchoolSettingsContent(
         state = state,
+        openIndiwareSettingsSchoolId = openIndiwareSettingsSchoolId,
         onBack = navHostController::navigateUp
     )
 }
@@ -71,10 +73,11 @@ fun SchoolSettingsScreen(
 @Composable
 private fun SchoolSettingsContent(
     state: SchoolSettingsState,
+    openIndiwareSettingsSchoolId: Int?,
     onBack: () -> Unit
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
-    var visibleIndiwareCredentialSchoolId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var visibleIndiwareCredentialSchoolId by rememberSaveable { mutableStateOf(openIndiwareSettingsSchoolId) }
 
     Scaffold(
         topBar = {

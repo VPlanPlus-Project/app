@@ -109,7 +109,7 @@ fun MainScreenHost(
             navController = navController,
             startDestination = MainScreen.MainHome
         ) {
-            composable<MainScreen.MainHome> { HomeScreen(contentPadding, homeViewModel) }
+            composable<MainScreen.MainHome> { HomeScreen(contentPadding, navController, homeViewModel) }
             composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
             composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel, toggleBottomBar) }
             composable<MainScreen.MainDev> { DevScreen(contentPadding, toggleBottomBar) }
@@ -123,7 +123,13 @@ fun MainScreenHost(
             composable<MainScreen.RoomSearch> { RoomSearch(navController) }
 
             composable<MainScreen.Settings> { SettingsScreen(navController) }
-            composable<MainScreen.SchoolSettings> { SchoolSettingsScreen(navController) }
+            composable<MainScreen.SchoolSettings> {
+                val args = it.toRoute<MainScreen.SchoolSettings>()
+                SchoolSettingsScreen(
+                    navHostController = navController,
+                    openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchoolId
+                )
+            }
         }
 
         AnimatedVisibility(
@@ -198,6 +204,9 @@ fun MainScreenHost(
                 calendarViewModel.onEvent(CalendarEvent.SelectDate(navigationTask.date))
                 navController.navigate(MainScreen.MainCalendar)
             }
+            is StartTask.NavigateTo.SchoolSettings -> {
+                navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId))
+            }
         }
     }
 }
@@ -217,5 +226,5 @@ sealed class MainScreen(val name: String) {
     @Serializable data object RoomSearch : MainScreen("RoomSearch")
 
     @Serializable data object Settings : MainScreen("Settings")
-    @Serializable data object SchoolSettings : MainScreen("SchoolSettings")
+    @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: Int? = null) : MainScreen("SchoolSettings")
 }

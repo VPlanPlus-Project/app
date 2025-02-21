@@ -110,13 +110,18 @@ class SchoolRepositoryImpl(
                 password = password,
                 daysPerWeek = daysPerWeek,
                 studentsHaveFullAccess = studentsHaveFullAccess,
-                downloadMode = downloadMode
+                downloadMode = downloadMode,
+                credentialsValid = true
             )
         )
     }
 
     override suspend fun updateSp24Access(school: School, username: String, password: String) {
         vppDatabase.schoolDao.updateIndiwareSchoolDetails(school.id, username, password)
+    }
+
+    override suspend fun setIndiwareAccessValidState(school: School, valid: Boolean) {
+        vppDatabase.schoolDao.setIndiwareAccessValidState(school.id, valid)
     }
 }
 

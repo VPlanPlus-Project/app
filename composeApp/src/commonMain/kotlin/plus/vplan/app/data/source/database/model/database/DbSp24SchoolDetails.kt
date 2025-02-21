@@ -7,7 +7,7 @@ import androidx.room.Index
 import plus.vplan.app.domain.model.School
 
 @Entity(
-    tableName = "schools_sp24details",
+    tableName = "school_indiware_access",
     primaryKeys = ["school_id"],
     indices = [Index(value = ["school_id"], unique = true)],
     foreignKeys = [
@@ -27,5 +27,6 @@ data class DbSp24SchoolDetails(
     @ColumnInfo("password") val password: String,
     @ColumnInfo("days_per_week") val daysPerWeek: Int,
     @ColumnInfo("students_have_full_access") val studentsHaveFullAccess: Boolean,
-    @ColumnInfo("download_mode") val downloadMode: School.IndiwareSchool.SchoolDownloadMode
+    @ColumnInfo("download_mode") val downloadMode: School.IndiwareSchool.SchoolDownloadMode,
+    @ColumnInfo("credentials_valid") val credentialsValid: Boolean
 )

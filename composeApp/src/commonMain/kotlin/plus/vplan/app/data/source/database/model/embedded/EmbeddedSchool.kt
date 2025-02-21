@@ -32,6 +32,7 @@ data class EmbeddedSchool(
                 daysPerWeek = sp24SchoolDetails.daysPerWeek,
                 studentsHaveFullAccess = sp24SchoolDetails.studentsHaveFullAccess,
                 schoolDownloadMode = sp24SchoolDetails.downloadMode,
+                credentialsValid = sp24SchoolDetails.credentialsValid
             )
         }
 
