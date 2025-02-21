@@ -2,9 +2,11 @@ package plus.vplan.app.domain.cache
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import plus.vplan.app.domain.data.Response
 
 sealed class CacheState<out T: Item>(val entityId: String) {
@@ -18,6 +20,8 @@ interface Item {
     fun getEntityId(): String
 }
 
-suspend fun <T: Item> Flow<CacheState<T>>.getFirstValue() = (this.filter { it is CacheState.NotExisting || it is CacheState.Done }.first() as? CacheState.Done<T>)?.data
+suspend fun <T: Item> Flow<CacheState<T>>.getFirstValue() = (this.onEach { if (it is CacheState.Error) Logger.e {
+    "Failed to load entity ${it.entityId}: ${it.error}"
+} }.filter { it is CacheState.NotExisting || it is CacheState.Done }.first() as? CacheState.Done<T>)?.data
 @Composable
 fun <T: Item> Flow<CacheState<T>>.collectAsLoadingState(id: String) = this.collectAsState(CacheState.Loading(id))

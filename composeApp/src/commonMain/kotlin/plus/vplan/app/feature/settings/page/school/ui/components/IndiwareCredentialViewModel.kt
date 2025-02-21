@@ -22,7 +22,7 @@ class IndiwareCredentialViewModel(
 
     fun init(schoolId: Int) {
         viewModelScope.launch {
-            val school = schoolRepository.getById(schoolId).getFirstValue() as? School.IndiwareSchool ?: return@launch
+            val school = schoolRepository.getById(schoolId, false).getFirstValue() as? School.IndiwareSchool ?: return@launch
             state = IndiwareCredentialState(
                 school = school,
                 schoolName = school.name,

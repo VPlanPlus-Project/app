@@ -40,6 +40,7 @@ import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
+import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
@@ -177,6 +178,10 @@ class AssessmentRepositoryImpl(
         return vppDatabase.assessmentDao.getAll().map { it.map { item -> item.toModel() } }
     }
 
+    override fun getAllIds(): Flow<List<Int>> {
+        return vppDatabase.assessmentDao.getAll().map { it.map { it.assessment.id } }
+    }
+
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Assessment>> {
         if (id < 0) {
             return vppDatabase.assessmentDao.getById(id).map {
@@ -201,7 +206,7 @@ class AssessmentRepositoryImpl(
             ) {
                 trySend(CacheState.Loading(id.toString())).onFailure { return@channelFlow }
                 val metadataResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id")
-                if (metadataResponse.status == HttpStatusCode.NotFound) {
+                if (metadataResponse.status == HttpStatusCode.NotFound && metadataResponse.isResponseFromBackend()) {
                     trySend(CacheState.NotExisting(id.toString()))
                     vppDatabase.assessmentDao.deleteById(listOf(id))
                     return@channelFlow

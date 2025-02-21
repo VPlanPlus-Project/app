@@ -17,7 +17,7 @@ class HomeworkSource(
 ) {
     private val cache = hashMapOf<Int, Flow<CacheState<Homework>>>()
     fun getById(id: Int): Flow<CacheState<Homework>> {
-        return cache.getOrPut(id) { homeworkRepository.getById(id) }
+        return cache.getOrPut(id) { homeworkRepository.getById(id, false) }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

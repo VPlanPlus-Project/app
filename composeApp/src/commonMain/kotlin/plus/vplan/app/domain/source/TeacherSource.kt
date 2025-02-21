@@ -13,7 +13,7 @@ class TeacherSource(
     private val cache = hashMapOf<Int, Flow<CacheState<Teacher>>>()
     private val cacheItems = hashMapOf<Int, CacheState<Teacher>>()
     fun getById(id: Int): Flow<CacheState<Teacher>> {
-        return cache.getOrPut(id) { teacherRepository.getById(id) }
+        return cache.getOrPut(id) { teacherRepository.getById(id, false) }
     }
 
     suspend fun getSingleById(id: Int): Teacher? {

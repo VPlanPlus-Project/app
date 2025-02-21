@@ -37,6 +37,7 @@ import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
+import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
@@ -133,6 +134,10 @@ class HomeworkRepositoryImpl(
         return vppDatabase.homeworkDao.getAll().map { it.map { embeddedHomework -> CacheState.Done(embeddedHomework.toModel()) } }
     }
 
+    override fun getAllIds(): Flow<List<Int>> {
+        return vppDatabase.homeworkDao.getAll().map { it.map { homework -> homework.homework.id } }
+    }
+
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Homework>> {
         if (id < 0) return vppDatabase.homeworkDao.getById(id).map {
             if (it == null) CacheState.NotExisting(id.toString())
@@ -149,7 +154,10 @@ class HomeworkRepositoryImpl(
                 onError = { return@channelFlow send(CacheState.Error(id.toString(), it)) }
             ) {
                 val metadataResponse = httpClient.get("${api.url}/api/v2.2/homework/$id")
-                if (metadataResponse.status == HttpStatusCode.NotFound) return@channelFlow send(CacheState.NotExisting(id.toString()))
+                if (metadataResponse.status == HttpStatusCode.NotFound && metadataResponse.isResponseFromBackend()) {
+                    vppDatabase.homeworkDao.deleteById(listOf(id))
+                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+                }
                 if (metadataResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
 
                 val metadataResponseData = ResponseDataWrapper.fromJson<HomeworkMetadataResponse>(metadataResponse.bodyAsText())
@@ -200,7 +208,7 @@ class HomeworkRepositoryImpl(
                 )
             }
 
-            return@channelFlow sendAll(getById(id))
+            return@channelFlow sendAll(getById(id, false))
         }
     }
 
