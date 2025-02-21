@@ -1,14 +1,11 @@
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 
-interface SchoolRepository {
+interface SchoolRepository: WebEntityRepository<School> {
     suspend fun fetchAllOnline(): Response<List<OnlineSchool>>
-    suspend fun getWithCachingById(id: Int): Response<Flow<School?>>
-    fun getById(id: Int): Flow<CacheState<School>>
     suspend fun getAll(): Flow<List<School>>
 
     suspend fun getIdFromSp24Id(sp24Id: Int): Response<Int>

@@ -22,16 +22,14 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentUseCase
-import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
+import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import kotlin.uuid.Uuid
 
 class DevViewModel(
     private val keyValueRepository: KeyValueRepository,
     private val assessmentRepository: AssessmentRepository,
     private val homeworkRepository: HomeworkRepository,
-    private val updateAssessmentUseCase: UpdateAssessmentUseCase,
-    private val updateHomeworkUseCase: UpdateHomeworkUseCase,
+    private val fullSyncUseCase: FullSyncUseCase,
     private val platformNotificationRepository: PlatformNotificationRepository,
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
@@ -80,8 +78,7 @@ class DevViewModel(
 
                 DevEvent.Clear -> assessmentRepository.clearCache()
                 DevEvent.Sync -> {
-                    updateAssessmentUseCase(true)
-                    updateHomeworkUseCase(true)
+                    fullSyncUseCase()
                 }
                 DevEvent.Notify -> platformNotificationRepository.sendNotification("Test", "Test", "Profil")
             }

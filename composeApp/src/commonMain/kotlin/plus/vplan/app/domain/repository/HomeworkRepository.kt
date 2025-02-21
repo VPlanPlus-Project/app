@@ -12,13 +12,12 @@ import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.ui.common.AttachedFile
 
-interface HomeworkRepository {
+interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
     fun getByGroup(groupId: Int): Flow<List<Homework>>
 
     fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
 
-    fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<Homework>>
     fun getAll(): Flow<List<CacheState<Homework>>>
 
     suspend fun deleteById(id: Int)

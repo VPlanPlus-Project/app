@@ -2,14 +2,13 @@ package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 
-interface AssessmentRepository {
+interface AssessmentRepository: WebEntityRepository<Assessment> {
 
     /**
      * @return List of ids of the created assessments
@@ -40,7 +39,6 @@ interface AssessmentRepository {
     )
 
     fun getAll(): Flow<List<Assessment>>
-    fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Assessment>>
 
     suspend fun deleteAssessment(assessment: Assessment, profile: Profile.StudentProfile): Response.Error?
 

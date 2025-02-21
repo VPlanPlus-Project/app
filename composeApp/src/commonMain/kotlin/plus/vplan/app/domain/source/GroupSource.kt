@@ -13,7 +13,7 @@ class GroupSource(
     private val cacheItems = hashMapOf<Int, CacheState<Group>>()
 
     fun getById(id: Int): Flow<CacheState<Group>> {
-        return cache.getOrPut(id) { groupRepository.getById(id) }
+        return cache.getOrPut(id) { groupRepository.getById(id, false) }
     }
 
     suspend fun getSingleById(id: Int): Group? {

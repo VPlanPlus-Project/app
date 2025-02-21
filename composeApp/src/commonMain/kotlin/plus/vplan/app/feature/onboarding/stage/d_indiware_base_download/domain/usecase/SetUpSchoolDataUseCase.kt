@@ -63,7 +63,7 @@ class SetUpSchoolDataUseCase(
 
             val schoolId = schoolRepository.getIdFromSp24Id(sp24Id.toInt())
             if (schoolId !is Response.Success) throw IllegalStateException("$prefix school-Lookup by sp24 was not successful: $schoolId")
-            val schoolFlow = (schoolRepository.getById(schoolId.data))
+            val schoolFlow = (schoolRepository.getById(schoolId.data, false))
             schoolFlow.takeWhile { it is CacheState.Loading }.collect()
             val school = schoolFlow.first().let {
                 if (it !is CacheState.Done) return@flow emit(SetUpSchoolDataResult.Error("$prefix school-Lookup was not successful: $it"))
@@ -77,7 +77,7 @@ class SetUpSchoolDataUseCase(
                     downloadMode = baseData.data.downloadMode
                 )
                 onboardingRepository.setSchoolId(it.data.id)
-                schoolRepository.getById(it.data.id).onEach { Logger.d { it.toString() } }.getFirstValue()!!
+                schoolRepository.getById(it.data.id, false).onEach { Logger.d { it.toString() } }.getFirstValue()!!
             }
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE
