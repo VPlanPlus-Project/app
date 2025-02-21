@@ -39,11 +39,24 @@ class MainActivity : ComponentActivity() {
                         when (navigationJson.screen) {
                             "calendar" -> {
                                 val payload = json.decodeFromString<StartTaskJson.StartTaskNavigateTo.StartTaskCalendar>(navigationJson.value)
-                                task = StartTask.NavigateTo.Calendar(navigationJson.profileId?.let { profileId -> Uuid.parse(profileId) }, LocalDate.parse(payload.date))
+                                task = StartTask.NavigateTo.Calendar(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, LocalDate.parse(payload.date))
                             }
                             "settings/school" -> {
                                 val payload = json.decodeFromString<StartTaskJson.StartTaskNavigateTo.SchoolSettings>(navigationJson.value)
-                                task = StartTask.NavigateTo.SchoolSettings(payload.openIndiwareSettingsSchoolId)
+                                task = StartTask.NavigateTo.SchoolSettings(null, payload.openIndiwareSettingsSchoolId)
+                            }
+                        }
+                    }
+                    "open" -> {
+                        val openJson = json.decodeFromString<StartTaskJson.StartTaskOpen>(taskJson.value)
+                        when (openJson.type) {
+                            "homework" -> {
+                                val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.Homework>(openJson.value)
+                                task = StartTask.Open.Homework(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.homeworkId)
+                            }
+                            "assessment" -> {
+                                val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.Assessment>(openJson.value)
+                                task = StartTask.Open.Assessment(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.assessmentId)
                             }
                         }
                     }

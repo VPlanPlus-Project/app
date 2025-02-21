@@ -42,12 +42,14 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
 import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
 import plus.vplan.app.feature.dev.ui.DevScreen
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
+import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.feature.profile.page.ui.ProfileScreen
 import plus.vplan.app.feature.profile.page.ui.ProfileScreenEvent
 import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
@@ -70,7 +72,7 @@ import vplanplus.composeapp.generated.resources.user
 @Composable
 fun MainScreenHost(
     onNavigateToOnboarding: (school: School?) -> Unit,
-    navigationTask: StartTask.NavigateTo?
+    navigationTask: StartTask?
 ) {
     val navController = rememberNavController()
     var currentDestination by rememberSaveable<MutableState<String?>> { mutableStateOf("Home") }
@@ -197,6 +199,9 @@ fun MainScreenHost(
         )
     }
 
+    var homeworkSheetHomeworkId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var assessmentSheetAssessmentId by rememberSaveable { mutableStateOf<Int?>(null) }
+
     LaunchedEffect(navigationTask) {
         if (navigationTask == null) return@LaunchedEffect
         when (navigationTask) {
@@ -207,8 +212,22 @@ fun MainScreenHost(
             is StartTask.NavigateTo.SchoolSettings -> {
                 navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId))
             }
+            is StartTask.Open.Homework -> homeworkSheetHomeworkId = navigationTask.homeworkId
+            is StartTask.Open.Assessment -> assessmentSheetAssessmentId = navigationTask.assessmentId
+
+            else -> Unit
         }
     }
+
+    if (homeworkSheetHomeworkId != null) HomeworkDetailDrawer(
+        homeworkId = homeworkSheetHomeworkId!!,
+        onDismiss = { homeworkSheetHomeworkId = null }
+    )
+
+    if (assessmentSheetAssessmentId != null) AssessmentDetailDrawer(
+        assessmentId = assessmentSheetAssessmentId!!,
+        onDismiss = { assessmentSheetAssessmentId = null }
+    )
 }
 
 /**

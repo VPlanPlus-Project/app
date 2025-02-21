@@ -10,10 +10,14 @@ import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 
 interface AssessmentRepository {
+
+    /**
+     * @return List of ids of the created assessments
+     */
     suspend fun download(
         schoolApiAccess: SchoolApiAccess,
         defaultLessonIds: List<Int>
-    ): Response.Error?
+    ): Response<List<Int>>
 
     suspend fun createAssessmentOnline(
         vppId: VppId.Active,

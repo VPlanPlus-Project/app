@@ -26,11 +26,9 @@ fun NavigationHost(task: StartTask?) {
     val setCurrentProfileUseCase = koinInject<SetCurrentProfileUseCase>()
 
     LaunchedEffect(task) {
+        if (task?.profileId != null) setCurrentProfileUseCase(task.profileId)
         when (task) {
             is StartTask.VppIdLogin -> navigationHostController.navigate(AppScreen.VppIdLogin(task.token))
-            is StartTask.NavigateTo -> {
-                if (task.profileId != null) setCurrentProfileUseCase(task.profileId)
-            }
             else -> Unit
         }
     }
@@ -47,7 +45,7 @@ fun NavigationHost(task: StartTask?) {
         composable<AppScreen.MainScreen> {
             MainScreenHost(onNavigateToOnboarding = {
                 navigationHostController.navigate(AppScreen.Onboarding(it?.id))
-            }, navigationTask = task as? StartTask.NavigateTo)
+            }, navigationTask = task)
         }
 
         composable<AppScreen.VppIdLogin> { route ->
