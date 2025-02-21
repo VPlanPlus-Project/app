@@ -23,7 +23,7 @@ enum class Sp24CredentialsState {
 
 fun Sp24CredentialsState.toButtonState(): ButtonState {
     return when (this) {
-        LOADING -> ButtonState.LOADING
+        LOADING -> ButtonState.Loading
         else -> ButtonState.Enabled
     }
 }

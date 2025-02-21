@@ -56,6 +56,8 @@ import plus.vplan.app.feature.profile.settings.ui.ProfileSettingsScreen
 import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
+import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
+import plus.vplan.app.feature.settings.ui.SettingsScreen
 import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
@@ -111,7 +113,7 @@ fun MainScreenHost(
             composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
             composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel, toggleBottomBar) }
             composable<MainScreen.MainDev> { DevScreen(contentPadding, toggleBottomBar) }
-            composable<MainScreen.MainProfile> { ProfileScreen(contentPadding, profileViewModel) }
+            composable<MainScreen.MainProfile> { ProfileScreen(contentPadding, navController, profileViewModel) }
 
             composable<MainScreen.ProfileSettings> {
                 val args = it.toRoute<MainScreen.ProfileSettings>()
@@ -119,6 +121,9 @@ fun MainScreenHost(
             }
 
             composable<MainScreen.RoomSearch> { RoomSearch(navController) }
+
+            composable<MainScreen.Settings> { SettingsScreen(navController) }
+            composable<MainScreen.SchoolSettings> { SchoolSettingsScreen(navController) }
         }
 
         AnimatedVisibility(
@@ -210,4 +215,7 @@ sealed class MainScreen(val name: String) {
 
     @Serializable data class ProfileSettings(val profileId: String) : MainScreen("ProfileSettings")
     @Serializable data object RoomSearch : MainScreen("RoomSearch")
+
+    @Serializable data object Settings : MainScreen("Settings")
+    @Serializable data object SchoolSettings : MainScreen("SchoolSettings")
 }

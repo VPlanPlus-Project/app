@@ -114,6 +114,10 @@ class SchoolRepositoryImpl(
             )
         )
     }
+
+    override suspend fun updateSp24Access(school: School, username: String, password: String) {
+        vppDatabase.schoolDao.updateIndiwareSchoolDetails(school.id, username, password)
+    }
 }
 
 @Serializable

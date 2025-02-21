@@ -23,10 +23,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
@@ -36,6 +38,7 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.feature.main.MainScreen
 import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.settings
@@ -43,6 +46,7 @@ import vplanplus.composeapp.generated.resources.settings
 @Composable
 fun ProfileScreen(
     contentPadding: PaddingValues,
+    navHostController: NavHostController,
     viewModel: ProfileViewModel
 ) {
     val state = viewModel.state
@@ -50,7 +54,8 @@ fun ProfileScreen(
     ProfileContent(
         state = state,
         contentPadding = contentPadding,
-        onEvent = viewModel::onEvent
+        onEvent = viewModel::onEvent,
+        onOpenSettings = remember { { navHostController.navigate(MainScreen.Settings) } }
     )
 }
 
@@ -58,7 +63,8 @@ fun ProfileScreen(
 private fun ProfileContent(
     state: ProfileState,
     contentPadding: PaddingValues,
-    onEvent: (event: ProfileScreenEvent) -> Unit
+    onEvent: (event: ProfileScreenEvent) -> Unit,
+    onOpenSettings: () -> Unit
 ) {
 
     Column(
@@ -82,7 +88,7 @@ private fun ProfileContent(
                 )
             }
             FilledTonalIconButton(
-                onClick = {}
+                onClick = onOpenSettings
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.settings),
