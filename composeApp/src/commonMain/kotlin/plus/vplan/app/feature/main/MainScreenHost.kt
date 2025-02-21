@@ -42,6 +42,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
 import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
@@ -199,6 +200,7 @@ fun MainScreenHost(
     }
 
     var homeworkSheetHomeworkId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var assessmentSheetAssessmentId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(navigationTask) {
         if (navigationTask == null) return@LaunchedEffect
@@ -210,9 +212,8 @@ fun MainScreenHost(
             is StartTask.NavigateTo.SchoolSettings -> {
                 navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId))
             }
-            is StartTask.Open.Homework -> {
-                homeworkSheetHomeworkId = navigationTask.homeworkId
-            }
+            is StartTask.Open.Homework -> homeworkSheetHomeworkId = navigationTask.homeworkId
+            is StartTask.Open.Assessment -> assessmentSheetAssessmentId = navigationTask.assessmentId
 
             else -> Unit
         }
@@ -221,6 +222,11 @@ fun MainScreenHost(
     if (homeworkSheetHomeworkId != null) HomeworkDetailDrawer(
         homeworkId = homeworkSheetHomeworkId!!,
         onDismiss = { homeworkSheetHomeworkId = null }
+    )
+
+    if (assessmentSheetAssessmentId != null) AssessmentDetailDrawer(
+        assessmentId = assessmentSheetAssessmentId!!,
+        onDismiss = { assessmentSheetAssessmentId = null }
     )
 }
 

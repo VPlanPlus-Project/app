@@ -61,7 +61,7 @@ class AssessmentRepositoryImpl(
 
     private val onlineChangeRequests = mutableListOf<OnlineChangeRequest>()
 
-    override suspend fun download(schoolApiAccess: SchoolApiAccess, defaultLessonIds: List<Int>): Response.Error? {
+    override suspend fun download(schoolApiAccess: SchoolApiAccess, defaultLessonIds: List<Int>): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url {
@@ -99,7 +99,7 @@ class AssessmentRepositoryImpl(
                 }
             )
 
-            return null
+            return Response.Success(assessments.map { it.id })
         }
         return Response.Error.Cancelled
     }
@@ -320,7 +320,7 @@ class AssessmentRepositoryImpl(
         if (assessment.id < 0 || profile.getVppIdItem() == null) return
 
         onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Type }
-        val request = OnlineChangeRequest.Type(assessment, profile, type)
+        val request = OnlineChangeRequest.Type(assessment)
         onlineChangeRequests.add(request)
         GlobalScope.launch {
             delay(5000)
@@ -355,7 +355,7 @@ class AssessmentRepositoryImpl(
         if (assessment.id < 0 || profile.getVppIdItem() == null) return
 
         onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Date }
-        val request = OnlineChangeRequest.Date(assessment, profile, date)
+        val request = OnlineChangeRequest.Date(assessment)
         onlineChangeRequests.add(request)
 
         GlobalScope.launch {
@@ -391,7 +391,7 @@ class AssessmentRepositoryImpl(
         vppDatabase.assessmentDao.updateVisibility(assessment.id, isPublic)
 
         onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Visibility }
-        val request = OnlineChangeRequest.Visibility(assessment, profile, isPublic)
+        val request = OnlineChangeRequest.Visibility(assessment)
         onlineChangeRequests.add(request)
 
         GlobalScope.launch {
@@ -428,7 +428,7 @@ class AssessmentRepositoryImpl(
         if (assessment.id < 0 || profile.getVppIdItem() == null) return
 
         onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Content }
-        val request = OnlineChangeRequest.Content(assessment, profile, content)
+        val request = OnlineChangeRequest.Content(assessment)
         onlineChangeRequests.add(request)
 
         GlobalScope.launch {
@@ -512,11 +512,9 @@ data class AssessmentUpdateContentRequest(
 
 private sealed class OnlineChangeRequest(
     val assessment: Assessment,
-    val profile: Profile.StudentProfile,
-    val name: String,
 ) {
-    class Content(assessment: Assessment, profile: Profile.StudentProfile, val newContent: String): OnlineChangeRequest(assessment, profile, "content")
-    class Type(assessment: Assessment, profile: Profile.StudentProfile, val type: Assessment.Type): OnlineChangeRequest(assessment, profile, "type")
-    class Date(assessment: Assessment, profile: Profile.StudentProfile, val date: LocalDate): OnlineChangeRequest(assessment, profile, "date")
-    class Visibility(assessment: Assessment, profile: Profile.StudentProfile, val isPublic: Boolean): OnlineChangeRequest(assessment, profile, "visibility")
+    class Content(assessment: Assessment): OnlineChangeRequest(assessment)
+    class Type(assessment: Assessment): OnlineChangeRequest(assessment)
+    class Date(assessment: Assessment): OnlineChangeRequest(assessment)
+    class Visibility(assessment: Assessment): OnlineChangeRequest(assessment)
 }

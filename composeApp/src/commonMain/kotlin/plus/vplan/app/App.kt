@@ -147,6 +147,7 @@ sealed class StartTask(val profileId: Uuid? = null) {
 
     sealed class Open(profileId: Uuid?): StartTask(profileId) {
         class Homework(profileId: Uuid?, val homeworkId: Int): Open(profileId)
+        class Assessment(profileId: Uuid?, val assessmentId: Int): Open(profileId)
     }
 }
 
@@ -164,6 +165,11 @@ data class StartTaskJson(
         @Serializable
         data class Homework(
             @SerialName("homework_id") val homeworkId: Int
+        )
+
+        @Serializable
+        data class Assessment(
+            @SerialName("assessment_id") val assessmentId: Int
         )
     }
 

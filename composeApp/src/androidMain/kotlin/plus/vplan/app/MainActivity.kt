@@ -54,6 +54,10 @@ class MainActivity : ComponentActivity() {
                                 val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.Homework>(openJson.value)
                                 task = StartTask.Open.Homework(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.homeworkId)
                             }
+                            "assessment" -> {
+                                val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.Assessment>(openJson.value)
+                                task = StartTask.Open.Assessment(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.assessmentId)
+                            }
                         }
                     }
                 }

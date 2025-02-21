@@ -86,6 +86,6 @@ class FullSyncUseCase(
 
         }
         updateHomeworkUseCase(true)
-        updateAssessmentUseCase()
+        updateAssessmentUseCase(true)
     }
 }
