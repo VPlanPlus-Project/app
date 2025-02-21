@@ -14,7 +14,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
-import org.koin.compose.koinInject
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
@@ -105,24 +104,6 @@ object App {
 fun App(task: StartTask?) {
     AppTheme(dynamicColor = false) {
         KoinContext {
-            App.vppIdSource = VppIdSource(koinInject())
-            App.homeworkSource = HomeworkSource(koinInject())
-            App.homeworkTaskSource = HomeworkTaskSource(koinInject())
-            App.profileSource = ProfileSource(koinInject())
-            App.groupSource = GroupSource(koinInject())
-            App.schoolSource = SchoolSource(koinInject())
-            App.defaultLessonSource = DefaultLessonSource(koinInject())
-            App.daySource = DaySource(koinInject(), koinInject(), koinInject(), koinInject())
-            App.timetableSource = TimetableSource(koinInject())
-            App.weekSource = WeekSource(koinInject())
-            App.courseSource = CourseSource(koinInject())
-            App.teacherSource = TeacherSource(koinInject())
-            App.roomSource = RoomSource(koinInject())
-            App.lessonTimeSource = LessonTimeSource(koinInject())
-            App.substitutionPlanSource = SubstitutionPlanSource(koinInject())
-            App.assessmentSource = AssessmentSource(koinInject())
-            App.fileSource = FileSource(koinInject(), koinInject())
-
             Surface(
                 modifier = Modifier
                     .fillMaxSize()

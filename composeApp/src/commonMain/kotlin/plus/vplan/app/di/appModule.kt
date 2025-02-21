@@ -12,6 +12,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import plus.vplan.app.App
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DayRepositoryImpl
@@ -49,6 +50,23 @@ import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.domain.source.AssessmentSource
+import plus.vplan.app.domain.source.CourseSource
+import plus.vplan.app.domain.source.DaySource
+import plus.vplan.app.domain.source.DefaultLessonSource
+import plus.vplan.app.domain.source.FileSource
+import plus.vplan.app.domain.source.GroupSource
+import plus.vplan.app.domain.source.HomeworkSource
+import plus.vplan.app.domain.source.HomeworkTaskSource
+import plus.vplan.app.domain.source.LessonTimeSource
+import plus.vplan.app.domain.source.ProfileSource
+import plus.vplan.app.domain.source.RoomSource
+import plus.vplan.app.domain.source.SchoolSource
+import plus.vplan.app.domain.source.SubstitutionPlanSource
+import plus.vplan.app.domain.source.TeacherSource
+import plus.vplan.app.domain.source.TimetableSource
+import plus.vplan.app.domain.source.VppIdSource
+import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.di.assessmentModule
 import plus.vplan.app.feature.calendar.di.calendarModule
@@ -129,5 +147,24 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             settingsModule
         )
         modules(devModule)
+        
+
+        App.vppIdSource = VppIdSource(koin.get())
+        App.homeworkSource = HomeworkSource(koin.get())
+        App.homeworkTaskSource = HomeworkTaskSource(koin.get())
+        App.profileSource = ProfileSource(koin.get())
+        App.groupSource = GroupSource(koin.get())
+        App.schoolSource = SchoolSource(koin.get())
+        App.defaultLessonSource = DefaultLessonSource(koin.get())
+        App.daySource = DaySource(koin.get(), koin.get(), koin.get(), koin.get())
+        App.timetableSource = TimetableSource(koin.get())
+        App.weekSource = WeekSource(koin.get())
+        App.courseSource = CourseSource(koin.get())
+        App.teacherSource = TeacherSource(koin.get())
+        App.roomSource = RoomSource(koin.get())
+        App.lessonTimeSource = LessonTimeSource(koin.get())
+        App.substitutionPlanSource = SubstitutionPlanSource(koin.get())
+        App.assessmentSource = AssessmentSource(koin.get())
+        App.fileSource = FileSource(koin.get(), koin.get())
     }
 }

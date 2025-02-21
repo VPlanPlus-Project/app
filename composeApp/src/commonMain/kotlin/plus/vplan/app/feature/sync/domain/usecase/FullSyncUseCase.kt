@@ -55,6 +55,34 @@ class FullSyncUseCase(
     private val maxCacheAge = 6.hours
 
     suspend operator fun invoke() {
+        groupRepository.getAllIds().first()
+            .mapNotNull { App.groupSource.getById(it).getFirstValue() }
+            .forEach { group ->
+                if (group.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
+                groupRepository.getById(group.id, true).getFirstValue()
+            }
+
+        roomRepository.getAllIds().first()
+            .mapNotNull { App.roomSource.getById(it).getFirstValue() }
+            .forEach { room ->
+                if (room.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
+                roomRepository.getById(room.id, true).getFirstValue()
+            }
+
+        teacherRepository.getAllIds().first()
+            .mapNotNull { App.teacherSource.getById(it).getFirstValue() }
+            .forEach { teacher ->
+                if (teacher.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
+                teacherRepository.getById(teacher.id, true).getFirstValue()
+            }
+
+        schoolRepository.getAllIds().first()
+            .mapNotNull { App.schoolSource.getById(it).getFirstValue() }
+            .forEach { school ->
+                if (school.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
+                schoolRepository.getById(school.id, true).getFirstValue()
+            }
+
         schoolRepository.getAll().first().filterIsInstance<School.IndiwareSchool>().forEach { school ->
             if (!school.credentialsValid) return@forEach
 
@@ -113,34 +141,6 @@ class FullSyncUseCase(
             .forEach { file ->
                 if (file.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
                 fileRepository.getById(file.id, true).getFirstValue()
-            }
-
-        groupRepository.getAllIds().first()
-            .mapNotNull { App.groupSource.getById(it).getFirstValue() }
-            .forEach { group ->
-                if (group.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                groupRepository.getById(group.id, true).getFirstValue()
-            }
-
-        roomRepository.getAllIds().first()
-            .mapNotNull { App.roomSource.getById(it).getFirstValue() }
-            .forEach { room ->
-                if (room.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                roomRepository.getById(room.id, true).getFirstValue()
-            }
-
-        teacherRepository.getAllIds().first()
-            .mapNotNull { App.teacherSource.getById(it).getFirstValue() }
-            .forEach { teacher ->
-                if (teacher.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                teacherRepository.getById(teacher.id, true).getFirstValue()
-            }
-
-        schoolRepository.getAllIds().first()
-            .mapNotNull { App.schoolSource.getById(it).getFirstValue() }
-            .forEach { school ->
-                if (school.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                schoolRepository.getById(school.id, true).getFirstValue()
             }
 
         vppIdRepository.getAllIds().first()
