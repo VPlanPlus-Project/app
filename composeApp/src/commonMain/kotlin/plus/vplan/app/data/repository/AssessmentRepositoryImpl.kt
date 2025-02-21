@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -91,6 +92,7 @@ class AssessmentRepositoryImpl(
                     defaultLessonId = assessment.subject,
                     description = assessment.description,
                     type = (Assessment.Type.entries.firstOrNull { it.name == assessment.type } ?: Assessment.Type.OTHER).ordinal,
+                    cachedAt = Clock.System.now()
                 ) },
                 files = assessments.flatMap { assessment ->
                     assessment.files.map {
@@ -247,7 +249,8 @@ class AssessmentRepositoryImpl(
                         isPublic = data.isPublic,
                         defaultLessonId = data.subject,
                         description = data.description,
-                        type = (Assessment.Type.entries.firstOrNull { it.name == data.type } ?: Assessment.Type.OTHER).ordinal
+                        type = (Assessment.Type.entries.firstOrNull { it.name == data.type } ?: Assessment.Type.OTHER).ordinal,
+                        cachedAt = Clock.System.now()
                     )),
                     files = data.files.map { FKAssessmentFile(id, it) }
                 )
@@ -296,7 +299,8 @@ class AssessmentRepositoryImpl(
                 isPublic = it.isPublic,
                 defaultLessonId = it.defaultLessonId,
                 description = it.description,
-                type = it.type.ordinal
+                type = it.type.ordinal,
+                cachedAt = it.cachedAt
             ) },
             files = assessments.flatMap { assessment ->
                 assessment.files.map { fileId -> FKAssessmentFile(

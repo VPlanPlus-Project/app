@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "homework_task",
@@ -26,4 +27,5 @@ data class DbHomeworkTask(
     @ColumnInfo(name = "id") val id: Int,
     @ColumnInfo(name = "homework_id") val homeworkId: Int,
     @ColumnInfo(name = "content") val content: String,
+    @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )

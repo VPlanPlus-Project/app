@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.api
@@ -44,7 +45,8 @@ class TeacherRepositoryImpl(
                     DbTeacher(
                         id = teacher.id,
                         schoolId = school.id,
-                        name = teacher.name
+                        name = teacher.name,
+                        cachedAt = Clock.System.now()
                     )
                 )
             }
@@ -71,7 +73,8 @@ class TeacherRepositoryImpl(
                 DbTeacher(
                     id = data.id,
                     schoolId = school.id,
-                    name = data.name
+                    name = data.name,
+                    cachedAt = Clock.System.now()
                 )
             )
             return Response.Success(getById(id).filterIsInstance())

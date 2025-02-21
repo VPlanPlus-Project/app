@@ -6,11 +6,9 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
-import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -44,7 +42,7 @@ class UpdateAssessmentUseCase(
                 .also { ids ->
                     if (ids.isEmpty() || !allowNotifications) return@forEach
                     combine(ids.map { App.assessmentSource.getById(it).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }.first()
-                        .filter { it.creator is AppEntity.VppId && it.creator.id != profile.vppId /*&& (it.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days */}
+                        .filter { it.creator is AppEntity.VppId && it.creator.id != profile.vppId && (it.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
                         .let { newAssessments ->
                             if (newAssessments.isEmpty()) return@forEach
                             if (newAssessments.size == 1) {

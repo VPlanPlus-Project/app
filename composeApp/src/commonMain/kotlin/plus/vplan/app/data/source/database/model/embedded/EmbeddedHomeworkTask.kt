@@ -27,6 +27,7 @@ data class EmbeddedHomeworkTask(
             doneByProfiles = doneProfiles.filter { it.isDone }.map { it.profileId },
             doneByVppIds = doneAccounts.filter { it.isDone }.map { it.vppId },
             homework = homeworkTask.homeworkId,
+            cachedAt = homeworkTask.cachedAt
         )
     }
 }
