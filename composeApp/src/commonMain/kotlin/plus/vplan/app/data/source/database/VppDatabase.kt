@@ -47,6 +47,13 @@ import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbSchool
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterCollection
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterFinalGrade
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterGrade
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterval
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubject
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
 import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.DbTeacher
@@ -123,7 +130,15 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGr
         FKSchoolGroup::class,
 
         DbAssessment::class,
-        FKAssessmentFile::class
+        FKAssessmentFile::class,
+
+        DbSchulverwalterCollection::class,
+        DbSchulverwalterFinalGrade::class,
+        DbSchulverwalterGrade::class,
+        DbSchulverwalterInterval::class,
+        DbSchulverwalterSubject::class,
+        DbSchulverwalterTeacher::class,
+        DbSchulverwalterYear::class,
     ],
     version = 1,
 )
