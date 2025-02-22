@@ -12,6 +12,9 @@ interface FileDao {
     @Query("SELECT * FROM file WHERE id = :id")
     fun getById(id: Int): Flow<DbFile?>
 
+    @Query("SELECT * FROM file")
+    fun getAll(): Flow<List<DbFile>>
+
     @Upsert
     suspend fun upsert(file: DbFile)
 
@@ -23,6 +26,9 @@ interface FileDao {
 
     @Query("DELETE FROM file WHERE id = :id")
     suspend fun deleteById(id: Int)
+
+    @Query("DELETE FROM file WHERE id IN (:ids)")
+    suspend fun deleteById(ids: List<Int>)
 
     @Query("SELECT MIN(id) FROM file WHERE id > 0")
     suspend fun getLocalMinId(): Int?

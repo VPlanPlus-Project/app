@@ -9,9 +9,11 @@ import androidx.compose.ui.Modifier
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
-import org.koin.compose.koinInject
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
@@ -31,6 +33,7 @@ import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
+import kotlin.uuid.Uuid
 
 data class Host(
     val protocol: URLProtocol = URLProtocol.HTTPS,
@@ -101,24 +104,6 @@ object App {
 fun App(task: StartTask?) {
     AppTheme(dynamicColor = false) {
         KoinContext {
-            App.vppIdSource = VppIdSource(koinInject())
-            App.homeworkSource = HomeworkSource(koinInject())
-            App.homeworkTaskSource = HomeworkTaskSource(koinInject())
-            App.profileSource = ProfileSource(koinInject())
-            App.groupSource = GroupSource(koinInject())
-            App.schoolSource = SchoolSource(koinInject())
-            App.defaultLessonSource = DefaultLessonSource(koinInject())
-            App.daySource = DaySource(koinInject(), koinInject(), koinInject(), koinInject())
-            App.timetableSource = TimetableSource(koinInject())
-            App.weekSource = WeekSource(koinInject())
-            App.courseSource = CourseSource(koinInject())
-            App.teacherSource = TeacherSource(koinInject())
-            App.roomSource = RoomSource(koinInject())
-            App.lessonTimeSource = LessonTimeSource(koinInject())
-            App.substitutionPlanSource = SubstitutionPlanSource(koinInject())
-            App.assessmentSource = AssessmentSource(koinInject())
-            App.fileSource = FileSource(koinInject(), koinInject())
-
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
@@ -134,6 +119,54 @@ fun App(task: StartTask?) {
     }
 }
 
-sealed class StartTask {
+sealed class StartTask(val profileId: Uuid? = null) {
     data class VppIdLogin(val token: String) : StartTask()
+    sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
+        class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
+        class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Int? = null): NavigateTo(profileId)
+    }
+
+    sealed class Open(profileId: Uuid?): StartTask(profileId) {
+        class Homework(profileId: Uuid?, val homeworkId: Int): Open(profileId)
+        class Assessment(profileId: Uuid?, val assessmentId: Int): Open(profileId)
+    }
+}
+
+@Serializable
+data class StartTaskJson(
+    @SerialName("type") val type: String,
+    @SerialName("profile_id") val profileId: String? = null,
+    @SerialName("value") val value: String
+) {
+    @Serializable
+    data class StartTaskOpen(
+        @SerialName("type") val type: String,
+        @SerialName("payload") val value: String
+    ) {
+        @Serializable
+        data class Homework(
+            @SerialName("homework_id") val homeworkId: Int
+        )
+
+        @Serializable
+        data class Assessment(
+            @SerialName("assessment_id") val assessmentId: Int
+        )
+    }
+
+    @Serializable
+    data class StartTaskNavigateTo(
+        @SerialName("screen") val screen: String,
+        @SerialName("payload") val value: String
+    ) {
+        @Serializable
+        data class StartTaskCalendar(
+            @SerialName("date") val date: String
+        )
+
+        @Serializable
+        data class SchoolSettings(
+            @SerialName("open_indiware_settings_school_id") val openIndiwareSettingsSchoolId: Int? = null,
+        )
+    }
 }

@@ -22,7 +22,7 @@ class IndiwareCredentialViewModel(
 
     fun init(schoolId: Int) {
         viewModelScope.launch {
-            val school = schoolRepository.getById(schoolId).getFirstValue() as? School.IndiwareSchool ?: return@launch
+            val school = schoolRepository.getById(schoolId, false).getFirstValue() as? School.IndiwareSchool ?: return@launch
             state = IndiwareCredentialState(
                 school = school,
                 schoolName = school.name,
@@ -45,6 +45,7 @@ class IndiwareCredentialViewModel(
                     val result = checkSp24CredentialsUseCase(state!!.sp24Id.toInt(), state!!.username, state!!.password)
                     if (result == SchoolSettingsCredentialsState.Valid) {
                         schoolRepository.updateSp24Access(state!!.school, state!!.username, state!!.password)
+                        schoolRepository.setIndiwareAccessValidState(state!!.school, true)
                     }
                     state = state?.copy(state = result)
                 }

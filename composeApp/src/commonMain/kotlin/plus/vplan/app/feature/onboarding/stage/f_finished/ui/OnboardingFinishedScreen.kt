@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.onboarding.stage.e_finished.ui
+package plus.vplan.app.feature.onboarding.stage.f_finished.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

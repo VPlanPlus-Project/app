@@ -25,6 +25,7 @@ sealed class Homework : Item {
     abstract val group: Int?
     abstract val files: List<Int>
     override fun getEntityId(): String = this.id.toString()
+    abstract val cachedAt: Instant
 
     var defaultLessonItem: DefaultLesson? = null
         private set
@@ -74,6 +75,7 @@ sealed class Homework : Item {
         val doneByProfiles: List<Uuid>,
         val doneByVppIds: List<Int>,
         val homework: Int,
+        val cachedAt: Instant
     ) : Item {
         override fun getEntityId(): String = this.id.toString()
 
@@ -104,6 +106,7 @@ sealed class Homework : Item {
         override val defaultLesson: Int?,
         override val group: Int?,
         override val files: List<Int>,
+        override val cachedAt: Instant,
         val isPublic: Boolean,
         val createdBy: Int,
     ) : Homework() {
@@ -134,6 +137,7 @@ sealed class Homework : Item {
         override val tasks: List<Int>,
         override val defaultLesson: Int?,
         override val files: List<Int>,
+        override val cachedAt: Instant,
         val createdByProfile: Uuid
     ) : Homework() {
         override val group: Int

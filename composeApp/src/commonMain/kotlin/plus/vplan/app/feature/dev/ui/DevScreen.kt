@@ -49,9 +49,19 @@ fun DevScreen(
                 Text("Refresh")
             }
             Button(
+                onClick = { viewModel.onEvent(DevEvent.Sync) }
+            ) {
+                Text("Sync")
+            }
+            Button(
                 onClick = { isDrawerOpen = true; onToggleBottomBar(false) }
             ) {
                 Text("New Assessment")
+            }
+            Button(
+                onClick = { viewModel.onEvent(DevEvent.Notify) }
+            ) {
+                Text("NTF")
             }
             Button(
                 onClick = { viewModel.onEvent(DevEvent.Clear) }

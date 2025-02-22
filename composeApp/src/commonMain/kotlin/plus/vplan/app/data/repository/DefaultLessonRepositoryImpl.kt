@@ -7,6 +7,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -26,6 +27,7 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.utils.sendAll
 
@@ -91,9 +93,9 @@ class DefaultLessonRepositoryImpl(
                 .getByIndiwareId(indiwareId)
                 .takeWhile { it != null }
                 .filterNotNull()
-                .onEach { hadData = true }
                 .map { CacheState.Done(it.toModel()) }
-                .let { sendAll(it) }
+                .onEach { hadData = true; send(it) }
+                .collect()
 
             if (hadData) return@channelFlow
             send(CacheState.Loading(indiwareId))
@@ -116,7 +118,7 @@ class DefaultLessonRepositoryImpl(
                     listOf(
                         DbDefaultLesson(
                             id = data.subjectInstanceId,
-                            indiwareId = indiwareId,
+                            indiwareId = if (school is School.IndiwareSchool && data.sp24Id != null) "sp24.${school.sp24Id}.${data.sp24Id}" else null,
                             subject = data.subject.subject.name,
                             teacherId = data.teacher?.id,
                             courseId = data.course?.id
@@ -129,6 +131,39 @@ class DefaultLessonRepositoryImpl(
                 sendAll(getByIndiwareId(indiwareId))
             }
         }
+    }
+
+    override suspend fun download(schoolId: Int, schoolApiAccess: SchoolApiAccess): Response<List<DefaultLesson>> {
+        val school = vppDatabase.schoolDao.findById(schoolId).first()?.toModel()
+        safeRequest(onError = { return it }) {
+            val schoolResponse = httpClient.get {
+                url {
+                    protocol = api.protocol
+                    host = api.host
+                    port = api.port
+                    pathSegments = listOf("api", "v2.2", "subject", "instance")
+                    parameter("include_subject", "true")
+                }
+                schoolApiAccess.authentication(this)
+            }
+            if (!schoolResponse.status.isSuccess()) return schoolResponse.toErrorResponse<List<DefaultLesson>>()
+            val data = ResponseDataWrapper.fromJson<List<SubjectInstanceResponseWithSubject>>(schoolResponse.bodyAsText()) ?: return Response.Error.ParsingError(schoolResponse.bodyAsText())
+            vppDatabase.defaultLessonDao.upsert(
+                data.map { item ->
+                    DbDefaultLesson(
+                        id = item.subjectInstanceId,
+                        indiwareId = if (school is School.IndiwareSchool && item.sp24Id != null) "sp24.${school.sp24Id}.${item.sp24Id}" else null,
+                        subject = item.subject.subject.name,
+                        teacherId = item.teacher?.id,
+                        courseId = item.course?.id
+                    )
+                },
+                defaultLessonGroupCrossovers = data.flatMap { item ->
+                    item.groups.map { DbDefaultLessonGroupCrossover(item.subjectInstanceId, it.id) }
+                }
+            )
+        }
+        return Response.Success(vppDatabase.defaultLessonDao.getBySchool(schoolId).first().map { it.toModel() })
     }
 
     override suspend fun upsert(defaultLesson: DefaultLesson): DefaultLesson {

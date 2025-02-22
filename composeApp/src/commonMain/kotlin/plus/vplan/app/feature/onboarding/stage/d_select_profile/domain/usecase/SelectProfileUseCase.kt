@@ -1,6 +1,5 @@
 package plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase
 
-import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.repository.GroupRepository
@@ -27,18 +26,18 @@ class SelectProfileUseCase(
         onboardingRepository.setSelectedProfile(onboardingProfile)
         val profile = when (onboardingProfile) {
             is OnboardingProfile.StudentProfile -> {
-                val group = groupRepository.getById(onboardingProfile.id).getFirstValue()!!
+                val group = groupRepository.getById(onboardingProfile.id, false).getFirstValue()!!
                 profileRepository.upsert(
                     group = group,
                     disabledDefaultLessons = defaultLessons.filterValues { !it }.keys.toList()
                 )
             }
             is OnboardingProfile.TeacherProfile -> {
-                val teacher = teacherRepository.getById(onboardingProfile.id).getFirstValue()!!
+                val teacher = teacherRepository.getById(onboardingProfile.id, false).getFirstValue()!!
                 profileRepository.upsert(teacher)
             }
             is OnboardingProfile.RoomProfile -> {
-                val room = roomRepository.getById(onboardingProfile.id).first()!!
+                val room = roomRepository.getById(onboardingProfile.id, false).getFirstValue()!!
                 profileRepository.upsert(room)
             }
         }

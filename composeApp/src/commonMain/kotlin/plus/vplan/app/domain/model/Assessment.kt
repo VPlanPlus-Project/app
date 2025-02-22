@@ -2,6 +2,7 @@ package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
@@ -18,7 +19,8 @@ data class Assessment(
     val defaultLessonId: Int,
     val description: String,
     val type: Type,
-    val files: List<Int>
+    val files: List<Int>,
+    val cachedAt: Instant
 ): Item {
     override fun getEntityId(): String = this.id.toString()
 

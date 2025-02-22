@@ -18,6 +18,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,13 +39,17 @@ import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.StartTask
 import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
+import plus.vplan.app.feature.calendar.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
 import plus.vplan.app.feature.dev.ui.DevScreen
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
+import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.feature.profile.page.ui.ProfileScreen
 import plus.vplan.app.feature.profile.page.ui.ProfileScreenEvent
 import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
@@ -66,7 +71,8 @@ import vplanplus.composeapp.generated.resources.user
 
 @Composable
 fun MainScreenHost(
-    onNavigateToOnboarding: (school: School?) -> Unit
+    onNavigateToOnboarding: (school: School?) -> Unit,
+    navigationTask: StartTask?
 ) {
     val navController = rememberNavController()
     var currentDestination by rememberSaveable<MutableState<String?>> { mutableStateOf("Home") }
@@ -91,6 +97,7 @@ fun MainScreenHost(
     var isBottomBarVisible by rememberSaveable { mutableStateOf(true) }
     val toggleBottomBar = remember<(Boolean) -> Unit> { { isBottomBarVisible = it } }
     var bottomBarHeight by remember { mutableStateOf(0.dp) }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -104,7 +111,7 @@ fun MainScreenHost(
             navController = navController,
             startDestination = MainScreen.MainHome
         ) {
-            composable<MainScreen.MainHome> { HomeScreen(contentPadding, homeViewModel) }
+            composable<MainScreen.MainHome> { HomeScreen(contentPadding, navController, homeViewModel) }
             composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
             composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel, toggleBottomBar) }
             composable<MainScreen.MainDev> { DevScreen(contentPadding, toggleBottomBar) }
@@ -118,7 +125,13 @@ fun MainScreenHost(
             composable<MainScreen.RoomSearch> { RoomSearch(navController) }
 
             composable<MainScreen.Settings> { SettingsScreen(navController) }
-            composable<MainScreen.SchoolSettings> { SchoolSettingsScreen(navController) }
+            composable<MainScreen.SchoolSettings> {
+                val args = it.toRoute<MainScreen.SchoolSettings>()
+                SchoolSettingsScreen(
+                    navHostController = navController,
+                    openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchoolId
+                )
+            }
         }
 
         AnimatedVisibility(
@@ -185,6 +198,36 @@ fun MainScreenHost(
             }
         )
     }
+
+    var homeworkSheetHomeworkId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var assessmentSheetAssessmentId by rememberSaveable { mutableStateOf<Int?>(null) }
+
+    LaunchedEffect(navigationTask) {
+        if (navigationTask == null) return@LaunchedEffect
+        when (navigationTask) {
+            is StartTask.NavigateTo.Calendar -> {
+                calendarViewModel.onEvent(CalendarEvent.SelectDate(navigationTask.date))
+                navController.navigate(MainScreen.MainCalendar)
+            }
+            is StartTask.NavigateTo.SchoolSettings -> {
+                navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId))
+            }
+            is StartTask.Open.Homework -> homeworkSheetHomeworkId = navigationTask.homeworkId
+            is StartTask.Open.Assessment -> assessmentSheetAssessmentId = navigationTask.assessmentId
+
+            else -> Unit
+        }
+    }
+
+    if (homeworkSheetHomeworkId != null) HomeworkDetailDrawer(
+        homeworkId = homeworkSheetHomeworkId!!,
+        onDismiss = { homeworkSheetHomeworkId = null }
+    )
+
+    if (assessmentSheetAssessmentId != null) AssessmentDetailDrawer(
+        assessmentId = assessmentSheetAssessmentId!!,
+        onDismiss = { assessmentSheetAssessmentId = null }
+    )
 }
 
 /**
@@ -202,5 +245,5 @@ sealed class MainScreen(val name: String) {
     @Serializable data object RoomSearch : MainScreen("RoomSearch")
 
     @Serializable data object Settings : MainScreen("Settings")
-    @Serializable data object SchoolSettings : MainScreen("SchoolSettings")
+    @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: Int? = null) : MainScreen("SchoolSettings")
 }

@@ -30,6 +30,7 @@ import kotlinx.serialization.Serializable
 import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbFile
+import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
@@ -53,7 +54,8 @@ class FileRepositoryImpl(
                 createdByVppId = null,
                 fileName = file.name,
                 size = file.size,
-                isOfflineReady = file.isOfflineReady
+                isOfflineReady = file.isOfflineReady,
+                cachedAt = file.cachedAt
             )
         )
     }
@@ -68,6 +70,10 @@ class FileRepositoryImpl(
             }
             send(CacheState.Loading(id.toString()))
             val response = httpClient.get("${api.url}/api/v2.2/file/$id")
+            if (response.status == HttpStatusCode.NotFound && response.isResponseFromBackend()) {
+                vppDatabase.fileDao.deleteById(listOf(id))
+                return@channelFlow send(CacheState.NotExisting(id.toString()))
+            }
             if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<File>()))
             val data = ResponseDataWrapper.fromJson<FileItemSimpleGetRequest>(response.bodyAsText())
                 ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
@@ -88,7 +94,8 @@ class FileRepositoryImpl(
                         createdByVppId = data.createdBy,
                         fileName = fileData.fileName,
                         size = fileData.size,
-                        isOfflineReady = existing?.isOfflineReady ?: false
+                        isOfflineReady = existing?.isOfflineReady ?: false,
+                        cachedAt = Clock.System.now()
                     )
                 )
                 return@channelFlow sendAll(getById(id, false))
@@ -110,13 +117,18 @@ class FileRepositoryImpl(
                         createdByVppId = data.createdBy,
                         fileName = fileData.fileName,
                         size = fileData.size,
-                        isOfflineReady = existing?.isOfflineReady ?: false
+                        isOfflineReady = existing?.isOfflineReady ?: false,
+                        cachedAt = Clock.System.now()
                     )
                 )
                 return@channelFlow sendAll(getById(id, false))
             }
             return@channelFlow send(CacheState.NotExisting(id.toString()))
         }
+    }
+
+    override fun getAllIds(): Flow<List<Int>> {
+        return vppDatabase.fileDao.getAll().map { it.map { file -> file.id } }
     }
 
     override fun cacheFile(file: File, schoolApiAccess: SchoolApiAccess): Flow<FileDownloadProgress> = channelFlow {

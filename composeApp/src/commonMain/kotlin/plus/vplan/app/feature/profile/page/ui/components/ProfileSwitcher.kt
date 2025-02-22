@@ -129,7 +129,10 @@ fun ProfileSwitcher(
                     .padding(bottom = 8.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { onConnectVppId() }
+                    .clickable {
+                        onDismiss()
+                        onConnectVppId()
+                    }
                     .background(Brush.horizontalGradient(
                         0f to MaterialTheme.colorScheme.tertiary,
                         .7f to blendColor(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.surface, 0.4f)

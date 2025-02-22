@@ -52,6 +52,9 @@ interface VppIdDao {
     @Query("SELECT * FROM vpp_id WHERE id = :id")
     fun getById(id: Int): Flow<EmbeddedVppId?>
 
+    @Query("DELETE FROM vpp_id WHERE id IN (:ids)")
+    suspend fun deleteById(ids: List<Int>)
+
     @Transaction
     @Query("SELECT * FROM vpp_id")
     fun getAll(): Flow<List<EmbeddedVppId>>

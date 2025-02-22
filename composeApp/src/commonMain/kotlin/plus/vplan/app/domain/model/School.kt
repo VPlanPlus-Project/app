@@ -3,6 +3,7 @@ package plus.vplan.app.domain.model
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.basicAuth
 import io.ktor.client.request.bearerAuth
+import kotlinx.datetime.Instant
 import plus.vplan.app.domain.cache.Item
 
 sealed interface School: Item {
@@ -12,6 +13,7 @@ sealed interface School: Item {
     val groups: List<Int>
 
     val name: String
+    val cachedAt: Instant
 
     fun getSchoolApiAccess(): SchoolApiAccess?
 
@@ -19,12 +21,14 @@ sealed interface School: Item {
         override val id: Int,
         override val name: String,
         override val groups: List<Int>,
+        override val cachedAt: Instant,
         val sp24Id: String,
         val username: String,
         val password: String,
         val daysPerWeek: Int = 5,
         val studentsHaveFullAccess: Boolean = false,
-        val schoolDownloadMode: SchoolDownloadMode = SchoolDownloadMode.INDIWARE_WOCHENPLAN_6
+        val schoolDownloadMode: SchoolDownloadMode = SchoolDownloadMode.INDIWARE_WOCHENPLAN_6,
+        val credentialsValid: Boolean
     ) : School {
         enum class SchoolDownloadMode {
             INDIWARE_WOCHENPLAN_6, INDIWARE_MOBIL
@@ -43,7 +47,8 @@ sealed interface School: Item {
     data class DefaultSchool(
         override val id: Int,
         override val name: String,
-        override val groups: List<Int>
+        override val groups: List<Int>,
+        override val cachedAt: Instant
     ) : School {
         override fun getSchoolApiAccess(): SchoolApiAccess? = null
     }

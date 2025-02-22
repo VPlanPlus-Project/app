@@ -3,20 +3,31 @@ package plus.vplan.app.data.repository
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbRoom
+import plus.vplan.app.data.source.network.isResponseFromBackend
+import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.saveRequest
+import plus.vplan.app.data.source.network.toErrorResponse
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.RoomRepository
+import plus.vplan.app.utils.sendAll
 
 class RoomRepositoryImpl(
     private val httpClient: HttpClient,
@@ -43,7 +54,8 @@ class RoomRepositoryImpl(
                     DbRoom(
                         id = room.id,
                         schoolId = school.id,
-                        name = room.name
+                        name = room.name,
+                        cachedAt = Clock.System.now()
                     )
                 )
             }
@@ -51,30 +63,57 @@ class RoomRepositoryImpl(
         }
     }
 
-    override fun getById(id: Int): Flow<Room?> {
-        return vppDatabase.roomDao.getById(id).map { it?.toModel() }
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Room>> {
+        val roomFlow = vppDatabase.roomDao.getById(id).map { it?.toModel() }
+        return channelFlow {
+            if (!forceReload) {
+                var hadData = false
+                sendAll(roomFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
+                if (hadData) return@channelFlow
+            }
+            send(CacheState.Loading(id.toString()))
+
+            safeRequest(onError = { send(CacheState.Error(id.toString(), it)) }) {
+                val accessResponse = httpClient.get("${api.url}/api/v2.2/room/$id")
+                if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
+                    vppDatabase.roomDao.deleteById(listOf(id))
+                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+                }
+
+                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Room>()))
+                val accessData = ResponseDataWrapper.fromJson<RoomUnauthenticatedResponse>(accessResponse.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
+
+                val school = vppDatabase.schoolDao.findById(accessData.schoolId).first()?.toModel()
+                    .let {
+                        if (it is School.IndiwareSchool && !it.credentialsValid) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for room $id")))
+                        if (it?.getSchoolApiAccess() == null) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for room $id")))
+                        it.getSchoolApiAccess()!!
+                    }
+
+                val response = httpClient.get("${api.url}/api/v2.2/room/$id") {
+                    school.authentication(this)
+                }
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Room>()))
+                val data = ResponseDataWrapper.fromJson<RoomItemResponse>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+
+                vppDatabase.roomDao.upsert(
+                    DbRoom(
+                        id = data.id,
+                        schoolId = data.school.id,
+                        name = data.name,
+                        cachedAt = Clock.System.now()
+                    )
+                )
+
+                return@channelFlow sendAll(getById(id, false))
+            }
+        }
     }
 
-    override suspend fun getByIdWithCaching(id: Int, school: School): Response<Flow<Room?>> {
-        val cached = vppDatabase.roomDao.getById(id).map { it?.toModel() }
-        if (cached.first() != null) return Response.Success(cached)
-
-        return saveRequest {
-            val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/room/$id") {
-                school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
-            }
-            if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
-            val data = ResponseDataWrapper.fromJson<SchoolItemRoomsResponse>(response.bodyAsText())
-                ?: return Response.Error.ParsingError(response.bodyAsText())
-            vppDatabase.roomDao.upsert(
-                DbRoom(
-                    id = data.id,
-                    schoolId = school.id,
-                    name = data.name
-                )
-            )
-            return Response.Success(getById(id))
-        }
+    override fun getAllIds(): Flow<List<Int>> {
+        return vppDatabase.roomDao.getAll()
     }
 }
 
@@ -83,3 +122,20 @@ private data class SchoolItemRoomsResponse(
     @SerialName("id") val id: Int,
     @SerialName("name") val name: String
 )
+
+@Serializable
+private data class RoomUnauthenticatedResponse(
+    @SerialName("school_id") val schoolId: Int
+)
+
+@Serializable
+private data class RoomItemResponse(
+    @SerialName("id") val id: Int,
+    @SerialName("name") val name: String,
+    @SerialName("school") val school: School
+) {
+    @Serializable
+    data class School(
+        @SerialName("id") val id: Int
+    )
+}

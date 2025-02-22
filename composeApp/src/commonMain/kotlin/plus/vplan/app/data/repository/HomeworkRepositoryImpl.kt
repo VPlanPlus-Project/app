@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
@@ -36,6 +37,7 @@ import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
+import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
@@ -83,13 +85,15 @@ class HomeworkRepositoryImpl(
                         is Homework.LocalHomework -> false
                     },
                     dueTo = homeworkItem.dueTo,
+                    cachedAt = Clock.System.now()
                 )
             },
             homeworkTask = tasks.map { homeworkTask ->
                 DbHomeworkTask(
                     id = homeworkTask.id,
                     homeworkId = homeworkTask.homework,
-                    content = homeworkTask.content
+                    content = homeworkTask.content,
+                    cachedAt = Clock.System.now()
                 )
             },
             homeworkTaskDoneAccount = emptyList(),
@@ -100,7 +104,8 @@ class HomeworkRepositoryImpl(
                     createdAt = homework.first { file.homework == it.id }.createdAt,
                     createdByVppId = (homework.first { file.homework == it.id } as? Homework.CloudHomework)?.createdBy,
                     fileName = file.name,
-                    isOfflineReady = true
+                    isOfflineReady = true,
+                    cachedAt = Clock.System.now()
                 )
             },
             fileHomeworkConnections = files.map {
@@ -129,6 +134,10 @@ class HomeworkRepositoryImpl(
         return vppDatabase.homeworkDao.getAll().map { it.map { embeddedHomework -> CacheState.Done(embeddedHomework.toModel()) } }
     }
 
+    override fun getAllIds(): Flow<List<Int>> {
+        return vppDatabase.homeworkDao.getAll().map { it.map { homework -> homework.homework.id } }
+    }
+
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Homework>> {
         if (id < 0) return vppDatabase.homeworkDao.getById(id).map {
             if (it == null) CacheState.NotExisting(id.toString())
@@ -145,7 +154,10 @@ class HomeworkRepositoryImpl(
                 onError = { return@channelFlow send(CacheState.Error(id.toString(), it)) }
             ) {
                 val metadataResponse = httpClient.get("${api.url}/api/v2.2/homework/$id")
-                if (metadataResponse.status == HttpStatusCode.NotFound) return@channelFlow send(CacheState.NotExisting(id.toString()))
+                if (metadataResponse.status == HttpStatusCode.NotFound && metadataResponse.isResponseFromBackend()) {
+                    vppDatabase.homeworkDao.deleteById(listOf(id))
+                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+                }
                 if (metadataResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
 
                 val metadataResponseData = ResponseDataWrapper.fromJson<HomeworkMetadataResponse>(metadataResponse.bodyAsText())
@@ -173,13 +185,15 @@ class HomeworkRepositoryImpl(
                             dueTo = LocalDate.parse(data.dueTo),
                             createdBy = data.createdBy.id,
                             createdByProfileId = null,
-                            isPublic = data.isPublic
+                            isPublic = data.isPublic,
+                            cachedAt = Clock.System.now()
                         )),
                     homeworkTask = data.tasks.map { it.value }.map { task ->
                         DbHomeworkTask(
                             id = task.id,
                             content = task.content,
-                            homeworkId = id
+                            homeworkId = id,
+                            cachedAt = Clock.System.now()
                         )
                     },
                     homeworkTaskDoneAccount = if (vppId == null) emptyList() else data.tasks.map { it.value }.mapNotNull {
@@ -194,7 +208,7 @@ class HomeworkRepositoryImpl(
                 )
             }
 
-            return@channelFlow sendAll(getById(id))
+            return@channelFlow sendAll(getById(id, false))
         }
     }
 
@@ -306,7 +320,7 @@ class HomeworkRepositoryImpl(
     override suspend fun addTask(homework: Homework, task: String, profile: Profile.StudentProfile): Response.Error? {
         if (homework.id < 0 || profile.getVppIdItem() == null) {
             val id = getIdForNewLocalHomeworkTask() - 1
-            vppDatabase.homeworkDao.upsertTaskMany(listOf(DbHomeworkTask(content = task, homeworkId = homework.id, id = id)))
+            vppDatabase.homeworkDao.upsertTaskMany(listOf(DbHomeworkTask(content = task, homeworkId = homework.id, id = id, cachedAt = Clock.System.now())))
             return null
         }
         safeRequest(onError = { return it }) {
@@ -322,7 +336,7 @@ class HomeworkRepositoryImpl(
             }
             if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
             val id = ResponseDataWrapper.fromJson<Int>(response.bodyAsText()) ?: return Response.Error.ParsingError(response.bodyAsText())
-            vppDatabase.homeworkDao.upsertTaskMany(listOf(DbHomeworkTask(content = task, homeworkId = homework.id, id = id)))
+            vppDatabase.homeworkDao.upsertTaskMany(listOf(DbHomeworkTask(content = task, homeworkId = homework.id, id = id, cachedAt = Clock.System.now())))
             return null
         }
         return Response.Error.Cancelled
@@ -423,7 +437,8 @@ class HomeworkRepositoryImpl(
                         dueTo = LocalDate.parse(homework.dueTo),
                         createdBy = homework.createdBy.id,
                         createdByProfileId = null,
-                        isPublic = homework.isPublic
+                        isPublic = homework.isPublic,
+                        cachedAt = Clock.System.now()
                     )
                 },
                 homeworkTask = data.map { homework ->
@@ -431,7 +446,8 @@ class HomeworkRepositoryImpl(
                         DbHomeworkTask(
                             id = homeworkTask.id,
                             homeworkId = homework.id,
-                            content = homeworkTask.content
+                            content = homeworkTask.content,
+                            cachedAt = Clock.System.now()
                         )
                     }
                 }.flatten(),
