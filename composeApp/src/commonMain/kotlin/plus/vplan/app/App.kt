@@ -32,6 +32,7 @@ import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.domain.source.schulverwalter.CollectionSource
+import plus.vplan.app.domain.source.schulverwalter.FinalGradeSource
 import plus.vplan.app.domain.source.schulverwalter.GradeSource
 import plus.vplan.app.domain.source.schulverwalter.IntervalSource
 import plus.vplan.app.domain.source.schulverwalter.SubjectSource
@@ -109,6 +110,7 @@ object App {
     lateinit var subjectSource: SubjectSource
     lateinit var schulverwalterTeacherSource: plus.vplan.app.domain.source.schulverwalter.TeacherSource
     lateinit var gradeSource: GradeSource
+    lateinit var finalGradeSource: FinalGradeSource
 }
 
 @Composable

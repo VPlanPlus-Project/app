@@ -28,6 +28,7 @@ import plus.vplan.app.data.source.database.dao.TimetableDao
 import plus.vplan.app.data.source.database.dao.VppIdDao
 import plus.vplan.app.data.source.database.dao.WeekDao
 import plus.vplan.app.data.source.database.dao.schulverwalter.CollectionDao
+import plus.vplan.app.data.source.database.dao.schulverwalter.FinalGradeDao
 import plus.vplan.app.data.source.database.dao.schulverwalter.GradeDao
 import plus.vplan.app.data.source.database.dao.schulverwalter.IntervalDao
 import plus.vplan.app.data.source.database.dao.schulverwalter.SubjectDao
@@ -85,7 +86,9 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulver
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterCollection
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterTeacher
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterSubjectSchulverwalterFinalGrade
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
+import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as SchulverwalterTeacherDao
 
 @Database(
     entities = [
@@ -157,6 +160,7 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulver
         FKSchulverwalterGradeSchulverwalterCollection::class,
         FKSchulverwalterGradeSchulverwalterSubject::class,
         FKSchulverwalterGradeSchulverwalterTeacher::class,
+        FKSchulverwalterSubjectSchulverwalterFinalGrade::class,
     ],
     version = 1,
 )
@@ -195,6 +199,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val intervalDao: IntervalDao
     abstract val collectionDao: CollectionDao
     abstract val subjectDao: SubjectDao
-    abstract val schulverwalterTeacherDao: plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao
+    abstract val schulverwalterTeacherDao: SchulverwalterTeacherDao
     abstract val gradeDao: GradeDao
+    abstract val finalGradeDao: FinalGradeDao
 }
