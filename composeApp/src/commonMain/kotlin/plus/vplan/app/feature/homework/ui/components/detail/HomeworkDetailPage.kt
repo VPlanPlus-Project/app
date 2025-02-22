@@ -72,7 +72,7 @@ import vplanplus.composeapp.generated.resources.trash_2
 
 @Composable
 fun DetailPage(
-    state: DetailState,
+    state: HomeworkDetailState,
     onEvent: (event: HomeworkDetailEvent) -> Unit
 ) {
     val homework = state.homework ?: return

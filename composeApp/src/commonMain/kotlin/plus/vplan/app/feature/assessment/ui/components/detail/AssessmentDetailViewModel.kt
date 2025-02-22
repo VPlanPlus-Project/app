@@ -33,7 +33,7 @@ import plus.vplan.app.feature.homework.domain.usecase.RenameFileUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 
-class DetailViewModel(
+class AssessmentDetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateAssessmentUseCase: UpdateAssessmentUseCase,
     private val deleteAssessmentUseCase: DeleteAssessmentUseCase,
@@ -46,13 +46,13 @@ class DetailViewModel(
     private val renameFileUseCase: RenameFileUseCase,
     private val deleteFileUseCase: DeleteFileUseCase
 ) : ViewModel() {
-    var state by mutableStateOf(DetailState())
+    var state by mutableStateOf(AssessmentDetailState())
         private set
 
     private var mainJob: Job? = null
 
     fun init(assessmentId: Int) {
-        state = DetailState()
+        state = AssessmentDetailState()
         mainJob?.cancel()
         mainJob = viewModelScope.launch {
             combine(
@@ -120,7 +120,7 @@ class DetailViewModel(
     }
 }
 
-data class DetailState(
+data class AssessmentDetailState(
     val assessment: Assessment? = null,
     val profile: Profile.StudentProfile? = null,
     val canEdit: Boolean = false,

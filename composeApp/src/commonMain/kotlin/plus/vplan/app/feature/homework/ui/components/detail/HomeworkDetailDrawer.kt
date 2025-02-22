@@ -13,7 +13,7 @@ fun HomeworkDetailDrawer(
     homeworkId: Int,
     onDismiss: () -> Unit
 ) {
-    val viewModel = koinViewModel<DetailViewModel>()
+    val viewModel = koinViewModel<HomeworkDetailViewModel>()
     val state = viewModel.state
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 

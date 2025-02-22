@@ -14,7 +14,7 @@ fun AssessmentDetailDrawer(
     assessmentId: Int,
     onDismiss: () -> Unit
 ) {
-    val viewModel = koinViewModel<DetailViewModel>()
+    val viewModel = koinViewModel<AssessmentDetailViewModel>()
     val state = viewModel.state
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 

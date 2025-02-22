@@ -38,7 +38,7 @@ import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.uuid.ExperimentalUuidApi
 
-class DetailViewModel(
+class HomeworkDetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val toggleTaskDoneUseCase: ToggleTaskDoneUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
@@ -54,13 +54,13 @@ class DetailViewModel(
     private val deleteFileUseCase: DeleteFileUseCase,
     private val addFileUseCase: AddFileUseCase
 ) : ViewModel() {
-    var state by mutableStateOf(DetailState())
+    var state by mutableStateOf(HomeworkDetailState())
         private set
 
     private var mainJob: Job? = null
 
     fun init(homeworkId: Int) {
-        state = DetailState()
+        state = HomeworkDetailState()
         mainJob?.cancel()
         mainJob = viewModelScope.launch {
             combine(
@@ -144,7 +144,7 @@ class DetailViewModel(
     }
 }
 
-data class DetailState(
+data class HomeworkDetailState(
     val homework: Homework? = null,
     val profile: Profile.StudentProfile? = null,
     val canEdit: Boolean = false,

@@ -70,7 +70,7 @@ import vplanplus.composeapp.generated.resources.trash_2
 
 @Composable
 fun DetailPage(
-    state: DetailState,
+    state: AssessmentDetailState,
     onEvent: (event: AssessmentDetailEvent) -> Unit
 ) {
     val assessment = state.assessment ?: return
