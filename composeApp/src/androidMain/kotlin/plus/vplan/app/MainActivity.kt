@@ -1,9 +1,13 @@
 package plus.vplan.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.core.FileKit
 import kotlinx.datetime.LocalDate
@@ -11,6 +15,10 @@ import kotlinx.serialization.json.Json
 import kotlin.uuid.Uuid
 
 class MainActivity : ComponentActivity() {
+
+    private var task: StartTask? by mutableStateOf(null)
+    private var canStart by mutableStateOf(true)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -18,9 +26,17 @@ class MainActivity : ComponentActivity() {
         FileKit.init(this)
         enableEdgeToEdge()
 
-        var task: StartTask? = null
+        setContent {
+            if (canStart) App(task)
+        }
+    }
 
-        intent?.let {
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+
+        canStart = false
+
+        intent.let {
             val action = it.action
             val data = it.data
             Logger.d { "Action: $action, Data: $data" }
@@ -64,7 +80,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        setContent { App(task) }
+        canStart = true
     }
 }
 
