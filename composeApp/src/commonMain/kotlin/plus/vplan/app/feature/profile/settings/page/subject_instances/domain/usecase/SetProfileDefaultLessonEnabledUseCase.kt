@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.page.domain.usecase
+package plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase
 
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile

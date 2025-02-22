@@ -40,7 +40,7 @@ interface ProfileDao {
     fun getById(id: Uuid): Flow<EmbeddedProfile?>
 
     @Transaction
-    @Query("INSERT INTO profiles_group_disabled_default_lessons (profile_id, default_lesson_id) VALUES (:profileId, :defaultLessonId)")
+    @Query("INSERT OR REPLACE INTO profiles_group_disabled_default_lessons (profile_id, default_lesson_id) VALUES (:profileId, :defaultLessonId)")
     suspend fun insertDisabledDefaultLesson(profileId: Uuid, defaultLessonId: Int)
 
     @Query("DELETE FROM profiles_group_disabled_default_lessons WHERE default_lesson_id = :defaultLessonId AND profile_id = :profileId")

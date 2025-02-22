@@ -1,5 +1,6 @@
 package plus.vplan.app.domain.model
 
+import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Item
 
 data class Course(
@@ -7,7 +8,7 @@ data class Course(
     val indiwareId: String?,
     val groups: List<Int>,
     val name: String,
-    val teacher: Int?,
+    val teacherId: Int?,
 ): Item {
     override fun getEntityId(): String = id.toString()
 
@@ -18,4 +19,6 @@ data class Course(
             teacher: Teacher?
         ) = "sp24.$sp24SchoolId.$name+${teacher?.name ?: ""}"
     }
+
+    val teacher by lazy { teacherId?.let { App.teacherSource.getById(it) } }
 }

@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.settings.domain.usecase
+package plus.vplan.app.feature.profile.settings.page.main.domain.usecase
 
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.ProfileRepository

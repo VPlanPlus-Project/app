@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.settings.ui.vpp_id_management
+package plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +41,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.feature.profile.settings.ui.vpp_id_management.components.LogoutDialog
+import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.components.LogoutDialog
 import plus.vplan.app.ui.components.Badge
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize

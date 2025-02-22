@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.settings.ui
+package plus.vplan.app.feature.profile.settings.page.main.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,9 +12,9 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
-import plus.vplan.app.feature.profile.settings.domain.usecase.CheckIfVppIdIsStillConnectedUseCase
-import plus.vplan.app.feature.profile.settings.domain.usecase.RenameProfileUseCase
-import plus.vplan.app.feature.profile.settings.domain.usecase.VppIdConnectionState
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.CheckIfVppIdIsStillConnectedUseCase
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.RenameProfileUseCase
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.VppIdConnectionState
 import kotlin.uuid.Uuid
 
 private val logger = Logger.withTag("ProfileSettingsViewModel")

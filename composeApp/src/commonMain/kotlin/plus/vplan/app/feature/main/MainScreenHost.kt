@@ -55,7 +55,8 @@ import plus.vplan.app.feature.profile.page.ui.ProfileScreen
 import plus.vplan.app.feature.profile.page.ui.ProfileScreenEvent
 import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
 import plus.vplan.app.feature.profile.page.ui.components.ProfileSwitcher
-import plus.vplan.app.feature.profile.settings.ui.ProfileSettingsScreen
+import plus.vplan.app.feature.profile.settings.page.main.ui.ProfileSettingsScreen
+import plus.vplan.app.feature.profile.settings.page.subject_instances.ui.components.ProfileSubjectInstanceScreen
 import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
@@ -69,6 +70,7 @@ import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.house
 import vplanplus.composeapp.generated.resources.search
 import vplanplus.composeapp.generated.resources.user
+import kotlin.uuid.Uuid
 
 @Composable
 fun MainScreenHost(
@@ -121,6 +123,10 @@ fun MainScreenHost(
             composable<MainScreen.ProfileSettings> {
                 val args = it.toRoute<MainScreen.ProfileSettings>()
                 ProfileSettingsScreen(args.profileId, navController)
+            }
+            composable<MainScreen.ProfileSubjectInstances> {
+                val args = it.toRoute<MainScreen.ProfileSubjectInstances>()
+                ProfileSubjectInstanceScreen(Uuid.parse(args.profileId), navController)
             }
 
             composable<MainScreen.RoomSearch> { RoomSearch(navController) }
@@ -250,6 +256,8 @@ sealed class MainScreen(val name: String) {
     @Serializable data object MainProfile : MainScreen("_Profile")
 
     @Serializable data class ProfileSettings(val profileId: String) : MainScreen("ProfileSettings")
+    @Serializable data class ProfileSubjectInstances(val profileId: String) : MainScreen("ProfileSubjectInstances")
+
     @Serializable data object RoomSearch : MainScreen("RoomSearch")
 
     @Serializable data object Settings : MainScreen("Settings")

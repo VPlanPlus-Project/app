@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.settings.ui.vpp_id_management.components
+package plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.feature.profile.settings.ui.vpp_id_management.VppIdManagementEvent
+import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.VppIdManagementEvent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.logout
 
