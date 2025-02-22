@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "9291adb24755568ab94f2303d79f5dc7",
+    "identityHash": "2391f345cc49e5cde79f92d75924a5e6",
     "entities": [
       {
         "tableName": "schools",
@@ -2974,7 +2974,7 @@
       },
       {
         "tableName": "schulverwalter_grade",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `value` TEXT, `is_optional` INTEGER NOT NULL, `is_selected_for_final_grade` INTEGER NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `value` TEXT, `is_optional` INTEGER NOT NULL, `is_selected_for_final_grade` INTEGER NOT NULL, `user_for_request` INTEGER NOT NULL, `vpp_id` INTEGER NOT NULL, `given_at` TEXT NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -3003,6 +3003,18 @@
             "fieldPath": "userForRequest",
             "columnName": "user_for_request",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vppId",
+            "columnName": "vpp_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "givenAt",
+            "columnName": "given_at",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -3566,7 +3578,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9291adb24755568ab94f2303d79f5dc7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2391f345cc49e5cde79f92d75924a5e6')"
     ]
   }
 }

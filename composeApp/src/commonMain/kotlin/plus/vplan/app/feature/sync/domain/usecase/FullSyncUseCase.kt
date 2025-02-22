@@ -27,6 +27,7 @@ import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateDefaultLessonsU
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
+import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import plus.vplan.app.utils.now
@@ -50,6 +51,7 @@ class FullSyncUseCase(
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val updateAssessmentUseCase: UpdateAssessmentUseCase,
     private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
+    private val syncGradesUseCase: SyncGradesUseCase,
     private val platformNotificationRepository: PlatformNotificationRepository
 ) {
     private val maxCacheAge = 6.hours
@@ -149,5 +151,7 @@ class FullSyncUseCase(
                 if (vppId.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
                 vppIdRepository.getById(vppId.id, true).getFirstValue()
             }
+
+        syncGradesUseCase(true)
     }
 }

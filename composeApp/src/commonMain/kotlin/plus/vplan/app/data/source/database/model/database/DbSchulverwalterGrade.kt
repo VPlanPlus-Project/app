@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 
 @Entity(
     tableName = "schulverwalter_grade",
@@ -18,5 +19,7 @@ data class DbSchulverwalterGrade(
     @ColumnInfo(name = "is_optional") val isOptional: Boolean,
     @ColumnInfo(name = "is_selected_for_final_grade") val isSelectedForFinalGrade: Boolean,
     @ColumnInfo(name = "user_for_request") val userForRequest: Int,
+    @ColumnInfo(name = "vpp_id") val vppId: Int,
+    @ColumnInfo(name = "given_at") val givenAt: LocalDate,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )
