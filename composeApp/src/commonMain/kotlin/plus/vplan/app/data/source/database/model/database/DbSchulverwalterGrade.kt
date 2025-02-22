@@ -52,5 +52,6 @@ data class DbSchulverwalterGrade(
     @ColumnInfo(name = "interval_id") val intervalId: Int,
     @ColumnInfo(name = "teacher_id") val teacherId: Int,
     @ColumnInfo(name = "collection_id") val collectionId: Int,
+    @ColumnInfo(name = "user_for_request") val userForRequest: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "2a35f43cfebabaee33ca9daa834acf27",
+    "identityHash": "1e22b267098c0db761344fa556f93f3e",
     "entities": [
       {
         "tableName": "schools",
@@ -2065,11 +2065,17 @@
       },
       {
         "tableName": "vpp_id_schulverwalter",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`vpp_id` INTEGER NOT NULL, `schulverwalter_access_token` TEXT NOT NULL, PRIMARY KEY(`vpp_id`), FOREIGN KEY(`vpp_id`) REFERENCES `vpp_id`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`vpp_id` INTEGER NOT NULL, `schulverwalter_user_id` INTEGER NOT NULL, `schulverwalter_access_token` TEXT NOT NULL, PRIMARY KEY(`vpp_id`), FOREIGN KEY(`vpp_id`) REFERENCES `vpp_id`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "vppId",
             "columnName": "vpp_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schulverwalterUserId",
+            "columnName": "schulverwalter_user_id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -2815,7 +2821,7 @@
       },
       {
         "tableName": "schulverwalter_collection",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `type` TEXT NOT NULL, `name` TEXT NOT NULL, `subject_id` INTEGER NOT NULL, `interval_id` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subject_id`) REFERENCES `schulverwalter_subject`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `type` TEXT NOT NULL, `name` TEXT NOT NULL, `subject_id` INTEGER NOT NULL, `interval_id` INTEGER NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subject_id`) REFERENCES `schulverwalter_subject`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -2848,6 +2854,12 @@
             "notNull": true
           },
           {
+            "fieldPath": "userForRequest",
+            "columnName": "user_for_request",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
             "fieldPath": "cachedAt",
             "columnName": "cached_at",
             "affinity": "INTEGER",
@@ -2869,6 +2881,24 @@
             ],
             "orders": [],
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_schulverwalter_collection_id` ON `${TABLE_NAME}` (`id`)"
+          },
+          {
+            "name": "index_schulverwalter_collection_subject_id",
+            "unique": false,
+            "columnNames": [
+              "subject_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_schulverwalter_collection_subject_id` ON `${TABLE_NAME}` (`subject_id`)"
+          },
+          {
+            "name": "index_schulverwalter_collection_interval_id",
+            "unique": false,
+            "columnNames": [
+              "interval_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_schulverwalter_collection_interval_id` ON `${TABLE_NAME}` (`interval_id`)"
           }
         ],
         "foreignKeys": [
@@ -2898,7 +2928,7 @@
       },
       {
         "tableName": "schulverwalter_final_grade",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `calculation_rule` TEXT, `subject_id` INTEGER NOT NULL, `interval_id` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subject_id`) REFERENCES `schulverwalter_subject`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `calculation_rule` TEXT, `subject_id` INTEGER NOT NULL, `interval_id` INTEGER NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subject_id`) REFERENCES `schulverwalter_subject`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -2920,6 +2950,12 @@
           {
             "fieldPath": "intervalId",
             "columnName": "interval_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userForRequest",
+            "columnName": "user_for_request",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -2992,7 +3028,7 @@
       },
       {
         "tableName": "schulverwalter_grade",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `value` TEXT, `is_optional` INTEGER NOT NULL, `is_selected_for_final_grade` INTEGER NOT NULL, `subject_id` INTEGER NOT NULL, `interval_id` INTEGER NOT NULL, `teacher_id` INTEGER NOT NULL, `collection_id` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subject_id`) REFERENCES `schulverwalter_subject`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`teacher_id`) REFERENCES `schulverwalter_teacher`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`collection_id`) REFERENCES `schulverwalter_collection`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `value` TEXT, `is_optional` INTEGER NOT NULL, `is_selected_for_final_grade` INTEGER NOT NULL, `subject_id` INTEGER NOT NULL, `interval_id` INTEGER NOT NULL, `teacher_id` INTEGER NOT NULL, `collection_id` INTEGER NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subject_id`) REFERENCES `schulverwalter_subject`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`teacher_id`) REFERENCES `schulverwalter_teacher`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`collection_id`) REFERENCES `schulverwalter_collection`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -3038,6 +3074,12 @@
           {
             "fieldPath": "collectionId",
             "columnName": "collection_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userForRequest",
+            "columnName": "user_for_request",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -3150,7 +3192,7 @@
       },
       {
         "tableName": "schulverwalter_interval",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `from` TEXT NOT NULL, `to` TEXT NOT NULL, `type` TEXT NOT NULL, `included_interval_id` INTEGER, `year_id` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`year_id`) REFERENCES `schulverwalter_year`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`included_interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `from` TEXT NOT NULL, `to` TEXT NOT NULL, `type` TEXT NOT NULL, `included_interval_id` INTEGER, `year_id` INTEGER NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`year_id`) REFERENCES `schulverwalter_year`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`included_interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -3190,6 +3232,12 @@
           {
             "fieldPath": "yearId",
             "columnName": "year_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userForRequest",
+            "columnName": "user_for_request",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -3262,7 +3310,7 @@
       },
       {
         "tableName": "schulverwalter_subject",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `local_id` TEXT NOT NULL, `name` TEXT NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `local_id` TEXT NOT NULL, `name` TEXT NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -3280,6 +3328,12 @@
             "fieldPath": "name",
             "columnName": "name",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userForRequest",
+            "columnName": "user_for_request",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -3309,7 +3363,7 @@
       },
       {
         "tableName": "schulverwalter_teacher",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `forename` TEXT NOT NULL, `surname` TEXT NOT NULL, `local_id` TEXT NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `forename` TEXT NOT NULL, `surname` TEXT NOT NULL, `local_id` TEXT NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -3333,6 +3387,12 @@
             "fieldPath": "localId",
             "columnName": "local_id",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userForRequest",
+            "columnName": "user_for_request",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -3362,7 +3422,7 @@
       },
       {
         "tableName": "schulverwalter_year",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `from` TEXT NOT NULL, `to` TEXT NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `from` TEXT NOT NULL, `to` TEXT NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -3386,6 +3446,12 @@
             "fieldPath": "to",
             "columnName": "to",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userForRequest",
+            "columnName": "user_for_request",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -3416,7 +3482,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2a35f43cfebabaee33ca9daa834acf27')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1e22b267098c0db761344fa556f93f3e')"
     ]
   }
 }

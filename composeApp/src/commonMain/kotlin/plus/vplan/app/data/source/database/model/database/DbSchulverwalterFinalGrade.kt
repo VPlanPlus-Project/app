@@ -34,5 +34,6 @@ data class DbSchulverwalterFinalGrade(
     @ColumnInfo(name = "calculation_rule") val calculationRule: String?,
     @ColumnInfo(name = "subject_id") val subjectId: Int,
     @ColumnInfo(name = "interval_id") val intervalId: Int,
+    @ColumnInfo(name = "user_for_request") val userForRequest: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )

@@ -24,11 +24,16 @@ sealed class VppId : Item {
         override val groups: List<Int>,
         override val cachedAt: Instant,
         val accessToken: String,
-        val schulverwalterAccessToken: String?
+        val schulverwalterConnection: SchulverwalterConnection?
     ) : VppId() {
         fun buildSchoolApiAccess(schoolId: Int = -1): SchoolApiAccess.VppIdAccess {
             return SchoolApiAccess.VppIdAccess(schoolId, accessToken, id)
         }
+
+        data class SchulverwalterConnection(
+            val accessToken: String,
+            val userId: Int
+        )
     }
 
     override fun hashCode(): Int {

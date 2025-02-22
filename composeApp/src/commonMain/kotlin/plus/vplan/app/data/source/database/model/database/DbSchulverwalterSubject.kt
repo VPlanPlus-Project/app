@@ -16,5 +16,6 @@ data class DbSchulverwalterSubject(
     @ColumnInfo(name = "id") val id: Int,
     @ColumnInfo(name = "local_id") val localId: String,
     @ColumnInfo(name = "name") val name: String,
+    @ColumnInfo(name = "user_for_request") val userForRequest: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )

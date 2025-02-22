@@ -39,7 +39,12 @@ data class EmbeddedVppId(
             groups = groups.map { it.groupId },
             accessToken = access.accessToken,
             cachedAt = vppId.cachedAt,
-            schulverwalterAccessToken = schulverwalterAccess?.schulverwalterAccessToken
+            schulverwalterConnection =
+            if (schulverwalterAccess == null) null
+            else VppId.Active.SchulverwalterConnection(
+                accessToken = schulverwalterAccess.schulverwalterAccessToken,
+                userId = schulverwalterAccess.schulverwalterUserId
+            )
         )
     }
 }

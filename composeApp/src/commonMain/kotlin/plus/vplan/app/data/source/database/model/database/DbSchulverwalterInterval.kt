@@ -38,5 +38,6 @@ data class DbSchulverwalterInterval(
     @ColumnInfo(name = "type") val type: String,
     @ColumnInfo(name = "included_interval_id") val includedIntervalId: Int?,
     @ColumnInfo(name = "year_id") val yearId: Int,
+    @ColumnInfo(name = "user_for_request") val userForRequest: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )

@@ -99,7 +99,8 @@ class VppIdRepositoryImpl(
                 vppIdSchulverwalter = data.schulverwalterAccessToken?.let {
                     DbVppIdSchulverwalter(
                         vppId = data.id,
-                        schulverwalterAccessToken = it
+                        schulverwalterAccessToken = it,
+                        schulverwalterUserId = data.schulverwalterUserId!!
                     )
                 },
                 groupCrossovers = listOf(
@@ -240,6 +241,7 @@ private data class UserMeResponse(
     @SerialName("username") val name: String,
     @SerialName("group_id") val groupId: Int,
     @SerialName("schulverwalter_access_token") val schulverwalterAccessToken: String?,
+    @SerialName("schulverwalter_user_id") val schulverwalterUserId: Int?,
 )
 
 @Serializable

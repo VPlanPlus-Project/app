@@ -35,5 +35,6 @@ data class DbSchulverwalterCollection(
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "subject_id") val subjectId: Int,
     @ColumnInfo(name = "interval_id") val intervalId: Int,
-    @ColumnInfo(name = "cached_at") val cachedAt: Instant
+    @ColumnInfo(name = "user_for_request") val userForRequest: Int,
+    @ColumnInfo(name = "cached_at") val cachedAt: Instant,
 )
