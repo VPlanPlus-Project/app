@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.homework.ui.components.detail
+package plus.vplan.app.feature.assessment.ui.components.detail
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,24 +39,21 @@ import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.flow.onEach
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
+import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
 import plus.vplan.app.ui.components.DateSelectDrawer
-import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
+import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.FileRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.NewTaskRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SavedLocalRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.ShareStatusRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.StatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.TaskRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.tableNameStyle
-import plus.vplan.app.feature.homework.ui.components.detail.components.tableValueStyle
-import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
@@ -72,18 +70,15 @@ import vplanplus.composeapp.generated.resources.trash_2
 
 @Composable
 fun DetailPage(
-    state: DetailState,
-    onEvent: (event: DetailEvent) -> Unit
+    state: AssessmentDetailState,
+    onEvent: (event: AssessmentDetailEvent) -> Unit
 ) {
-    val homework = state.homework ?: return
-    val profile = state.profile ?: return
+    val assessment = state.assessment ?: return
 
-    var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
+    var showTypeSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
 
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
-
-    var taskToEdit by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val filePickerLauncher = rememberFilePickerLauncher(
         mode = PickerMode.Multiple(),
@@ -92,7 +87,7 @@ fun DetailPage(
         // Handle picked files
         Logger.d { "Picked files: ${files?.map { it.path }}" }
         files?.forEach { file ->
-            onEvent(DetailEvent.AddFile(AttachedFile.Other(file)))
+            onEvent(AssessmentDetailEvent.AddFile(AttachedFile.Other(file)))
         }
     }
 
@@ -102,7 +97,7 @@ fun DetailPage(
     ) { images ->
         Logger.d { "Picked images: ${images?.map { it.path }}" }
         images?.forEach { image ->
-            onEvent(DetailEvent.AddFile(AttachedFile.Other(image)))
+            onEvent(AssessmentDetailEvent.AddFile(AttachedFile.Other(image)))
         }
     }
 
@@ -122,10 +117,10 @@ fun DetailPage(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Hausaufgabe",
+                    text = "Leistungserhebung",
                     style = MaterialTheme.typography.headlineLarge,
                     maxLines = 1,
-                    overflow = TextOverflow.Clip,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
                 if (state.canEdit) {
@@ -159,7 +154,7 @@ fun DetailPage(
                 }
                 FilledTonalIconButton(
                     enabled = state.reloadingState != UnoptimisticTaskState.InProgress,
-                    onClick = { onEvent(DetailEvent.Reload) }
+                    onClick = { onEvent(AssessmentDetailEvent.Reload) }
                 ) {
                     AnimatedContent(
                         targetState = state.reloadingState,
@@ -190,22 +185,26 @@ fun DetailPage(
             }
             Spacer(Modifier.height(16.dp))
             SubjectGroupRow(
+                canEdit = false,
+                allowGroup = false,
+                subject = assessment.subjectInstanceItem?.subject,
+                onClick = {}
+            )
+            TypeRow(
                 canEdit = state.canEdit,
-                allowGroup = true,
-                defaultLesson = homework.defaultLessonItem,
-                group = homework.groupItem,
-                onClick = { showLessonSelectDrawer = true },
+                type = assessment.type,
+                onClick = { showTypeSelectDrawer = true }
             )
             DueToRow(
                 canEdit = state.canEdit,
-                isHomework = true,
-                dueTo = homework.dueTo,
+                isHomework = false,
+                dueTo = assessment.date,
                 onClick = { showDateSelectDrawer = true },
             )
-            if (homework is Homework.CloudHomework) ShareStatusRow(
+            if (assessment.creator is AppEntity.VppId) ShareStatusRow(
                 canEdit = state.canEdit,
-                isPublic = homework.isPublic,
-                onSelect = { isPublic -> onEvent(DetailEvent.UpdateVisibility(isPublic)) }
+                isPublic = assessment.isPublic,
+                onSelect = { isPublic -> onEvent(AssessmentDetailEvent.UpdateVisibility(isPublic)) }
             )
 
             if (state.canEdit) {
@@ -222,54 +221,38 @@ fun DetailPage(
                     HorizontalDivider()
                 }
             }
-            StatusRow(status = homework.getStatusFlow(state.profile).collectAsState(null).value)
-            if (homework is Homework.CloudHomework) CreatedByRow(createdBy = homework.createdByItem!!)
+            if (assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = assessment.createdByVppId!!)
             else SavedLocalRow()
 
-            CreatedAtRow(createdAt = homework.createdAt)
-
-            if (isDeveloperMode) MetadataRow(
-                key = { Text(text = "ID", style = tableNameStyle()) },
-                value = { Text(text = state.homework.id.toString(), style = tableValueStyle()) }
-            )
+            CreatedAtRow(createdAt = assessment.createdAt.toInstant(TimeZone.UTC))
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-
-            homework.getTasksFlow().collectAsState(emptyList()).value.forEach { task ->
-                TaskRow(
-                    task = task,
-                    isDone = task.isDone(state.profile),
-                    taskDeleteState = state.taskDeleteState[task.id],
-                    canEdit = state.canEdit,
-                    taskToEdit = taskToEdit,
-                    onSetTaskToEdit = { taskToEdit = it },
-                    onToggleTaskDone = { onEvent(DetailEvent.ToggleTaskDone(task)) },
-                    onUpdateTask = { onEvent(DetailEvent.UpdateTask(task, it)) },
-                    onDeleteTask = {
-                        if (homework.tasks.size == 1) showDeleteDialog = true
-                        else onEvent(DetailEvent.DeleteTask(task))
-                    }
+            if (state.canEdit) {
+                var text by rememberSaveable(assessment.id, state.reloadingState == UnoptimisticTaskState.Success) { mutableStateOf(assessment.description) }
+                TextField(
+                    value = text,
+                    enabled = state.canEdit,
+                    onValueChange = { text = it; onEvent(AssessmentDetailEvent.UpdateContent(it)) },
+                    minLines = 5,
+                    modifier = Modifier.fillMaxWidth(),
                 )
-            }
-            if (state.canEdit) NewTaskRow(
-                newTaskState = state.newTaskState,
-                onAddTask = { onEvent(DetailEvent.AddTask(it)) }
+            } else Text(
+                text = assessment.description
             )
-
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                homework.getFilesFlow().onEach { it.onEach { file -> if (file.isOfflineReady) file.getPreview() } }.collectAsState(emptyList()).value.forEach { file ->
+                assessment.getFilesFlow().onEach { it.onEach { file -> if (file.isOfflineReady) file.getPreview() } }.collectAsState(emptyList()).value.forEach { file ->
                     FileRow(
                         file = file,
                         canEdit = state.canEdit,
                         downloadProgress = state.fileDownloadState[file.id],
-                        onDownloadClick = { onEvent(DetailEvent.DownloadFile(file)) },
-                        onRenameClick = { newName -> onEvent(DetailEvent.RenameFile(file, newName)) },
-                        onDeleteClick = { onEvent(DetailEvent.DeleteFile(file)) }
+                        onDownloadClick = { onEvent(AssessmentDetailEvent.DownloadFile(file)) },
+                        onRenameClick = { newName -> onEvent(AssessmentDetailEvent.RenameFile(file, newName)) },
+                        onDeleteClick = { onEvent(AssessmentDetailEvent.DeleteFile(file)) }
                     )
                 }
             }
@@ -303,27 +286,22 @@ fun DetailPage(
         }
     }
 
-    if (showLessonSelectDrawer) {
-        LessonSelectDrawer(
-            group = profile.groupItem!!,
-            allowGroup = true,
-            defaultLessons = profile.defaultLessonItems.filter { defaultLesson -> profile.defaultLessons.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
-            selectedDefaultLesson = homework.defaultLessonItem,
-            onSelectDefaultLesson = { onEvent(DetailEvent.UpdateDefaultLesson(it)) },
-            onDismiss = { showLessonSelectDrawer = false }
-        )
-    }
-
     if (showDateSelectDrawer) {
         DateSelectDrawer(
             configuration = DateSelectConfiguration(
                 allowDatesInPast = false
             ),
-            selectedDate = homework.dueTo,
-            onSelectDate = { onEvent(DetailEvent.UpdateDueTo(it)) },
+            selectedDate = assessment.date,
+            onSelectDate = { onEvent(AssessmentDetailEvent.UpdateDate(it)) },
             onDismiss = { showDateSelectDrawer = false }
         )
     }
+
+    if (showTypeSelectDrawer) TypeDrawer(
+        selectedType = assessment.type,
+        onSelectType = { onEvent(AssessmentDetailEvent.UpdateType(it)) },
+        onDismiss = { showTypeSelectDrawer = false }
+    )
 
     if (showDeleteDialog) {
         AlertDialog(
@@ -335,13 +313,13 @@ fun DetailPage(
                     modifier = Modifier.size(24.dp)
                 )
             },
-            title = { Text("Hausaufgabe löschen") },
+            title = { Text("Leistungserhebung löschen") },
             text = {
-                Text("Bist du sicher, dass du die Hausaufgabe löschen möchtest? Dies kann nicht rückgängig gemacht werden.")
+                Text("Bist du sicher, dass du die Leistungserhebung löschen möchtest? Dies kann nicht rückgängig gemacht werden.")
             },
             confirmButton = {
                 TextButton(
-                    onClick = { onEvent(DetailEvent.DeleteHomework) },
+                    onClick = { onEvent(AssessmentDetailEvent.Delete) },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
                     )

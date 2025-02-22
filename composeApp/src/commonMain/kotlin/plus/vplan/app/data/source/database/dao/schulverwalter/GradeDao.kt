@@ -37,4 +37,7 @@ interface GradeDao {
 
     @Query("DELETE FROM fk_schulverwalter_grade_schulverwalter_teacher WHERE grade_id = :gradeId AND teacher_id NOT IN (:teacherIds)")
     suspend fun deleteSchulverwalterGradeSchulverwalterTeacher(gradeId: Int, teacherIds: List<Int>)
+
+    @Query("UPDATE schulverwalter_grade SET is_selected_for_final_grade = :useForFinalGrade WHERE id = :gradeId")
+    suspend fun setConsiderForFinalGrade(gradeId: Int, useForFinalGrade: Boolean)
 }

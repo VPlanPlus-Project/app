@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +35,7 @@ import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Year
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
+import plus.vplan.app.feature.grades.ui.components.detail.GradeDetailDrawer
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -46,6 +48,8 @@ fun DevScreen(
 
     var isDrawerOpen by rememberSaveable { mutableStateOf(false) }
     var clickAssessmentId by rememberSaveable { mutableStateOf<Int?>(null) }
+
+    var clickGradeId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Column(
         modifier = Modifier
@@ -83,21 +87,27 @@ fun DevScreen(
             }
         }
         App.gradeSource.getAll().collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Grade>>().map { it.data }.forEach { grade ->
-            Text("${grade.id}: ${grade.value}")
-            (grade.collection.collectAsState(null).value as? CacheState.Done)?.data?.let { collection ->
-                Text("  ${collection.id}: ${collection.name}")
-                (collection.subject.collectAsState(null).value as? CacheState.Done)?.data?.let { subject ->
-                    Text("  ${subject.id}: ${subject.name}")
-                }
-            }
-            (grade.teacher.collectAsState(null).value.let { teacher ->
-                when (teacher) {
-                    is CacheState.Done -> teacher.data.let { Text("  ${it.id}: ${it.name}") }
-                    else -> teacher?.let {
-                        Text("  Lehrer: $it")
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { clickGradeId = grade.id }
+            ) {
+                Text("${grade.id}: ${grade.value}")
+                (grade.collection.collectAsState(null).value as? CacheState.Done)?.data?.let { collection ->
+                    Text("  ${collection.id}: ${collection.name}")
+                    (collection.subject.collectAsState(null).value as? CacheState.Done)?.data?.let { subject ->
+                        Text("  ${subject.id}: ${subject.name}")
                     }
                 }
-            })
+                (grade.teacher.collectAsState(null).value.let { teacher ->
+                    when (teacher) {
+                        is CacheState.Done -> teacher.data.let { Text("  ${it.id}: ${it.name}") }
+                        else -> teacher?.let {
+                            Text("  Lehrer: $it")
+                        }
+                    }
+                })
+            }
             HorizontalDivider()
         }
 
@@ -147,4 +157,5 @@ fun DevScreen(
     )
 
     if (clickAssessmentId != null) AssessmentDetailDrawer(clickAssessmentId!!) { clickAssessmentId = null }
+    if (clickGradeId != null) GradeDetailDrawer(clickGradeId!!) { clickGradeId = null }
 }

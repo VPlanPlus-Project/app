@@ -12,7 +12,7 @@ import plus.vplan.app.feature.assessment.domain.usecase.CreateAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.DeleteAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentViewModel
-import plus.vplan.app.feature.assessment.ui.components.detail.DetailViewModel
+import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailViewModel
 
 val assessmentModule = module {
     singleOf(::CreateAssessmentUseCase)
@@ -25,5 +25,5 @@ val assessmentModule = module {
     singleOf(::AddAssessmentFileUseCase)
 
     viewModelOf(::NewAssessmentViewModel)
-    viewModelOf(::DetailViewModel)
+    viewModelOf(::AssessmentDetailViewModel)
 }
