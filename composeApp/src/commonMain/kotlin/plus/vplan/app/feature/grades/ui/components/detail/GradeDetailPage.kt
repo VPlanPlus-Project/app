@@ -34,8 +34,10 @@ import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Subject
+import plus.vplan.app.domain.model.schulverwalter.Teacher
 import plus.vplan.app.domain.model.schulverwalter.Year
 import plus.vplan.app.feature.grades.ui.components.detail.components.GivenAtRow
+import plus.vplan.app.feature.grades.ui.components.detail.components.GivenByRow
 import plus.vplan.app.feature.grades.ui.components.detail.components.IntervalRow
 import plus.vplan.app.feature.grades.ui.components.detail.components.OptionalRow
 import plus.vplan.app.feature.grades.ui.components.detail.components.TypeRow
@@ -60,6 +62,7 @@ fun GradeDetailPage(
     val interval = collection?.interval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
     val year = interval?.year?.filterIsInstance<CacheState.Done<Year>>()?.map { it.data }?.collectAsState(null)?.value
     val vppId = grade.vppId.filterIsInstance<CacheState.Done<VppId>>().map { it.data }.collectAsState(null).value
+    val teacher = grade.teacher.filterIsInstance<CacheState.Done<Teacher>>().map { it.data }.collectAsState(null).value
 
     Column(
         modifier = Modifier
@@ -134,6 +137,7 @@ fun GradeDetailPage(
             if (collection != null) TypeRow(type = collection.type)
             if (interval != null) IntervalRow(schoolYearName = year?.name ?: "?", intervalName = interval.name)
             GivenAtRow(grade.givenAt)
+            if (teacher != null) GivenByRow("${teacher.forename} ${teacher.name}")
             if (vppId != null) UserRow(vppId.name)
             OptionalRow(grade.isOptional)
             UseForFinalGradeRow(grade.isSelectedForFinalGrade) { onEvent(GradeDetailEvent.ToggleConsiderForFinalGrade) }
