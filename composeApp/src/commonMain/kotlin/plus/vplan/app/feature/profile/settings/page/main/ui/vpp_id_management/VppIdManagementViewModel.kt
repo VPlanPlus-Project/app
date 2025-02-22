@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.settings.ui.vpp_id_management
+package plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,9 +9,9 @@ import kotlinx.coroutines.launch
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.VppIdDevice
-import plus.vplan.app.feature.profile.settings.domain.usecase.GetVppIdDevicesUseCase
-import plus.vplan.app.feature.profile.settings.domain.usecase.LogoutVppIdDeviceUseCase
-import plus.vplan.app.feature.profile.settings.domain.usecase.LogoutVppIdUseCase
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.GetVppIdDevicesUseCase
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.LogoutVppIdDeviceUseCase
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.LogoutVppIdUseCase
 
 class VppIdManagementViewModel(
     private val logoutVppIdUseCase: LogoutVppIdUseCase,

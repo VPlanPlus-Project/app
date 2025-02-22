@@ -1,10 +1,15 @@
 package plus.vplan.app.domain.source.schulverwalter
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.repository.schulverwalter.CollectionRepository
@@ -13,10 +18,16 @@ class CollectionSource(
     private val collectionRepository: CollectionRepository
 ) {
 
-    private val cache = hashMapOf<Int, Flow<CacheState<Collection>>>()
+    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Collection>>>()
 
     fun getById(id: Int): Flow<CacheState<Collection>> {
-        return cache.getOrPut(id) { collectionRepository.getById(id, false) }
+        return flows.getOrPut(id) {
+            val flow = MutableSharedFlow<CacheState<Collection>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            MainScope().launch {
+                collectionRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+            }
+            flow
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

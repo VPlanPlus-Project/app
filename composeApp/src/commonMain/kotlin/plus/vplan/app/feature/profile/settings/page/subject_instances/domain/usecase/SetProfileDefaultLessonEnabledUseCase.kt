@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.page.domain.usecase
+package plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase
 
 import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Profile
@@ -9,9 +9,17 @@ class SetProfileDefaultLessonEnabledUseCase(
 ) {
     suspend operator fun invoke(
         profile: Profile.StudentProfile,
+        defaultLessons: List<DefaultLesson>,
+        enabled: Boolean
+    ) {
+        profileRepository.setDefaultLessonEnabled(profile.id, defaultLessons.map { it.id }, enabled)
+    }
+
+    suspend operator fun invoke(
+        profile: Profile.StudentProfile,
         defaultLesson: DefaultLesson,
         enabled: Boolean
     ) {
-        profileRepository.setDefaultLessonEnabled(profile.id, defaultLesson.id, enabled)
+        this(profile, listOf(defaultLesson), enabled)
     }
 }

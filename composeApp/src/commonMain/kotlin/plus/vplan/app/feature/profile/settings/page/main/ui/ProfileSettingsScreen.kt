@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.profile.settings.ui
+package plus.vplan.app.feature.profile.settings.page.main.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,14 +48,17 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.feature.profile.settings.domain.usecase.VppIdConnectionState
-import plus.vplan.app.feature.profile.settings.ui.vpp_id_management.VppIdManagementDrawer
+import plus.vplan.app.feature.main.MainScreen
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.VppIdConnectionState
+import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.VppIdManagementDrawer
+import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import plus.vplan.app.utils.BrowserIntent
 import plus.vplan.app.utils.DOT
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.circle_user_round
+import vplanplus.composeapp.generated.resources.graduation_cap
 import vplanplus.composeapp.generated.resources.pencil
 import vplanplus.composeapp.generated.resources.x
 
@@ -73,6 +77,7 @@ fun ProfileSettingsScreen(
     ProfileSettingsContent(
         state = state,
         onEvent = viewModel::onEvent,
+        onOpenSubjectInstances = remember(profileId) { { navHostController.navigate(MainScreen.ProfileSubjectInstances(profileId)) } },
         onBack = { navHostController.navigateUp() }
     )
 }
@@ -82,6 +87,7 @@ fun ProfileSettingsScreen(
 private fun ProfileSettingsContent(
     state: ProfileSettingsState,
     onBack: () -> Unit,
+    onOpenSubjectInstances: () -> Unit,
     onEvent: (event: ProfileSettingsEvent) -> Unit
 ) {
 
@@ -273,6 +279,13 @@ private fun ProfileSettingsContent(
                     }
                 }
             }
+            Spacer(Modifier.height(8.dp))
+            SettingsRecord(
+                title = "Stundenauswahl",
+                subtitle = "Wähle aus, welche Stunden dir angezeigt werden.",
+                icon = painterResource(Res.drawable.graduation_cap),
+                onClick = onOpenSubjectInstances
+            )
         }
 
         if (isVppIdManagementDrawerVisible &&

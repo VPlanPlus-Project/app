@@ -19,7 +19,7 @@ data class EmbeddedCourse(
             id = course.id,
             indiwareId = course.indiwareId,
             name = course.name,
-            teacher = course.teacherId,
+            teacherId = course.teacherId,
             groups = groups.map { it.groupId }
         )
     }
