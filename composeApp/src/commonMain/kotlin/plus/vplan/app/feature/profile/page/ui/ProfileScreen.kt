@@ -234,10 +234,18 @@ private fun ProfileContent(
                                                         style = MaterialTheme.typography.headlineLarge,
                                                         color = MaterialTheme.colorScheme.primary
                                                     )
-                                                    ShimmerLoader(
-                                                        modifier = Modifier.size(MaterialTheme.typography.headlineLarge.lineHeight.toDp()).clip(RoundedCornerShape(8.dp)),
-                                                        infiniteTransition = infiniteTransition
-                                                    )
+                                                    AnimatedContent(
+                                                        targetState = state.averageGrade,
+                                                    ) { average ->
+                                                        if (average == null) ShimmerLoader(
+                                                            modifier = Modifier.size(MaterialTheme.typography.headlineLarge.lineHeight.toDp()).clip(RoundedCornerShape(8.dp)),
+                                                            infiniteTransition = infiniteTransition
+                                                        ) else Text(
+                                                            text = ((average * 100).roundToInt() / 100.0).toString(),
+                                                            style = MaterialTheme.typography.headlineLarge,
+                                                            color = MaterialTheme.colorScheme.primary
+                                                        )
+                                                    }
                                                 }
                                                 Text(
                                                     text = "Gesamtdurchschnitt",
@@ -277,9 +285,6 @@ private fun ProfileContent(
                                     }
                                 }
                             }
-                        }
-                        grades.forEach { grade ->
-                            Text(grade.toString())
                         }
                     }
                 }
