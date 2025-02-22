@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterCollection
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSchulverwalterCollection
 
 @Dao
@@ -25,7 +24,6 @@ interface CollectionDao {
         collections: List<DbSchulverwalterCollection>,
         intervalsCrossovers: List<FKSchulverwalterCollectionSchulverwalterInterval>,
         subjectsCrossovers: List<FKSchulverwalterCollectionSchulverwalterSubject>,
-        teachersCrossovers: List<FKSchulverwalterCollectionSchulverwalterTeacher>
     )
 
     @Query("DELETE FROM fk_schulverwalter_collection_schulverwalter_interval WHERE collection_id = :collectionId AND interval_id NOT IN (:intervalIds)")
@@ -33,7 +31,4 @@ interface CollectionDao {
 
     @Query("DELETE FROM fk_schulverwalter_collection_schulverwalter_subject WHERE collection_id = :collectionId AND subject_id NOT IN (:subjectIds)")
     suspend fun deleteSchulverwalterCollectionSchulverwalterSubject(collectionId: Int, subjectIds: List<Int>)
-
-    @Query("DELETE FROM fk_schulverwalter_collection_schulverwalter_teacher WHERE collection_id = :collectionId AND teacher_id NOT IN (:teacherIds)")
-    suspend fun deleteSchulverwalterCollectionSchulverwalterTeacher(collectionId: Int, teacherIds: List<Int>)
 }

@@ -68,6 +68,7 @@ import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.domain.source.schulverwalter.CollectionSource
+import plus.vplan.app.domain.source.schulverwalter.GradeSource
 import plus.vplan.app.domain.source.schulverwalter.IntervalSource
 import plus.vplan.app.domain.source.schulverwalter.SubjectSource
 import plus.vplan.app.domain.source.schulverwalter.YearSource
@@ -178,5 +179,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         App.collectionSource = CollectionSource(koin.get())
         App.subjectSource = SubjectSource(koin.get())
         App.schulverwalterTeacherSource = plus.vplan.app.domain.source.schulverwalter.TeacherSource(koin.get())
+        App.gradeSource = GradeSource(koin.get())
     }
 }

@@ -82,7 +82,9 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomework
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterTeacher
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterCollection
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterSubject
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 
 @Database(
@@ -152,7 +154,9 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulver
         FKSchulverwalterYearSchulverwalterInterval::class,
         FKSchulverwalterCollectionSchulverwalterInterval::class,
         FKSchulverwalterCollectionSchulverwalterSubject::class,
-        FKSchulverwalterCollectionSchulverwalterTeacher::class,
+        FKSchulverwalterGradeSchulverwalterCollection::class,
+        FKSchulverwalterGradeSchulverwalterSubject::class,
+        FKSchulverwalterGradeSchulverwalterTeacher::class,
     ],
     version = 1,
 )

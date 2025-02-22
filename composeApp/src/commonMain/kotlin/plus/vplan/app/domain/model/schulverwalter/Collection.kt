@@ -10,12 +10,10 @@ data class Collection(
     val name: String,
     val subjectId: Int,
     val intervalId: Int,
-    val teacherId: Int,
     val cachedAt: Instant
 ): Item {
     override fun getEntityId(): String = this.id.toString()
 
     val interval by lazy { App.intervalSource.getById(intervalId) }
     val subject by lazy { App.subjectSource.getById(subjectId) }
-    val teacher by lazy { App.schulverwalterTeacherSource.getById(teacherId) }
 }

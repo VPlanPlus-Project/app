@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "89432b721454d604bed237f626336a19",
+    "identityHash": "9291adb24755568ab94f2303d79f5dc7",
     "entities": [
       {
         "tableName": "schools",
@@ -3429,12 +3429,102 @@
         ]
       },
       {
-        "tableName": "fk_schulverwalter_collection_schulverwalter_teacher",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`collection_id` INTEGER NOT NULL, `teacher_id` INTEGER NOT NULL, PRIMARY KEY(`collection_id`, `teacher_id`))",
+        "tableName": "fk_schulverwalter_grade_schulverwalter_collection",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`grade_id` INTEGER NOT NULL, `collection_id` INTEGER NOT NULL, PRIMARY KEY(`grade_id`, `collection_id`))",
         "fields": [
+          {
+            "fieldPath": "gradeId",
+            "columnName": "grade_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
           {
             "fieldPath": "collectionId",
             "columnName": "collection_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "grade_id",
+            "collection_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_fk_schulverwalter_grade_schulverwalter_collection_grade_id",
+            "unique": false,
+            "columnNames": [
+              "grade_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_grade_schulverwalter_collection_grade_id` ON `${TABLE_NAME}` (`grade_id`)"
+          },
+          {
+            "name": "index_fk_schulverwalter_grade_schulverwalter_collection_collection_id",
+            "unique": false,
+            "columnNames": [
+              "collection_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_grade_schulverwalter_collection_collection_id` ON `${TABLE_NAME}` (`collection_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "fk_schulverwalter_grade_schulverwalter_subject",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`grade_id` INTEGER NOT NULL, `subject_id` INTEGER NOT NULL, PRIMARY KEY(`grade_id`, `subject_id`))",
+        "fields": [
+          {
+            "fieldPath": "gradeId",
+            "columnName": "grade_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subjectId",
+            "columnName": "subject_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "grade_id",
+            "subject_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_fk_schulverwalter_grade_schulverwalter_subject_grade_id",
+            "unique": false,
+            "columnNames": [
+              "grade_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_grade_schulverwalter_subject_grade_id` ON `${TABLE_NAME}` (`grade_id`)"
+          },
+          {
+            "name": "index_fk_schulverwalter_grade_schulverwalter_subject_subject_id",
+            "unique": false,
+            "columnNames": [
+              "subject_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_grade_schulverwalter_subject_subject_id` ON `${TABLE_NAME}` (`subject_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "fk_schulverwalter_grade_schulverwalter_teacher",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`grade_id` INTEGER NOT NULL, `teacher_id` INTEGER NOT NULL, PRIMARY KEY(`grade_id`, `teacher_id`))",
+        "fields": [
+          {
+            "fieldPath": "gradeId",
+            "columnName": "grade_id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -3448,35 +3538,35 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "collection_id",
+            "grade_id",
             "teacher_id"
           ]
         },
         "indices": [
           {
-            "name": "index_fk_schulverwalter_collection_schulverwalter_teacher_collection_id",
+            "name": "index_fk_schulverwalter_grade_schulverwalter_teacher_grade_id",
             "unique": false,
             "columnNames": [
-              "collection_id"
+              "grade_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_collection_schulverwalter_teacher_collection_id` ON `${TABLE_NAME}` (`collection_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_grade_schulverwalter_teacher_grade_id` ON `${TABLE_NAME}` (`grade_id`)"
           },
           {
-            "name": "index_fk_schulverwalter_collection_schulverwalter_teacher_teacher_id",
+            "name": "index_fk_schulverwalter_grade_schulverwalter_teacher_teacher_id",
             "unique": false,
             "columnNames": [
               "teacher_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_collection_schulverwalter_teacher_teacher_id` ON `${TABLE_NAME}` (`teacher_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_grade_schulverwalter_teacher_teacher_id` ON `${TABLE_NAME}` (`teacher_id`)"
           }
         ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '89432b721454d604bed237f626336a19')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9291adb24755568ab94f2303d79f5dc7')"
     ]
   }
 }

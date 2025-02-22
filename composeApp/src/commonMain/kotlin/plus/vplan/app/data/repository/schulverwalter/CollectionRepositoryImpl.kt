@@ -25,7 +25,6 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubjec
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
@@ -169,19 +168,12 @@ class CollectionRepositoryImpl(
                     collectionId = collection.id,
                     subjectId = collection.subject.id
                 )
-            },
-            teachersCrossovers = data.map { collection ->
-                FKSchulverwalterCollectionSchulverwalterTeacher(
-                    collectionId = collection.id,
-                    teacherId = collection.teacher.id
-                )
             }
         )
 
         data.forEach { collection ->
             vppDatabase.collectionDao.deleteSchulverwalterCollectionSchulverwalterInterval(collectionId = collection.id, intervalIds = listOf(collection.interval.id))
             vppDatabase.collectionDao.deleteSchulverwalterCollectionSchulverwalterSubject(collectionId = collection.id, subjectIds = listOf(collection.subject.id))
-            vppDatabase.collectionDao.deleteSchulverwalterCollectionSchulverwalterTeacher(collectionId = collection.id, teacherIds = listOf(collection.teacher.id))
         }
     }
 }

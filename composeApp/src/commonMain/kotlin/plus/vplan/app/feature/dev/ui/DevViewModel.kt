@@ -22,7 +22,7 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.domain.repository.schulverwalter.CollectionRepository
+import plus.vplan.app.domain.repository.schulverwalter.GradeRepository
 import kotlin.uuid.Uuid
 
 class DevViewModel(
@@ -30,7 +30,7 @@ class DevViewModel(
     private val assessmentRepository: AssessmentRepository,
     private val homeworkRepository: HomeworkRepository,
     private val platformNotificationRepository: PlatformNotificationRepository,
-    private val collectionRepository: CollectionRepository,
+    private val gradeRepository: GradeRepository,
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
         private set
@@ -78,7 +78,8 @@ class DevViewModel(
 
                 DevEvent.Clear -> assessmentRepository.clearCache()
                 DevEvent.Sync -> {
-                    collectionRepository.download()
+                    val a = gradeRepository.download()
+                    Logger.d { "Grades updated: $a" }
                 }
                 DevEvent.Notify -> platformNotificationRepository.sendNotification("Test", "Test", "Profil")
             }
