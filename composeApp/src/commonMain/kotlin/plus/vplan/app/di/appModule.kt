@@ -177,5 +177,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         App.intervalSource = IntervalSource(koin.get())
         App.collectionSource = CollectionSource(koin.get())
         App.subjectSource = SubjectSource(koin.get())
+        App.schulverwalterTeacherSource = plus.vplan.app.domain.source.schulverwalter.TeacherSource(koin.get())
     }
 }

@@ -106,6 +106,7 @@ object App {
     lateinit var intervalSource: IntervalSource
     lateinit var collectionSource: CollectionSource
     lateinit var subjectSource: SubjectSource
+    lateinit var schulverwalterTeacherSource: plus.vplan.app.domain.source.schulverwalter.TeacherSource
 }
 
 @Composable

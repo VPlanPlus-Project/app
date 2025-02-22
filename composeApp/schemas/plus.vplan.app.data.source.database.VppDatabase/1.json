@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "262332400dcef6eb096b2abe22db1558",
+    "identityHash": "89432b721454d604bed237f626336a19",
     "entities": [
       {
         "tableName": "schools",
@@ -3427,11 +3427,56 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_collection_schulverwalter_subject_subject_id` ON `${TABLE_NAME}` (`subject_id`)"
           }
         ]
+      },
+      {
+        "tableName": "fk_schulverwalter_collection_schulverwalter_teacher",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`collection_id` INTEGER NOT NULL, `teacher_id` INTEGER NOT NULL, PRIMARY KEY(`collection_id`, `teacher_id`))",
+        "fields": [
+          {
+            "fieldPath": "collectionId",
+            "columnName": "collection_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "teacherId",
+            "columnName": "teacher_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "collection_id",
+            "teacher_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_fk_schulverwalter_collection_schulverwalter_teacher_collection_id",
+            "unique": false,
+            "columnNames": [
+              "collection_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_collection_schulverwalter_teacher_collection_id` ON `${TABLE_NAME}` (`collection_id`)"
+          },
+          {
+            "name": "index_fk_schulverwalter_collection_schulverwalter_teacher_teacher_id",
+            "unique": false,
+            "columnNames": [
+              "teacher_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_collection_schulverwalter_teacher_teacher_id` ON `${TABLE_NAME}` (`teacher_id`)"
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '262332400dcef6eb096b2abe22db1558')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '89432b721454d604bed237f626336a19')"
     ]
   }
 }

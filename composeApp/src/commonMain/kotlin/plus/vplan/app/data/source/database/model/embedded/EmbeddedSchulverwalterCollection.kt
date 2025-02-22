@@ -5,6 +5,7 @@ import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterCollection
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterTeacher
 import plus.vplan.app.domain.model.schulverwalter.Collection
 
 data class EmbeddedSchulverwalterCollection(
@@ -19,14 +20,19 @@ data class EmbeddedSchulverwalterCollection(
         parentColumn = "id",
         entityColumn = "collection_id",
         entity = FKSchulverwalterCollectionSchulverwalterSubject::class
-    ) val subject: FKSchulverwalterCollectionSchulverwalterSubject
+    ) val subject: FKSchulverwalterCollectionSchulverwalterSubject,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "collection_id",
+        entity = FKSchulverwalterCollectionSchulverwalterTeacher::class
+    ) val teacher: FKSchulverwalterCollectionSchulverwalterTeacher
 ) {
     fun toModel() = Collection(
         id = collection.id,
         type = collection.type,
         name = collection.name,
         intervalId = interval.intervalId,
-        teacherId = 0,
+        teacherId = teacher.teacherId,
         subjectId = subject.subjectId,
         cachedAt = collection.cachedAt
     )

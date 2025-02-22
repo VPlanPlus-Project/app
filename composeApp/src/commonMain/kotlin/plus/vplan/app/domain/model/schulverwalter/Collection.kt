@@ -17,4 +17,5 @@ data class Collection(
 
     val interval by lazy { App.intervalSource.getById(intervalId) }
     val subject by lazy { App.subjectSource.getById(subjectId) }
+    val teacher by lazy { App.schulverwalterTeacherSource.getById(teacherId) }
 }

@@ -86,6 +86,14 @@ fun DevScreen(
             (collection.subject.collectAsState(null).value as? CacheState.Done)?.data?.let { subject ->
                 Text("  ${subject.id}: ${subject.name}")
             }
+            (collection.teacher.collectAsState(null).value.let { teacher ->
+                when (teacher) {
+                    is CacheState.Done -> teacher.data.let { Text("  ${it.id}: ${it.name}") }
+                    else -> teacher?.let {
+                        Text("  Lehrer: $it")
+                    }
+                }
+            })
             HorizontalDivider()
         }
         Spacer(Modifier.height(8.dp))

@@ -82,6 +82,7 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomework
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 
 @Database(
@@ -151,6 +152,7 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulver
         FKSchulverwalterYearSchulverwalterInterval::class,
         FKSchulverwalterCollectionSchulverwalterInterval::class,
         FKSchulverwalterCollectionSchulverwalterSubject::class,
+        FKSchulverwalterCollectionSchulverwalterTeacher::class,
     ],
     version = 1,
 )
@@ -189,5 +191,6 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val intervalDao: IntervalDao
     abstract val collectionDao: CollectionDao
     abstract val subjectDao: SubjectDao
+    abstract val schulverwalterTeacherDao: plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao
     abstract val gradeDao: GradeDao
 }
