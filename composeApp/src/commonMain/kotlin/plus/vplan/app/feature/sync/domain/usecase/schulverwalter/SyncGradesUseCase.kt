@@ -1,11 +1,15 @@
 package plus.vplan.app.feature.sync.domain.usecase.schulverwalter
 
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import plus.vplan.app.App
+import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
@@ -53,7 +57,21 @@ class SyncGradesUseCase(
                         append(") erhalten.")
                     },
                     isLarge = false,
-                    onClickData = null
+                    onClickData = Json.encodeToString(
+                        StartTaskJson(
+                            type = "open",
+                            value = Json.encodeToString(
+                                StartTaskJson.StartTaskOpen(
+                                    type = "grade",
+                                    value = Json.encodeToString(
+                                        StartTaskJson.StartTaskOpen.Grade(
+                                            gradeId = newGrades.first().id
+                                        )
+                                    )
+                                )
+                            )
+                        ).also { Logger.d { "Task: $it" } }
+                    )
                 )
             }
             if (newGrades.size > 1) {

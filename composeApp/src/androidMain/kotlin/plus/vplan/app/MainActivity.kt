@@ -22,6 +22,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        onNewIntent(intent)
+
         activity = this
         FileKit.init(this)
         enableEdgeToEdge()
@@ -73,6 +75,10 @@ class MainActivity : ComponentActivity() {
                             "assessment" -> {
                                 val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.Assessment>(openJson.value)
                                 task = StartTask.Open.Assessment(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.assessmentId)
+                            }
+                            "grade" -> {
+                                val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.Grade>(openJson.value)
+                                task = StartTask.Open.Grade(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.gradeId)
                             }
                         }
                     }
