@@ -177,7 +177,7 @@ class VppIdRepositoryImpl(
     }
 
     override fun getAllIds(): Flow<List<Int>> {
-        return vppDatabase.vppIdDao.getAll().map { it.map { it.vppId.id } }
+        return vppDatabase.vppIdDao.getAll().map { it.map { vppId -> vppId.vppId.id } }
     }
 
     override suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>> {
