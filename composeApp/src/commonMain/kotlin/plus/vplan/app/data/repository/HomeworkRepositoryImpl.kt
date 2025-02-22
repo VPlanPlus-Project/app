@@ -8,6 +8,7 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -167,7 +168,14 @@ class HomeworkRepositoryImpl(
                 val schools = vppDatabase.schoolDao.getAll().first().filter { it.school.id in metadataResponseData.schoolIds }.map { it.toModel() }
                 val school = schools.first()
 
-                val homeworkResponse = httpClient.get("${api.url}/api/v2.2/homework/$id") {
+                val homeworkResponse = httpClient.get {
+                    url {
+                        protocol = api.protocol
+                        host = api.host
+                        port = api.port
+                        pathSegments = listOf("api", "v2.2", "homework", id.toString())
+                        parameter("include_tasks", "true")
+                    }
                     vppId?.let { bearerAuth(it.accessToken) } ?: school.getSchoolApiAccess()?.authentication(this)
                 }
                 if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))

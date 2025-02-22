@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -20,6 +21,7 @@ import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.homework.domain.usecase.AddFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteFileUseCase
@@ -75,7 +77,6 @@ class DetailViewModel(
                     homework = homework,
                     profile = profile,
                     canEdit = (homework is Homework.CloudHomework && homework.createdBy == profile.vppId) || (homework is Homework.LocalHomework && homework.createdByProfile == profile.id),
-                    isReloading = false,
                     initDone = true
                 )
             }.filterNotNull().collectLatest { state = it }
@@ -90,8 +91,19 @@ class DetailViewModel(
                 is DetailEvent.UpdateDueTo -> editHomeworkDueToUseCase(state.homework!!, event.dueTo, state.profile!!)
                 is DetailEvent.UpdateVisibility -> editHomeworkVisibilityUseCase(state.homework as Homework.CloudHomework, event.isPublic, state.profile!!)
                 is DetailEvent.Reload -> {
-                    state = state.copy(isReloading = true)
-                    updateHomeworkUseCase(state.homework!!.id)
+                    state = state.copy(reloadingState = UnoptimisticTaskState.InProgress)
+                    val result = updateHomeworkUseCase(state.homework!!.id)
+                    when (result) {
+                        UpdateResult.SUCCESS -> {
+                            state = state.copy(reloadingState = UnoptimisticTaskState.Success)
+                            viewModelScope.launch {
+                                delay(2000)
+                                if (state.reloadingState == UnoptimisticTaskState.Success) state = state.copy(reloadingState = null)
+                            }
+                        }
+                        UpdateResult.ERROR -> state = state.copy(reloadingState = UnoptimisticTaskState.Error)
+                        UpdateResult.DOES_NOT_EXIST -> state = state.copy(reloadingState = UnoptimisticTaskState.Success, deleteState = UnoptimisticTaskState.Success)
+                    }
                 }
                 is DetailEvent.DeleteHomework -> {
                     state = state.copy(deleteState = UnoptimisticTaskState.InProgress)
@@ -136,7 +148,7 @@ data class DetailState(
     val homework: Homework? = null,
     val profile: Profile.StudentProfile? = null,
     val canEdit: Boolean = false,
-    val isReloading: Boolean = false,
+    val reloadingState: UnoptimisticTaskState? = null,
     val deleteState: UnoptimisticTaskState? = null,
     val initDone: Boolean = false,
     val newTaskState: UnoptimisticTaskState? = null,
