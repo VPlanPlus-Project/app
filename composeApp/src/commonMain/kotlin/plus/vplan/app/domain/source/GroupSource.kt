@@ -1,6 +1,11 @@
 package plus.vplan.app.domain.source
 
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Group
@@ -9,11 +14,17 @@ import plus.vplan.app.domain.repository.GroupRepository
 class GroupSource(
     private val groupRepository: GroupRepository
 ) {
-    private val cache = hashMapOf<Int, Flow<CacheState<Group>>>()
+    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Group>>>()
     private val cacheItems = hashMapOf<Int, CacheState<Group>>()
 
     fun getById(id: Int): Flow<CacheState<Group>> {
-        return cache.getOrPut(id) { groupRepository.getById(id, false) }
+        return flows.getOrPut(id) {
+            val flow = MutableSharedFlow<CacheState<Group>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            MainScope().launch {
+                groupRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+            }
+            flow
+        }
     }
 
     suspend fun getSingleById(id: Int): Group? {

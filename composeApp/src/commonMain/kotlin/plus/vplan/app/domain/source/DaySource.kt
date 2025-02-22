@@ -1,12 +1,16 @@
 package plus.vplan.app.domain.source
 
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
@@ -29,70 +33,74 @@ class DaySource(
     private val timetableRepository: TimetableRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository
 ) {
-    private val cache = hashMapOf<String, Flow<CacheState<Day>>>()
+    val flows = hashMapOf<String, MutableSharedFlow<CacheState<Day>>>()
     fun getById(id: String): Flow<CacheState<Day>> {
-        return cache.getOrPut(id) {
-            channelFlow {
-                val schoolId = id.substringBefore("/").toInt()
-                val date = LocalDate.parse(id.substringAfter("/"))
-                val school = App.schoolSource.getById(schoolId).filterIsInstance<CacheState.Done<School>>().first().data
-                combine(
-                    weekRepository.getBySchool(schoolId),
-                    dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } },
-                    dayRepository.getBySchool(date, schoolId)
-                ) { weeks, holidays, dayInfo ->
-                    val dayWeek = weeks.firstOrNull { date in it.start..it.end } ?: weeks.last { it.start < date }
-                    MetaEmitting(
-                        dayWeek = dayWeek,
-                        dayInfo = dayInfo,
-                        holidays = holidays
-                    )
-                }.collectLatest { meta ->
-                    val findNextRegularSchoolDayAfter: (LocalDate) -> LocalDate? = findNextRegularSchoolDayAfter@{ startDate ->
-                        if (meta.holidays.isEmpty()) return@findNextRegularSchoolDayAfter null
-                        var nextSchoolDay = startDate + 1.days
-                        while (meta.holidays.maxOf { it } > nextSchoolDay && !(meta.holidays.none { it == nextSchoolDay } && nextSchoolDay.dayOfWeek.isoDayNumber <= ((school as? School.IndiwareSchool)?.daysPerWeek ?: 5))) {
-                            nextSchoolDay += 1.days
-                        }
-                        nextSchoolDay
-                    }
+        return flows.getOrPut(id) {
+            val flow = MutableSharedFlow<CacheState<Day>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            MainScope().launch {
+                channelFlow {
+                    val schoolId = id.substringBefore("/").toInt()
+                    val date = LocalDate.parse(id.substringAfter("/"))
+                    val school = App.schoolSource.getById(schoolId).filterIsInstance<CacheState.Done<School>>().first().data
                     combine(
-                        timetableRepository.getForSchool(
-                            schoolId = schoolId,
-                            dayOfWeek = date.dayOfWeek,
-                            weekIndex = meta.dayWeek.weekIndex,
-                        ),
-                        substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
-                    ) { timetable, substitutionPlan ->
-                        send(CacheState.Done(Day(
-                            id = id,
-                            date = date,
-                            school = schoolId,
-                            week = meta.dayWeek.id,
-                            info = meta.dayInfo?.info,
-                            dayType =
-                            if (date in meta.holidays) Day.DayType.HOLIDAY
-                            else if (date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY) {
-                                var friday = date
-                                while (friday.dayOfWeek != DayOfWeek.FRIDAY) {
-                                    friday -= 1.days
-                                }
-                                var monday = date
-                                while (monday.dayOfWeek != DayOfWeek.MONDAY) {
-                                    monday += 1.days
-                                }
-                                if (meta.holidays.any { it == friday } || meta.holidays.any { it == monday }) Day.DayType.HOLIDAY
-                                else Day.DayType.WEEKEND
+                        weekRepository.getBySchool(schoolId),
+                        dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } },
+                        dayRepository.getBySchool(date, schoolId)
+                    ) { weeks, holidays, dayInfo ->
+                        val dayWeek = weeks.firstOrNull { date in it.start..it.end } ?: weeks.last { it.start < date }
+                        MetaEmitting(
+                            dayWeek = dayWeek,
+                            dayInfo = dayInfo,
+                            holidays = holidays
+                        )
+                    }.collectLatest { meta ->
+                        val findNextRegularSchoolDayAfter: (LocalDate) -> LocalDate? = findNextRegularSchoolDayAfter@{ startDate ->
+                            if (meta.holidays.isEmpty()) return@findNextRegularSchoolDayAfter null
+                            var nextSchoolDay = startDate + 1.days
+                            while (meta.holidays.maxOf { it } > nextSchoolDay && !(meta.holidays.none { it == nextSchoolDay } && nextSchoolDay.dayOfWeek.isoDayNumber <= ((school as? School.IndiwareSchool)?.daysPerWeek ?: 5))) {
+                                nextSchoolDay += 1.days
                             }
-                            else if (timetable.isNotEmpty()) Day.DayType.REGULAR
-                            else Day.DayType.UNKNOWN,
-                            timetable = timetable,
-                            substitutionPlan = substitutionPlan,
-                            nextSchoolDay = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
-                        )))
-                    }.collectLatest {  }
-                }
+                            nextSchoolDay
+                        }
+                        combine(
+                            timetableRepository.getForSchool(
+                                schoolId = schoolId,
+                                dayOfWeek = date.dayOfWeek,
+                                weekIndex = meta.dayWeek.weekIndex,
+                            ),
+                            substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
+                        ) { timetable, substitutionPlan ->
+                            send(CacheState.Done(Day(
+                                id = id,
+                                date = date,
+                                school = schoolId,
+                                week = meta.dayWeek.id,
+                                info = meta.dayInfo?.info,
+                                dayType =
+                                if (date in meta.holidays) Day.DayType.HOLIDAY
+                                else if (date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY) {
+                                    var friday = date
+                                    while (friday.dayOfWeek != DayOfWeek.FRIDAY) {
+                                        friday -= 1.days
+                                    }
+                                    var monday = date
+                                    while (monday.dayOfWeek != DayOfWeek.MONDAY) {
+                                        monday += 1.days
+                                    }
+                                    if (meta.holidays.any { it == friday } || meta.holidays.any { it == monday }) Day.DayType.HOLIDAY
+                                    else Day.DayType.WEEKEND
+                                }
+                                else if (timetable.isNotEmpty()) Day.DayType.REGULAR
+                                else Day.DayType.UNKNOWN,
+                                timetable = timetable,
+                                substitutionPlan = substitutionPlan,
+                                nextSchoolDay = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
+                            )))
+                        }.collectLatest {  }
+                    }
+                }.collectLatest { flow.tryEmit(it) }
             }
+            flow
         }
     }
 }

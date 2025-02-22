@@ -1,6 +1,11 @@
 package plus.vplan.app.domain.source
 
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.VppId
@@ -9,10 +14,16 @@ import plus.vplan.app.domain.repository.VppIdRepository
 class VppIdSource(
     private val vppIdRepository: VppIdRepository
 ) {
-    private val cache = hashMapOf<Int, Flow<CacheState<VppId>>>()
+    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<VppId>>>()
     private val cacheItems = hashMapOf<Int, CacheState<VppId>>()
     fun getById(id: Int): Flow<CacheState<VppId>> {
-        return cache.getOrPut(id) { vppIdRepository.getById(id, false) }
+        return flows.getOrPut(id) {
+            val flow = MutableSharedFlow<CacheState<VppId>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            MainScope().launch {
+                vppIdRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+            }
+            flow
+        }
     }
 
     suspend fun getSingleById(id: Int): VppId? {

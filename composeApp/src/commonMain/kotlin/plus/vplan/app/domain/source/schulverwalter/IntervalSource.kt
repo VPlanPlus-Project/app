@@ -1,10 +1,15 @@
 package plus.vplan.app.domain.source.schulverwalter
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.repository.schulverwalter.IntervalRepository
@@ -12,10 +17,16 @@ import plus.vplan.app.domain.repository.schulverwalter.IntervalRepository
 class IntervalSource(
     private val intervalRepository: IntervalRepository
 ) {
-    private val cache = hashMapOf<Int, Flow<CacheState<Interval>>>()
+    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Interval>>>()
 
     fun getById(id: Int): Flow<CacheState<Interval>> {
-        return cache.getOrPut(id) { intervalRepository.getById(id, false) }
+        return flows.getOrPut(id) {
+            val flow = MutableSharedFlow<CacheState<Interval>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            MainScope().launch {
+                intervalRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+            }
+            flow
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

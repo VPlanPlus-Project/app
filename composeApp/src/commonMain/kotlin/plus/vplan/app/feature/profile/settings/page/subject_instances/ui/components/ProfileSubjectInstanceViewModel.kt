@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -42,6 +43,10 @@ class ProfileSubjectInstanceViewModel(
                         .sortedBy { runBlocking { it.first.subject + (it.first.getCourseItem()?.name ?: "") + (it.first.getTeacherItem()?.name ?: "") } }
                         .toMap()
                 )
+
+                Logger.d { state.defaultLessons.keys.first().getTeacherItem().let {
+                    it?.name + " " + it.hashCode()
+                } }
             }
         }
     }
@@ -52,9 +57,9 @@ class ProfileSubjectInstanceViewModel(
                 is ProfileSubjectInstanceEvent.ToggleCourseSelection -> {
                     state.profile!!.getDefaultLessons()
                         .filter { it.getCourseItem()?.id == event.course.id }
-                        .forEach { defaultLesson ->
-                            setProfileDefaultLessonEnabledUseCase(state.profile!!, defaultLesson, event.isSelected)
-                            state = state.copy(defaultLessons = state.defaultLessons.plus(defaultLesson to event.isSelected))
+                        .let { defaultLessons ->
+                            setProfileDefaultLessonEnabledUseCase(state.profile!!, defaultLessons, event.isSelected)
+                            state = state.copy(defaultLessons = state.defaultLessons.plus(defaultLessons.map { it to event.isSelected }))
                         }
                 }
                 is ProfileSubjectInstanceEvent.ToggleDefaultLessonSelection -> {
