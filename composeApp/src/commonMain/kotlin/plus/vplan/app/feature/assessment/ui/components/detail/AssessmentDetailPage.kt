@@ -71,7 +71,7 @@ import vplanplus.composeapp.generated.resources.trash_2
 @Composable
 fun DetailPage(
     state: DetailState,
-    onEvent: (event: DetailEvent) -> Unit
+    onEvent: (event: AssessmentDetailEvent) -> Unit
 ) {
     val assessment = state.assessment ?: return
 
@@ -87,7 +87,7 @@ fun DetailPage(
         // Handle picked files
         Logger.d { "Picked files: ${files?.map { it.path }}" }
         files?.forEach { file ->
-            onEvent(DetailEvent.AddFile(AttachedFile.Other(file)))
+            onEvent(AssessmentDetailEvent.AddFile(AttachedFile.Other(file)))
         }
     }
 
@@ -97,7 +97,7 @@ fun DetailPage(
     ) { images ->
         Logger.d { "Picked images: ${images?.map { it.path }}" }
         images?.forEach { image ->
-            onEvent(DetailEvent.AddFile(AttachedFile.Other(image)))
+            onEvent(AssessmentDetailEvent.AddFile(AttachedFile.Other(image)))
         }
     }
 
@@ -154,7 +154,7 @@ fun DetailPage(
                 }
                 FilledTonalIconButton(
                     enabled = state.reloadingState != UnoptimisticTaskState.InProgress,
-                    onClick = { onEvent(DetailEvent.Reload) }
+                    onClick = { onEvent(AssessmentDetailEvent.Reload) }
                 ) {
                     AnimatedContent(
                         targetState = state.reloadingState,
@@ -204,7 +204,7 @@ fun DetailPage(
             if (assessment.creator is AppEntity.VppId) ShareStatusRow(
                 canEdit = state.canEdit,
                 isPublic = assessment.isPublic,
-                onSelect = { isPublic -> onEvent(DetailEvent.UpdateVisibility(isPublic)) }
+                onSelect = { isPublic -> onEvent(AssessmentDetailEvent.UpdateVisibility(isPublic)) }
             )
 
             if (state.canEdit) {
@@ -232,7 +232,7 @@ fun DetailPage(
                 TextField(
                     value = text,
                     enabled = state.canEdit,
-                    onValueChange = { text = it; onEvent(DetailEvent.UpdateContent(it)) },
+                    onValueChange = { text = it; onEvent(AssessmentDetailEvent.UpdateContent(it)) },
                     minLines = 5,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -250,9 +250,9 @@ fun DetailPage(
                         file = file,
                         canEdit = state.canEdit,
                         downloadProgress = state.fileDownloadState[file.id],
-                        onDownloadClick = { onEvent(DetailEvent.DownloadFile(file)) },
-                        onRenameClick = { newName -> onEvent(DetailEvent.RenameFile(file, newName)) },
-                        onDeleteClick = { onEvent(DetailEvent.DeleteFile(file)) }
+                        onDownloadClick = { onEvent(AssessmentDetailEvent.DownloadFile(file)) },
+                        onRenameClick = { newName -> onEvent(AssessmentDetailEvent.RenameFile(file, newName)) },
+                        onDeleteClick = { onEvent(AssessmentDetailEvent.DeleteFile(file)) }
                     )
                 }
             }
@@ -292,14 +292,14 @@ fun DetailPage(
                 allowDatesInPast = false
             ),
             selectedDate = assessment.date,
-            onSelectDate = { onEvent(DetailEvent.UpdateDate(it)) },
+            onSelectDate = { onEvent(AssessmentDetailEvent.UpdateDate(it)) },
             onDismiss = { showDateSelectDrawer = false }
         )
     }
 
     if (showTypeSelectDrawer) TypeDrawer(
         selectedType = assessment.type,
-        onSelectType = { onEvent(DetailEvent.UpdateType(it)) },
+        onSelectType = { onEvent(AssessmentDetailEvent.UpdateType(it)) },
         onDismiss = { showTypeSelectDrawer = false }
     )
 
@@ -319,7 +319,7 @@ fun DetailPage(
             },
             confirmButton = {
                 TextButton(
-                    onClick = { onEvent(DetailEvent.Delete) },
+                    onClick = { onEvent(AssessmentDetailEvent.Delete) },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
                     )

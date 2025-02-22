@@ -73,7 +73,7 @@ import vplanplus.composeapp.generated.resources.trash_2
 @Composable
 fun DetailPage(
     state: DetailState,
-    onEvent: (event: DetailEvent) -> Unit
+    onEvent: (event: HomeworkDetailEvent) -> Unit
 ) {
     val homework = state.homework ?: return
     val profile = state.profile ?: return
@@ -92,7 +92,7 @@ fun DetailPage(
         // Handle picked files
         Logger.d { "Picked files: ${files?.map { it.path }}" }
         files?.forEach { file ->
-            onEvent(DetailEvent.AddFile(AttachedFile.Other(file)))
+            onEvent(HomeworkDetailEvent.AddFile(AttachedFile.Other(file)))
         }
     }
 
@@ -102,7 +102,7 @@ fun DetailPage(
     ) { images ->
         Logger.d { "Picked images: ${images?.map { it.path }}" }
         images?.forEach { image ->
-            onEvent(DetailEvent.AddFile(AttachedFile.Other(image)))
+            onEvent(HomeworkDetailEvent.AddFile(AttachedFile.Other(image)))
         }
     }
 
@@ -159,7 +159,7 @@ fun DetailPage(
                 }
                 FilledTonalIconButton(
                     enabled = state.reloadingState != UnoptimisticTaskState.InProgress,
-                    onClick = { onEvent(DetailEvent.Reload) }
+                    onClick = { onEvent(HomeworkDetailEvent.Reload) }
                 ) {
                     AnimatedContent(
                         targetState = state.reloadingState,
@@ -205,7 +205,7 @@ fun DetailPage(
             if (homework is Homework.CloudHomework) ShareStatusRow(
                 canEdit = state.canEdit,
                 isPublic = homework.isPublic,
-                onSelect = { isPublic -> onEvent(DetailEvent.UpdateVisibility(isPublic)) }
+                onSelect = { isPublic -> onEvent(HomeworkDetailEvent.UpdateVisibility(isPublic)) }
             )
 
             if (state.canEdit) {
@@ -243,17 +243,17 @@ fun DetailPage(
                     canEdit = state.canEdit,
                     taskToEdit = taskToEdit,
                     onSetTaskToEdit = { taskToEdit = it },
-                    onToggleTaskDone = { onEvent(DetailEvent.ToggleTaskDone(task)) },
-                    onUpdateTask = { onEvent(DetailEvent.UpdateTask(task, it)) },
+                    onToggleTaskDone = { onEvent(HomeworkDetailEvent.ToggleTaskDone(task)) },
+                    onUpdateTask = { onEvent(HomeworkDetailEvent.UpdateTask(task, it)) },
                     onDeleteTask = {
                         if (homework.tasks.size == 1) showDeleteDialog = true
-                        else onEvent(DetailEvent.DeleteTask(task))
+                        else onEvent(HomeworkDetailEvent.DeleteTask(task))
                     }
                 )
             }
             if (state.canEdit) NewTaskRow(
                 newTaskState = state.newTaskState,
-                onAddTask = { onEvent(DetailEvent.AddTask(it)) }
+                onAddTask = { onEvent(HomeworkDetailEvent.AddTask(it)) }
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -267,9 +267,9 @@ fun DetailPage(
                         file = file,
                         canEdit = state.canEdit,
                         downloadProgress = state.fileDownloadState[file.id],
-                        onDownloadClick = { onEvent(DetailEvent.DownloadFile(file)) },
-                        onRenameClick = { newName -> onEvent(DetailEvent.RenameFile(file, newName)) },
-                        onDeleteClick = { onEvent(DetailEvent.DeleteFile(file)) }
+                        onDownloadClick = { onEvent(HomeworkDetailEvent.DownloadFile(file)) },
+                        onRenameClick = { newName -> onEvent(HomeworkDetailEvent.RenameFile(file, newName)) },
+                        onDeleteClick = { onEvent(HomeworkDetailEvent.DeleteFile(file)) }
                     )
                 }
             }
@@ -309,7 +309,7 @@ fun DetailPage(
             allowGroup = true,
             defaultLessons = profile.defaultLessonItems.filter { defaultLesson -> profile.defaultLessons.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
             selectedDefaultLesson = homework.defaultLessonItem,
-            onSelectDefaultLesson = { onEvent(DetailEvent.UpdateDefaultLesson(it)) },
+            onSelectDefaultLesson = { onEvent(HomeworkDetailEvent.UpdateDefaultLesson(it)) },
             onDismiss = { showLessonSelectDrawer = false }
         )
     }
@@ -320,7 +320,7 @@ fun DetailPage(
                 allowDatesInPast = false
             ),
             selectedDate = homework.dueTo,
-            onSelectDate = { onEvent(DetailEvent.UpdateDueTo(it)) },
+            onSelectDate = { onEvent(HomeworkDetailEvent.UpdateDueTo(it)) },
             onDismiss = { showDateSelectDrawer = false }
         )
     }
@@ -341,7 +341,7 @@ fun DetailPage(
             },
             confirmButton = {
                 TextButton(
-                    onClick = { onEvent(DetailEvent.DeleteHomework) },
+                    onClick = { onEvent(HomeworkDetailEvent.DeleteHomework) },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
                     )
