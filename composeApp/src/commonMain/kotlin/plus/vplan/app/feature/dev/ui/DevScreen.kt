@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -25,6 +26,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Year
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
@@ -78,6 +80,10 @@ fun DevScreen(
         }
         App.yearSource.getAll().collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Year>>().map { it.data }.forEach { year ->
             Text("${year.id}: ${year.name}")
+            year.intervals.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Interval>>().map { it.data }.forEach { interval ->
+                Text("  ${interval.id}: ${interval.name}")
+            }
+            HorizontalDivider()
         }
         state.assessments.forEach { assessment ->
             Column(

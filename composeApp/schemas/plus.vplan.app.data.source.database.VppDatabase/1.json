@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "1e22b267098c0db761344fa556f93f3e",
+    "identityHash": "d3befa05f1249403fc3d0ab2871e10b1",
     "entities": [
       {
         "tableName": "schools",
@@ -3192,7 +3192,7 @@
       },
       {
         "tableName": "schulverwalter_interval",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `from` TEXT NOT NULL, `to` TEXT NOT NULL, `type` TEXT NOT NULL, `included_interval_id` INTEGER, `year_id` INTEGER NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`year_id`) REFERENCES `schulverwalter_year`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`included_interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `from` TEXT NOT NULL, `to` TEXT NOT NULL, `type` TEXT NOT NULL, `included_interval_id` INTEGER, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`included_interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -3230,12 +3230,6 @@
             "affinity": "INTEGER"
           },
           {
-            "fieldPath": "yearId",
-            "columnName": "year_id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
             "fieldPath": "userForRequest",
             "columnName": "user_for_request",
             "affinity": "INTEGER",
@@ -3265,15 +3259,6 @@
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_schulverwalter_interval_id` ON `${TABLE_NAME}` (`id`)"
           },
           {
-            "name": "index_schulverwalter_interval_year_id",
-            "unique": false,
-            "columnNames": [
-              "year_id"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_schulverwalter_interval_year_id` ON `${TABLE_NAME}` (`year_id`)"
-          },
-          {
             "name": "index_schulverwalter_interval_included_interval_id",
             "unique": false,
             "columnNames": [
@@ -3284,17 +3269,6 @@
           }
         ],
         "foreignKeys": [
-          {
-            "table": "schulverwalter_year",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "year_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
           {
             "table": "schulverwalter_interval",
             "onDelete": "CASCADE",
@@ -3478,11 +3452,56 @@
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_schulverwalter_year_id` ON `${TABLE_NAME}` (`id`)"
           }
         ]
+      },
+      {
+        "tableName": "fk_schulverwalter_year_schulverwalter_interval",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`year_id` INTEGER NOT NULL, `interval_id` INTEGER NOT NULL, PRIMARY KEY(`year_id`, `interval_id`))",
+        "fields": [
+          {
+            "fieldPath": "yearId",
+            "columnName": "year_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intervalId",
+            "columnName": "interval_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "year_id",
+            "interval_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_fk_schulverwalter_year_schulverwalter_interval_year_id",
+            "unique": false,
+            "columnNames": [
+              "year_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_year_schulverwalter_interval_year_id` ON `${TABLE_NAME}` (`year_id`)"
+          },
+          {
+            "name": "index_fk_schulverwalter_year_schulverwalter_interval_interval_id",
+            "unique": false,
+            "columnNames": [
+              "interval_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_year_schulverwalter_interval_interval_id` ON `${TABLE_NAME}` (`interval_id`)"
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1e22b267098c0db761344fa556f93f3e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd3befa05f1249403fc3d0ab2871e10b1')"
     ]
   }
 }

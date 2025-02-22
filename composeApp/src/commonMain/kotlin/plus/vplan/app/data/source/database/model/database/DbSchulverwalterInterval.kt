@@ -12,12 +12,6 @@ import kotlinx.datetime.LocalDate
     primaryKeys = ["id"],
     foreignKeys = [
         ForeignKey(
-            entity = DbSchulverwalterYear::class,
-            parentColumns = ["id"],
-            childColumns = ["year_id"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
             entity = DbSchulverwalterInterval::class,
             parentColumns = ["id"],
             childColumns = ["included_interval_id"],
@@ -26,7 +20,6 @@ import kotlinx.datetime.LocalDate
     ],
     indices = [
         Index(value = ["id"], unique = true),
-        Index(value = ["year_id"], unique = false),
         Index(value = ["included_interval_id"], unique = false)
     ]
 )
@@ -37,7 +30,6 @@ data class DbSchulverwalterInterval(
     @ColumnInfo(name = "to") val to: LocalDate,
     @ColumnInfo(name = "type") val type: String,
     @ColumnInfo(name = "included_interval_id") val includedIntervalId: Int?,
-    @ColumnInfo(name = "year_id") val yearId: Int,
     @ColumnInfo(name = "user_for_request") val userForRequest: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )
