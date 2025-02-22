@@ -1,6 +1,7 @@
 package plus.vplan.app.domain.model.schulverwalter
 
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Item
 
@@ -11,7 +12,9 @@ data class Grade(
     val isSelectedForFinalGrade: Boolean,
     val subjectId: Int,
     val teacherId: Int,
+    val givenAt: LocalDate,
     val collectionId: Int,
+    val vppIdId: Int,
     val cachedAt: Instant
 ): Item {
     override fun getEntityId(): String = this.id.toString()
@@ -19,4 +22,5 @@ data class Grade(
     val collection by lazy { App.collectionSource.getById(collectionId) }
     val subject by lazy { App.subjectSource.getById(subjectId) }
     val teacher by lazy { App.schulverwalterTeacherSource.getById(teacherId) }
+    val vppId by lazy { App.vppIdSource.getById(vppIdId) }
 }

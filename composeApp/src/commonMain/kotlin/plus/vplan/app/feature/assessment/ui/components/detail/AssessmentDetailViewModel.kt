@@ -33,7 +33,7 @@ import plus.vplan.app.feature.homework.domain.usecase.RenameFileUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 
-class DetailViewModel(
+class AssessmentDetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateAssessmentUseCase: UpdateAssessmentUseCase,
     private val deleteAssessmentUseCase: DeleteAssessmentUseCase,
@@ -46,13 +46,13 @@ class DetailViewModel(
     private val renameFileUseCase: RenameFileUseCase,
     private val deleteFileUseCase: DeleteFileUseCase
 ) : ViewModel() {
-    var state by mutableStateOf(DetailState())
+    var state by mutableStateOf(AssessmentDetailState())
         private set
 
     private var mainJob: Job? = null
 
     fun init(assessmentId: Int) {
-        state = DetailState()
+        state = AssessmentDetailState()
         mainJob?.cancel()
         mainJob = viewModelScope.launch {
             combine(
@@ -79,10 +79,10 @@ class DetailViewModel(
         }
     }
 
-    fun onEvent(event: DetailEvent) {
+    fun onEvent(event: AssessmentDetailEvent) {
         viewModelScope.launch {
             when (event) {
-                is DetailEvent.Reload -> {
+                is AssessmentDetailEvent.Reload -> {
                     state = state.copy(reloadingState = UnoptimisticTaskState.InProgress)
                     val result = updateAssessmentUseCase(state.assessment!!.id)
                     when (result) {
@@ -97,30 +97,30 @@ class DetailViewModel(
                         UpdateResult.DOES_NOT_EXIST -> state = state.copy(reloadingState = UnoptimisticTaskState.Success, deleteState = UnoptimisticTaskState.Success)
                     }
                 }
-                is DetailEvent.Delete -> {
+                is AssessmentDetailEvent.Delete -> {
                     state = state.copy(deleteState = UnoptimisticTaskState.InProgress)
                     val result = deleteAssessmentUseCase(state.assessment!!, state.profile!!)
                     state = state.copy(deleteState = if (result) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error)
                 }
-                is DetailEvent.UpdateType -> changeAssessmentTypeUseCase(state.assessment!!, event.type, state.profile!!)
-                is DetailEvent.UpdateDate -> changeAssessmentDateUseCase(state.assessment!!, event.date, state.profile!!)
-                is DetailEvent.UpdateVisibility -> changeAssessmentVisibilityUseCase(state.assessment!!, event.isPublic, state.profile!!)
-                is DetailEvent.UpdateContent -> changeAssessmentContentUseCase(state.assessment!!, event.content, state.profile!!)
-                is DetailEvent.AddFile -> addAssessmentFileUseCase(state.assessment!!, event.file.platformFile, state.profile!!)
-                is DetailEvent.DownloadFile -> {
+                is AssessmentDetailEvent.UpdateType -> changeAssessmentTypeUseCase(state.assessment!!, event.type, state.profile!!)
+                is AssessmentDetailEvent.UpdateDate -> changeAssessmentDateUseCase(state.assessment!!, event.date, state.profile!!)
+                is AssessmentDetailEvent.UpdateVisibility -> changeAssessmentVisibilityUseCase(state.assessment!!, event.isPublic, state.profile!!)
+                is AssessmentDetailEvent.UpdateContent -> changeAssessmentContentUseCase(state.assessment!!, event.content, state.profile!!)
+                is AssessmentDetailEvent.AddFile -> addAssessmentFileUseCase(state.assessment!!, event.file.platformFile, state.profile!!)
+                is AssessmentDetailEvent.DownloadFile -> {
                     downloadFileUseCase(event.file, state.profile!!).collectLatest {
                         state = state.copy(fileDownloadState = state.fileDownloadState.plus(event.file.id to it))
                     }
                     state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
                 }
-                is DetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
-                is DetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.profile!!)
+                is AssessmentDetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
+                is AssessmentDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.profile!!)
             }
         }
     }
 }
 
-data class DetailState(
+data class AssessmentDetailState(
     val assessment: Assessment? = null,
     val profile: Profile.StudentProfile? = null,
     val canEdit: Boolean = false,
@@ -146,17 +146,17 @@ private suspend fun Assessment.prefetch() {
     }
 }
 
-sealed class DetailEvent {
-    data class AddFile(val file: AttachedFile): DetailEvent()
-    data class UpdateType(val type: Assessment.Type): DetailEvent()
-    data class UpdateVisibility(val isPublic: Boolean): DetailEvent()
-    data class UpdateDate(val date: LocalDate): DetailEvent()
-    data class DownloadFile(val file: File): DetailEvent()
-    data class RenameFile(val file: File, val newName: String): DetailEvent()
-    data class DeleteFile(val file: File): DetailEvent()
+sealed class AssessmentDetailEvent {
+    data class AddFile(val file: AttachedFile): AssessmentDetailEvent()
+    data class UpdateType(val type: Assessment.Type): AssessmentDetailEvent()
+    data class UpdateVisibility(val isPublic: Boolean): AssessmentDetailEvent()
+    data class UpdateDate(val date: LocalDate): AssessmentDetailEvent()
+    data class DownloadFile(val file: File): AssessmentDetailEvent()
+    data class RenameFile(val file: File, val newName: String): AssessmentDetailEvent()
+    data class DeleteFile(val file: File): AssessmentDetailEvent()
 
-    data class UpdateContent(val content: String): DetailEvent()
+    data class UpdateContent(val content: String): AssessmentDetailEvent()
 
-    data object Reload : DetailEvent()
-    data object Delete : DetailEvent()
+    data object Reload : AssessmentDetailEvent()
+    data object Delete : AssessmentDetailEvent()
 }

@@ -34,6 +34,8 @@ data class EmbeddedSchulverwalterGrade(
         subjectId = subject.subjectId,
         teacherId = teacher.teacherId,
         collectionId = collections.collectionId,
+        vppIdId = grade.vppId,
+        givenAt = grade.givenAt,
         cachedAt = grade.cachedAt
     )
 }

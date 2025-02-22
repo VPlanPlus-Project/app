@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectIcon
@@ -20,7 +19,7 @@ fun SubjectGroupRow(
     canEdit: Boolean,
     allowGroup: Boolean,
     onClick: () -> Unit,
-    defaultLesson: DefaultLesson?,
+    subject: String?,
     group: Group? = null
 ) {
     MetadataRow(
@@ -36,14 +35,14 @@ fun SubjectGroupRow(
                 onClick = onClick
             ) {
                 AnimatedContent(
-                    targetState = defaultLesson?.subject?.subjectIcon() to defaultLesson?.subject
+                    targetState = subject?.subjectIcon() to subject
                 ) { (subjectIcon, subject) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         if (subjectIcon != null && subject != null) {
-                            SubjectIcon(Modifier.size(18.dp), defaultLesson?.subject)
+                            SubjectIcon(Modifier.size(18.dp), subject)
                             Text(
                                 text = subject,
                                 style = tableValueStyle(),

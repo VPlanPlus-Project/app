@@ -47,6 +47,7 @@ import plus.vplan.app.feature.calendar.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
 import plus.vplan.app.feature.dev.ui.DevScreen
+import plus.vplan.app.feature.grades.ui.components.detail.GradeDetailDrawer
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
@@ -201,6 +202,7 @@ fun MainScreenHost(
 
     var homeworkSheetHomeworkId by rememberSaveable { mutableStateOf<Int?>(null) }
     var assessmentSheetAssessmentId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var gradeSheetGradeId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(navigationTask) {
         if (navigationTask == null) return@LaunchedEffect
@@ -214,6 +216,7 @@ fun MainScreenHost(
             }
             is StartTask.Open.Homework -> homeworkSheetHomeworkId = navigationTask.homeworkId
             is StartTask.Open.Assessment -> assessmentSheetAssessmentId = navigationTask.assessmentId
+            is StartTask.Open.Grade -> gradeSheetGradeId = navigationTask.gradeId
 
             else -> Unit
         }
@@ -227,6 +230,11 @@ fun MainScreenHost(
     if (assessmentSheetAssessmentId != null) AssessmentDetailDrawer(
         assessmentId = assessmentSheetAssessmentId!!,
         onDismiss = { assessmentSheetAssessmentId = null }
+    )
+
+    if (gradeSheetGradeId != null) GradeDetailDrawer(
+        gradeId = gradeSheetGradeId!!,
+        onDismiss = { gradeSheetGradeId = null }
     )
 }
 

@@ -38,7 +38,7 @@ import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.uuid.ExperimentalUuidApi
 
-class DetailViewModel(
+class HomeworkDetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val toggleTaskDoneUseCase: ToggleTaskDoneUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
@@ -54,13 +54,13 @@ class DetailViewModel(
     private val deleteFileUseCase: DeleteFileUseCase,
     private val addFileUseCase: AddFileUseCase
 ) : ViewModel() {
-    var state by mutableStateOf(DetailState())
+    var state by mutableStateOf(HomeworkDetailState())
         private set
 
     private var mainJob: Job? = null
 
     fun init(homeworkId: Int) {
-        state = DetailState()
+        state = HomeworkDetailState()
         mainJob?.cancel()
         mainJob = viewModelScope.launch {
             combine(
@@ -83,14 +83,14 @@ class DetailViewModel(
         }
     }
 
-    fun onEvent(event: DetailEvent) {
+    fun onEvent(event: HomeworkDetailEvent) {
         viewModelScope.launch {
             when (event) {
-                is DetailEvent.ToggleTaskDone -> toggleTaskDoneUseCase(event.task, state.profile!!)
-                is DetailEvent.UpdateDefaultLesson -> editHomeworkDefaultLessonUseCase(state.homework!!, event.defaultLesson, state.profile!!)
-                is DetailEvent.UpdateDueTo -> editHomeworkDueToUseCase(state.homework!!, event.dueTo, state.profile!!)
-                is DetailEvent.UpdateVisibility -> editHomeworkVisibilityUseCase(state.homework as Homework.CloudHomework, event.isPublic, state.profile!!)
-                is DetailEvent.Reload -> {
+                is HomeworkDetailEvent.ToggleTaskDone -> toggleTaskDoneUseCase(event.task, state.profile!!)
+                is HomeworkDetailEvent.UpdateDefaultLesson -> editHomeworkDefaultLessonUseCase(state.homework!!, event.defaultLesson, state.profile!!)
+                is HomeworkDetailEvent.UpdateDueTo -> editHomeworkDueToUseCase(state.homework!!, event.dueTo, state.profile!!)
+                is HomeworkDetailEvent.UpdateVisibility -> editHomeworkVisibilityUseCase(state.homework as Homework.CloudHomework, event.isPublic, state.profile!!)
+                is HomeworkDetailEvent.Reload -> {
                     state = state.copy(reloadingState = UnoptimisticTaskState.InProgress)
                     val result = updateHomeworkUseCase(state.homework!!.id)
                     when (result) {
@@ -105,7 +105,7 @@ class DetailViewModel(
                         UpdateResult.DOES_NOT_EXIST -> state = state.copy(reloadingState = UnoptimisticTaskState.Success, deleteState = UnoptimisticTaskState.Success)
                     }
                 }
-                is DetailEvent.DeleteHomework -> {
+                is HomeworkDetailEvent.DeleteHomework -> {
                     state = state.copy(deleteState = UnoptimisticTaskState.InProgress)
                     val result = deleteHomeworkUseCase(state.homework!!, state.profile!!)
                     state = if (result) {
@@ -114,14 +114,14 @@ class DetailViewModel(
                         state.copy(deleteState = UnoptimisticTaskState.Error)
                     }
                 }
-                is DetailEvent.AddTask -> {
+                is HomeworkDetailEvent.AddTask -> {
                     state = state.copy(newTaskState = UnoptimisticTaskState.InProgress)
                     val result = addTaskUseCase(state.homework!!, event.task, state.profile!!)
                     state = if (result) state.copy(newTaskState = UnoptimisticTaskState.Success) else state.copy(newTaskState = UnoptimisticTaskState.Error)
                 }
-                is DetailEvent.UpdateTask -> updateTaskUseCase(event.task, event.newContent, state.profile!!)
-                is DetailEvent.DeleteTask -> {
-                    if (state.homework!!.tasks.size == 1) return@launch onEvent(DetailEvent.DeleteHomework)
+                is HomeworkDetailEvent.UpdateTask -> updateTaskUseCase(event.task, event.newContent, state.profile!!)
+                is HomeworkDetailEvent.DeleteTask -> {
+                    if (state.homework!!.tasks.size == 1) return@launch onEvent(HomeworkDetailEvent.DeleteHomework)
                     state = state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.InProgress))
                     val result = deleteTaskUseCase(event.task, state.profile!!)
                     state = if (result) {
@@ -130,21 +130,21 @@ class DetailViewModel(
                         state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.Error))
                     }
                 }
-                is DetailEvent.DownloadFile -> {
+                is HomeworkDetailEvent.DownloadFile -> {
                     downloadFileUseCase(event.file, state.profile!!).collectLatest {
                         state = state.copy(fileDownloadState = state.fileDownloadState.plus(event.file.id to it))
                     }
                     state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
                 }
-                is DetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
-                is DetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.profile!!)
-                is DetailEvent.AddFile -> addFileUseCase(state.homework!!, event.file.platformFile, state.profile!!)
+                is HomeworkDetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
+                is HomeworkDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.profile!!)
+                is HomeworkDetailEvent.AddFile -> addFileUseCase(state.homework!!, event.file.platformFile, state.profile!!)
             }
         }
     }
 }
 
-data class DetailState(
+data class HomeworkDetailState(
     val homework: Homework? = null,
     val profile: Profile.StudentProfile? = null,
     val canEdit: Boolean = false,
@@ -156,21 +156,21 @@ data class DetailState(
     val fileDownloadState: Map<Int, Float> = emptyMap(),
 )
 
-sealed class DetailEvent {
-    data class ToggleTaskDone(val task: Homework.HomeworkTask) : DetailEvent()
-    data class UpdateDefaultLesson(val defaultLesson: DefaultLesson?) : DetailEvent()
-    data class UpdateDueTo(val dueTo: LocalDate) : DetailEvent()
-    data class UpdateVisibility(val isPublic: Boolean) : DetailEvent()
-    data class AddTask(val task: String) : DetailEvent()
-    data class UpdateTask(val task: Homework.HomeworkTask, val newContent: String) : DetailEvent()
-    data class DeleteTask(val task: Homework.HomeworkTask) : DetailEvent()
-    data object DeleteHomework : DetailEvent()
-    data class DownloadFile(val file: File) : DetailEvent()
+sealed class HomeworkDetailEvent {
+    data class ToggleTaskDone(val task: Homework.HomeworkTask) : HomeworkDetailEvent()
+    data class UpdateDefaultLesson(val defaultLesson: DefaultLesson?) : HomeworkDetailEvent()
+    data class UpdateDueTo(val dueTo: LocalDate) : HomeworkDetailEvent()
+    data class UpdateVisibility(val isPublic: Boolean) : HomeworkDetailEvent()
+    data class AddTask(val task: String) : HomeworkDetailEvent()
+    data class UpdateTask(val task: Homework.HomeworkTask, val newContent: String) : HomeworkDetailEvent()
+    data class DeleteTask(val task: Homework.HomeworkTask) : HomeworkDetailEvent()
+    data object DeleteHomework : HomeworkDetailEvent()
+    data class DownloadFile(val file: File) : HomeworkDetailEvent()
 
-    data class RenameFile(val file: File, val newName: String) : DetailEvent()
-    data class DeleteFile(val file: File) : DetailEvent()
-    data class AddFile(val file: AttachedFile) : DetailEvent()
-    data object Reload : DetailEvent()
+    data class RenameFile(val file: File, val newName: String) : HomeworkDetailEvent()
+    data class DeleteFile(val file: File) : HomeworkDetailEvent()
+    data class AddFile(val file: AttachedFile) : HomeworkDetailEvent()
+    data object Reload : HomeworkDetailEvent()
 }
 
 private suspend fun Profile.StudentProfile.prefetch() {

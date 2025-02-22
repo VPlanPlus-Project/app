@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.data.repository.ResponseDataWrapper
@@ -59,7 +60,7 @@ class GradeRepositoryImpl(
                 val data = ResponseDataWrapper.fromJson<List<GradeItemResponse>>(response.bodyAsText())
                     ?: return Response.Error.ParsingError(response.bodyAsText())
 
-                handleResponse(data, accessToken.schulverwalterUserId)
+                handleResponse(data, accessToken.schulverwalterUserId, accessToken.vppId)
                 ids.addAll(data.map { it.id })
             }
             return Response.Success(ids)
@@ -95,7 +96,7 @@ class GradeRepositoryImpl(
             val data = ResponseDataWrapper.fromJson<List<GradeItemResponse>>(response.bodyAsText())
                 ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
-            handleResponse(data, accessToken.schulverwalterUserId)
+            handleResponse(data, accessToken.schulverwalterUserId, accessToken.vppId)
         }
 
         if (gradeFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
@@ -104,7 +105,11 @@ class GradeRepositoryImpl(
 
     override fun getAllIds(): Flow<List<Int>> = vppDatabase.gradeDao.getAll()
 
-    private suspend fun handleResponse(data: List<GradeItemResponse>, userForRequest: Int) {
+    override suspend fun setConsiderForFinalGrade(gradeId: Int, useForFinalGrade: Boolean) {
+        vppDatabase.gradeDao.setConsiderForFinalGrade(gradeId, useForFinalGrade)
+    }
+
+    private suspend fun handleResponse(data: List<GradeItemResponse>, userForRequest: Int, vppId: Int) {
         vppDatabase.subjectDao.upsert(
             subjects = data.map { grade ->
                 DbSchulverwalterSubject(
@@ -174,6 +179,8 @@ class GradeRepositoryImpl(
                     isOptional = isOptional,
                     isSelectedForFinalGrade = true,
                     userForRequest = userForRequest,
+                    givenAt = LocalDate.parse(grade.givenAt),
+                    vppId = vppId,
                     cachedAt = Clock.System.now()
                 )
             },
