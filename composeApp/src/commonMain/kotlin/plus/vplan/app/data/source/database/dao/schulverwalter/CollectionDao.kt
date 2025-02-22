@@ -7,6 +7,7 @@ import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterCollection
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSchulverwalterCollection
 
 @Dao
@@ -22,6 +23,7 @@ interface CollectionDao {
     suspend fun upsert(
         collections: List<DbSchulverwalterCollection>,
         intervalsCrossovers: List<FKSchulverwalterCollectionSchulverwalterInterval>,
+        subjectsCrossovers: List<FKSchulverwalterCollectionSchulverwalterSubject>
     )
 
     @Query("DELETE FROM fk_schulverwalter_collection_schulverwalter_interval WHERE collection_id = :collectionId AND interval_id NOT IN (:intervalIds)")

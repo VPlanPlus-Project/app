@@ -21,7 +21,9 @@ import plus.vplan.app.data.repository.ResponseDataWrapper
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterCollection
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterval
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
@@ -122,6 +124,17 @@ class CollectionRepositoryImpl(
         data.forEach { collection ->
             vppDatabase.intervalDao.deleteSchulverwalterYearSchulverwalterInterval(intervalId = collection.interval.id, yearIds = listOf(collection.interval.year))
         }
+
+        vppDatabase.subjectDao.upsert(subjects = data.map { collection ->
+            DbSchulverwalterSubject(
+                id = collection.subject.id,
+                name = collection.subject.name,
+                localId = collection.subject.localId,
+                userForRequest = userForRequest,
+                cachedAt = Clock.System.now()
+            )
+        })
+
         vppDatabase.collectionDao.upsert(
             collections = data.map {
                 DbSchulverwalterCollection(
@@ -137,7 +150,13 @@ class CollectionRepositoryImpl(
                     collectionId = collection.id,
                     intervalId = collection.interval.id
                 )
-            }
+            },
+            subjectsCrossovers = data.map { collection ->
+                FKSchulverwalterCollectionSchulverwalterSubject(
+                    collectionId = collection.id,
+                    subjectId = collection.subject.id
+                )
+            },
         )
 
         data.forEach { collection ->

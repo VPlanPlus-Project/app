@@ -83,13 +83,8 @@ fun DevScreen(
         }
         App.collectionSource.getAll().collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Collection>>().map { it.data }.forEach { collection ->
             Text("${collection.id}: ${collection.name}")
-            (collection.interval.collectAsState(null).value as? CacheState.Done)?.data?.let { interval ->
-                Text("  ${interval.id}: ${interval.name}")
-                if (interval.includedIntervalId != null) {
-                    (interval.includedInterval?.collectAsState(null)?.value as? CacheState.Done)?.data?.let { includedInterval ->
-                        Text("  (includes ${includedInterval.id}: ${includedInterval.name})")
-                    }
-                }
+            (collection.subject.collectAsState(null).value as? CacheState.Done)?.data?.let { subject ->
+                Text("  ${subject.id}: ${subject.name}")
             }
             HorizontalDivider()
         }

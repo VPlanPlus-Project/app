@@ -16,4 +16,5 @@ data class Collection(
     override fun getEntityId(): String = this.id.toString()
 
     val interval by lazy { App.intervalSource.getById(intervalId) }
+    val subject by lazy { App.subjectSource.getById(subjectId) }
 }

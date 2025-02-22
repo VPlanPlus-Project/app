@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "25e23923c5f895c137bf53f5346e36e4",
+    "identityHash": "262332400dcef6eb096b2abe22db1558",
     "entities": [
       {
         "tableName": "schools",
@@ -3382,11 +3382,56 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_collection_schulverwalter_interval_interval_id` ON `${TABLE_NAME}` (`interval_id`)"
           }
         ]
+      },
+      {
+        "tableName": "fk_schulverwalter_collection_schulverwalter_subject",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`collection_id` INTEGER NOT NULL, `subject_id` INTEGER NOT NULL, PRIMARY KEY(`collection_id`, `subject_id`))",
+        "fields": [
+          {
+            "fieldPath": "collectionId",
+            "columnName": "collection_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subjectId",
+            "columnName": "subject_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "collection_id",
+            "subject_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_fk_schulverwalter_collection_schulverwalter_subject_collection_id",
+            "unique": false,
+            "columnNames": [
+              "collection_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_collection_schulverwalter_subject_collection_id` ON `${TABLE_NAME}` (`collection_id`)"
+          },
+          {
+            "name": "index_fk_schulverwalter_collection_schulverwalter_subject_subject_id",
+            "unique": false,
+            "columnNames": [
+              "subject_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_collection_schulverwalter_subject_subject_id` ON `${TABLE_NAME}` (`subject_id`)"
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '25e23923c5f895c137bf53f5346e36e4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '262332400dcef6eb096b2abe22db1558')"
     ]
   }
 }
