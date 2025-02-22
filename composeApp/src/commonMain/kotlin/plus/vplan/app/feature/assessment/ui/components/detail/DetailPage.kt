@@ -257,7 +257,7 @@ fun DetailPage(
                 }
             }
 
-            Row(
+            if (state.canEdit) Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
