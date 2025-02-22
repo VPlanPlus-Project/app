@@ -64,4 +64,10 @@ interface VppIdDao {
 
     @Query("DELETE FROM vpp_id_schulverwalter WHERE vpp_id = :vppId")
     suspend fun deleteSchulverwalterAccessToken(vppId: Int)
+
+    @Query("SELECT * FROM vpp_id_schulverwalter WHERE schulverwalter_user_id = :userId LIMIT 1")
+    fun getSchulverwalterAccessBySchulverwalterUserId(userId: Int): Flow<DbVppIdSchulverwalter?>
+
+    @Query("SELECT * FROM vpp_id_schulverwalter")
+    fun getSchulverwalterAccess(): Flow<List<DbVppIdSchulverwalter>>
 }

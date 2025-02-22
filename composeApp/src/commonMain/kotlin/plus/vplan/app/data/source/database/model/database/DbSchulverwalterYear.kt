@@ -18,5 +18,6 @@ data class DbSchulverwalterYear(
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "from") val from: LocalDate,
     @ColumnInfo(name = "to") val to: LocalDate,
+    @ColumnInfo(name = "user_for_request") val userForRequest: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )

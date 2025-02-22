@@ -22,31 +22,31 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentUseCase
+import plus.vplan.app.domain.repository.schulverwalter.GradeRepository
 import kotlin.uuid.Uuid
 
 class DevViewModel(
     private val keyValueRepository: KeyValueRepository,
     private val assessmentRepository: AssessmentRepository,
     private val homeworkRepository: HomeworkRepository,
-    private val updateAssessmentUseCase: UpdateAssessmentUseCase,
     private val platformNotificationRepository: PlatformNotificationRepository,
+    private val gradeRepository: GradeRepository,
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
         private set
 
     init {
         viewModelScope.launch {
-            keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().collectLatest {
-                App.profileSource.getById(Uuid.parseHex(it))
+            keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().collectLatest { profileId ->
+                App.profileSource.getById(Uuid.parseHex(profileId))
                     .filterIsInstance<CacheState.Done<Profile>>()
                     .collectLatest { state = state.copy(profile = it.data) }
             }
         }
 
         viewModelScope.launch {
-            App.assessmentSource.getAll().map { it.filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }.collect {
-                state = state.copy(assessments = it.onEachIndexed { index, assessment ->
+            App.assessmentSource.getAll().map { assessments -> assessments.filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }.collect {
+                state = state.copy(assessments = it.onEach { assessment ->
                     assessment.prefetch()
                 })
             }
@@ -78,7 +78,8 @@ class DevViewModel(
 
                 DevEvent.Clear -> assessmentRepository.clearCache()
                 DevEvent.Sync -> {
-                    updateAssessmentUseCase(true)
+                    val a = gradeRepository.download()
+                    Logger.d { "Grades updated: $a" }
                 }
                 DevEvent.Notify -> platformNotificationRepository.sendNotification("Test", "Test", "Profil")
             }

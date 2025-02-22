@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import kotlinx.datetime.Instant
+import plus.vplan.app.domain.model.schulverwalter.Teacher
 
 @Entity(
     tableName = "schulverwalter_teacher",
@@ -17,5 +18,14 @@ data class DbSchulverwalterTeacher(
     @ColumnInfo(name = "forename") val forename: String,
     @ColumnInfo(name = "surname") val surname: String,
     @ColumnInfo(name = "local_id") val localId: String,
+    @ColumnInfo(name = "user_for_request") val userForRequest: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
-)
+) {
+    fun toModel() = Teacher(
+        id = id,
+        forename = forename,
+        name = surname,
+        localId = localId,
+        cachedAt = cachedAt
+    )
+}
