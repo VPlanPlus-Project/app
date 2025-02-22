@@ -3,6 +3,8 @@ package plus.vplan.app.feature.dev.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -19,10 +22,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.domain.model.schulverwalter.Year
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DevScreen(
     contentPadding: PaddingValues,
@@ -42,7 +49,7 @@ fun DevScreen(
     ) {
         Text(state.profile?.name.toString())
         Text(state.updateResponse.toString())
-        Row {
+        FlowRow {
             Button(
                 onClick = { viewModel.onEvent(DevEvent.Refresh) }
             ) {
@@ -68,6 +75,9 @@ fun DevScreen(
             ) {
                 Text("Clear Cache")
             }
+        }
+        App.yearSource.getAll().collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Year>>().map { it.data }.forEach { year ->
+            Text("${year.id}: ${year.name}")
         }
         state.assessments.forEach { assessment ->
             Column(

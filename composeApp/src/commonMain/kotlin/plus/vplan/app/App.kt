@@ -31,6 +31,7 @@ import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
+import plus.vplan.app.domain.source.schulverwalter.YearSource
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
 import kotlin.uuid.Uuid
@@ -97,6 +98,8 @@ object App {
     lateinit var substitutionPlanSource: SubstitutionPlanSource
     lateinit var assessmentSource: AssessmentSource
     lateinit var fileSource: FileSource
+
+    lateinit var yearSource: YearSource
 }
 
 @Composable

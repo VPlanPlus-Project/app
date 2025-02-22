@@ -27,6 +27,7 @@ import plus.vplan.app.data.source.database.dao.TeacherDao
 import plus.vplan.app.data.source.database.dao.TimetableDao
 import plus.vplan.app.data.source.database.dao.VppIdDao
 import plus.vplan.app.data.source.database.dao.WeekDao
+import plus.vplan.app.data.source.database.dao.schulverwalter.YearDao
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbDay
 import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
@@ -171,4 +172,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val homeworkDao: HomeworkDao
     abstract val fileDao: FileDao
     abstract val assessmentDao: AssessmentDao
+
+    // Schulverwalter
+    abstract val yearDao: YearDao
 }

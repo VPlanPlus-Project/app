@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.model.schulverwalter.Year
 
 @Entity(
     tableName = "schulverwalter_year",
@@ -20,4 +21,14 @@ data class DbSchulverwalterYear(
     @ColumnInfo(name = "to") val to: LocalDate,
     @ColumnInfo(name = "user_for_request") val userForRequest: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
-)
+) {
+    fun toModel(): Year {
+        return Year(
+            id = id,
+            name = name,
+            from = from,
+            to = to,
+            cachedAt = cachedAt
+        )
+    }
+}

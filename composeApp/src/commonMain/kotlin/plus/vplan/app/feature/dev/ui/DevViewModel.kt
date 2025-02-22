@@ -22,15 +22,15 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentUseCase
+import plus.vplan.app.domain.repository.schulverwalter.YearRepository
 import kotlin.uuid.Uuid
 
 class DevViewModel(
     private val keyValueRepository: KeyValueRepository,
     private val assessmentRepository: AssessmentRepository,
     private val homeworkRepository: HomeworkRepository,
-    private val updateAssessmentUseCase: UpdateAssessmentUseCase,
     private val platformNotificationRepository: PlatformNotificationRepository,
+    private val yearRepository: YearRepository,
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
         private set
@@ -78,7 +78,7 @@ class DevViewModel(
 
                 DevEvent.Clear -> assessmentRepository.clearCache()
                 DevEvent.Sync -> {
-                    updateAssessmentUseCase(true)
+                    yearRepository.download()
                 }
                 DevEvent.Notify -> platformNotificationRepository.sendNotification("Test", "Test", "Profil")
             }

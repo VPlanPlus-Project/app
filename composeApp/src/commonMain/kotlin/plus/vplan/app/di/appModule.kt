@@ -67,6 +67,7 @@ import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
+import plus.vplan.app.domain.source.schulverwalter.YearSource
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.di.assessmentModule
 import plus.vplan.app.feature.calendar.di.calendarModule
@@ -77,6 +78,7 @@ import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
 import plus.vplan.app.feature.profile.page.di.profileModule
 import plus.vplan.app.feature.profile.settings.di.profileSettingsModule
+import plus.vplan.app.feature.schulverwalter.di.schulverwalterModule
 import plus.vplan.app.feature.search.di.searchModule
 import plus.vplan.app.feature.settings.di.settingsModule
 import plus.vplan.app.feature.sync.di.syncModule
@@ -144,7 +146,8 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             profileModule,
             profileSettingsModule,
             vppIdModule,
-            settingsModule
+            settingsModule,
+            schulverwalterModule
         )
         modules(devModule)
         
@@ -166,5 +169,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         App.substitutionPlanSource = SubstitutionPlanSource(koin.get())
         App.assessmentSource = AssessmentSource(koin.get())
         App.fileSource = FileSource(koin.get(), koin.get())
+
+        App.yearSource = YearSource(koin.get())
     }
 }
