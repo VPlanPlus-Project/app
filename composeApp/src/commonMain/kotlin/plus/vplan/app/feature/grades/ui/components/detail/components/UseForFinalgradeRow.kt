@@ -10,6 +10,7 @@ import plus.vplan.app.feature.homework.ui.components.detail.components.tableName
 @Composable
 fun UseForFinalGradeRow(
     useForFinalGrade: Boolean,
+    wasNotGiven: Boolean,
     onToggle: () -> Unit
 ) {
     MetadataRow(
@@ -21,13 +22,14 @@ fun UseForFinalGradeRow(
         },
         value = {
             MetadataValueContainer(
-                canEdit = true,
+                canEdit = !wasNotGiven,
                 editStyling = false,
                 onClick = onToggle
             ) {
                 Switch(
-                    checked = useForFinalGrade,
-                    onCheckedChange = { onToggle() }
+                    checked = if (wasNotGiven) false else useForFinalGrade,
+                    onCheckedChange = { onToggle() },
+                    enabled = !wasNotGiven
                 )
             }
         }

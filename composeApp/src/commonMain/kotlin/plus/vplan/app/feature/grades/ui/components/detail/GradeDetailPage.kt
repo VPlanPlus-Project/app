@@ -81,8 +81,18 @@ fun GradeDetailPage(
             ) {
                 Text(
                     text = buildString {
-                        append("Note")
-                        if (grade.value != null) append(" ${grade.value}")
+                        val value = if (grade.isOptional) "(${grade.value})" else grade.value
+                        when (interval?.type) {
+                            null -> Unit
+                            Interval.Type.SEK1 -> {
+                                append("Note")
+                                if (grade.value != null) append(" ${value}")
+                            }
+                            Interval.Type.SEK2 -> {
+                                if (grade.value == null) append("Note")
+                                else append("$value Notenpunkte")
+                            }
+                        }
                     },
                     style = MaterialTheme.typography.headlineLarge,
                     maxLines = 1,
@@ -140,7 +150,7 @@ fun GradeDetailPage(
             if (teacher != null) GivenByRow("${teacher.forename} ${teacher.name}")
             if (vppId != null) UserRow(vppId.name)
             OptionalRow(grade.isOptional)
-            UseForFinalGradeRow(grade.isSelectedForFinalGrade) { onEvent(GradeDetailEvent.ToggleConsiderForFinalGrade) }
+            UseForFinalGradeRow(grade.isSelectedForFinalGrade, grade.value == null) { onEvent(GradeDetailEvent.ToggleConsiderForFinalGrade) }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             if (collection != null) Text(text = collection.name)
