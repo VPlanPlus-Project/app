@@ -76,6 +76,7 @@ import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.di.assessmentModule
 import plus.vplan.app.feature.calendar.di.calendarModule
 import plus.vplan.app.feature.dev.di.devModule
+import plus.vplan.app.feature.grades.di.gradeModule
 import plus.vplan.app.feature.home.di.homeModule
 import plus.vplan.app.feature.homework.di.homeworkModule
 import plus.vplan.app.feature.host.di.hostModule
@@ -151,7 +152,8 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             profileSettingsModule,
             vppIdModule,
             settingsModule,
-            schulverwalterModule
+            schulverwalterModule,
+            gradeModule
         )
         modules(devModule)
         

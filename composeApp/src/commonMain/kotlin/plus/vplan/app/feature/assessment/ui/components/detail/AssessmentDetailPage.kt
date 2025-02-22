@@ -187,7 +187,7 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = false,
                 allowGroup = false,
-                defaultLesson = assessment.subjectInstanceItem,
+                subject = assessment.subjectInstanceItem?.subject,
                 onClick = {}
             )
             TypeRow(

@@ -105,6 +105,10 @@ class GradeRepositoryImpl(
 
     override fun getAllIds(): Flow<List<Int>> = vppDatabase.gradeDao.getAll()
 
+    override suspend fun setConsiderForFinalGrade(gradeId: Int, useForFinalGrade: Boolean) {
+        vppDatabase.gradeDao.setConsiderForFinalGrade(gradeId, useForFinalGrade)
+    }
+
     private suspend fun handleResponse(data: List<GradeItemResponse>, userForRequest: Int, vppId: Int) {
         vppDatabase.subjectDao.upsert(
             subjects = data.map { grade ->

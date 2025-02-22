@@ -192,7 +192,7 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = state.canEdit,
                 allowGroup = true,
-                defaultLesson = homework.defaultLessonItem,
+                subject = homework.defaultLessonItem?.subject,
                 group = homework.groupItem,
                 onClick = { showLessonSelectDrawer = true },
             )

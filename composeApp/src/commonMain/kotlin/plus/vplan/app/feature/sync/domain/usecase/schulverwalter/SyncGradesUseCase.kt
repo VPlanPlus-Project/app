@@ -32,7 +32,8 @@ class SyncGradesUseCase(
         val downloadedGrades = gradeRepository.download()
 
         if (allowNotifications && downloadedGrades is Response.Success && downloadedGrades.data.isNotEmpty()) {
-            val newGrades = combine((downloadedGrades.data - existingGrades).map { ids -> App.gradeSource.getById(ids).filterIsInstance<CacheState.Done<Grade>>().map { it.data } }) { it.toList() }.first()
+            val newGradeIds = (downloadedGrades.data - existingGrades)
+            val newGrades = combine(newGradeIds.ifEmpty { return }.map { ids -> App.gradeSource.getById(ids).filterIsInstance<CacheState.Done<Grade>>().map { it.data } }) { it.toList() }.first()
                 .filter {  LocalDate.now().toEpochDays() - it.givenAt.toEpochDays() <= 2 }
 
             if (newGrades.isEmpty()) return
