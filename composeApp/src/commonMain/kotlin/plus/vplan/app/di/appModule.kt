@@ -67,6 +67,7 @@ import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
+import plus.vplan.app.domain.source.schulverwalter.CollectionSource
 import plus.vplan.app.domain.source.schulverwalter.IntervalSource
 import plus.vplan.app.domain.source.schulverwalter.YearSource
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
@@ -173,5 +174,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
 
         App.yearSource = YearSource(koin.get())
         App.intervalSource = IntervalSource(koin.get())
+        App.collectionSource = CollectionSource(koin.get())
     }
 }

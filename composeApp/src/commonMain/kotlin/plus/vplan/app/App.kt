@@ -31,6 +31,7 @@ import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
+import plus.vplan.app.domain.source.schulverwalter.CollectionSource
 import plus.vplan.app.domain.source.schulverwalter.IntervalSource
 import plus.vplan.app.domain.source.schulverwalter.YearSource
 import plus.vplan.app.feature.host.ui.NavigationHost
@@ -102,6 +103,7 @@ object App {
 
     lateinit var yearSource: YearSource
     lateinit var intervalSource: IntervalSource
+    lateinit var collectionSource: CollectionSource
 }
 
 @Composable

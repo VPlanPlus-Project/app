@@ -27,6 +27,8 @@ import plus.vplan.app.data.source.database.dao.TeacherDao
 import plus.vplan.app.data.source.database.dao.TimetableDao
 import plus.vplan.app.data.source.database.dao.VppIdDao
 import plus.vplan.app.data.source.database.dao.WeekDao
+import plus.vplan.app.data.source.database.dao.schulverwalter.CollectionDao
+import plus.vplan.app.data.source.database.dao.schulverwalter.GradeDao
 import plus.vplan.app.data.source.database.dao.schulverwalter.IntervalDao
 import plus.vplan.app.data.source.database.dao.schulverwalter.YearDao
 import plus.vplan.app.data.source.database.model.database.DbCourse
@@ -77,6 +79,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 
 @Database(
@@ -144,6 +147,7 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulver
         DbSchulverwalterYear::class,
 
         FKSchulverwalterYearSchulverwalterInterval::class,
+        FKSchulverwalterCollectionSchulverwalterInterval::class,
     ],
     version = 1,
 )
@@ -180,4 +184,6 @@ abstract class VppDatabase : RoomDatabase() {
     // Schulverwalter
     abstract val yearDao: YearDao
     abstract val intervalDao: IntervalDao
+    abstract val collectionDao: CollectionDao
+    abstract val gradeDao: GradeDao
 }

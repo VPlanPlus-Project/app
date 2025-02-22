@@ -22,7 +22,7 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.domain.repository.schulverwalter.YearRepository
+import plus.vplan.app.domain.repository.schulverwalter.CollectionRepository
 import kotlin.uuid.Uuid
 
 class DevViewModel(
@@ -30,23 +30,23 @@ class DevViewModel(
     private val assessmentRepository: AssessmentRepository,
     private val homeworkRepository: HomeworkRepository,
     private val platformNotificationRepository: PlatformNotificationRepository,
-    private val yearRepository: YearRepository,
+    private val collectionRepository: CollectionRepository,
 ) : ViewModel() {
     var state by mutableStateOf(DevState())
         private set
 
     init {
         viewModelScope.launch {
-            keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().collectLatest {
-                App.profileSource.getById(Uuid.parseHex(it))
+            keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().collectLatest { profileId ->
+                App.profileSource.getById(Uuid.parseHex(profileId))
                     .filterIsInstance<CacheState.Done<Profile>>()
                     .collectLatest { state = state.copy(profile = it.data) }
             }
         }
 
         viewModelScope.launch {
-            App.assessmentSource.getAll().map { it.filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }.collect {
-                state = state.copy(assessments = it.onEachIndexed { index, assessment ->
+            App.assessmentSource.getAll().map { assessments -> assessments.filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }.collect {
+                state = state.copy(assessments = it.onEach { assessment ->
                     assessment.prefetch()
                 })
             }
@@ -78,7 +78,7 @@ class DevViewModel(
 
                 DevEvent.Clear -> assessmentRepository.clearCache()
                 DevEvent.Sync -> {
-                    yearRepository.download()
+                    collectionRepository.download()
                 }
                 DevEvent.Notify -> platformNotificationRepository.sendNotification("Test", "Test", "Profil")
             }

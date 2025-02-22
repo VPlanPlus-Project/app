@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "d3befa05f1249403fc3d0ab2871e10b1",
+    "identityHash": "25e23923c5f895c137bf53f5346e36e4",
     "entities": [
       {
         "tableName": "schools",
@@ -2821,7 +2821,7 @@
       },
       {
         "tableName": "schulverwalter_collection",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `type` TEXT NOT NULL, `name` TEXT NOT NULL, `subject_id` INTEGER NOT NULL, `interval_id` INTEGER NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subject_id`) REFERENCES `schulverwalter_subject`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `type` TEXT NOT NULL, `name` TEXT NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -2839,18 +2839,6 @@
             "fieldPath": "name",
             "columnName": "name",
             "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "subjectId",
-            "columnName": "subject_id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "intervalId",
-            "columnName": "interval_id",
-            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -2881,48 +2869,6 @@
             ],
             "orders": [],
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_schulverwalter_collection_id` ON `${TABLE_NAME}` (`id`)"
-          },
-          {
-            "name": "index_schulverwalter_collection_subject_id",
-            "unique": false,
-            "columnNames": [
-              "subject_id"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_schulverwalter_collection_subject_id` ON `${TABLE_NAME}` (`subject_id`)"
-          },
-          {
-            "name": "index_schulverwalter_collection_interval_id",
-            "unique": false,
-            "columnNames": [
-              "interval_id"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_schulverwalter_collection_interval_id` ON `${TABLE_NAME}` (`interval_id`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "schulverwalter_subject",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "subject_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "schulverwalter_interval",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "interval_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
           }
         ]
       },
@@ -3028,7 +2974,7 @@
       },
       {
         "tableName": "schulverwalter_grade",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `value` TEXT, `is_optional` INTEGER NOT NULL, `is_selected_for_final_grade` INTEGER NOT NULL, `subject_id` INTEGER NOT NULL, `interval_id` INTEGER NOT NULL, `teacher_id` INTEGER NOT NULL, `collection_id` INTEGER NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subject_id`) REFERENCES `schulverwalter_subject`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`interval_id`) REFERENCES `schulverwalter_interval`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`teacher_id`) REFERENCES `schulverwalter_teacher`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`collection_id`) REFERENCES `schulverwalter_collection`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `value` TEXT, `is_optional` INTEGER NOT NULL, `is_selected_for_final_grade` INTEGER NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -3050,30 +2996,6 @@
           {
             "fieldPath": "isSelectedForFinalGrade",
             "columnName": "is_selected_for_final_grade",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "subjectId",
-            "columnName": "subject_id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "intervalId",
-            "columnName": "interval_id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "teacherId",
-            "columnName": "teacher_id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "collectionId",
-            "columnName": "collection_id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -3105,88 +3027,6 @@
             ],
             "orders": [],
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_schulverwalter_grade_id` ON `${TABLE_NAME}` (`id`)"
-          },
-          {
-            "name": "index_schulverwalter_grade_subject_id",
-            "unique": false,
-            "columnNames": [
-              "subject_id"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_schulverwalter_grade_subject_id` ON `${TABLE_NAME}` (`subject_id`)"
-          },
-          {
-            "name": "index_schulverwalter_grade_interval_id",
-            "unique": false,
-            "columnNames": [
-              "interval_id"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_schulverwalter_grade_interval_id` ON `${TABLE_NAME}` (`interval_id`)"
-          },
-          {
-            "name": "index_schulverwalter_grade_teacher_id",
-            "unique": false,
-            "columnNames": [
-              "teacher_id"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_schulverwalter_grade_teacher_id` ON `${TABLE_NAME}` (`teacher_id`)"
-          },
-          {
-            "name": "index_schulverwalter_grade_collection_id",
-            "unique": false,
-            "columnNames": [
-              "collection_id"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_schulverwalter_grade_collection_id` ON `${TABLE_NAME}` (`collection_id`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "schulverwalter_subject",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "subject_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "schulverwalter_interval",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "interval_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "schulverwalter_teacher",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "teacher_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "schulverwalter_collection",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "collection_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
           }
         ]
       },
@@ -3497,11 +3337,56 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_year_schulverwalter_interval_interval_id` ON `${TABLE_NAME}` (`interval_id`)"
           }
         ]
+      },
+      {
+        "tableName": "fk_schulverwalter_collection_schulverwalter_interval",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`collection_id` INTEGER NOT NULL, `interval_id` INTEGER NOT NULL, PRIMARY KEY(`collection_id`, `interval_id`))",
+        "fields": [
+          {
+            "fieldPath": "collectionId",
+            "columnName": "collection_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intervalId",
+            "columnName": "interval_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "collection_id",
+            "interval_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_fk_schulverwalter_collection_schulverwalter_interval_collection_id",
+            "unique": false,
+            "columnNames": [
+              "collection_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_collection_schulverwalter_interval_collection_id` ON `${TABLE_NAME}` (`collection_id`)"
+          },
+          {
+            "name": "index_fk_schulverwalter_collection_schulverwalter_interval_interval_id",
+            "unique": false,
+            "columnNames": [
+              "interval_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_collection_schulverwalter_interval_interval_id` ON `${TABLE_NAME}` (`interval_id`)"
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd3befa05f1249403fc3d0ab2871e10b1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '25e23923c5f895c137bf53f5346e36e4')"
     ]
   }
 }

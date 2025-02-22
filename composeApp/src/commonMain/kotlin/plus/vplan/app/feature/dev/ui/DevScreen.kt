@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -26,6 +28,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Year
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
@@ -78,10 +81,28 @@ fun DevScreen(
                 Text("Clear Cache")
             }
         }
+        App.collectionSource.getAll().collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Collection>>().map { it.data }.forEach { collection ->
+            Text("${collection.id}: ${collection.name}")
+            (collection.interval.collectAsState(null).value as? CacheState.Done)?.data?.let { interval ->
+                Text("  ${interval.id}: ${interval.name}")
+                if (interval.includedIntervalId != null) {
+                    (interval.includedInterval?.collectAsState(null)?.value as? CacheState.Done)?.data?.let { includedInterval ->
+                        Text("  (includes ${includedInterval.id}: ${includedInterval.name})")
+                    }
+                }
+            }
+            HorizontalDivider()
+        }
+        Spacer(Modifier.height(8.dp))
         App.yearSource.getAll().collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Year>>().map { it.data }.forEach { year ->
             Text("${year.id}: ${year.name}")
             year.intervals.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Interval>>().map { it.data }.forEach { interval ->
                 Text("  ${interval.id}: ${interval.name}")
+                if (interval.includedIntervalId != null) {
+                    (interval.includedInterval?.collectAsState(null)?.value as? CacheState.Done)?.data?.let { includedInterval ->
+                        Text("  (includes ${includedInterval.id}: ${includedInterval.name})")
+                    }
+                }
             }
             HorizontalDivider()
         }
