@@ -19,7 +19,7 @@ class LogoutVppIdUseCase(
             .latest()
             .filterIsInstance<Profile.StudentProfile>()
             .forEach {
-                if (it.vppId == vppId.id) profileRepository.updateVppId(it.id, null)
+                if (it.vppIdId == vppId.id) profileRepository.updateVppId(it.id, null)
             }
         vppIdRepository.deleteAccessTokens(vppId)
         return Response.Success(Unit)

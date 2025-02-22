@@ -163,14 +163,14 @@ sealed interface Lesson : Item {
         when (profile) {
             is Profile.StudentProfile -> {
                 if (profile.group !in this.groups) return false
-                if (profile.defaultLessons.filterValues { false }.any { it.key == this.defaultLesson }) return false
+                if (profile.defaultLessonsConfiguration.filterValues { false }.any { it.key == this.defaultLesson }) return false
                 if (this is TimetableLesson) {
-                    val defaultLessons = profile.defaultLessons.mapKeys { profile.getDefaultLesson(it.key) }
+                    val defaultLessons = profile.defaultLessonsConfiguration.mapKeys { profile.getDefaultLesson(it.key) }
                     if (defaultLessons.filterValues { !it }.any { it.key.getCourseItem()?.name == this.subject }) return false
                     if (defaultLessons.filterValues { !it }.any { it.key.course == null && it.key.subject == this.subject }) return false
                     defaultLessons.isEmpty()
                 } else if (this is SubstitutionPlanLesson) {
-                    if (this.defaultLesson != null && this.defaultLesson in profile.defaultLessons.filterValues { !it }) return false
+                    if (this.defaultLesson != null && this.defaultLesson in profile.defaultLessonsConfiguration.filterValues { !it }) return false
                 }
             }
             is Profile.TeacherProfile -> {

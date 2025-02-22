@@ -33,8 +33,8 @@ class ProfileSettingsViewModel(
             getProfileByIdUseCase(Uuid.parse(profileId)).collect { profile ->
                 logger.d { "Got profile $profile" }
                 state = state.copy(profile = profile.also { it?.prefetch() })
-                if (profile is Profile.StudentProfile && profile.vppId != null) {
-                    checkIfVppIdIsStillConnectedUseCase(App.vppIdSource.getById(profile.vppId).getFirstValue() as VppId.Active).let {
+                if (profile is Profile.StudentProfile && profile.vppIdId != null) {
+                    checkIfVppIdIsStillConnectedUseCase(App.vppIdSource.getById(profile.vppIdId).getFirstValue() as VppId.Active).let {
                         state = state.copy(isVppIdStillConnected = it)
                     }
                 }

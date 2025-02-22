@@ -99,7 +99,7 @@ private fun HomeContent(
                 .fillMaxWidth()
         ) {
             run greeting@{
-                val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppId?.let {
+                val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppIdId?.let {
                     App.vppIdSource.getById(it).collectAsState(CacheState.Loading(it.toString()))
                 }
                 Greeting(

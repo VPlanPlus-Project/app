@@ -10,7 +10,7 @@ class GetCourseConfigurationUseCase {
         return profile.getDefaultLessons()
             .groupBy { it.getCourseItem() }
             .map { (course, defaultLessons) ->
-                val selections = defaultLessons.map { profile.defaultLessons[it.id] == true }
+                val selections = defaultLessons.map { profile.defaultLessonsConfiguration[it.id] == true }
                 course to if (selections.all { it }) true else if (selections.any { it }) null else false
             }
             .filter { it.first != null }

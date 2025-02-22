@@ -12,8 +12,8 @@ class GetAssessmentsForProfileUseCase(
         .map { items ->
             items
                 .filter {
-                    (it.creator is AppEntity.Profile && it.creator.id == profile.id) || (it.creator is AppEntity.VppId && it.creator.id == profile.vppId) ||
-                            (profile.group in it.getSubjectInstanceItem().groups && profile.defaultLessons.any { (id, allowed) -> it.defaultLessonId == id && allowed })
+                    (it.creator is AppEntity.Profile && it.creator.id == profile.id) || (it.creator is AppEntity.VppId && it.creator.id == profile.vppIdId) ||
+                            (profile.group in it.getSubjectInstanceItem().groups && profile.defaultLessonsConfiguration.any { (id, allowed) -> it.defaultLessonId == id && allowed })
                 }.onEach {
                     it.getCreatedByProfileItem()
                     it.getCreatedByVppIdItem()

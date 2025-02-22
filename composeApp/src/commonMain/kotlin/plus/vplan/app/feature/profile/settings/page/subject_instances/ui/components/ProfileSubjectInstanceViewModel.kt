@@ -37,7 +37,7 @@ class ProfileSubjectInstanceViewModel(
                 state = state.copy(
                     profile = profile,
                     courses = getCourseConfigurationUseCase(profile),
-                    defaultLessons = profile.defaultLessons
+                    defaultLessons = profile.defaultLessonsConfiguration
                         .mapKeys { (key, _) -> profile.defaultLessonItems.first { it.id == key } }
                         .toList()
                         .sortedBy { runBlocking { it.first.subject + (it.first.getCourseItem()?.name ?: "") + (it.first.getTeacherItem()?.name ?: "") } }

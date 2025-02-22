@@ -70,7 +70,7 @@ class AssessmentDetailViewModel(
                 state.copy(
                     assessment = assessment,
                     profile = profile,
-                    canEdit = (assessment.creator is AppEntity.VppId && profile.vppId == assessment.creator.id) || (assessment.creator is AppEntity.Profile && profile.id == assessment.creator.id),
+                    canEdit = (assessment.creator is AppEntity.VppId && profile.vppIdId == assessment.creator.id) || (assessment.creator is AppEntity.Profile && profile.id == assessment.creator.id),
                     reloadingState = if (isOtherAssessment) null else state.reloadingState,
                     deleteState = if (isOtherAssessment) null else state.deleteState,
                     initDone = true

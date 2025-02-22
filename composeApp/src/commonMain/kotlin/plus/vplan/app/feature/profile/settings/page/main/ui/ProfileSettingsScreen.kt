@@ -205,14 +205,14 @@ private fun ProfileSettingsContent(
             Spacer(Modifier.height(8.dp))
             if (state.profile is Profile.StudentProfile) {
                 AnimatedContent(
-                    targetState = state.profile.vppId,
+                    targetState = state.profile.vppIdId,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.surfaceContainer)
                         .clickable {
-                            if (state.profile.vppId == null || state.isVppIdStillConnected == VppIdConnectionState.DISCONNECTED) {
+                            if (state.profile.vppIdId == null || state.isVppIdStillConnected == VppIdConnectionState.DISCONNECTED) {
                                 BrowserIntent.openUrl(VPP_ID_AUTH_URL)
                                 return@clickable
                             }
@@ -290,7 +290,7 @@ private fun ProfileSettingsContent(
 
         if (isVppIdManagementDrawerVisible &&
             state.profile is Profile.StudentProfile &&
-            state.profile.vppId != null) {
+            state.profile.vppIdId != null) {
             VppIdManagementDrawer(
                 vppId = state.profile.vppIdItem!!,
                 onDismiss = { isVppIdManagementDrawerVisible = false }

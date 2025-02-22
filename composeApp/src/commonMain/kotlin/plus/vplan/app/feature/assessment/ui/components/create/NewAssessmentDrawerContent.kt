@@ -224,7 +224,7 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
     if (showLessonSelectDrawer) LessonSelectDrawer(
         group = (state.currentProfile as Profile.StudentProfile).groupItem!!,
         allowGroup = false,
-        defaultLessons = state.currentProfile.defaultLessonItems.filter { defaultLesson -> state.currentProfile.defaultLessons.filterValues { !it }.none { it.key == defaultLesson.id } }
+        defaultLessons = state.currentProfile.defaultLessonItems.filter { defaultLesson -> state.currentProfile.defaultLessonsConfiguration.filterValues { !it }.none { it.key == defaultLesson.id } }
             .sortedBy { it.subject },
         selectedDefaultLesson = state.selectedDefaultLesson,
         onSelectDefaultLesson = { if (it == null) return@LessonSelectDrawer; viewModel.onEvent(NewAssessmentEvent.SelectDefaultLesson(it)) },
