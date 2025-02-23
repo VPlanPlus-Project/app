@@ -76,7 +76,7 @@ class HomeworkDetailViewModel(
                 state.copy(
                     homework = homework,
                     profile = profile,
-                    canEdit = (homework is Homework.CloudHomework && homework.createdBy == profile.vppId) || (homework is Homework.LocalHomework && homework.createdByProfile == profile.id),
+                    canEdit = (homework is Homework.CloudHomework && homework.createdBy == profile.vppIdId) || (homework is Homework.LocalHomework && homework.createdByProfile == profile.id),
                     initDone = true
                 )
             }.filterNotNull().collectLatest { state = it }

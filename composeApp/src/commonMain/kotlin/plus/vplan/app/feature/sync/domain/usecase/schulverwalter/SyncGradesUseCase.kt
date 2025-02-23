@@ -16,6 +16,7 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.schulverwalter.CollectionRepository
+import plus.vplan.app.domain.repository.schulverwalter.FinalGradeRepository
 import plus.vplan.app.domain.repository.schulverwalter.GradeRepository
 import plus.vplan.app.domain.repository.schulverwalter.IntervalRepository
 import plus.vplan.app.domain.repository.schulverwalter.YearRepository
@@ -26,12 +27,14 @@ class SyncGradesUseCase(
     private val yearRepository: YearRepository,
     private val intervalRepository: IntervalRepository,
     private val collectionRepository: CollectionRepository,
+    private val finalGradeRepository: FinalGradeRepository,
     private val platformNotificationRepository: PlatformNotificationRepository
 ) {
     suspend operator fun invoke(allowNotifications: Boolean) {
         yearRepository.download()
         intervalRepository.download()
         collectionRepository.download()
+        finalGradeRepository.download()
         val existingGrades = gradeRepository.getAllIds().first().toSet()
         val downloadedGrades = gradeRepository.download()
 

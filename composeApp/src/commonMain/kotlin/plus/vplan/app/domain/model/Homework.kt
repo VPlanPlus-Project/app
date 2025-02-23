@@ -86,7 +86,7 @@ sealed class Homework : Item {
             return homeworkItem ?: App.homeworkSource.getById(homework).getFirstValue().also { homeworkItem = it }
         }
 
-        fun isDone(profile: Profile.StudentProfile) = (profile.id in doneByProfiles && profile.vppId == null) || profile.vppId in doneByVppIds
+        fun isDone(profile: Profile.StudentProfile) = (profile.id in doneByProfiles && profile.vppIdId == null) || profile.vppIdId in doneByVppIds
     }
 
     data class HomeworkFile(

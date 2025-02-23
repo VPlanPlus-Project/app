@@ -307,7 +307,7 @@ fun DetailPage(
         LessonSelectDrawer(
             group = profile.groupItem!!,
             allowGroup = true,
-            defaultLessons = profile.defaultLessonItems.filter { defaultLesson -> profile.defaultLessons.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
+            defaultLessons = profile.defaultLessonItems.filter { defaultLesson -> profile.defaultLessonsConfiguration.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
             selectedDefaultLesson = homework.defaultLessonItem,
             onSelectDefaultLesson = { onEvent(HomeworkDetailEvent.UpdateDefaultLesson(it)) },
             onDismiss = { showLessonSelectDrawer = false }

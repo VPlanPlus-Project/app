@@ -170,7 +170,10 @@ class GradeRepositoryImpl(
                 val matchResult = regexForGradeInParentheses.find(grade.value)
 
                 val isOptional = matchResult != null
-                val value = if (matchResult != null) matchResult.groupValues[1] else grade.value
+                val value =
+                    if (matchResult != null) matchResult.groupValues[1]
+                    else if (grade.value == "-") null
+                    else grade.value
 
                 if (matchResult != null) matchResult.groupValues[1] else grade.value
                 DbSchulverwalterGrade(

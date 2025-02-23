@@ -234,7 +234,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
         LessonSelectDrawer(
             group = (state.currentProfile as Profile.StudentProfile).groupItem!!,
             allowGroup = true,
-            defaultLessons = state.currentProfile.defaultLessonItems.filter { defaultLesson -> state.currentProfile.defaultLessons.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
+            defaultLessons = state.currentProfile.defaultLessonItems.filter { defaultLesson -> state.currentProfile.defaultLessonsConfiguration.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
             selectedDefaultLesson = state.selectedDefaultLesson,
             onSelectDefaultLesson = { viewModel.onEvent(NewHomeworkEvent.SelectDefaultLesson(it)) },
             onDismiss = { showLessonSelectDrawer = false }
