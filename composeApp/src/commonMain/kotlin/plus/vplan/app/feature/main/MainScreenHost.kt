@@ -47,6 +47,7 @@ import plus.vplan.app.feature.calendar.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
 import plus.vplan.app.feature.dev.ui.DevScreen
+import plus.vplan.app.feature.grades.page.analytics.ui.AnalyticsScreen
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.GradesScreen
 import plus.vplan.app.feature.home.ui.HomeScreen
@@ -144,6 +145,10 @@ fun MainScreenHost(
             composable<MainScreen.Grades> {
                 val args = it.toRoute<MainScreen.Grades>()
                 GradesScreen(navController, args.vppId)
+            }
+            composable<MainScreen.Analytics> {
+                val args = it.toRoute<MainScreen.Analytics>()
+                AnalyticsScreen(navController, args.vppId)
             }
         }
 
@@ -270,4 +275,5 @@ sealed class MainScreen(val name: String) {
     @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: Int? = null) : MainScreen("SchoolSettings")
 
     @Serializable data class Grades(val vppId: Int) : MainScreen("Grades")
+    @Serializable data class Analytics(val vppId: Int) : MainScreen("Analytics")
 }

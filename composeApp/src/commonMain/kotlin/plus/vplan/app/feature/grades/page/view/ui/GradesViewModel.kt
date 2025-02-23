@@ -76,17 +76,13 @@ class GradesViewModel(
                     .sortedBy { it.name }
                     .let {
                         state = state.copy(subjects = it)
-                        updateFullAverage()
-
-                        state.subjects.forEach { subject ->
-                            updateAverageForSubject(subject.id)
-                        }
+                        updateFullAverage(true)
                     }
             }
         }
     }
 
-    private fun updateFullAverage() {
+    private fun updateFullAverage(updateSubjects: Boolean) {
         updateFullAverageJob?.cancel()
         updateFullAverageJob = viewModelScope.launch {
             val interval = getCurrentIntervalUseCase() ?: return@launch
@@ -109,6 +105,7 @@ class GradesViewModel(
             )
             state = state.copy(fullAverage = average)
         }
+        if (updateSubjects) state.subjects.forEach { subject -> updateAverageForSubject(subject.id) }
     }
 
     private fun updateAverageForSubject(subjectId: Int) {
@@ -192,7 +189,7 @@ class GradesViewModel(
                         })
                     })
                     updateAverageForSubject(event.grade.subjectId)
-                    updateFullAverage()
+                    updateFullAverage(false)
                 }
                 is GradeDetailEvent.ToggleEditMode -> state = state.copy(isInEditMode = !state.isInEditMode)
                 is GradeDetailEvent.AddGrade -> {
@@ -202,7 +199,7 @@ class GradesViewModel(
                             else currentCategory
                         })
                     })
-                    updateFullAverage()
+                    updateFullAverage(false)
                     updateAverageForSubject(state.subjects.first { it.categories.any { category -> category.id == event.categoryId } }.id)
                 }
                 is GradeDetailEvent.RemoveGrade -> {
@@ -212,8 +209,16 @@ class GradesViewModel(
                             else currentCategory
                         })
                     })
-                    updateFullAverage()
+                    updateFullAverage(false)
                     updateAverageForSubject(state.subjects.first { it.categories.any { category -> category.id == event.categoryId } }.id)
+                }
+                is GradeDetailEvent.ResetAdditionalGrades -> {
+                    state = state.copy(subjects = state.subjects.map { currentSubject ->
+                        currentSubject.copy(categories = currentSubject.categories.map { currentCategory ->
+                            currentCategory.copy(calculatorGrades = emptyList())
+                        })
+                    })
+                    updateFullAverage(true)
                 }
             }
         }
@@ -254,4 +259,6 @@ sealed class GradeDetailEvent {
 
     data class AddGrade(val categoryId: Int, val grade: Int) : GradeDetailEvent()
     data class RemoveGrade(val categoryId: Int, val grade: Int) : GradeDetailEvent()
+
+    data object ResetAdditionalGrades : GradeDetailEvent()
 }

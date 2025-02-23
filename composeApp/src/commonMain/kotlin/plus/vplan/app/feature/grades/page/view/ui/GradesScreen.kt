@@ -27,16 +27,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -50,6 +47,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,6 +56,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -72,6 +71,7 @@ import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Teacher
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.AddGradeDialog
+import plus.vplan.app.feature.main.MainScreen
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
@@ -81,7 +81,10 @@ import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.calculator
+import vplanplus.composeapp.generated.resources.chart_no_axes_combined
 import vplanplus.composeapp.generated.resources.trash_2
+import vplanplus.composeapp.generated.resources.undo_2
+import vplanplus.composeapp.generated.resources.x
 import kotlin.math.roundToInt
 
 @Composable
@@ -96,6 +99,7 @@ fun GradesScreen(
 
     GradesContent(
         state = state,
+        onOpenAnalytics = remember(vppId) { { navHostController.navigate(MainScreen.Analytics(vppId)) } },
         onEvent = viewModel::onEvent,
         onBack = navHostController::navigateUp
     )
@@ -105,11 +109,13 @@ fun GradesScreen(
 @Composable
 private fun GradesContent(
     state: GradesState,
+    onOpenAnalytics: () -> Unit,
     onEvent: (event: GradeDetailEvent) -> Unit,
     onBack: () -> Unit
 ) {
+    val localDensity = LocalDensity.current
     val topScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val scrollState = rememberLazyListState()
+    val scrollState = rememberScrollState()
     val infiniteTransition = rememberInfiniteTransition()
 
     var gradeDrawerId by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -143,13 +149,17 @@ private fun GradesContent(
                 .padding(contentPadding)
                 .fillMaxSize()
         ) {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .nestedScroll(topScrollBehavior.nestedScrollConnection),
-                state = scrollState
+                    .nestedScroll(topScrollBehavior.nestedScrollConnection)
+                    .verticalScroll(scrollState)
             ) {
-                item header@{
+                AnimatedVisibility(
+                    visible = !state.isInEditMode,
+                    enter = fadeIn() + expandVertically(expandFrom = Alignment.CenterVertically),
+                    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.CenterVertically)
+                ) {
                     Row(
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
@@ -219,8 +229,18 @@ private fun GradesContent(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(RoundedCornerShape(8.dp))
+                                        .clickable { onOpenAnalytics() }
                                         .background(colors[CustomColor.Green]!!.getGroup().container)
                                 ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.chart_no_axes_combined),
+                                        contentDescription = null,
+                                        tint = colors[CustomColor.Green]!!.getGroup().onContainer.copy(alpha = .7f),
+                                        modifier = Modifier
+                                            .padding(8.dp)
+                                            .align(Alignment.BottomEnd)
+                                            .size(24.dp)
+                                    )
                                     CompositionLocalProvider(LocalContentColor provides colors[CustomColor.Green]!!.getGroup().onContainer) {
                                         Text(
                                             text = "Analyse",
@@ -237,8 +257,18 @@ private fun GradesContent(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(RoundedCornerShape(8.dp))
+                                        .clickable { onEvent(GradeDetailEvent.ToggleEditMode) }
                                         .background(MaterialTheme.colorScheme.surfaceVariant)
                                 ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.calculator),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .7f),
+                                        modifier = Modifier
+                                            .padding(8.dp)
+                                            .align(Alignment.BottomEnd)
+                                            .size(24.dp)
+                                    )
                                     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
                                         Text(
                                             text = "Notenrechner",
@@ -253,8 +283,8 @@ private fun GradesContent(
                         }
                     }
                 }
-                item { Spacer(Modifier.height(16.dp)) }
-                items(state.subjects) { subject ->
+                Spacer(Modifier.height(16.dp))
+                state.subjects.forEach { subject ->
                     Column {
                         Row(
                             modifier = Modifier
@@ -588,7 +618,7 @@ private fun GradesContent(
             }
 
             AnimatedVisibility(
-                visible = scrollState.firstVisibleItemIndex > 0,
+                visible = scrollState.value > with (localDensity) { 128.dp.toPx() } || state.isInEditMode,
                 enter = fadeIn() + scaleIn(animationSpec = spring(stiffness = Spring.StiffnessHigh)),
                 exit = fadeOut() + scaleOut(animationSpec = spring(stiffness = Spring.StiffnessHigh)),
                 modifier = Modifier.align(Alignment.TopCenter)
@@ -627,21 +657,47 @@ private fun GradesContent(
                     AnimatedContent(
                         targetState = state.isInEditMode,
                     ) { editMode ->
-                        FilledTonalIconToggleButton(
-                            checked = editMode,
-                            onCheckedChange = { onEvent(GradeDetailEvent.ToggleEditMode) },
-                            colors = IconButtonDefaults.filledTonalIconToggleButtonColors(
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(
-                                painter = painterResource(Res.drawable.calculator),
-                                contentDescription = null,
-                                modifier = Modifier.size(24.dp)
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(
+                                        if (editMode) MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                    .clickable { onEvent(GradeDetailEvent.ToggleEditMode) }
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                CompositionLocalProvider(LocalContentColor provides if (editMode) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.calculator),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    if (editMode) {
+                                        VerticalDivider(Modifier.height(16.dp))
+                                        Icon(
+                                            painter = painterResource(Res.drawable.x),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp).padding(4.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            if (editMode) IconButton(
+                                onClick = { onEvent(GradeDetailEvent.ResetAdditionalGrades) },
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.undo_2),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                         }
                     }
                 }
