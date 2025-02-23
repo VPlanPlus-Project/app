@@ -2,13 +2,16 @@ package plus.vplan.app.feature.grades.page.view.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,15 +32,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -50,12 +56,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
@@ -65,6 +71,7 @@ import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Teacher
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
+import plus.vplan.app.feature.grades.page.view.ui.components.AddGradeDialog
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
@@ -73,6 +80,8 @@ import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
+import vplanplus.composeapp.generated.resources.calculator
+import vplanplus.composeapp.generated.resources.trash_2
 import kotlin.math.roundToInt
 
 @Composable
@@ -92,7 +101,7 @@ fun GradesScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GradesContent(
     state: GradesState,
@@ -104,6 +113,7 @@ private fun GradesContent(
     val infiniteTransition = rememberInfiniteTransition()
 
     var gradeDrawerId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var addGradeToCategoryId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = {
@@ -327,9 +337,9 @@ private fun GradesContent(
                                 }
 
                                 category.grades.forEach forEachGrade@{ (grade, isSelectedForFinalGrade) ->
-                                    val collection = grade.collection.filterIsInstance<CacheState.Done<Collection>>().map { it.data }.debounce(500).collectAsState(null).value
-                                    val interval = collection?.interval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data }?.debounce(500)?.collectAsState(null)?.value
-                                    val teacher = grade.teacher.filterIsInstance<CacheState.Done<Teacher>>().map { it.data }.debounce(500).collectAsState(null).value
+                                    val collection = grade.collection.filterIsInstance<CacheState.Done<Collection>>().map { it.data }.collectAsState(null).value
+                                    val interval = collection?.interval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
+                                    val teacher = grade.teacher.filterIsInstance<CacheState.Done<Teacher>>().map { it.data }.collectAsState(null).value
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -349,6 +359,22 @@ private fun GradesContent(
                                         ) {
                                             val red = colors[CustomColor.Red]!!.getGroup()
                                             val green = colors[CustomColor.Green]!!.getGroup()
+                                            val backgroundColor by animateColorAsState(
+                                                if (isSelectedForFinalGrade != true || interval == null || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.Gray
+                                                else when (interval.type) {
+                                                    Interval.Type.SEK1 -> blendColor(blendColor(green.container, red.container, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                    Interval.Type.SEK2 -> blendColor(blendColor(red.container, green.container, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                }
+                                            )
+
+                                            val textColor by animateColorAsState(
+                                                if (isSelectedForFinalGrade != true || interval == null || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.White
+                                                else when (interval.type) {
+                                                    Interval.Type.SEK1 -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                    Interval.Type.SEK2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                }
+                                            )
+
 
                                             Box(
                                                 modifier = Modifier
@@ -357,23 +383,18 @@ private fun GradesContent(
                                                     .width(42.dp)
                                                     .clip(RoundedCornerShape(8.dp))
                                                     .clickable(enabled = isSelectedForFinalGrade != null) { onEvent(GradeDetailEvent.ToggleConsiderForFinalGrade(grade)) }
-                                                    .background(
-                                                        if (isSelectedForFinalGrade != true || interval == null || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) MaterialTheme.colorScheme.outline
-                                                        else when (interval.type) {
-                                                            Interval.Type.SEK1 -> blendColor(blendColor(green.container, red.container, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
-                                                            Interval.Type.SEK2 -> blendColor(blendColor(red.container, green.container, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
-                                                        }
-                                                    ),
+                                                    .background(backgroundColor),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Text(
-                                                    text = grade.value ?: "-",
+                                                    text = buildString {
+                                                        if (grade.isOptional) append("(")
+                                                        if (grade.value != null) append(grade.value)
+                                                        else append("-")
+                                                        if (grade.isOptional) append(")")
+                                                    },
                                                     style = MaterialTheme.typography.bodyLarge,
-                                                    color = if (isSelectedForFinalGrade != true || interval == null || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) MaterialTheme.colorScheme.onSurface
-                                                    else when (interval.type) {
-                                                        Interval.Type.SEK1 -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
-                                                        Interval.Type.SEK2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
-                                                    }
+                                                    color = textColor
                                                 )
                                             }
 
@@ -387,7 +408,8 @@ private fun GradesContent(
                                             ) {
                                                 AnimatedContent(
                                                     targetState = collection?.name,
-                                                    transitionSpec = { fadeIn() togetherWith fadeOut() }
+                                                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                                                    modifier = Modifier.fillMaxWidth()
                                                 ) { collectionName ->
                                                     val style = MaterialTheme.typography.bodyMedium
                                                     if (collectionName == null) ShimmerLoader(
@@ -399,13 +421,16 @@ private fun GradesContent(
                                                     ) else Text(
                                                         text = collectionName,
                                                         style = style,
+                                                        color = if (isSelectedForFinalGrade == true) MaterialTheme.colorScheme.onSurfaceVariant else Color.Gray,
+                                                        textDecoration = if (isSelectedForFinalGrade != true) TextDecoration.LineThrough else null,
                                                         maxLines = 1,
                                                         overflow = TextOverflow.Ellipsis
                                                     )
                                                 }
                                                 AnimatedContent(
                                                     targetState = teacher?.let { "${it.forename} ${it.name}" },
-                                                    transitionSpec = { fadeIn() togetherWith fadeOut() }
+                                                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                                                    modifier = Modifier.fillMaxWidth()
                                                 ) { teacherName ->
                                                     val style = MaterialTheme.typography.labelSmall
                                                     if (teacherName == null) ShimmerLoader(
@@ -422,6 +447,135 @@ private fun GradesContent(
                                                     )
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+                                category.calculatorGrades.forEach { grade ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(56.dp)
+                                            .padding(horizontal = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxHeight()
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .padding(horizontal = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            val red = colors[CustomColor.Red]!!.getGroup()
+                                            val green = colors[CustomColor.Green]!!.getGroup()
+                                            val backgroundColor by animateColorAsState(
+                                                when (state.currentInterval!!.type) {
+                                                    Interval.Type.SEK1 -> blendColor(blendColor(green.container, red.container, (grade-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                    Interval.Type.SEK2 -> blendColor(blendColor(red.container, green.container, grade/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                }
+                                            )
+
+                                            val textColor by animateColorAsState(
+                                                when (state.currentInterval!!.type) {
+                                                    Interval.Type.SEK1 -> blendColor(blendColor(green.onContainer, red.onContainer, (grade-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                    Interval.Type.SEK2 -> blendColor(blendColor(red.onContainer, green.onContainer, grade /15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                }
+                                            )
+
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .padding(2.dp)
+                                                    .fillMaxHeight()
+                                                    .width(42.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(backgroundColor),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = grade.toString(),
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    color = textColor
+                                                )
+                                            }
+
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .padding(4.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = "Hinzugefügte Note",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                IconButton(
+                                                    onClick = { onEvent(GradeDetailEvent.RemoveGrade(category.id, grade)) },
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(Res.drawable.trash_2),
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                AnimatedVisibility(
+                                    visible = state.isInEditMode,
+                                    enter = expandVertically(expandFrom = Alignment.CenterVertically),
+                                    exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(56.dp)
+                                            .padding(horizontal = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxHeight()
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .clickable { addGradeToCategoryId = category.id }
+                                                .padding(horizontal = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .padding(2.dp)
+                                                    .fillMaxHeight()
+                                                    .width(42.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(MaterialTheme.colorScheme.tertiary),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = "+",
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    color = MaterialTheme.colorScheme.onTertiary,
+                                                )
+                                            }
+
+                                            Text(
+                                                text = "Note hinzufügen",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(4.dp)
+                                            )
                                         }
                                     }
                                 }
@@ -444,7 +598,7 @@ private fun GradesContent(
                         .padding(top = 16.dp)
                         .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp))
                         .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -452,7 +606,7 @@ private fun GradesContent(
                     Text(
                         text = "∅",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     AnimatedContent(
                         targetState = state.fullAverage,
@@ -466,8 +620,29 @@ private fun GradesContent(
                         ) else Text(
                             text = if (average.isNaN()) "-" else ((average * 100).roundToInt() / 100.0).toString(),
                             style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
+                    }
+                    VerticalDivider(Modifier.height(32.dp))
+                    AnimatedContent(
+                        targetState = state.isInEditMode,
+                    ) { editMode ->
+                        FilledTonalIconToggleButton(
+                            checked = editMode,
+                            onCheckedChange = { onEvent(GradeDetailEvent.ToggleEditMode) },
+                            colors = IconButtonDefaults.filledTonalIconToggleButtonColors(
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.calculator),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -477,5 +652,11 @@ private fun GradesContent(
     if (gradeDrawerId != null) GradeDetailDrawer(
         gradeId = gradeDrawerId!!,
         onDismiss = { gradeDrawerId = null }
+    )
+
+    if (addGradeToCategoryId != null) AddGradeDialog(
+        onDismiss = { addGradeToCategoryId = null },
+        onSelectGrade = { onEvent(GradeDetailEvent.AddGrade(addGradeToCategoryId!!, it)); addGradeToCategoryId = null },
+        intervalType = state.currentInterval?.type ?: Interval.Type.SEK1
     )
 }

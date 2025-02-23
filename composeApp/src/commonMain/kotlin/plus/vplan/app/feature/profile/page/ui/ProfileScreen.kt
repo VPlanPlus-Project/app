@@ -243,7 +243,7 @@ private fun ProfileContent(
                                                             modifier = Modifier.size(MaterialTheme.typography.headlineLarge.lineHeight.toDp()).clip(RoundedCornerShape(8.dp)),
                                                             infiniteTransition = infiniteTransition
                                                         ) else Text(
-                                                            text = ((average * 100).roundToInt() / 100.0).toString(),
+                                                            text = if (average.isNaN()) "-" else ((average * 100).roundToInt() / 100.0).toString(),
                                                             style = MaterialTheme.typography.headlineLarge,
                                                             color = MaterialTheme.colorScheme.primary
                                                         )
