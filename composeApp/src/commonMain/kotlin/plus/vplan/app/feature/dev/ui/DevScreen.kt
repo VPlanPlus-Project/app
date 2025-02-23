@@ -35,7 +35,7 @@ import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Year
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
-import plus.vplan.app.feature.grades.ui.components.detail.GradeDetailDrawer
+import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

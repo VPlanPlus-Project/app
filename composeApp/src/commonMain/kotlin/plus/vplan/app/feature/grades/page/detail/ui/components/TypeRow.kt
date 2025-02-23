@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.ui.components.detail.components
+package plus.vplan.app.feature.grades.page.detail.ui.components
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

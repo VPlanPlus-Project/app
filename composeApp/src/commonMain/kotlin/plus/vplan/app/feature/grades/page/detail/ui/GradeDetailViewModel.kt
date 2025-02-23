@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.ui.components.detail
+package plus.vplan.app.feature.grades.page.detail.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

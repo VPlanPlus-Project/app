@@ -1,26 +1,21 @@
-package plus.vplan.app.feature.grades.ui.components.detail.components
+package plus.vplan.app.feature.grades.page.detail.ui.components
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.format
 import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataValueContainer
 import plus.vplan.app.feature.homework.ui.components.detail.components.tableNameStyle
 import plus.vplan.app.feature.homework.ui.components.detail.components.tableValueStyle
-import plus.vplan.app.utils.now
-import plus.vplan.app.utils.regularDateFormat
-import plus.vplan.app.utils.untilText
 
 @Composable
-fun GivenAtRow(
-    date: LocalDate
+fun OptionalRow(
+    isOptional: Boolean
 ) {
     MetadataRow(
         key = {
             Text(
-                text = "Erteilt am",
+                text = "Optional",
                 style = tableNameStyle()
             )
         },
@@ -30,11 +25,7 @@ fun GivenAtRow(
                 onClick = {}
             ) {
                 Text(
-                    text = buildString {
-                        append(date.format(regularDateFormat))
-                        append(", ")
-                        append(LocalDate.now() untilText date)
-                    },
+                    text = if (isOptional) "Ja" else "Nein",
                     style = tableValueStyle(),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1
