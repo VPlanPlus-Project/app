@@ -5,13 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
-import kotlinx.coroutines.Job
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.VppId
@@ -20,10 +20,12 @@ import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculatorGrade
 import plus.vplan.app.feature.grades.domain.usecase.GetCurrentIntervalUseCase
+import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 
 class GradesViewModel(
     private val getCurrentIntervalUseCase: GetCurrentIntervalUseCase,
-    private val calculateAverageUseCase: CalculateAverageUseCase
+    private val calculateAverageUseCase: CalculateAverageUseCase,
+    private val syncGradesUseCase: SyncGradesUseCase
 ) : ViewModel() {
     var state by mutableStateOf(GradesState())
         private set
@@ -220,6 +222,11 @@ class GradesViewModel(
                     })
                     updateFullAverage(true)
                 }
+                is GradeDetailEvent.Refresh -> {
+                    state = state.copy(isUpdating = true)
+                    syncGradesUseCase(true)
+                    state = state.copy(isUpdating = false)
+                }
             }
         }
     }
@@ -230,7 +237,8 @@ data class GradesState(
     val currentInterval: Interval? = null,
     val vppId: VppId? = null,
     val isInEditMode: Boolean = false,
-    val subjects: List<Subject> = emptyList()
+    val subjects: List<Subject> = emptyList(),
+    val isUpdating: Boolean = false
 ) {
     val allGrades: List<Grade>
         get() = subjects.flatMap { subject -> subject.categories.flatMap { category -> category.grades.filterValues { it == true }.keys } }
@@ -259,6 +267,8 @@ sealed class GradeDetailEvent {
 
     data class AddGrade(val categoryId: Int, val grade: Int) : GradeDetailEvent()
     data class RemoveGrade(val categoryId: Int, val grade: Int) : GradeDetailEvent()
+
+    data object Refresh: GradeDetailEvent()
 
     data object ResetAdditionalGrades : GradeDetailEvent()
 }
