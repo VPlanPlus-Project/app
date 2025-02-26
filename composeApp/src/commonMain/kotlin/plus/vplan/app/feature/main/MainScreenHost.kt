@@ -63,6 +63,7 @@ import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
+import plus.vplan.app.feature.settings.page.security.ui.SecuritySettingsScreen
 import plus.vplan.app.feature.settings.ui.SettingsScreen
 import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.utils.BrowserIntent
@@ -139,6 +140,11 @@ fun MainScreenHost(
                 SchoolSettingsScreen(
                     navHostController = navController,
                     openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchoolId
+                )
+            }
+            composable<MainScreen.SecuritySettings> {
+                SecuritySettingsScreen(
+                    navHostController = navController
                 )
             }
 
@@ -274,6 +280,7 @@ sealed class MainScreen(val name: String) {
 
     @Serializable data object Settings : MainScreen("Settings")
     @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: Int? = null) : MainScreen("SchoolSettings")
+    @Serializable data object SecuritySettings : MainScreen("SecuritySettings")
 
     @Serializable data class Grades(val vppId: Int) : MainScreen("Grades")
     @Serializable data class Analytics(val vppId: Int) : MainScreen("Analytics")

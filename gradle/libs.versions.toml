@@ -12,6 +12,8 @@ kermit = "2.0.4"
 kotlin = "2.1.10"
 kotlinxDatetime = "0.6.1"
 
+biometric = "1.1.0"
+
 ksp = "2.1.10-1.0.29"
 androidx-room = "2.7.0-beta01"
 androidx-sqlite = "2.5.0-beta01"
@@ -40,6 +42,7 @@ androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", nam
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 
 androidx-material = { module = "androidx.compose.material3:material3", version.ref = "androidx-material" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
 
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
