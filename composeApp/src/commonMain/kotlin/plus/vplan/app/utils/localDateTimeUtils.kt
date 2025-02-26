@@ -13,3 +13,10 @@ infix fun LocalDateTime.until(other: LocalDateTime): Duration {
     val end = other.toInstant(TimeZone.UTC)
     return start.until(end, DateTimeUnit.MILLISECOND).milliseconds
 }
+
+infix fun LocalDateTime.progressIn(range: ClosedRange<LocalDateTime>): Double {
+    val start = range.start.toInstant(TimeZone.currentSystemDefault()).epochSeconds
+    val end = range.endInclusive.toInstant(TimeZone.currentSystemDefault()).epochSeconds
+    val current = this.toInstant(TimeZone.currentSystemDefault()).epochSeconds.toDouble()
+    return (current - start) / (end - start)
+}

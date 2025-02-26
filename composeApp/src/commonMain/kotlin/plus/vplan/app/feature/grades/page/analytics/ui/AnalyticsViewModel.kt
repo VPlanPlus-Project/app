@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
@@ -57,6 +58,10 @@ class AnalyticsViewModel(
                     else state.copy(filteredSubjects = state.filteredSubjects.filter { it.id != event.subject.id })
                     updateFiltered()
                 }
+                is AnalyticsAction.SetTimeType -> {
+                    state = state.copy(timeType = event.timeType)
+                    updateTimeDataPoints()
+                }
             }
         }
     }
@@ -66,6 +71,20 @@ class AnalyticsViewModel(
             .filter { grade ->
                 state.filteredSubjects.any { grade.subject.getFirstValue()!!.id == it.id } || state.filteredSubjects.isEmpty()
             })
+        updateTimeDataPoints()
+    }
+
+    private suspend fun updateTimeDataPoints() {
+        val grades = state.filteredGrades
+        val dataPoints = mutableListOf<AnalyticsTimeDataPoint>()
+        when (state.timeType) {
+            AnalyticsTimeType.Average -> Unit
+            AnalyticsTimeType.Value -> grades.forEach { grade ->
+                val value = grade.numericValue ?: return@forEach
+                dataPoints.add(AnalyticsTimeDataPoint(grade.givenAt, grade.subject.getFirstValue()!!.id, value.toDouble()))
+            }
+        }
+        state = state.copy(timeDataPoints = dataPoints.sortedBy { it.date })
     }
 }
 
@@ -76,9 +95,24 @@ data class AnalyticsState(
     val filteredGrades: List<Grade> = emptyList(),
 
     val availableSubjectFilters: List<Subject> = emptyList(),
-    val filteredSubjects: List<Subject> = emptyList()
+    val filteredSubjects: List<Subject> = emptyList(),
+
+    val timeDataPoints: List<AnalyticsTimeDataPoint> = emptyList(),
+
+    val timeType: AnalyticsTimeType = AnalyticsTimeType.Average
 )
 
 sealed class AnalyticsAction {
     data class ToggleSubjectFilter(val subject: Subject) : AnalyticsAction()
+    data class SetTimeType(val timeType: AnalyticsTimeType) : AnalyticsAction()
 }
+
+enum class AnalyticsTimeType {
+    Average, Value
+}
+
+data class AnalyticsTimeDataPoint(
+    val date: LocalDate,
+    val subjectId: Int,
+    val value: Double
+)
