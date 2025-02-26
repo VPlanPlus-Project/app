@@ -9,5 +9,6 @@ class SetGradeProtectionLevelUseCase(
 ) {
     suspend operator fun invoke(state: GradeProtectLevel) {
         keyValueRepository.set(Keys.GRADE_PROTECTION_LEVEL, state.name)
+        keyValueRepository.set(Keys.GRADES_LOCKED, "false")
     }
 }

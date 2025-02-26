@@ -99,7 +99,16 @@ private fun SecuritySettingsContent(
             Text("Noten schützen")
             Switch(
                 checked = state.gradeProtectLevel != GradeProtectLevel.None,
-                onCheckedChange = { onEvent(SecuritySettingsEvent.ToggleGradeProtection) }
+                onCheckedChange = {
+                    if (state.gradeProtectLevel == GradeProtectLevel.Biometric) {
+                        onRunBiometricAuthentication(
+                            { onEvent(SecuritySettingsEvent.ToggleGradeProtection) },
+                            {},
+                            {}
+                        )
+                    }
+                    else onEvent(SecuritySettingsEvent.ToggleGradeProtection)
+                }
             )
             if (state.biometricDeviceState != BiometricDeviceState.NotAvailable) {
                 Text("Biometrische Anmeldung nutzen")

@@ -3,8 +3,12 @@ package plus.vplan.app.feature.profile.page.ui
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,10 +31,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +53,7 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
@@ -58,6 +65,7 @@ import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.lock
 import vplanplus.composeapp.generated.resources.settings
 import kotlin.math.roundToInt
 
@@ -89,6 +97,23 @@ private fun ProfileContent(
     val localDensity = LocalDensity.current
     val infiniteTransition = rememberInfiniteTransition()
     val colorScheme = MaterialTheme.colorScheme
+
+    var openGradesScreenAfterUnlock by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(state.areGradesLocked) {
+        if (!state.areGradesLocked && openGradesScreenAfterUnlock) {
+            openGradesScreenAfterUnlock = false
+            onOpenGrades()
+        }
+    }
+
+    LaunchedEffect(openGradesScreenAfterUnlock) {
+        if (openGradesScreenAfterUnlock) {
+            delay(10000)
+            openGradesScreenAfterUnlock = false
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -146,7 +171,13 @@ private fun ProfileContent(
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .clickable { onOpenGrades() }
+                                    .clickable {
+                                        if (state.areGradesLocked) {
+                                            openGradesScreenAfterUnlock = true
+                                            onEvent(ProfileScreenEvent.RequestGradeUnlock)
+                                        }
+                                        else onOpenGrades()
+                                    }
                             ) {
                                 var contentWidth by remember { mutableStateOf(0.dp) }
                                 var contentHeight by remember { mutableStateOf(0.dp) }
@@ -214,11 +245,40 @@ private fun ProfileContent(
                                             .padding(16.dp)
                                             .fillMaxWidth()
                                     ) {
-                                        Text(
-                                            text = "Noten",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clipToBounds(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "Noten",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            androidx.compose.animation.AnimatedVisibility(
+                                                visible = state.areGradesLocked,
+                                                enter = fadeIn() + expandHorizontally(expandFrom = Alignment.CenterHorizontally) + slideInHorizontally { it },
+                                                exit = shrinkHorizontally(shrinkTowards = Alignment.CenterHorizontally) + fadeOut() + slideOutHorizontally { it },
+                                            ) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(Res.drawable.lock),
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(12.dp)
+                                                    )
+                                                    Text(
+                                                        text = "Noten gesperrt, tippe zum Entsperren",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.outline
+                                                    )
+                                                }
+                                            }
+                                        }
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -239,7 +299,7 @@ private fun ProfileContent(
                                                     AnimatedContent(
                                                         targetState = state.averageGrade,
                                                     ) { average ->
-                                                        if (average == null) ShimmerLoader(
+                                                        if (average == null || state.areGradesLocked) ShimmerLoader(
                                                             modifier = Modifier.size(MaterialTheme.typography.headlineLarge.lineHeight.toDp()).clip(RoundedCornerShape(8.dp)),
                                                             infiniteTransition = infiniteTransition
                                                         ) else Text(
@@ -255,7 +315,7 @@ private fun ProfileContent(
                                                     color = MaterialTheme.colorScheme.onSurface,
                                                 )
                                             }
-                                            VerticalDivider(Modifier.height(32.dp))
+                                            VerticalDivider(Modifier.height(48.dp))
                                             Column(
                                                 modifier = Modifier.weight(1f),
                                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -263,7 +323,7 @@ private fun ProfileContent(
                                                 AnimatedContent(
                                                     targetState = grades.maxByOrNull { it.givenAt },
                                                 ) { latestGrade ->
-                                                    if (latestGrade == null) {
+                                                    if (latestGrade == null || state.areGradesLocked) {
                                                         ShimmerLoader(
                                                             modifier = Modifier.size(MaterialTheme.typography.headlineLarge.lineHeight.toDp()).clip(RoundedCornerShape(8.dp)),
                                                             infiniteTransition = infiniteTransition
@@ -283,7 +343,6 @@ private fun ProfileContent(
                                                 )
                                             }
                                         }
-
                                     }
                                 }
                             }
