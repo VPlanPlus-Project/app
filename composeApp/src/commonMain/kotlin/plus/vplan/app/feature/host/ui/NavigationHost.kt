@@ -12,6 +12,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
+import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.main.MainScreenHost
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.feature.vpp_id.ui.VppIdSetupScreen
@@ -24,6 +25,10 @@ fun NavigationHost(task: StartTask?) {
     if (state.hasProfile == null) return
 
     val setCurrentProfileUseCase = koinInject<SetCurrentProfileUseCase>()
+
+    val lockGradesUseCase = koinInject<LockGradesUseCase>()
+
+    LaunchedEffect(Unit) { lockGradesUseCase() }
 
     LaunchedEffect(task) {
         if (task?.profileId != null) setCurrentProfileUseCase(task.profileId)

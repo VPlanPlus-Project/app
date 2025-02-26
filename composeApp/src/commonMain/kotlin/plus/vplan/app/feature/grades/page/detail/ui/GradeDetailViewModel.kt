@@ -17,6 +17,10 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
+import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
+import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
+import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.grades.domain.usecase.ToggleConsiderGradeForFinalGradeUseCase
 import plus.vplan.app.feature.grades.domain.usecase.UpdateGradeUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
@@ -24,7 +28,10 @@ import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskStat
 class GradeDetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateGradeUseCase: UpdateGradeUseCase,
-    private val toggleConsiderGradeForFinalGradeUseCase: ToggleConsiderGradeForFinalGradeUseCase
+    private val toggleConsiderGradeForFinalGradeUseCase: ToggleConsiderGradeForFinalGradeUseCase,
+    private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
+    private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
+    private val lockGradesUseCase: LockGradesUseCase
 ) : ViewModel() {
     var state by mutableStateOf(GradeDetailState())
         private set
@@ -37,8 +44,9 @@ class GradeDetailViewModel(
         mainJob = viewModelScope.launch {
             combine(
                 getCurrentProfileUseCase(),
+                getGradeLockStateUseCase(),
                 App.gradeSource.getById(gradeId)
-            ) { profile, gradeData ->
+            ) { profile, gradeLockState, gradeData ->
                 if (gradeData !is CacheState.Done || profile !is Profile.StudentProfile) return@combine null
                 val grade = gradeData.data
 
@@ -47,6 +55,7 @@ class GradeDetailViewModel(
                 state.copy(
                     grade = grade,
                     profile = profile,
+                    lockState = gradeLockState,
                     initDone = true
                 )
             }.filterNotNull().collectLatest { state = it }
@@ -72,6 +81,8 @@ class GradeDetailViewModel(
                         else -> Unit
                     }
                 }
+                is GradeDetailEvent.RequestGradesUnlock -> requestGradeUnlockUseCase()
+                is GradeDetailEvent.LockGrades -> lockGradesUseCase()
             }
         }
     }
@@ -82,6 +93,7 @@ data class GradeDetailState(
     val profile: Profile.StudentProfile? = null,
     val initDone: Boolean = false,
     val reloadingState: UnoptimisticTaskState? = null,
+    val lockState: GradeLockState? = null,
 )
 
 private suspend fun Profile.StudentProfile.prefetch() {
@@ -95,4 +107,7 @@ private suspend fun Profile.StudentProfile.prefetch() {
 sealed class GradeDetailEvent {
     data object ToggleConsiderForFinalGrade : GradeDetailEvent()
     data object Reload : GradeDetailEvent()
+
+    data object RequestGradesUnlock: GradeDetailEvent()
+    data object LockGrades: GradeDetailEvent()
 }

@@ -20,12 +20,19 @@ import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculatorGrade
 import plus.vplan.app.feature.grades.domain.usecase.GetCurrentIntervalUseCase
+import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
+import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
+import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 
 class GradesViewModel(
     private val getCurrentIntervalUseCase: GetCurrentIntervalUseCase,
     private val calculateAverageUseCase: CalculateAverageUseCase,
-    private val syncGradesUseCase: SyncGradesUseCase
+    private val syncGradesUseCase: SyncGradesUseCase,
+    private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
+    private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
+    private val lockUseCase: LockGradesUseCase
 ) : ViewModel() {
     var state by mutableStateOf(GradesState())
         private set
@@ -37,49 +44,53 @@ class GradesViewModel(
     fun init(vppIdId: Int) {
         viewModelScope.launch {
             state = GradesState()
-            App.vppIdSource.getById(vppIdId).filterIsInstance<CacheState.Done<VppId>>().map { it.data }.collectLatest { vppId ->
-                val interval = getCurrentIntervalUseCase()
-                state = state.copy(vppId = vppId, currentInterval = interval)
-                if (interval == null ||vppId !is VppId.Active) return@collectLatest
+            getGradeLockStateUseCase().collectLatest { areGradesLocked ->
+                state = state.copy(gradeLockState = areGradesLocked)
+                if (!areGradesLocked.canAccess) return@collectLatest
+                App.vppIdSource.getById(vppIdId).filterIsInstance<CacheState.Done<VppId>>().map { it.data }.collectLatest collectLatestGrades@{ vppId ->
+                    val interval = getCurrentIntervalUseCase()
+                    state = state.copy(vppId = vppId, currentInterval = interval)
+                    if (interval == null ||vppId !is VppId.Active) return@collectLatestGrades
 
-                val grades = App.gradeSource.getAll().map { it.filterIsInstance<CacheState.Done<Grade>>().map { gradeState -> gradeState.data } }.first()
-                grades.groupBy { it.subjectId }.map { (subjectId, gradesForSubject) ->
-                    val subject = App.subjectSource.getById(subjectId).getFirstValue()!!
-                    val calculationRule = subject.finalGrade?.first()?.calculationRule
-                    Subject(
-                        id = subjectId,
-                        average = null,
-                        name = subject.name,
-                        categories = gradesForSubject.groupBy { it.collection.getFirstValue()!!.type }.map { (type, gradesForType) ->
-                            val weight = if (calculationRule != null) {
-                                val regex = Regex("""([\d.]+)\s*\*\s*\(\(($type)_sum\)/\(($type)_count\)\)""")
-                                regex.find(calculationRule)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
-                            } else 1.0
+                    val grades = App.gradeSource.getAll().map { it.filterIsInstance<CacheState.Done<Grade>>().map { gradeState -> gradeState.data } }.first()
+                    grades.groupBy { it.subjectId }.map { (subjectId, gradesForSubject) ->
+                        val subject = App.subjectSource.getById(subjectId).getFirstValue()!!
+                        val calculationRule = subject.finalGrade?.first()?.calculationRule
+                        Subject(
+                            id = subjectId,
+                            average = null,
+                            name = subject.name,
+                            categories = gradesForSubject.groupBy { it.collection.getFirstValue()!!.type }.map { (type, gradesForType) ->
+                                val weight = if (calculationRule != null) {
+                                    val regex = Regex("""([\d.]+)\s*\*\s*\(\(($type)_sum\)/\(($type)_count\)\)""")
+                                    regex.find(calculationRule)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
+                                } else 1.0
 
-                            Subject.Category(
-                                id = (subjectId.toString() + type).hashCode(),
-                                name = type,
-                                average = null,
-                                count = gradesForType.size,
-                                weight = weight,
-                                grades = gradesForType
-                                    .associateWith {
-                                        if (it.value == null) null
-                                        else it.isSelectedForFinalGrade
-                                    }
-                                    .toList()
-                                    .sortedBy { it.first.givenAt }
-                                    .toMap(),
-                                calculatorGrades = state.subjects.find { it.id == subjectId }?.categories?.find { it.name == type }?.calculatorGrades ?: emptyList()
-                            )
-                        }.sortedBy { it.name }
-                    )
-                }
-                    .sortedBy { it.name }
-                    .let {
-                        state = state.copy(subjects = it)
-                        updateFullAverage(true)
+                                Subject.Category(
+                                    id = (subjectId.toString() + type).hashCode(),
+                                    name = type,
+                                    average = null,
+                                    count = gradesForType.size,
+                                    weight = weight,
+                                    grades = gradesForType
+                                        .associateWith {
+                                            if (it.value == null) null
+                                            else it.isSelectedForFinalGrade
+                                        }
+                                        .toList()
+                                        .sortedBy { it.first.givenAt }
+                                        .toMap(),
+                                    calculatorGrades = state.subjects.find { it.id == subjectId }?.categories?.find { it.name == type }?.calculatorGrades ?: emptyList()
+                                )
+                            }.sortedBy { it.name }
+                        )
                     }
+                        .sortedBy { it.name }
+                        .let {
+                            state = state.copy(subjects = it)
+                            updateFullAverage(true)
+                        }
+                }
             }
         }
     }
@@ -227,6 +238,8 @@ class GradesViewModel(
                     syncGradesUseCase(true)
                     state = state.copy(isUpdating = false)
                 }
+                is GradeDetailEvent.RequestGradeUnlock -> requestGradeUnlockUseCase()
+                is GradeDetailEvent.RequestGradeLock -> lockUseCase()
             }
         }
     }
@@ -238,7 +251,8 @@ data class GradesState(
     val vppId: VppId? = null,
     val isInEditMode: Boolean = false,
     val subjects: List<Subject> = emptyList(),
-    val isUpdating: Boolean = false
+    val isUpdating: Boolean = false,
+    val gradeLockState: GradeLockState? = null,
 ) {
     val allGrades: List<Grade>
         get() = subjects.flatMap { subject -> subject.categories.flatMap { category -> category.grades.filterValues { it == true }.keys } }
@@ -271,4 +285,7 @@ sealed class GradeDetailEvent {
     data object Refresh: GradeDetailEvent()
 
     data object ResetAdditionalGrades : GradeDetailEvent()
+
+    data object RequestGradeUnlock: GradeDetailEvent()
+    data object RequestGradeLock: GradeDetailEvent()
 }

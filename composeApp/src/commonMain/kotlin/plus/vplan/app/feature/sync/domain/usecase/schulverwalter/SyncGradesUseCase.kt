@@ -20,6 +20,7 @@ import plus.vplan.app.domain.repository.schulverwalter.FinalGradeRepository
 import plus.vplan.app.domain.repository.schulverwalter.GradeRepository
 import plus.vplan.app.domain.repository.schulverwalter.IntervalRepository
 import plus.vplan.app.domain.repository.schulverwalter.YearRepository
+import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.now
 
 class SyncGradesUseCase(
@@ -28,7 +29,8 @@ class SyncGradesUseCase(
     private val intervalRepository: IntervalRepository,
     private val collectionRepository: CollectionRepository,
     private val finalGradeRepository: FinalGradeRepository,
-    private val platformNotificationRepository: PlatformNotificationRepository
+    private val platformNotificationRepository: PlatformNotificationRepository,
+    private val getGradeLockStateUseCase: GetGradeLockStateUseCase
 ) {
     suspend operator fun invoke(allowNotifications: Boolean) {
         yearRepository.download()
@@ -50,7 +52,8 @@ class SyncGradesUseCase(
                     category = newGrades.first().vppId.getFirstValue()?.name ?: "Unbekannter Nutzer",
                     message = buildString {
                         append("Du hast eine ")
-                        append(newGrades.first().value)
+                        if (getGradeLockStateUseCase().first().canAccess) append(newGrades.first().value)
+                        else append("neue Note")
                         append(" in ")
                         append(newGrades.first().collection.getFirstValue()?.subject?.getFirstValue()?.name ?: "Unbekanntes Fach")
                         append(" für ")
