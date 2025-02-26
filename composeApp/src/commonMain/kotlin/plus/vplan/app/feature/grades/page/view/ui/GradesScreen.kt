@@ -130,8 +130,16 @@ private fun GradesContent(
 
     var gradeDrawerId by rememberSaveable { mutableStateOf<Int?>(null) }
     var addGradeToCategoryId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var firstRun by rememberSaveable { mutableStateOf(true) }
 
     val pullToRefreshState = rememberPullToRefreshState()
+
+    LaunchedEffect(state.gradeLockState) {
+        if (state.gradeLockState == GradeLockState.Locked && firstRun) {
+            firstRun = false
+            onEvent(GradeDetailEvent.RequestGradeUnlock)
+        }
+    }
 
     Scaffold(
         topBar = {
