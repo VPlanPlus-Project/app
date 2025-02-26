@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.ui.components.detail
+package plus.vplan.app.feature.grades.page.detail.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
@@ -36,13 +36,13 @@ import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Subject
 import plus.vplan.app.domain.model.schulverwalter.Teacher
 import plus.vplan.app.domain.model.schulverwalter.Year
-import plus.vplan.app.feature.grades.ui.components.detail.components.GivenAtRow
-import plus.vplan.app.feature.grades.ui.components.detail.components.GivenByRow
-import plus.vplan.app.feature.grades.ui.components.detail.components.IntervalRow
-import plus.vplan.app.feature.grades.ui.components.detail.components.OptionalRow
-import plus.vplan.app.feature.grades.ui.components.detail.components.TypeRow
-import plus.vplan.app.feature.grades.ui.components.detail.components.UseForFinalGradeRow
-import plus.vplan.app.feature.grades.ui.components.detail.components.UserRow
+import plus.vplan.app.feature.grades.page.detail.ui.components.GivenAtRow
+import plus.vplan.app.feature.grades.page.detail.ui.components.GivenByRow
+import plus.vplan.app.feature.grades.page.detail.ui.components.IntervalRow
+import plus.vplan.app.feature.grades.page.detail.ui.components.OptionalRow
+import plus.vplan.app.feature.grades.page.detail.ui.components.TypeRow
+import plus.vplan.app.feature.grades.page.detail.ui.components.UseForFinalGradeRow
+import plus.vplan.app.feature.grades.page.detail.ui.components.UserRow
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
 import vplanplus.composeapp.generated.resources.Res

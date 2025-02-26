@@ -17,6 +17,9 @@ interface GradeDao {
     @Query("SELECT id FROM schulverwalter_grade")
     fun getAll(): Flow<List<Int>>
 
+    @Query("SELECT * FROM schulverwalter_grade")
+    fun getAllRaw(): Flow<List<DbSchulverwalterGrade>>
+
     @Upsert
     suspend fun upsert(
         grades: List<DbSchulverwalterGrade>,

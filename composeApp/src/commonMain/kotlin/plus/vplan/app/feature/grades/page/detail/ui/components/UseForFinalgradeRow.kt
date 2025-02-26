@@ -1,34 +1,35 @@
-package plus.vplan.app.feature.grades.ui.components.detail.components
+package plus.vplan.app.feature.grades.page.detail.ui.components
 
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataValueContainer
 import plus.vplan.app.feature.homework.ui.components.detail.components.tableNameStyle
-import plus.vplan.app.feature.homework.ui.components.detail.components.tableValueStyle
 
 @Composable
-fun OptionalRow(
-    isOptional: Boolean
+fun UseForFinalGradeRow(
+    useForFinalGrade: Boolean,
+    wasNotGiven: Boolean,
+    onToggle: () -> Unit
 ) {
     MetadataRow(
         key = {
             Text(
-                text = "Optional",
+                text = "Im Durchschnitt berücksichtigen",
                 style = tableNameStyle()
             )
         },
         value = {
             MetadataValueContainer(
-                canEdit = false,
-                onClick = {}
+                canEdit = !wasNotGiven,
+                editStyling = false,
+                onClick = onToggle
             ) {
-                Text(
-                    text = if (isOptional) "Ja" else "Nein",
-                    style = tableValueStyle(),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
+                Switch(
+                    checked = if (wasNotGiven) false else useForFinalGrade,
+                    onCheckedChange = { onToggle() },
+                    enabled = !wasNotGiven
                 )
             }
         }

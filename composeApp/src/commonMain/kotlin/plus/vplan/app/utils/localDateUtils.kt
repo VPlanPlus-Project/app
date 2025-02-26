@@ -6,13 +6,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.atTime
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
 import kotlin.math.abs
@@ -31,10 +31,10 @@ infix operator fun LocalDate.minus(duration: Duration): LocalDate {
     return this.minus(duration.inWholeDays, DateTimeUnit.DAY)
 }
 
-infix fun LocalDateTime.progressIn(range: ClosedRange<LocalDateTime>): Double {
-    val start = range.start.toInstant(TimeZone.currentSystemDefault()).epochSeconds
-    val end = range.endInclusive.toInstant(TimeZone.currentSystemDefault()).epochSeconds
-    val current = this.toInstant(TimeZone.currentSystemDefault()).epochSeconds.toDouble()
+infix fun LocalDate.progressIn(range: ClosedRange<LocalDate>): Double {
+    val start = range.start.atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds
+    val end = range.endInclusive.atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds
+    val current = this.atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds.toDouble()
     return (current - start) / (end - start)
 }
 

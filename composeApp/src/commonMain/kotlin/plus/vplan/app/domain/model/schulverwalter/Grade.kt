@@ -23,4 +23,15 @@ data class Grade(
     val subject by lazy { App.subjectSource.getById(subjectId) }
     val teacher by lazy { App.schulverwalterTeacherSource.getById(teacherId) }
     val vppId by lazy { App.vppIdSource.getById(vppIdId) }
+
+    val numericValue: Int?
+        get() {
+            return if (this.value == null) null
+            else this.value
+                .replace("(", "")
+                .replace(")", "")
+                .replace("+", "")
+                .replace("-", "")
+                .toIntOrNull()
+        }
 }

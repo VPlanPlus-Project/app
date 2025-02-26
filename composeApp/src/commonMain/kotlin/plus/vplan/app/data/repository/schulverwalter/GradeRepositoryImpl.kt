@@ -164,6 +164,8 @@ class GradeRepositoryImpl(
             vppDatabase.collectionDao.deleteSchulverwalterCollectionSchulverwalterSubject(collectionId = grade.collection.id, subjectIds = listOf(grade.subject.id))
         }
 
+        val existingGrades = vppDatabase.gradeDao.getAllRaw().first()
+
         vppDatabase.gradeDao.upsert(
             grades = data.map { grade ->
                 val regexForGradeInParentheses = "\\((.*?)\\)".toRegex()
@@ -180,7 +182,7 @@ class GradeRepositoryImpl(
                     id = grade.id,
                     value = value,
                     isOptional = isOptional,
-                    isSelectedForFinalGrade = true,
+                    isSelectedForFinalGrade = existingGrades.find { it.id == grade.id }?.isSelectedForFinalGrade ?: true,
                     userForRequest = userForRequest,
                     givenAt = LocalDate.parse(grade.givenAt),
                     vppId = vppId,

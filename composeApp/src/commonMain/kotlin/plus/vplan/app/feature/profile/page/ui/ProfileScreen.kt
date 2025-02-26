@@ -73,7 +73,8 @@ fun ProfileScreen(
         state = state,
         contentPadding = contentPadding,
         onEvent = viewModel::onEvent,
-        onOpenSettings = remember { { navHostController.navigate(MainScreen.Settings) } }
+        onOpenSettings = remember { { navHostController.navigate(MainScreen.Settings) } },
+        onOpenGrades = remember(state.currentProfile?.id) { { navHostController.navigate(MainScreen.Grades((state.currentProfile as Profile.StudentProfile).vppIdId!!)) } }
     )
 }
 
@@ -82,7 +83,8 @@ private fun ProfileContent(
     state: ProfileState,
     contentPadding: PaddingValues,
     onEvent: (event: ProfileScreenEvent) -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onOpenGrades: () -> Unit
 ) {
     val localDensity = LocalDensity.current
     val infiniteTransition = rememberInfiniteTransition()
@@ -144,7 +146,7 @@ private fun ProfileContent(
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .clickable {  }
+                                    .clickable { onOpenGrades() }
                             ) {
                                 var contentWidth by remember { mutableStateOf(0.dp) }
                                 var contentHeight by remember { mutableStateOf(0.dp) }
@@ -241,7 +243,7 @@ private fun ProfileContent(
                                                             modifier = Modifier.size(MaterialTheme.typography.headlineLarge.lineHeight.toDp()).clip(RoundedCornerShape(8.dp)),
                                                             infiniteTransition = infiniteTransition
                                                         ) else Text(
-                                                            text = ((average * 100).roundToInt() / 100.0).toString(),
+                                                            text = if (average.isNaN()) "-" else ((average * 100).roundToInt() / 100.0).toString(),
                                                             style = MaterialTheme.typography.headlineLarge,
                                                             color = MaterialTheme.colorScheme.primary
                                                         )
