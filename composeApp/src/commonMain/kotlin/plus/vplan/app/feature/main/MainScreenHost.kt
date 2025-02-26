@@ -231,6 +231,7 @@ fun MainScreenHost(
             is StartTask.NavigateTo.SchoolSettings -> {
                 navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId))
             }
+            is StartTask.NavigateTo.Grades -> navController.navigate(MainScreen.Grades(navigationTask.vppId))
             is StartTask.Open.Homework -> homeworkSheetHomeworkId = navigationTask.homeworkId
             is StartTask.Open.Assessment -> assessmentSheetAssessmentId = navigationTask.assessmentId
             is StartTask.Open.Grade -> gradeSheetGradeId = navigationTask.gradeId

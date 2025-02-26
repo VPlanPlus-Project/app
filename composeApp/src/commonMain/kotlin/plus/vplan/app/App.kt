@@ -138,6 +138,7 @@ sealed class StartTask(val profileId: Uuid? = null) {
     sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
         class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
         class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Int? = null): NavigateTo(profileId)
+        class Grades(profileId: Uuid?, val vppId: Int): NavigateTo(profileId)
     }
 
     sealed class Open(profileId: Uuid?): StartTask(profileId) {
@@ -177,7 +178,7 @@ data class StartTaskJson(
     @Serializable
     data class StartTaskNavigateTo(
         @SerialName("screen") val screen: String,
-        @SerialName("payload") val value: String
+        @SerialName("payload") val value: String?
     ) {
         @Serializable
         data class StartTaskCalendar(
@@ -187,6 +188,11 @@ data class StartTaskJson(
         @Serializable
         data class SchoolSettings(
             @SerialName("open_indiware_settings_school_id") val openIndiwareSettingsSchoolId: Int? = null,
+        )
+
+        @Serializable
+        data class Grades(
+            @SerialName("vpp_id") val vppId: Int
         )
     }
 }

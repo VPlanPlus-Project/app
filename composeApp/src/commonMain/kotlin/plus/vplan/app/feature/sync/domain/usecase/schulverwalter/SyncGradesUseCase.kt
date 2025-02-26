@@ -87,7 +87,19 @@ class SyncGradesUseCase(
                         append(" neue Noten erhalten")
                     },
                     isLarge = false,
-                    onClickData = null
+                    onClickData = Json.encodeToString(
+                        StartTaskJson(
+                            type = "navigate_to",
+                            value = Json.encodeToString(
+                                StartTaskJson.StartTaskNavigateTo(
+                                    screen = "grades",
+                                    value = Json.encodeToString(
+                                        StartTaskJson.StartTaskNavigateTo.Grades(newGrades.first().vppIdId)
+                                    )
+                                )
+                            )
+                        )
+                    ).also { Logger.d { "Task: $it" } }
                 )
             }
         }
