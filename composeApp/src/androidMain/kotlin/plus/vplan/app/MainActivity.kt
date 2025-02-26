@@ -2,19 +2,20 @@ package plus.vplan.app
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.fragment.app.FragmentActivity
 import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.core.FileKit
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import kotlin.uuid.Uuid
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private var task: StartTask? by mutableStateOf(null)
     private var canStart by mutableStateOf(true)
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
+            fragmentActivity = LocalActivity.current as FragmentActivity
             if (canStart) App(task)
         }
     }
@@ -95,3 +97,4 @@ class MainActivity : ComponentActivity() {
 }
 
 lateinit var activity: MainActivity
+lateinit var fragmentActivity: FragmentActivity

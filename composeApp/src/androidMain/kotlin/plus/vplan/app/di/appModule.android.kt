@@ -15,6 +15,8 @@ import plus.vplan.app.domain.repository.PlatformAuthenticationRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.ui.platform.OpenBiometricSettings
 import plus.vplan.app.ui.platform.OpenBiometricSettingsImpl
+import plus.vplan.app.ui.platform.RunBiometricAuthentication
+import plus.vplan.app.ui.platform.RunBiometricAuthenticationImpl
 
 actual fun platformModule(): Module = module(createdAtStart = true) {
     single<VppDatabase>(createdAtStart = true) {
@@ -31,4 +33,5 @@ actual fun platformModule(): Module = module(createdAtStart = true) {
     single<PlatformNotificationRepository> { PlatformNotificationImpl(get()) }
     single<PlatformAuthenticationRepository> { PlatformAuthenticationRepositoryImpl(get()) }
     single<OpenBiometricSettings> { OpenBiometricSettingsImpl(get()) }
+    single<RunBiometricAuthentication> { RunBiometricAuthenticationImpl() }
 }

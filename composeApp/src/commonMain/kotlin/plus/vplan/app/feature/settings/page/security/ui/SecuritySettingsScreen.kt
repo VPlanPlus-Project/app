@@ -30,6 +30,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.settings.page.security.domain.usecase.BiometricDeviceState
 import plus.vplan.app.feature.settings.page.security.ui.components.EnrollBiometricAuthenticationDialog
 import plus.vplan.app.ui.platform.OpenBiometricSettings
+import plus.vplan.app.ui.platform.RunBiometricAuthentication
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 
@@ -41,12 +42,21 @@ fun SecuritySettingsScreen(
     val state = viewModel.state
 
     val openBiometricSettings = koinInject<OpenBiometricSettings>()
+    val runBiometricAuthentication = koinInject<RunBiometricAuthentication>()
 
     SecuritySettingsContent(
         state = state,
         onBack = remember { { navHostController.navigateUp() } },
         onEvent = viewModel::onEvent,
-        onOpenBiometricSettings = openBiometricSettings::run
+        onOpenBiometricSettings = openBiometricSettings::run,
+        onRunBiometricAuthentication = remember { { onSuccess, onError, onCancel -> runBiometricAuthentication.run(
+            title = "Sichere Anmeldung",
+            subtitle = "Um die sichere Anmeldung zu deaktivieren, musst du Biometrie aktivieren.",
+            negativeButtonText = "Abbrechen",
+            onSuccess = onSuccess,
+            onError = onError,
+            onCancel = onCancel
+        ) } }
     )
 }
 
@@ -56,7 +66,8 @@ private fun SecuritySettingsContent(
     state: SecuritySettingsState,
     onBack: () -> Unit,
     onEvent: (SecuritySettingsEvent) -> Unit,
-    onOpenBiometricSettings: () -> Unit
+    onOpenBiometricSettings: () -> Unit,
+    onRunBiometricAuthentication: (onSuccess: () -> Unit, onError: () -> Unit, onCancel: () -> Unit) -> Unit
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
     var showBiometricsEnrollDialog by rememberSaveable { mutableStateOf(false) }
@@ -96,6 +107,13 @@ private fun SecuritySettingsContent(
                     checked = state.gradeProtectLevel == GradeProtectLevel.Biometric,
                     onCheckedChange = {
                         if (state.gradeProtectLevel != GradeProtectLevel.Biometric && state.biometricDeviceState == BiometricDeviceState.NotEnrolled) showBiometricsEnrollDialog = true
+                        else if (state.gradeProtectLevel == GradeProtectLevel.Biometric && state.biometricDeviceState == BiometricDeviceState.Ready) {
+                            onRunBiometricAuthentication(
+                                { onEvent(SecuritySettingsEvent.ToggleBiometricGradeProtection) },
+                                {},
+                                {}
+                            )
+                        }
                         else onEvent(SecuritySettingsEvent.ToggleBiometricGradeProtection)
                     }
                 )
