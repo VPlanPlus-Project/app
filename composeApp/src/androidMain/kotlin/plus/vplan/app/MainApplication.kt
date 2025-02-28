@@ -26,7 +26,6 @@ class MainApplication : Application() {
             androidContext(this@MainApplication)
             workManagerFactory()
             module {
-                single { LocalFileRepositoryImpl(get()) }.bind<LocalFileRepository>()
                 single { WorkManager.getInstance(androidContext()) }
                 workerOf(::SyncWorker)
             }

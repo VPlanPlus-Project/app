@@ -1,7 +1,9 @@
 package plus.vplan.app.data.source.database
 
+import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import plus.vplan.app.data.source.database.converters.InstantConverter
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
@@ -136,6 +138,7 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGr
         InstantConverter::class
     ]
 )
+@ConstructedBy(VppDatabaseConstructor::class)
 abstract class VppDatabase : RoomDatabase() {
     abstract val schoolDao: SchoolDao
     abstract val groupDao: GroupDao
@@ -156,4 +159,10 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val homeworkDao: HomeworkDao
     abstract val fileDao: FileDao
     abstract val assessmentDao: AssessmentDao
+}
+
+// Room compiler generates the `actual` implementations
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+expect object VppDatabaseConstructor : RoomDatabaseConstructor<VppDatabase> {
+    override fun initialize(): VppDatabase
 }
