@@ -3,12 +3,9 @@ package plus.vplan.app.data.repository
 import co.touchlab.kermit.Logger
 import platform.UserNotifications.UNMutableNotificationContent
 import platform.UserNotifications.UNNotificationRequest
-import platform.UserNotifications.UNNotificationResponse
 import platform.UserNotifications.UNNotificationSound
 import platform.UserNotifications.UNTimeIntervalNotificationTrigger
 import platform.UserNotifications.UNUserNotificationCenter
-import platform.UserNotifications.UNUserNotificationCenterDelegateProtocol
-import platform.darwin.NSObject
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import kotlin.uuid.Uuid
 
