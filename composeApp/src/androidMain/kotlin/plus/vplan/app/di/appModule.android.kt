@@ -12,7 +12,7 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 
-actual fun platformModule(): Module = module(createdAtStart = true) {
+actual val platformModule: Module = module(createdAtStart = true) {
     single<VppDatabase>(createdAtStart = true) {
         Room.databaseBuilder<VppDatabase>(
             context = get(),

@@ -1,4 +1,3 @@
-import com.google.devtools.ksp.gradle.KspTaskMetadata
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -11,17 +10,15 @@ plugins {
     alias(libs.plugins.serialization)
 }
 
-repositories {
-    mavenCentral()
-    google()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev/")
-}
-
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_11)
         }
+    }
+
+    compilerOptions {
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
     }
     
     listOf(
@@ -30,16 +27,11 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "VPlanPlus"
+            baseName = "ComposeApp"
             isStatic = true
         }
     }
 
-    compilerOptions {
-        optIn.add("kotlin.uuid.ExperimentalUuidApi")
-        freeCompilerArgs.add("-Xexpect-actual-classes")
-    }
-    
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -100,10 +92,6 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
     }
-
-    compilerOptions {
-        optIn.add("kotlin.uuid.ExperimentalUuidApi")
-    }
 }
 
 android {
@@ -125,17 +113,12 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-}
-
-dependencies {
-    debugImplementation(compose.uiTooling)
 }
 
 room {
