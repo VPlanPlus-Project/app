@@ -1,15 +1,22 @@
 import SwiftUI
 import SafariServices
+import ComposeApp
 
 @main
-struct iOSApp: App {
+struct iOSApp: SwiftUI.App {
+    init() {
+        MainViewControllerKt.doInitKoin()
+    }
+    @State private var launchUrl: String? = nil
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(url: launchUrl ?? "")
                 .onOpenURL { url in
-                    print("Open URL")
-                    print(url)
                     (getVisibleViewController(UIApplication.shared.keyWindow?.rootViewController) as! SFSafariViewController).dismiss(animated: true)
+                    
+                    if url.scheme == "vpp" && url.host == "app" && url.pathComponents[1] == "auth" {
+                        launchUrl = url.absoluteString
+                    }
                 }
         }
     }

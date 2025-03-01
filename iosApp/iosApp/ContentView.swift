@@ -3,15 +3,31 @@ import SwiftUI
 import ComposeApp
 
 struct ComposeView: UIViewControllerRepresentable {
+    let url: String
+    
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        return MainViewControllerKt.mainViewController(url: url)
     }
-
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        // Replace the view controller with a new one
+        // This effectively removes and recreates the view controller
+        if let parent = uiViewController.view.superview {
+            uiViewController.removeFromParent()
+            uiViewController.view.removeFromSuperview()
+            
+            let newController = MainViewControllerKt.mainViewController(url: url)
+            parent.addSubview(newController.view)
+            newController.view.frame = parent.bounds
+            parent.addSubview(newController.view)
+        }
+    }
 }
 
+
 struct ContentView: View {
+    let url: String
     var body: some View {
-        ComposeView().ignoresSafeArea()
+        return ComposeView(url: url).ignoresSafeArea()
     }
 }
