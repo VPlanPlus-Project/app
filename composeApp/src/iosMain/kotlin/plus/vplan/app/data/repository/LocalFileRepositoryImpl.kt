@@ -1,6 +1,5 @@
 package plus.vplan.app.data.repository
 
-import co.touchlab.kermit.Logger
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
@@ -42,7 +41,7 @@ class LocalFileRepositoryImpl : LocalFileRepository {
         }
 
         // Create the full file path
-        val filePath = documentDirectory.URLByAppendingPathComponent("/$name")?.relativePath
+        val filePath = documentDirectory.URLByAppendingPathComponent("/homework_files/$name")?.relativePath
             ?: throw IllegalStateException("Invalid file path")
         val nsData = content.toNSData()
 
@@ -76,7 +75,7 @@ class LocalFileRepositoryImpl : LocalFileRepository {
         }
 
         // Create the full file path
-        val filePath = documentDirectory.URLByAppendingPathComponent("/$name")?.relativePath
+        val filePath = documentDirectory.URLByAppendingPathComponent("/homework_files/$name")?.relativePath
             ?: throw IllegalStateException("Invalid file path")
 
         fileManager.removeItemAtPath(filePath, null)
@@ -107,7 +106,7 @@ class LocalFileRepositoryImpl : LocalFileRepository {
         }
 
         // Create the full file path
-        val filePath = documentDirectory.URLByAppendingPathComponent("/$name")?.relativePath
+        val filePath = documentDirectory.URLByAppendingPathComponent("/homework_files/$name")?.relativePath
             ?: throw IllegalStateException("Invalid file path")
 
         val data = fileManager.contentsAtPath(filePath)
