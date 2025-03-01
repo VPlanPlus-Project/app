@@ -2,46 +2,18 @@ import SwiftUI
 import SafariServices
 import ComposeApp
 import QuickLook
+import BackgroundTasks
 
 @main
 struct iOSApp: SwiftUI.App {
     init() {
         MainViewControllerKt.doInitKoin()
-        let fileManager = FileManager.default
-        let documentsDirectory = try! fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
-        let homeworkFileURL = documentsDirectory.appendingPathComponent("homework_files/30")
-        if #available(iOS 16.0, *) {
-            print(fileManager.fileExists(atPath: homeworkFileURL.path()))
-        } else {
-            // Fallback on earlier versions
-        }
-        print(homeworkFileURL.absoluteString)
-        
-        let a = Int("0")!
-        //1/a
-
-        let tmpDirectory = fileManager.temporaryDirectory
-        let destinationURL = tmpDirectory.appendingPathComponent("image.jpg")
-
-        do {
-            // Check if the file exists at the source location
-            if fileManager.fileExists(atPath: homeworkFileURL.path) {
-                // Copy the file to the tmp directory with a new name
-                try fileManager.copyItem(at: homeworkFileURL, to: destinationURL)
-                print("File copied to temporary directory as image.jpg")
-            } else {
-                print("File does not exist at the specified location.")
-            }
-        } catch {
-            print("An error occurred: \(error.localizedDescription)")
-        }
-        
-        let viewer = UIDocumentInteractionController(url:destinationURL)
-        viewer.presentPreview(animated: true)
     }
     
     @State private var launchUrl: String? = nil
     @State var quickLookUrl: URL? = nil
+    
+    @Environment(\.scenePhase) private var phase
     
     var body: some Scene {
         WindowGroup {
@@ -57,6 +29,18 @@ struct iOSApp: SwiftUI.App {
                     }
                 }
                 .quickLookPreview($quickLookUrl)
+        }.onChange(of: phase) { newPhase in
+            switch newPhase {
+            case .background: scheduleAppRefresh()
+            default: break
+            }
+        }.backgroundTask(.appRefresh("plus.vplan.app.sync.task")) {
+            print("Refresh")
+            Task {
+                do {
+                    try await SyncHelperKt.sync()
+                }
+            }
         }
     }
 }
@@ -101,3 +85,13 @@ func getVisibleViewController(_ rootViewController: UIViewController?) -> UIView
   return nil
 }
 
+public func scheduleAppRefresh() {
+    let request = BGAppRefreshTaskRequest(identifier: "plus.vplan.app.sync.task") // Mark 1
+    request.earliestBeginDate = Calendar.current.date(byAdding: .second, value: 30, to: Date()) // Mark 2
+    do {
+        try BGTaskScheduler.shared.submit(request) // Mark 3
+        print("Background Task Scheduled!")
+    } catch (let error) {
+        print("Scheduling error: ", error)
+    }
+}
