@@ -16,6 +16,7 @@ import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.main.MainScreenHost
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.feature.vpp_id.ui.VppIdSetupScreen
+import plus.vplan.app.utils.BrowserIntent
 
 @Composable
 fun NavigationHost(task: StartTask?) {
@@ -34,6 +35,7 @@ fun NavigationHost(task: StartTask?) {
         if (task?.profileId != null) setCurrentProfileUseCase(task.profileId)
         when (task) {
             is StartTask.VppIdLogin -> navigationHostController.navigate(AppScreen.VppIdLogin(task.token))
+            is StartTask.OpenUrl -> BrowserIntent.openUrl(task.url)
             else -> Unit
         }
     }

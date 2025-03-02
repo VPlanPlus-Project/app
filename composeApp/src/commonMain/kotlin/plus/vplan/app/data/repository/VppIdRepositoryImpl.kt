@@ -100,7 +100,8 @@ class VppIdRepositoryImpl(
                     DbVppIdSchulverwalter(
                         vppId = data.id,
                         schulverwalterAccessToken = it,
-                        schulverwalterUserId = data.schulverwalterUserId!!
+                        schulverwalterUserId = data.schulverwalterUserId!!,
+                        isValid = null
                     )
                 },
                 groupCrossovers = listOf(

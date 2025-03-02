@@ -1,0 +1,39 @@
+package plus.vplan.app.data.repository.schulverwalter
+
+import co.touchlab.kermit.Logger
+import io.ktor.client.HttpClient
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.get
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLProtocol
+import kotlinx.coroutines.flow.first
+import plus.vplan.app.data.source.database.VppDatabase
+import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
+
+class SchulverwalterRepositoryImpl(
+    private val httpClient: HttpClient,
+    private val vppDatabase: VppDatabase
+) : SchulverwalterRepository {
+    override suspend fun checkAccess(): Set<Int> {
+        val invalidVppIds = mutableSetOf<Int>()
+        vppDatabase.vppIdDao.getSchulverwalterAccess().first().forEach { access ->
+            val response = httpClient.get {
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = "beste.schule"
+                    pathSegments = listOf("api", "me")
+                }
+                bearerAuth(access.schulverwalterAccessToken)
+            }
+            if (response.status == HttpStatusCode.Unauthorized) {
+                Logger.e { "Failed to authenticate ${access.schulverwalterUserId}" }
+                invalidVppIds.add(access.vppId)
+            } else Logger.i { "User ${access.schulverwalterUserId} is still valid" }
+        }
+        return invalidVppIds
+    }
+
+    override suspend fun setSchulverwalterAccessValidity(token: String, valid: Boolean) {
+        vppDatabase.vppIdDao.setSchulverwalterValidity(valid, token)
+    }
+}

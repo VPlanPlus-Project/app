@@ -135,6 +135,7 @@ fun App(task: StartTask?) {
 
 sealed class StartTask(val profileId: Uuid? = null) {
     data class VppIdLogin(val token: String) : StartTask()
+    data class OpenUrl(val url: String): StartTask()
     sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
         class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
         class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Int? = null): NavigateTo(profileId)

@@ -88,6 +88,9 @@ class MainActivity : FragmentActivity() {
                             }
                         }
                     }
+                    "url" -> {
+                        task = StartTask.OpenUrl(taskJson.value)
+                    }
                 }
             }
         }
