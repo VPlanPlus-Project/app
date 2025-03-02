@@ -36,7 +36,7 @@ class AnalyticsViewModel(
                         it
                             .filterIsInstance<CacheState.Done<Grade>>()
                             .map { gradeState -> gradeState.data }
-                            .filter { grade -> grade.vppIdId == vppIdId }
+                            .filter { grade -> grade.vppIdId == vppIdId && grade.collection.getFirstValue()!!.intervalId in listOfNotNull(state.interval?.id, state.interval?.includedIntervalId) }
                     }.collectLatest { grades ->
                         state = state.copy(
                             grades = grades,

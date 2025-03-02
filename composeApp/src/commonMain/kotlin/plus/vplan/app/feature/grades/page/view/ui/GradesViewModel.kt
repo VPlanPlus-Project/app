@@ -21,6 +21,7 @@ import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculatorGrade
 import plus.vplan.app.feature.grades.domain.usecase.GetCurrentIntervalUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.domain.usecase.GetIntervalsUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
@@ -32,7 +33,8 @@ class GradesViewModel(
     private val syncGradesUseCase: SyncGradesUseCase,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
-    private val lockUseCase: LockGradesUseCase
+    private val lockUseCase: LockGradesUseCase,
+    private val getIntervalsUseCase: GetIntervalsUseCase
 ) : ViewModel() {
     var state by mutableStateOf(GradesState())
         private set
@@ -41,55 +43,68 @@ class GradesViewModel(
     private val updateAverageForSubjectJobs = mutableMapOf<Int, Job>()
     private val updateAverageForCategoryJobs = mutableMapOf<Int, Job>()
 
+    private var grades = listOf<Grade>()
+
+    private suspend fun setGrades() {
+        grades
+            .filter { it.collection.getFirstValue()!!.intervalId in listOfNotNull(state.selectedInterval?.id, state.selectedInterval?.includedIntervalId) }
+            .groupBy { it.subjectId }.map { (subjectId, gradesForSubject) ->
+                val subject = App.subjectSource.getById(subjectId).getFirstValue()!!
+                val calculationRule = subject.finalGrade?.first()?.calculationRule
+                Subject(
+                    id = subjectId,
+                    average = null,
+                    name = subject.name,
+                    categories = gradesForSubject.groupBy { it.collection.getFirstValue()!!.type }.map { (type, gradesForType) ->
+                        val weight = if (calculationRule != null) {
+                            val regex = Regex("""([\d.]+)\s*\*\s*\(\(($type)_sum\)/\(($type)_count\)\)""")
+                            regex.find(calculationRule)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
+                        } else 1.0
+
+                        Subject.Category(
+                            id = (subjectId.toString() + type).hashCode(),
+                            name = type,
+                            average = null,
+                            count = gradesForType.size,
+                            weight = weight,
+                            grades = gradesForType
+                                .associateWith {
+                                    if (it.value == null) null
+                                    else it.isSelectedForFinalGrade
+                                }
+                                .toList()
+                                .sortedBy { it.first.givenAt }
+                                .toMap(),
+                            calculatorGrades = state.subjects.find { it.id == subjectId }?.categories?.find { it.name == type }?.calculatorGrades ?: emptyList()
+                        )
+                    }.sortedBy { it.name }
+            )
+        }
+            .let {
+                state = state.copy(subjects = it)
+                updateFullAverage(true)
+            }
+    }
+
     fun init(vppIdId: Int) {
+        state = GradesState()
+        viewModelScope.launch { getIntervalsUseCase().collectLatest { state = state.copy(intervals = it) } }
         viewModelScope.launch {
-            state = GradesState()
             getGradeLockStateUseCase().collectLatest { areGradesLocked ->
                 state = state.copy(gradeLockState = areGradesLocked)
                 if (!areGradesLocked.canAccess) return@collectLatest
                 App.vppIdSource.getById(vppIdId).filterIsInstance<CacheState.Done<VppId>>().map { it.data }.collectLatest collectLatestGrades@{ vppId ->
                     val interval = getCurrentIntervalUseCase()
                     state = state.copy(vppId = vppId, currentInterval = interval)
-                    if (interval == null ||vppId !is VppId.Active) return@collectLatestGrades
+                    if (interval == null || vppId !is VppId.Active) return@collectLatestGrades
+                    state = state.copy(
+                        intervals = state.intervals,
+                        selectedInterval = interval
+                    )
 
-                    val grades = App.gradeSource.getAll().map { it.filterIsInstance<CacheState.Done<Grade>>().map { gradeState -> gradeState.data } }.first()
-                    grades.groupBy { it.subjectId }.map { (subjectId, gradesForSubject) ->
-                        val subject = App.subjectSource.getById(subjectId).getFirstValue()!!
-                        val calculationRule = subject.finalGrade?.first()?.calculationRule
-                        Subject(
-                            id = subjectId,
-                            average = null,
-                            name = subject.name,
-                            categories = gradesForSubject.groupBy { it.collection.getFirstValue()!!.type }.map { (type, gradesForType) ->
-                                val weight = if (calculationRule != null) {
-                                    val regex = Regex("""([\d.]+)\s*\*\s*\(\(($type)_sum\)/\(($type)_count\)\)""")
-                                    regex.find(calculationRule)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
-                                } else 1.0
+                    grades = App.gradeSource.getAll().map { it.filterIsInstance<CacheState.Done<Grade>>().map { gradeState -> gradeState.data } }.first()
 
-                                Subject.Category(
-                                    id = (subjectId.toString() + type).hashCode(),
-                                    name = type,
-                                    average = null,
-                                    count = gradesForType.size,
-                                    weight = weight,
-                                    grades = gradesForType
-                                        .associateWith {
-                                            if (it.value == null) null
-                                            else it.isSelectedForFinalGrade
-                                        }
-                                        .toList()
-                                        .sortedBy { it.first.givenAt }
-                                        .toMap(),
-                                    calculatorGrades = state.subjects.find { it.id == subjectId }?.categories?.find { it.name == type }?.calculatorGrades ?: emptyList()
-                                )
-                            }.sortedBy { it.name }
-                        )
-                    }
-                        .sortedBy { it.name }
-                        .let {
-                            state = state.copy(subjects = it)
-                            updateFullAverage(true)
-                        }
+                    setGrades()
                 }
             }
         }
@@ -98,7 +113,7 @@ class GradesViewModel(
     private fun updateFullAverage(updateSubjects: Boolean) {
         updateFullAverageJob?.cancel()
         updateFullAverageJob = viewModelScope.launch {
-            val interval = getCurrentIntervalUseCase() ?: return@launch
+            val interval = state.selectedInterval ?: return@launch
             val grades = state.subjects.flatMap { subject -> subject.categories.map { category -> category.grades.filterValues { it == true }.keys.toList() } }.flatten()
             state = state.copy(fullAverage = null)
             val average = calculateAverageUseCase(
@@ -124,7 +139,7 @@ class GradesViewModel(
     private fun updateAverageForSubject(subjectId: Int) {
         updateAverageForSubjectJobs[subjectId]?.cancel()
         updateAverageForSubjectJobs[subjectId] = viewModelScope.launch {
-            val interval = getCurrentIntervalUseCase() ?: return@launch
+            val interval = state.selectedInterval ?: return@launch
             val subject = state.subjects.find { it.id == subjectId } ?: return@launch
             val grades = subject.categories.flatMap { category -> category.grades.filterValues { it == true }.keys.toList() }
             state = state.copy(subjects = state.subjects.map { currentSubject ->
@@ -158,7 +173,7 @@ class GradesViewModel(
     private fun updateAverageForCategory(categoryId: Int) {
         updateAverageForCategoryJobs[categoryId]?.cancel()
         updateAverageForCategoryJobs[categoryId] = viewModelScope.launch {
-            val interval = getCurrentIntervalUseCase() ?: return@launch
+            val interval = state.selectedInterval ?: return@launch
             val subject = state.subjects.first { it.categories.any { category -> category.id == categoryId } }
             val category = state.subjects.flatMap { s -> s.categories }.find { it.id == categoryId } ?: return@launch
             val grades = category.grades.filterValues { it == true }.keys.toList()
@@ -240,6 +255,10 @@ class GradesViewModel(
                 }
                 is GradeDetailEvent.RequestGradeUnlock -> requestGradeUnlockUseCase()
                 is GradeDetailEvent.RequestGradeLock -> lockUseCase()
+                is GradeDetailEvent.SelectInterval -> {
+                    state = state.copy(selectedInterval = event.interval)
+                    setGrades()
+                }
             }
         }
     }
@@ -253,6 +272,8 @@ data class GradesState(
     val subjects: List<Subject> = emptyList(),
     val isUpdating: Boolean = false,
     val gradeLockState: GradeLockState? = null,
+    val intervals: List<Interval> = emptyList(),
+    val selectedInterval: Interval? = null
 ) {
     val allGrades: List<Grade>
         get() = subjects.flatMap { subject -> subject.categories.flatMap { category -> category.grades.filterValues { it == true }.keys } }
@@ -288,4 +309,6 @@ sealed class GradeDetailEvent {
 
     data object RequestGradeUnlock: GradeDetailEvent()
     data object RequestGradeLock: GradeDetailEvent()
+
+    data class SelectInterval(val interval: Interval): GradeDetailEvent()
 }

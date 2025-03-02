@@ -64,6 +64,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -79,6 +80,7 @@ import plus.vplan.app.domain.model.schulverwalter.Teacher
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.AddGradeDialog
+import plus.vplan.app.feature.grades.page.view.ui.components.SelectIntervalDrawer
 import plus.vplan.app.feature.main.MainScreen
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
@@ -90,6 +92,8 @@ import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.calculator
 import vplanplus.composeapp.generated.resources.chart_no_axes_combined
+import vplanplus.composeapp.generated.resources.filter
+import vplanplus.composeapp.generated.resources.list_ordered
 import vplanplus.composeapp.generated.resources.lock
 import vplanplus.composeapp.generated.resources.lock_open
 import vplanplus.composeapp.generated.resources.trash_2
@@ -134,6 +138,8 @@ private fun GradesContent(
 
     val pullToRefreshState = rememberPullToRefreshState()
 
+    var showIntervalFilterDrawer by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(state.gradeLockState) {
         if (state.gradeLockState == GradeLockState.Locked && firstRun) {
             firstRun = false
@@ -169,6 +175,20 @@ private fun GradesContent(
                         IconButton(onClick = { onEvent(GradeDetailEvent.RequestGradeLock) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.lock),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = state.gradeLockState != GradeLockState.Locked,
+                        enter = expandHorizontally(expandFrom = Alignment.CenterHorizontally) + fadeIn(),
+                        exit = shrinkHorizontally(shrinkTowards = Alignment.CenterHorizontally) + fadeOut()
+                    ) {
+                        IconButton(onClick = { showIntervalFilterDrawer = true }) {
+                            Icon(
+                                painter = painterResource(Res.drawable.filter),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(20.dp)
@@ -245,6 +265,37 @@ private fun GradesContent(
                         isRefreshing = state.isUpdating,
                         modifier = Modifier.fillMaxSize()
                     ) {
+                        if (state.allGrades.isEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                                    .nestedScroll(topScrollBehavior.nestedScrollConnection),
+                                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.list_ordered),
+                                    modifier = Modifier.size(24.dp),
+                                    contentDescription = null
+                                )
+                                Text(
+                                    text = buildString {
+                                        append("Keine Noten ")
+                                        if (state.currentInterval != null) {
+                                            if (state.currentInterval.includedIntervalId == null) append("für das Interval ${state.currentInterval.name} ")
+                                            else state.currentInterval.includedInterval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data.name }?.collectAsState(null)?.let {
+                                                append("für die Intervalle $it und ${state.currentInterval.name}")
+                                            }
+                                        }
+                                        append("verfügbar.")
+                                    },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                            return@PullToRefreshBox
+                        }
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -813,5 +864,12 @@ private fun GradesContent(
         onDismiss = { addGradeToCategoryId = null },
         onSelectGrade = { onEvent(GradeDetailEvent.AddGrade(addGradeToCategoryId!!, it)); addGradeToCategoryId = null },
         intervalType = state.currentInterval?.type ?: Interval.Type.SEK1
+    )
+
+    if (showIntervalFilterDrawer) SelectIntervalDrawer(
+        intervals = state.intervals,
+        selectedInterval = state.selectedInterval,
+        onDismiss = { showIntervalFilterDrawer = false },
+        onClickInterval = { onEvent(GradeDetailEvent.SelectInterval(it)) }
     )
 }

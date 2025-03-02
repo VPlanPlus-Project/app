@@ -15,6 +15,7 @@ data class Interval(
     val to: LocalDate,
     val includedIntervalId: Int?,
     val yearId: Int,
+    val collectionIds: List<Int>,
     val cachedAt: Instant
 ): Item {
     override fun getEntityId(): String = this.id.toString()
