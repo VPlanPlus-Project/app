@@ -1,5 +1,7 @@
 package plus.vplan.app.feature.search.ui.main
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +22,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -31,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -43,9 +47,13 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
+import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
+import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.feature.main.MainScreen
+import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.LessonRow
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
@@ -53,9 +61,17 @@ import plus.vplan.app.feature.search.ui.main.components.StartScreen
 import plus.vplan.app.feature.search.ui.main.components.hourWidth
 import plus.vplan.app.ui.keyboardAsState
 import plus.vplan.app.ui.subjectIcon
+import plus.vplan.app.ui.theme.CustomColor
+import plus.vplan.app.ui.theme.colors
+import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.DOT
+import plus.vplan.app.utils.blendColor
+import plus.vplan.app.utils.getState
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toName
+import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.lock
+import vplanplus.composeapp.generated.resources.lock_open
 
 @Composable
 fun SearchScreen(
@@ -91,6 +107,7 @@ private fun SearchScreenContent(
 
     var visibleHomework by rememberSaveable<MutableState<Int?>> { mutableStateOf(null) }
     var visibleAssessment by rememberSaveable<MutableState<Int?>> { mutableStateOf(null) }
+    var visibleGrade by rememberSaveable<MutableState<Int?>> { mutableStateOf(null) }
 
     Column(
         modifier = Modifier
@@ -129,11 +146,48 @@ private fun SearchScreenContent(
             }
 
             state.results.forEach { (type, results) ->
-                Text(
-                    text = type.toName(),
-                    modifier = Modifier.padding(start = 8.dp),
-                    style = MaterialTheme.typography.headlineMedium
-                )
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = type.toName(),
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    if (type == Result.Grade && state.gradeLockState != GradeLockState.NotConfigured) {
+                        TextButton(
+                            onClick = {
+                                when (state.gradeLockState) {
+                                    GradeLockState.Locked -> onEvent(SearchEvent.RequestGradeUnlock)
+                                    GradeLockState.Unlocked -> onEvent(SearchEvent.RequestGradeLock)
+                                    else -> Unit
+                                }
+                            }
+                        ) {
+                            AnimatedContent(
+                                targetState = state.gradeLockState
+                            ) { gradeLockState ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        painter =
+                                        if (gradeLockState == GradeLockState.Locked) painterResource(Res.drawable.lock_open)
+                                        else painterResource(Res.drawable.lock),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    if (gradeLockState == GradeLockState.Locked) Text("Entsperren")
+                                    else Text("Sperren")
+                                }
+                            }
+                        }
+                    }
+                }
                 results.forEach { result ->
                     if (result is SearchResult.SchoolEntity) {
                         Row(
@@ -267,6 +321,100 @@ private fun SearchScreenContent(
                         }
                     }
 
+                    if (result is SearchResult.Grade) {
+                        val subject = result.grade.subject.getState(null).value
+                        val collection = result.grade.collection.getState(null).value
+                        val interval = collection?.interval?.getState(null)?.value
+
+                        val red = colors[CustomColor.Red]!!.getGroup()
+                        val green = colors[CustomColor.Green]!!.getGroup()
+
+                        val backgroundColor = when (interval?.type) {
+                            Interval.Type.SEK1 -> blendColor(blendColor(green.container, red.container, ((result.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                            Interval.Type.SEK2 -> blendColor(blendColor(red.container, green.container, (result.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                            else -> Color.Transparent
+                        }
+
+                        val foregroundColor = when (interval?.type) {
+                            Interval.Type.SEK1 -> blendColor(blendColor(green.onContainer, red.onContainer, ((result.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                            Interval.Type.SEK2 -> blendColor(blendColor(red.onContainer, green.onContainer, (result.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                            else -> Color.Transparent
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { visibleGrade = result.grade.id }
+                                .padding(horizontal = 8.dp),
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(24.dp)) {
+                                    subject?.let { subject ->
+                                        Icon(
+                                            painter = painterResource(subject.localId.subjectIcon()),
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentDescription = null
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                Column {
+                                    Row {
+                                        subject?.let {
+                                            Text(
+                                                text = it.name,
+                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                                            )
+                                        }
+                                        collection?.let {
+                                            Text(
+                                                text = " $DOT ${collection.givenAt.format(regularDateFormat)}",
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.weight(1f, true))
+                                AnimatedContent(
+                                    targetState = state.gradeLockState
+                                ) { gradeLockState ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .thenIf(Modifier.clickable { onEvent(SearchEvent.RequestGradeUnlock) }) { gradeLockState == GradeLockState.Locked }
+                                            .background(if (gradeLockState == GradeLockState.Locked) MaterialTheme.colorScheme.outline else backgroundColor),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (gradeLockState == GradeLockState.Locked) Icon(
+                                            painter = painterResource(Res.drawable.lock_open),
+                                            modifier = Modifier.size(12.dp),
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.outlineVariant
+                                        ) else Text(
+                                            text = buildString {
+                                                if (result.grade.isOptional) append("(")
+                                                if (result.grade.value != null) append(result.grade.value)
+                                                else append("-")
+                                                if (result.grade.isOptional) append(")")
+                                            },
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = foregroundColor
+                                        )
+                                    }
+                                }
+                            }
+                            collection?.let {
+                                Text(
+                                    text = it.name,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(start = 32.dp, end = 8.dp)
+                                )
+                            }
+                        }
+                    }
+
                     HorizontalDivider()
                     Spacer(Modifier.height(8.dp))
                 }
@@ -282,5 +430,10 @@ private fun SearchScreenContent(
     visibleAssessment?.let { AssessmentDetailDrawer(
         assessmentId = it,
         onDismiss = { visibleAssessment = null }
+    ) }
+
+    visibleGrade?.let { GradeDetailDrawer(
+        gradeId = it,
+        onDismiss = { visibleGrade = null }
     ) }
 }

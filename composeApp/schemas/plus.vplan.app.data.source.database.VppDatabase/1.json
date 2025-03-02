@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8bbcb73e9414aa1d3c6a57bca024c02d",
+    "identityHash": "541b071cbdaed7b61d00f1e5ce1759e7",
     "entities": [
       {
         "tableName": "schools",
@@ -2821,7 +2821,7 @@
       },
       {
         "tableName": "schulverwalter_collection",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `type` TEXT NOT NULL, `name` TEXT NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `type` TEXT NOT NULL, `name` TEXT NOT NULL, `given_at` TEXT NOT NULL, `user_for_request` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -2838,6 +2838,12 @@
           {
             "fieldPath": "name",
             "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "givenAt",
+            "columnName": "given_at",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -3570,7 +3576,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8bbcb73e9414aa1d3c6a57bca024c02d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '541b071cbdaed7b61d00f1e5ce1759e7')"
     ]
   }
 }

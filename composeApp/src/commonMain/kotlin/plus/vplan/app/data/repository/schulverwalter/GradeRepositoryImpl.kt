@@ -142,6 +142,7 @@ class GradeRepositoryImpl(
                     type = grade.collection.type,
                     name = grade.collection.name,
                     userForRequest = userForRequest,
+                    givenAt = LocalDate.parse(grade.collection.givenAt),
                     cachedAt = Clock.System.now()
                 )
             },
@@ -238,6 +239,7 @@ private data class GradeItemResponse(
         @SerialName("id") val id: Int,
         @SerialName("type") val type: String,
         @SerialName("name") val name: String,
+        @SerialName("given_at") val givenAt: String,
         @SerialName("subject_id") val subjectId: Int,
         @SerialName("interval_id") val intervalId: Int,
     )
