@@ -32,14 +32,9 @@ class SecuritySettingsViewModel(
                     if (state.biometricDeviceState == null) return@launch
                     if (state.gradeProtectLevel == GradeProtectLevel.None) {
                         if (state.biometricDeviceState == BiometricDeviceState.Ready) setGradeProtectionLevelUseCase(GradeProtectLevel.Biometric)
-                        else setGradeProtectionLevelUseCase(GradeProtectLevel.Regular)
+                        else setGradeProtectionLevelUseCase(GradeProtectLevel.None)
                     }
                     else setGradeProtectionLevelUseCase(GradeProtectLevel.None)
-                }
-                is SecuritySettingsEvent.ToggleBiometricGradeProtection -> {
-                    if (state.biometricDeviceState == null) return@launch
-                    if (state.gradeProtectLevel == GradeProtectLevel.Biometric) setGradeProtectionLevelUseCase(GradeProtectLevel.Regular)
-                    else if (state.biometricDeviceState == BiometricDeviceState.Ready && state.gradeProtectLevel == GradeProtectLevel.Regular) setGradeProtectionLevelUseCase(GradeProtectLevel.Biometric)
                 }
             }
         }
@@ -58,11 +53,6 @@ enum class GradeProtectLevel {
     Biometric,
 
     /**
-     * Uses the system lock mechanisms like PIN, pattern or password
-     */
-    Regular,
-
-    /**
      * Does not protect grades
      */
     None
@@ -70,5 +60,4 @@ enum class GradeProtectLevel {
 
 sealed class SecuritySettingsEvent {
     data object ToggleGradeProtection: SecuritySettingsEvent()
-    data object ToggleBiometricGradeProtection: SecuritySettingsEvent()
 }

@@ -6,6 +6,7 @@ import org.koin.dsl.module
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetCurrentIntervalUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.domain.usecase.GetIntervalsUseCase
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.grades.domain.usecase.ToggleConsiderGradeForFinalGradeUseCase
@@ -22,6 +23,7 @@ val gradeModule = module {
     singleOf(::GetGradeLockStateUseCase)
     singleOf(::LockGradesUseCase)
     singleOf(::RequestGradeUnlockUseCase)
+    singleOf(::GetIntervalsUseCase)
 
     viewModelOf(::GradeDetailViewModel)
     viewModelOf(::GradesViewModel)

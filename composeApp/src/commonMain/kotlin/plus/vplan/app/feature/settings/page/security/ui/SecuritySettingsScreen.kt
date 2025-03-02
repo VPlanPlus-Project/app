@@ -100,7 +100,8 @@ private fun SecuritySettingsContent(
             Switch(
                 checked = state.gradeProtectLevel != GradeProtectLevel.None,
                 onCheckedChange = {
-                    if (state.gradeProtectLevel == GradeProtectLevel.Biometric) {
+                    if (state.biometricDeviceState == BiometricDeviceState.NotEnrolled) showBiometricsEnrollDialog = true
+                    else if (state.gradeProtectLevel == GradeProtectLevel.Biometric) {
                         onRunBiometricAuthentication(
                             { onEvent(SecuritySettingsEvent.ToggleGradeProtection) },
                             {},
@@ -110,24 +111,7 @@ private fun SecuritySettingsContent(
                     else onEvent(SecuritySettingsEvent.ToggleGradeProtection)
                 }
             )
-            if (state.biometricDeviceState != BiometricDeviceState.NotAvailable) {
-                Text("Biometrische Anmeldung nutzen")
-                Switch(
-                    checked = state.gradeProtectLevel == GradeProtectLevel.Biometric,
-                    onCheckedChange = {
-                        if (state.gradeProtectLevel != GradeProtectLevel.Biometric && state.biometricDeviceState == BiometricDeviceState.NotEnrolled) showBiometricsEnrollDialog = true
-                        else if (state.gradeProtectLevel == GradeProtectLevel.Biometric && state.biometricDeviceState == BiometricDeviceState.Ready) {
-                            onRunBiometricAuthentication(
-                                { onEvent(SecuritySettingsEvent.ToggleBiometricGradeProtection) },
-                                {},
-                                {}
-                            )
-                        }
-                        else onEvent(SecuritySettingsEvent.ToggleBiometricGradeProtection)
-                    }
-                )
-            }
-            if (state.gradeProtectLevel == GradeProtectLevel.Regular && state.biometricDeviceState == BiometricDeviceState.NotEnrolled) {
+            if (state.gradeProtectLevel == GradeProtectLevel.None && state.biometricDeviceState == BiometricDeviceState.NotEnrolled) {
                 Text("Dein Gerät unterstützt Biometrische Anmeldung, du hast sie jedoch noch nicht eingerichtet. Gehe zu Einstellungen.")
             }
         }
