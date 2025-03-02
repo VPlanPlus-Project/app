@@ -154,6 +154,7 @@ class CollectionRepositoryImpl(
                     type = it.type,
                     name = it.name,
                     userForRequest = userForRequest,
+                    givenAt = LocalDate.parse(it.givenAt),
                     cachedAt = Clock.System.now()
                 )
             },
@@ -184,6 +185,7 @@ private data class CollectionItemResponse(
     @SerialName("type") val type: String,
     @SerialName("name") val name: String,
     @SerialName("interval") val interval: Interval,
+    @SerialName("given_at") val givenAt: String,
     @SerialName("subject") val subject: Subject,
     @SerialName("teacher") val teacher: Teacher,
 ) {

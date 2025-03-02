@@ -18,6 +18,10 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
+import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
+import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.GetAssessmentsForProfileUseCase
@@ -29,7 +33,10 @@ class SearchViewModel(
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getHomeworkForProfileUseCase: GetHomeworkForProfileUseCase,
-    private val getAssessmentsForProfileUseCase: GetAssessmentsForProfileUseCase
+    private val getAssessmentsForProfileUseCase: GetAssessmentsForProfileUseCase,
+    private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
+    private val lockGradesUseCase: LockGradesUseCase,
+    private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase
 ) : ViewModel() {
 
     var state by mutableStateOf(SearchState())
@@ -40,6 +47,10 @@ class SearchViewModel(
     init {
         viewModelScope.launch {
             getCurrentDateTimeUseCase().collectLatest { state = state.copy(currentTime = it) }
+        }
+
+        viewModelScope.launch {
+            getGradeLockStateUseCase().collectLatest { state = state.copy(gradeLockState = it) }
         }
 
         viewModelScope.launch {
@@ -68,6 +79,8 @@ class SearchViewModel(
                     state = state.copy(selectedDate = event.date)
                     restartSearch()
                 }
+                is SearchEvent.RequestGradeLock -> lockGradesUseCase()
+                is SearchEvent.RequestGradeUnlock -> requestGradeUnlockUseCase()
             }
         }
     }
@@ -89,10 +102,14 @@ data class SearchState(
     val homework: List<Homework> = emptyList(),
     val assessments: List<Assessment> = emptyList(),
     val currentProfile: Profile? = null,
-    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+    val gradeLockState: GradeLockState = GradeLockState.NotConfigured
 )
 
 sealed class SearchEvent {
     data class UpdateQuery(val query: String): SearchEvent()
     data class SelectDate(val date: LocalDate): SearchEvent()
+
+    data object RequestGradeUnlock: SearchEvent()
+    data object RequestGradeLock: SearchEvent()
 }
