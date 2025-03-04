@@ -1,7 +1,12 @@
 package plus.vplan.app.feature.calendar.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -31,8 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -45,7 +48,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -78,6 +80,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.feature.calendar.ui.components.DisplaySelectType
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
 import plus.vplan.app.feature.home.ui.components.headerFont
@@ -93,8 +96,6 @@ import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
-import vplanplus.composeapp.generated.resources.sheet
-import vplanplus.composeapp.generated.resources.table_properties
 import kotlin.math.roundToInt
 
 private const val CONTENT_PAGER_SIZE = Int.MAX_VALUE
@@ -177,7 +178,8 @@ private fun CalendarScreenContent(
         Column (
             modifier = Modifier
                 .fillMaxWidth()
-                .pointerInput(Unit) {
+                .pointerInput(state.displayType) {
+                    if (state.displayType != DisplayType.Calendar) return@pointerInput
                     detectVerticalDragGestures(
                         onDragStart = { isUserScrolling = true },
                         onDragEnd = {
@@ -240,238 +242,239 @@ private fun CalendarScreenContent(
                     IconButton(onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) }) {
                         Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(24.dp))
                     }
-                    SingleChoiceSegmentedButtonRow {
-                        SegmentedButton(
-                            shape = RoundedCornerShape(50, 0, 0, 50),
-                            onClick = {},
-                            selected = true
-                        ) { Icon(
-                            painter = painterResource(Res.drawable.sheet),
-                            modifier = Modifier.size(18.dp),
-                            contentDescription = null
-                        ) }
-                        SegmentedButton(
-                            shape = RoundedCornerShape(0, 50, 50, 0),
-                            onClick = {  },
-                            selected = false
-                        ) { Icon(
-                            painter = painterResource(Res.drawable.table_properties),
-                            modifier = Modifier.size(18.dp).rotate(180f),
-                            contentDescription = null
-                        ) }
-                    }
+                    DisplaySelectType(
+                        displayType = state.displayType,
+                        onSelectType = { onEvent(CalendarEvent.SelectDisplayType(it)) }
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-            ScrollableDateSelector(
-                scrollProgress = displayScrollProgress,
-                allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
-                selectedDate = state.selectedDate,
-                onSelectDate = { onEvent(CalendarEvent.SelectDate(it)) }
-            )
-        }
-        HorizontalDivider()
-        val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
-        val isUserDragging = pagerState.interactionSource.collectIsDraggedAsState().value
-        LaunchedEffect(pagerState.targetPage, isUserDragging) {
-            if (isUserDragging) return@LaunchedEffect
-            val date = LocalDate.now().plus((pagerState.targetPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-            if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
-        }
-        LaunchedEffect(state.selectedDate) {
-            val currentlyOpenedDate = LocalDate.now().plus((pagerState.currentPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-            if (currentlyOpenedDate != state.selectedDate) {
-                pagerState.animateScrollToPage((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+            AnimatedVisibility(
+                visible = state.displayType == DisplayType.Calendar,
+                enter = fadeIn() + expandVertically(expandFrom = Alignment.CenterVertically),
+                exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.CenterVertically)
+            ) {
+                ScrollableDateSelector(
+                    scrollProgress = displayScrollProgress,
+                    allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
+                    selectedDate = state.selectedDate,
+                    onSelectDate = { onEvent(CalendarEvent.SelectDate(it)) }
+                )
             }
         }
-        LaunchedEffect(state.days[state.selectedDate]) {
-            val day = state.days[state.selectedDate] ?: return@LaunchedEffect
-            if (day.lessons.isEmpty()) return@LaunchedEffect
-            val lessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
-            if (lessons.isEmpty()) return@LaunchedEffect
-            val startOfDay = lessons.minOf { it.lessonTimeItem!!.start }
-            contentScrollState.animateScrollTo(with(localDensity) { ((startOfDay.inWholeMinutes().toFloat() - 60) * minute).coerceAtLeast(0.dp).roundToPx() })
-        }
-        HorizontalPager(
-            state = pagerState,
-            pageSize = PageSize.Fill,
-            verticalAlignment = Alignment.Top,
-            beyondViewportPageCount = 7,
-            modifier = Modifier
-                .fillMaxSize()
-        ) { page ->
-            val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-            Column {
-                val day = state.days[date]
-                if (day != null) {
-                    Box(
+        HorizontalDivider()
+        AnimatedContent(
+            targetState = state.displayType
+        ) { displayType ->
+            when (displayType) {
+                DisplayType.Calendar -> {
+                    val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
+                    val isUserDragging = pagerState.interactionSource.collectIsDraggedAsState().value
+                    LaunchedEffect(pagerState.targetPage, isUserDragging) {
+                        if (isUserDragging) return@LaunchedEffect
+                        val date = LocalDate.now().plus((pagerState.targetPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+                        if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
+                    }
+                    LaunchedEffect(state.selectedDate) {
+                        val currentlyOpenedDate = LocalDate.now().plus((pagerState.currentPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+                        if (currentlyOpenedDate != state.selectedDate) {
+                            pagerState.animateScrollToPage((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+                        }
+                    }
+                    LaunchedEffect(state.days[state.selectedDate]) {
+                        val day = state.days[state.selectedDate] ?: return@LaunchedEffect
+                        if (day.lessons.isEmpty()) return@LaunchedEffect
+                        val lessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+                        if (lessons.isEmpty()) return@LaunchedEffect
+                        val startOfDay = lessons.minOf { it.lessonTimeItem!!.start }
+                        contentScrollState.animateScrollTo(with(localDensity) { ((startOfDay.inWholeMinutes().toFloat() - 60) * minute).coerceAtLeast(0.dp).roundToPx() })
+                    }
+                    HorizontalPager(
+                        state = pagerState,
+                        pageSize = PageSize.Fill,
+                        verticalAlignment = Alignment.Top,
+                        beyondViewportPageCount = 7,
                         modifier = Modifier
                             .fillMaxSize()
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .onSizeChanged { availableWidth = with(localDensity) { it.width.toDp() } - 2 * 8.dp - 32.dp }
-                                .verticalScroll(contentScrollState)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(minute * 24 * 60)
-                            ) {
-                                val lessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
-                                repeat(24) {
-                                    val time = LocalTime(it, 0)
-                                    val y = time.inWholeMinutes().toFloat() * minute
-                                    if (y < 0.dp) return@repeat
-                                    HorizontalDivider(Modifier.fillMaxWidth().offset(y = y).zIndex(-10f))
-                                    Text(
-                                        text = "${it.toString().padStart(2, '0')}:00",
-                                        color = Color.Gray,
-                                        modifier = Modifier.offset(y = y).widthIn(max = 48.dp).align(Alignment.TopEnd),
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                }
-                                if (date == state.currentTime.date) {
-                                    val currentTime = state.currentTime.time
-                                    val y = currentTime.inWholeMinutes().toFloat() * minute
-                                    HorizontalDivider(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .offset(y = y + 2.dp)
-                                            .drawWithCache {
-                                                val triangleShape = Path().apply {
-                                                    moveTo(0f, 1.dp.toPx())
-                                                    relativeMoveTo(0f, 6.dp.toPx())
-                                                    relativeLineTo(0f, -12.dp.toPx())
-                                                    relativeLineTo(8.dp.toPx(), 6.dp.toPx())
-                                                    relativeLineTo(-8.dp.toPx(), 6.dp.toPx())
-                                                    close()
-                                                }
-                                                onDrawBehind {
-                                                    drawPath(
-                                                        color = Color.Red,
-                                                        path = triangleShape,
-                                                        style = Fill
-                                                    )
-                                                }
-                                            }
-                                            .zIndex(-9f),
-                                        color = Color.Red,
-                                        thickness = 2.dp
-                                    )
-                                }
-                                lessons.forEachIndexed { i, lesson ->
-                                    val start = lesson.lessonTimeItem!!.start
-                                    val end = lesson.lessonTimeItem!!.end
-
-                                    val lessonsThatOverlapStart = lessons.filter { start in it.lessonTimeItem!!.start..it.lessonTimeItem!!.end }
-                                    val lessonsThatOverlapStartAndAreAlreadyDisplayed = lessons.filterIndexed { index, lessonCompare -> start in lessonCompare.lessonTimeItem!!.start..lessonCompare.lessonTimeItem!!.end && index < i }
-
-                                    val y = start.inWholeMinutes().toFloat() * minute
+                    ) { page ->
+                        val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+                        Column {
+                            val day = state.days[date]
+                            if (day != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                ) {
                                     Box(
                                         modifier = Modifier
-                                            .width(availableWidth / lessonsThatOverlapStart.size)
-                                            .padding(horizontal = 8.dp)
-                                            .height(start.until(end).inWholeMinutes.toFloat() * minute)
-                                            .offset(y = y, x = (availableWidth / lessonsThatOverlapStart.size) * lessonsThatOverlapStartAndAreAlreadyDisplayed.size)
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .clickable {  }
-                                            .background(
-                                                if (lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
-                                                else MaterialTheme.colorScheme.surfaceVariant)
-                                            .padding(4.dp)
+                                            .fillMaxWidth()
+                                            .onSizeChanged { availableWidth = with(localDensity) { it.width.toDp() } - 2 * 8.dp - 32.dp }
+                                            .verticalScroll(contentScrollState)
                                     ) {
-                                        CompositionLocalProvider(
-                                            LocalContentColor provides if (lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(minute * 24 * 60)
                                         ) {
-                                            Column {
-                                                Row(
-                                                    verticalAlignment = Alignment.Top,
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                ) {
-                                                    if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) SubjectIcon(
-                                                        modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                                                        subject = lesson.subject,
-                                                        contentColor = MaterialTheme.colorScheme.onError,
-                                                        containerColor = MaterialTheme.colorScheme.error
-                                                    )
-                                                    else SubjectIcon(
-                                                        modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                                                        subject = lesson.subject
-                                                    )
-                                                    Column {
-                                                        Row(
-                                                            verticalAlignment = Alignment.CenterVertically,
-                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                        ) {
-                                                            Text(text = buildAnnotatedString {
-                                                                withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
-                                                                    if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                        append((lesson as Lesson.SubstitutionPlanLesson).defaultLessonItem!!.subject)
-                                                                    } else append(lesson.subject.toString())
-                                                                }
-                                                            }, style = MaterialTheme.typography.bodySmall)
-                                                            if (lesson.roomItems != null) Text(
-                                                                text = lesson.roomItems.orEmpty().joinToString { it.name },
-                                                                style = MaterialTheme.typography.labelMedium
-                                                            )
-                                                            Text(
-                                                                text = lesson.teacherItems.orEmpty().joinToString { it.name },
-                                                                style = MaterialTheme.typography.labelMedium
-                                                            )
+                                            val lessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+                                            repeat(24) {
+                                                val time = LocalTime(it, 0)
+                                                val y = time.inWholeMinutes().toFloat() * minute
+                                                if (y < 0.dp) return@repeat
+                                                HorizontalDivider(Modifier.fillMaxWidth().offset(y = y).zIndex(-10f))
+                                                Text(
+                                                    text = "${it.toString().padStart(2, '0')}:00",
+                                                    color = Color.Gray,
+                                                    modifier = Modifier.offset(y = y).widthIn(max = 48.dp).align(Alignment.TopEnd),
+                                                    style = MaterialTheme.typography.labelSmall
+                                                )
+                                            }
+                                            if (date == state.currentTime.date) {
+                                                val currentTime = state.currentTime.time
+                                                val y = currentTime.inWholeMinutes().toFloat() * minute
+                                                HorizontalDivider(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .offset(y = y + 2.dp)
+                                                        .drawWithCache {
+                                                            val triangleShape = Path().apply {
+                                                                moveTo(0f, 1.dp.toPx())
+                                                                relativeMoveTo(0f, 6.dp.toPx())
+                                                                relativeLineTo(0f, -12.dp.toPx())
+                                                                relativeLineTo(8.dp.toPx(), 6.dp.toPx())
+                                                                relativeLineTo(-8.dp.toPx(), 6.dp.toPx())
+                                                                close()
+                                                            }
+                                                            onDrawBehind {
+                                                                drawPath(
+                                                                    color = Color.Red,
+                                                                    path = triangleShape,
+                                                                    style = Fill
+                                                                )
+                                                            }
                                                         }
-                                                        Text(
-                                                            buildString {
-                                                                append(lesson.lessonTimeItem!!.lessonNumber)
-                                                                append(". $DOT ")
-                                                                append(lesson.lessonTimeItem!!.start.format(regularTimeFormat))
-                                                                append(" - ")
-                                                                append(lesson.lessonTimeItem!!.end.format(regularTimeFormat))
-                                                            },
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                    }
-                                                }
-                                                if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                    modifier = Modifier.padding(start = 16.dp)
+                                                        .zIndex(-9f),
+                                                    color = Color.Red,
+                                                    thickness = 2.dp
+                                                )
+                                            }
+                                            lessons.forEachIndexed { i, lesson ->
+                                                val start = lesson.lessonTimeItem!!.start
+                                                val end = lesson.lessonTimeItem!!.end
+
+                                                val lessonsThatOverlapStart = lessons.filter { start in it.lessonTimeItem!!.start..it.lessonTimeItem!!.end }
+                                                val lessonsThatOverlapStartAndAreAlreadyDisplayed = lessons.filterIndexed { index, lessonCompare -> start in lessonCompare.lessonTimeItem!!.start..lessonCompare.lessonTimeItem!!.end && index < i }
+
+                                                val y = start.inWholeMinutes().toFloat() * minute
+                                                Box(
+                                                    modifier = Modifier
+                                                        .width(availableWidth / lessonsThatOverlapStart.size)
+                                                        .padding(horizontal = 8.dp)
+                                                        .height(start.until(end).inWholeMinutes.toFloat() * minute)
+                                                        .offset(y = y, x = (availableWidth / lessonsThatOverlapStart.size) * lessonsThatOverlapStartAndAreAlreadyDisplayed.size)
+                                                        .clip(RoundedCornerShape(6.dp))
+                                                        .clickable {  }
+                                                        .background(
+                                                            if (lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
+                                                            else MaterialTheme.colorScheme.surfaceVariant)
+                                                        .padding(4.dp)
                                                 ) {
-                                                    Icon(
-                                                        painter = painterResource(Res.drawable.info),
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(8.dp),
-                                                        tint = MaterialTheme.colorScheme.onSurface
-                                                    )
-                                                    Text(
-                                                        text = lesson.info,
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
+                                                    CompositionLocalProvider(
+                                                        LocalContentColor provides if (lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                    ) {
+                                                        Column {
+                                                            Row(
+                                                                verticalAlignment = Alignment.Top,
+                                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                            ) {
+                                                                if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) SubjectIcon(
+                                                                    modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                                                                    subject = lesson.subject,
+                                                                    contentColor = MaterialTheme.colorScheme.onError,
+                                                                    containerColor = MaterialTheme.colorScheme.error
+                                                                )
+                                                                else SubjectIcon(
+                                                                    modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                                                                    subject = lesson.subject
+                                                                )
+                                                                Column {
+                                                                    Row(
+                                                                        verticalAlignment = Alignment.CenterVertically,
+                                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                                    ) {
+                                                                        Text(text = buildAnnotatedString {
+                                                                            withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
+                                                                                if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
+                                                                                    append((lesson as Lesson.SubstitutionPlanLesson).defaultLessonItem!!.subject)
+                                                                                } else append(lesson.subject.toString())
+                                                                            }
+                                                                        }, style = MaterialTheme.typography.bodySmall)
+                                                                        if (lesson.roomItems != null) Text(
+                                                                            text = lesson.roomItems.orEmpty().joinToString { it.name },
+                                                                            style = MaterialTheme.typography.labelMedium
+                                                                        )
+                                                                        Text(
+                                                                            text = lesson.teacherItems.orEmpty().joinToString { it.name },
+                                                                            style = MaterialTheme.typography.labelMedium
+                                                                        )
+                                                                    }
+                                                                    Text(
+                                                                        buildString {
+                                                                            append(lesson.lessonTimeItem!!.lessonNumber)
+                                                                            append(". $DOT ")
+                                                                            append(lesson.lessonTimeItem!!.start.format(regularTimeFormat))
+                                                                            append(" - ")
+                                                                            append(lesson.lessonTimeItem!!.end.format(regularTimeFormat))
+                                                                        },
+                                                                        style = MaterialTheme.typography.labelSmall,
+                                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                        maxLines = 1,
+                                                                        overflow = TextOverflow.Ellipsis
+                                                                    )
+                                                                }
+                                                            }
+                                                            if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) Row(
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                                modifier = Modifier.padding(start = 16.dp)
+                                                            ) {
+                                                                Icon(
+                                                                    painter = painterResource(Res.drawable.info),
+                                                                    contentDescription = null,
+                                                                    modifier = Modifier.size(8.dp),
+                                                                    tint = MaterialTheme.colorScheme.onSurface
+                                                                )
+                                                                Text(
+                                                                    text = lesson.info,
+                                                                    style = MaterialTheme.typography.bodySmall,
+                                                                    maxLines = 1,
+                                                                    overflow = TextOverflow.Ellipsis
+                                                                )
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
                                     }
+
+                                    if (day.day.info != null) {
+                                        InfoCard(
+                                            modifier = Modifier
+                                                .align(Alignment.BottomCenter)
+                                                .padding(vertical = 4.dp, horizontal = 8.dp),
+                                            imageVector = Res.drawable.info,
+                                            title = "Informationen deiner Schule",
+                                            text = day.day.info,
+                                        )
+                                    }
                                 }
                             }
                         }
-
-                        if (day.day.info != null) {
-                            InfoCard(
-                                modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .padding(vertical = 4.dp, horizontal = 8.dp),
-                                imageVector = Res.drawable.info,
-                                title = "Informationen deiner Schule",
-                                text = day.day.info,
-                            )
-                        }
                     }
+                }
+                DisplayType.Agenda -> {
+                    Text("Agenda")
                 }
             }
         }

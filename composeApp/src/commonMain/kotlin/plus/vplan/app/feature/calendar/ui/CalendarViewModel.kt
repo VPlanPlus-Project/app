@@ -123,6 +123,7 @@ class CalendarViewModel(
                         )
                     )
                 }
+                is CalendarEvent.SelectDisplayType -> state = state.copy(displayType = event.displayType)
             }
         }
     }
@@ -133,10 +134,13 @@ data class CalendarState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
     val days: Map<LocalDate, CalendarDay> = emptyMap(),
+    val displayType: DisplayType = DisplayType.Calendar
 )
 
 sealed class CalendarEvent {
     data class SelectDate(val date: LocalDate) : CalendarEvent()
+
+    data class SelectDisplayType(val displayType: DisplayType): CalendarEvent()
 }
 
 private data class SyncJob(
@@ -161,4 +165,8 @@ private suspend fun Lesson.prefetch() {
     this.getRoomItems()
     this.getTeacherItems()
     if (this is Lesson.SubstitutionPlanLesson) this.getDefaultLesson()
+}
+
+enum class DisplayType {
+    Agenda, Calendar
 }
