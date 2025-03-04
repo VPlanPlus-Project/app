@@ -19,6 +19,8 @@ import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.domain.repository.schulverwalter.SubjectRepository
 import plus.vplan.app.domain.repository.schulverwalter.TeacherRepository
 import plus.vplan.app.domain.repository.schulverwalter.YearRepository
+import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
+import plus.vplan.app.feature.schulverwalter.domain.usecase.UpdateSchulverwalterAccessUseCase
 
 val schulverwalterModule = module {
     singleOf(::YearRepositoryImpl).bind<YearRepository>()
@@ -29,4 +31,7 @@ val schulverwalterModule = module {
     singleOf(::GradeRepositoryImpl).bind<GradeRepository>()
     singleOf(::FinalGradeRepositoryImpl).bind<FinalGradeRepository>()
     singleOf(::SchulverwalterRepositoryImpl).bind<SchulverwalterRepository>()
+
+    singleOf(::InitializeSchulverwalterReauthUseCase)
+    singleOf(::UpdateSchulverwalterAccessUseCase)
 }

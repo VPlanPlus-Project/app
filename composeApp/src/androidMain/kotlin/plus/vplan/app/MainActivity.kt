@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentActivity
 import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.core.FileKit
+import io.ktor.http.URLBuilder
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import kotlin.uuid.Uuid
@@ -44,9 +45,16 @@ class MainActivity : FragmentActivity() {
             val action = it.action
             val data = it.data
             Logger.d { "Action: $action, Data: $data" }
-            if (action == "android.intent.action.VIEW" && data.toString().startsWith("vpp://app/auth/")) {
-                val token = data.toString().substringAfter("vpp://app/auth/")
-                task = StartTask.VppIdLogin(token)
+            if (action == "android.intent.action.VIEW" && data.toString().startsWith("vpp://app/")) {
+                val url = URLBuilder(data.toString())
+                if (data.toString().startsWith("vpp://app/auth/")) {
+                    val token = data.toString().substringAfter("vpp://app/auth/")
+                    task = StartTask.VppIdLogin(token)
+                } else if (data.toString().startsWith("vpp://app/schulverwalter-reconnect")) {
+                    val token = url.pathSegments.last()
+                    val vppId = url.parameters["user_id"]!!.toInt()
+                    task = StartTask.SchulverwalterReconnect(token, vppId)
+                }
             }
 
             if (intent.hasExtra("onClickData")) {

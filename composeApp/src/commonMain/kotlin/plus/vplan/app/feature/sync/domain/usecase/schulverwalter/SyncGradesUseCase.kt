@@ -24,6 +24,7 @@ import plus.vplan.app.domain.repository.schulverwalter.IntervalRepository
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.domain.repository.schulverwalter.YearRepository
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.utils.now
 
 class SyncGradesUseCase(
@@ -35,7 +36,8 @@ class SyncGradesUseCase(
     private val platformNotificationRepository: PlatformNotificationRepository,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val schulverwalterRepository: SchulverwalterRepository,
-    private val vppIdRepository: VppIdRepository
+    private val vppIdRepository: VppIdRepository,
+    private val initializeSchulverwalterReauthUseCase: InitializeSchulverwalterReauthUseCase
 ) {
     suspend operator fun invoke(allowNotifications: Boolean) {
         run schulverwalterConnectionRefresh@{
@@ -43,13 +45,14 @@ class SyncGradesUseCase(
             vppIdRepository
                 .getVppIds().first().filterIsInstance<VppId.Active>()
                 .filter { it.id in invalidVppIds }.forEach { vppId ->
-                    //vppIdRepository.getUserByToken(vppId.accessToken, true)
+                    vppIdRepository.getUserByToken(vppId.accessToken, true)
                 }
 
             val invalidVppIdsAfterTokenReload = schulverwalterRepository.checkAccess()
             invalidVppIdsAfterTokenReload.forEach { stillInvalidVppId ->
                 val vppId = App.vppIdSource.getById(stillInvalidVppId).getFirstValue() as? VppId.Active ?: return@forEach
                 if (vppId.schulverwalterConnection!!.isValid == false) return@forEach
+                val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@forEach
                 schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection.accessToken, false)
                 platformNotificationRepository.sendNotification(
                     title = "beste.schule-Zugang ungültig",
@@ -59,7 +62,7 @@ class SyncGradesUseCase(
                     onClickData = Json.encodeToString(
                         StartTaskJson(
                             type = "url",
-                            value = "https://google.de"
+                            value = url
                         )
                     )
                 )

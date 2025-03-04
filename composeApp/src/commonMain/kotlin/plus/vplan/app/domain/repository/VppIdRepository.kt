@@ -14,6 +14,8 @@ interface VppIdRepository: WebEntityRepository<VppId> {
     suspend fun logout(token: String): Response<Unit>
     suspend fun deleteAccessTokens(vppId: VppId.Active)
 
+    suspend fun getSchulverwalterReauthUrl(vppId: VppId.Active): Response<String>
+
     fun getVppIds(): Flow<List<VppId>>
 }
 

@@ -7,4 +7,6 @@ interface SchulverwalterRepository {
      */
     suspend fun checkAccess(): Set<Int>
     suspend fun setSchulverwalterAccessValidity(token: String, valid: Boolean)
+
+    suspend fun setSchulverwalterAccessTokenForUser(vppIdId: Int, token: String)
 }

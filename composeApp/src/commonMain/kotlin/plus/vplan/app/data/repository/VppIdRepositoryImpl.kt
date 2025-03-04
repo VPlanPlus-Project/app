@@ -6,9 +6,11 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
+import io.ktor.client.request.post
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
+import io.ktor.http.URLBuilder
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -34,6 +36,7 @@ import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
 import plus.vplan.app.data.source.network.isResponseFromBackend
+import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
@@ -43,6 +46,7 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.VppIdDevice
 import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.schulverwalterReauthService
 import plus.vplan.app.utils.sendAll
 
 private val logger = Logger.withTag("VppIdRepositoryImpl")
@@ -228,6 +232,27 @@ class VppIdRepositoryImpl(
     override suspend fun deleteAccessTokens(vppId: VppId.Active) {
         vppDatabase.vppIdDao.deleteAccessToken(vppId.id)
         vppDatabase.vppIdDao.deleteSchulverwalterAccessToken(vppId.id)
+    }
+
+    override suspend fun getSchulverwalterReauthUrl(vppId: VppId.Active): Response<String> {
+        safeRequest(onError = { return it }) {
+            val response = httpClient.post(
+                URLBuilder(schulverwalterReauthService.url)
+                    .apply {
+                        this.pathSegments = listOf("reauth")
+                    }
+                    .buildString()
+            ) {
+                vppId.buildSchoolApiAccess().authentication(this)
+            }
+
+            if (!response.status.isSuccess()) return response.toErrorResponse<String>()
+            val url = ResponseDataWrapper.fromJson<String>(response.bodyAsText())
+                ?: return Response.Error.ParsingError(response.bodyAsText())
+
+            return Response.Success(url)
+        }
+        return Response.Error.Cancelled
     }
 }
 

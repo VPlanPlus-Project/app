@@ -8,6 +8,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.data.source.database.VppDatabase
+import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 
 class SchulverwalterRepositoryImpl(
@@ -35,5 +36,16 @@ class SchulverwalterRepositoryImpl(
 
     override suspend fun setSchulverwalterAccessValidity(token: String, valid: Boolean) {
         vppDatabase.vppIdDao.setSchulverwalterValidity(valid, token)
+    }
+
+    override suspend fun setSchulverwalterAccessTokenForUser(vppIdId: Int, token: String) {
+        val oldAccess = vppDatabase.vppIdDao.getSchulverwalterAccess().first().first { it.vppId == vppIdId }
+        vppDatabase.vppIdDao.deleteAccessToken(vppIdId)
+        vppDatabase.vppIdDao.upsert(DbVppIdSchulverwalter(
+            vppId = vppIdId,
+            schulverwalterUserId = oldAccess.schulverwalterUserId,
+            schulverwalterAccessToken = token,
+            isValid = true
+        ))
     }
 }
