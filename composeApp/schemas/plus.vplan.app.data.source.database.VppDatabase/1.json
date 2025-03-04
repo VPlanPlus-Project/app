@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "541b071cbdaed7b61d00f1e5ce1759e7",
+    "identityHash": "77dbd076c3a127349164c35941a523c5",
     "entities": [
       {
         "tableName": "schools",
@@ -2065,7 +2065,7 @@
       },
       {
         "tableName": "vpp_id_schulverwalter",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`vpp_id` INTEGER NOT NULL, `schulverwalter_user_id` INTEGER NOT NULL, `schulverwalter_access_token` TEXT NOT NULL, PRIMARY KEY(`vpp_id`), FOREIGN KEY(`vpp_id`) REFERENCES `vpp_id`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`vpp_id` INTEGER NOT NULL, `schulverwalter_user_id` INTEGER NOT NULL, `schulverwalter_access_token` TEXT NOT NULL, `is_valid` INTEGER, PRIMARY KEY(`vpp_id`), FOREIGN KEY(`vpp_id`) REFERENCES `vpp_id`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "vppId",
@@ -2084,6 +2084,11 @@
             "columnName": "schulverwalter_access_token",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "isValid",
+            "columnName": "is_valid",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -3576,7 +3581,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '541b071cbdaed7b61d00f1e5ce1759e7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '77dbd076c3a127349164c35941a523c5')"
     ]
   }
 }

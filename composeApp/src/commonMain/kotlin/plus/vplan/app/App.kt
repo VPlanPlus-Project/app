@@ -61,6 +61,12 @@ val sp24Service = Host(
     port = 443
 )
 
+val schulverwalterReauthService = Host(
+    protocol = URLProtocol.HTTPS,
+    host = "schulverwalter-reauth.microservices.vplan.plus/",
+    port = 443
+)
+
 val auth = Host(
     protocol = URLProtocol.HTTPS,
     host = "auth.vplan.plus",
@@ -135,6 +141,8 @@ fun App(task: StartTask?) {
 
 sealed class StartTask(val profileId: Uuid? = null) {
     data class VppIdLogin(val token: String) : StartTask()
+    data class SchulverwalterReconnect(val schulverwalterAccessToken: String, val vppId: Int) : StartTask()
+    data class OpenUrl(val url: String): StartTask()
     sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
         class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
         class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Int? = null): NavigateTo(profileId)

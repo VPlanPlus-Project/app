@@ -50,7 +50,8 @@ data class EmbeddedVppId(
             if (schulverwalterAccess == null) null
             else VppId.Active.SchulverwalterConnection(
                 accessToken = schulverwalterAccess.schulverwalterAccessToken,
-                userId = schulverwalterAccess.schulverwalterUserId
+                userId = schulverwalterAccess.schulverwalterUserId,
+                isValid = schulverwalterAccess.isValid
             )
         )
     }

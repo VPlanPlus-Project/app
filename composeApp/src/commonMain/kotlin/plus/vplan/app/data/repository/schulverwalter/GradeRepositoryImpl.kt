@@ -43,7 +43,7 @@ class GradeRepositoryImpl(
 ) : GradeRepository {
     override suspend fun download(): Response<Set<Int>> {
         safeRequest(onError = { return it }) {
-            val accessTokens = vppDatabase.vppIdDao.getSchulverwalterAccess().first()
+            val accessTokens = vppDatabase.vppIdDao.getSchulverwalterAccess().first().filter { it.isValid != false }
             val ids = mutableSetOf<Int>()
             accessTokens.forEach { accessToken ->
                 val response = httpClient.get {

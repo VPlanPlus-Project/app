@@ -70,4 +70,7 @@ interface VppIdDao {
 
     @Query("SELECT * FROM vpp_id_schulverwalter")
     fun getSchulverwalterAccess(): Flow<List<DbVppIdSchulverwalter>>
+
+    @Query("UPDATE vpp_id_schulverwalter SET is_valid = :isValid WHERE schulverwalter_access_token = :token")
+    suspend fun setSchulverwalterValidity(isValid: Boolean, token: String)
 }

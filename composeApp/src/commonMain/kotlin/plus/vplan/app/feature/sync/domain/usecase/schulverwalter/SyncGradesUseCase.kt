@@ -13,14 +13,18 @@ import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
+import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.schulverwalter.CollectionRepository
 import plus.vplan.app.domain.repository.schulverwalter.FinalGradeRepository
 import plus.vplan.app.domain.repository.schulverwalter.GradeRepository
 import plus.vplan.app.domain.repository.schulverwalter.IntervalRepository
+import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.domain.repository.schulverwalter.YearRepository
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.utils.now
 
 class SyncGradesUseCase(
@@ -30,9 +34,45 @@ class SyncGradesUseCase(
     private val collectionRepository: CollectionRepository,
     private val finalGradeRepository: FinalGradeRepository,
     private val platformNotificationRepository: PlatformNotificationRepository,
-    private val getGradeLockStateUseCase: GetGradeLockStateUseCase
+    private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
+    private val schulverwalterRepository: SchulverwalterRepository,
+    private val vppIdRepository: VppIdRepository,
+    private val initializeSchulverwalterReauthUseCase: InitializeSchulverwalterReauthUseCase
 ) {
     suspend operator fun invoke(allowNotifications: Boolean) {
+        run schulverwalterConnectionRefresh@{
+            val invalidVppIds = schulverwalterRepository.checkAccess()
+            vppIdRepository
+                .getVppIds().first().filterIsInstance<VppId.Active>()
+                .filter { it.id in invalidVppIds }.forEach { vppId ->
+                    vppIdRepository.getUserByToken(vppId.accessToken, true)
+                }
+
+            val invalidVppIdsAfterTokenReload = schulverwalterRepository.checkAccess()
+            invalidVppIdsAfterTokenReload.forEach { stillInvalidVppId ->
+                val vppId = App.vppIdSource.getById(stillInvalidVppId).getFirstValue() as? VppId.Active ?: return@forEach
+                if (vppId.schulverwalterConnection!!.isValid == false) return@forEach
+                val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@forEach
+                schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection.accessToken, false)
+                platformNotificationRepository.sendNotification(
+                    title = "beste.schule-Zugang ungültig",
+                    message = "Wir können keine Daten von beste.schule mehr abrufen. Tippe hier, um dich erneut in beste.schule anzumelden",
+                    isLarge = false,
+                    category = vppId.name,
+                    onClickData = Json.encodeToString(
+                        StartTaskJson(
+                            type = "url",
+                            value = url
+                        )
+                    )
+                )
+            }
+            (invalidVppIds - invalidVppIdsAfterTokenReload).forEach { nowValidVppId ->
+                val vppId = App.vppIdSource.getById(nowValidVppId).getFirstValue() as? VppId.Active ?: return@forEach
+                schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection!!.accessToken, true)
+            }
+        }
+
         yearRepository.download()
         intervalRepository.download()
         collectionRepository.download()

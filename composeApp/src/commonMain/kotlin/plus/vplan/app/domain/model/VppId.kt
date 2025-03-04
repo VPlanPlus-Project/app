@@ -41,7 +41,8 @@ sealed class VppId : Item {
 
         data class SchulverwalterConnection(
             val accessToken: String,
-            val userId: Int
+            val userId: Int,
+            val isValid: Boolean?
         )
     }
 
