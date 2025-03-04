@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
+import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
@@ -48,7 +49,7 @@ class ProfileRepositoryImpl(
             )
         )
         disabledDefaultLessons.forEach {
-            vppDatabase.profileDao.insertDisabledDefaultLesson(
+            vppDatabase.profileDao.insertDisabledDefaultLessons(
                 profileId = id,
                 defaultLessonId = it.id
             )
@@ -99,11 +100,16 @@ class ProfileRepositoryImpl(
 
     override suspend fun setDefaultLessonEnabled(
         profileId: Uuid,
-        defaultLessonId: Int,
+        defaultLessonIds: List<Int>,
         enable: Boolean
     ) {
-        if (enable) vppDatabase.profileDao.deleteDisabledDefaultLesson(profileId, defaultLessonId)
-        else vppDatabase.profileDao.insertDisabledDefaultLesson(profileId, defaultLessonId)
+        if (enable) vppDatabase.profileDao.deleteDisabledDefaultLessons(profileId, defaultLessonIds)
+        else vppDatabase.profileDao.upsertGroupProfileDisabledDefaultLessons(defaultLessonIds.map {
+            DbGroupProfileDisabledDefaultLessons(
+                profileId = profileId,
+                defaultLessonId = it
+            )
+        })
     }
 
     override suspend fun updateDisplayName(id: Uuid, displayName: String) {

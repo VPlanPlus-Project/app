@@ -1,10 +1,14 @@
 package plus.vplan.app.domain.source
 
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Profile
@@ -14,7 +18,7 @@ import kotlin.uuid.Uuid
 class ProfileSource(
     private val profileRepository: ProfileRepository
 ) {
-    private val cache = hashMapOf<Uuid, Flow<CacheState<Profile>>>()
+    private val flows = hashMapOf<Uuid, MutableSharedFlow<CacheState<Profile>>>()
     private val cacheItems = hashMapOf<Uuid, CacheState<Profile>>()
     private var allProfilesFlow: Flow<List<CacheState<Profile>>>? = null
 
@@ -30,7 +34,14 @@ class ProfileSource(
     }
 
     fun getById(id: Uuid): Flow<CacheState<Profile>> {
-        return cache.getOrPut(id) { profileRepository.getById(id).map { profile -> profile?.let { CacheState.Done(it).also { cacheItems[id] = it } } ?: CacheState.NotExisting(id.toHexString()) } }
+        return flows.getOrPut(id) {
+            val flow = MutableSharedFlow<CacheState<Profile>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            MainScope().launch {
+                profileRepository.getById(id).map { profile -> profile?.let { CacheState.Done(it).also { cacheItems[id] = it } } ?: CacheState.NotExisting(id.toHexString()) }
+                    .collectLatest { flow.tryEmit(it) }
+            }
+            flow
+        }
     }
 
     suspend fun getSingleById(id: Uuid): Profile? {

@@ -47,6 +47,9 @@ import plus.vplan.app.feature.calendar.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
 import plus.vplan.app.feature.dev.ui.DevScreen
+import plus.vplan.app.feature.grades.page.analytics.ui.AnalyticsScreen
+import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
+import plus.vplan.app.feature.grades.page.view.ui.GradesScreen
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
@@ -54,11 +57,13 @@ import plus.vplan.app.feature.profile.page.ui.ProfileScreen
 import plus.vplan.app.feature.profile.page.ui.ProfileScreenEvent
 import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
 import plus.vplan.app.feature.profile.page.ui.components.ProfileSwitcher
-import plus.vplan.app.feature.profile.settings.ui.ProfileSettingsScreen
+import plus.vplan.app.feature.profile.settings.page.main.ui.ProfileSettingsScreen
+import plus.vplan.app.feature.profile.settings.page.subject_instances.ui.components.ProfileSubjectInstanceScreen
 import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
+import plus.vplan.app.feature.settings.page.security.ui.SecuritySettingsScreen
 import plus.vplan.app.feature.settings.ui.SettingsScreen
 import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.utils.BrowserIntent
@@ -68,6 +73,7 @@ import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.house
 import vplanplus.composeapp.generated.resources.search
 import vplanplus.composeapp.generated.resources.user
+import kotlin.uuid.Uuid
 
 @Composable
 fun MainScreenHost(
@@ -121,6 +127,10 @@ fun MainScreenHost(
                 val args = it.toRoute<MainScreen.ProfileSettings>()
                 ProfileSettingsScreen(args.profileId, navController)
             }
+            composable<MainScreen.ProfileSubjectInstances> {
+                val args = it.toRoute<MainScreen.ProfileSubjectInstances>()
+                ProfileSubjectInstanceScreen(Uuid.parse(args.profileId), navController)
+            }
 
             composable<MainScreen.RoomSearch> { RoomSearch(navController) }
 
@@ -131,6 +141,20 @@ fun MainScreenHost(
                     navHostController = navController,
                     openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchoolId
                 )
+            }
+            composable<MainScreen.SecuritySettings> {
+                SecuritySettingsScreen(
+                    navHostController = navController
+                )
+            }
+
+            composable<MainScreen.Grades> {
+                val args = it.toRoute<MainScreen.Grades>()
+                GradesScreen(navController, args.vppId)
+            }
+            composable<MainScreen.Analytics> {
+                val args = it.toRoute<MainScreen.Analytics>()
+                AnalyticsScreen(navController, args.vppId)
             }
         }
 
@@ -201,6 +225,7 @@ fun MainScreenHost(
 
     var homeworkSheetHomeworkId by rememberSaveable { mutableStateOf<Int?>(null) }
     var assessmentSheetAssessmentId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var gradeSheetGradeId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(navigationTask) {
         if (navigationTask == null) return@LaunchedEffect
@@ -212,8 +237,10 @@ fun MainScreenHost(
             is StartTask.NavigateTo.SchoolSettings -> {
                 navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId))
             }
+            is StartTask.NavigateTo.Grades -> navController.navigate(MainScreen.Grades(navigationTask.vppId))
             is StartTask.Open.Homework -> homeworkSheetHomeworkId = navigationTask.homeworkId
             is StartTask.Open.Assessment -> assessmentSheetAssessmentId = navigationTask.assessmentId
+            is StartTask.Open.Grade -> gradeSheetGradeId = navigationTask.gradeId
 
             else -> Unit
         }
@@ -227,6 +254,11 @@ fun MainScreenHost(
     if (assessmentSheetAssessmentId != null) AssessmentDetailDrawer(
         assessmentId = assessmentSheetAssessmentId!!,
         onDismiss = { assessmentSheetAssessmentId = null }
+    )
+
+    if (gradeSheetGradeId != null) GradeDetailDrawer(
+        gradeId = gradeSheetGradeId!!,
+        onDismiss = { gradeSheetGradeId = null }
     )
 }
 
@@ -242,8 +274,14 @@ sealed class MainScreen(val name: String) {
     @Serializable data object MainProfile : MainScreen("_Profile")
 
     @Serializable data class ProfileSettings(val profileId: String) : MainScreen("ProfileSettings")
+    @Serializable data class ProfileSubjectInstances(val profileId: String) : MainScreen("ProfileSubjectInstances")
+
     @Serializable data object RoomSearch : MainScreen("RoomSearch")
 
     @Serializable data object Settings : MainScreen("Settings")
     @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: Int? = null) : MainScreen("SchoolSettings")
+    @Serializable data object SecuritySettings : MainScreen("SecuritySettings")
+
+    @Serializable data class Grades(val vppId: Int) : MainScreen("Grades")
+    @Serializable data class Analytics(val vppId: Int) : MainScreen("Analytics")
 }

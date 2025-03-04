@@ -139,7 +139,7 @@ class CourseRepositoryImpl(
                     id = course.id,
                     indiwareId = course.indiwareId,
                     name = course.name,
-                    teacherId = course.teacher
+                    teacherId = course.teacherId
                 )
             },
             courseGroupCrossovers = courses.flatMap { course ->

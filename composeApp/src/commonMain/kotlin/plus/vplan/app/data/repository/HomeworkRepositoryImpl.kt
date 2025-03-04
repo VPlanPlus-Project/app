@@ -247,8 +247,8 @@ class HomeworkRepositoryImpl(
             vppDatabase.homeworkDao.upsertTaskDoneProfile(DbHomeworkTaskDoneProfile(task.id, profile.id, newState))
             return
         }
-        vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId!!, newState))
-        safeRequest(onError = { vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId, oldState)) }) {
+        vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppIdId!!, newState))
+        safeRequest(onError = { vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppIdId, oldState)) }) {
             val response = httpClient.patch(URLBuilder(
                 protocol = api.protocol,
                 host = api.host,
@@ -259,7 +259,7 @@ class HomeworkRepositoryImpl(
                 contentType(ContentType.Application.Json)
                 setBody(HomeworkTaskUpdateDoneStateRequest(isDone = newState))
             }
-            if (!response.status.isSuccess()) vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId, oldState))
+            if (!response.status.isSuccess()) vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppIdId, oldState))
         }
     }
 

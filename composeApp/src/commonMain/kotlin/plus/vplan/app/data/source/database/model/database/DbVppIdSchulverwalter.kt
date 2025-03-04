@@ -22,5 +22,7 @@ import androidx.room.Index
 )
 data class DbVppIdSchulverwalter(
     @ColumnInfo(name = "vpp_id") val vppId: Int,
-    @ColumnInfo(name = "schulverwalter_access_token") val schulverwalterAccessToken: String
+    @ColumnInfo(name = "schulverwalter_user_id") val schulverwalterUserId: Int,
+    @ColumnInfo(name = "schulverwalter_access_token") val schulverwalterAccessToken: String,
+    @ColumnInfo(name = "is_valid") val isValid: Boolean?
 )

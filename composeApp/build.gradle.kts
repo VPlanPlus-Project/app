@@ -44,6 +44,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
 
             implementation(libs.androidx.browser)
+            implementation(libs.androidx.biometric)
 
             implementation(libs.androidx.material)
             implementation(libs.androidx.sqlite.framework)

@@ -58,7 +58,7 @@ class CreateHomeworkUseCase(
                 defaultLesson = defaultLesson?.id,
                 group = profile.group,
                 createdAt = Clock.System.now(),
-                createdBy = profile.vppId!!,
+                createdBy = profile.vppIdId!!,
                 isPublic = isPublic ?: false,
                 dueTo = date,
                 files = emptyList(),

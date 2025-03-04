@@ -20,7 +20,7 @@ import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkViewModel
-import plus.vplan.app.feature.homework.ui.components.detail.DetailViewModel
+import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailViewModel
 
 val homeworkModule = module {
     singleOf(::IsVppIdBannerAllowedUseCase)
@@ -41,5 +41,5 @@ val homeworkModule = module {
     singleOf(::AddFileUseCase)
 
     viewModelOf(::NewHomeworkViewModel)
-    viewModelOf(::DetailViewModel)
+    viewModelOf(::HomeworkDetailViewModel)
 }
