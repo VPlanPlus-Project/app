@@ -24,6 +24,7 @@ inline fun <reified T : Any> getKoinInstance(): T {
 @Suppress("unused") // Is called in SwiftUI
 fun mainViewController(
     url: String,
+    notificationTask: String?,
     quicklookImpl: OpenQuicklook
 ): UIViewController {
     var task: StartTask? = null
@@ -32,6 +33,9 @@ fun mainViewController(
         Logger.i { "vpp.ID authentication" }
         val token = url.substringAfter("vpp://app/auth/")
         task = StartTask.VppIdLogin(token)
+    }
+    if (!notificationTask.isNullOrBlank()) {
+        task = getTaskFromNotificationString(notificationTask)
     }
     mainViewController = ComposeUIViewController { App(task = task) }
 

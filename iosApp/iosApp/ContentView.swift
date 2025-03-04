@@ -4,10 +4,11 @@ import ComposeApp
 
 struct ComposeView: UIViewControllerRepresentable {
     let url: String
+    let notificationTask: String?
     let onQuicklook: (String) -> ()
     
     func makeUIViewController(context: Context) -> UIViewController {
-        return MainViewControllerKt.mainViewController(url: url, quicklookImpl: QuickLookImpl(onQuicklook: onQuicklook))
+        return MainViewControllerKt.mainViewController(url: url, notificationTask: notificationTask, quicklookImpl: QuickLookImpl(onQuicklook: onQuicklook))
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
@@ -17,7 +18,7 @@ struct ComposeView: UIViewControllerRepresentable {
             uiViewController.removeFromParent()
             uiViewController.view.removeFromSuperview()
             
-            let newController = MainViewControllerKt.mainViewController(url: url, quicklookImpl: QuickLookImpl(onQuicklook: onQuicklook))
+            let newController = MainViewControllerKt.mainViewController(url: url, notificationTask: notificationTask, quicklookImpl: QuickLookImpl(onQuicklook: onQuicklook))
             parent.addSubview(newController.view)
             newController.view.frame = parent.bounds
             parent.addSubview(newController.view)
@@ -27,8 +28,9 @@ struct ComposeView: UIViewControllerRepresentable {
 
 struct ContentView: View {
     let url: String
+    let notificationTask: String?
     let onQuicklook: (String)->()
     var body: some View {
-        return ComposeView(url: url, onQuicklook: onQuicklook).ignoresSafeArea()
+        return ComposeView(url: url, notificationTask: notificationTask, onQuicklook: onQuicklook).ignoresSafeArea()
     }
 }

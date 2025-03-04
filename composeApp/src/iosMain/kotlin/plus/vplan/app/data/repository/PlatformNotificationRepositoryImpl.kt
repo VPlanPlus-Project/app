@@ -25,6 +25,7 @@ class PlatformNotificationRepositoryImpl : PlatformNotificationRepository {
         category?.let { notification.setSubtitle(it) }
         notification.setBody(message)
         notification.setSound(UNNotificationSound.defaultSound)
+        if (onClickData != null) notification.setUserInfo(mapOf("data" to onClickData))
 
         val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(1.0, false)
         val notificationRequest = UNNotificationRequest.requestWithIdentifier(

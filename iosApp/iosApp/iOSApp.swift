@@ -15,12 +15,15 @@ struct iOSApp: SwiftUI.App {
     @State private var launchUrl: String? = nil
     @State var quickLookUrl: URL? = nil
     
+    @ObservedObject var notificationManager = NotificationManager.shared
+    
     @Environment(\.scenePhase) private var phase
     
     var body: some Scene {
         WindowGroup {
             ContentView(
                 url: launchUrl ?? "",
+                notificationTask: notificationManager.notificationData,
                 onQuicklook: { path in quickLookUrl = URL(string: path) }
             )
                 .onOpenURL { url in
@@ -102,6 +105,21 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .sound])
     }
+    
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        
+        let userInfo = response.notification.request.content.userInfo
+        
+        if let notificationTask = userInfo["data"] as? String {
+            DispatchQueue.main.async {
+                NotificationManager.shared.notificationData = notificationTask
+            }
+        }
+        
+        completionHandler()
+    }
 }
 
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -109,8 +127,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        let center = UNUserNotificationCenter.current()
-        center.delegate = notificationDelegate
+        UNUserNotificationCenter.current().delegate = notificationDelegate
         return true
     }
+}
+
+class NotificationManager: ObservableObject {
+    static let shared = NotificationManager() // Singleton für globale Nutzung
+    @Published var notificationData: String? // Speichert die Item-ID aus der Benachrichtigung
 }
