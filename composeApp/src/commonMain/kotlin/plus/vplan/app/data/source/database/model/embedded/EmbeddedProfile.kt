@@ -33,11 +33,11 @@ data class EmbeddedProfile(
                 id = profile.id,
                 name = profile.displayName ?: embeddedGroupProfile.group.group.name,
                 group = embeddedGroupProfile.group.group.id,
-                defaultLessons =
+                defaultLessonsConfiguration =
                     embeddedGroupProfile.defaultLessons
                         .associateWith { disabledDefaultLessons.contains(it.defaultLessonId).not() }
                         .mapKeys { it.key.defaultLessonId },
-                vppId = embeddedGroupProfile.vppId?.vppId?.id
+                vppIdId = embeddedGroupProfile.vppId?.vppId?.id
             )
         }
         if (embeddedTeacherProfile != null) {

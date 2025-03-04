@@ -17,4 +17,5 @@ fun Result.toName() = when (this) {
     Result.Room -> "Räume"
     Result.Homework -> "Hausaufgaben"
     Result.Assessment -> "Leistungserhebungen"
+    Result.Grade -> "Noten"
 }

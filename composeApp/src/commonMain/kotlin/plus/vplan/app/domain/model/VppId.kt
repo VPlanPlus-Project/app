@@ -1,7 +1,13 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
+import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.model.schulverwalter.Grade
 
 sealed class VppId : Item {
     abstract val id: Int
@@ -24,11 +30,20 @@ sealed class VppId : Item {
         override val groups: List<Int>,
         override val cachedAt: Instant,
         val accessToken: String,
-        val schulverwalterAccessToken: String?
+        val schulverwalterConnection: SchulverwalterConnection?,
+        val gradeIds: List<Int>
     ) : VppId() {
         fun buildSchoolApiAccess(schoolId: Int = -1): SchoolApiAccess.VppIdAccess {
             return SchoolApiAccess.VppIdAccess(schoolId, accessToken, id)
         }
+
+        val grades by lazy { combine(gradeIds.map { App.gradeSource.getById(it).filterIsInstance<CacheState.Done<Grade>>().map { it.data } }) { it.toList() } }
+
+        data class SchulverwalterConnection(
+            val accessToken: String,
+            val userId: Int,
+            val isValid: Boolean?
+        )
     }
 
     override fun hashCode(): Int {

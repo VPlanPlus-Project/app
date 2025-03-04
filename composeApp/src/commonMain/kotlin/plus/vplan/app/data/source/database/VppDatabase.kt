@@ -27,6 +27,12 @@ import plus.vplan.app.data.source.database.dao.TeacherDao
 import plus.vplan.app.data.source.database.dao.TimetableDao
 import plus.vplan.app.data.source.database.dao.VppIdDao
 import plus.vplan.app.data.source.database.dao.WeekDao
+import plus.vplan.app.data.source.database.dao.schulverwalter.CollectionDao
+import plus.vplan.app.data.source.database.dao.schulverwalter.FinalGradeDao
+import plus.vplan.app.data.source.database.dao.schulverwalter.GradeDao
+import plus.vplan.app.data.source.database.dao.schulverwalter.IntervalDao
+import plus.vplan.app.data.source.database.dao.schulverwalter.SubjectDao
+import plus.vplan.app.data.source.database.dao.schulverwalter.YearDao
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbDay
 import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
@@ -47,6 +53,13 @@ import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbSchool
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterCollection
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterFinalGrade
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterGrade
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterval
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubject
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
 import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.DbTeacher
@@ -68,6 +81,14 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGrou
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterCollection
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterSubject
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterTeacher
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterSubjectSchulverwalterFinalGrade
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
+import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as SchulverwalterTeacherDao
 
 @Database(
     entities = [
@@ -123,7 +144,23 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGr
         FKSchoolGroup::class,
 
         DbAssessment::class,
-        FKAssessmentFile::class
+        FKAssessmentFile::class,
+
+        DbSchulverwalterCollection::class,
+        DbSchulverwalterFinalGrade::class,
+        DbSchulverwalterGrade::class,
+        DbSchulverwalterInterval::class,
+        DbSchulverwalterSubject::class,
+        DbSchulverwalterTeacher::class,
+        DbSchulverwalterYear::class,
+
+        FKSchulverwalterYearSchulverwalterInterval::class,
+        FKSchulverwalterCollectionSchulverwalterInterval::class,
+        FKSchulverwalterCollectionSchulverwalterSubject::class,
+        FKSchulverwalterGradeSchulverwalterCollection::class,
+        FKSchulverwalterGradeSchulverwalterSubject::class,
+        FKSchulverwalterGradeSchulverwalterTeacher::class,
+        FKSchulverwalterSubjectSchulverwalterFinalGrade::class,
     ],
     version = 1,
 )
@@ -156,4 +193,13 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val homeworkDao: HomeworkDao
     abstract val fileDao: FileDao
     abstract val assessmentDao: AssessmentDao
+
+    // Schulverwalter
+    abstract val yearDao: YearDao
+    abstract val intervalDao: IntervalDao
+    abstract val collectionDao: CollectionDao
+    abstract val subjectDao: SubjectDao
+    abstract val schulverwalterTeacherDao: SchulverwalterTeacherDao
+    abstract val gradeDao: GradeDao
+    abstract val finalGradeDao: FinalGradeDao
 }

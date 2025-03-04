@@ -2,9 +2,11 @@ package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
@@ -30,8 +32,8 @@ abstract class Profile : Item {
         override val id: Uuid,
         override val name: String,
         val group: Int,
-        val defaultLessons: Map<Int, Boolean>,
-        val vppId: Int?
+        val defaultLessonsConfiguration: Map<Int, Boolean>,
+        val vppIdId: Int?
     ) : Profile() {
         override val profileType = ProfileType.STUDENT
 
@@ -40,6 +42,9 @@ abstract class Profile : Item {
 
         var vppIdItem: VppId.Active? = null
             private set
+
+        val vppId by lazy { vppIdId?.let { App.vppIdSource.getById(it).filterIsInstance<CacheState.Done<VppId>>().map { cacheState -> cacheState.data } } }
+        val defaultLessons by lazy { combine(defaultLessonsConfiguration.keys.map { App.defaultLessonSource.getById(it).filterIsInstance<CacheState.Done<DefaultLesson>>().map { cacheState -> cacheState.data } }) { it.toList() } }
 
         private val defaultLessonCache = hashMapOf<Int, DefaultLesson>()
         val defaultLessonItems: List<DefaultLesson>
@@ -53,12 +58,12 @@ abstract class Profile : Item {
         }
 
         suspend fun getVppIdItem(): VppId.Active? {
-            if (this.vppId == null) return null
-            return vppIdItem ?: App.vppIdSource.getById(vppId).getFirstValue().let { it as? VppId.Active }.also { this.vppIdItem = it }
+            if (this.vppIdId == null) return null
+            return vppIdItem ?: App.vppIdSource.getById(vppIdId).getFirstValue().let { it as? VppId.Active }.also { this.vppIdItem = it }
         }
 
         suspend fun getDefaultLessons(): List<DefaultLesson> {
-            return this.defaultLessons.keys.map { getDefaultLesson(it) }
+            return this.defaultLessonsConfiguration.keys.map { getDefaultLesson(it) }
         }
 
         @OptIn(ExperimentalCoroutinesApi::class)

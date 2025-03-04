@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import plus.vplan.app.ui.thenIf
 
 @Composable fun tableNameStyle() = MaterialTheme.typography.bodyLarge.copy(Color.Gray)
 @Composable fun tableValueStyle() = MaterialTheme.typography.bodyMedium
@@ -42,17 +43,19 @@ fun MetadataRow(
 
 @Composable
 fun MetadataValueContainer(
+    modifier: Modifier = Modifier,
     canEdit: Boolean,
+    editStyling: Boolean = true,
     onClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
     if (canEdit) Box(
-        modifier = Modifier
+        modifier = modifier
             .defaultMinSize(minHeight = 32.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .thenIf(Modifier.background(MaterialTheme.colorScheme.surfaceVariant)) { editStyling }
             .clickable(canEdit) { onClick() }
-            .padding(4.dp),
+            .thenIf(Modifier.padding(4.dp)) { editStyling },
         contentAlignment = Alignment.CenterStart
     ) {
         content()

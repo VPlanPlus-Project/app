@@ -6,13 +6,11 @@ import org.koin.dsl.module
 import plus.vplan.app.feature.profile.page.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
-import plus.vplan.app.feature.profile.page.domain.usecase.SetProfileDefaultLessonEnabledUseCase
 import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
 
 val profileModule = module {
     singleOf(::GetProfilesUseCase)
     singleOf(::GetCurrentProfileUseCase)
-    singleOf(::SetProfileDefaultLessonEnabledUseCase)
     singleOf(::HasVppIdLinkedUseCase)
 
     viewModelOf(::ProfileViewModel)

@@ -25,6 +25,7 @@ import plus.vplan.app.feature.main.MainScreen
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
+import vplanplus.composeapp.generated.resources.lock
 import vplanplus.composeapp.generated.resources.school
 
 @Composable
@@ -33,7 +34,8 @@ fun SettingsScreen(
 ) {
     SettingsContent(
         onBack = navHostController::navigateUp,
-        onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings()) } }
+        onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings()) } },
+        onOpenSecuritySettings = remember { { navHostController.navigate(MainScreen.SecuritySettings) } }
     )
 }
 
@@ -41,7 +43,8 @@ fun SettingsScreen(
 @Composable
 private fun SettingsContent(
     onBack: () -> Unit,
-    onOpenSchoolSettings: () -> Unit
+    onOpenSchoolSettings: () -> Unit,
+    onOpenSecuritySettings: () -> Unit
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
 
@@ -75,6 +78,13 @@ private fun SettingsContent(
                 subtitle = "Zugänge für Schulen verwalten",
                 icon = painterResource(Res.drawable.school),
                 onClick = onOpenSchoolSettings
+            )
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            SettingsRecord(
+                title = "Anmeldung und Sicherheit",
+                subtitle = "Noten und vpp.ID schützen",
+                icon = painterResource(Res.drawable.lock),
+                onClick = onOpenSecuritySettings
             )
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         }

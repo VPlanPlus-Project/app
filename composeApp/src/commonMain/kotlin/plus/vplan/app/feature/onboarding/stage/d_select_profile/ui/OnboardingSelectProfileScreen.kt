@@ -157,8 +157,8 @@ private fun OnboardingSelectProfileScreen(
                                                                     style = MaterialTheme.typography.titleSmall,
                                                                     color = MaterialTheme.colorScheme.onSurface,
                                                                 )
-                                                                if (loadedCourse.teacher == null) return@detailsRow
-                                                                val teacherState by App.teacherSource.getById(loadedCourse.teacher).collectAsLoadingState(loadedCourse.teacher.toString())
+                                                                if (loadedCourse.teacherId == null) return@detailsRow
+                                                                val teacherState by App.teacherSource.getById(loadedCourse.teacherId).collectAsLoadingState(loadedCourse.teacherId.toString())
                                                                 if (teacherState !is CacheState.Done) return@detailsRow
                                                                 Text(
                                                                     text = (teacherState as? CacheState.Done)?.data?.name ?: "-",

@@ -44,19 +44,23 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import org.koin.compose.koinInject
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.feature.home.ui.components.Greeting
 import plus.vplan.app.feature.home.ui.components.HolidayScreen
 import plus.vplan.app.feature.home.ui.components.PagerSwitcher
 import plus.vplan.app.feature.home.ui.components.current_day.CurrentDayView
 import plus.vplan.app.feature.home.ui.components.next_day.NextDayView
 import plus.vplan.app.feature.main.MainScreen
+import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.thenIf
+import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.key_round
 
@@ -84,6 +88,7 @@ private fun HomeContent(
 ) {
     val scope = rememberCoroutineScope()
     val pullToRefreshState = rememberPullToRefreshState()
+    val initializeSchulverwalterReauthUseCase = koinInject<InitializeSchulverwalterReauthUseCase>()
 
     PullToRefreshBox(
         state = pullToRefreshState,
@@ -99,7 +104,7 @@ private fun HomeContent(
                 .fillMaxWidth()
         ) {
             run greeting@{
-                val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppId?.let {
+                val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppIdId?.let {
                     App.vppIdSource.getById(it).collectAsState(CacheState.Loading(it.toString()))
                 }
                 Greeting(
@@ -146,7 +151,7 @@ private fun HomeContent(
                     modifier = Modifier
                         .fillMaxSize()
                 ) {
-                    item {
+                    item schoolAccessInvalid@{
                         androidx.compose.animation.AnimatedVisibility(
                             visible = school is School.IndiwareSchool && !school.credentialsValid,
                             enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
@@ -167,6 +172,33 @@ private fun HomeContent(
                                 backgroundColor = MaterialTheme.colorScheme.errorContainer,
                                 shadow = true,
                                 buttonAction1 = { onOpenSchoolSettings(displaySchool!!.id) },
+                                buttonText1 = "Aktualisieren",
+                                imageVector = Res.drawable.key_round
+                            )
+                        }
+                    }
+                    item {
+                        val vppId = ((state.currentProfile as? Profile.StudentProfile)?.vppId?.collectAsState(null)?.value as? VppId.Active)
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = vppId?.schulverwalterConnection?.isValid == false,
+                            enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
+                            exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            InfoCard(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                                title = "beste.schule-Zugangsdaten abgelaufen",
+                                text = "Die Verbindung zu beste.schule ist nicht mehr gültig. Bitte melde dich erneut mit beste.schule an.",
+                                textColor = MaterialTheme.colorScheme.onErrorContainer,
+                                backgroundColor = MaterialTheme.colorScheme.errorContainer,
+                                shadow = true,
+                                buttonAction1 = { scope.launch {
+                                    if (vppId == null) return@launch
+                                    val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@launch
+                                    BrowserIntent.openUrl(url)
+                                } },
                                 buttonText1 = "Aktualisieren",
                                 imageVector = Res.drawable.key_round
                             )

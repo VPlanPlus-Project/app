@@ -29,7 +29,7 @@ interface ProfileRepository {
 
     suspend fun setDefaultLessonEnabled(
         profileId: Uuid,
-        defaultLessonId: Int,
+        defaultLessonIds: List<Int>,
         enable: Boolean
     )
 }

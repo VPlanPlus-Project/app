@@ -37,12 +37,12 @@ class UpdateAssessmentUseCase(
     suspend operator fun invoke(allowNotifications: Boolean) {
         val existing = assessmentRepository.getAll().first().map { it.id }.toSet()
         profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>().forEach { profile ->
-            ((assessmentRepository.download(profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchoolItem().getSchoolApiAccess()!!, profile.defaultLessons.filterValues { it }.keys.toList()) as? Response.Success ?: return@forEach)
+            ((assessmentRepository.download(profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchoolItem().getSchoolApiAccess()!!, profile.defaultLessonsConfiguration.filterValues { it }.keys.toList()) as? Response.Success ?: return@forEach)
                 .data - existing)
                 .also { ids ->
                     if (ids.isEmpty() || !allowNotifications) return@forEach
                     combine(ids.map { App.assessmentSource.getById(it).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }.first()
-                        .filter { it.creator is AppEntity.VppId && it.creator.id != profile.vppId && (it.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
+                        .filter { it.creator is AppEntity.VppId && it.creator.id != profile.vppIdId && (it.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
                         .let { newAssessments ->
                             if (newAssessments.isEmpty()) return@forEach
                             if (newAssessments.size == 1) {

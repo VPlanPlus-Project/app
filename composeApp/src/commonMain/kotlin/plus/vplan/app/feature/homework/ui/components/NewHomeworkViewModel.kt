@@ -44,7 +44,7 @@ class NewHomeworkViewModel(
                             defaultLesson.getCourseItem()
                         }
                     },
-                    isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppId == null) null else true,
+                    isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppIdId == null) null else true,
                     canShowVppIdBanner = canShowVppIdBanner
                 )
             }.collect { state = it }

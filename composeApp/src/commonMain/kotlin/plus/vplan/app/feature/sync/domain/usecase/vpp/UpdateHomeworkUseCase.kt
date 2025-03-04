@@ -41,12 +41,12 @@ class UpdateHomeworkUseCase(
                 (homeworkRepository.download(
                     schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess(studentProfile.getSchoolItem().id) ?: studentProfile.getSchool().getFirstValue()!!.getSchoolApiAccess()!!,
                     groupId = studentProfile.group,
-                    defaultLessonIds = studentProfile.defaultLessons.map { it.key },
+                    defaultLessonIds = studentProfile.defaultLessonsConfiguration.map { it.key },
                 ) as? Response.Success)?.data.orEmpty().also {
                     if (allowNotifications) {
                         val newHomework = combine((it - existingHomework).ifEmpty { return@also }.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
                             .filterIsInstance<Homework.CloudHomework>()
-                            .filter { homework -> homework.createdBy != studentProfile.vppId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days }
+                            .filter { homework -> homework.createdBy != studentProfile.vppIdId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days }
 
                         if (newHomework.size == 1) {
                             platformNotificationRepository.sendNotification(

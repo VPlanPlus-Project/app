@@ -31,6 +31,12 @@ import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
+import plus.vplan.app.domain.source.schulverwalter.CollectionSource
+import plus.vplan.app.domain.source.schulverwalter.FinalGradeSource
+import plus.vplan.app.domain.source.schulverwalter.GradeSource
+import plus.vplan.app.domain.source.schulverwalter.IntervalSource
+import plus.vplan.app.domain.source.schulverwalter.SubjectSource
+import plus.vplan.app.domain.source.schulverwalter.YearSource
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
 import kotlin.uuid.Uuid
@@ -52,6 +58,12 @@ val api = Host(
 val sp24Service = Host(
     protocol = URLProtocol.HTTPS,
     host = "sp24.microservices.vplan.plus",
+    port = 443
+)
+
+val schulverwalterReauthService = Host(
+    protocol = URLProtocol.HTTPS,
+    host = "schulverwalter-reauth.microservices.vplan.plus/",
     port = 443
 )
 
@@ -97,6 +109,14 @@ object App {
     lateinit var substitutionPlanSource: SubstitutionPlanSource
     lateinit var assessmentSource: AssessmentSource
     lateinit var fileSource: FileSource
+
+    lateinit var yearSource: YearSource
+    lateinit var intervalSource: IntervalSource
+    lateinit var collectionSource: CollectionSource
+    lateinit var subjectSource: SubjectSource
+    lateinit var schulverwalterTeacherSource: plus.vplan.app.domain.source.schulverwalter.TeacherSource
+    lateinit var gradeSource: GradeSource
+    lateinit var finalGradeSource: FinalGradeSource
 }
 
 @Composable
@@ -121,14 +141,18 @@ fun App(task: StartTask?) {
 
 sealed class StartTask(val profileId: Uuid? = null) {
     data class VppIdLogin(val token: String) : StartTask()
+    data class SchulverwalterReconnect(val schulverwalterAccessToken: String, val vppId: Int) : StartTask()
+    data class OpenUrl(val url: String): StartTask()
     sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
         class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
         class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Int? = null): NavigateTo(profileId)
+        class Grades(profileId: Uuid?, val vppId: Int): NavigateTo(profileId)
     }
 
     sealed class Open(profileId: Uuid?): StartTask(profileId) {
         class Homework(profileId: Uuid?, val homeworkId: Int): Open(profileId)
         class Assessment(profileId: Uuid?, val assessmentId: Int): Open(profileId)
+        class Grade(profileId: Uuid?, val gradeId: Int): Open(profileId)
     }
 }
 
@@ -152,12 +176,17 @@ data class StartTaskJson(
         data class Assessment(
             @SerialName("assessment_id") val assessmentId: Int
         )
+
+        @Serializable
+        data class Grade(
+            @SerialName("grade_id") val gradeId: Int
+        )
     }
 
     @Serializable
     data class StartTaskNavigateTo(
         @SerialName("screen") val screen: String,
-        @SerialName("payload") val value: String
+        @SerialName("payload") val value: String?
     ) {
         @Serializable
         data class StartTaskCalendar(
@@ -167,6 +196,11 @@ data class StartTaskJson(
         @Serializable
         data class SchoolSettings(
             @SerialName("open_indiware_settings_school_id") val openIndiwareSettingsSchoolId: Int? = null,
+        )
+
+        @Serializable
+        data class Grades(
+            @SerialName("vpp_id") val vppId: Int
         )
     }
 }

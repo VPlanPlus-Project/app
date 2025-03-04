@@ -16,6 +16,8 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -121,6 +123,19 @@ class SearchUseCase(
                         }
                     }
                 results.value = results.value.plus(Result.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
+            }
+        }
+
+        launch {
+            App.collectionSource.getAll().map { it.filterIsInstance<CacheState.Done<Collection>>().map { it.data } }.collectLatest { collections ->
+                val filteredGrades = collections
+                    .filter { query in it.name.lowercase() }
+                    .flatMap { collection ->
+                        collection.grades.first()
+                            .filter { grade -> grade.vppIdId == (profile as? Profile.StudentProfile)?.vppIdId }
+                    }
+                    .distinctBy { it.id }
+                results.value = results.value.plus(Result.Grade to filteredGrades.map { SearchResult.Grade(it) })
             }
         }
     }
