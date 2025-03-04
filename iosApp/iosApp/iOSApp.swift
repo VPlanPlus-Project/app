@@ -6,6 +6,8 @@ import BackgroundTasks
 
 @main
 struct iOSApp: SwiftUI.App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     init() {
         MainViewControllerKt.doInitKoin()
     }
@@ -93,5 +95,22 @@ public func scheduleAppRefresh() {
         print("Background Task Scheduled!")
     } catch (let error) {
         print("Scheduling error: ", error)
+    }
+}
+
+class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound])
+    }
+}
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+    let notificationDelegate = NotificationDelegate()
+
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        let center = UNUserNotificationCenter.current()
+        center.delegate = notificationDelegate
+        return true
     }
 }
