@@ -31,6 +31,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -43,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -90,6 +93,8 @@ import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
+import vplanplus.composeapp.generated.resources.sheet
+import vplanplus.composeapp.generated.resources.table_properties
 import kotlin.math.roundToInt
 
 private const val CONTENT_PAGER_SIZE = Int.MAX_VALUE
@@ -228,8 +233,33 @@ private fun CalendarScreenContent(
                         )
                     }
                 }
-                IconButton(onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) }) {
-                    Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(24.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) }) {
+                        Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(24.dp))
+                    }
+                    SingleChoiceSegmentedButtonRow {
+                        SegmentedButton(
+                            shape = RoundedCornerShape(50, 0, 0, 50),
+                            onClick = {},
+                            selected = true
+                        ) { Icon(
+                            painter = painterResource(Res.drawable.sheet),
+                            modifier = Modifier.size(18.dp),
+                            contentDescription = null
+                        ) }
+                        SegmentedButton(
+                            shape = RoundedCornerShape(0, 50, 50, 0),
+                            onClick = {  },
+                            selected = false
+                        ) { Icon(
+                            painter = painterResource(Res.drawable.table_properties),
+                            modifier = Modifier.size(18.dp).rotate(180f),
+                            contentDescription = null
+                        ) }
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
