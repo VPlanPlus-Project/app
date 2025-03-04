@@ -2,11 +2,13 @@ package plus.vplan.app.feature.calendar.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -25,6 +27,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
@@ -74,8 +78,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
-import kotlinx.datetime.format.Padding
-import kotlinx.datetime.format.char
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
@@ -89,6 +91,7 @@ import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
+import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.until
@@ -98,8 +101,7 @@ import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
 
-private const val CONTENT_PAGER_SIZE = Int.MAX_VALUE
-
+private const val CONTENT_PAGER_SIZE = 400
 
 @Composable
 fun CalendarScreen(
@@ -211,7 +213,7 @@ private fun CalendarScreenContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column(Modifier.padding(horizontal = 8.dp)) {
+                Column(Modifier.padding(horizontal = 8.dp)) dateHead@{
                     AnimatedContent(
                         targetState = state.selectedDate
                     ) { displayDate ->
@@ -220,19 +222,47 @@ private fun CalendarScreenContent(
                             style = MaterialTheme.typography.titleSmall
                         )
                     }
-                    AnimatedContent(
-                        targetState = state.selectedDate
-                    ) { displayDate ->
+                    Row {
+                        AnimatedContent(
+                            targetState = state.selectedDate.dayOfMonth,
+                            transitionSpec = { fadeIn() togetherWith fadeOut() },
+                            modifier = Modifier.animateContentSize()
+                        ) {
+                            Text(
+                                text = it.toString(),
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
                         Text(
-                            text = displayDate.format(LocalDate.Format {
-                                dayOfMonth(Padding.ZERO)
-                                chars(". ")
-                                monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
-                                char(' ')
-                                yearTwoDigits(2000)
-                            }),
+                            text = ". ",
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                         )
+                        AnimatedContent(
+                            targetState = state.selectedDate.format(LocalDate.Format {
+                                monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
+                            }),
+                            transitionSpec = { fadeIn() togetherWith fadeOut() },
+                            modifier = Modifier.animateContentSize()
+                        ) {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+                        Text(
+                            text = " ",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                        AnimatedContent(
+                            targetState = state.selectedDate.year,
+                            transitionSpec = { fadeIn() togetherWith fadeOut() },
+                            modifier = Modifier.animateContentSize()
+                        ) {
+                            Text(
+                                text = it.toString().drop(2),
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
                     }
                 }
                 Row(
@@ -263,33 +293,42 @@ private fun CalendarScreenContent(
             }
         }
         HorizontalDivider()
+
+        val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
+        val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+        val isUserDraggingPager = pagerState.interactionSource.collectIsDraggedAsState().value
+        val isUserDraggingList = lazyListState.interactionSource.collectIsDraggedAsState().value
+        LaunchedEffect(pagerState.targetPage, isUserDraggingPager) {
+            if (isUserDraggingPager) return@LaunchedEffect
+            val date = LocalDate.now().plus((pagerState.targetPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+            if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
+        }
+        LaunchedEffect(lazyListState.firstVisibleItemIndex, isUserDraggingList) {
+            val date = LocalDate.now().plus((lazyListState.firstVisibleItemIndex - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+            if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
+        }
+        LaunchedEffect(state.selectedDate) {
+            val currentlyOpenedDate = LocalDate.now().plus((pagerState.currentPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+            if (currentlyOpenedDate != state.selectedDate) {
+                pagerState.animateScrollToPage((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+                if (!isUserDraggingList) lazyListState.animateScrollToItem((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+            }
+        }
+        LaunchedEffect(state.days[state.selectedDate]) {
+            val day = state.days[state.selectedDate] ?: return@LaunchedEffect
+            if (day.lessons.isEmpty()) return@LaunchedEffect
+            val lessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+            if (lessons.isEmpty()) return@LaunchedEffect
+            val startOfDay = lessons.minOf { it.lessonTimeItem!!.start }
+            contentScrollState.animateScrollTo(with(localDensity) { ((startOfDay.inWholeMinutes().toFloat() - 60) * minute).coerceAtLeast(0.dp).roundToPx() })
+        }
+
         AnimatedContent(
             targetState = state.displayType,
             modifier = Modifier.fillMaxSize()
         ) { displayType ->
             when (displayType) {
                 DisplayType.Calendar -> {
-                    val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
-                    val isUserDragging = pagerState.interactionSource.collectIsDraggedAsState().value
-                    LaunchedEffect(pagerState.targetPage, isUserDragging) {
-                        if (isUserDragging) return@LaunchedEffect
-                        val date = LocalDate.now().plus((pagerState.targetPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                        if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
-                    }
-                    LaunchedEffect(state.selectedDate) {
-                        val currentlyOpenedDate = LocalDate.now().plus((pagerState.currentPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                        if (currentlyOpenedDate != state.selectedDate) {
-                            pagerState.animateScrollToPage((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
-                        }
-                    }
-                    LaunchedEffect(state.days[state.selectedDate]) {
-                        val day = state.days[state.selectedDate] ?: return@LaunchedEffect
-                        if (day.lessons.isEmpty()) return@LaunchedEffect
-                        val lessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
-                        if (lessons.isEmpty()) return@LaunchedEffect
-                        val startOfDay = lessons.minOf { it.lessonTimeItem!!.start }
-                        contentScrollState.animateScrollTo(with(localDensity) { ((startOfDay.inWholeMinutes().toFloat() - 60) * minute).coerceAtLeast(0.dp).roundToPx() })
-                    }
                     HorizontalPager(
                         state = pagerState,
                         pageSize = PageSize.Fill,
@@ -475,7 +514,14 @@ private fun CalendarScreenContent(
                     }
                 }
                 DisplayType.Agenda -> {
-                    Text("Agenda")
+                    LazyColumn(
+                        state = lazyListState
+                    ) {
+                        items(CONTENT_PAGER_SIZE) { page ->
+                            val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+                            Text(date.format(regularDateFormat))
+                        }
+                    }
                 }
             }
         }
