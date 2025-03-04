@@ -264,7 +264,8 @@ private fun CalendarScreenContent(
         }
         HorizontalDivider()
         AnimatedContent(
-            targetState = state.displayType
+            targetState = state.displayType,
+            modifier = Modifier.fillMaxSize()
         ) { displayType ->
             when (displayType) {
                 DisplayType.Calendar -> {

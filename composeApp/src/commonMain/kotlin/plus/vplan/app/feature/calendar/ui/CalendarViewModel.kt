@@ -26,6 +26,8 @@ import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
+import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.now
@@ -35,6 +37,8 @@ import kotlin.time.Duration.Companion.days
 class CalendarViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
+    private val getLastDisplayTypeUseCase: GetLastDisplayTypeUseCase,
+    private val setLastDisplayTypeUseCase: SetLastDisplayTypeUseCase
 ) : ViewModel() {
     var state by mutableStateOf(CalendarState())
         private set
@@ -56,9 +60,9 @@ class CalendarViewModel(
     }
 
     init {
-        viewModelScope.launch {
-            getCurrentDateTimeUseCase().collectLatest { state = state.copy(currentTime = it) }
-        }
+        viewModelScope.launch { getCurrentDateTimeUseCase().collectLatest { state = state.copy(currentTime = it) } }
+        viewModelScope.launch { getLastDisplayTypeUseCase().collectLatest { state = state.copy(displayType = it) } }
+
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(currentProfile = profile)
@@ -123,7 +127,7 @@ class CalendarViewModel(
                         )
                     )
                 }
-                is CalendarEvent.SelectDisplayType -> state = state.copy(displayType = event.displayType)
+                is CalendarEvent.SelectDisplayType -> setLastDisplayTypeUseCase(event.displayType)
             }
         }
     }
