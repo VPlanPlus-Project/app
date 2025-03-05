@@ -40,6 +40,8 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
 
     fun getAll(): Flow<List<Assessment>>
 
+    fun getByDate(date: LocalDate): Flow<List<Assessment>>
+
     suspend fun deleteAssessment(assessment: Assessment, profile: Profile.StudentProfile): Response.Error?
 
     suspend fun getIdForNewLocalAssessment(): Int

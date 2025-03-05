@@ -1,7 +1,12 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
@@ -15,6 +20,7 @@ data class Day(
     val dayType: DayType,
     val timetable: List<Uuid>,
     val substitutionPlan: List<Uuid>,
+    val assessmentIds: List<Int>,
     val nextSchoolDay: String?
 ): Item {
     enum class DayType {
@@ -47,4 +53,9 @@ data class Day(
     }
 
     override fun getEntityId(): String = this.id
+
+    val assessments by lazy {
+        if (this.assessmentIds.isEmpty()) return@lazy flowOf(emptySet())
+        combine(this.assessmentIds.map { assessmentId -> App.assessmentSource.getById(assessmentId).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toSet() }
+    }
 }

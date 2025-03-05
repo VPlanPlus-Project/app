@@ -35,6 +35,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,9 +45,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +72,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
@@ -81,19 +85,29 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.collectAsLoadingState
+import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.components.DisplaySelectType
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
 import plus.vplan.app.feature.home.ui.components.headerFont
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.SubjectIcon
+import plus.vplan.app.ui.subjectColor
+import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.regularTimeFormat
+import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.toDp
+import plus.vplan.app.utils.toName
 import plus.vplan.app.utils.until
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
@@ -101,7 +115,7 @@ import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
 
-private const val CONTENT_PAGER_SIZE = 400
+private const val CONTENT_PAGER_SIZE = 800
 
 @Composable
 fun CalendarScreen(
@@ -124,6 +138,8 @@ private fun CalendarScreenContent(
     onEvent: (event: CalendarEvent) -> Unit
 ) {
     val localDensity = LocalDensity.current
+
+    var displayAssessmentId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     var scrollProgress by remember { mutableStateOf(0f) }
     val contentScrollState = rememberScrollState()
@@ -174,7 +190,7 @@ private fun CalendarScreenContent(
         modifier = Modifier
             .padding(contentPadding)
             .fillMaxSize()
-            .nestedScroll(scrollConnection)
+            .thenIf(Modifier.nestedScroll(scrollConnection)) { state.displayType == DisplayType.Calendar }
     ) {
         val dateSelectorVelocityTracker = remember { VelocityTracker() }
         Column (
@@ -298,20 +314,26 @@ private fun CalendarScreenContent(
         val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
         val isUserDraggingPager = pagerState.interactionSource.collectIsDraggedAsState().value
         val isUserDraggingList = lazyListState.interactionSource.collectIsDraggedAsState().value
+        var isScrollAnimationRunning by remember { mutableStateOf(false) }
         LaunchedEffect(pagerState.targetPage, isUserDraggingPager) {
             if (isUserDraggingPager) return@LaunchedEffect
             val date = LocalDate.now().plus((pagerState.targetPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
             if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
         }
         LaunchedEffect(lazyListState.firstVisibleItemIndex, isUserDraggingList) {
+            if (!isUserDraggingList && isScrollAnimationRunning) return@LaunchedEffect
+            if (isUserDraggingList) isScrollAnimationRunning = false
             val date = LocalDate.now().plus((lazyListState.firstVisibleItemIndex - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
             if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
         }
         LaunchedEffect(state.selectedDate) {
-            val currentlyOpenedDate = LocalDate.now().plus((pagerState.currentPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
+            val currentlyOpenedDate = LocalDate.now().plus(((if (state.displayType == DisplayType.Calendar) pagerState.currentPage else lazyListState.firstVisibleItemIndex) - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
             if (currentlyOpenedDate != state.selectedDate) {
                 pagerState.animateScrollToPage((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
-                if (!isUserDraggingList) lazyListState.animateScrollToItem((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+                if (!isUserDraggingList) {
+                    isScrollAnimationRunning = true
+                    lazyListState.animateScrollToItem((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+                }
             }
         }
         LaunchedEffect(state.days[state.selectedDate]) {
@@ -519,11 +541,137 @@ private fun CalendarScreenContent(
                     ) {
                         items(CONTENT_PAGER_SIZE) { page ->
                             val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                            Text(date.format(regularDateFormat))
+                            val day = state.days[date]
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(horizontal = 8.dp)
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) dayHeader@{
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(RoundedCornerShape(50)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = date.format(LocalDate.Format {
+                                                    dayOfWeek(shortDayOfWeekNames)
+                                                }),
+                                                style = MaterialTheme.typography.labelMedium
+                                            )
+                                            Text(
+                                                text = date.dayOfMonth.toString(),
+                                                style = MaterialTheme.typography.titleSmall
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateContentSize()
+                            ) assessments@{
+                                day?.day?.assessments?.collectAsState(emptyList())?.value?.let { assessments ->
+                                    assessments.forEach forEachAssessment@{ assessment ->
+                                        val subject = assessment.subjectInstance.collectAsState(null).value
+                                        val createdBy by when (assessment.creator) {
+                                            is AppEntity.VppId -> assessment.creator.vppId.collectAsLoadingState("")
+                                            is AppEntity.Profile -> assessment.creator.profile.collectAsLoadingState("")
+                                        }
+                                        if (subject == null) return@forEachAssessment
+                                        var boxHeight by remember { mutableStateOf(0.dp) }
+                                        Box(
+                                            modifier = Modifier
+                                                .padding(start = 24.dp, end = 8.dp)
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .clickable { displayAssessmentId = assessment.id }
+                                                .onSizeChanged { with(localDensity) { boxHeight = it.height.toDp() } }
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .align(Alignment.CenterStart)
+                                                    .width(4.dp)
+                                                    .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
+                                                    .clip(RoundedCornerShape(0, 50, 50, 0))
+                                                    .background(subject.subject.subjectColor().getGroup().color)
+                                            )
+                                            Column(
+                                                modifier = Modifier
+                                                    .padding(16.dp)
+                                                    .fillMaxWidth()
+                                            ) {
+                                                Row {
+                                                    SubjectIcon(
+                                                        modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
+                                                        subject = subject.subject
+                                                    )
+                                                    Spacer(Modifier.size(8.dp))
+                                                    Column {
+                                                        Text(
+                                                            text = buildString {
+                                                                append(assessment.type.toName())
+                                                                append(" in ")
+                                                                append(subject.subject)
+                                                            },
+                                                            style = MaterialTheme.typography.titleLarge
+                                                        )
+                                                        Text(
+                                                            text = assessment.description,
+                                                            style = MaterialTheme.typography.bodyMedium
+                                                        )
+                                                    }
+                                                }
+                                                HorizontalDivider(Modifier.padding(8.dp))
+                                                Row(
+                                                    modifier = Modifier
+                                                        .padding(horizontal = 8.dp)
+                                                        .fillMaxWidth(),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    if (createdBy is CacheState.Loading) CircularProgressIndicator(Modifier.size(MaterialTheme.typography.labelMedium.lineHeight.toDp()))
+                                                    else Text(
+                                                        text = buildString {
+                                                            val creator = (createdBy as? CacheState.Done)?.data
+                                                            append(when (creator) {
+                                                                is VppId -> creator.name
+                                                                is Profile -> creator.name
+                                                                else -> ""
+                                                            })
+                                                        },
+                                                        style = MaterialTheme.typography.labelMedium,
+                                                        color = MaterialTheme.colorScheme.outline
+                                                    )
+                                                    Text(
+                                                        text = assessment.createdAt.date.format(regularDateFormat),
+                                                        style = MaterialTheme.typography.labelMedium,
+                                                        color = MaterialTheme.colorScheme.outline
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
     }
+
+    displayAssessmentId?.let { AssessmentDetailDrawer(
+        assessmentId = it,
+        onDismiss = { displayAssessmentId = null }
+    ) }
 }

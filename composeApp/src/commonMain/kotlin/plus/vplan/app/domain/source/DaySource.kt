@@ -19,6 +19,7 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
+import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
@@ -31,7 +32,8 @@ class DaySource(
     private val dayRepository: DayRepository,
     private val weekRepository: WeekRepository,
     private val timetableRepository: TimetableRepository,
-    private val substitutionPlanRepository: SubstitutionPlanRepository
+    private val substitutionPlanRepository: SubstitutionPlanRepository,
+    private val assessmentRepository: AssessmentRepository
 ) {
     val flows = hashMapOf<String, MutableSharedFlow<CacheState<Day>>>()
     fun getById(id: String): Flow<CacheState<Day>> {
@@ -68,8 +70,9 @@ class DaySource(
                                 dayOfWeek = date.dayOfWeek,
                                 weekIndex = meta.dayWeek.weekIndex,
                             ),
-                            substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
-                        ) { timetable, substitutionPlan ->
+                            substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),
+                            assessmentRepository.getByDate(date)
+                        ) { timetable, substitutionPlan, assessments ->
                             send(CacheState.Done(Day(
                                 id = id,
                                 date = date,
@@ -94,6 +97,7 @@ class DaySource(
                                 else Day.DayType.UNKNOWN,
                                 timetable = timetable,
                                 substitutionPlan = substitutionPlan,
+                                assessmentIds = assessments.map { it.id },
                                 nextSchoolDay = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
                             )))
                         }.collectLatest {  }
