@@ -49,6 +49,7 @@ data class DbDay(
             substitutionPlan = emptyList(),
             timetable = emptyList(),
             assessmentIds = emptyList(),
+            homeworkIds = emptyList(),
             nextSchoolDay = null
         )
     }

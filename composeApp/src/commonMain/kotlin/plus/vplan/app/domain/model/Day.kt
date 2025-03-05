@@ -1,6 +1,8 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -21,6 +23,7 @@ data class Day(
     val timetable: List<Uuid>,
     val substitutionPlan: List<Uuid>,
     val assessmentIds: List<Int>,
+    val homeworkIds: List<Int>,
     val nextSchoolDay: String?
 ): Item {
     enum class DayType {
@@ -39,7 +42,9 @@ data class Day(
         private set
 
     suspend fun getTimetableItems(): List<Lesson.TimetableLesson> {
-        if (timetableItems == null) timetableItems = timetable.mapNotNull { App.timetableSource.getById(it).getFirstValue() }.also { this.timetableItems = it }
+        if (timetableItems == null) timetableItems =
+            timetable.mapNotNull { App.timetableSource.getById(it).getFirstValue() }
+                .also { this.timetableItems = it }
         return timetableItems!!
     }
 
@@ -56,6 +61,17 @@ data class Day(
 
     val assessments by lazy {
         if (this.assessmentIds.isEmpty()) return@lazy flowOf(emptySet())
-        combine(this.assessmentIds.map { assessmentId -> App.assessmentSource.getById(assessmentId).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toSet() }
+        combine(this.assessmentIds.map { assessmentId ->
+            App.assessmentSource.getById(assessmentId)
+                .filterIsInstance<CacheState.Done<Assessment>>().map { it.data }
+        }) { it.toSet() }
+    }
+
+    @OptIn(FlowPreview::class)
+    val homework by lazy {
+        if (this.homeworkIds.isEmpty()) return@lazy flowOf(emptySet())
+        combine(this.homeworkIds.map { homeworkId -> App.homeworkSource.getById(homeworkId) }) {
+            it.filterIsInstance<CacheState.Done<Homework>>().map { it.data }.toSet()
+        }.debounce(50)
     }
 }

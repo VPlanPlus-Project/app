@@ -63,6 +63,10 @@ interface HomeworkDao {
     fun getAll(): Flow<List<EmbeddedHomework>>
 
     @Transaction
+    @Query("SELECT * FROM homework WHERE due_to = :date")
+    fun getByDate(date: LocalDate): Flow<List<EmbeddedHomework>>
+
+    @Transaction
     @Query("SELECT * FROM homework WHERE id = :id")
     fun getById(id: Int): Flow<EmbeddedHomework?>
 

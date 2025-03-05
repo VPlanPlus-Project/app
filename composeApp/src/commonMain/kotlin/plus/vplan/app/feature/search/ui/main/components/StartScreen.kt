@@ -176,7 +176,7 @@ fun HomeworkCard(
                 }
                 if (profile is Profile.StudentProfile) CircularProgressIndicator(
                     modifier = Modifier.padding(end = 4.dp).size(24.dp),
-                    progress = { tasks.count { it.isDone(profile) }.toFloat() / homework.tasks.size },
+                    progress = { tasks.count { it.isDone(profile) }.toFloat() / homework.taskIds.size },
                     trackColor = MaterialTheme.colorScheme.outlineVariant,
                     color = MaterialTheme.colorScheme.tertiary
                 )
@@ -209,7 +209,7 @@ fun HomeworkCard(
                 }
                 if (tasks.size > maxTasks) {
                     Text(
-                        text = "-> +${(homework.tasks.size - maxTasks)}",
+                        text = "-> +${(homework.taskIds.size - maxTasks)}",
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
