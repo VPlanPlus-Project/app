@@ -128,6 +128,19 @@ class CalendarViewModel(
                     )
                 }
                 is CalendarEvent.SelectDisplayType -> setLastDisplayTypeUseCase(event.displayType)
+                is CalendarEvent.StartLessonUiSync -> {
+                    if (syncJobs.any { it.date == event.date && !it.syncLessons }) {
+                        syncJobs.find { it.date == event.date && it.syncLessons }?.job?.cancel()
+                        syncJobs.removeAll { it.date == event.date && it.syncLessons }
+                    }
+                    syncJobs.add(
+                        SyncJob(
+                            job = launchSyncJob(event.date, true),
+                            date = event.date,
+                            syncLessons = true
+                        )
+                    )
+                }
             }
         }
     }
@@ -143,6 +156,7 @@ data class CalendarState(
 
 sealed class CalendarEvent {
     data class SelectDate(val date: LocalDate) : CalendarEvent()
+    data class StartLessonUiSync(val date: LocalDate): CalendarEvent()
 
     data class SelectDisplayType(val displayType: DisplayType): CalendarEvent()
 }

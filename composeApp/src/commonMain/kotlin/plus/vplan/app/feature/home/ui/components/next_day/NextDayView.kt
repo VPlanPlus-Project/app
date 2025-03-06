@@ -61,7 +61,11 @@ fun NextDayView(day: HomeViewDay) {
                     else "${day.timetable.minOf { l -> lessonTimes.first { it.id == l.lessonTime }.start }} bis ${day.timetable.maxOf { l -> lessonTimes.first { it.id == l.lessonTime }.end }}"
             )
             FollowingLessons(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(start = 4.dp),
                 showFirstGradient = false,
+                paddingStart = 4.dp,
                 date = day.day.date,
                 lessons = day.substitutionPlan.orEmpty().ifEmpty() { day.timetable }.groupBy { l -> lessonTimes.first { it.id == l.lessonTime }.lessonNumber }
             )
