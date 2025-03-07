@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,16 +24,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Day
+import plus.vplan.app.ui.grayScale
+import plus.vplan.app.ui.thenIf
+import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularTimeFormat
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.chevron_down
 
 @Composable
 fun Head(
+    date: LocalDate,
     dayType: Day.DayType,
     lessons: Int = 0,
     start: LocalTime? = null,
@@ -42,58 +49,61 @@ fun Head(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp),
+            .height(48.dp)
+            .thenIf(Modifier.grayScale()) { date < LocalDate.now() },
         verticalArrangement = Arrangement.Center
     ) {
-        when (dayType) {
-            Day.DayType.WEEKEND -> Text(
-                text = "Wochenende",
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-            Day.DayType.HOLIDAY -> Text(
-                text = "Ferien",
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-            Day.DayType.REGULAR -> {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(end = 4.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onClick() }
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "$lessons Stunden",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        if (start != null && end != null) Text(
-                            text = buildString {
-                                append(start.format(regularTimeFormat))
-                                append(" - ")
-                                append(end.format(regularTimeFormat))
-                            },
-                            style = MaterialTheme.typography.bodySmall
+        CompositionLocalProvider(LocalContentColor provides if (date < LocalDate.now()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface) {
+            when (dayType) {
+                Day.DayType.WEEKEND -> Text(
+                    text = "Wochenende",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+                Day.DayType.HOLIDAY -> Text(
+                    text = "Ferien",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+                Day.DayType.REGULAR -> {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(end = 4.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onClick() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = "$lessons Stunden",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            if (start != null && end != null) Text(
+                                text = buildString {
+                                    append(start.format(regularTimeFormat))
+                                    append(" - ")
+                                    append(end.format(regularTimeFormat))
+                                },
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        val iconRotation by animateFloatAsState(if (showLessons) 1f else 0f, label = "rotation animation")
+                        Icon(
+                            painter = painterResource(Res.drawable.chevron_down),
+                            modifier = Modifier
+                                .size(24.dp)
+                                .rotate(-180*iconRotation),
+                            contentDescription = null
                         )
                     }
-                    val iconRotation by animateFloatAsState(if (showLessons) 1f else 0f, label = "rotation animation")
-                    Icon(
-                        painter = painterResource(Res.drawable.chevron_down),
-                        modifier = Modifier
-                            .size(24.dp)
-                            .rotate(-180*iconRotation),
-                        contentDescription = null
-                    )
                 }
+                Day.DayType.UNKNOWN -> Unit
             }
-            Day.DayType.UNKNOWN -> Unit
         }
     }
 }

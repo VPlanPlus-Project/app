@@ -579,14 +579,17 @@ private fun CalendarScreenContent(
                                                     dayOfWeek(shortDayOfWeekNames)
                                                 }),
                                                 style = MaterialTheme.typography.labelMedium,
-                                                color = if (date == LocalDate.now()) MaterialTheme.colorScheme.onPrimary
+                                                color =
+                                                if (date < LocalDate.now()) MaterialTheme.colorScheme.outline
+                                                else if (date == LocalDate.now()) MaterialTheme.colorScheme.onPrimary
                                                 else if (date.dayOfWeek.isoDayNumber >= 6) colors[CustomColor.Red]!!.getGroup().color
                                                 else MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
                                                 text = date.dayOfMonth.toString(),
                                                 style = MaterialTheme.typography.titleSmall,
-                                                color = if (date == LocalDate.now()) MaterialTheme.colorScheme.onPrimary
+                                                color = if (date < LocalDate.now()) MaterialTheme.colorScheme.outline
+                                                else if (date == LocalDate.now()) MaterialTheme.colorScheme.onPrimary
                                                 else MaterialTheme.colorScheme.onSurface
                                             )
                                         }
@@ -603,6 +606,7 @@ private fun CalendarScreenContent(
                                 }
                                 Column {
                                     Head(
+                                        date = date,
                                         dayType = day?.day?.dayType ?: Day.DayType.UNKNOWN,
                                         lessons = day?.lessons.orEmpty().distinctBy { it.lessonTimeItem!!.lessonNumber }.count(),
                                         start = day?.lessons?.minOfOrNull { it.lessonTimeItem!!.start },
@@ -615,6 +619,15 @@ private fun CalendarScreenContent(
                                             }
                                         }
                                     )
+                                    if (day?.day?.info != null) {
+                                        InfoCard(
+                                            modifier = Modifier
+                                                .padding(vertical = 4.dp, horizontal = 8.dp),
+                                            imageVector = Res.drawable.info,
+                                            title = "Informationen deiner Schule",
+                                            text = day.day.info,
+                                        )
+                                    }
                                     AnimatedVisibility(
                                         visible = showLessons,
                                         enter = expandVertically(),
