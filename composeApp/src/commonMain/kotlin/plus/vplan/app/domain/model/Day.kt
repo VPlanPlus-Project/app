@@ -17,7 +17,7 @@ data class Day(
     val id: String,
     val date: LocalDate,
     val school: Int,
-    val week: String?,
+    val weekId: String?,
     val info: String?,
     val dayType: DayType,
     val timetable: List<Uuid>,
@@ -74,4 +74,6 @@ data class Day(
             it.filterIsInstance<CacheState.Done<Homework>>().map { it.data }.toSet()
         }.debounce(50)
     }
+
+    val week by lazy { if (this.weekId == null) return@lazy null else App.weekSource.getById(weekId) }
 }

@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
@@ -564,31 +565,45 @@ private fun CalendarScreenContent(
                             Row(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .padding(2.dp)
-                                        .clip(RoundedCornerShape(50))
-                                        .thenIf(Modifier.background(MaterialTheme.colorScheme.primary)) { date == LocalDate.now() },
-                                    contentAlignment = Alignment.Center
+                                Column(
+                                    modifier = Modifier.width(48.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .padding(2.dp)
+                                            .clip(RoundedCornerShape(50))
+                                            .thenIf(Modifier.background(MaterialTheme.colorScheme.primary)) { date == LocalDate.now() },
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Text(
-                                            text = date.format(LocalDate.Format {
-                                                dayOfWeek(shortDayOfWeekNames)
-                                            }),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = if (date == LocalDate.now()) MaterialTheme.colorScheme.onPrimary
-                                            else if (date.dayOfWeek.isoDayNumber >= 6) colors[CustomColor.Red]!!.getGroup().color
-                                            else MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Text(
-                                            text = date.dayOfMonth.toString(),
-                                            style = MaterialTheme.typography.titleSmall,
-                                            color = if (date == LocalDate.now()) MaterialTheme.colorScheme.onPrimary
-                                            else MaterialTheme.colorScheme.onSurface
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = date.format(LocalDate.Format {
+                                                    dayOfWeek(shortDayOfWeekNames)
+                                                }),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = if (date == LocalDate.now()) MaterialTheme.colorScheme.onPrimary
+                                                else if (date.dayOfWeek.isoDayNumber >= 6) colors[CustomColor.Red]!!.getGroup().color
+                                                else MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = date.dayOfMonth.toString(),
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = if (date == LocalDate.now()) MaterialTheme.colorScheme.onPrimary
+                                                else MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                    }
+                                    if (date.dayOfWeek == DayOfWeek.MONDAY) {
+                                        val week = day?.day?.week?.collectAsResultingFlow()?.value
+                                        if (week != null) Text(
+                                            text = listOf("KW ${week.calendarWeek}", "SW ${week.weekIndex}", week.weekType).joinToString("\n"),
+                                            color = MaterialTheme.colorScheme.outline,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            textAlign = TextAlign.Center
                                         )
                                     }
                                 }

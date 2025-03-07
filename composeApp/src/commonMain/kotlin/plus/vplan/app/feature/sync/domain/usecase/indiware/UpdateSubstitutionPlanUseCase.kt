@@ -76,7 +76,7 @@ class UpdateSubstitutionPlanUseCase(
             id = Day.buildId(indiwareSchool, date),
             date = date,
             school = indiwareSchool.id,
-            week = week.id,
+            weekId = week.id,
             info = substitutionPlan.info,
             dayType = Day.DayType.REGULAR,
             substitutionPlan = emptyList(),

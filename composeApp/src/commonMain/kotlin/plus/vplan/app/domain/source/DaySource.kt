@@ -80,7 +80,7 @@ class DaySource(
                                 id = id,
                                 date = date,
                                 school = schoolId,
-                                week = meta.dayWeek.id,
+                                weekId = meta.dayWeek.id,
                                 info = meta.dayInfo?.info,
                                 dayType =
                                 if (date in meta.holidays) Day.DayType.HOLIDAY

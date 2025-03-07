@@ -33,7 +33,7 @@ fun NextDayView(day: HomeViewDay) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Column {
-            val weekState = day.day.week?.let { App.weekSource.getById(it).collectAsLoadingState(it) }
+            val weekState = day.day.weekId?.let { App.weekSource.getById(it).collectAsLoadingState(it) }
             SectionTitle(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = "Nächster Schultag",
