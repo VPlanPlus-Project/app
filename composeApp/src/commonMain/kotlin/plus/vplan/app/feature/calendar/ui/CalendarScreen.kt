@@ -7,8 +7,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
@@ -35,6 +33,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -76,6 +75,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
@@ -126,6 +126,7 @@ import plus.vplan.app.utils.until
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
+import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.chevron_down
 import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
@@ -565,8 +566,13 @@ private fun CalendarScreenContent(
                             Row(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
+                                var stickySideHeight by remember { mutableStateOf(0) }
+                                val currentDayHeight = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 0
                                 Column(
-                                    modifier = Modifier.width(48.dp),
+                                    modifier = Modifier
+                                        .width(48.dp)
+                                        .thenIf(Modifier.offset { IntOffset(0, lazyListState.firstVisibleItemScrollOffset.coerceAtMost((currentDayHeight-stickySideHeight).coerceAtLeast(0))) }) { state.selectedDate == date }
+                                        .onSizeChanged { stickySideHeight = it.height },
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Box(
@@ -668,8 +674,9 @@ private fun CalendarScreenContent(
                                     }
                                     AnimatedVisibility(
                                         visible = showLessons,
-                                        enter = scaleIn() + expandVertically(),
-                                        exit = scaleOut() + shrinkVertically()
+                                        enter = expandVertically(),
+                                        exit = shrinkVertically(),
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Column {
                                             FollowingLessons(
@@ -798,11 +805,33 @@ private fun CalendarScreenContent(
                                                             .padding(16.dp)
                                                             .fillMaxWidth()
                                                     ) {
+                                                        val tasks by homework.tasks.collectAsState(emptyList())
                                                         Row {
-                                                            SubjectIcon(
-                                                                modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
-                                                                subject = subject.subject
-                                                            )
+                                                            AnimatedContent(
+                                                                targetState = state.currentProfile is Profile.StudentProfile && tasks.isNotEmpty() && tasks.all { it.isDone(state.currentProfile) },
+                                                                modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp())
+                                                            ) { allDone ->
+                                                                if (allDone) {
+                                                                    val greenGroup = colors[CustomColor.Green]!!.getGroup()
+                                                                    Box(
+                                                                        modifier = Modifier
+                                                                            .fillMaxSize()
+                                                                            .clip(CircleShape)
+                                                                            .background(greenGroup.color)
+                                                                            .padding(4.dp)
+                                                                    ) {
+                                                                        Icon(
+                                                                            painter = painterResource(Res.drawable.check),
+                                                                            contentDescription = null,
+                                                                            modifier = Modifier.fillMaxSize(),
+                                                                            tint = greenGroup.onColor
+                                                                        )
+                                                                    }
+                                                                } else SubjectIcon(
+                                                                    modifier = Modifier.fillMaxSize(),
+                                                                    subject = subject.subject
+                                                                )
+                                                            }
                                                             Spacer(Modifier.size(8.dp))
                                                             Column {
                                                                 Text(
@@ -812,11 +841,40 @@ private fun CalendarScreenContent(
                                                                     },
                                                                     style = MaterialTheme.typography.titleLarge
                                                                 )
-                                                                val tasks = homework.tasks.collectAsState(emptyList())
-                                                                Text(
-                                                                    text = tasks.value.joinToString("\n") { "- ${it.content}" },
-                                                                    style = MaterialTheme.typography.bodyMedium
-                                                                )
+                                                                val taskFont = MaterialTheme.typography.bodyMedium
+                                                                tasks.forEach { task ->
+                                                                    val isTaskDone = state.currentProfile is Profile.StudentProfile && task.isDone(state.currentProfile)
+                                                                    Row {
+                                                                        Box(
+                                                                            modifier = Modifier
+                                                                                .padding(end = 4.dp)
+                                                                                .size(taskFont.lineHeight.toDp()),
+                                                                            contentAlignment = Alignment.Center
+                                                                        ) {
+                                                                            if (isTaskDone) Icon(
+                                                                                painter = painterResource(Res.drawable.check),
+                                                                                modifier = Modifier.size(taskFont.fontSize.toDp()),
+                                                                                contentDescription = null
+                                                                            ) else {
+                                                                                Text(
+                                                                                    text = "-",
+                                                                                    style = taskFont
+                                                                                )
+                                                                            }
+                                                                        }
+                                                                        AnimatedContent(
+                                                                            targetState = isTaskDone,
+                                                                            modifier = Modifier.fillMaxWidth(),
+                                                                            transitionSpec = { fadeIn() togetherWith fadeOut() }
+                                                                        ) { showDone ->
+                                                                            Text(
+                                                                                text = task.content,
+                                                                                style = taskFont,
+                                                                                textDecoration = if (showDone) TextDecoration.LineThrough else null
+                                                                            )
+                                                                        }
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                         HorizontalDivider(Modifier.padding(8.dp))
