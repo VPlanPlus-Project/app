@@ -33,10 +33,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,7 +54,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -85,24 +82,20 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.components.DisplaySelectType
+import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
+import plus.vplan.app.feature.calendar.ui.components.agenda.Head
+import plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
 import plus.vplan.app.feature.home.ui.components.FollowingLessons
@@ -110,24 +103,19 @@ import plus.vplan.app.feature.home.ui.components.headerFont
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
-import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.toDp
-import plus.vplan.app.utils.toName
 import plus.vplan.app.utils.until
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.chevron_down
 import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
 
@@ -614,70 +602,25 @@ private fun CalendarScreenContent(
                                     }
                                 }
                                 Column {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(48.dp),
-                                        verticalArrangement = Arrangement.Center
-                                    ) {
-                                        when (day?.day?.dayType) {
-                                            Day.DayType.WEEKEND -> Text(
-                                                text = "Wochenende",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                textAlign = TextAlign.Center,
-                                                modifier = Modifier.padding(start = 8.dp)
-                                            )
-                                            Day.DayType.HOLIDAY -> Text(
-                                                text = "Ferien",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                textAlign = TextAlign.Center,
-                                                modifier = Modifier.padding(start = 8.dp)
-                                            )
-                                            Day.DayType.REGULAR -> {
-                                                val lessonCount = day.lessons.distinctBy { it.lessonTimeItem!!.lessonNumber }.count()
-                                                Row(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .padding(end = 4.dp)
-                                                        .clip(RoundedCornerShape(8.dp))
-                                                        .clickable { showLessons = !showLessons }
-                                                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.SpaceBetween
-                                                ) {
-                                                    Column {
-                                                        Text(
-                                                            text = "$lessonCount Stunden",
-                                                            style = MaterialTheme.typography.titleMedium
-                                                        )
-                                                        if (day.lessons.isNotEmpty()) Text(
-                                                            text = buildString {
-                                                                append(day.lessons.minOf { it.lessonTimeItem!!.start }.format(regularTimeFormat))
-                                                                append(" - ")
-                                                                append(day.lessons.maxOf { it.lessonTimeItem!!.end }.format(regularTimeFormat))
-                                                            },
-                                                            style = MaterialTheme.typography.bodySmall
-                                                        )
-                                                    }
-                                                    val iconRotation by animateFloatAsState(if (showLessons) 1f else 0f, label = "rotation animation")
-                                                    Icon(
-                                                        painter = painterResource(Res.drawable.chevron_down),
-                                                        modifier = Modifier
-                                                            .size(24.dp)
-                                                            .rotate(-180*iconRotation),
-                                                        contentDescription = null
-                                                    )
-                                                }
+                                    Head(
+                                        dayType = day?.day?.dayType ?: Day.DayType.UNKNOWN,
+                                        lessons = day?.lessons.orEmpty().distinctBy { it.lessonTimeItem!!.lessonNumber }.count(),
+                                        start = day?.lessons?.minOfOrNull { it.lessonTimeItem!!.start },
+                                        end = day?.lessons?.maxOfOrNull { it.lessonTimeItem!!.end },
+                                        showLessons = showLessons,
+                                        onClick = {
+                                            when (day?.day?.dayType) {
+                                                Day.DayType.REGULAR -> showLessons = !showLessons
+                                                else -> Unit
                                             }
-                                            else -> Unit
                                         }
-                                    }
+                                    )
                                     AnimatedVisibility(
                                         visible = showLessons,
                                         enter = expandVertically(),
                                         exit = shrinkVertically(),
                                         modifier = Modifier.fillMaxWidth()
-                                    ) {
+                                    ) lessonsSection@{
                                         Column {
                                             FollowingLessons(
                                                 modifier = Modifier.padding(horizontal = 4.dp),
@@ -695,217 +638,20 @@ private fun CalendarScreenContent(
                                     ) assessments@{
                                         day?.day?.assessments?.collectAsState(emptyList())?.value?.let { assessments ->
                                             assessments.forEach forEachAssessment@{ assessment ->
-                                                val subject = assessment.subjectInstance.collectAsState(null).value
-                                                val createdBy by when (assessment.creator) {
-                                                    is AppEntity.VppId -> assessment.creator.vppId.collectAsLoadingState("")
-                                                    is AppEntity.Profile -> assessment.creator.profile.collectAsLoadingState("")
-                                                }
-                                                if (subject == null) return@forEachAssessment
-                                                var boxHeight by remember { mutableStateOf(0.dp) }
-                                                Box(
-                                                    modifier = Modifier
-                                                        .padding(end = 8.dp)
-                                                        .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(16.dp))
-                                                        .clickable { displayAssessmentId = assessment.id }
-                                                        .onSizeChanged { with(localDensity) { boxHeight = it.height.toDp() } }
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .align(Alignment.CenterStart)
-                                                            .width(4.dp)
-                                                            .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
-                                                            .clip(RoundedCornerShape(0, 50, 50, 0))
-                                                            .background(subject.subject.subjectColor().getGroup().color)
-                                                    )
-                                                    Column(
-                                                        modifier = Modifier
-                                                            .padding(16.dp)
-                                                            .fillMaxWidth()
-                                                    ) {
-                                                        Row {
-                                                            SubjectIcon(
-                                                                modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
-                                                                subject = subject.subject
-                                                            )
-                                                            Spacer(Modifier.size(8.dp))
-                                                            Column {
-                                                                Text(
-                                                                    text = buildString {
-                                                                        append(assessment.type.toName())
-                                                                        append(" in ")
-                                                                        append(subject.subject)
-                                                                    },
-                                                                    style = MaterialTheme.typography.titleLarge
-                                                                )
-                                                                Text(
-                                                                    text = assessment.description,
-                                                                    style = MaterialTheme.typography.bodyMedium
-                                                                )
-                                                            }
-                                                        }
-                                                        HorizontalDivider(Modifier.padding(8.dp))
-                                                        Row(
-                                                            modifier = Modifier
-                                                                .padding(horizontal = 8.dp)
-                                                                .fillMaxWidth(),
-                                                            verticalAlignment = Alignment.CenterVertically,
-                                                            horizontalArrangement = Arrangement.SpaceBetween
-                                                        ) {
-                                                            if (createdBy is CacheState.Loading) CircularProgressIndicator(Modifier.size(MaterialTheme.typography.labelMedium.lineHeight.toDp()))
-                                                            else Text(
-                                                                text = buildString {
-                                                                    val creator = (createdBy as? CacheState.Done)?.data
-                                                                    append(when (creator) {
-                                                                        is VppId -> creator.name
-                                                                        is Profile -> creator.name
-                                                                        else -> ""
-                                                                    })
-                                                                },
-                                                                style = MaterialTheme.typography.labelMedium,
-                                                                color = MaterialTheme.colorScheme.outline
-                                                            )
-                                                            Text(
-                                                                text = assessment.createdAt.date.format(regularDateFormat),
-                                                                style = MaterialTheme.typography.labelMedium,
-                                                                color = MaterialTheme.colorScheme.outline
-                                                            )
-                                                        }
-                                                    }
-                                                }
+                                                AssessmentCard(
+                                                    assessment = assessment,
+                                                    onClick = { displayAssessmentId = assessment.id }
+                                                )
                                             }
                                         }
+                                        if (state.currentProfile == null) return@items
                                         day?.day?.homework?.collectAsState(emptySet())?.value?.let { homeworkItems ->
                                             homeworkItems.forEach forEachHomework@{ homework ->
-                                                val subject = homework.subjectInstance?.collectAsResultingFlow()?.value
-                                                val createdBy by when (homework.creator) {
-                                                    is AppEntity.VppId -> homework.creator.vppId.collectAsLoadingState("")
-                                                    is AppEntity.Profile -> homework.creator.profile.collectAsLoadingState("")
-                                                }
-                                                var boxHeight by remember { mutableStateOf(0.dp) }
-                                                if (subject == null) return@forEachHomework
-                                                Box(
-                                                    modifier = Modifier
-                                                        .padding(end = 8.dp)
-                                                        .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(16.dp))
-                                                        .clickable { displayHomeworkId = homework.id }
-                                                        .onSizeChanged { with(localDensity) { boxHeight = it.height.toDp() } }
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .align(Alignment.CenterStart)
-                                                            .width(4.dp)
-                                                            .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
-                                                            .clip(RoundedCornerShape(0, 50, 50, 0))
-                                                            .background(subject.subject.subjectColor().getGroup().color)
-                                                    )
-                                                    Column(
-                                                        modifier = Modifier
-                                                            .padding(16.dp)
-                                                            .fillMaxWidth()
-                                                    ) {
-                                                        val tasks by homework.tasks.collectAsState(emptyList())
-                                                        Row {
-                                                            AnimatedContent(
-                                                                targetState = state.currentProfile is Profile.StudentProfile && tasks.isNotEmpty() && tasks.all { it.isDone(state.currentProfile) },
-                                                                modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp())
-                                                            ) { allDone ->
-                                                                if (allDone) {
-                                                                    val greenGroup = colors[CustomColor.Green]!!.getGroup()
-                                                                    Box(
-                                                                        modifier = Modifier
-                                                                            .fillMaxSize()
-                                                                            .clip(CircleShape)
-                                                                            .background(greenGroup.color)
-                                                                            .padding(4.dp)
-                                                                    ) {
-                                                                        Icon(
-                                                                            painter = painterResource(Res.drawable.check),
-                                                                            contentDescription = null,
-                                                                            modifier = Modifier.fillMaxSize(),
-                                                                            tint = greenGroup.onColor
-                                                                        )
-                                                                    }
-                                                                } else SubjectIcon(
-                                                                    modifier = Modifier.fillMaxSize(),
-                                                                    subject = subject.subject
-                                                                )
-                                                            }
-                                                            Spacer(Modifier.size(8.dp))
-                                                            Column {
-                                                                Text(
-                                                                    text = buildString {
-                                                                        append("Hausaufgabe in ")
-                                                                        append(subject.subject)
-                                                                    },
-                                                                    style = MaterialTheme.typography.titleLarge
-                                                                )
-                                                                val taskFont = MaterialTheme.typography.bodyMedium
-                                                                tasks.forEach { task ->
-                                                                    val isTaskDone = state.currentProfile is Profile.StudentProfile && task.isDone(state.currentProfile)
-                                                                    Row {
-                                                                        Box(
-                                                                            modifier = Modifier
-                                                                                .padding(end = 4.dp)
-                                                                                .size(taskFont.lineHeight.toDp()),
-                                                                            contentAlignment = Alignment.Center
-                                                                        ) {
-                                                                            if (isTaskDone) Icon(
-                                                                                painter = painterResource(Res.drawable.check),
-                                                                                modifier = Modifier.size(taskFont.fontSize.toDp()),
-                                                                                contentDescription = null
-                                                                            ) else {
-                                                                                Text(
-                                                                                    text = "-",
-                                                                                    style = taskFont
-                                                                                )
-                                                                            }
-                                                                        }
-                                                                        AnimatedContent(
-                                                                            targetState = isTaskDone,
-                                                                            modifier = Modifier.fillMaxWidth(),
-                                                                            transitionSpec = { fadeIn() togetherWith fadeOut() }
-                                                                        ) { showDone ->
-                                                                            Text(
-                                                                                text = task.content,
-                                                                                style = taskFont,
-                                                                                textDecoration = if (showDone) TextDecoration.LineThrough else null
-                                                                            )
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        HorizontalDivider(Modifier.padding(8.dp))
-                                                        Row(
-                                                            modifier = Modifier
-                                                                .padding(horizontal = 8.dp)
-                                                                .fillMaxWidth(),
-                                                            verticalAlignment = Alignment.CenterVertically,
-                                                            horizontalArrangement = Arrangement.SpaceBetween
-                                                        ) {
-                                                            if (createdBy is CacheState.Loading) CircularProgressIndicator(Modifier.size(MaterialTheme.typography.labelMedium.lineHeight.toDp()))
-                                                            else Text(
-                                                                text = buildString {
-                                                                    val creator = (createdBy as? CacheState.Done)?.data
-                                                                    append(when (creator) {
-                                                                        is VppId -> creator.name
-                                                                        is Profile -> creator.name
-                                                                        else -> ""
-                                                                    })
-                                                                },
-                                                                style = MaterialTheme.typography.labelMedium,
-                                                                color = MaterialTheme.colorScheme.outline
-                                                            )
-                                                            Text(
-                                                                text = homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date.format(regularDateFormat),
-                                                                style = MaterialTheme.typography.labelMedium,
-                                                                color = MaterialTheme.colorScheme.outline
-                                                            )
-                                                        }
-                                                    }
-                                                }
+                                                HomeworkCard(
+                                                    homework = homework,
+                                                    profile = state.currentProfile,
+                                                    onClick = { displayHomeworkId = homework.id }
+                                                )
                                             }
                                         }
                                     }
