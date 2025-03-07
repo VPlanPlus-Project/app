@@ -40,8 +40,7 @@ import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DevScreen(
-    contentPadding: PaddingValues,
-    onToggleBottomBar: (visible: Boolean) -> Unit
+    contentPadding: PaddingValues
 ) {
     val viewModel = koinViewModel<DevViewModel>()
     val state = viewModel.state
@@ -53,9 +52,9 @@ fun DevScreen(
 
     Column(
         modifier = Modifier
+            .padding(contentPadding)
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(contentPadding)
     ) {
         Text(state.profile?.name.toString())
         Text(state.updateResponse.toString())
@@ -71,7 +70,7 @@ fun DevScreen(
                 Text("Sync")
             }
             Button(
-                onClick = { isDrawerOpen = true; onToggleBottomBar(false) }
+                onClick = { isDrawerOpen = true }
             ) {
                 Text("New Assessment")
             }
@@ -153,7 +152,7 @@ fun DevScreen(
         }
     }
     if (isDrawerOpen) NewAssessmentDrawer(
-        onDismissRequest = { isDrawerOpen = false; onToggleBottomBar(true) }
+        onDismissRequest = { isDrawerOpen = false }
     )
 
     if (clickAssessmentId != null) AssessmentDetailDrawer(clickAssessmentId!!) { clickAssessmentId = null }
