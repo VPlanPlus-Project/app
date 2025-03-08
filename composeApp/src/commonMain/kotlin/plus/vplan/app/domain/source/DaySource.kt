@@ -1,15 +1,18 @@
 package plus.vplan.app.domain.source
 
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -51,6 +54,7 @@ class DaySource(
                         dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } },
                         dayRepository.getBySchool(date, schoolId)
                     ) { weeks, holidays, dayInfo ->
+                        Logger.d { "Combine 1" }
                         val dayWeek = weeks.firstOrNull { date in it.start..it.end } ?: weeks.last { it.start < date }
                         MetaEmitting(
                             dayWeek = dayWeek,
@@ -71,11 +75,12 @@ class DaySource(
                                 schoolId = schoolId,
                                 dayOfWeek = date.dayOfWeek,
                                 weekIndex = meta.dayWeek.weekIndex,
-                            ),
-                            substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),
+                            ).onEach { Logger.d { "Timetable update" } },
+                            substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date).onEach { Logger.d { "VPlan update" } },
                             assessmentRepository.getByDate(date),
                             homeworkRepository.getByDate(date)
                         ) { timetable, substitutionPlan, assessments, homework ->
+                            Logger.d { "Combine 2" }
                             send(CacheState.Done(Day(
                                 id = id,
                                 date = date,
@@ -104,7 +109,7 @@ class DaySource(
                                 homeworkIds = homework.map { it.id },
                                 nextSchoolDay = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
                             )))
-                        }.collectLatest {  }
+                        }.collect()
                     }
                 }.collectLatest { flow.tryEmit(it) }
             }

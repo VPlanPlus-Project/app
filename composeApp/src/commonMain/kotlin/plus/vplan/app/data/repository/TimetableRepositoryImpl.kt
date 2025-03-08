@@ -77,9 +77,7 @@ class TimetableRepositoryImpl(
     override fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>> = channelFlow {
         vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).collectLatest { currentVersionFlow ->
             val currentVersion = currentVersionFlow?.toIntOrNull() ?: -1
-            vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion").collect { timetableLessons ->
-                send(timetableLessons.map { lesson -> lesson.toModel() })
-            }
+            send(vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion").first().map { it.toModel() })
         }
     }
 

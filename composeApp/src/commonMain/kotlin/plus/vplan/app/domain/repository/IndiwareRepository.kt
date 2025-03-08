@@ -87,7 +87,8 @@ data class IndiwareBaseData(
 }
 
 data class IndiwareTimeTable(
-    val classes: List<Class>
+    val classes: List<Class>,
+    val hasChangedToPrevious: Boolean
 ) {
     data class Class(
         val name: String,
