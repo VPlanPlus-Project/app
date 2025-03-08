@@ -21,7 +21,7 @@ import nl.adaptivity.xmlutil.core.XmlVersion
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlConfig.Companion.IGNORING_UNKNOWN_CHILD_HANDLER
 import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbIndiwareHasTimetableInWeek
+import plus.vplan.app.data.source.database.model.database.DbIndiwareTimetableMetadata
 import plus.vplan.app.data.source.indiware.model.MobdatenClassData
 import plus.vplan.app.data.source.indiware.model.SPlan
 import plus.vplan.app.data.source.indiware.model.VPlan
@@ -35,6 +35,7 @@ import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.IndiwareSubstitutionPlan
 import plus.vplan.app.domain.repository.IndiwareTimeTable
+import plus.vplan.app.utils.sha256
 import plus.vplan.app.utils.splitWithKnownValuesBySpace
 
 class IndiwareRepositoryImpl(
@@ -198,8 +199,8 @@ class IndiwareRepositoryImpl(
         week: Week,
         roomNames: List<String>
     ): Response<IndiwareTimeTable> {
-        val hasTimetableInWeek = vppDatabase.indiwareDao.getHasTimetableInWeek(week.id)
-        if (hasTimetableInWeek == false) return Response.Error.OnlineError.NotFound
+        val hasTimetableInWeek = vppDatabase.indiwareDao.getHasTimetableInWeek(week.id, sp24Id)
+        if (hasTimetableInWeek?.hasData == false) return Response.Error.OnlineError.NotFound
         return saveRequest {
             val response = httpClient.get {
                 url(
@@ -211,10 +212,13 @@ class IndiwareRepositoryImpl(
             }
             if (response.status == HttpStatusCode.NotFound) {
                 if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date !in week.start..week.end)
-                    vppDatabase.indiwareDao.upsert(DbIndiwareHasTimetableInWeek(week.id, false))
+                    vppDatabase.indiwareDao.upsert(DbIndiwareTimetableMetadata(sp24Id, week.id, false, null))
             }
+
+            val rawHash = response.bodyAsText().sha256()
+
             if (response.status != HttpStatusCode.OK) return response.toResponse()
-            vppDatabase.indiwareDao.upsert(DbIndiwareHasTimetableInWeek(week.id, true))
+            vppDatabase.indiwareDao.upsert(DbIndiwareTimetableMetadata(sp24Id, week.id, true, rawHash))
             val xml: XML by lazy {
                 XML {
                     xmlVersion = XmlVersion.XML10
@@ -232,6 +236,7 @@ class IndiwareRepositoryImpl(
             )
             return Response.Success(
                 IndiwareTimeTable(
+                    hasChangedToPrevious = rawHash != hasTimetableInWeek?.rawHash,
                     classes = splan.classes.map { timetableClass ->
                         IndiwareTimeTable.Class(
                             name = timetableClass.name.name,

@@ -7,7 +7,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
@@ -26,6 +25,7 @@ import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsS
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateDefaultLessonsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
 import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentUseCase
@@ -46,6 +46,7 @@ class FullSyncUseCase(
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
     private val vppIdRepository: VppIdRepository,
+    private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateDefaultLessonsUseCase: UpdateDefaultLessonsUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
@@ -85,55 +86,57 @@ class FullSyncUseCase(
                 schoolRepository.getById(school.id, true).getFirstValue()
             }
 
-        schoolRepository.getAll().first().filterIsInstance<School.IndiwareSchool>().forEach { school ->
-            if (!school.credentialsValid) return@forEach
-
-            when (checkSp24CredentialsUseCase(school.sp24Id.toInt(), school.username, school.password)) {
-                SchoolSettingsCredentialsState.Error -> return@forEach
-                SchoolSettingsCredentialsState.Invalid -> {
-                    schoolRepository.setIndiwareAccessValidState(school, false)
-                    platformNotificationRepository.sendNotification(
-                        title = "Schulzugangsdaten abgelaufen",
-                        message = "Die Schulzugangsdaten für ${school.name} sind abgelaufen. Tippe, um sie zu aktualisieren.",
-                        category = school.name,
-                        isLarge = false,
-                        onClickData = Json.encodeToString(
-                            StartTaskJson(
-                                type = "navigate_to",
-                                value = Json.encodeToString(
-                                    StartTaskJson.StartTaskNavigateTo(
-                                        screen = "settings/school",
-                                        value = Json.encodeToString(
-                                            StartTaskJson.StartTaskNavigateTo.SchoolSettings(
-                                                openIndiwareSettingsSchoolId = school.id
+        schoolRepository.getAll().first()
+            .filterIsInstance<School.IndiwareSchool>()
+            .filter { it.credentialsValid }
+            .forEach { school ->
+                when (checkSp24CredentialsUseCase(school.sp24Id.toInt(), school.username, school.password)) {
+                    SchoolSettingsCredentialsState.Error -> return@forEach
+                    SchoolSettingsCredentialsState.Invalid -> {
+                        schoolRepository.setIndiwareAccessValidState(school, false)
+                        platformNotificationRepository.sendNotification(
+                            title = "Schulzugangsdaten abgelaufen",
+                            message = "Die Schulzugangsdaten für ${school.name} sind abgelaufen. Tippe, um sie zu aktualisieren.",
+                            category = school.name,
+                            isLarge = false,
+                            onClickData = Json.encodeToString(
+                                StartTaskJson(
+                                    type = "navigate_to",
+                                    value = Json.encodeToString(
+                                        StartTaskJson.StartTaskNavigateTo(
+                                            screen = "settings/school",
+                                            value = Json.encodeToString(
+                                                StartTaskJson.StartTaskNavigateTo.SchoolSettings(
+                                                    openIndiwareSettingsSchoolId = school.id
+                                                )
                                             )
                                         )
                                     )
                                 )
-                            )
-                        ).also { Logger.d { "Task: $it" } }
-                    )
-                    return@forEach
+                            ).also { Logger.d { "Task: $it" } }
+                        )
+                        return@forEach
+                    }
+                    else -> Unit
                 }
-                else -> Unit
-            }
-            updateDefaultLessonsUseCase(school)
-            updateHolidaysUseCase(school)
-            updateWeeksUseCase(school)
-            val today = LocalDate.now()
-            val nextDay = run {
-                val holidayDates = dayRepository.getHolidays(school.id).first().map { it.date }
-                var start = today + 1.days
-                while (start.dayOfWeek.isoDayNumber > 5 || start in holidayDates) {
-                    start += 1.days
+                updateDefaultLessonsUseCase(school)
+                updateHolidaysUseCase(school)
+                updateWeeksUseCase(school)
+                val today = LocalDate.now()
+                val nextDay = run {
+                    val holidayDates = dayRepository.getHolidays(school.id).first().map { it.date }
+                    var start = today + 1.days
+                    while (start.dayOfWeek.isoDayNumber > 5 || start in holidayDates) {
+                        start += 1.days
+                    }
+                    start
                 }
-                start
+
+                updateTimetableUseCase(school, forceUpdate = false)
+                updateSubstitutionPlanUseCase(school, today, true)
+                updateSubstitutionPlanUseCase(school, nextDay, true)
             }
 
-            updateSubstitutionPlanUseCase(school, today, true)
-            updateSubstitutionPlanUseCase(school, nextDay, true)
-
-        }
         updateHomeworkUseCase(true)
         updateAssessmentUseCase(true)
 

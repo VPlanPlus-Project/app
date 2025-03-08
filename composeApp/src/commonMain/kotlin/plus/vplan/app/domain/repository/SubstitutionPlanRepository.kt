@@ -10,6 +10,6 @@ interface SubstitutionPlanRepository {
     suspend fun deleteAllSubstitutionPlans()
     suspend fun deleteSubstitutionPlansByVersion(schoolId: Int, version: String)
 
-    fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate): Flow<List<Uuid>>
+    fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate): Flow<Set<Uuid>>
     fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?>
 }

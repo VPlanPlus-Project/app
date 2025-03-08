@@ -28,7 +28,11 @@ class UpdateTimetableUseCase(
     private val lessonTimeRepository: LessonTimeRepository,
     private val timetableRepository: TimetableRepository
 ) {
-    suspend operator fun invoke(indiwareSchool: School.IndiwareSchool): Response.Error? {
+
+    /**
+     * @param forceUpdate: Whether the app should replace its data store regardless of the hash difference
+     */
+    suspend operator fun invoke(indiwareSchool: School.IndiwareSchool, forceUpdate: Boolean): Response.Error? {
         LOGGER.i { "Updating timetable for indiware school ${indiwareSchool.id}" }
         val rooms = roomRepository.getBySchool(indiwareSchool.id).latest()
         val teachers = teacherRepository.getBySchool(indiwareSchool.id).latest()
@@ -61,6 +65,10 @@ class UpdateTimetableUseCase(
                 timetable !is Response.Success && timetable is Response.Error -> return timetable
                 timetable is Response.Success -> {
                     LOGGER.i { "Timetable found for indiware school ${indiwareSchool.id} in week CW${weeksInPastOrCurrent[weekIndex].calendarWeek} (${weeksInPastOrCurrent[weekIndex].weekIndex} week of school year)" }
+                    if (!timetable.data.hasChangedToPrevious) {
+                        Logger.i { "No changes in timetable" + (if (!forceUpdate) ", aborting" else " but update was forced") }
+                        if (!forceUpdate) return null
+                    }
                     downloadedTimetable = timetable.data
                     break
                 }

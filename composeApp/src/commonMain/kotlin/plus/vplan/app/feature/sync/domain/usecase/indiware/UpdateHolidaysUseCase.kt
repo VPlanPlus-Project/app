@@ -29,9 +29,10 @@ class UpdateHolidaysUseCase(
             dayRepository.deleteHolidaysByIds(existing.filter { it.date !in downloadedDates }.map { it.id })
         }
 
-        downloadedHolidays.let { downloaded ->
-            dayRepository.upsert(downloaded)
-        }
+        val existingDates = existingHolidays.map { it.date }
+        downloadedHolidays
+            .filter { it.date !in existingDates }
+            .let { dayRepository.upsert(it) }
 
         return null
     }
