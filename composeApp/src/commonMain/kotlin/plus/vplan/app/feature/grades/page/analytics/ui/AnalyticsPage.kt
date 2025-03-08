@@ -61,6 +61,7 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.schulverwalter.Interval
+import plus.vplan.app.feature.grades.page.view.ui.components.SelectIntervalDrawer
 import plus.vplan.app.ui.animatePlacement
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
@@ -102,6 +103,8 @@ private fun AnalyticsContent(
     val red = colors[CustomColor.Red]!!.getGroup()
     val green = colors[CustomColor.Green]!!.getGroup()
 
+    var showIntervalFilterDrawer by rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -112,6 +115,16 @@ private fun AnalyticsContent(
                             painter = painterResource(Res.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showIntervalFilterDrawer = true }) {
+                        Icon(
+                            painter = painterResource(Res.drawable.filter),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 },
@@ -409,6 +422,13 @@ private fun AnalyticsContent(
 //            }
         }
     }
+
+    if (showIntervalFilterDrawer) SelectIntervalDrawer(
+        intervals = state.intervals,
+        selectedInterval = state.interval,
+        onDismiss = { showIntervalFilterDrawer = false },
+        onClickInterval = { onEvent(AnalyticsAction.SetInterval(it)) }
+    )
 
     if (showFilterDrawer) {
         val sheetState = rememberModalBottomSheetState(true)
