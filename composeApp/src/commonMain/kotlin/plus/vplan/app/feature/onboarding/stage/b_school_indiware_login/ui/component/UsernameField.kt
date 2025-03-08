@@ -67,6 +67,7 @@ fun UsernameField(
             errorIndicatorColor = Color.Transparent,
         ) else TextFieldDefaults.colors(),
         shape = shape,
+        singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { onFocusPassword() }),
         isError = !isUsernameValid || areCredentialsInvalid,

@@ -58,6 +58,7 @@ fun PasswordField(
         keyboardActions = KeyboardActions(
             onDone = { onCheckCredentials() }
         ),
+        singleLine = true,
         isError = areCredentialsInvalid,
         colors = if (hideBottomLine) TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Transparent,
