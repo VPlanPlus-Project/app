@@ -25,6 +25,7 @@ import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsS
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateDefaultLessonsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
 import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentUseCase
@@ -45,6 +46,7 @@ class FullSyncUseCase(
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
     private val vppIdRepository: VppIdRepository,
+    private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateDefaultLessonsUseCase: UpdateDefaultLessonsUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
@@ -129,6 +131,7 @@ class FullSyncUseCase(
                 start
             }
 
+            updateTimetableUseCase(school, forceUpdate = false)
             updateSubstitutionPlanUseCase(school, today, true)
             updateSubstitutionPlanUseCase(school, nextDay, true)
 
