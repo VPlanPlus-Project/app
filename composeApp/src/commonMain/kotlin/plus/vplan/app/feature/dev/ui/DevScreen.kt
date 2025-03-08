@@ -16,6 +16,7 @@ import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 
@@ -29,6 +30,7 @@ fun DevScreen(
 
     val updateTimetableUseCase = koinInject<UpdateTimetableUseCase>()
     val updateSubstitutionPlanUseCase = koinInject<UpdateSubstitutionPlanUseCase>()
+    val fullSyncUseCase = koinInject<FullSyncUseCase>()
 
     Column(
         modifier = Modifier
@@ -50,6 +52,13 @@ fun DevScreen(
             } }
         ) {
             Text("VPlan aktualisieren")
+        }
+        Button(
+            onClick = { scope.launch {
+                fullSyncUseCase()
+            } }
+        ) {
+            Text("Full sync")
         }
     }
 }
