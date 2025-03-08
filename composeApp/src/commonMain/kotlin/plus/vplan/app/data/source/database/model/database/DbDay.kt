@@ -48,8 +48,8 @@ data class DbDay(
             dayType = Day.DayType.UNKNOWN,
             substitutionPlan = emptyList(),
             timetable = emptyList(),
-            assessmentIds = emptyList(),
-            homeworkIds = emptyList(),
+            assessmentIds = emptySet(),
+            homeworkIds = emptySet(),
             nextSchoolDay = null
         )
     }

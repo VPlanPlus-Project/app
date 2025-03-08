@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -77,8 +78,8 @@ class DaySource(
                                 weekIndex = meta.dayWeek.weekIndex,
                             ).onEach { Logger.d { "Timetable update" } },
                             substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date).onEach { Logger.d { "VPlan update" } },
-                            assessmentRepository.getByDate(date),
-                            homeworkRepository.getByDate(date)
+                            assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
+                            homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
                         ) { timetable, substitutionPlan, assessments, homework ->
                             Logger.d { "Combine 2" }
                             send(CacheState.Done(Day(
@@ -105,8 +106,8 @@ class DaySource(
                                 else Day.DayType.UNKNOWN,
                                 timetable = timetable,
                                 substitutionPlan = substitutionPlan,
-                                assessmentIds = assessments.map { it.id },
-                                homeworkIds = homework.map { it.id },
+                                assessmentIds = assessments,
+                                homeworkIds = homework,
                                 nextSchoolDay = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
                             )))
                         }.collect()

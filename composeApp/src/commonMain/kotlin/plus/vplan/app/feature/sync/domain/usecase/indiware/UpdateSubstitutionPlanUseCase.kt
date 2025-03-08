@@ -81,8 +81,8 @@ class UpdateSubstitutionPlanUseCase(
             dayType = Day.DayType.REGULAR,
             substitutionPlan = emptyList(),
             timetable = emptyList(),
-            assessmentIds = emptyList(),
-            homeworkIds = emptyList(),
+            assessmentIds = emptySet(),
+            homeworkIds = emptySet(),
             nextSchoolDay = null
         )
 

@@ -22,8 +22,8 @@ data class Day(
     val dayType: DayType,
     val timetable: List<Uuid>,
     val substitutionPlan: List<Uuid>,
-    val assessmentIds: List<Int>,
-    val homeworkIds: List<Int>,
+    val assessmentIds: Set<Int>,
+    val homeworkIds: Set<Int>,
     val nextSchoolDay: String?
 ): Item {
     enum class DayType {
