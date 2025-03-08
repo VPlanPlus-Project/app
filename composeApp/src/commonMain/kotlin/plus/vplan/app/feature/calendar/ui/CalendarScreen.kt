@@ -664,11 +664,7 @@ private fun CalendarScreenContent(
                                                 )
                                             }
                                         }
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .animateContentSize()
-                                        ) assessments@{
+                                        Column(Modifier.fillMaxWidth()) assessments@{
                                             day?.day?.assessments?.collectAsState(emptyList())?.value?.let { assessments ->
                                                 assessments.forEach forEachAssessment@{ assessment ->
                                                     AssessmentCard(

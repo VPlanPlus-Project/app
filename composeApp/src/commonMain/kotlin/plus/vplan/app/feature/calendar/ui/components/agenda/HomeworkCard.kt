@@ -72,7 +72,8 @@ fun HomeworkCard(
         is AppEntity.Profile -> homework.creator.profile.collectAsLoadingState("")
     }
     var boxHeight by remember { mutableStateOf(0.dp) }
-    if (subject == null) return
+    val tasks by homework.tasks.collectAsState(emptyList())
+    if (subject == null || tasks.isEmpty()) return
     Box(
         modifier = Modifier
             .padding(end = 8.dp)
@@ -94,7 +95,6 @@ fun HomeworkCard(
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
-            val tasks by homework.tasks.collectAsState(emptyList())
             Row {
                 AnimatedContent(
                     targetState = profile is Profile.StudentProfile && tasks.isNotEmpty() && tasks.all { it.isDone(profile) },

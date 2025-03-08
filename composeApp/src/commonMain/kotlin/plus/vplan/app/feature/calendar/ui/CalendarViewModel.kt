@@ -109,7 +109,6 @@ class CalendarViewModel(
         viewModelScope.launch {
             when (event) {
                 is CalendarEvent.SelectDate -> {
-                    Logger.d { "Requesting ${event.date}" }
                     while (state.currentProfile == null) {
                         delay(10)
                         Logger.d { "Waiting for profile" }
