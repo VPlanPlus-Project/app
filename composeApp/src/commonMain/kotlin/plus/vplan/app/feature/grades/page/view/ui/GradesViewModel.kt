@@ -80,6 +80,7 @@ class GradesViewModel(
                     }.sortedBy { it.name }
             )
         }
+            .sortedBy { it.name }
             .let {
                 state = state.copy(subjects = it)
                 updateFullAverage(true)
