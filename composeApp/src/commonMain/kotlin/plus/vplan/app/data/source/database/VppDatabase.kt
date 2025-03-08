@@ -46,7 +46,7 @@ import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
-import plus.vplan.app.data.source.database.model.database.DbIndiwareHasTimetableInWeek
+import plus.vplan.app.data.source.database.model.database.DbIndiwareTimetableMetadata
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbProfile
@@ -94,7 +94,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
     entities = [
         DbSchool::class,
         DbSp24SchoolDetails::class,
-        DbIndiwareHasTimetableInWeek::class,
+        DbIndiwareTimetableMetadata::class,
 
         DbGroup::class,
         DbTeacher::class,

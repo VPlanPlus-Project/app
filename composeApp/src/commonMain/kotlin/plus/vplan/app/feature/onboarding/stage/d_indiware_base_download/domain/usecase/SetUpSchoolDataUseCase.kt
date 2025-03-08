@@ -108,8 +108,8 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
-            baseData.data.weeks?.forEach { baseDataWeek ->
-                val week = Week(
+            baseData.data.weeks?.map { baseDataWeek ->
+                Week(
                     id = school.id.toString() + "/" + baseDataWeek.calendarWeek.toString(),
                     calendarWeek = baseDataWeek.calendarWeek,
                     start = baseDataWeek.start,
@@ -118,17 +118,17 @@ class SetUpSchoolDataUseCase(
                     weekIndex = baseDataWeek.weekIndex,
                     school = school.id
                 )
-                weekRepository.upsert(week)
-            }
+            }?.let { weekRepository.upsert(it) }
 
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
-            baseData.data.classes.forEach { baseDataClass ->
+            baseData.data.classes.flatMap { baseDataClass ->
                 val group = classes.firstOrNull { it.name == baseDataClass.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataClass.name} not found"))
-                baseDataClass.lessonTimes.forEach { baseDataLessonTime ->
-                    val lessonTime = LessonTime(
+                baseDataClass.lessonTimes.map { baseDataLessonTime ->
+                    Logger.d { "Upsert lessontime $baseDataLessonTime" }
+                    LessonTime(
                         id = "${school.id}/${group.id}/${baseDataLessonTime.lessonNumber}",
                         start = baseDataLessonTime.start,
                         end = baseDataLessonTime.end,
@@ -136,9 +136,8 @@ class SetUpSchoolDataUseCase(
                         group = group.id,
                         interpolated = false
                     )
-                    lessonTimeRepository.upsert(lessonTime)
                 }
-            }
+            }.let { lessonTimeRepository.upsert(it) }
 
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.IN_PROGRESS

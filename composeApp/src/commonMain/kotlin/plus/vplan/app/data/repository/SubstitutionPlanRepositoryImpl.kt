@@ -3,8 +3,8 @@ package plus.vplan.app.data.repository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
@@ -73,8 +73,8 @@ class SubstitutionPlanRepositoryImpl(
     override fun getSubstitutionPlanBySchool(
         schoolId: Int,
         date: LocalDate
-    ): Flow<List<Uuid>> = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.flatMapLatest { version ->
-        vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version", date)
+    ): Flow<List<Uuid>> = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.mapLatest { version ->
+        vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version", date).first()
     }
 
     override fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?> {

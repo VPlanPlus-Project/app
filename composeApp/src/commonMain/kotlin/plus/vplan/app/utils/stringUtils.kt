@@ -33,6 +33,9 @@ fun String.splitWithKnownValuesBySpace(values: List<String>): List<String> {
     return if (remaining.isEmpty()) matches else emptyList()
 }
 
+/**
+ * @return a lowercase hash of the context string
+ */
 expect fun String.sha256(): String
 
 infix operator fun String.times(number: Int): String {
