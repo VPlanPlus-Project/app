@@ -5,8 +5,10 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -70,11 +72,11 @@ class DaySource(
                             timetableRepository.getForSchool(
                                 schoolId = schoolId,
                                 dayOfWeek = date.dayOfWeek,
-                                weekIndex = meta.dayWeek.weekIndex,
+                                weekIndex = meta.dayWeek.weekIndex
                             ),
                             substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),
-                            assessmentRepository.getByDate(date),
-                            homeworkRepository.getByDate(date)
+                            assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
+                            homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
                         ) { timetable, substitutionPlan, assessments, homework ->
                             send(CacheState.Done(Day(
                                 id = id,
@@ -100,11 +102,11 @@ class DaySource(
                                 else Day.DayType.UNKNOWN,
                                 timetable = timetable,
                                 substitutionPlan = substitutionPlan,
-                                assessmentIds = assessments.map { it.id },
-                                homeworkIds = homework.map { it.id },
+                                assessmentIds = assessments,
+                                homeworkIds = homework,
                                 nextSchoolDay = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
                             )))
-                        }.collectLatest {  }
+                        }.collect()
                     }
                 }.collectLatest { flow.tryEmit(it) }
             }

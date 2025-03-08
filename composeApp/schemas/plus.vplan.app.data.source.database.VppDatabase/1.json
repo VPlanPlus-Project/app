@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "77dbd076c3a127349164c35941a523c5",
+    "identityHash": "9063986e6f7beda0897e49d134527c3b",
     "entities": [
       {
         "tableName": "schools",
@@ -130,9 +130,15 @@
         ]
       },
       {
-        "tableName": "indiware_has_timetable_in_week",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`week_id` TEXT NOT NULL, `has_data` INTEGER NOT NULL, PRIMARY KEY(`week_id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "indiware_timetable_metadata",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`indiware_school_id` TEXT NOT NULL, `week_id` TEXT NOT NULL, `has_data` INTEGER NOT NULL, `raw_hash` TEXT, PRIMARY KEY(`week_id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
+          {
+            "fieldPath": "indiwareSchoolId",
+            "columnName": "indiware_school_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
           {
             "fieldPath": "weekId",
             "columnName": "week_id",
@@ -144,6 +150,11 @@
             "columnName": "has_data",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "rawHash",
+            "columnName": "raw_hash",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -154,13 +165,13 @@
         },
         "indices": [
           {
-            "name": "index_indiware_has_timetable_in_week_week_id",
+            "name": "index_indiware_timetable_metadata_week_id",
             "unique": true,
             "columnNames": [
               "week_id"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_indiware_has_timetable_in_week_week_id` ON `${TABLE_NAME}` (`week_id`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_indiware_timetable_metadata_week_id` ON `${TABLE_NAME}` (`week_id`)"
           }
         ],
         "foreignKeys": [
@@ -3581,7 +3592,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '77dbd076c3a127349164c35941a523c5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9063986e6f7beda0897e49d134527c3b')"
     ]
   }
 }
