@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
@@ -40,7 +41,6 @@ import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
@@ -62,6 +62,7 @@ import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.components.DateSelectConfiguration
+import plus.vplan.app.ui.components.DateSelectDrawer
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.file
@@ -113,6 +114,7 @@ fun DetailPage(
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
+                .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
         ) {
@@ -298,8 +300,6 @@ fun DetailPage(
                     onClick = { imagePickerLauncher.launch() }
                 )
             }
-
-            Spacer(Modifier.height(WindowInsets.safeContent.asPaddingValues().calculateBottomPadding()))
         }
     }
 

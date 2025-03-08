@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
@@ -80,6 +81,7 @@ fun GradeDetailPage(
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
+                        .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
                         .fillMaxWidth()
                 ) {
                     Text(
@@ -212,8 +214,6 @@ fun GradeDetailPage(
 
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 if (collection != null) Text(text = collection.name)
-
-                Spacer(Modifier.height(WindowInsets.safeContent.asPaddingValues().calculateBottomPadding()))
             }
         }
     }
