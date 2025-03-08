@@ -62,7 +62,7 @@ class CreateHomeworkUseCase(
                 isPublic = isPublic ?: false,
                 dueTo = date,
                 files = emptyList(),
-                tasks = taskIds.map { it.value },
+                taskIds = taskIds.map { it.value },
                 cachedAt = Clock.System.now()
             )
             homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
@@ -96,7 +96,7 @@ class CreateHomeworkUseCase(
                 createdAt = Clock.System.now(),
                 createdByProfile = profile.id,
                 dueTo = date,
-                tasks = taskIds.map { it.value },
+                taskIds = taskIds.map { it.value },
                 files = files.map { it.id },
                 cachedAt = Clock.System.now()
             )

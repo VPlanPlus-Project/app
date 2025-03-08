@@ -4,7 +4,6 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.data.Response
@@ -77,11 +76,13 @@ class UpdateSubstitutionPlanUseCase(
             id = Day.buildId(indiwareSchool, date),
             date = date,
             school = indiwareSchool.id,
-            week = week.id,
+            weekId = week.id,
             info = substitutionPlan.info,
             dayType = Day.DayType.REGULAR,
             substitutionPlan = emptyList(),
             timetable = emptyList(),
+            assessmentIds = emptyList(),
+            homeworkIds = emptyList(),
             nextSchoolDay = null
         )
 

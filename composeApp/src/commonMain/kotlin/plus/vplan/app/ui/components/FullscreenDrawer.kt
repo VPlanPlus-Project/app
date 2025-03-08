@@ -54,11 +54,12 @@ fun FullscreenDrawer(
 ) {
     var maxHeight by remember { mutableStateOf(0.dp) }
     val localDensity = LocalDensity.current
+    var firstAnimationDone by remember { mutableStateOf(false) }
 
     var offset by remember { mutableStateOf(0.dp) }
     val offsetAnimation by animateDpAsState(
         targetValue = offset,
-        finishedListener = { if (it == 0.dp || it == 2 * maxHeight) onDismissRequest() }
+        finishedListener = { if (it < 10.dp || it > (2 * maxHeight)-10.dp) onDismissRequest(); firstAnimationDone = true }
     )
     var isUserScrolling by remember { mutableStateOf(false) }
 
@@ -73,6 +74,11 @@ fun FullscreenDrawer(
                 offset = with(localDensity) { it.toDp() }
             }
         }
+    }
+
+    LaunchedEffect(offsetAnimation) {
+        if (!firstAnimationDone) return@LaunchedEffect
+        if (offsetAnimation < 10.dp || offsetAnimation > (2 * maxHeight)-10.dp) onDismissRequest()
     }
 
     LaunchedEffect(contentScrollState.isScrollInProgress) {

@@ -16,5 +16,7 @@ object Keys {
     const val GRADE_PROTECTION_LEVEL = "grade_protection_level"
     const val GRADES_LOCKED = "grades_locked"
 
+    const val CALENDAR_DISPLAY_TYPE = "calendar_display_type"
+
     const val SHOW_HOMEWORK_VPP_ID_BANNER = "show_homework_vpp_id_banner"
 }

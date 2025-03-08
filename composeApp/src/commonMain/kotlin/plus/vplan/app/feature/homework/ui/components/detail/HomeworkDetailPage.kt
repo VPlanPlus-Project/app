@@ -246,7 +246,7 @@ fun DetailPage(
                     onToggleTaskDone = { onEvent(HomeworkDetailEvent.ToggleTaskDone(task)) },
                     onUpdateTask = { onEvent(HomeworkDetailEvent.UpdateTask(task, it)) },
                     onDeleteTask = {
-                        if (homework.tasks.size == 1) showDeleteDialog = true
+                        if (homework.taskIds.size == 1) showDeleteDialog = true
                         else onEvent(HomeworkDetailEvent.DeleteTask(task))
                     }
                 )

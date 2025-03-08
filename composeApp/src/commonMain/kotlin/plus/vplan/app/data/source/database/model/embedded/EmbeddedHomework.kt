@@ -29,7 +29,7 @@ data class EmbeddedHomework(
                 createdByProfile = homework.createdByProfileId!!,
                 defaultLesson = homework.defaultLessonId,
                 files = files.map { it.fileId },
-                tasks = tasks.map { it.id },
+                taskIds = tasks.map { it.id },
                 cachedAt = homework.cachedAt
             )
         }
@@ -42,7 +42,7 @@ data class EmbeddedHomework(
             group = homework.groupId,
             isPublic = homework.isPublic,
             files = files.map { it.fileId },
-            tasks = tasks.map { it.id },
+            taskIds = tasks.map { it.id },
             cachedAt = homework.cachedAt
         )
     }

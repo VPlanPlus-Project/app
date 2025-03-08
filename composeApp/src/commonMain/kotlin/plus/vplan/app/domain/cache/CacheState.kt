@@ -5,7 +5,9 @@ import androidx.compose.runtime.collectAsState
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import plus.vplan.app.domain.data.Response
 
@@ -25,3 +27,6 @@ suspend fun <T: Item> Flow<CacheState<T>>.getFirstValue() = (this.onEach { if (i
 } }.filter { it is CacheState.NotExisting || it is CacheState.Done }.first() as? CacheState.Done<T>)?.data
 @Composable
 fun <T: Item> Flow<CacheState<T>>.collectAsLoadingState(id: String) = this.collectAsState(CacheState.Loading(id))
+
+@Composable
+fun <T: Item> Flow<CacheState<T>>.collectAsResultingFlow() = this.filterIsInstance<CacheState.Done<T>>().map { it.data }.collectAsState(null)

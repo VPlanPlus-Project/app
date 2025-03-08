@@ -178,6 +178,10 @@ class AssessmentRepositoryImpl(
         return vppDatabase.assessmentDao.getAll().map { it.map { item -> item.toModel() } }
     }
 
+    override fun getByDate(date: LocalDate): Flow<List<Assessment>> {
+        return vppDatabase.assessmentDao.getByDate(date).map { it.map { it.toModel() } }
+    }
+
     override fun getAllIds(): Flow<List<Int>> {
         return vppDatabase.assessmentDao.getAll().map { it.map { it.assessment.id } }
     }

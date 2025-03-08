@@ -3,6 +3,7 @@ package plus.vplan.app.domain.model
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
@@ -16,11 +17,13 @@ import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
 
-sealed class Homework : Item {
+sealed class Homework(
+    val creator: AppEntity
+) : Item {
     abstract val id: Int
     abstract val createdAt: Instant
     abstract val dueTo: LocalDate
-    abstract val tasks: List<Int>
+    abstract val taskIds: List<Int>
     abstract val defaultLesson: Int?
     abstract val group: Int?
     abstract val files: List<Int>
@@ -34,6 +37,12 @@ sealed class Homework : Item {
         return defaultLessonItem ?: defaultLesson?.let { defaultLessonId ->
             App.defaultLessonSource.getSingleById(defaultLessonId).also { defaultLessonItem = it }
         }
+    }
+
+    val subjectInstance by lazy { defaultLesson?.let { App.defaultLessonSource.getById(it) } }
+    val tasks by lazy {
+        if (taskIds.isEmpty()) return@lazy flowOf(emptyList())
+        combine(taskIds.map { id -> App.homeworkTaskSource.getById(id).filterIsInstance<CacheState.Done<HomeworkTask>>().map { it.data } }) { it.toList() }
     }
 
     var groupItem: Group? = null
@@ -51,7 +60,7 @@ sealed class Homework : Item {
     var fileItems: List<File>? = null
         private set
 
-    fun getTasksFlow() = combine(tasks.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheState.Done<HomeworkTask>>() }) { it.toList().map { it.data }.also { taskItems = it } }
+    fun getTasksFlow() = combine(taskIds.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheState.Done<HomeworkTask>>() }) { it.toList().map { it.data }.also { taskItems = it } }
     fun getStatusFlow(profile: Profile.StudentProfile) = getTasksFlow().map { tasks ->
         if (tasks.all { it.isDone(profile) }) HomeworkStatus.DONE
         else if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date > dueTo) HomeworkStatus.OVERDUE
@@ -61,7 +70,7 @@ sealed class Homework : Item {
     fun getFilesFlow() = combine(files.map { App.fileSource.getById(it).filterIsInstance<CacheState.Done<File>>() }) { it.toList().map { it.data } }
 
     suspend fun getTaskItems(): List<HomeworkTask> {
-        return taskItems ?: tasks.mapNotNull { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
+        return taskItems ?: taskIds.mapNotNull { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
     }
 
     suspend fun getFileItems(): List<File> {
@@ -102,19 +111,21 @@ sealed class Homework : Item {
         override val id: Int,
         override val createdAt: Instant,
         override val dueTo: LocalDate,
-        override val tasks: List<Int>,
+        override val taskIds: List<Int>,
         override val defaultLesson: Int?,
         override val group: Int?,
         override val files: List<Int>,
         override val cachedAt: Instant,
         val isPublic: Boolean,
         val createdBy: Int,
-    ) : Homework() {
+    ) : Homework(
+        creator = AppEntity.VppId(createdBy)
+    ) {
         override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
-                tasks = tasks,
+                taskIds = tasks,
                 defaultLesson = defaultLesson,
                 group = group
             )
@@ -134,12 +145,14 @@ sealed class Homework : Item {
         override val id: Int,
         override val createdAt: Instant,
         override val dueTo: LocalDate,
-        override val tasks: List<Int>,
+        override val taskIds: List<Int>,
         override val defaultLesson: Int?,
         override val files: List<Int>,
         override val cachedAt: Instant,
         val createdByProfile: Uuid
-    ) : Homework() {
+    ) : Homework(
+        creator = AppEntity.Profile(createdByProfile)
+    ) {
         override val group: Int
             get() = groupId ?: runBlocking { getCreatedByProfile().group }
 
@@ -159,7 +172,7 @@ sealed class Homework : Item {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
-                tasks = tasks,
+                taskIds = tasks,
                 defaultLesson = defaultLesson
             )
         }
@@ -168,7 +181,7 @@ sealed class Homework : Item {
     abstract fun copyBase(
         createdAt: Instant = this.createdAt,
         dueTo: LocalDate = this.dueTo,
-        tasks: List<Int> = this.tasks,
+        tasks: List<Int> = this.taskIds,
         defaultLesson: Int? = this.defaultLesson,
         group: Int? = this.group
     ): Homework

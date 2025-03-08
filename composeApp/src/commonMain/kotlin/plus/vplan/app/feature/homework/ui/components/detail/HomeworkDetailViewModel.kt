@@ -121,7 +121,7 @@ class HomeworkDetailViewModel(
                 }
                 is HomeworkDetailEvent.UpdateTask -> updateTaskUseCase(event.task, event.newContent, state.profile!!)
                 is HomeworkDetailEvent.DeleteTask -> {
-                    if (state.homework!!.tasks.size == 1) return@launch onEvent(HomeworkDetailEvent.DeleteHomework)
+                    if (state.homework!!.taskIds.size == 1) return@launch onEvent(HomeworkDetailEvent.DeleteHomework)
                     state = state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.InProgress))
                     val result = deleteTaskUseCase(event.task, state.profile!!)
                     state = if (result) {
