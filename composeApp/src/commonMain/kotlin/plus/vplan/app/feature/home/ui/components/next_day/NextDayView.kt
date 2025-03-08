@@ -45,20 +45,20 @@ fun NextDayView(day: HomeViewDay) {
                     monthName(MonthNames("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"))
                     char(' ')
                     year()
-                }) + "\n${(weekState?.value as? CacheState.Done)?.data?.weekType ?: "Unbekannte"}-Woche (KW ${(weekState?.value as? CacheState.Done)?.data?.calendarWeek}, SW ${(weekState?.value as? CacheState.Done)?.data?.weekIndex})\n" + (if (day.substitutionPlan == null) "Stundenplan" else "Vertretungsplan")
+                }) + "\n${(weekState?.value as? CacheState.Done)?.data?.weekType ?: "Unbekannte"}-Woche (KW ${(weekState?.value as? CacheState.Done)?.data?.calendarWeek}, SW ${(weekState?.value as? CacheState.Done)?.data?.weekIndex})\n" + (if (day.day.substitutionPlan.isEmpty()) "Stundenplan" else "Vertretungsplan")
             )
             if (day.day.info != null) DayInfoCard(Modifier.padding(vertical = 4.dp), info = day.day.info)
         }
 
         Column lessons@{
-            val lessonTimes by combine(day.substitutionPlan.orEmpty().ifEmpty { day.timetable }.map { it.lessonTime }.distinct().map { App.lessonTimeSource.getById(it).filterIsInstance<CacheState.Done<LessonTime>>().map { it.data } }) { it.toList() }.collectAsState(emptyList())
+            val lessonTimes by combine(day.lessons.map { it.lessonTime }.distinct().map { App.lessonTimeSource.getById(it).filterIsInstance<CacheState.Done<LessonTime>>().map { it.data } }) { it.toList() }.collectAsState(emptyList())
             if (lessonTimes.isEmpty()) return@lessons
             SectionTitle(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = "Nächste Stunden",
                 subtitle =
-                    if (day.substitutionPlan.orEmpty().ifEmpty { day.timetable }.isEmpty()) "Keine Stunden"
-                    else "${day.timetable.minOf { l -> lessonTimes.first { it.id == l.lessonTime }.start }} bis ${day.timetable.maxOf { l -> lessonTimes.first { it.id == l.lessonTime }.end }}"
+                    if (day.lessons.isEmpty()) "Keine Stunden"
+                    else "${day.lessons.minOf { l -> lessonTimes.first { it.id == l.lessonTime }.start }} bis ${day.lessons.maxOf { l -> lessonTimes.first { it.id == l.lessonTime }.end }}"
             )
             FollowingLessons(
                 modifier = Modifier
@@ -67,7 +67,7 @@ fun NextDayView(day: HomeViewDay) {
                 showFirstGradient = false,
                 paddingStart = 4.dp,
                 date = day.day.date,
-                lessons = day.substitutionPlan.orEmpty().ifEmpty() { day.timetable }.groupBy { l -> lessonTimes.first { it.id == l.lessonTime }.lessonNumber }
+                lessons = day.lessons.groupBy { l -> lessonTimes.first { it.id == l.lessonTime }.lessonNumber }
             )
         }
     }

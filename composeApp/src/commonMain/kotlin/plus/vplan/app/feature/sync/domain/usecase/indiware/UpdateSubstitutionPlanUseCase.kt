@@ -56,7 +56,7 @@ class UpdateSubstitutionPlanUseCase(
         val oldPlan = profileRepository.getAll().first()
             .filterIsInstance<Profile.StudentProfile>()
             .filter { it.getSchoolItem().id == indiwareSchool.id }
-            .associateWith { getDayUseCase(it, date).first().getLessonItems() }
+            .associateWith { getDayUseCase(it, date).first().lessons.first() }
 
         val substitutionPlanResponse = indiwareRepository.getSubstitutionPlan(
             sp24Id = indiwareSchool.sp24Id,
@@ -128,7 +128,7 @@ class UpdateSubstitutionPlanUseCase(
                 val new = newPlan[profile] ?: return@forEach
 
                 val oldLessons = old.map { it.getLessonSignature() }
-                val changedOrNewLessons = new.getLessonItems().filter { it.getLessonSignature() !in oldLessons }
+                val changedOrNewLessons = new.lessons.first().filter { it.getLessonSignature() !in oldLessons }
                 if (changedOrNewLessons.isEmpty()) return@forEach
 
                 Logger.d { "Sending notification for ${profile.name}" }

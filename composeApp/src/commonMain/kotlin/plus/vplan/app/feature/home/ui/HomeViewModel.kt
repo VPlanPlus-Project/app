@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -17,8 +16,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
@@ -53,15 +50,13 @@ class HomeViewModel(
                     .collectLatest { day ->
                         state = state.copy(currentDay = HomeViewDay(
                             day = day,
-                            timetable = day.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() },
-                            substitutionPlan = day.substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() }.ifEmpty { null }
+                            lessons = day.lessons.map { it.filter { lesson -> lesson.isRelevantForProfile(profile) }.onEach { it.prefetch() } }.first()
                         ))
                         if (day.nextSchoolDay != null) getDayUseCase(profile, LocalDate.parse(day.nextSchoolDay.split("/")[1])).collectLatest { nextDay ->
                             state = state.copy(
                                 nextDay = HomeViewDay(
                                     day = nextDay,
-                                    timetable = nextDay.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() },
-                                    substitutionPlan = nextDay.substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { lesson -> lesson.data }.first() }.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() }.ifEmpty { null }
+                                    lessons = nextDay.lessons.map { it.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() } }.first()
                                 ),
                                 initDone = true
                             )
@@ -110,8 +105,7 @@ sealed class HomeEvent {
 
 data class HomeViewDay(
     val day: Day,
-    val timetable: List<Lesson.TimetableLesson>,
-    val substitutionPlan: List<Lesson.SubstitutionPlanLesson>?
+    val lessons: List<Lesson>
 )
 
 private suspend fun Lesson.prefetch() {
