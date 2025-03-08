@@ -112,51 +112,6 @@ fun MainScreenHost(
         val right = WindowInsets.systemBars.asPaddingValues().calculateRightPadding(localLayoutDirection)
         val bottom = bottomBarHeight.let { if (it == 0.dp) WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() else it }
         val contentPadding = PaddingValues(left, top, right, bottom)
-        NavHost(
-            modifier = Modifier.fillMaxSize(),
-            navController = navController,
-            startDestination = MainScreen.MainHome
-        ) {
-            composable<MainScreen.MainHome> { HomeScreen(contentPadding, navController, homeViewModel) }
-            composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
-            composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel, toggleBottomBar) }
-            composable<MainScreen.MainDev> { DevScreen(contentPadding, toggleBottomBar) }
-            composable<MainScreen.MainProfile> { ProfileScreen(contentPadding, navController, profileViewModel) }
-
-            composable<MainScreen.ProfileSettings> {
-                val args = it.toRoute<MainScreen.ProfileSettings>()
-                ProfileSettingsScreen(args.profileId, navController)
-            }
-            composable<MainScreen.ProfileSubjectInstances> {
-                val args = it.toRoute<MainScreen.ProfileSubjectInstances>()
-                ProfileSubjectInstanceScreen(Uuid.parse(args.profileId), navController)
-            }
-
-            composable<MainScreen.RoomSearch> { RoomSearch(navController) }
-
-            composable<MainScreen.Settings> { SettingsScreen(navController) }
-            composable<MainScreen.SchoolSettings> {
-                val args = it.toRoute<MainScreen.SchoolSettings>()
-                SchoolSettingsScreen(
-                    navHostController = navController,
-                    openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchoolId
-                )
-            }
-            composable<MainScreen.SecuritySettings> {
-                SecuritySettingsScreen(
-                    navHostController = navController
-                )
-            }
-
-            composable<MainScreen.Grades> {
-                val args = it.toRoute<MainScreen.Grades>()
-                GradesScreen(navController, args.vppId)
-            }
-            composable<MainScreen.Analytics> {
-                val args = it.toRoute<MainScreen.Analytics>()
-                AnalyticsScreen(navController, args.vppId)
-            }
-        }
 
         AnimatedVisibility(
             visible = currentDestination?.startsWith("_") == true && isBottomBarVisible,
@@ -203,6 +158,52 @@ fun MainScreenHost(
                     icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
                     onClick = { navController.navigate(MainScreen.MainProfile) { popUpTo(MainScreen.MainHome) } },
                 )
+            }
+        }
+
+        NavHost(
+            modifier = Modifier.fillMaxSize(),
+            navController = navController,
+            startDestination = MainScreen.MainHome
+        ) {
+            composable<MainScreen.MainHome> { HomeScreen(contentPadding, navController, homeViewModel) }
+            composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
+            composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel, toggleBottomBar) }
+            composable<MainScreen.MainDev> { DevScreen(contentPadding) }
+            composable<MainScreen.MainProfile> { ProfileScreen(contentPadding, navController, profileViewModel) }
+
+            composable<MainScreen.ProfileSettings> {
+                val args = it.toRoute<MainScreen.ProfileSettings>()
+                ProfileSettingsScreen(args.profileId, navController)
+            }
+            composable<MainScreen.ProfileSubjectInstances> {
+                val args = it.toRoute<MainScreen.ProfileSubjectInstances>()
+                ProfileSubjectInstanceScreen(Uuid.parse(args.profileId), navController)
+            }
+
+            composable<MainScreen.RoomSearch> { RoomSearch(navController) }
+
+            composable<MainScreen.Settings> { SettingsScreen(navController) }
+            composable<MainScreen.SchoolSettings> {
+                val args = it.toRoute<MainScreen.SchoolSettings>()
+                SchoolSettingsScreen(
+                    navHostController = navController,
+                    openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchoolId
+                )
+            }
+            composable<MainScreen.SecuritySettings> {
+                SecuritySettingsScreen(
+                    navHostController = navController
+                )
+            }
+
+            composable<MainScreen.Grades> {
+                val args = it.toRoute<MainScreen.Grades>()
+                GradesScreen(navController, args.vppId)
+            }
+            composable<MainScreen.Analytics> {
+                val args = it.toRoute<MainScreen.Analytics>()
+                AnalyticsScreen(navController, args.vppId)
             }
         }
     }

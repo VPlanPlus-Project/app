@@ -10,11 +10,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
@@ -41,14 +41,14 @@ class UpdateAssessmentUseCase(
                 .data - existing)
                 .also { ids ->
                     if (ids.isEmpty() || !allowNotifications) return@forEach
-                    combine(ids.map { App.assessmentSource.getById(it).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }.first()
+                    combine(ids.map { assessmentId -> App.assessmentSource.getById(assessmentId).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }.first()
                         .filter { it.creator is AppEntity.VppId && it.creator.id != profile.vppIdId && (it.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
                         .let { newAssessments ->
                             if (newAssessments.isEmpty()) return@forEach
                             if (newAssessments.size == 1) {
                                 val message =  buildString {
                                     newAssessments.first().let { assessment ->
-                                        append((assessment.creator as AppEntity.VppId).getVppIdItem()?.name ?: "Unbekannter Nutzer")
+                                        append((assessment.creator as AppEntity.VppId).vppId.getFirstValue()?.name ?: "Unbekannter Nutzer")
                                         append(" hat eine neue Leistungserhebung in ")
                                         append(assessment.getSubjectInstanceItem().subject)
                                         append(" für ")

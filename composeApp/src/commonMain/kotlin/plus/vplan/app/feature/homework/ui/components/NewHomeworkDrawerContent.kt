@@ -41,7 +41,6 @@ import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
@@ -66,6 +65,7 @@ import kotlin.uuid.ExperimentalUuidApi
 fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
     val viewModel = koinViewModel<NewHomeworkViewModel>()
     val state = viewModel.state
+    if (state.currentProfile == null) return
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
@@ -176,7 +176,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
             SubjectAndDateTile(
                 selectedDefaultLesson = state.selectedDefaultLesson,
                 selectedDate = state.selectedDate,
-                group = state.currentProfile!!.groupItem!!,
+                group = state.currentProfile.groupItem!!,
                 isAssessment = false,
                 onClickDefaultLesson = { showLessonSelectDrawer = true },
                 onClickDate = { showDateSelectDrawer = true }
@@ -232,7 +232,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
 
     if (showLessonSelectDrawer) {
         LessonSelectDrawer(
-            group = (state.currentProfile as Profile.StudentProfile).groupItem!!,
+            group = state.currentProfile.groupItem!!,
             allowGroup = true,
             defaultLessons = state.currentProfile.defaultLessonItems.filter { defaultLesson -> state.currentProfile.defaultLessonsConfiguration.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
             selectedDefaultLesson = state.selectedDefaultLesson,

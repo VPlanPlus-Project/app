@@ -33,7 +33,7 @@ fun NextDayView(day: HomeViewDay) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Column {
-            val weekState = day.day.week?.let { App.weekSource.getById(it).collectAsLoadingState(it) }
+            val weekState = day.day.weekId?.let { App.weekSource.getById(it).collectAsLoadingState(it) }
             SectionTitle(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = "Nächster Schultag",
@@ -61,7 +61,11 @@ fun NextDayView(day: HomeViewDay) {
                     else "${day.timetable.minOf { l -> lessonTimes.first { it.id == l.lessonTime }.start }} bis ${day.timetable.maxOf { l -> lessonTimes.first { it.id == l.lessonTime }.end }}"
             )
             FollowingLessons(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(start = 4.dp),
                 showFirstGradient = false,
+                paddingStart = 4.dp,
                 date = day.day.date,
                 lessons = day.substitutionPlan.orEmpty().ifEmpty() { day.timetable }.groupBy { l -> lessonTimes.first { it.id == l.lessonTime }.lessonNumber }
             )

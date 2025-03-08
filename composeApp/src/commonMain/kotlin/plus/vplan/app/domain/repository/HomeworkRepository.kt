@@ -19,6 +19,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
 
     fun getAll(): Flow<List<CacheState<Homework>>>
+    fun getByDate(date: LocalDate): Flow<List<Homework>>
 
     suspend fun deleteById(id: Int)
     suspend fun deleteById(ids: List<Int>)

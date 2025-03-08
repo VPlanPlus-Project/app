@@ -32,6 +32,9 @@ interface AssessmentDao {
     @Query("SELECT * FROM assessments")
     fun getAll(): Flow<List<EmbeddedAssessment>>
 
+    @Query("SELECT * FROM assessments WHERE date = :date")
+    fun getByDate(date: LocalDate): Flow<List<EmbeddedAssessment>>
+
     @Query("DELETE FROM assessments WHERE id IN (:ids)")
     suspend fun deleteById(ids: List<Int>)
 

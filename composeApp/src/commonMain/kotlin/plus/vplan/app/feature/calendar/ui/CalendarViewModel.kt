@@ -26,6 +26,8 @@ import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
+import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.now
@@ -35,6 +37,8 @@ import kotlin.time.Duration.Companion.days
 class CalendarViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
+    private val getLastDisplayTypeUseCase: GetLastDisplayTypeUseCase,
+    private val setLastDisplayTypeUseCase: SetLastDisplayTypeUseCase
 ) : ViewModel() {
     var state by mutableStateOf(CalendarState())
         private set
@@ -44,7 +48,6 @@ class CalendarViewModel(
     private fun launchSyncJob(date: LocalDate, syncLessons: Boolean): Job {
         return viewModelScope.launch {
             App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date").filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
-                Logger.d { "Synced day $date (lessons: $syncLessons)" }
                 if (!syncLessons) state = state.copy(days = state.days + (date to CalendarDay(day)))
                 else {
                     val timetable = day.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { it.data }.first() }.filter { it.isRelevantForProfile(state.currentProfile!!) }.onEach { it.prefetch() }
@@ -56,9 +59,9 @@ class CalendarViewModel(
     }
 
     init {
-        viewModelScope.launch {
-            getCurrentDateTimeUseCase().collectLatest { state = state.copy(currentTime = it) }
-        }
+        viewModelScope.launch { getCurrentDateTimeUseCase().collectLatest { state = state.copy(currentTime = it) } }
+        viewModelScope.launch { getLastDisplayTypeUseCase().collectLatest { state = state.copy(displayType = it) } }
+
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(currentProfile = profile)
@@ -123,6 +126,20 @@ class CalendarViewModel(
                         )
                     )
                 }
+                is CalendarEvent.SelectDisplayType -> setLastDisplayTypeUseCase(event.displayType)
+                is CalendarEvent.StartLessonUiSync -> {
+                    if (syncJobs.any { it.date == event.date && !it.syncLessons }) {
+                        syncJobs.find { it.date == event.date && it.syncLessons }?.job?.cancel()
+                        syncJobs.removeAll { it.date == event.date && it.syncLessons }
+                    }
+                    syncJobs.add(
+                        SyncJob(
+                            job = launchSyncJob(event.date, true),
+                            date = event.date,
+                            syncLessons = true
+                        )
+                    )
+                }
             }
         }
     }
@@ -133,10 +150,14 @@ data class CalendarState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
     val days: Map<LocalDate, CalendarDay> = emptyMap(),
+    val displayType: DisplayType = DisplayType.Calendar
 )
 
 sealed class CalendarEvent {
     data class SelectDate(val date: LocalDate) : CalendarEvent()
+    data class StartLessonUiSync(val date: LocalDate): CalendarEvent()
+
+    data class SelectDisplayType(val displayType: DisplayType): CalendarEvent()
 }
 
 private data class SyncJob(
@@ -161,4 +182,8 @@ private suspend fun Lesson.prefetch() {
     this.getRoomItems()
     this.getTeacherItems()
     if (this is Lesson.SubstitutionPlanLesson) this.getDefaultLesson()
+}
+
+enum class DisplayType {
+    Agenda, Calendar
 }

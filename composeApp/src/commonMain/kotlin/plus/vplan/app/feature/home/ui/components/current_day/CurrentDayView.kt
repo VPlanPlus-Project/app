@@ -162,6 +162,7 @@ fun CurrentDayView(
                 val lessonsGroupedByLessonNumber =
                     followingLessons.groupBy { it.lessonTimeItem!!.lessonNumber }
                 FollowingLessons(
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     showFirstGradient =
                     lessonsGroupedByLessonNumber.keys.min() > (currentOrNextLesson.minOfOrNull { it.first.lessonTimeItem!!.lessonNumber }
                         ?: -1),
@@ -170,6 +171,7 @@ fun CurrentDayView(
                 )
             } else Column {
                 FollowingLessons(
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     showFirstGradient = false,
                     date = day.day.date,
                     lessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }.groupBy { it.lessonTimeItem!!.lessonNumber }

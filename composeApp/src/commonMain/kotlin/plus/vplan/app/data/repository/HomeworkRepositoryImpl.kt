@@ -135,6 +135,10 @@ class HomeworkRepositoryImpl(
         return vppDatabase.homeworkDao.getAll().map { it.map { embeddedHomework -> CacheState.Done(embeddedHomework.toModel()) } }
     }
 
+    override fun getByDate(date: LocalDate): Flow<List<Homework>> {
+        return vppDatabase.homeworkDao.getByDate(date).map { it.map { it.toModel() } }
+    }
+
     override fun getAllIds(): Flow<List<Int>> {
         return vppDatabase.homeworkDao.getAll().map { it.map { homework -> homework.homework.id } }
     }
