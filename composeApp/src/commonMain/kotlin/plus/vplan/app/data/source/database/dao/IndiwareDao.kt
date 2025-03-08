@@ -11,6 +11,6 @@ interface IndiwareDao {
     @Upsert
     suspend fun upsert(indiwareHasTimetableInWeek: DbIndiwareTimetableMetadata)
 
-    @Query("SELECT * FROM indiware_timetable_metadata WHERE week_id = :weekId")
-    suspend fun getHasTimetableInWeek(weekId: String): DbIndiwareTimetableMetadata?
+    @Query("SELECT * FROM indiware_timetable_metadata WHERE week_id = :weekId AND indiware_school_id = :indiwareSchoolId")
+    suspend fun getHasTimetableInWeek(weekId: String, indiwareSchoolId: String): DbIndiwareTimetableMetadata?
 }

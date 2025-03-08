@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -86,9 +87,9 @@ class TimetableRepositoryImpl(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<Uuid>> = vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).flatMapLatest { versionFlow ->
+    override fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> = vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).flatMapLatest { versionFlow ->
         val currentVersion = versionFlow?.toIntOrNull() ?: -1
-        val weeks = vppDatabase.timetableDao.getWeekIds("${schoolId}_$currentVersion", weekIndex).ifEmpty { return@flatMapLatest flowOf(emptyList()) }
-        vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion", weeks.last(), dayOfWeek)
-    }
+        val weeks = vppDatabase.timetableDao.getWeekIds("${schoolId}_$currentVersion", weekIndex).ifEmpty { return@flatMapLatest flowOf(emptySet()) }
+        vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion", weeks.last(), dayOfWeek).map { it.toSet() }
+    }.distinctUntilChanged()
 }

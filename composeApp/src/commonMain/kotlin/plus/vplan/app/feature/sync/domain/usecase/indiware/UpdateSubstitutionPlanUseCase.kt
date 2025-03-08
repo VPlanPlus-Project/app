@@ -79,8 +79,8 @@ class UpdateSubstitutionPlanUseCase(
             weekId = week.id,
             info = substitutionPlan.info,
             dayType = Day.DayType.REGULAR,
-            substitutionPlan = emptyList(),
-            timetable = emptyList(),
+            substitutionPlan = emptySet(),
+            timetable = emptySet(),
             assessmentIds = emptySet(),
             homeworkIds = emptySet(),
             nextSchoolDay = null

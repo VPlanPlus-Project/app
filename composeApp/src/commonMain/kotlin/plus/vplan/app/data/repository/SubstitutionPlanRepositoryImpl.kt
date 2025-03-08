@@ -2,6 +2,7 @@ package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -73,9 +74,9 @@ class SubstitutionPlanRepositoryImpl(
     override fun getSubstitutionPlanBySchool(
         schoolId: Int,
         date: LocalDate
-    ): Flow<List<Uuid>> = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.mapLatest { version ->
-        vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version", date).first()
-    }
+    ): Flow<Set<Uuid>> = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.mapLatest { version ->
+        vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version", date).first().toSet()
+    }.distinctUntilChanged()
 
     override fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?> {
         return vppDatabase.substitutionPlanDao.getById(id).map { it?.toModel() }

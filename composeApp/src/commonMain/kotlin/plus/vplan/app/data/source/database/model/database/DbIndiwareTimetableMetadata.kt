@@ -25,6 +25,7 @@ import androidx.room.Index
     ]
 )
 data class DbIndiwareTimetableMetadata(
+    @ColumnInfo(name = "indiware_school_id") val indiwareSchoolId: String,
     @ColumnInfo(name = "week_id") val weekId: String,
     @ColumnInfo(name = "has_data") val hasData: Boolean,
     @ColumnInfo(name = "raw_hash") val rawHash: String?

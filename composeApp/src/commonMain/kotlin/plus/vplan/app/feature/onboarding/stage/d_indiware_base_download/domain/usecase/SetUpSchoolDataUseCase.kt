@@ -11,18 +11,18 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
-import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DefaultLessonRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
-import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateLessonTimesUseCase
 
 class SetUpSchoolDataUseCase(
     private val onboardingRepository: OnboardingRepository,
@@ -34,7 +34,7 @@ class SetUpSchoolDataUseCase(
     private val courseRepository: CourseRepository,
     private val defaultLessonRepository: DefaultLessonRepository,
     private val weekRepository: WeekRepository,
-    private val lessonTimeRepository: LessonTimeRepository
+    private val updateLessonTimesUseCase: UpdateLessonTimesUseCase
 ) {
     operator fun invoke(): Flow<SetUpSchoolDataResult> = flow {
         val result = SetUpSchoolDataStep.entries.associateWith { SetUpSchoolDataState.NOT_STARTED }.toMutableMap()
@@ -78,7 +78,7 @@ class SetUpSchoolDataUseCase(
                 )
                 onboardingRepository.setSchoolId(it.data.id)
                 schoolRepository.getById(it.data.id, false).onEach { Logger.d { it.toString() } }.getFirstValue()!!
-            }
+            } as School.IndiwareSchool
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.IN_PROGRESS
@@ -124,20 +124,7 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
-            baseData.data.classes.flatMap { baseDataClass ->
-                val group = classes.firstOrNull { it.name == baseDataClass.name } ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix group ${baseDataClass.name} not found"))
-                baseDataClass.lessonTimes.map { baseDataLessonTime ->
-                    Logger.d { "Upsert lessontime $baseDataLessonTime" }
-                    LessonTime(
-                        id = "${school.id}/${group.id}/${baseDataLessonTime.lessonNumber}",
-                        start = baseDataLessonTime.start,
-                        end = baseDataLessonTime.end,
-                        lessonNumber = baseDataLessonTime.lessonNumber,
-                        group = group.id,
-                        interpolated = false
-                    )
-                }
-            }.let { lessonTimeRepository.upsert(it) }
+            updateLessonTimesUseCase(school)
 
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.IN_PROGRESS
@@ -149,7 +136,7 @@ class SetUpSchoolDataUseCase(
                 .distinct()
                 .onEach { courseRepository.getByIndiwareId(it).getFirstValue() }
 
-            defaultLessonRepository.download(school.id, school.getSchoolApiAccess()!!)
+            defaultLessonRepository.download(school.id, school.getSchoolApiAccess())
 
             defaultLessonRepository.getBySchool(school.id, true).first()
             val defaultLessons = baseData.data.classes

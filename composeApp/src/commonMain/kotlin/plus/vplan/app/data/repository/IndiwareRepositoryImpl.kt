@@ -199,7 +199,7 @@ class IndiwareRepositoryImpl(
         week: Week,
         roomNames: List<String>
     ): Response<IndiwareTimeTable> {
-        val hasTimetableInWeek = vppDatabase.indiwareDao.getHasTimetableInWeek(week.id)
+        val hasTimetableInWeek = vppDatabase.indiwareDao.getHasTimetableInWeek(week.id, sp24Id)
         if (hasTimetableInWeek?.hasData == false) return Response.Error.OnlineError.NotFound
         return saveRequest {
             val response = httpClient.get {
@@ -212,13 +212,13 @@ class IndiwareRepositoryImpl(
             }
             if (response.status == HttpStatusCode.NotFound) {
                 if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date !in week.start..week.end)
-                    vppDatabase.indiwareDao.upsert(DbIndiwareTimetableMetadata(week.id, false, null))
+                    vppDatabase.indiwareDao.upsert(DbIndiwareTimetableMetadata(sp24Id, week.id, false, null))
             }
 
             val rawHash = response.bodyAsText().sha256()
 
             if (response.status != HttpStatusCode.OK) return response.toResponse()
-            vppDatabase.indiwareDao.upsert(DbIndiwareTimetableMetadata(week.id, true, rawHash))
+            vppDatabase.indiwareDao.upsert(DbIndiwareTimetableMetadata(sp24Id, week.id, true, rawHash))
             val xml: XML by lazy {
                 XML {
                     xmlVersion = XmlVersion.XML10

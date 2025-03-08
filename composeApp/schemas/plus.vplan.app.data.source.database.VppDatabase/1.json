@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "7f29ade8f1080358b833943ce3e88ff8",
+    "identityHash": "9063986e6f7beda0897e49d134527c3b",
     "entities": [
       {
         "tableName": "schools",
@@ -131,8 +131,14 @@
       },
       {
         "tableName": "indiware_timetable_metadata",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`week_id` TEXT NOT NULL, `has_data` INTEGER NOT NULL, `raw_hash` TEXT, PRIMARY KEY(`week_id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`indiware_school_id` TEXT NOT NULL, `week_id` TEXT NOT NULL, `has_data` INTEGER NOT NULL, `raw_hash` TEXT, PRIMARY KEY(`week_id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
+          {
+            "fieldPath": "indiwareSchoolId",
+            "columnName": "indiware_school_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
           {
             "fieldPath": "weekId",
             "columnName": "week_id",
@@ -3586,7 +3592,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7f29ade8f1080358b833943ce3e88ff8')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9063986e6f7beda0897e49d134527c3b')"
     ]
   }
 }

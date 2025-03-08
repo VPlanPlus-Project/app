@@ -20,8 +20,8 @@ data class Day(
     val weekId: String?,
     val info: String?,
     val dayType: DayType,
-    val timetable: List<Uuid>,
-    val substitutionPlan: List<Uuid>,
+    val timetable: Set<Uuid>,
+    val substitutionPlan: Set<Uuid>,
     val assessmentIds: Set<Int>,
     val homeworkIds: Set<Int>,
     val nextSchoolDay: String?
