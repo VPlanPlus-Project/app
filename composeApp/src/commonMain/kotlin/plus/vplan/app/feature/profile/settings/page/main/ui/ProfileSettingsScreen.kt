@@ -32,6 +32,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -204,8 +205,9 @@ private fun ProfileSettingsContent(
             )
             Spacer(Modifier.height(8.dp))
             if (state.profile is Profile.StudentProfile) {
+                val vppId = state.profile.vppId?.collectAsState(null)?.value
                 AnimatedContent(
-                    targetState = state.profile.vppIdId,
+                    targetState = vppId,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth()
@@ -231,7 +233,7 @@ private fun ProfileSettingsContent(
                         )
                         Column {
                             Text(
-                                text = state.profile.vppIdItem!!.name,
+                                text = displayVppId.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
