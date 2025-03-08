@@ -32,6 +32,7 @@ import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
+import plus.vplan.app.utils.isPermissionGranted
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_right
 import vplanplus.composeapp.generated.resources.bell_ring
@@ -41,6 +42,9 @@ fun OnboardingPermissionsScreen(
     navHostController: NavHostController,
 ) {
     val viewModel = koinViewModel<OnboardingPermissionViewModel>()
+    LaunchedEffect(Unit) {
+        if (isPermissionGranted(PermissionState.POST_NOTIFICATIONS)) viewModel.onNotificationGranted()
+    }
     Column(
         modifier = Modifier
             .padding(WindowInsets.systemBars.asPaddingValues())
