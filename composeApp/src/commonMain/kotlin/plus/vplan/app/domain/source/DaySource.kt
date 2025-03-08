@@ -1,6 +1,5 @@
 package plus.vplan.app.domain.source
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +12,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -55,7 +53,6 @@ class DaySource(
                         dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } },
                         dayRepository.getBySchool(date, schoolId)
                     ) { weeks, holidays, dayInfo ->
-                        Logger.d { "Combine 1" }
                         val dayWeek = weeks.firstOrNull { date in it.start..it.end } ?: weeks.last { it.start < date }
                         MetaEmitting(
                             dayWeek = dayWeek,
@@ -75,13 +72,12 @@ class DaySource(
                             timetableRepository.getForSchool(
                                 schoolId = schoolId,
                                 dayOfWeek = date.dayOfWeek,
-                                weekIndex = meta.dayWeek.weekIndex,
-                            ).onEach { Logger.d { "Timetable update" } },
-                            substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date).onEach { Logger.d { "VPlan update" } },
+                                weekIndex = meta.dayWeek.weekIndex
+                            ),
+                            substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),
                             assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
                             homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
                         ) { timetable, substitutionPlan, assessments, homework ->
-                            Logger.d { "Combine 2" }
                             send(CacheState.Done(Day(
                                 id = id,
                                 date = date,
