@@ -18,17 +18,20 @@ import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Subject
 import plus.vplan.app.feature.grades.domain.usecase.GetCurrentIntervalUseCase
+import plus.vplan.app.feature.grades.domain.usecase.GetIntervalsUseCase
 
 class AnalyticsViewModel(
-    private val getCurrentIntervalUseCase: GetCurrentIntervalUseCase
+    private val getCurrentIntervalUseCase: GetCurrentIntervalUseCase,
+    private val getIntervalsUseCase: GetIntervalsUseCase
 ) : ViewModel() {
     var state by mutableStateOf(AnalyticsState())
         private set
 
     fun init(vppIdId: Int) {
         state = AnalyticsState()
+        viewModelScope.launch { getIntervalsUseCase().collectLatest { state = state.copy(intervals = it) } }
         viewModelScope.launch {
-            state = state.copy(interval = getCurrentIntervalUseCase())
+            getCurrentIntervalUseCase().let { state = state.copy(interval = it) }
             App.vppIdSource.getById(vppIdId).filterIsInstance<CacheState.Done<VppId.Active>>().map { it.data }.collectLatest { vppId ->
                 state = state.copy(vppId = vppId)
                 App.gradeSource.getAll()
@@ -36,14 +39,15 @@ class AnalyticsViewModel(
                         it
                             .filterIsInstance<CacheState.Done<Grade>>()
                             .map { gradeState -> gradeState.data }
-                            .filter { grade -> grade.vppIdId == vppIdId && grade.collection.getFirstValue()!!.intervalId in listOfNotNull(state.interval?.id, state.interval?.includedIntervalId) }
+                            .filter { grade -> grade.vppIdId == vppIdId }
                     }.collectLatest { grades ->
                         state = state.copy(
                             grades = grades,
-                            filteredGrades = grades,
+                            filteredGrades = emptyList(),
                             availableSubjectFilters = grades.map { it.subject.getFirstValue()!! }.distinctBy { subject -> subject.id }.sortedBy { it.localId },
                             filteredSubjects = emptyList()
                         )
+                        updateFiltered()
                     }
             }
         }
@@ -62,6 +66,10 @@ class AnalyticsViewModel(
                     state = state.copy(timeType = event.timeType)
                     updateTimeDataPoints()
                 }
+                is AnalyticsAction.SetInterval -> {
+                    state = state.copy(interval = event.interval)
+                    updateFiltered()
+                }
             }
         }
     }
@@ -70,7 +78,9 @@ class AnalyticsViewModel(
         state = state.copy(filteredGrades = state.grades
             .filter { grade ->
                 state.filteredSubjects.any { grade.subject.getFirstValue()!!.id == it.id } || state.filteredSubjects.isEmpty()
-            })
+            }
+            .filter { it.collection.getFirstValue()!!.intervalId in listOfNotNull(state.interval?.id, state.interval?.includedIntervalId) }
+        )
         updateTimeDataPoints()
     }
 
@@ -91,6 +101,7 @@ class AnalyticsViewModel(
 data class AnalyticsState(
     val vppId: VppId? = null,
     val interval: Interval? = null,
+    val intervals: List<Interval> = emptyList(),
     val grades: List<Grade> = emptyList(),
     val filteredGrades: List<Grade> = emptyList(),
 
@@ -105,6 +116,8 @@ data class AnalyticsState(
 sealed class AnalyticsAction {
     data class ToggleSubjectFilter(val subject: Subject) : AnalyticsAction()
     data class SetTimeType(val timeType: AnalyticsTimeType) : AnalyticsAction()
+
+    data class SetInterval(val interval: Interval) : AnalyticsAction()
 }
 
 enum class AnalyticsTimeType {

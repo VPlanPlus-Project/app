@@ -182,6 +182,20 @@ private fun GradesContent(
                         }
                     }
                     androidx.compose.animation.AnimatedVisibility(
+                        visible = state.gradeLockState?.canAccess == true && state.subjects.isEmpty(),
+                        enter = expandHorizontally(expandFrom = Alignment.CenterHorizontally) + fadeIn(),
+                        exit = shrinkHorizontally(shrinkTowards = Alignment.CenterHorizontally) + fadeOut(),
+                    ) {
+                        IconButton(onClick = { onOpenAnalytics() }) {
+                            Icon(
+                                painter = painterResource(Res.drawable.chart_no_axes_combined),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    androidx.compose.animation.AnimatedVisibility(
                         visible = state.gradeLockState != GradeLockState.Locked,
                         enter = expandHorizontally(expandFrom = Alignment.CenterHorizontally) + fadeIn(),
                         exit = shrinkHorizontally(shrinkTowards = Alignment.CenterHorizontally) + fadeOut()
