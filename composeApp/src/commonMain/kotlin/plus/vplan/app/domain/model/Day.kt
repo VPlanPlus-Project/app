@@ -1,6 +1,7 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterIsInstance
@@ -30,29 +31,6 @@ data class Day(
         REGULAR, WEEKEND, HOLIDAY, UNKNOWN
     }
 
-    var substitutionPlanItems: List<Lesson.SubstitutionPlanLesson>? = null
-        private set
-
-    suspend fun getSubstitutionPlanItems(): List<Lesson.SubstitutionPlanLesson> {
-        if (substitutionPlanItems == null) substitutionPlanItems = substitutionPlan.mapNotNull { App.substitutionPlanSource.getById(it).getFirstValue() }.also { this.substitutionPlanItems = it }
-        return substitutionPlanItems!!
-    }
-
-    var timetableItems: List<Lesson.TimetableLesson>? = null
-        private set
-
-    suspend fun getTimetableItems(): List<Lesson.TimetableLesson> {
-        if (timetableItems == null) timetableItems =
-            timetable.mapNotNull { App.timetableSource.getById(it).getFirstValue() }
-                .also { this.timetableItems = it }
-        return timetableItems!!
-    }
-
-    suspend fun getLessonItems(): List<Lesson> {
-        if (this.dayType == DayType.REGULAR) return getSubstitutionPlanItems().ifEmpty { getTimetableItems() }
-        return emptyList()
-    }
-
     companion object {
         fun buildId(school: School, date: LocalDate) = "${school.id}/$date"
     }
@@ -76,4 +54,15 @@ data class Day(
     }
 
     val week by lazy { if (this.weekId == null) return@lazy null else App.weekSource.getById(weekId) }
+
+    val lessons: Flow<Set<Lesson>> by lazy {
+        if (timetable.isEmpty()) return@lazy flowOf(emptySet())
+        (if (substitutionPlan.isEmpty()) combine(timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { it.data } }) { it.toSet() }
+        else combine(substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { it.data } }) { it.toSet() })
+            .map { lessons ->
+                val week = this.week?.getFirstValue()
+                lessons.filter { lesson ->
+                    lesson is Lesson.SubstitutionPlanLesson || (lesson is Lesson.TimetableLesson && (lesson.weekType == null || week?.weekType == lesson.weekType))
+            }.toSet() }
+    }
 }

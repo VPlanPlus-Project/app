@@ -188,8 +188,7 @@ private fun CalendarScreenContent(
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val day = state.days[state.selectedDate]
-                val lessons = day?.substitutionPlan.orEmpty().ifEmpty { day?.timetable }
-                val isContentAtTop = (contentScrollState.value == 0 && lessons.isNullOrEmpty()) || (lessons.orEmpty().isNotEmpty() && with(localDensity) { contentScrollState.value <= ((lessons.orEmpty().minOf { it.lessonTimeItem!!.start }.inWholeMinutes().toFloat() - 60) * minute).roundToPx() })
+                val isContentAtTop = (contentScrollState.value == 0 && day?.lessons.isNullOrEmpty()) || (day?.lessons.orEmpty().isNotEmpty() && with(localDensity) { contentScrollState.value <= ((day?.lessons.orEmpty().minOf { it.lessonTimeItem!!.start }.inWholeMinutes().toFloat() - 60) * minute).roundToPx() })
                 val y = (with(localDensity) { available.y.toDp() }) / (5 * weekHeight)
 
                 if ((isContentAtTop || scrollProgress > 0 && scrollProgress < 1) && available.y > 0) { // scroll to expand date picker
@@ -364,7 +363,7 @@ private fun CalendarScreenContent(
             LaunchedEffect(state.days[state.selectedDate]) {
                 val day = state.days[state.selectedDate] ?: return@LaunchedEffect
                 if (day.lessons.isEmpty()) return@LaunchedEffect
-                val lessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+                val lessons = day.lessons
                 if (lessons.isEmpty()) return@LaunchedEffect
                 val startOfDay = lessons.minOf { it.lessonTimeItem!!.start }
                 contentScrollState.animateScrollTo(with(localDensity) { ((startOfDay.inWholeMinutes().toFloat() - 60) * minute).coerceAtLeast(0.dp).roundToPx() })
@@ -403,7 +402,7 @@ private fun CalendarScreenContent(
                                                     .fillMaxWidth()
                                                     .height(minute * 24 * 60)
                                             ) {
-                                                val lessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+                                                val lessons = day.lessons
                                                 repeat(24) {
                                                     val time = LocalTime(it, 0)
                                                     val y = time.inWholeMinutes().toFloat() * minute

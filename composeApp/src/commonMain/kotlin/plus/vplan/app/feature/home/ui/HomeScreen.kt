@@ -140,7 +140,7 @@ private fun HomeContent(
                 LaunchedEffect(state.nextDay) {
                     if (state.nextDay == null || state.currentDay == null) return@LaunchedEffect
                     if (state.nextDay.day.dayType != Day.DayType.REGULAR) return@LaunchedEffect
-                    if (state.currentDay.timetable.all { it.getLessonTimeItem().end < state.currentTime.time }) {
+                    if (state.currentDay.lessons.all { it.getLessonTimeItem().end < state.currentTime.time }) {
                         pagerState.animateScrollToPage(1)
                     }
                 }
