@@ -87,8 +87,10 @@ class RoomRepositoryImpl(
                 val school = vppDatabase.schoolDao.findById(accessData.schoolId).first()?.toModel()
                     .let {
                         if (it is School.IndiwareSchool && !it.credentialsValid) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for room $id")))
-                        if (it?.getSchoolApiAccess() == null) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for room $id")))
-                        it.getSchoolApiAccess()!!
+                        it?.getSchoolApiAccess() ?: run {
+                            vppDatabase.roomDao.deleteById(listOf(id))
+                            return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for room $id")))
+                        }
                     }
 
                 val response = httpClient.get("${api.url}/api/v2.2/room/$id") {

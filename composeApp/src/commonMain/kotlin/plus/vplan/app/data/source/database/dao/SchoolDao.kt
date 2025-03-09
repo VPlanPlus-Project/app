@@ -7,7 +7,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbSchool
-import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
+import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSchool
 
 @Dao
@@ -26,7 +26,7 @@ interface SchoolDao {
     suspend fun upsertSchool(school: DbSchool)
 
     @Upsert
-    suspend fun upsertSp24SchoolDetails(details: DbSp24SchoolDetails)
+    suspend fun upsertSp24SchoolDetails(details: DbSchoolIndiwareAccess)
 
     @Query("UPDATE school_indiware_access SET username = :username, password = :password WHERE school_id = :schoolId")
     suspend fun updateIndiwareSchoolDetails(schoolId: Int, username: String, password: String)

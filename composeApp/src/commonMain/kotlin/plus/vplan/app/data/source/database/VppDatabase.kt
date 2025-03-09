@@ -60,7 +60,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterv
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
-import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
+import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
@@ -93,7 +93,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
 @Database(
     entities = [
         DbSchool::class,
-        DbSp24SchoolDetails::class,
+        DbSchoolIndiwareAccess::class,
         DbIndiwareTimetableMetadata::class,
 
         DbGroup::class,

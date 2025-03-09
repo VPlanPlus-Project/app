@@ -27,11 +27,11 @@ class DeleteProfileUseCase(
             keyValueRepository.set(Keys.CURRENT_PROFILE, nextProfile.id.toHexString())
         } ?: keyValueRepository.delete(Keys.CURRENT_PROFILE)
 
-        profileRepository.deleteProfile(profileId = profile.id)
-
         if (existingProfiles.isEmpty()) {
             logger.i { "Deleting school ${school.name} (${school.id})" }
-            schoolRepository.deleteSchool(school.id)
+            schoolRepository.deleteSchool(school.id) // deletes profile as well
+        } else {
+            profileRepository.deleteProfile(profileId = profile.id)
         }
     }
 }

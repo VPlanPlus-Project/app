@@ -3,7 +3,7 @@ package plus.vplan.app.data.source.database.model.embedded
 import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbSchool
-import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
+import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.domain.model.School
 
@@ -12,8 +12,8 @@ data class EmbeddedSchool(
     @Relation(
         parentColumn = "id",
         entityColumn = "school_id",
-        entity = DbSp24SchoolDetails::class
-    ) val sp24SchoolDetails: DbSp24SchoolDetails?,
+        entity = DbSchoolIndiwareAccess::class
+    ) val sp24SchoolDetails: DbSchoolIndiwareAccess?,
     @Relation(
         parentColumn = "id",
         entityColumn = "school_id",
