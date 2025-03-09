@@ -55,7 +55,7 @@ class UpdateHomeworkUseCase(
                                     newHomework.first().let { homework ->
                                         append(homework.getCreatedBy().name)
                                         append(" hat eine neue Hausaufgabe ")
-                                        if (homework.subjectInstance == null) append("für Klasse ${homework.getGroupItem()?.name}")
+                                        if (homework.subjectInstance == null) append("für Klasse ${homework.group?.getFirstValue()?.name}")
                                         else append("für ${homework.subjectInstance?.getFirstValue()?.subject}")
                                         append(" erstellt, welche bis ")
                                         append(homework.dueTo.let { date ->

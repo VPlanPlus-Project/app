@@ -50,7 +50,7 @@ class UpdateAssessmentUseCase(
                                     newAssessments.first().let { assessment ->
                                         append((assessment.creator as AppEntity.VppId).vppId.getFirstValue()?.name ?: "Unbekannter Nutzer")
                                         append(" hat eine neue Leistungserhebung in ")
-                                        append(assessment.getSubjectInstanceItem().subject)
+                                        append(assessment.subjectInstance.getFirstValue()?.subject ?: "einem Fach")
                                         append(" für ")
                                         (assessment.date untilRelativeText LocalDate.now())?.let { append(it) } ?: append(assessment.date.format(LocalDate.Format {
                                             dayOfWeek(shortDayOfWeekNames)

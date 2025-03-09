@@ -22,11 +22,11 @@ class GetHomeworkForProfileUseCase(
         val enabledSubjectInstances = profile.subjectInstanceConfiguration.filterValues { it }.keys
         return homeworkRepository.getByGroup(group).map { it.map { homework -> homework.id } }
             .map { combine(it.map { id -> App.homeworkSource.getById(id) }) { items -> items.toList() } }
-            .map { it.map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } } }
+            .map { it.map { homeworkState -> homeworkState.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } } }
             .flattenMerge()
             .onEach {
                 it.onEach { homework ->
-                    homework.getGroupItem()
+                    homework.group?.getFirstValue()
                     homework.subjectInstance?.getFirstValue()
                     when (homework) {
                         is Homework.CloudHomework -> homework.getCreatedBy()

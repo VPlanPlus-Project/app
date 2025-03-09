@@ -139,7 +139,6 @@ private suspend fun Profile.StudentProfile.prefetch() {
 }
 
 private suspend fun Assessment.prefetch() {
-    this.getSubjectInstanceItem()
     when (this.creator) {
         is AppEntity.VppId -> this.getCreatedByVppIdItem()
         is AppEntity.Profile -> this.getCreatedByProfileItem()!!.getGroupItem()

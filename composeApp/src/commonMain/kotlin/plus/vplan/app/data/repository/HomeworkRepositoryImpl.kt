@@ -72,7 +72,7 @@ class HomeworkRepositoryImpl(
                 DbHomework(
                     id = homeworkItem.id,
                     subjectInstanceId = homeworkItem.subjectInstanceId,
-                    groupId = (homeworkItem as? Homework.LocalHomework)?.getCreatedByProfile()?.group ?: homeworkItem.group,
+                    groupId = (homeworkItem as? Homework.LocalHomework)?.getCreatedByProfile()?.group ?: homeworkItem.group?.getFirstValue()?.id,
                     createdAt = homeworkItem.createdAt,
                     createdByProfileId = when (homeworkItem) {
                         is Homework.CloudHomework -> null
@@ -271,7 +271,7 @@ class HomeworkRepositoryImpl(
     override suspend fun editHomeworkSubjectInstance(homework: Homework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile) {
         require((subjectInstance == null) xor (group == null)) { "Either subjectInstance or group must not be null" }
         val oldSubjectInstance = homework.subjectInstance?.getFirstValue()
-        val oldGroup = homework.getGroupItem()
+        val oldGroup = homework.group?.getFirstValue()
         vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, subjectInstance?.id, group?.id)
 
         if (homework.id < 0 || profile.getVppIdItem() == null) return

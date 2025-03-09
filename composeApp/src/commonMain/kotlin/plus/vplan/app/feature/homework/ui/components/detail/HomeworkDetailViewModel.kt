@@ -183,7 +183,6 @@ private suspend fun Profile.StudentProfile.prefetch() {
 }
 
 private suspend fun Homework.prefetch() {
-    this.getGroupItem()
     this.subjectInstance?.getFirstValue()
     this.getFileItems()
     if (this is Homework.CloudHomework) this.getCreatedBy()

@@ -26,7 +26,7 @@ suspend fun <T: Item> Flow<CacheState<T>>.getFirstValue() = (this.onEach { if (i
     "Failed to load entity ${it.entityId}: ${it.error}"
 } }.filter { it is CacheState.NotExisting || it is CacheState.Done || it is CacheState.Error }.first() as? CacheState.Done<T>)?.data
 @Composable
-fun <T: Item> Flow<CacheState<T>>.collectAsLoadingState(id: String) = this.collectAsState(CacheState.Loading(id))
+fun <T: Item> Flow<CacheState<T>>.collectAsLoadingState(id: String = "Unbekannt") = this.collectAsState(CacheState.Loading(id))
 
 @Composable
 fun <T: Item> Flow<CacheState<T>>.collectAsResultingFlow() = this.filterIsInstance<CacheState.Done<T>>().map { it.data }.collectAsState(null)

@@ -42,6 +42,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
@@ -161,16 +162,17 @@ fun HomeworkCard(
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(8.dp)
     ) {
+        val subject = homework.subjectInstance?.collectAsResultingFlow()?.value
         val tasks by homework.getTasksFlow().collectAsState(emptyList())
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                if (homework.subjectInstanceItem != null) {
-                    SubjectIcon(Modifier.size(24.dp), homework.subjectInstanceItem!!.subject)
+                if (subject != null) {
+                    SubjectIcon(Modifier.size(24.dp), subject.subject)
                     Text(
-                        text = homework.subjectInstanceItem!!.subject,
+                        text = subject.subject,
                         style = MaterialTheme.typography.headlineSmall
                     )
                 }
@@ -227,6 +229,7 @@ fun AssessmentCard(
     assessment: Assessment,
     onClick: () -> Unit,
 ) {
+    val subject by assessment.subjectInstance.collectAsResultingFlow()
     Column(
         modifier = Modifier
             .width(300.dp)
@@ -240,10 +243,10 @@ fun AssessmentCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                if (assessment.subjectInstanceItem != null) {
-                    SubjectIcon(Modifier.size(24.dp), assessment.subjectInstanceItem!!.subject)
+                if (subject != null) {
+                    SubjectIcon(Modifier.size(24.dp), subject?.subject)
                     Text(
-                        text = assessment.subjectInstanceItem!!.subject,
+                        text = subject?.subject ?: "",
                         style = MaterialTheme.typography.headlineSmall
                     )
                 }

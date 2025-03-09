@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
@@ -224,7 +225,7 @@ private fun SearchScreenContent(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.size(24.dp)) {
-                                    result.homework.subjectInstanceItem?.let { subjectInstance ->
+                                    result.homework.subjectInstance?.collectAsResultingFlow()?.value?.let { subjectInstance ->
                                         Icon(
                                             painter = painterResource(subjectInstance.subject.subjectIcon()),
                                             modifier = Modifier.fillMaxSize(),
@@ -236,7 +237,7 @@ private fun SearchScreenContent(
                                 Column {
                                     Row {
                                         Text(
-                                            text = result.homework.subjectInstanceItem?.subject ?: result.homework.groupItem?.name ?: "Unbekannte Zuweisung",
+                                            text = result.homework.subjectInstance?.collectAsResultingFlow()?.value?.subject ?: result.homework.group?.collectAsResultingFlow()?.value?.name ?: "Unbekannte Zuweisung",
                                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                                         )
                                         Text(
@@ -275,6 +276,7 @@ private fun SearchScreenContent(
                         }
                     }
                     if (result is SearchResult.Assessment) {
+                        val subject by result.assessment.subjectInstance.collectAsResultingFlow()
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -282,9 +284,10 @@ private fun SearchScreenContent(
                                 .clickable { visibleAssessment = result.assessment.id }
                                 .padding(horizontal = 8.dp),
                         ) {
+                            Text(result.assessment.subjectInstanceId.toString())
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.size(24.dp)) {
-                                    result.assessment.subjectInstanceItem?.let { subjectInstance ->
+                                    subject?.let { subjectInstance ->
                                         Icon(
                                             painter = painterResource(subjectInstance.subject.subjectIcon()),
                                             modifier = Modifier.fillMaxSize(),
@@ -296,7 +299,7 @@ private fun SearchScreenContent(
                                 Column {
                                     Row {
                                         Text(
-                                            text = result.assessment.subjectInstanceItem!!.subject,
+                                            text = subject?.subject ?: "",
                                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                                         )
                                         Text(

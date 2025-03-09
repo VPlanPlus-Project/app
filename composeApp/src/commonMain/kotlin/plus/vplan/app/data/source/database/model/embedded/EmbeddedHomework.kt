@@ -39,7 +39,7 @@ data class EmbeddedHomework(
             createdAt = homework.createdAt,
             createdBy = homework.createdBy!!,
             subjectInstanceId = homework.subjectInstanceId,
-            group = homework.groupId,
+            groupId = homework.groupId,
             isPublic = homework.isPublic,
             files = files.map { it.fileId },
             taskIds = tasks.map { it.id },

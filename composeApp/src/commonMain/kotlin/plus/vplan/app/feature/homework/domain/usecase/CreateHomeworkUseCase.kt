@@ -56,7 +56,7 @@ class CreateHomeworkUseCase(
             homework = Homework.CloudHomework(
                 id = id,
                 subjectInstanceId = subjectInstance?.id,
-                group = profile.group,
+                groupId = profile.group,
                 createdAt = Clock.System.now(),
                 createdBy = profile.vppIdId!!,
                 isPublic = isPublic ?: false,
