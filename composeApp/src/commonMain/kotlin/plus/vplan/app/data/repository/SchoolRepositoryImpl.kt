@@ -125,6 +125,10 @@ class SchoolRepositoryImpl(
     override suspend fun setIndiwareAccessValidState(school: School, valid: Boolean) {
         vppDatabase.schoolDao.setIndiwareAccessValidState(school.id, valid)
     }
+
+    override suspend fun deleteSchool(schoolId: Int) {
+        vppDatabase.schoolDao.deleteById(schoolId)
+    }
 }
 
 @Serializable

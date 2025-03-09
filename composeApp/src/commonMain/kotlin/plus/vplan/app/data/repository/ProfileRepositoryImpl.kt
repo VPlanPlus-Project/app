@@ -112,6 +112,10 @@ class ProfileRepositoryImpl(
         })
     }
 
+    override suspend fun deleteProfile(profileId: Uuid) {
+        vppDatabase.profileDao.deleteById(profileId)
+    }
+
     override suspend fun updateDisplayName(id: Uuid, displayName: String) {
         vppDatabase.profileDao.updateDisplayName(id, displayName.ifBlank { null })
     }

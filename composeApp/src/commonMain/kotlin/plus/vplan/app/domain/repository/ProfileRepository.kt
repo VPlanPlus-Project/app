@@ -32,4 +32,6 @@ interface ProfileRepository {
         defaultLessonIds: List<Int>,
         enable: Boolean
     )
+
+    suspend fun deleteProfile(profileId: Uuid)
 }

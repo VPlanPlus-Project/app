@@ -55,7 +55,7 @@ class FullSyncUseCase(
     private val syncGradesUseCase: SyncGradesUseCase,
     private val platformNotificationRepository: PlatformNotificationRepository
 ) {
-    private val maxCacheAge = 6.hours
+    private val maxCacheAge = 24.hours
 
     suspend operator fun invoke() {
         groupRepository.getAllIds().first()

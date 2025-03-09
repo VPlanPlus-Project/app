@@ -4,7 +4,9 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.CheckIfVppIdIsStillConnectedUseCase
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.DeleteProfileUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.GetVppIdDevicesUseCase
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.IsLastProfileOfSchoolUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.LogoutVppIdDeviceUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.LogoutVppIdUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.RenameProfileUseCase
@@ -20,6 +22,8 @@ val profileSettingsModule = module {
     singleOf(::LogoutVppIdUseCase)
     singleOf(::LogoutVppIdDeviceUseCase)
     singleOf(::GetVppIdDevicesUseCase)
+    singleOf(::IsLastProfileOfSchoolUseCase)
+    singleOf(::DeleteProfileUseCase)
 
     singleOf(::GetCourseConfigurationUseCase)
     singleOf(::SetProfileDefaultLessonEnabledUseCase)

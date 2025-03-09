@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValue
@@ -13,6 +14,8 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.CheckIfVppIdIsStillConnectedUseCase
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.DeleteProfileUseCase
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.IsLastProfileOfSchoolUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.RenameProfileUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.VppIdConnectionState
 import kotlin.uuid.Uuid
@@ -23,6 +26,8 @@ class ProfileSettingsViewModel(
     private val getProfileByIdUseCase: GetProfileByIdUseCase,
     private val renameProfileUseCase: RenameProfileUseCase,
     private val checkIfVppIdIsStillConnectedUseCase: CheckIfVppIdIsStillConnectedUseCase,
+    private val isLastProfileOfSchoolUseCase: IsLastProfileOfSchoolUseCase,
+    private val deleteProfileUseCase: DeleteProfileUseCase
 ) : ViewModel() {
     var state by mutableStateOf(ProfileSettingsState())
         private set
@@ -38,6 +43,8 @@ class ProfileSettingsViewModel(
                         state = state.copy(isVppIdStillConnected = it)
                     }
                 }
+
+                if (profile != null) isLastProfileOfSchoolUseCase(profile).collectLatest { state = state.copy(isLastProfileOfSchool = it) }
             }
         }
     }
@@ -46,6 +53,7 @@ class ProfileSettingsViewModel(
         viewModelScope.launch {
             when (event) {
                 is ProfileSettingsEvent.RenameProfile -> renameProfileUseCase(state.profile!!, event.newName)
+                is ProfileSettingsEvent.DeleteProfile -> deleteProfileUseCase(state.profile!!)
             }
         }
     }
@@ -53,11 +61,13 @@ class ProfileSettingsViewModel(
 
 data class ProfileSettingsState(
     val profile: Profile? = null,
+    val isLastProfileOfSchool: Boolean = false,
     val isVppIdStillConnected: VppIdConnectionState = VppIdConnectionState.UNKNOWN
 )
 
 sealed class ProfileSettingsEvent {
     data class RenameProfile(val newName: String) : ProfileSettingsEvent()
+    data object DeleteProfile : ProfileSettingsEvent()
 }
 
 private suspend fun Profile.prefetch() {

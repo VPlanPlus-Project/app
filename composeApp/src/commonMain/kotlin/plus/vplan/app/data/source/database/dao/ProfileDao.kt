@@ -54,4 +54,7 @@ interface ProfileDao {
 
     @Query("UPDATE profiles_group SET vpp_id = :vppId WHERE profile_id = :id")
     suspend fun updateVppId(id: Uuid, vppId: Int?)
+
+    @Query("DELETE FROM profiles WHERE id = :id")
+    suspend fun deleteById(id: Uuid)
 }

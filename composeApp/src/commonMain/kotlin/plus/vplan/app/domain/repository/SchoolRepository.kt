@@ -27,6 +27,8 @@ interface SchoolRepository: WebEntityRepository<School> {
     )
 
     suspend fun setIndiwareAccessValidState(school: School, valid: Boolean)
+
+    suspend fun deleteSchool(schoolId: Int)
 }
 
 data class OnlineSchool(

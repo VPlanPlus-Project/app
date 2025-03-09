@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSchool
-import kotlin.uuid.Uuid
 
 @Dao
 interface SchoolDao {
@@ -35,6 +34,6 @@ interface SchoolDao {
     @Query("UPDATE school_indiware_access SET credentials_valid = :valid WHERE school_id = :schoolId")
     suspend fun setIndiwareAccessValidState(schoolId: Int, valid: Boolean)
 
-    @Query("DELETE FROM school_indiware_access WHERE school_id = :schoolId AND username = :username")
-    suspend fun deleteIndiwareSchoolDetails(schoolId: Uuid, username: String)
+    @Query("DELETE FROM schools WHERE id = :schoolId")
+    suspend fun deleteById(schoolId: Int)
 }
