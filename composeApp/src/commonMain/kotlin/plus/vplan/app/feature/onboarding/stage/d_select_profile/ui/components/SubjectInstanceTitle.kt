@@ -22,7 +22,7 @@ import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar_cog
 
 @Composable
-fun DefaultLessonTitle(onChangeProfile: () -> Unit) {
+fun SubjectInstanceTitle(onChangeProfile: () -> Unit) {
     Column {
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),

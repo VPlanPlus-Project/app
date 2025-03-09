@@ -32,7 +32,7 @@ abstract class Profile : Item {
         override val id: Uuid,
         override val name: String,
         val group: Int,
-        val defaultLessonsConfiguration: Map<Int, Boolean>,
+        val subjectInstanceConfiguration: Map<Int, Boolean>,
         val vppIdId: Int?
     ) : Profile() {
         override val profileType = ProfileType.STUDENT
@@ -44,13 +44,13 @@ abstract class Profile : Item {
             private set
 
         val vppId by lazy { vppIdId?.let { App.vppIdSource.getById(it).filterIsInstance<CacheState.Done<VppId>>().map { cacheState -> cacheState.data } } }
-        val defaultLessons by lazy { combine(defaultLessonsConfiguration.keys.map { App.defaultLessonSource.getById(it).filterIsInstance<CacheState.Done<DefaultLesson>>().map { cacheState -> cacheState.data } }) { it.toList() } }
+        val subjectInstances by lazy { combine(subjectInstanceConfiguration.keys.map { App.subjectInstanceSource.getById(it).filterIsInstance<CacheState.Done<SubjectInstance>>().map { cacheState -> cacheState.data } }) { it.toList() } }
 
-        private val defaultLessonCache = hashMapOf<Int, DefaultLesson>()
-        val defaultLessonItems: List<DefaultLesson>
-            get() = this.defaultLessonCache.values.toList()
-        suspend fun getDefaultLesson(id: Int): DefaultLesson {
-            return defaultLessonCache.getOrPut(id) { App.defaultLessonSource.getById(id).filterIsInstance<CacheState.Done<DefaultLesson>>().first().data }
+        private val subjectInstanceCache = hashMapOf<Int, SubjectInstance>()
+        val subjectInstanceItems: List<SubjectInstance>
+            get() = this.subjectInstanceCache.values.toList()
+        suspend fun getSubjectInstance(id: Int): SubjectInstance {
+            return subjectInstanceCache.getOrPut(id) { App.subjectInstanceSource.getById(id).filterIsInstance<CacheState.Done<SubjectInstance>>().first().data }
         }
 
         suspend fun getGroupItem(): Group {
@@ -62,8 +62,8 @@ abstract class Profile : Item {
             return vppIdItem ?: App.vppIdSource.getById(vppIdId).getFirstValue().let { it as? VppId.Active }.also { this.vppIdItem = it }
         }
 
-        suspend fun getDefaultLessons(): List<DefaultLesson> {
-            return this.defaultLessonsConfiguration.keys.map { getDefaultLesson(it) }
+        suspend fun getSubjectInstances(): List<SubjectInstance> {
+            return this.subjectInstanceConfiguration.keys.map { getSubjectInstance(it) }
         }
 
         @OptIn(ExperimentalCoroutinesApi::class)

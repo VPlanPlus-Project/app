@@ -174,17 +174,17 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
             )
 
             SubjectAndDateTile(
-                selectedDefaultLesson = state.selectedDefaultLesson,
+                selectedSubjectInstance = state.selectedSubjectInstance,
                 selectedDate = state.selectedDate,
                 group = state.currentProfile.groupItem!!,
                 isAssessment = false,
-                onClickDefaultLesson = { showLessonSelectDrawer = true },
+                onClickSubjectInstance = { showLessonSelectDrawer = true },
                 onClickDate = { showDateSelectDrawer = true }
             )
 
             if (state.isPublic != null) VisibilityTile(
                 isPublic = state.isPublic,
-                selectedDefaultLesson = state.selectedDefaultLesson,
+                selectedSubjectInstance = state.selectedSubjectInstance,
                 group = state.currentProfile.groupItem!!,
                 onSetVisibility = { isPublic -> viewModel.onEvent(NewHomeworkEvent.SetVisibility(isPublic)) }
             )
@@ -234,9 +234,9 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
         LessonSelectDrawer(
             group = state.currentProfile.groupItem!!,
             allowGroup = true,
-            defaultLessons = state.currentProfile.defaultLessonItems.filter { defaultLesson -> state.currentProfile.defaultLessonsConfiguration.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
-            selectedDefaultLesson = state.selectedDefaultLesson,
-            onSelectDefaultLesson = { viewModel.onEvent(NewHomeworkEvent.SelectDefaultLesson(it)) },
+            subjectInstances = state.currentProfile.subjectInstanceItems.filter { subjectInstance -> state.currentProfile.subjectInstanceConfiguration.filterValues { !it }.none { it.key == subjectInstance.id } }.sortedBy { it.subject },
+            selectedSubjectInstance = state.selectedSubjectInstance,
+            onSelectSubjectInstance = { viewModel.onEvent(NewHomeworkEvent.SelectSubjectInstance(it)) },
             onDismiss = { showLessonSelectDrawer = false }
         )
     }

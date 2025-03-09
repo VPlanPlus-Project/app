@@ -132,7 +132,7 @@ data class AssessmentDetailState(
 
 private suspend fun Profile.StudentProfile.prefetch() {
     this.getGroupItem()
-    this.getDefaultLessons().onEach {
+    this.getSubjectInstances().onEach {
         it.getCourseItem()
         it.getTeacherItem()
     }

@@ -13,7 +13,7 @@ sealed interface Lesson : Item {
     val teachers: List<Int>
     val rooms: List<Int>?
     val groups: List<Int>
-    val defaultLesson: Int?
+    val subjectInstance: Int?
     val lessonTime: String
 
     fun getLessonSignature(): String
@@ -45,7 +45,7 @@ sealed interface Lesson : Item {
         override val lessonTime: String,
         val weekType: String?
     ) : Lesson {
-        override val defaultLesson = null
+        override val subjectInstance = null
         override val isCancelled: Boolean = false
         override var roomItems: List<Room>? = null
             private set
@@ -112,12 +112,12 @@ sealed interface Lesson : Item {
         override val rooms: List<Int>,
         val isRoomChanged: Boolean,
         override val groups: List<Int>,
-        override val defaultLesson: Int?,
+        override val subjectInstance: Int?,
         override val lessonTime: String,
         val info: String?
     ) : Lesson {
         override val isCancelled: Boolean
-            get() = subject == null && defaultLesson != null
+            get() = subject == null && subjectInstance != null
 
         override var lessonTimeItem: LessonTime? = null
             private set
@@ -128,18 +128,18 @@ sealed interface Lesson : Item {
         override var teacherItems: List<Teacher>? = null
             private set
 
-        var defaultLessonItem: DefaultLesson? = null
+        var subjectInstanceItem: SubjectInstance? = null
             private set
 
         override var groupItems: List<Group>? = null
             private set
 
-        suspend fun getDefaultLesson(): DefaultLesson? {
-            return defaultLessonItem ?: if (defaultLesson == null) null else App.defaultLessonSource.getSingleById(defaultLesson).also { defaultLessonItem = it }
+        suspend fun getSubjectInstance(): SubjectInstance? {
+            return subjectInstanceItem ?: if (subjectInstance == null) null else App.subjectInstanceSource.getSingleById(subjectInstance).also { subjectInstanceItem = it }
         }
 
         override fun getLessonSignature(): String {
-            return "$subject/$teachers/$rooms/$groups/$lessonTime/$date/$defaultLesson"
+            return "$subject/$teachers/$rooms/$groups/$lessonTime/$date/$subjectInstance"
         }
 
         override suspend fun getLessonTimeItem(): LessonTime {
@@ -163,14 +163,14 @@ sealed interface Lesson : Item {
         when (profile) {
             is Profile.StudentProfile -> {
                 if (profile.group !in this.groups) return false
-                if (profile.defaultLessonsConfiguration.filterValues { false }.any { it.key == this.defaultLesson }) return false
+                if (profile.subjectInstanceConfiguration.filterValues { false }.any { it.key == this.subjectInstance }) return false
                 if (this is TimetableLesson) {
-                    val defaultLessons = profile.defaultLessonsConfiguration.mapKeys { profile.getDefaultLesson(it.key) }
-                    if (defaultLessons.filterValues { !it }.any { it.key.getCourseItem()?.name == this.subject }) return false
-                    if (defaultLessons.filterValues { !it }.any { it.key.course == null && it.key.subject == this.subject }) return false
-                    defaultLessons.isEmpty()
+                    val subjectInstances = profile.subjectInstanceConfiguration.mapKeys { profile.getSubjectInstance(it.key) }
+                    if (subjectInstances.filterValues { !it }.any { it.key.getCourseItem()?.name == this.subject }) return false
+                    if (subjectInstances.filterValues { !it }.any { it.key.course == null && it.key.subject == this.subject }) return false
+                    subjectInstances.isEmpty()
                 } else if (this is SubstitutionPlanLesson) {
-                    if (this.defaultLesson != null && this.defaultLesson in profile.defaultLessonsConfiguration.filterValues { !it }) return false
+                    if (this.subjectInstance != null && this.subjectInstance in profile.subjectInstanceConfiguration.filterValues { !it }) return false
                 }
             }
             is Profile.TeacherProfile -> {

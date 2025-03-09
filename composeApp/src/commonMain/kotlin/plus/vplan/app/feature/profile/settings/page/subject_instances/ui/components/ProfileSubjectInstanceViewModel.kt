@@ -10,17 +10,17 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import plus.vplan.app.domain.model.Course
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.GetCourseConfigurationUseCase
-import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileDefaultLessonEnabledUseCase
+import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileSubjectInstanceEnabledUseCase
 import kotlin.uuid.Uuid
 
 class ProfileSubjectInstanceViewModel(
     private val getProfileByIdUseCase: GetProfileByIdUseCase,
     private val getCourseConfigurationUseCase: GetCourseConfigurationUseCase,
-    private val setProfileDefaultLessonEnabledUseCase: SetProfileDefaultLessonEnabledUseCase
+    private val setProfileSubjectInstanceEnabledUseCase: SetProfileSubjectInstanceEnabledUseCase
 ) : ViewModel() {
     var state by mutableStateOf(ProfileSubjectInstanceState())
         private set
@@ -30,21 +30,21 @@ class ProfileSubjectInstanceViewModel(
         viewModelScope.launch {
             getProfileByIdUseCase(profileId).collectLatest { profile ->
                 if (profile !is Profile.StudentProfile) return@collectLatest
-                profile.getDefaultLessons().onEach {
+                profile.getSubjectInstances().onEach {
                     it.getCourseItem()
                     it.getTeacherItem()
                 }
                 state = state.copy(
                     profile = profile,
                     courses = getCourseConfigurationUseCase(profile),
-                    defaultLessons = profile.defaultLessonsConfiguration
-                        .mapKeys { (key, _) -> profile.defaultLessonItems.first { it.id == key } }
+                    subjectInstance = profile.subjectInstanceConfiguration
+                        .mapKeys { (key, _) -> profile.subjectInstanceItems.first { it.id == key } }
                         .toList()
                         .sortedBy { runBlocking { it.first.subject + (it.first.getCourseItem()?.name ?: "") + (it.first.getTeacherItem()?.name ?: "") } }
                         .toMap()
                 )
 
-                Logger.d { state.defaultLessons.keys.first().getTeacherItem().let {
+                Logger.d { state.subjectInstance.keys.first().getTeacherItem().let {
                     it?.name + " " + it.hashCode()
                 } }
             }
@@ -55,16 +55,16 @@ class ProfileSubjectInstanceViewModel(
         viewModelScope.launch {
             when (event) {
                 is ProfileSubjectInstanceEvent.ToggleCourseSelection -> {
-                    state.profile!!.getDefaultLessons()
+                    state.profile!!.getSubjectInstances()
                         .filter { it.getCourseItem()?.id == event.course.id }
-                        .let { defaultLessons ->
-                            setProfileDefaultLessonEnabledUseCase(state.profile!!, defaultLessons, event.isSelected)
-                            state = state.copy(defaultLessons = state.defaultLessons.plus(defaultLessons.map { it to event.isSelected }))
+                        .let { subjectInstances ->
+                            setProfileSubjectInstanceEnabledUseCase(state.profile!!, subjectInstances, event.isSelected)
+                            state = state.copy(subjectInstance = state.subjectInstance.plus(subjectInstances.map { it to event.isSelected }))
                         }
                 }
-                is ProfileSubjectInstanceEvent.ToggleDefaultLessonSelection -> {
-                    setProfileDefaultLessonEnabledUseCase(state.profile!!, event.defaultLesson, event.isSelected)
-                    state = state.copy(defaultLessons = state.defaultLessons.plus(event.defaultLesson to event.isSelected))
+                is ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection -> {
+                    setProfileSubjectInstanceEnabledUseCase(state.profile!!, event.subjectInstance, event.isSelected)
+                    state = state.copy(subjectInstance = state.subjectInstance.plus(event.subjectInstance to event.isSelected))
                 }
             }
         }
@@ -74,10 +74,10 @@ class ProfileSubjectInstanceViewModel(
 data class ProfileSubjectInstanceState(
     val profile: Profile.StudentProfile? = null,
     val courses: Map<Course, Boolean?> = emptyMap(),
-    val defaultLessons: Map<DefaultLesson, Boolean> = emptyMap()
+    val subjectInstance: Map<SubjectInstance, Boolean> = emptyMap()
 )
 
 sealed class ProfileSubjectInstanceEvent {
     data class ToggleCourseSelection(val course: Course, val isSelected: Boolean) : ProfileSubjectInstanceEvent()
-    data class ToggleDefaultLessonSelection(val defaultLesson: DefaultLesson, val isSelected: Boolean) : ProfileSubjectInstanceEvent()
+    data class ToggleSubjectInstanceSelection(val subjectInstance: SubjectInstance, val isSelected: Boolean) : ProfileSubjectInstanceEvent()
 }

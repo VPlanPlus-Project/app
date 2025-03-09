@@ -35,7 +35,7 @@ class SubstitutionPlanRepositoryImpl(
                     subject = lesson.subject,
                     isSubjectChanged = lesson.isSubjectChanged,
                     info = lesson.info,
-                    defaultLessonId = lesson.defaultLesson,
+                    subjectInstanceId = lesson.subjectInstance,
                     version = "${schoolId}_$newVersion",
                     isRoomChanged = lesson.isRoomChanged,
                     isTeacherChanged = lesson.isTeacherChanged

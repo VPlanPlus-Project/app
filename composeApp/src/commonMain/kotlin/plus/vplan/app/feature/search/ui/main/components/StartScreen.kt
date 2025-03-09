@@ -167,10 +167,10 @@ fun HomeworkCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                if (homework.defaultLessonItem != null) {
-                    SubjectIcon(Modifier.size(24.dp), homework.defaultLessonItem!!.subject)
+                if (homework.subjectInstanceItem != null) {
+                    SubjectIcon(Modifier.size(24.dp), homework.subjectInstanceItem!!.subject)
                     Text(
-                        text = homework.defaultLessonItem!!.subject,
+                        text = homework.subjectInstanceItem!!.subject,
                         style = MaterialTheme.typography.headlineSmall
                     )
                 }

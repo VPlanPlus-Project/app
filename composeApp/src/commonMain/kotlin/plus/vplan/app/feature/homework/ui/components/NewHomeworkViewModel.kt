@@ -11,7 +11,7 @@ import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
@@ -39,9 +39,9 @@ class NewHomeworkViewModel(
                 state.copy(
                     currentProfile = (currentProfile as? Profile.StudentProfile).also {
                         it?.getGroupItem()
-                        it?.getDefaultLessons()?.onEach { defaultLesson ->
-                            defaultLesson.getTeacherItem()
-                            defaultLesson.getCourseItem()
+                        it?.getSubjectInstances()?.onEach { subjectInstance ->
+                            subjectInstance.getTeacherItem()
+                            subjectInstance.getCourseItem()
                         }
                     },
                     isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppIdId == null) null else true,
@@ -57,7 +57,7 @@ class NewHomeworkViewModel(
                 is NewHomeworkEvent.AddTask -> state = state.copy(tasks = state.tasks.plus(Uuid.random() to event.task))
                 is NewHomeworkEvent.UpdateTask -> state = state.copy(tasks = state.tasks.plus(event.taskId to event.task))
                 is NewHomeworkEvent.RemoveTask -> state = state.copy(tasks = state.tasks.minus(event.taskId))
-                is NewHomeworkEvent.SelectDefaultLesson -> state = state.copy(selectedDefaultLesson = event.defaultLesson.also {
+                is NewHomeworkEvent.SelectSubjectInstance -> state = state.copy(selectedSubjectInstance = event.subjectInstance.also {
                     it?.getCourseItem()
                     it?.getTeacherItem()
                     it?.getGroupItems()
@@ -79,7 +79,7 @@ class NewHomeworkViewModel(
                     if (state.tasks.isEmpty()) return@launch
                     if (state.currentProfile == null) return@launch
                     if (state.selectedDate == null) return@launch
-                    createHomeworkUseCase(state.tasks.values.toList(), state.isPublic, state.selectedDate!!, state.selectedDefaultLesson, state.files)
+                    createHomeworkUseCase(state.tasks.values.toList(), state.isPublic, state.selectedDate!!, state.selectedSubjectInstance, state.files)
                 }
             }
         }
@@ -89,7 +89,7 @@ class NewHomeworkViewModel(
 data class NewHomeworkState(
     val tasks: Map<Uuid, String> = emptyMap(),
     val currentProfile: Profile.StudentProfile? = null,
-    val selectedDefaultLesson: DefaultLesson? = null,
+    val selectedSubjectInstance: SubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val isPublic: Boolean? = null,
     val files: List<AttachedFile> = emptyList(),
@@ -101,7 +101,7 @@ sealed class NewHomeworkEvent {
     data class UpdateTask(val taskId: Uuid, val task: String) : NewHomeworkEvent()
     data class RemoveTask(val taskId: Uuid) : NewHomeworkEvent()
 
-    data class SelectDefaultLesson(val defaultLesson: DefaultLesson?) : NewHomeworkEvent()
+    data class SelectSubjectInstance(val subjectInstance: SubjectInstance?) : NewHomeworkEvent()
     data class SelectDate(val date: LocalDate) : NewHomeworkEvent()
 
     data class SetVisibility(val isPublic: Boolean) : NewHomeworkEvent()

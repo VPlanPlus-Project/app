@@ -27,7 +27,6 @@ import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
-import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.repository.CourseRepository
@@ -102,11 +101,11 @@ class CourseRepositoryImpl(
             safeRequest(onError = { send(CacheState.Error(id.toString(), it)) }) {
                 val accessResponse = httpClient.get("${api.url}/api/v2.2/subject/course/$id")
                 if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
-                    vppDatabase.roomDao.deleteById(listOf(id))
+                    vppDatabase.courseDao.deleteById(listOf(id))
                     return@channelFlow send(CacheState.NotExisting(id.toString()))
                 }
 
-                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Room>()))
+                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Course>()))
                 val accessData = ResponseDataWrapper.fromJson<CourseUnauthenticatedResponse>(accessResponse.bodyAsText())
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
 
@@ -123,7 +122,7 @@ class CourseRepositoryImpl(
                 val response = httpClient.get("${api.url}/api/v2.2/subject/course/$id?include_teacher=true") {
                     school.authentication(this)
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Room>()))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Course>()))
                 val data = ResponseDataWrapper.fromJson<CourseItemResponse>(response.bodyAsText())
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 

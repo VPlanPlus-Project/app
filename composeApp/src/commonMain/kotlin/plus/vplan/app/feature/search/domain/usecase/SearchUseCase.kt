@@ -103,7 +103,7 @@ class SearchUseCase(
             homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
                 val homework = homeworkList.onEach { it.getTaskItems() }
                 results.value = results.value.plus(Result.Homework to homework.filter { it.taskItems!!.any { task -> query in task.content.lowercase() } }.onEach {
-                    it.getDefaultLessonItem() ?: it.getGroupItem()
+                    it.subjectInstance?.getFirstValue() ?: it.getGroupItem()
                     when (it) {
                         is Homework.CloudHomework -> it.getCreatedBy()
                         is Homework.LocalHomework -> it.getCreatedByProfile()

@@ -1,6 +1,6 @@
 package plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model
 
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.ProfileType
 
 sealed interface OnboardingProfile {
@@ -11,7 +11,7 @@ sealed interface OnboardingProfile {
     data class StudentProfile(
         override val id: Int,
         override val name: String,
-        val defaultLessons: List<DefaultLesson>
+        val subjectInstances: List<SubjectInstance>
     ) : OnboardingProfile {
         override val type: ProfileType = ProfileType.STUDENT
     }

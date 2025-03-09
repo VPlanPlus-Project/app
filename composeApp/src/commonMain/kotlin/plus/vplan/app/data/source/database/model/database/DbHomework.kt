@@ -13,7 +13,7 @@ import kotlin.uuid.Uuid
     primaryKeys = ["id"],
     indices = [
         Index("id", unique = true),
-        Index("default_lesson_id"),
+        Index("subject_instance_id"),
         Index("group_id"),
         Index("created_by_vpp_id"),
         Index("created_by_profile_id")
@@ -30,7 +30,7 @@ import kotlin.uuid.Uuid
 )
 data class DbHomework(
     @ColumnInfo(name = "id") val id: Int,
-    @ColumnInfo(name = "default_lesson_id") val defaultLessonId: Int?,
+    @ColumnInfo(name = "subject_instance_id") val subjectInstanceId: Int?,
     @ColumnInfo(name = "group_id") val groupId: Int?,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "due_to") val dueTo: LocalDate,

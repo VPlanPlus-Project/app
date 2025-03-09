@@ -19,11 +19,12 @@ import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateDefaultLessonsUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
@@ -48,9 +49,10 @@ class FullSyncUseCase(
     private val roomRepository: RoomRepository,
     private val courseRepository: CourseRepository,
     private val vppIdRepository: VppIdRepository,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
-    private val updateDefaultLessonsUseCase: UpdateDefaultLessonsUseCase,
+    private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val updateAssessmentUseCase: UpdateAssessmentUseCase,
     private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
@@ -121,7 +123,7 @@ class FullSyncUseCase(
                     }
                     else -> Unit
                 }
-                updateDefaultLessonsUseCase(school)
+                updateSubjectInstanceUseCase(school)
                 updateHolidaysUseCase(school)
                 updateWeeksUseCase(school)
                 val today = LocalDate.now()
@@ -163,6 +165,14 @@ class FullSyncUseCase(
                 courseRepository.getById(course.id, true).getFirstValue()
             }
 
+        subjectInstanceRepository.getAll().first()
+            .forEach { subjectInstance ->
+                if (subjectInstance.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
+                subjectInstanceRepository.getById(subjectInstance.id, true).getFirstValue()
+            }
+
         syncGradesUseCase(true)
+
+        Logger.i { "FullSync done" }
     }
 }

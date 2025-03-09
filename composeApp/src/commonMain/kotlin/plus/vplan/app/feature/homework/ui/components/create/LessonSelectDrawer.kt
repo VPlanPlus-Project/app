@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.thenIf
@@ -51,9 +51,9 @@ import vplanplus.composeapp.generated.resources.users
 @Composable fun LessonSelectDrawer(
     group: Group,
     allowGroup: Boolean,
-    defaultLessons: List<DefaultLesson>,
-    selectedDefaultLesson: DefaultLesson?,
-    onSelectDefaultLesson: (DefaultLesson?) -> Unit,
+    subjectInstances: List<SubjectInstance>,
+    selectedSubjectInstance: SubjectInstance?,
+    onSelectSubjectInstance: (SubjectInstance?) -> Unit,
     onDismiss: () -> Unit
 ) {
     val modalState = rememberModalBottomSheetState()
@@ -66,9 +66,9 @@ import vplanplus.composeapp.generated.resources.users
         LessonSelectContent(
             group = group,
             allowGroup = allowGroup,
-            defaultLessons = defaultLessons,
-            selectedDefaultLesson = selectedDefaultLesson,
-            onSelectDefaultLesson = { onSelectDefaultLesson(it); hideSheet() }
+            subjectInstances = subjectInstances,
+            selectedSubjectInstance = selectedSubjectInstance,
+            onSelectSubjectInstance = { onSelectSubjectInstance(it); hideSheet() }
         )
     }
 }
@@ -77,9 +77,9 @@ import vplanplus.composeapp.generated.resources.users
 private fun LessonSelectContent(
     group: Group,
     allowGroup: Boolean,
-    defaultLessons: List<DefaultLesson>,
-    selectedDefaultLesson: DefaultLesson?,
-    onSelectDefaultLesson: (DefaultLesson?) -> Unit
+    subjectInstances: List<SubjectInstance>,
+    selectedSubjectInstance: SubjectInstance?,
+    onSelectSubjectInstance: (SubjectInstance?) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -89,17 +89,17 @@ private fun LessonSelectContent(
     ) {
         if (allowGroup) {
             AnimatedContent(
-                targetState = selectedDefaultLesson == null,
+                targetState = selectedSubjectInstance == null,
                 transitionSpec = { fadeIn() togetherWith  fadeOut() }
-            ) { isDefaultLessonNotSelected ->
+            ) { isSubjectInstanceNotSelected ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 48.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .thenIf(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) { isDefaultLessonNotSelected }
+                        .thenIf(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) { isSubjectInstanceNotSelected }
                         .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
-                        .clickable { onSelectDefaultLesson(null) }
+                        .clickable { onSelectSubjectInstance(null) }
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -108,18 +108,18 @@ private fun LessonSelectContent(
                         painter = painterResource(Res.drawable.users),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
-                        tint = if (isDefaultLessonNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        tint = if (isSubjectInstanceNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                     )
                     Column {
                         Text(
                             text = "Kein Fach",
                             style = MaterialTheme.typography.titleSmall,
-                            color = if (isDefaultLessonNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                            color = if (isSubjectInstanceNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
                             text = "Für Klasse ${group.name}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (isDefaultLessonNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                            color = if (isSubjectInstanceNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 }
@@ -133,32 +133,32 @@ private fun LessonSelectContent(
                 .clip(RoundedCornerShape(8.dp))
                 .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
         ) {
-            defaultLessons.forEach { defaultLesson ->
+            subjectInstances.forEach { subjectInstance ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .thenIf(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) { selectedDefaultLesson == defaultLesson }
+                        .thenIf(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) { selectedSubjectInstance == subjectInstance }
                         .border(0.5.dp, MaterialTheme.colorScheme.outline)
-                        .clickable { onSelectDefaultLesson(defaultLesson) }
+                        .clickable { onSelectSubjectInstance(subjectInstance) }
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (selectedDefaultLesson == defaultLesson) SubjectIcon(Modifier.size(24.dp), defaultLesson.subject, containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
-                    else SubjectIcon(Modifier.size(24.dp), defaultLesson.subject)
+                    if (selectedSubjectInstance == subjectInstance) SubjectIcon(Modifier.size(24.dp), subjectInstance.subject, containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+                    else SubjectIcon(Modifier.size(24.dp), subjectInstance.subject)
                     Column {
                         Text(
                             text = buildString {
-                                append(defaultLesson.subject)
-                                if (defaultLesson.course != null) append(" (${defaultLesson.courseItem!!.name})")
+                                append(subjectInstance.subject)
+                                if (subjectInstance.course != null) append(" (${subjectInstance.courseItem!!.name})")
                             },
                             style = MaterialTheme.typography.titleSmall,
-                            color = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                            color = if (selectedSubjectInstance == subjectInstance) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text = defaultLesson.teacherItem?.name ?: "Kein Lehrer",
+                            text = subjectInstance.teacherItem?.name ?: "Kein Lehrer",
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (selectedDefaultLesson == defaultLesson) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                            color = if (selectedSubjectInstance == subjectInstance) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 }

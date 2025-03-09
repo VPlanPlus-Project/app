@@ -17,7 +17,7 @@ data class Assessment(
     val createdAt: LocalDateTime,
     val date: LocalDate,
     val isPublic: Boolean,
-    val defaultLessonId: Int,
+    val subjectInstanceId: Int,
     val description: String,
     val type: Type,
     val files: List<Int>,
@@ -29,11 +29,11 @@ data class Assessment(
         SHORT_TEST, CLASS_TEST, PROJECT, ORAL, OTHER
     }
 
-    var subjectInstanceItem: DefaultLesson? = null
+    var subjectInstanceItem: SubjectInstance? = null
         private set
 
-    suspend fun getSubjectInstanceItem(): DefaultLesson {
-        return subjectInstanceItem ?: App.defaultLessonSource.getSingleById(defaultLessonId)!!.also { subjectInstanceItem = it }
+    suspend fun getSubjectInstanceItem(): SubjectInstance {
+        return subjectInstanceItem ?: App.subjectInstanceSource.getSingleById(subjectInstanceId)!!.also { subjectInstanceItem = it }
     }
 
     var createdByVppId: VppId? = null
@@ -63,5 +63,5 @@ data class Assessment(
         override fun getEntityId(): String = this.id.toString()
     }
 
-    val subjectInstance by lazy { App.defaultLessonSource.getById(defaultLessonId).filterIsInstance<CacheState.Done<DefaultLesson>>().map { it.data } }
+    val subjectInstance by lazy { App.subjectInstanceSource.getById(subjectInstanceId).filterIsInstance<CacheState.Done<SubjectInstance>>().map { it.data } }
 }

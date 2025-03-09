@@ -16,7 +16,7 @@ import plus.vplan.app.App
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DayRepositoryImpl
-import plus.vplan.app.data.repository.DefaultLessonRepositoryImpl
+import plus.vplan.app.data.repository.SubjectInstanceRepositoryImpl
 import plus.vplan.app.data.repository.FileRepositoryImpl
 import plus.vplan.app.data.repository.GroupRepositoryImpl
 import plus.vplan.app.data.repository.HomeworkRepositoryImpl
@@ -35,7 +35,7 @@ import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.DefaultLessonRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -53,7 +53,7 @@ import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
-import plus.vplan.app.domain.source.DefaultLessonSource
+import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.FileSource
 import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
@@ -118,7 +118,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
     singleOf(::IndiwareRepositoryImpl).bind<IndiwareRepository>()
     singleOf(::CourseRepositoryImpl).bind<CourseRepository>()
-    singleOf(::DefaultLessonRepositoryImpl).bind<DefaultLessonRepository>()
+    singleOf(::SubjectInstanceRepositoryImpl).bind<SubjectInstanceRepository>()
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
     singleOf(::KeyValueRepositoryImpl).bind<KeyValueRepository>()
     singleOf(::WeekRepositoryImpl).bind<WeekRepository>()
@@ -165,7 +165,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         App.profileSource = ProfileSource(koin.get())
         App.groupSource = GroupSource(koin.get())
         App.schoolSource = SchoolSource(koin.get())
-        App.defaultLessonSource = DefaultLessonSource(koin.get())
+        App.subjectInstanceSource = SubjectInstanceSource(koin.get())
         App.daySource = DaySource(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
         App.timetableSource = TimetableSource(koin.get())
         App.weekSource = WeekSource(koin.get())

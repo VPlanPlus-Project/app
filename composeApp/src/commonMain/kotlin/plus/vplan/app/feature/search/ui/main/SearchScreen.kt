@@ -224,9 +224,9 @@ private fun SearchScreenContent(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.size(24.dp)) {
-                                    result.homework.defaultLessonItem?.let { defaultLesson ->
+                                    result.homework.subjectInstanceItem?.let { subjectInstance ->
                                         Icon(
-                                            painter = painterResource(defaultLesson.subject.subjectIcon()),
+                                            painter = painterResource(subjectInstance.subject.subjectIcon()),
                                             modifier = Modifier.fillMaxSize(),
                                             contentDescription = null
                                         )
@@ -236,7 +236,7 @@ private fun SearchScreenContent(
                                 Column {
                                     Row {
                                         Text(
-                                            text = result.homework.defaultLessonItem?.subject ?: result.homework.groupItem?.name ?: "Unbekannte Zuweisung",
+                                            text = result.homework.subjectInstanceItem?.subject ?: result.homework.groupItem?.name ?: "Unbekannte Zuweisung",
                                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                                         )
                                         Text(
@@ -284,9 +284,9 @@ private fun SearchScreenContent(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.size(24.dp)) {
-                                    result.assessment.subjectInstanceItem?.let { defaultLesson ->
+                                    result.assessment.subjectInstanceItem?.let { subjectInstance ->
                                         Icon(
-                                            painter = painterResource(defaultLesson.subject.subjectIcon()),
+                                            painter = painterResource(subjectInstance.subject.subjectIcon()),
                                             modifier = Modifier.fillMaxSize(),
                                             contentDescription = null
                                         )

@@ -83,13 +83,13 @@ fun FollowingLesson(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val defaultLessonState = lesson.defaultLesson?.let {
-                        App.defaultLessonSource.getById(it).collectAsLoadingState(it.toString())
+                    val subjectInstanceState = lesson.subjectInstance?.let {
+                        App.subjectInstanceSource.getById(it).collectAsLoadingState(it.toString())
                     }
                     Text(
                         text = buildString {
                             if (lesson.subject != null) append(lesson.subject)
-                            else if (defaultLessonState?.value is CacheState.Done) append((defaultLessonState.value as CacheState.Done).data.subject + " entfällt")
+                            else if (subjectInstanceState?.value is CacheState.Done) append((subjectInstanceState.value as CacheState.Done).data.subject + " entfällt")
                             else append("Entfall")
                         },
                         style = headerFont(),

@@ -13,7 +13,7 @@ class GetAssessmentsForProfileUseCase(
             items
                 .filter {
                     (it.creator is AppEntity.Profile && it.creator.id == profile.id) || (it.creator is AppEntity.VppId && it.creator.id == profile.vppIdId) ||
-                            (profile.group in it.getSubjectInstanceItem().groups && profile.defaultLessonsConfiguration.any { (id, allowed) -> it.defaultLessonId == id && allowed })
+                            (profile.group in it.getSubjectInstanceItem().groups && profile.subjectInstanceConfiguration.any { (id, allowed) -> it.subjectInstanceId == id && allowed })
                 }.onEach {
                     it.getCreatedByProfileItem()
                     it.getCreatedByVppIdItem()

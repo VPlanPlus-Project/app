@@ -64,7 +64,7 @@ fun CurrentLessonCard(
                     Text(
                         text = buildString {
                             if (currentLesson.subject != null) append(currentLesson.subject)
-                            else if (currentLesson.defaultLesson != null && currentLesson is Lesson.SubstitutionPlanLesson) append(currentLesson.defaultLessonItem!!.subject + " entfällt")
+                            else if (currentLesson.subjectInstance != null && currentLesson is Lesson.SubstitutionPlanLesson) append(currentLesson.subjectInstanceItem!!.subject + " entfällt")
                             else append("Entfall")
                         },
                         style = MaterialTheme.typography.titleMedium,

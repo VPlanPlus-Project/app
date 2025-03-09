@@ -1,17 +1,19 @@
-package plus.vplan.app.data.source.database.model.database
+package plus.vplan.app.data.source.database.model.database.foreign_key
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import plus.vplan.app.data.source.database.model.database.DbProfile
+import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import kotlin.uuid.Uuid
 
 @Entity(
-    tableName = "profiles_group_disabled_default_lessons",
-    primaryKeys = ["profile_id", "default_lesson_id"],
+    tableName = "fk_group_profile_disabled_subject_instances",
+    primaryKeys = ["profile_id", "subject_instance_id"],
     indices = [
         Index(value = ["profile_id"]),
-        Index(value = ["default_lesson_id"])
+        Index(value = ["subject_instance_id"])
     ],
     foreignKeys = [
         ForeignKey(
@@ -22,15 +24,15 @@ import kotlin.uuid.Uuid
             onUpdate = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = DbDefaultLesson::class,
+            entity = DbSubjectInstance::class,
             parentColumns = ["id"],
-            childColumns = ["default_lesson_id"],
+            childColumns = ["subject_instance_id"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
         )
     ]
 )
-data class DbGroupProfileDisabledDefaultLessons(
+data class FKGroupProfileDisabledSubjectInstances(
     @ColumnInfo(name = "profile_id") val profileId: Uuid,
-    @ColumnInfo(name = "default_lesson_id") val defaultLessonId: Int,
+    @ColumnInfo(name = "subject_instance_id") val subjectInstanceId: Int,
 )

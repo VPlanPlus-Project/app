@@ -194,7 +194,7 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = state.canEdit,
                 allowGroup = true,
-                subject = homework.defaultLessonItem?.subject,
+                subject = homework.subjectInstanceItem?.subject,
                 group = homework.groupItem,
                 onClick = { showLessonSelectDrawer = true },
             )
@@ -307,9 +307,9 @@ fun DetailPage(
         LessonSelectDrawer(
             group = profile.groupItem!!,
             allowGroup = true,
-            defaultLessons = profile.defaultLessonItems.filter { defaultLesson -> profile.defaultLessonsConfiguration.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
-            selectedDefaultLesson = homework.defaultLessonItem,
-            onSelectDefaultLesson = { onEvent(HomeworkDetailEvent.UpdateDefaultLesson(it)) },
+            subjectInstances = profile.subjectInstanceItems.filter { subjectInstance -> profile.subjectInstanceConfiguration.filterValues { !it }.none { it.key == subjectInstance.id } }.sortedBy { it.subject },
+            selectedSubjectInstance = homework.subjectInstanceItem,
+            onSelectSubjectInstance = { onEvent(HomeworkDetailEvent.UpdateSubjectInstance(it)) },
             onDismiss = { showLessonSelectDrawer = false }
         )
     }

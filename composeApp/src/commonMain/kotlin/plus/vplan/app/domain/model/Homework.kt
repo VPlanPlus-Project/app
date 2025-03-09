@@ -24,22 +24,16 @@ sealed class Homework(
     abstract val createdAt: Instant
     abstract val dueTo: LocalDate
     abstract val taskIds: List<Int>
-    abstract val defaultLesson: Int?
+    abstract val subjectInstanceId: Int?
     abstract val group: Int?
     abstract val files: List<Int>
     override fun getEntityId(): String = this.id.toString()
     abstract val cachedAt: Instant
 
-    var defaultLessonItem: DefaultLesson? = null
+    var subjectInstanceItem: SubjectInstance? = null
         private set
 
-    suspend fun getDefaultLessonItem(): DefaultLesson? {
-        return defaultLessonItem ?: defaultLesson?.let { defaultLessonId ->
-            App.defaultLessonSource.getSingleById(defaultLessonId).also { defaultLessonItem = it }
-        }
-    }
-
-    val subjectInstance by lazy { defaultLesson?.let { App.defaultLessonSource.getById(it) } }
+    val subjectInstance by lazy { this.subjectInstanceId?.let { App.subjectInstanceSource.getById(it) } }
     val tasks by lazy {
         if (taskIds.isEmpty()) return@lazy flowOf(emptyList())
         combine(taskIds.map { id -> App.homeworkTaskSource.getById(id).filterIsInstance<CacheState.Done<HomeworkTask>>().map { it.data } }) { it.toList() }
@@ -112,7 +106,7 @@ sealed class Homework(
         override val createdAt: Instant,
         override val dueTo: LocalDate,
         override val taskIds: List<Int>,
-        override val defaultLesson: Int?,
+        override val subjectInstanceId: Int?,
         override val group: Int?,
         override val files: List<Int>,
         override val cachedAt: Instant,
@@ -121,12 +115,12 @@ sealed class Homework(
     ) : Homework(
         creator = AppEntity.VppId(createdBy)
     ) {
-        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
+        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, subjectInstance: Int?, group: Int?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
                 taskIds = tasks,
-                defaultLesson = defaultLesson,
+                subjectInstanceId = subjectInstance,
                 group = group
             )
         }
@@ -146,7 +140,7 @@ sealed class Homework(
         override val createdAt: Instant,
         override val dueTo: LocalDate,
         override val taskIds: List<Int>,
-        override val defaultLesson: Int?,
+        override val subjectInstanceId: Int?,
         override val files: List<Int>,
         override val cachedAt: Instant,
         val createdByProfile: Uuid
@@ -168,12 +162,12 @@ sealed class Homework(
             }
         }
 
-        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
+        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, subjectInstance: Int?, group: Int?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
                 taskIds = tasks,
-                defaultLesson = defaultLesson
+                subjectInstanceId = subjectInstance
             )
         }
     }
@@ -182,7 +176,7 @@ sealed class Homework(
         createdAt: Instant = this.createdAt,
         dueTo: LocalDate = this.dueTo,
         tasks: List<Int> = this.taskIds,
-        defaultLesson: Int? = this.defaultLesson,
+        subjectInstance: Int? = this.subjectInstanceId,
         group: Int? = this.group
     ): Homework
 }

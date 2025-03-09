@@ -13,7 +13,7 @@ import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.RenamePr
 import plus.vplan.app.feature.profile.settings.page.main.ui.ProfileSettingsViewModel
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.VppIdManagementViewModel
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.GetCourseConfigurationUseCase
-import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileDefaultLessonEnabledUseCase
+import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileSubjectInstanceEnabledUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.ui.components.ProfileSubjectInstanceViewModel
 
 val profileSettingsModule = module {
@@ -26,7 +26,7 @@ val profileSettingsModule = module {
     singleOf(::DeleteProfileUseCase)
 
     singleOf(::GetCourseConfigurationUseCase)
-    singleOf(::SetProfileDefaultLessonEnabledUseCase)
+    singleOf(::SetProfileSubjectInstanceEnabledUseCase)
 
     viewModelOf(::ProfileSettingsViewModel)
     viewModelOf(::VppIdManagementViewModel)

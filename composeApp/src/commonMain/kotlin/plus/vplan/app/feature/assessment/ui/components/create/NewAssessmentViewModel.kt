@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.CreateAssessmentUseCase
@@ -33,10 +33,10 @@ class NewAssessmentViewModel(
                 state = state.copy(
                     currentProfile = (profile as? Profile.StudentProfile).also {
                         it?.getGroupItem()
-                        it?.getDefaultLessons()?.onEach { defaultLesson ->
-                            defaultLesson.getTeacherItem()
-                            defaultLesson.getCourseItem()
-                            defaultLesson.getGroupItems()
+                        it?.getSubjectInstances()?.onEach { subjectInstance ->
+                            subjectInstance.getTeacherItem()
+                            subjectInstance.getCourseItem()
+                            subjectInstance.getGroupItems()
                         }
                     },
                     isVisible = if ((profile as? Profile.StudentProfile)?.getVppIdItem() != null) true else null
@@ -54,7 +54,7 @@ class NewAssessmentViewModel(
         viewModelScope.launch {
             when (event) {
                 is NewAssessmentEvent.HideVppIdBanner -> hideVppIdBannerUseCase()
-                is NewAssessmentEvent.SelectDefaultLesson -> state = state.copy(selectedDefaultLesson = event.defaultLesson)
+                is NewAssessmentEvent.SelectSubjectInstance -> state = state.copy(selectedSubjectInstance = event.subjectInstance)
                 is NewAssessmentEvent.SelectDate -> state = state.copy(selectedDate = event.date)
                 is NewAssessmentEvent.SetVisibility -> state = state.copy(isVisible = event.isVisible)
                 is NewAssessmentEvent.UpdateDescription -> state = state.copy(description = event.description)
@@ -69,7 +69,7 @@ class NewAssessmentViewModel(
                     text = state.description,
                     isPublic = state.isVisible,
                     date = state.selectedDate!!,
-                    defaultLesson = state.selectedDefaultLesson!!,
+                    subjectInstance = state.selectedSubjectInstance!!,
                     type = state.type!!,
                     selectedFiles = state.files
                 )
@@ -81,7 +81,7 @@ class NewAssessmentViewModel(
 data class NewAssessmentState(
     val currentProfile: Profile.StudentProfile? = null,
     val canShowVppIdBanner: Boolean = false,
-    val selectedDefaultLesson: DefaultLesson? = null,
+    val selectedSubjectInstance: SubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val description: String = "",
     val isVisible: Boolean? = null,
@@ -91,7 +91,7 @@ data class NewAssessmentState(
 
 sealed class NewAssessmentEvent {
     data object HideVppIdBanner : NewAssessmentEvent()
-    data class SelectDefaultLesson(val defaultLesson: DefaultLesson) : NewAssessmentEvent()
+    data class SelectSubjectInstance(val subjectInstance: SubjectInstance) : NewAssessmentEvent()
     data class SelectDate(val date: LocalDate) : NewAssessmentEvent()
     data class SetVisibility(val isVisible: Boolean) : NewAssessmentEvent()
     data class UpdateDescription(val description: String) : NewAssessmentEvent()

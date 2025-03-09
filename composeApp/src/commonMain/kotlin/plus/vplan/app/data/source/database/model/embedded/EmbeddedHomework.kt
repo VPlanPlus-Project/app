@@ -27,7 +27,7 @@ data class EmbeddedHomework(
                 dueTo = homework.dueTo,
                 createdAt = homework.createdAt,
                 createdByProfile = homework.createdByProfileId!!,
-                defaultLesson = homework.defaultLessonId,
+                subjectInstanceId = homework.subjectInstanceId,
                 files = files.map { it.fileId },
                 taskIds = tasks.map { it.id },
                 cachedAt = homework.cachedAt
@@ -38,7 +38,7 @@ data class EmbeddedHomework(
             dueTo = homework.dueTo,
             createdAt = homework.createdAt,
             createdBy = homework.createdBy!!,
-            defaultLesson = homework.defaultLessonId,
+            subjectInstanceId = homework.subjectInstanceId,
             group = homework.groupId,
             isPublic = homework.isPublic,
             files = files.map { it.fileId },

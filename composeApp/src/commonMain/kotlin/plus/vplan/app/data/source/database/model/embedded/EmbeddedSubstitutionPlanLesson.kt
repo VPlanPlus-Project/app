@@ -44,7 +44,7 @@ data class EmbeddedSubstitutionPlanLesson(
             rooms = rooms.map { it.roomId },
             isRoomChanged = substitutionPlanLesson.isRoomChanged,
             groups = groups.map { it.groupId },
-            defaultLesson = substitutionPlanLesson.defaultLessonId,
+            subjectInstance = substitutionPlanLesson.subjectInstanceId,
             lessonTime = substitutionPlanLesson.lessonTimeId,
             info = substitutionPlanLesson.info
         )

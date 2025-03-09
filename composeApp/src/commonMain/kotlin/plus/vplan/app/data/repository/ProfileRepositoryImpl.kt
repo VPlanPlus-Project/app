@@ -6,11 +6,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
-import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.Room
@@ -31,7 +31,7 @@ class ProfileRepositoryImpl(
 
     override suspend fun upsert(
         group: Group,
-        disabledDefaultLessons: List<DefaultLesson>
+        disabledSubjectInstances: List<SubjectInstance>
     ): Profile.StudentProfile {
         val id = Uuid.random()
         vppDatabase.profileDao.upsert(
@@ -48,10 +48,10 @@ class ProfileRepositoryImpl(
                 vppId = null
             )
         )
-        disabledDefaultLessons.forEach {
-            vppDatabase.profileDao.insertDisabledDefaultLessons(
+        disabledSubjectInstances.forEach {
+            vppDatabase.profileDao.insertDisabledSubjectInstances(
                 profileId = id,
-                defaultLessonId = it.id
+                subjectInstanceId = it.id
             )
         }
 
@@ -98,16 +98,16 @@ class ProfileRepositoryImpl(
         return getById(id).first { it != null } as Profile.RoomProfile
     }
 
-    override suspend fun setDefaultLessonEnabled(
+    override suspend fun setSubjectInstancesEnabled(
         profileId: Uuid,
-        defaultLessonIds: List<Int>,
+        subjectInstanceIds: List<Int>,
         enable: Boolean
     ) {
-        if (enable) vppDatabase.profileDao.deleteDisabledDefaultLessons(profileId, defaultLessonIds)
-        else vppDatabase.profileDao.upsertGroupProfileDisabledDefaultLessons(defaultLessonIds.map {
-            DbGroupProfileDisabledDefaultLessons(
+        if (enable) vppDatabase.profileDao.deleteDisabledSubjectInstances(profileId, subjectInstanceIds)
+        else vppDatabase.profileDao.upsertGroupProfileDisabledSubjectInstances(subjectInstanceIds.map {
+            FKGroupProfileDisabledSubjectInstances(
                 profileId = profileId,
-                defaultLessonId = it
+                subjectInstanceId = it
             )
         })
     }

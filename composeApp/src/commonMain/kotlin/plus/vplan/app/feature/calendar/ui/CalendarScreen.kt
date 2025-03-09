@@ -491,7 +491,7 @@ private fun CalendarScreenContent(
                                                                             Text(text = buildAnnotatedString {
                                                                                 withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
                                                                                     if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                                        append((lesson as Lesson.SubstitutionPlanLesson).defaultLessonItem!!.subject)
+                                                                                        append((lesson as Lesson.SubstitutionPlanLesson).subjectInstanceItem!!.subject)
                                                                                     } else append(lesson.subject.toString())
                                                                                 }
                                                                             }, style = MaterialTheme.typography.bodySmall)

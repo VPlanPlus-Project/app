@@ -14,7 +14,7 @@ import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.CourseRepository
-import plus.vplan.app.domain.repository.DefaultLessonRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -32,7 +32,7 @@ class SetUpSchoolDataUseCase(
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
     private val courseRepository: CourseRepository,
-    private val defaultLessonRepository: DefaultLessonRepository,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val weekRepository: WeekRepository,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase
 ) {
@@ -132,17 +132,17 @@ class SetUpSchoolDataUseCase(
 
             courseRepository.getBySchool(school.id, true).first()
             val courses = baseData.data.classes
-                .flatMap { baseDataClass -> baseDataClass.defaultLessons.mapNotNull { it.course }.map { Course.fromIndiware(sp24Id, it.name, teachers.firstOrNull { t -> t.name == it.teacher }) } }
+                .flatMap { baseDataClass -> baseDataClass.subjectInstances.mapNotNull { it.course }.map { Course.fromIndiware(sp24Id, it.name, teachers.firstOrNull { t -> t.name == it.teacher }) } }
                 .distinct()
                 .onEach { courseRepository.getByIndiwareId(it).getFirstValue() }
 
-            defaultLessonRepository.download(school.id, school.getSchoolApiAccess())
+            subjectInstanceRepository.download(school.id, school.getSchoolApiAccess())
 
-            defaultLessonRepository.getBySchool(school.id, true).first()
-            val defaultLessons = baseData.data.classes
-                .flatMap { baseDataClass -> baseDataClass.defaultLessons.map { it.defaultLessonNumber } }
+            subjectInstanceRepository.getBySchool(school.id, true).first()
+            val subjectInstances = baseData.data.classes
+                .flatMap { baseDataClass -> baseDataClass.subjectInstances.map { it.subjectInstanceNumber } }
                 .distinct()
-                .map { defaultLessonRepository.getByIndiwareId(it).getFirstValue() }
+                .map { subjectInstanceRepository.getByIndiwareId(it).getFirstValue() }
 
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.DONE
             return@flow emitResult()

@@ -47,7 +47,7 @@ data class IndiwareBaseData(
     data class Class(
         val name: String,
         val lessonTimes: List<LessonTime>,
-        val defaultLessons: List<DefaultLesson>
+        val subjectInstances: List<SubjectInstance>
     ) {
         data class LessonTime(
             val start: LocalTime,
@@ -55,10 +55,10 @@ data class IndiwareBaseData(
             val lessonNumber: Int
         )
 
-        data class DefaultLesson(
+        data class SubjectInstance(
             val subject: String,
             val teacher: String?,
-            val defaultLessonNumber: String,
+            val subjectInstanceNumber: String,
             val course: Course?
         )
 
@@ -123,7 +123,7 @@ data class IndiwareSubstitutionPlan(
             val room: List<String>,
             val roomChanged: Boolean,
             val info: String?,
-            val defaultLessonNumber: Int?,
+            val subjectInstanceNumber: Int?,
             val start: LocalTime,
             val end: LocalTime
         )

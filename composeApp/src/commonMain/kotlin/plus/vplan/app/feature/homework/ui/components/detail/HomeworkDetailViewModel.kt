@@ -16,7 +16,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
@@ -28,7 +29,7 @@ import plus.vplan.app.feature.homework.domain.usecase.DeleteFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DownloadFileUseCase
-import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDefaultLessonUseCase
+import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkSubjectInstanceUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDueToUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkVisibilityUseCase
 import plus.vplan.app.feature.homework.domain.usecase.RenameFileUseCase
@@ -42,7 +43,7 @@ class HomeworkDetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val toggleTaskDoneUseCase: ToggleTaskDoneUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
-    private val editHomeworkDefaultLessonUseCase: EditHomeworkDefaultLessonUseCase,
+    private val editHomeworkSubjectInstanceUseCase: EditHomeworkSubjectInstanceUseCase,
     private val editHomeworkDueToUseCase: EditHomeworkDueToUseCase,
     private val editHomeworkVisibilityUseCase: EditHomeworkVisibilityUseCase,
     private val deleteHomeworkUseCase: DeleteHomeworkUseCase,
@@ -87,7 +88,7 @@ class HomeworkDetailViewModel(
         viewModelScope.launch {
             when (event) {
                 is HomeworkDetailEvent.ToggleTaskDone -> toggleTaskDoneUseCase(event.task, state.profile!!)
-                is HomeworkDetailEvent.UpdateDefaultLesson -> editHomeworkDefaultLessonUseCase(state.homework!!, event.defaultLesson, state.profile!!)
+                is HomeworkDetailEvent.UpdateSubjectInstance -> editHomeworkSubjectInstanceUseCase(state.homework!!, event.subjectInstance, state.profile!!)
                 is HomeworkDetailEvent.UpdateDueTo -> editHomeworkDueToUseCase(state.homework!!, event.dueTo, state.profile!!)
                 is HomeworkDetailEvent.UpdateVisibility -> editHomeworkVisibilityUseCase(state.homework as Homework.CloudHomework, event.isPublic, state.profile!!)
                 is HomeworkDetailEvent.Reload -> {
@@ -158,7 +159,7 @@ data class HomeworkDetailState(
 
 sealed class HomeworkDetailEvent {
     data class ToggleTaskDone(val task: Homework.HomeworkTask) : HomeworkDetailEvent()
-    data class UpdateDefaultLesson(val defaultLesson: DefaultLesson?) : HomeworkDetailEvent()
+    data class UpdateSubjectInstance(val subjectInstance: SubjectInstance?) : HomeworkDetailEvent()
     data class UpdateDueTo(val dueTo: LocalDate) : HomeworkDetailEvent()
     data class UpdateVisibility(val isPublic: Boolean) : HomeworkDetailEvent()
     data class AddTask(val task: String) : HomeworkDetailEvent()
@@ -175,7 +176,7 @@ sealed class HomeworkDetailEvent {
 
 private suspend fun Profile.StudentProfile.prefetch() {
     this.getGroupItem()
-    this.getDefaultLessons().onEach {
+    this.getSubjectInstances().onEach {
         it.getCourseItem()
         it.getTeacherItem()
     }
@@ -183,7 +184,7 @@ private suspend fun Profile.StudentProfile.prefetch() {
 
 private suspend fun Homework.prefetch() {
     this.getGroupItem()
-    this.getDefaultLessonItem()
+    this.subjectInstance?.getFirstValue()
     this.getFileItems()
     if (this is Homework.CloudHomework) this.getCreatedBy()
 }

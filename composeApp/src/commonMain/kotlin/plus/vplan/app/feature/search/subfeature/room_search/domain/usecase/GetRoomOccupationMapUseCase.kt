@@ -69,7 +69,7 @@ sealed class Occupancy(
     val start: LocalDateTime,
     val end: LocalDateTime
 ) {
-    data class Lesson private constructor(val lesson: plus.vplan.app.domain.model.Lesson, val date: LocalDate) : Occupancy(lesson.lessonTimeItem!!.start.atDate(date), lesson.lessonTimeItem!!.end.atDate(date)) {
+    data class Lesson(val lesson: plus.vplan.app.domain.model.Lesson, val date: LocalDate) : Occupancy(lesson.lessonTimeItem!!.start.atDate(date), lesson.lessonTimeItem!!.end.atDate(date)) {
         constructor(lesson: plus.vplan.app.domain.model.Lesson.SubstitutionPlanLesson): this(lesson, lesson.date)
         constructor(lesson: plus.vplan.app.domain.model.Lesson.TimetableLesson, contextDate: LocalDate): this(lesson, date = contextDate)
     }

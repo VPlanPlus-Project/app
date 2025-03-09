@@ -172,12 +172,12 @@ private fun ProfileSubjectInstanceContent(
                         )
                     }
                 }
-                items(state.defaultLessons.toList()) { (defaultLesson, isSelected) ->
+                items(state.subjectInstance.toList()) { (subjectInstance, isSelected) ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { onEvent(ProfileSubjectInstanceEvent.ToggleDefaultLessonSelection(defaultLesson, !isSelected)) }
+                            .clickable { onEvent(ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection(subjectInstance, !isSelected)) }
                             .padding(start = 8.dp, end = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -193,18 +193,18 @@ private fun ProfileSubjectInstanceContent(
                         ) {
                             Column {
                                 Text(
-                                    text = defaultLesson.subject,
+                                    text = subjectInstance.subject,
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                if (defaultLesson.courseItem != null) Text(
-                                    text = defaultLesson.courseItem!!.name,
+                                if (subjectInstance.courseItem != null) Text(
+                                    text = subjectInstance.courseItem!!.name,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            if (defaultLesson.teacherItem != null) Text(
-                                text = defaultLesson.teacherItem!!.name,
+                            if (subjectInstance.teacherItem != null) Text(
+                                text = subjectInstance.teacherItem!!.name,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

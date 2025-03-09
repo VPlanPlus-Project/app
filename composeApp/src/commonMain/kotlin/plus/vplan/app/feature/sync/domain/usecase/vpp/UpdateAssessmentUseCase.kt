@@ -37,7 +37,7 @@ class UpdateAssessmentUseCase(
     suspend operator fun invoke(allowNotifications: Boolean) {
         val existing = assessmentRepository.getAll().first().map { it.id }.toSet()
         profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>().forEach { profile ->
-            ((assessmentRepository.download(profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchoolItem().getSchoolApiAccess()!!, profile.defaultLessonsConfiguration.filterValues { it }.keys.toList()) as? Response.Success ?: return@forEach)
+            ((assessmentRepository.download(profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchoolItem().getSchoolApiAccess()!!, profile.subjectInstanceConfiguration.filterValues { it }.keys.toList()) as? Response.Success ?: return@forEach)
                 .data - existing)
                 .also { ids ->
                     if (ids.isEmpty() || !allowNotifications) return@forEach

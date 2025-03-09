@@ -10,7 +10,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.cache.CacheState
@@ -41,7 +40,7 @@ class UpdateHomeworkUseCase(
                 (homeworkRepository.download(
                     schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess(studentProfile.getSchoolItem().id) ?: studentProfile.getSchool().getFirstValue()!!.getSchoolApiAccess()!!,
                     groupId = studentProfile.group,
-                    defaultLessonIds = studentProfile.defaultLessonsConfiguration.map { it.key },
+                    subjectInstanceIds = studentProfile.subjectInstanceConfiguration.map { it.key },
                 ) as? Response.Success)?.data.orEmpty().also {
                     if (allowNotifications) {
                         val newHomework = combine((it - existingHomework).ifEmpty { return@also }.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
@@ -56,8 +55,8 @@ class UpdateHomeworkUseCase(
                                     newHomework.first().let { homework ->
                                         append(homework.getCreatedBy().name)
                                         append(" hat eine neue Hausaufgabe ")
-                                        if (homework.getDefaultLessonItem() == null) append("für Klasse ${homework.getGroupItem()?.name}")
-                                        else append("für ${homework.getDefaultLessonItem()?.subject}")
+                                        if (homework.subjectInstance == null) append("für Klasse ${homework.getGroupItem()?.name}")
+                                        else append("für ${homework.subjectInstance?.getFirstValue()?.subject}")
                                         append(" erstellt, welche bis ")
                                         append(homework.dueTo.let { date ->
                                             (LocalDate.now() untilRelativeText date) ?: date.format(LocalDate.Format {

@@ -158,8 +158,8 @@ private fun ProfileContent(
                 ) {
                     val vppId = state.currentProfile.vppId?.collectAsState(null)?.value
                     if (vppId is VppId.Active) {
-                        val defaultLessons = state.currentProfile.defaultLessons
-                            .map { it.map { defaultLesson -> defaultLesson.subject }.distinct() }
+                        val subjectInstances = state.currentProfile.subjectInstances
+                            .map { it.map { subjectInstance -> subjectInstance.subject }.distinct() }
                             .distinctUntilChanged()
                             .collectAsState(emptyList()).value
 
@@ -190,7 +190,7 @@ private fun ProfileContent(
                                         .align(Alignment.CenterEnd)
                                         .height(contentHeight)
                                         .clipToBounds(),
-                                    visible = defaultLessons.isNotEmpty() && contentWidth > 0.dp && contentHeight > 0.dp,
+                                    visible = subjectInstances.isNotEmpty() && contentWidth > 0.dp && contentHeight > 0.dp,
                                     enter = fadeIn(tween(2000)),
                                     exit = fadeOut(tween(2000)),
                                 ) subjectIconBackdrop@{
@@ -218,11 +218,11 @@ private fun ProfileContent(
                                         verticalArrangement = Arrangement.spacedBy(subjectBackdropIconPadding)
                                     ) {
                                         val subjectMap = remember { mutableMapOf<IntOffset, String>() }
-                                        if (defaultLessons.isNotEmpty()) repeat(rows) { i ->
+                                        if (subjectInstances.isNotEmpty()) repeat(rows) { i ->
                                             Row(horizontalArrangement = Arrangement.spacedBy(subjectBackdropIconPadding)) {
                                                 repeat(((contentWidth.value / 1.5) / (subjectBackdropIconSize + subjectBackdropIconPadding).value).roundToInt()) { j ->
                                                     SubjectIcon(
-                                                        subject = subjectMap.getOrPut(IntOffset(i, j)) { defaultLessons.random() },
+                                                        subject = subjectMap.getOrPut(IntOffset(i, j)) { subjectInstances.random() },
                                                         modifier = Modifier.size(subjectBackdropIconSize),
                                                         contentColor = MaterialTheme.colorScheme.secondary,
                                                         containerColor = Color.Transparent,

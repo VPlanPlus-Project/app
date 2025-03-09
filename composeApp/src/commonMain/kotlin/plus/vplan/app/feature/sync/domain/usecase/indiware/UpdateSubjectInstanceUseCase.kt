@@ -5,21 +5,21 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.CourseRepository
-import plus.vplan.app.domain.repository.DefaultLessonRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.utils.latest
 
-private val LOGGER = Logger.withTag("UpdateDefaultLessonsUseCase")
+private val LOGGER = Logger.withTag("UpdateSubjectInstanceUseCase")
 
-class UpdateDefaultLessonsUseCase(
+class UpdateSubjectInstanceUseCase(
     private val indiwareRepository: IndiwareRepository,
-    private val defaultLessonRepository: DefaultLessonRepository,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val teacherRepository: TeacherRepository,
     private val courseRepository: CourseRepository
 ) {
@@ -30,7 +30,7 @@ class UpdateDefaultLessonsUseCase(
 
         val teachers = teacherRepository.getBySchool(schoolId = school.id).first()
         val existingCourses = courseRepository.getBySchool(schoolId = school.id, false)
-        val existingDefaultLessons = defaultLessonRepository.getBySchool(schoolId = school.id, false)
+        val existingSubjectInstances = subjectInstanceRepository.getBySchool(schoolId = school.id, false)
 
         updateCourses(
             school = school,
@@ -39,9 +39,9 @@ class UpdateDefaultLessonsUseCase(
             teachers = teachers
         )
 
-        updateDefaultLessons(
+        updateSubjectInstances(
             baseData = baseData.data,
-            existingDefaultLessons = existingDefaultLessons.latest(),
+            existingSubjectInstances = existingSubjectInstances.latest(),
         )
 
         return null
@@ -54,7 +54,7 @@ class UpdateDefaultLessonsUseCase(
         teachers: List<Teacher>
     ) {
         val downloadedCourses = baseData.classes
-            .flatMap { baseDataClass -> baseDataClass.defaultLessons.mapNotNull { it.course }.map { Course.fromIndiware(school.sp24Id, it.name, teachers.firstOrNull { t -> t.name == it.teacher }) } }
+            .flatMap { baseDataClass -> baseDataClass.subjectInstances.mapNotNull { it.course }.map { Course.fromIndiware(school.sp24Id, it.name, teachers.firstOrNull { t -> t.name == it.teacher }) } }
             .distinct()
             .mapNotNull { courseRepository.getByIndiwareId(it).getFirstValue() }
 
@@ -70,26 +70,26 @@ class UpdateDefaultLessonsUseCase(
         courseRepository.upsert(updatedCourses)
     }
 
-    private suspend fun updateDefaultLessons(
+    private suspend fun updateSubjectInstances(
         baseData: IndiwareBaseData,
-        existingDefaultLessons: List<DefaultLesson>,
+        existingSubjectInstances: List<SubjectInstance>,
     ) {
-        val downloadedDefaultLessons = baseData.classes
+        val downloadedSubjectInstances = baseData.classes
             .flatMap { baseDataClass ->
-                baseDataClass.defaultLessons.map { it.defaultLessonNumber }
+                baseDataClass.subjectInstances.map { it.subjectInstanceNumber }
                     .distinct()
-                    .mapNotNull { defaultLessonRepository.getByIndiwareId(it).getFirstValue() }
+                    .mapNotNull { subjectInstanceRepository.getByIndiwareId(it).getFirstValue() }
             }
 
-        downloadedDefaultLessons.let {
-            val existingDefaultLessonIds = existingDefaultLessons.map { it.id }
-            val downloadedDefaultLessonsToDelete = existingDefaultLessonIds.filter { existingDefaultLessonId -> downloadedDefaultLessons.none { it.id == existingDefaultLessonId } }
-            LOGGER.d { "Delete ${downloadedDefaultLessonsToDelete.size} default lessons" }
-            defaultLessonRepository.deleteById(downloadedDefaultLessonsToDelete)
+        downloadedSubjectInstances.let {
+            val existingSubjectInstanceIds = existingSubjectInstances.map { it.id }
+            val downloadedSubjectInstancesToDelete = existingSubjectInstanceIds.filter { existingSubjectInstanceId -> downloadedSubjectInstances.none { it.id == existingSubjectInstanceId } }
+            LOGGER.d { "Delete ${downloadedSubjectInstancesToDelete.size} default lessons" }
+            subjectInstanceRepository.deleteById(downloadedSubjectInstancesToDelete)
         }
 
-        val updatedDefaultLessons = downloadedDefaultLessons.filter { downloadedDefaultLesson -> existingDefaultLessons.none { it.hashCode() == downloadedDefaultLesson.hashCode() } }
-        LOGGER.d { "Upsert ${updatedDefaultLessons.size} default lessons" }
-        defaultLessonRepository.upsert(updatedDefaultLessons)
+        val updatedSubjectInstances = downloadedSubjectInstances.filter { downloadedSubjectInstance -> existingSubjectInstances.none { it.hashCode() == downloadedSubjectInstance.hashCode() } }
+        LOGGER.d { "Upsert ${updatedSubjectInstances.size} default lessons" }
+        subjectInstanceRepository.upsert(updatedSubjectInstances)
     }
 }

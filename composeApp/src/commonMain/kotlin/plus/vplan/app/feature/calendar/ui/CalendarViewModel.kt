@@ -176,7 +176,7 @@ private suspend fun Lesson.prefetch() {
     this.getLessonTimeItem()
     this.getRoomItems()
     this.getTeacherItems()
-    if (this is Lesson.SubstitutionPlanLesson) this.getDefaultLesson()
+    if (this is Lesson.SubstitutionPlanLesson) this.getSubjectInstance()
 }
 
 enum class DisplayType {
