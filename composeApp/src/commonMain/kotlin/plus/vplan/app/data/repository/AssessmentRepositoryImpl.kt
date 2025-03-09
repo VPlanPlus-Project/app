@@ -235,7 +235,11 @@ class AssessmentRepositoryImpl(
                     }
 
                 val assessmentResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id") {
-                    vppId?.let { bearerAuth(it.accessToken) } ?: school.getSchoolApiAccess()?.authentication(this)
+                    vppId?.let { bearerAuth(it.accessToken) } ?: school.getSchoolApiAccess()?.authentication(this) ?: run {
+                        vppDatabase.assessmentDao.deleteById(listOf(id))
+                        trySend(CacheState.NotExisting(id.toString()))
+                        return@channelFlow
+                    }
                 }
                 if (assessmentResponse.status != HttpStatusCode.OK) {
                     trySend(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
