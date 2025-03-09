@@ -1,5 +1,6 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Item
 
@@ -9,6 +10,7 @@ data class Course(
     val groups: List<Int>,
     val name: String,
     val teacherId: Int?,
+    val cachedAt: Instant
 ): Item {
     override fun getEntityId(): String = id.toString()
 

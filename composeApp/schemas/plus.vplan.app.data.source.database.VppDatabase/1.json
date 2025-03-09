@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "9063986e6f7beda0897e49d134527c3b",
+    "identityHash": "d537b0630db96fd364a17a17f0a929ed",
     "entities": [
       {
         "tableName": "schools",
@@ -857,7 +857,7 @@
       },
       {
         "tableName": "courses",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `indiware_id` TEXT, `name` TEXT NOT NULL, `teacher_id` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`teacher_id`) REFERENCES `school_teachers`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `indiware_id` TEXT, `name` TEXT NOT NULL, `teacher_id` INTEGER, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`teacher_id`) REFERENCES `school_teachers`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -880,6 +880,12 @@
             "fieldPath": "teacherId",
             "columnName": "teacher_id",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "cachedAt",
+            "columnName": "cached_at",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -3592,7 +3598,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9063986e6f7beda0897e49d134527c3b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd537b0630db96fd364a17a17f0a929ed')"
     ]
   }
 }

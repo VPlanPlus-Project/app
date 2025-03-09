@@ -12,6 +12,7 @@ import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
@@ -45,6 +46,7 @@ class FullSyncUseCase(
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
+    private val courseRepository: CourseRepository,
     private val vppIdRepository: VppIdRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
@@ -153,6 +155,12 @@ class FullSyncUseCase(
             .forEach { vppId ->
                 if (vppId.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
                 vppIdRepository.getById(vppId.id, true).getFirstValue()
+            }
+
+        courseRepository.getAll().first()
+            .forEach { course ->
+                if (course.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
+                courseRepository.getById(course.id, true).getFirstValue()
             }
 
         syncGradesUseCase(true)
