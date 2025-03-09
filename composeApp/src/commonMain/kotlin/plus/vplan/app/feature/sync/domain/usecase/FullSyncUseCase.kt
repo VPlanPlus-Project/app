@@ -144,6 +144,13 @@ class FullSyncUseCase(
         updateHomeworkUseCase(true)
         updateAssessmentUseCase(true)
 
+        groupRepository.getAllIds().first()
+            .mapNotNull { App.groupSource.getById(it).getFirstValue() }
+            .forEach { group ->
+                if (group.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
+                groupRepository.getById(group.id, true).getFirstValue()
+            }
+
         fileRepository.getAllIds().first()
             .filter { it > 0 }
             .mapNotNull { App.fileSource.getById(it).getFirstValue() }
