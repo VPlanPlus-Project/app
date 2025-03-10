@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.model.DefaultLesson
-import plus.vplan.app.domain.repository.DefaultLessonRepository
+import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -21,7 +21,7 @@ class GetProfileOptionsUseCase(
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
-    private val defaultLessonRepository: DefaultLessonRepository
+    private val subjectInstanceRepository: SubjectInstanceRepository
 ) {
     operator fun invoke(): Flow<List<OnboardingProfile>> = channelFlow {
         onboardingRepository.getSchoolId().collectLatest { schoolId ->
@@ -35,7 +35,7 @@ class GetProfileOptionsUseCase(
                     OnboardingProfile.StudentProfile(
                         id = it.id,
                         name = it.name,
-                        defaultLessons = defaultLessonRepository.getByGroup(it.id).first().map { App.defaultLessonSource.getById(it.id).filterIsInstance<CacheState.Done<DefaultLesson>>().first().data }
+                        subjectInstances = subjectInstanceRepository.getByGroup(it.id).first().map { App.subjectInstanceSource.getById(it.id).filterIsInstance<CacheState.Done<SubjectInstance>>().first().data }
                     )
                 } + teachers.map {
                     OnboardingProfile.TeacherProfile(

@@ -63,7 +63,7 @@ class AssessmentRepositoryImpl(
 
     private val onlineChangeRequests = mutableListOf<OnlineChangeRequest>()
 
-    override suspend fun download(schoolApiAccess: SchoolApiAccess, defaultLessonIds: List<Int>): Response<List<Int>> {
+    override suspend fun download(schoolApiAccess: SchoolApiAccess, subjectInstanceIds: List<Int>): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url {
@@ -72,7 +72,7 @@ class AssessmentRepositoryImpl(
                     port = api.port
                     pathSegments = listOf("api", "v2.2", "assessment")
                     parameters {
-                        append("filter_default_lessons", defaultLessonIds.joinToString(","))
+                        append("filter_default_lessons", subjectInstanceIds.joinToString(","))
                     }
                 }
                 schoolApiAccess.authentication(this)
@@ -90,7 +90,7 @@ class AssessmentRepositoryImpl(
                     createdAt = Instant.fromEpochSeconds(assessment.createdAt),
                     date = LocalDate.parse(assessment.date),
                     isPublic = assessment.isPublic,
-                    defaultLessonId = assessment.subject,
+                    subjectInstanceId = assessment.subject,
                     description = assessment.description,
                     type = (Assessment.Type.entries.firstOrNull { it.name == assessment.type } ?: Assessment.Type.OTHER).ordinal,
                     cachedAt = Clock.System.now()
@@ -111,7 +111,7 @@ class AssessmentRepositoryImpl(
         vppId: VppId.Active,
         date: LocalDate,
         type: Assessment.Type,
-        defaultLessonId: Int,
+        subjectInstanceId: Int,
         isPublic: Boolean,
         content: String
     ): Response<Int> {
@@ -126,7 +126,7 @@ class AssessmentRepositoryImpl(
                     pathSegments = listOf("api", "v2.2", "assessment")
                 }
                 setBody(AssessmentPostRequest(
-                    subjectInstance = defaultLessonId,
+                    subjectInstance = subjectInstanceId,
                     date = date.toString(),
                     isPublic = isPublic,
                     content = content,
@@ -235,7 +235,11 @@ class AssessmentRepositoryImpl(
                     }
 
                 val assessmentResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id") {
-                    vppId?.let { bearerAuth(it.accessToken) } ?: school.getSchoolApiAccess()?.authentication(this)
+                    vppId?.let { bearerAuth(it.accessToken) } ?: school.getSchoolApiAccess()?.authentication(this) ?: run {
+                        vppDatabase.assessmentDao.deleteById(listOf(id))
+                        trySend(CacheState.NotExisting(id.toString()))
+                        return@channelFlow
+                    }
                 }
                 if (assessmentResponse.status != HttpStatusCode.OK) {
                     trySend(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
@@ -256,7 +260,7 @@ class AssessmentRepositoryImpl(
                         createdAt = Instant.fromEpochSeconds(data.createdAt),
                         date = LocalDate.parse(data.date),
                         isPublic = data.isPublic,
-                        defaultLessonId = data.subject,
+                        subjectInstanceId = data.subject,
                         description = data.description,
                         type = (Assessment.Type.entries.firstOrNull { it.name == data.type } ?: Assessment.Type.OTHER).ordinal,
                         cachedAt = Clock.System.now()
@@ -306,7 +310,7 @@ class AssessmentRepositoryImpl(
                 createdAt = it.createdAt.toInstant(TimeZone.UTC),
                 date = it.date,
                 isPublic = it.isPublic,
-                defaultLessonId = it.defaultLessonId,
+                subjectInstanceId = it.subjectInstanceId,
                 description = it.description,
                 type = it.type.ordinal,
                 cachedAt = it.cachedAt

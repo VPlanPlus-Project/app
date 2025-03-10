@@ -45,7 +45,7 @@ data class MobdatenClassData(
 
         @SerialName("Unterricht")
         @XmlChildrenName("Ue")
-        val defaultLessons: List<ClassDefaultLessonWrapper>,
+        val subjectInstances: List<ClassSubjectInstanceWrapper>,
 
         @SerialName("Kurse")
         @XmlChildrenName("Ku")
@@ -68,13 +68,13 @@ data class MobdatenClassData(
 
         @Serializable
         @SerialName("Ue")
-        data class ClassDefaultLessonWrapper(
-            @SerialName("UeNr") val defaultLesson: ClassDefaultLesson
+        data class ClassSubjectInstanceWrapper(
+            @SerialName("UeNr") val subjectInstance: ClassSubjectInstance
         ) {
             @Serializable
             @SerialName("UeNr")
-            data class ClassDefaultLesson(
-                @XmlValue val defaultLessonNumber: Int,
+            data class ClassSubjectInstance(
+                @XmlValue val subjectInstanceNumber: Int,
                 @SerialName("UeLe") val teacherName: String,
                 @SerialName("UeFa") val subjectName: String,
                 @SerialName("UeGr") val courseName: String? = null

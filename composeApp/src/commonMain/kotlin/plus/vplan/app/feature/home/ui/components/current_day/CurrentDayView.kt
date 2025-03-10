@@ -101,7 +101,7 @@ fun CurrentDayView(
                                     && ((it.rooms.orEmpty() - currentLesson.rooms.orEmpty()
                                 .toSet()).size != it.rooms?.size || it.rooms.orEmpty()
                                 .isEmpty() || currentLesson.rooms.orEmpty().isEmpty())
-                                    && it.defaultLesson == currentLesson.defaultLesson
+                                    && it.subjectInstance == currentLesson.subjectInstance
                                     && it.getLessonTimeItem().lessonNumber > currentLesson.getLessonTimeItem().lessonNumber
                         }.sortedBy { it.lessonTimeItem!!.lessonNumber }
                         .takeContinuousBy { it.lessonTimeItem!!.lessonNumber }

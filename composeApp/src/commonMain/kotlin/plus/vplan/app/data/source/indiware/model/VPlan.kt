@@ -38,7 +38,7 @@ data class VPlan(
             @SerialName("Le") val teacher: Teacher,
             @SerialName("Ra") val room: Room,
             @SerialName("If") val info: Info,
-            @SerialName("Nr") val defaultLessonNumber: DefaultLessonNumber? = null,
+            @SerialName("Nr") val subjectInstanceNumber: SubjectInstanceNumber? = null,
             @SerialName("Beginn") val start: Start,
             @SerialName("Ende") val end: End
         ) {
@@ -57,7 +57,7 @@ data class VPlan(
 
             @Serializable
             @SerialName("Nr")
-            data class DefaultLessonNumber(
+            data class SubjectInstanceNumber(
                 @XmlValue val value: String
             )
 

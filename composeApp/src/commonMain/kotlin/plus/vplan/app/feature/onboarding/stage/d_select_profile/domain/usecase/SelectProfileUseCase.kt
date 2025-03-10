@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase
 
 import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -21,7 +21,7 @@ class SelectProfileUseCase(
 ) {
     suspend operator fun invoke(
         onboardingProfile: OnboardingProfile,
-        defaultLessons: Map<DefaultLesson, Boolean> = emptyMap()
+        subjectInstances: Map<SubjectInstance, Boolean> = emptyMap()
     ) {
         onboardingRepository.setSelectedProfile(onboardingProfile)
         val profile = when (onboardingProfile) {
@@ -29,7 +29,7 @@ class SelectProfileUseCase(
                 val group = groupRepository.getById(onboardingProfile.id, false).getFirstValue()!!
                 profileRepository.upsert(
                     group = group,
-                    disabledDefaultLessons = defaultLessons.filterValues { !it }.keys.toList()
+                    disabledSubjectInstances = subjectInstances.filterValues { !it }.keys.toList()
                 )
             }
             is OnboardingProfile.TeacherProfile -> {

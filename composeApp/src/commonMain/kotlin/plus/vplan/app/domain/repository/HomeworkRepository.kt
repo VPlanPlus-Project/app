@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
@@ -29,7 +29,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun getIdForNewLocalHomeworkFile(): Int
 
     suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile)
-    suspend fun editHomeworkDefaultLesson(homework: Homework, defaultLesson: DefaultLesson?, group: Group?, profile: Profile.StudentProfile)
+    suspend fun editHomeworkSubjectInstance(homework: Homework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile)
     suspend fun editHomeworkDueTo(homework: Homework, dueTo: LocalDate, profile: Profile.StudentProfile)
     suspend fun editHomeworkVisibility(homework: Homework.CloudHomework, isPublic: Boolean, profile: Profile.StudentProfile)
 
@@ -47,7 +47,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun download(
         schoolApiAccess: SchoolApiAccess,
         groupId: Int,
-        defaultLessonIds: List<Int>
+        subjectInstanceIds: List<Int>
     ): Response<List<Int>>
 
     suspend fun clearCache()
@@ -56,7 +56,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
         vppId: VppId.Active,
         until: LocalDate,
         group: Group,
-        defaultLesson: DefaultLesson?,
+        subjectInstance: SubjectInstance?,
         isPublic: Boolean,
         tasks: List<String>,
     ): Response<CreateHomeworkResponse>

@@ -1,7 +1,7 @@
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.Room
@@ -13,7 +13,7 @@ interface ProfileRepository {
     fun getAll(): Flow<List<Profile>>
     suspend fun upsert(
         group: Group,
-        disabledDefaultLessons: List<DefaultLesson>
+        disabledSubjectInstances: List<SubjectInstance>
     ): Profile.StudentProfile
 
     suspend fun upsert(
@@ -27,9 +27,11 @@ interface ProfileRepository {
     suspend fun updateDisplayName(id: Uuid, displayName: String)
     suspend fun updateVppId(id: Uuid, vppId: Int?)
 
-    suspend fun setDefaultLessonEnabled(
+    suspend fun setSubjectInstancesEnabled(
         profileId: Uuid,
-        defaultLessonIds: List<Int>,
+        subjectInstanceIds: List<Int>,
         enable: Boolean
     )
+
+    suspend fun deleteProfile(profileId: Uuid)
 }

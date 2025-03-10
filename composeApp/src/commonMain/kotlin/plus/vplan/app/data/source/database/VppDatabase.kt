@@ -11,7 +11,7 @@ import plus.vplan.app.data.source.database.converters.UuidTypeConverter
 import plus.vplan.app.data.source.database.dao.AssessmentDao
 import plus.vplan.app.data.source.database.dao.CourseDao
 import plus.vplan.app.data.source.database.dao.DayDao
-import plus.vplan.app.data.source.database.dao.DefaultLessonDao
+import plus.vplan.app.data.source.database.dao.SubjectInstanceDao
 import plus.vplan.app.data.source.database.dao.FileDao
 import plus.vplan.app.data.source.database.dao.GroupDao
 import plus.vplan.app.data.source.database.dao.HolidayDao
@@ -35,11 +35,11 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.SubjectDao
 import plus.vplan.app.data.source.database.dao.schulverwalter.YearDao
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbDay
-import plus.vplan.app.data.source.database.model.database.DbDefaultLesson
+import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
-import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.data.source.database.model.database.DbHoliday
 import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbFile
@@ -60,7 +60,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterv
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
-import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
+import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
@@ -70,7 +70,7 @@ import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.DbWeek
 import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
-import plus.vplan.app.data.source.database.model.database.crossovers.DbDefaultLessonGroupCrossover
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectInstanceGroup
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
@@ -93,7 +93,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
 @Database(
     entities = [
         DbSchool::class,
-        DbSp24SchoolDetails::class,
+        DbSchoolIndiwareAccess::class,
         DbIndiwareTimetableMetadata::class,
 
         DbGroup::class,
@@ -102,12 +102,12 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
 
         DbProfile::class,
         DbGroupProfile::class,
-        DbGroupProfileDisabledDefaultLessons::class,
+        FKGroupProfileDisabledSubjectInstances::class,
         DbTeacherProfile::class,
         DbRoomProfile::class,
 
-        DbDefaultLesson::class,
-        DbDefaultLessonGroupCrossover::class,
+        DbSubjectInstance::class,
+        FKSubjectInstanceGroup::class,
         DbCourse::class,
         DbCourseGroupCrossover::class,
 
@@ -179,7 +179,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val teacherDao: TeacherDao
     abstract val roomDao: RoomDao
     abstract val courseDao: CourseDao
-    abstract val defaultLessonDao: DefaultLessonDao
+    abstract val subjectInstanceDao: SubjectInstanceDao
     abstract val profileDao: ProfileDao
     abstract val keyValueDao: KeyValueDao
     abstract val weekDao: WeekDao

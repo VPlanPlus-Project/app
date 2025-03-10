@@ -20,7 +20,7 @@ import plus.vplan.app.domain.model.School
         )
     ]
 )
-data class DbSp24SchoolDetails(
+data class DbSchoolIndiwareAccess(
     @ColumnInfo("school_id") val schoolId: Int,
     @ColumnInfo("sp24_school_id") val sp24SchoolId: String,
     @ColumnInfo("username") val username: String,

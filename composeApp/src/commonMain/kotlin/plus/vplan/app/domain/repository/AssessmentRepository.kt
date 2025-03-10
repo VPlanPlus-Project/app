@@ -15,14 +15,14 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
      */
     suspend fun download(
         schoolApiAccess: SchoolApiAccess,
-        defaultLessonIds: List<Int>
+        subjectInstanceIds: List<Int>
     ): Response<List<Int>>
 
     suspend fun createAssessmentOnline(
         vppId: VppId.Active,
         date: LocalDate,
         type: Assessment.Type,
-        defaultLessonId: Int,
+        subjectInstanceId: Int,
         isPublic: Boolean,
         content: String
     ): Response<Int>

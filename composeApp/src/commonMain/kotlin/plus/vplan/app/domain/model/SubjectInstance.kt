@@ -1,19 +1,21 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 
 /**
- * @param id The id of the default lesson. If it originates from indiware, it will be prefixed with `sp24.` followed by the indiware group name and the default lesson number separated with a dot, e.g. `sp24.6c.146`
+ * @param id The id of the subject instance. If it originates from indiware, it will be prefixed with `sp24.` followed by the indiware school id and group name and the subject instance number separated with a dot, e.g. `sp24.10000000.6c.146`
  */
-data class DefaultLesson(
+data class SubjectInstance(
     val id: Int,
     val indiwareId: String?,
     val subject: String,
     val course: Int?,
     val teacher: Int?,
-    val groups: List<Int>
+    val groups: List<Int>,
+    val cachedAt: Instant
 ) : Item {
     override fun getEntityId(): String = this.id.toString()
 
@@ -41,6 +43,6 @@ data class DefaultLesson(
     }
 }
 
-fun Collection<DefaultLesson>.findByIndiwareId(indiwareId: String): DefaultLesson? {
+fun Collection<SubjectInstance>.findByIndiwareId(indiwareId: String): SubjectInstance? {
     return firstOrNull { it.indiwareId.orEmpty().matches(Regex("^sp24\\..*\\.$indiwareId\$")) }
 }

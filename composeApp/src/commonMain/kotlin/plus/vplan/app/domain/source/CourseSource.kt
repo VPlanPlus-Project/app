@@ -16,11 +16,11 @@ class CourseSource(
 ) {
     private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Course>>>()
 
-    fun getById(id: Int): Flow<CacheState<Course>> {
+    fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<Course>> {
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Course>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             MainScope().launch {
-                courseRepository.getById(id).distinctUntilChanged().collectLatest { flow.tryEmit(it) }
+                courseRepository.getById(id, forceReload).distinctUntilChanged().collectLatest { flow.tryEmit(it) }
             }
             flow
         }

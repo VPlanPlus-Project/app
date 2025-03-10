@@ -131,17 +131,17 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
             )
 
             SubjectAndDateTile(
-                selectedDefaultLesson = state.selectedDefaultLesson,
+                selectedSubjectInstance = state.selectedSubjectInstance,
                 selectedDate = state.selectedDate,
                 group = state.currentProfile.groupItem!!,
                 isAssessment = true,
-                onClickDefaultLesson = { showLessonSelectDrawer = true },
+                onClickSubjectInstance = { showLessonSelectDrawer = true },
                 onClickDate = { showDateSelectDrawer = true }
             )
 
             if (state.isVisible != null) VisibilityTile(
                 isPublic = state.isVisible,
-                selectedDefaultLesson = state.selectedDefaultLesson,
+                selectedSubjectInstance = state.selectedSubjectInstance,
                 group = state.currentProfile.groupItem!!,
                 onSetVisibility = { isPublic -> viewModel.onEvent(NewAssessmentEvent.SetVisibility(isPublic)) }
             ) else VppIdBanner(
@@ -224,10 +224,10 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
     if (showLessonSelectDrawer) LessonSelectDrawer(
         group = (state.currentProfile as Profile.StudentProfile).groupItem!!,
         allowGroup = false,
-        defaultLessons = state.currentProfile.defaultLessonItems.filter { defaultLesson -> state.currentProfile.defaultLessonsConfiguration.filterValues { !it }.none { it.key == defaultLesson.id } }
+        subjectInstances = state.currentProfile.subjectInstanceItems.filter { subjectInstance -> state.currentProfile.subjectInstanceConfiguration.filterValues { !it }.none { it.key == subjectInstance.id } }
             .sortedBy { it.subject },
-        selectedDefaultLesson = state.selectedDefaultLesson,
-        onSelectDefaultLesson = { if (it == null) return@LessonSelectDrawer; viewModel.onEvent(NewAssessmentEvent.SelectDefaultLesson(it)) },
+        selectedSubjectInstance = state.selectedSubjectInstance,
+        onSelectSubjectInstance = { if (it == null) return@LessonSelectDrawer; viewModel.onEvent(NewAssessmentEvent.SelectSubjectInstance(it)) },
         onDismiss = { showLessonSelectDrawer = false }
     )
 

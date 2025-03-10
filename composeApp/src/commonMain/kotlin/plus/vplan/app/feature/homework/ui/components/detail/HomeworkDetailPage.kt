@@ -40,6 +40,7 @@ import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
@@ -194,8 +195,8 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = state.canEdit,
                 allowGroup = true,
-                subject = homework.defaultLessonItem?.subject,
-                group = homework.groupItem,
+                subject = homework.subjectInstance?.collectAsResultingFlow()?.value?.subject,
+                group = homework.group?.collectAsResultingFlow()?.value,
                 onClick = { showLessonSelectDrawer = true },
             )
             DueToRow(
@@ -307,9 +308,9 @@ fun DetailPage(
         LessonSelectDrawer(
             group = profile.groupItem!!,
             allowGroup = true,
-            defaultLessons = profile.defaultLessonItems.filter { defaultLesson -> profile.defaultLessonsConfiguration.filterValues { !it }.none { it.key == defaultLesson.id } }.sortedBy { it.subject },
-            selectedDefaultLesson = homework.defaultLessonItem,
-            onSelectDefaultLesson = { onEvent(HomeworkDetailEvent.UpdateDefaultLesson(it)) },
+            subjectInstances = profile.subjectInstanceItems.filter { subjectInstance -> profile.subjectInstanceConfiguration.filterValues { !it }.none { it.key == subjectInstance.id } }.sortedBy { it.subject },
+            selectedSubjectInstance = homework.subjectInstance?.collectAsResultingFlow()?.value,
+            onSelectSubjectInstance = { onEvent(HomeworkDetailEvent.UpdateSubjectInstance(it)) },
             onDismiss = { showLessonSelectDrawer = false }
         )
     }

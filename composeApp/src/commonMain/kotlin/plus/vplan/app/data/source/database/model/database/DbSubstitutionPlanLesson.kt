@@ -13,7 +13,7 @@ import kotlin.uuid.Uuid
         Index(value = ["id"], unique = true),
         Index(value = ["day_id"], unique = false),
         Index(value = ["lesson_time_id"], unique = false),
-        Index(value = ["default_lesson_id"], unique = false),
+        Index(value = ["subject_instance_id"], unique = false),
     ],
     foreignKeys = [
         ForeignKey(
@@ -31,9 +31,9 @@ import kotlin.uuid.Uuid
             onUpdate = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = DbDefaultLesson::class,
+            entity = DbSubjectInstance::class,
             parentColumns = ["id"],
-            childColumns = ["default_lesson_id"],
+            childColumns = ["subject_instance_id"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
         ),
@@ -46,7 +46,7 @@ data class DbSubstitutionPlanLesson(
     @ColumnInfo("subject") val subject: String?,
     @ColumnInfo("is_subject_changed") val isSubjectChanged: Boolean,
     @ColumnInfo("info") val info: String?,
-    @ColumnInfo("default_lesson_id") val defaultLessonId: Int?,
+    @ColumnInfo("subject_instance_id") val subjectInstanceId: Int?,
     @ColumnInfo("version") val version: String,
     @ColumnInfo("is_room_changed") val isRoomChanged: Boolean,
     @ColumnInfo("is_teacher_changed") val isTeacherChanged: Boolean

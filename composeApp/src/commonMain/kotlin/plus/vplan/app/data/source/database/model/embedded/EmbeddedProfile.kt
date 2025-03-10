@@ -28,15 +28,15 @@ data class EmbeddedProfile(
 ) {
     fun toModel(): Profile? {
         if (embeddedGroupProfile != null) {
-            val disabledDefaultLessons = embeddedGroupProfile.disabledDefaultLesson.map { it.defaultLessonId }
+            val disabledSubjectInstances = embeddedGroupProfile.disabledSubjectInstances.map { it.subjectInstanceId }
             return Profile.StudentProfile(
                 id = profile.id,
                 name = profile.displayName ?: embeddedGroupProfile.group.group.name,
                 group = embeddedGroupProfile.group.group.id,
-                defaultLessonsConfiguration =
-                    embeddedGroupProfile.defaultLessons
-                        .associateWith { disabledDefaultLessons.contains(it.defaultLessonId).not() }
-                        .mapKeys { it.key.defaultLessonId },
+                subjectInstanceConfiguration =
+                    embeddedGroupProfile.subjectInstances
+                        .associateWith { disabledSubjectInstances.contains(it.subjectInstanceId).not() }
+                        .mapKeys { it.key.subjectInstanceId },
                 vppIdId = embeddedGroupProfile.vppId?.vppId?.id
             )
         }

@@ -32,8 +32,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbFile
+import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
@@ -44,12 +44,13 @@ import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.DefaultLesson
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolApiAccess
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.CreateHomeworkResponse
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -70,8 +71,8 @@ class HomeworkRepositoryImpl(
             homework = homework.map { homeworkItem ->
                 DbHomework(
                     id = homeworkItem.id,
-                    defaultLessonId = homeworkItem.defaultLesson,
-                    groupId = (homeworkItem as? Homework.LocalHomework)?.getCreatedByProfile()?.group ?: homeworkItem.group,
+                    subjectInstanceId = homeworkItem.subjectInstanceId,
+                    groupId = (homeworkItem as? Homework.LocalHomework)?.getCreatedByProfile()?.group ?: homeworkItem.group?.getFirstValue()?.id,
                     createdAt = homeworkItem.createdAt,
                     createdByProfileId = when (homeworkItem) {
                         is Homework.CloudHomework -> null
@@ -120,9 +121,9 @@ class HomeworkRepositoryImpl(
 
     override fun getByGroup(groupId: Int): Flow<List<Homework>> {
         return vppDatabase.homeworkDao.getAll().map { flowData ->
-            val defaultLessons = vppDatabase.defaultLessonDao.getByGroup(groupId).first()
+            val subjectInstances = vppDatabase.subjectInstanceDao.getByGroup(groupId).first()
             flowData.filter {
-                it.homework.groupId == groupId || defaultLessons.any { defaultLesson -> defaultLesson.groups.any { group -> group.groupId == groupId } }
+                it.homework.groupId == groupId || subjectInstances.any { subjectInstance -> subjectInstance.groups.any { group -> group.groupId == groupId } }
             }.map { it.toModel() }
         }
     }
@@ -191,7 +192,7 @@ class HomeworkRepositoryImpl(
                     homework = listOf(
                         DbHomework(
                             id = id,
-                            defaultLessonId = data.subjectInstance?.id,
+                            subjectInstanceId = data.subjectInstance?.id,
                             groupId = if (data.subjectInstance == null) data.group.id else null,
                             createdAt = Instant.fromEpochSeconds(data.createdAt),
                             dueTo = LocalDate.parse(data.dueTo),
@@ -267,14 +268,14 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override suspend fun editHomeworkDefaultLesson(homework: Homework, defaultLesson: DefaultLesson?, group: Group?, profile: Profile.StudentProfile) {
-        require((defaultLesson == null) xor (group == null)) { "Either defaultLesson or group must not be null" }
-        val oldDefaultLesson = homework.getDefaultLessonItem()
-        val oldGroup = homework.getGroupItem()
-        vppDatabase.homeworkDao.updateDefaultLessonAndGroup(homework.id, defaultLesson?.id, group?.id)
+    override suspend fun editHomeworkSubjectInstance(homework: Homework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile) {
+        require((subjectInstance == null) xor (group == null)) { "Either subjectInstance or group must not be null" }
+        val oldSubjectInstance = homework.subjectInstance?.getFirstValue()
+        val oldGroup = homework.group?.getFirstValue()
+        vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, subjectInstance?.id, group?.id)
 
         if (homework.id < 0 || profile.getVppIdItem() == null) return
-        safeRequest(onError = { vppDatabase.homeworkDao.updateDefaultLessonAndGroup(homework.id, oldDefaultLesson?.id, oldGroup?.id) }) {
+        safeRequest(onError = { vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, oldSubjectInstance?.id, oldGroup?.id) }) {
             val response = httpClient.patch(URLBuilder(
                 protocol = api.protocol,
                 host = api.host,
@@ -283,9 +284,9 @@ class HomeworkRepositoryImpl(
             ).build()) {
                 profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
                 contentType(ContentType.Application.Json)
-                setBody(HomeworkUpdateDefaultLessonRequest(subjectInstanceId = defaultLesson?.id, groupId = group?.id))
+                setBody(HomeworkUpdateSubjectInstanceRequest(subjectInstanceId = subjectInstance?.id, groupId = group?.id))
             }
-            if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateDefaultLessonAndGroup(homework.id, oldDefaultLesson?.id, oldGroup?.id)
+            if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, oldSubjectInstance?.id, oldGroup?.id)
         }
     }
 
@@ -420,7 +421,7 @@ class HomeworkRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, defaultLessonIds: List<Int>): Response<List<Int>> {
+    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, subjectInstanceIds: List<Int>): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get(URLBuilder(
                 protocol = api.protocol,
@@ -429,7 +430,7 @@ class HomeworkRepositoryImpl(
                 pathSegments = listOf("api", "v2.2", "homework"),
                 parameters = Parameters.build {
                     append("filter_groups", groupId.toString())
-                    append("filter_default_lessons", defaultLessonIds.joinToString(","))
+                    append("filter_default_lessons", subjectInstanceIds.joinToString(","))
                     append("include_tasks", "true")
                     append("include_files", "true")
                 }
@@ -443,7 +444,7 @@ class HomeworkRepositoryImpl(
                 homework = data.map { homework ->
                     DbHomework(
                         id = homework.id,
-                        defaultLessonId = homework.subjectInstance?.id,
+                        subjectInstanceId = homework.subjectInstance?.id,
                         groupId = if (homework.subjectInstance == null) homework.group.id else null,
                         createdAt = Instant.fromEpochSeconds(homework.createdAt),
                         dueTo = LocalDate.parse(homework.dueTo),
@@ -496,7 +497,7 @@ class HomeworkRepositoryImpl(
         vppId: VppId.Active,
         until: LocalDate,
         group: Group,
-        defaultLesson: DefaultLesson?,
+        subjectInstance: SubjectInstance?,
         isPublic: Boolean,
         tasks: List<String>
     ): Response<CreateHomeworkResponse> {
@@ -506,7 +507,7 @@ class HomeworkRepositoryImpl(
                 contentType(ContentType.Application.Json)
                 setBody(
                     HomeworkPostRequest(
-                        defaultLesson = defaultLesson?.id,
+                        subjectInstance = subjectInstance?.id,
                         groupId = group.id,
                         dueTo = until.toEpochDays() * 24 * 60 * 60L,
                         isPublic = isPublic,
@@ -550,7 +551,7 @@ class HomeworkRepositoryImpl(
 
 @Serializable
 data class HomeworkPostRequest(
-    @SerialName("subject_instance") val defaultLesson: Int? = null,
+    @SerialName("subject_instance") val subjectInstance: Int? = null,
     @SerialName("group_id") val groupId: Int? = null,
     @SerialName("due_to") val dueTo: Long,
     @SerialName("is_public") val isPublic: Boolean,
@@ -611,7 +612,7 @@ data class HomeworkTaskUpdateDoneStateRequest(
 )
 
 @Serializable
-data class HomeworkUpdateDefaultLessonRequest(
+data class HomeworkUpdateSubjectInstanceRequest(
     @SerialName("subject_instance_id") val subjectInstanceId: Int?,
     @SerialName("group_id") val groupId: Int?,
 )

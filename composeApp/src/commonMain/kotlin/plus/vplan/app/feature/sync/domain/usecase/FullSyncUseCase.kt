@@ -12,17 +12,19 @@ import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateDefaultLessonsUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
@@ -45,17 +47,19 @@ class FullSyncUseCase(
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
+    private val courseRepository: CourseRepository,
     private val vppIdRepository: VppIdRepository,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
-    private val updateDefaultLessonsUseCase: UpdateDefaultLessonsUseCase,
+    private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val updateAssessmentUseCase: UpdateAssessmentUseCase,
     private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
     private val syncGradesUseCase: SyncGradesUseCase,
     private val platformNotificationRepository: PlatformNotificationRepository
 ) {
-    private val maxCacheAge = 6.hours
+    private val maxCacheAge = 24.hours
 
     suspend operator fun invoke() {
         groupRepository.getAllIds().first()
@@ -119,7 +123,7 @@ class FullSyncUseCase(
                     }
                     else -> Unit
                 }
-                updateDefaultLessonsUseCase(school)
+                updateSubjectInstanceUseCase(school)
                 updateHolidaysUseCase(school)
                 updateWeeksUseCase(school)
                 val today = LocalDate.now()
@@ -140,6 +144,13 @@ class FullSyncUseCase(
         updateHomeworkUseCase(true)
         updateAssessmentUseCase(true)
 
+        groupRepository.getAllIds().first()
+            .mapNotNull { App.groupSource.getById(it).getFirstValue() }
+            .forEach { group ->
+                if (group.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
+                groupRepository.getById(group.id, true).getFirstValue()
+            }
+
         fileRepository.getAllIds().first()
             .filter { it > 0 }
             .mapNotNull { App.fileSource.getById(it).getFirstValue() }
@@ -155,6 +166,20 @@ class FullSyncUseCase(
                 vppIdRepository.getById(vppId.id, true).getFirstValue()
             }
 
+        courseRepository.getAll().first()
+            .forEach { course ->
+                if (course.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
+                courseRepository.getById(course.id, true).getFirstValue()
+            }
+
+        subjectInstanceRepository.getAll().first()
+            .forEach { subjectInstance ->
+                if (subjectInstance.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
+                subjectInstanceRepository.getById(subjectInstance.id, true).getFirstValue()
+            }
+
         syncGradesUseCase(true)
+
+        Logger.i { "FullSync done" }
     }
 }

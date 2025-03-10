@@ -2,6 +2,7 @@ package plus.vplan.app.data.source.database.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
@@ -27,12 +28,18 @@ interface AssessmentDao {
     suspend fun getSmallestId(): Int?
 
     @Query("SELECT * FROM assessments WHERE id = :id")
+    @Transaction
+    @RewriteQueriesToDropUnusedColumns
     fun getById(id: Int): Flow<EmbeddedAssessment?>
 
     @Query("SELECT * FROM assessments")
+    @Transaction
+    @RewriteQueriesToDropUnusedColumns
     fun getAll(): Flow<List<EmbeddedAssessment>>
 
     @Query("SELECT * FROM assessments WHERE date = :date")
+    @Transaction
+    @RewriteQueriesToDropUnusedColumns
     fun getByDate(date: LocalDate): Flow<List<EmbeddedAssessment>>
 
     @Query("DELETE FROM assessments WHERE id IN (:ids)")

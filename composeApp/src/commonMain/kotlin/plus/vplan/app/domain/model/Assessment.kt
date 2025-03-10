@@ -2,7 +2,6 @@ package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -17,7 +16,7 @@ data class Assessment(
     val createdAt: LocalDateTime,
     val date: LocalDate,
     val isPublic: Boolean,
-    val defaultLessonId: Int,
+    val subjectInstanceId: Int,
     val description: String,
     val type: Type,
     val files: List<Int>,
@@ -29,12 +28,7 @@ data class Assessment(
         SHORT_TEST, CLASS_TEST, PROJECT, ORAL, OTHER
     }
 
-    var subjectInstanceItem: DefaultLesson? = null
-        private set
-
-    suspend fun getSubjectInstanceItem(): DefaultLesson {
-        return subjectInstanceItem ?: App.defaultLessonSource.getSingleById(defaultLessonId)!!.also { subjectInstanceItem = it }
-    }
+    val subjectInstance by lazy { App.subjectInstanceSource.getById(subjectInstanceId) }
 
     var createdByVppId: VppId? = null
         private set
@@ -62,6 +56,4 @@ data class Assessment(
     ): Item {
         override fun getEntityId(): String = this.id.toString()
     }
-
-    val subjectInstance by lazy { App.defaultLessonSource.getById(defaultLessonId).filterIsInstance<CacheState.Done<DefaultLesson>>().map { it.data } }
 }

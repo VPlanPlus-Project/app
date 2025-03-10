@@ -9,7 +9,7 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
@@ -30,7 +30,7 @@ class CreateHomeworkUseCase(
         tasks: List<String>,
         isPublic: Boolean?,
         date: LocalDate,
-        defaultLesson: DefaultLesson?,
+        subjectInstance: SubjectInstance?,
         selectedFiles: List<AttachedFile>
     ): Boolean {
         val profile = keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().first().let { App.profileSource.getById(Uuid.parseHex(it)).getFirstValue() as? Profile.StudentProfile } ?: return false
@@ -44,7 +44,7 @@ class CreateHomeworkUseCase(
                 vppId = profile.getVppIdItem() as VppId.Active,
                 until = date,
                 group = profile.getGroupItem(),
-                defaultLesson = defaultLesson,
+                subjectInstance = subjectInstance,
                 isPublic = isPublic ?: false,
                 tasks = tasks
             )
@@ -55,8 +55,8 @@ class CreateHomeworkUseCase(
             taskIds = idMapping.taskIds
             homework = Homework.CloudHomework(
                 id = id,
-                defaultLesson = defaultLesson?.id,
-                group = profile.group,
+                subjectInstanceId = subjectInstance?.id,
+                groupId = profile.group,
                 createdAt = Clock.System.now(),
                 createdBy = profile.vppIdId!!,
                 isPublic = isPublic ?: false,
@@ -92,7 +92,7 @@ class CreateHomeworkUseCase(
             files = selectedFiles.mapIndexed { index, file -> Homework.HomeworkFile(fileIdStart - index, file.name, id, file.size) }
             homework = Homework.LocalHomework(
                 id = id,
-                defaultLesson = defaultLesson?.id,
+                subjectInstanceId = subjectInstance?.id,
                 createdAt = Clock.System.now(),
                 createdByProfile = profile.id,
                 dueTo = date,

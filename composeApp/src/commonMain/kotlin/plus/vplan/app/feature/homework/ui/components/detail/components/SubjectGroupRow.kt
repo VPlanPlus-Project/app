@@ -50,7 +50,7 @@ fun SubjectGroupRow(
                             )
                         } else {
                             Text(
-                                text = if (allowGroup) group!!.name else "Kein Fach",
+                                text = if (allowGroup) group?.name ?: "Unbekannt" else "Kein Fach",
                                 style = tableValueStyle(),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
