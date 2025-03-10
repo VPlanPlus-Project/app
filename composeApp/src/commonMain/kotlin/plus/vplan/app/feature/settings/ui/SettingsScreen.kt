@@ -25,6 +25,7 @@ import plus.vplan.app.feature.main.MainScreen
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
+import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.lock
 import vplanplus.composeapp.generated.resources.school
 
@@ -74,19 +75,26 @@ private fun SettingsContent(
                 .padding(top = 4.dp)
         ) {
             SettingsRecord(
-                title = "Schulen",
+                title = "Meine Schulen",
                 subtitle = "Zugänge für Schulen verwalten",
                 icon = painterResource(Res.drawable.school),
                 onClick = onOpenSchoolSettings
             )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(Modifier.padding(horizontal = 24.dp))
             SettingsRecord(
                 title = "Anmeldung und Sicherheit",
                 subtitle = "Noten und vpp.ID schützen",
                 icon = painterResource(Res.drawable.lock),
                 onClick = onOpenSecuritySettings
             )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            HorizontalDivider(Modifier.padding(horizontal = 24.dp))
+            SettingsRecord(
+                title = "Info & Feedback",
+                subtitle = "Über VPlanPlus, Rückmeldung an die Entwickler",
+                icon = painterResource(Res.drawable.info),
+                onClick = {}
+            )
+            HorizontalDivider(Modifier.padding(horizontal = 24.dp))
         }
     }
 }
