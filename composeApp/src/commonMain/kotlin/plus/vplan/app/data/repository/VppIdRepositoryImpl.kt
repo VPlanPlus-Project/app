@@ -7,10 +7,13 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -43,6 +46,7 @@ import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.VppIdDevice
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -254,6 +258,19 @@ class VppIdRepositoryImpl(
         }
         return Response.Error.Cancelled
     }
+
+    override suspend fun sendFeedback(access: SchoolApiAccess, content: String, email: String?): Response<Unit> {
+        safeRequest(onError = { return it }) {
+            val response = httpClient.post("${api.url}/api/v2.2/app/feedback") {
+                contentType(ContentType.Application.Json)
+                setBody(FeedbackRequest(content, email))
+                access.authentication(this)
+            }
+            if (response.status.isSuccess()) return Response.Success(Unit)
+            return response.toErrorResponse<Unit>()
+        }
+        return Response.Error.Cancelled
+    }
 }
 
 @Serializable
@@ -298,4 +315,10 @@ private data class MeSession(
 @Serializable
 data class UserSchoolResponse(
     @SerialName("school_ids") val schoolIds: List<Int>
+)
+
+@Serializable
+data class FeedbackRequest(
+    @SerialName("content") val content: String,
+    @SerialName("email") val email: String?
 )
