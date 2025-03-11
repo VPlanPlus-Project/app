@@ -12,17 +12,7 @@ struct ComposeView: UIViewControllerRepresentable {
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        // Replace the view controller with a new one
-        // This effectively removes and recreates the view controller
-        if let parent = uiViewController.view.superview {
-            uiViewController.removeFromParent()
-            uiViewController.view.removeFromSuperview()
-            
-            let newController = MainViewControllerKt.mainViewController(url: url, notificationTask: notificationTask, quicklookImpl: QuickLookImpl(onQuicklook: onQuicklook))
-            parent.addSubview(newController.view)
-            newController.view.frame = parent.bounds
-            parent.addSubview(newController.view)
-        }
+        MainViewControllerKt.updateView(url: url, notificationTask: notificationTask)
     }
 }
 

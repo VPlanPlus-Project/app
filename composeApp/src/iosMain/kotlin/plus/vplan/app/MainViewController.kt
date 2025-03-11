@@ -1,5 +1,8 @@
 package plus.vplan.app
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.ComposeUIViewController
 import co.touchlab.kermit.Logger
 import org.koin.core.component.KoinComponent
@@ -21,23 +24,39 @@ inline fun <reified T : Any> getKoinInstance(): T {
     }.value
 }
 
+var task: StartTask? by mutableStateOf(null)
+
 @Suppress("unused") // Is called in SwiftUI
 fun mainViewController(
     url: String,
     notificationTask: String?,
     quicklookImpl: OpenQuicklook
 ): UIViewController {
-    var task: StartTask? = null
     quicklook = quicklookImpl
+    updateTaskFromUrl(url)
+    updateTaskFromNotification(notificationTask)
+
+    mainViewController = ComposeUIViewController { App(task = task) }
+
+    return mainViewController
+}
+
+@Suppress("unused") // Is called in SwiftUI
+fun updateView(url: String, notificationTask: String?) {
+    updateTaskFromUrl(url)
+    updateTaskFromNotification(notificationTask)
+}
+
+fun updateTaskFromUrl(url: String) {
     if (url.startsWith("vpp://app/auth")) {
         Logger.i { "vpp.ID authentication" }
         val token = url.substringAfter("vpp://app/auth/")
         task = StartTask.VppIdLogin(token)
     }
+}
+
+fun updateTaskFromNotification(notificationTask: String?) {
     if (!notificationTask.isNullOrBlank()) {
         task = getTaskFromNotificationString(notificationTask)
     }
-    mainViewController = ComposeUIViewController { App(task = task) }
-
-    return mainViewController
 }
