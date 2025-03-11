@@ -3,6 +3,7 @@ package plus.vplan.app.domain.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 
 interface VppIdRepository: WebEntityRepository<VppId> {
@@ -17,6 +18,8 @@ interface VppIdRepository: WebEntityRepository<VppId> {
     suspend fun getSchulverwalterReauthUrl(vppId: VppId.Active): Response<String>
 
     fun getVppIds(): Flow<List<VppId>>
+
+    suspend fun sendFeedback(access: SchoolApiAccess, content: String, email: String?): Response<Unit>
 }
 
 data class VppIdDevice(

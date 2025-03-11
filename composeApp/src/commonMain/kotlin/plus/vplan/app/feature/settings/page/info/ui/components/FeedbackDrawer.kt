@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
@@ -81,8 +82,8 @@ fun FeedbackDrawer(
     LaunchedEffect(Unit) { viewModel.init() }
     if (state.currentProfile == null) return
 
-    LaunchedEffect(state.sendDone) {
-        if (!state.sendDone) return@LaunchedEffect
+    LaunchedEffect(state.sendResult) {
+        if (state.sendResult !is Response.Success) return@LaunchedEffect
         delay(2000)
         modalState.hide()
         onDismiss()
@@ -116,7 +117,7 @@ private fun FeedbackDrawerContent(
             .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
     ) {
         AnimatedContent(
-            targetState = state.sendDone
+            targetState = state.sendResult is Response.Success
         ) { sendDone ->
             Column(
                 modifier = Modifier
@@ -300,7 +301,7 @@ private fun FeedbackDrawerContent(
         },
         title = { Text("Systeminformationen") },
         text = {
-            Text(state.systemInfo.toString())
+            Text(state.feedbackMetadata.toString())
         },
         confirmButton = {
             TextButton(

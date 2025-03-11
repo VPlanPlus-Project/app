@@ -5,19 +5,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.CheckEMailStructureUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.feature.settings.page.info.domain.usecase.GetSystemInfoUseCase
-import plus.vplan.app.feature.settings.page.info.domain.usecase.SystemInfo
+import plus.vplan.app.feature.settings.page.info.domain.usecase.GetFeedbackMetadataUseCase
+import plus.vplan.app.feature.settings.page.info.domain.usecase.SendFeedbackUseCase
+import plus.vplan.app.feature.settings.page.info.domain.usecase.FeedbackMetadata
 
 class FeedbackDrawerViewModel(
-    private val getSystemInfoUseCase: GetSystemInfoUseCase,
+    private val getFeedbackMetadataUseCase: GetFeedbackMetadataUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
-    private val checkEMailStructureUseCase: CheckEMailStructureUseCase
+    private val checkEMailStructureUseCase: CheckEMailStructureUseCase,
+    private val sendFeedbackUseCase: SendFeedbackUseCase
 ) : ViewModel() {
     var state by mutableStateOf(FeedbackDrawerState())
         private set
@@ -28,7 +30,7 @@ class FeedbackDrawerViewModel(
 
     fun init() {
         state = FeedbackDrawerState()
-        getSystemInfoUseCase().let { state = state.copy(systemInfo = it) }
+        viewModelScope.launch { getFeedbackMetadataUseCase().collectLatest { state = state.copy(feedbackMetadata = it) } }
         viewModelScope.launch { getCurrentProfileUseCase().collectLatest { state = state.copy(currentProfile = it) } }
     }
 
@@ -56,8 +58,11 @@ class FeedbackDrawerViewModel(
                     }
                     if (error) return@launch
                     state = state.copy(showEmptyError = false, showEmailError = false, isLoading = true)
-                    delay(1000)
-                    state = state.copy(sendDone = true)
+                    state = state.copy(sendResult = sendFeedbackUseCase(
+                        profile = state.currentProfile!!,
+                        message = state.message,
+                        email = state.customEmail.ifEmpty { null }
+                    ), isLoading = false)
                 }
             }
         }
@@ -67,12 +72,12 @@ class FeedbackDrawerViewModel(
 data class FeedbackDrawerState(
     val showEmptyError: Boolean = false,
     val message: String = "",
-    var systemInfo: SystemInfo? = null,
+    var feedbackMetadata: FeedbackMetadata? = null,
     val currentProfile: Profile? = null,
     val customEmail: String = "",
     val showEmailError: Boolean = false,
     val isLoading: Boolean = false,
-    val sendDone: Boolean = false
+    val sendResult: Response<Unit>? = null
 )
 
 sealed class FeedbackEvent {
