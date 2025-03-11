@@ -43,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -76,6 +77,8 @@ fun FeedbackDrawer(
     val modalState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val viewModel = koinViewModel<FeedbackDrawerViewModel>()
     val state = viewModel.state
+
+    LaunchedEffect(Unit) { viewModel.init() }
     if (state.currentProfile == null) return
 
     LaunchedEffect(state.sendDone) {
@@ -101,7 +104,11 @@ private fun FeedbackDrawerContent(
     state: FeedbackDrawerState,
     onEvent: (FeedbackEvent) -> Unit
 ) {
+    val localKeyboardController = LocalSoftwareKeyboardController.current
     var showSystemInfoDialog by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(state.isLoading) {
+        if (state.isLoading) localKeyboardController?.hide()
+    }
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())

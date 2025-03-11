@@ -15,7 +15,7 @@ import plus.vplan.app.feature.settings.page.info.domain.usecase.GetSystemInfoUse
 import plus.vplan.app.feature.settings.page.info.domain.usecase.SystemInfo
 
 class FeedbackDrawerViewModel(
-    getSystemInfoUseCase: GetSystemInfoUseCase,
+    private val getSystemInfoUseCase: GetSystemInfoUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val checkEMailStructureUseCase: CheckEMailStructureUseCase
 ) : ViewModel() {
@@ -23,6 +23,11 @@ class FeedbackDrawerViewModel(
         private set
 
     init {
+        init()
+    }
+
+    fun init() {
+        state = FeedbackDrawerState()
         getSystemInfoUseCase().let { state = state.copy(systemInfo = it) }
         viewModelScope.launch { getCurrentProfileUseCase().collectLatest { state = state.copy(currentProfile = it) } }
     }
