@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.model.Profile
@@ -50,6 +51,8 @@ class FeedbackDrawerViewModel(
                     }
                     if (error) return@launch
                     state = state.copy(showEmptyError = false, showEmailError = false, isLoading = true)
+                    delay(1000)
+                    state = state.copy(sendDone = true)
                 }
             }
         }
@@ -63,7 +66,8 @@ data class FeedbackDrawerState(
     val currentProfile: Profile? = null,
     val customEmail: String = "",
     val showEmailError: Boolean = false,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val sendDone: Boolean = false
 )
 
 sealed class FeedbackEvent {
