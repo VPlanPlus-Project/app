@@ -3,6 +3,7 @@ package plus.vplan.app.data.source.database.model.database
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.Uuid
@@ -12,9 +13,9 @@ import kotlin.uuid.Uuid
     primaryKeys = ["id"],
     foreignKeys = [
         ForeignKey(
-            entity = DbDefaultLesson::class,
+            entity = DbSubjectInstance::class,
             parentColumns = ["id"],
-            childColumns = ["default_lesson_id"],
+            childColumns = ["subject_instance_ids"],
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
@@ -23,6 +24,10 @@ import kotlin.uuid.Uuid
             childColumns = ["created_by_profile"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        Index("subject_instance_ids", unique = false),
+        Index("created_by_profile", unique = false)
     ]
 )
 data class DbAssessment(
@@ -32,7 +37,7 @@ data class DbAssessment(
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "date") val date: LocalDate,
     @ColumnInfo(name = "is_public") val isPublic: Boolean,
-    @ColumnInfo(name = "default_lesson_id") val defaultLessonId: Int,
+    @ColumnInfo(name = "subject_instance_ids") val subjectInstanceId: Int,
     @ColumnInfo(name = "description") val description: String,
     @ColumnInfo(name = "type") val type: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant

@@ -18,7 +18,7 @@ import org.koin.compose.KoinContext
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
-import plus.vplan.app.domain.source.DefaultLessonSource
+import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.FileSource
 import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
@@ -99,7 +99,7 @@ object App {
     lateinit var profileSource: ProfileSource
     lateinit var groupSource: GroupSource
     lateinit var schoolSource: SchoolSource
-    lateinit var defaultLessonSource: DefaultLessonSource
+    lateinit var subjectInstanceSource: SubjectInstanceSource
     lateinit var daySource: DaySource
     lateinit var timetableSource: TimetableSource
     lateinit var weekSource: WeekSource
@@ -118,6 +118,9 @@ object App {
     lateinit var schulverwalterTeacherSource: plus.vplan.app.domain.source.schulverwalter.TeacherSource
     lateinit var gradeSource: GradeSource
     lateinit var finalGradeSource: FinalGradeSource
+
+    val versionCode: Int = 1
+    val versionName: String = "0.0.1-alpha" // remember to update build.gradle.kts
 }
 
 @Composable
@@ -250,3 +253,9 @@ fun getTaskFromNotificationString(data: String): StartTask? {
     }
     return null
 }
+
+enum class Platform {
+    Android, iOS
+}
+
+expect fun getPlatform(): Platform

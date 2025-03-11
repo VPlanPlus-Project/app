@@ -23,7 +23,7 @@ data class EmbeddedAssessment(
         createdAt = assessment.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()),
         date = assessment.date,
         isPublic = assessment.isPublic,
-        defaultLessonId = assessment.defaultLessonId,
+        subjectInstanceId = assessment.subjectInstanceId,
         description = assessment.description,
         type = Assessment.Type.entries[assessment.type],
         files = files.map { it.fileId },

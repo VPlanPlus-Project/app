@@ -8,7 +8,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
-import plus.vplan.app.data.source.database.model.database.DbGroupProfileDisabledDefaultLessons
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
@@ -41,17 +41,20 @@ interface ProfileDao {
     fun getById(id: Uuid): Flow<EmbeddedProfile?>
 
     @Upsert
-    suspend fun upsertGroupProfileDisabledDefaultLessons(config: List<DbGroupProfileDisabledDefaultLessons>)
+    suspend fun upsertGroupProfileDisabledSubjectInstances(config: List<FKGroupProfileDisabledSubjectInstances>)
 
-    @Query("INSERT OR REPLACE INTO profiles_group_disabled_default_lessons (profile_id, default_lesson_id) VALUES (:profileId, :defaultLessonId)")
-    suspend fun insertDisabledDefaultLessons(profileId: Uuid, defaultLessonId: Int)
+    @Query("INSERT OR REPLACE INTO fk_group_profile_disabled_subject_instances (profile_id, subject_instance_id) VALUES (:profileId, :subjectInstanceId)")
+    suspend fun insertDisabledSubjectInstances(profileId: Uuid, subjectInstanceId: Int)
 
-    @Query("DELETE FROM profiles_group_disabled_default_lessons WHERE default_lesson_id IN (:defaultLessonIds) AND profile_id = :profileId")
-    suspend fun deleteDisabledDefaultLessons(profileId: Uuid, defaultLessonIds: List<Int>)
+    @Query("DELETE FROM fk_group_profile_disabled_subject_instances WHERE subject_instance_id IN (:subjectInstanceIds) AND profile_id = :profileId")
+    suspend fun deleteDisabledSubjectInstances(profileId: Uuid, subjectInstanceIds: List<Int>)
 
     @Query("UPDATE profiles SET display_name = :displayName WHERE id = :id")
     suspend fun updateDisplayName(id: Uuid, displayName: String?)
 
     @Query("UPDATE profiles_group SET vpp_id = :vppId WHERE profile_id = :id")
     suspend fun updateVppId(id: Uuid, vppId: Int?)
+
+    @Query("DELETE FROM profiles WHERE id = :id")
+    suspend fun deleteById(id: Uuid)
 }

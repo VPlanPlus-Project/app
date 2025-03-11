@@ -25,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Group
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
@@ -34,7 +34,7 @@ import vplanplus.composeapp.generated.resources.user
 @Composable
 fun VisibilityTile(
     isPublic: Boolean,
-    selectedDefaultLesson: DefaultLesson?,
+    selectedSubjectInstance: SubjectInstance?,
     group: Group,
     onSetVisibility: (to: Boolean) -> Unit
 ) {
@@ -115,7 +115,7 @@ fun VisibilityTile(
                         )
                         Text(
                             text =
-                            if ((selectedDefaultLesson?.groupItems?.size ?: 0) > 1) "Klassen ${selectedDefaultLesson?.groupItems.orEmpty().joinToString { it.name }}"
+                            if ((selectedSubjectInstance?.groupItems?.size ?: 0) > 1) "Klassen ${selectedSubjectInstance?.groupItems.orEmpty().joinToString { it.name }}"
                             else "Klasse ${group.name}",
                             style = MaterialTheme.typography.titleSmall,
                             color = if (displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface

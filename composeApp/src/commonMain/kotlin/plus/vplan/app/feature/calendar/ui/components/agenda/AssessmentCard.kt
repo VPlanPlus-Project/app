@@ -18,7 +18,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingState
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
@@ -50,7 +50,7 @@ fun AssessmentCard(
 ) {
     val localDensity = LocalDensity.current
 
-    val subject = assessment.subjectInstance.collectAsState(null).value
+    val subject = assessment.subjectInstance.collectAsResultingFlow().value
     val createdBy by when (assessment.creator) {
         is AppEntity.VppId -> assessment.creator.vppId.collectAsLoadingState("")
         is AppEntity.Profile -> assessment.creator.profile.collectAsLoadingState("")

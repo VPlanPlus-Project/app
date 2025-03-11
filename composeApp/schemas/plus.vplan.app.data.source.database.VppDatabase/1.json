@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "9063986e6f7beda0897e49d134527c3b",
+    "identityHash": "22086f307b8cb07040f3a25946e1452a",
     "entities": [
       {
         "tableName": "schools",
@@ -523,8 +523,8 @@
         ]
       },
       {
-        "tableName": "profiles_group_disabled_default_lessons",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `default_lesson_id` INTEGER NOT NULL, PRIMARY KEY(`profile_id`, `default_lesson_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "fk_group_profile_disabled_subject_instances",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `subject_instance_id` INTEGER NOT NULL, PRIMARY KEY(`profile_id`, `subject_instance_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`subject_instance_id`) REFERENCES `subject_instance`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "profileId",
@@ -533,8 +533,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "defaultLessonId",
-            "columnName": "default_lesson_id",
+            "fieldPath": "subjectInstanceId",
+            "columnName": "subject_instance_id",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -543,27 +543,27 @@
           "autoGenerate": false,
           "columnNames": [
             "profile_id",
-            "default_lesson_id"
+            "subject_instance_id"
           ]
         },
         "indices": [
           {
-            "name": "index_profiles_group_disabled_default_lessons_profile_id",
+            "name": "index_fk_group_profile_disabled_subject_instances_profile_id",
             "unique": false,
             "columnNames": [
               "profile_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_profiles_group_disabled_default_lessons_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_group_profile_disabled_subject_instances_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
           },
           {
-            "name": "index_profiles_group_disabled_default_lessons_default_lesson_id",
+            "name": "index_fk_group_profile_disabled_subject_instances_subject_instance_id",
             "unique": false,
             "columnNames": [
-              "default_lesson_id"
+              "subject_instance_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_profiles_group_disabled_default_lessons_default_lesson_id` ON `${TABLE_NAME}` (`default_lesson_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_group_profile_disabled_subject_instances_subject_instance_id` ON `${TABLE_NAME}` (`subject_instance_id`)"
           }
         ],
         "foreignKeys": [
@@ -579,11 +579,11 @@
             ]
           },
           {
-            "table": "default_lessons",
+            "table": "subject_instance",
             "onDelete": "CASCADE",
             "onUpdate": "CASCADE",
             "columns": [
-              "default_lesson_id"
+              "subject_instance_id"
             ],
             "referencedColumns": [
               "id"
@@ -728,8 +728,8 @@
         ]
       },
       {
-        "tableName": "default_lessons",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `indiware_id` TEXT, `subject` TEXT NOT NULL, `teacher_id` INTEGER, `course_id` INTEGER, PRIMARY KEY(`id`))",
+        "tableName": "subject_instance",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `indiware_id` TEXT, `subject` TEXT NOT NULL, `teacher_id` INTEGER, `course_id` INTEGER, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -757,6 +757,12 @@
             "fieldPath": "courseId",
             "columnName": "course_id",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "cachedAt",
+            "columnName": "cached_at",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -767,32 +773,32 @@
         },
         "indices": [
           {
-            "name": "index_default_lessons_id",
+            "name": "index_subject_instance_id",
             "unique": true,
             "columnNames": [
               "id"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_default_lessons_id` ON `${TABLE_NAME}` (`id`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_subject_instance_id` ON `${TABLE_NAME}` (`id`)"
           },
           {
-            "name": "index_default_lessons_teacher_id",
+            "name": "index_subject_instance_teacher_id",
             "unique": false,
             "columnNames": [
               "teacher_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_default_lessons_teacher_id` ON `${TABLE_NAME}` (`teacher_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_subject_instance_teacher_id` ON `${TABLE_NAME}` (`teacher_id`)"
           }
         ]
       },
       {
-        "tableName": "default_lesson_group_crossover",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`default_lesson_id` INTEGER NOT NULL, `group_id` INTEGER NOT NULL, PRIMARY KEY(`default_lesson_id`, `group_id`), FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "fk_subject_instance_group",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`subject_instance_id` INTEGER NOT NULL, `group_id` INTEGER NOT NULL, PRIMARY KEY(`subject_instance_id`, `group_id`), FOREIGN KEY(`subject_instance_id`) REFERENCES `subject_instance`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`group_id`) REFERENCES `school_groups`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
-            "fieldPath": "defaultLessonId",
-            "columnName": "default_lesson_id",
+            "fieldPath": "subjectInstanceId",
+            "columnName": "subject_instance_id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -806,37 +812,37 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "default_lesson_id",
+            "subject_instance_id",
             "group_id"
           ]
         },
         "indices": [
           {
-            "name": "index_default_lesson_group_crossover_default_lesson_id",
+            "name": "index_fk_subject_instance_group_subject_instance_id",
             "unique": false,
             "columnNames": [
-              "default_lesson_id"
+              "subject_instance_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_default_lesson_group_crossover_default_lesson_id` ON `${TABLE_NAME}` (`default_lesson_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_subject_instance_group_subject_instance_id` ON `${TABLE_NAME}` (`subject_instance_id`)"
           },
           {
-            "name": "index_default_lesson_group_crossover_group_id",
+            "name": "index_fk_subject_instance_group_group_id",
             "unique": false,
             "columnNames": [
               "group_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_default_lesson_group_crossover_group_id` ON `${TABLE_NAME}` (`group_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_subject_instance_group_group_id` ON `${TABLE_NAME}` (`group_id`)"
           }
         ],
         "foreignKeys": [
           {
-            "table": "default_lessons",
+            "table": "subject_instance",
             "onDelete": "CASCADE",
             "onUpdate": "CASCADE",
             "columns": [
-              "default_lesson_id"
+              "subject_instance_id"
             ],
             "referencedColumns": [
               "id"
@@ -857,7 +863,7 @@
       },
       {
         "tableName": "courses",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `indiware_id` TEXT, `name` TEXT NOT NULL, `teacher_id` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`teacher_id`) REFERENCES `school_teachers`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `indiware_id` TEXT, `name` TEXT NOT NULL, `teacher_id` INTEGER, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`teacher_id`) REFERENCES `school_teachers`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -880,6 +886,12 @@
             "fieldPath": "teacherId",
             "columnName": "teacher_id",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "cachedAt",
+            "columnName": "cached_at",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -1501,7 +1513,7 @@
       },
       {
         "tableName": "substitution_plan_lesson",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `day_id` TEXT NOT NULL, `lesson_time_id` TEXT NOT NULL, `subject` TEXT, `is_subject_changed` INTEGER NOT NULL, `info` TEXT, `default_lesson_id` INTEGER, `version` TEXT NOT NULL, `is_room_changed` INTEGER NOT NULL, `is_teacher_changed` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`day_id`) REFERENCES `day`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`lesson_time_id`) REFERENCES `lesson_times`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `day_id` TEXT NOT NULL, `lesson_time_id` TEXT NOT NULL, `subject` TEXT, `is_subject_changed` INTEGER NOT NULL, `info` TEXT, `subject_instance_id` INTEGER, `version` TEXT NOT NULL, `is_room_changed` INTEGER NOT NULL, `is_teacher_changed` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`day_id`) REFERENCES `day`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`lesson_time_id`) REFERENCES `lesson_times`(`id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`subject_instance_id`) REFERENCES `subject_instance`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1538,8 +1550,8 @@
             "affinity": "TEXT"
           },
           {
-            "fieldPath": "defaultLessonId",
-            "columnName": "default_lesson_id",
+            "fieldPath": "subjectInstanceId",
+            "columnName": "subject_instance_id",
             "affinity": "INTEGER"
           },
           {
@@ -1596,13 +1608,13 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_lesson_lesson_time_id` ON `${TABLE_NAME}` (`lesson_time_id`)"
           },
           {
-            "name": "index_substitution_plan_lesson_default_lesson_id",
+            "name": "index_substitution_plan_lesson_subject_instance_id",
             "unique": false,
             "columnNames": [
-              "default_lesson_id"
+              "subject_instance_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_lesson_default_lesson_id` ON `${TABLE_NAME}` (`default_lesson_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_lesson_subject_instance_id` ON `${TABLE_NAME}` (`subject_instance_id`)"
           }
         ],
         "foreignKeys": [
@@ -1629,11 +1641,11 @@
             ]
           },
           {
-            "table": "default_lessons",
+            "table": "subject_instance",
             "onDelete": "CASCADE",
             "onUpdate": "CASCADE",
             "columns": [
-              "default_lesson_id"
+              "subject_instance_id"
             ],
             "referencedColumns": [
               "id"
@@ -2204,7 +2216,7 @@
       },
       {
         "tableName": "homework",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `default_lesson_id` INTEGER, `group_id` INTEGER, `created_at` INTEGER NOT NULL, `due_to` TEXT NOT NULL, `created_by_vpp_id` INTEGER, `created_by_profile_id` TEXT, `is_public` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`created_by_profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `subject_instance_id` INTEGER, `group_id` INTEGER, `created_at` INTEGER NOT NULL, `due_to` TEXT NOT NULL, `created_by_vpp_id` INTEGER, `created_by_profile_id` TEXT, `is_public` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`created_by_profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -2213,8 +2225,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "defaultLessonId",
-            "columnName": "default_lesson_id",
+            "fieldPath": "subjectInstanceId",
+            "columnName": "subject_instance_id",
             "affinity": "INTEGER"
           },
           {
@@ -2274,13 +2286,13 @@
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_homework_id` ON `${TABLE_NAME}` (`id`)"
           },
           {
-            "name": "index_homework_default_lesson_id",
+            "name": "index_homework_subject_instance_id",
             "unique": false,
             "columnNames": [
-              "default_lesson_id"
+              "subject_instance_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_default_lesson_id` ON `${TABLE_NAME}` (`default_lesson_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_homework_subject_instance_id` ON `${TABLE_NAME}` (`subject_instance_id`)"
           },
           {
             "name": "index_homework_group_id",
@@ -2698,7 +2710,7 @@
       },
       {
         "tableName": "assessments",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `created_by` INTEGER, `created_by_profile` TEXT, `created_at` INTEGER NOT NULL, `date` TEXT NOT NULL, `is_public` INTEGER NOT NULL, `default_lesson_id` INTEGER NOT NULL, `description` TEXT NOT NULL, `type` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`default_lesson_id`) REFERENCES `default_lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`created_by_profile`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `created_by` INTEGER, `created_by_profile` TEXT, `created_at` INTEGER NOT NULL, `date` TEXT NOT NULL, `is_public` INTEGER NOT NULL, `subject_instance_ids` INTEGER NOT NULL, `description` TEXT NOT NULL, `type` INTEGER NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subject_instance_ids`) REFERENCES `subject_instance`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`created_by_profile`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -2735,8 +2747,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "defaultLessonId",
-            "columnName": "default_lesson_id",
+            "fieldPath": "subjectInstanceId",
+            "columnName": "subject_instance_ids",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -2765,13 +2777,33 @@
             "id"
           ]
         },
+        "indices": [
+          {
+            "name": "index_assessments_subject_instance_ids",
+            "unique": false,
+            "columnNames": [
+              "subject_instance_ids"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_assessments_subject_instance_ids` ON `${TABLE_NAME}` (`subject_instance_ids`)"
+          },
+          {
+            "name": "index_assessments_created_by_profile",
+            "unique": false,
+            "columnNames": [
+              "created_by_profile"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_assessments_created_by_profile` ON `${TABLE_NAME}` (`created_by_profile`)"
+          }
+        ],
         "foreignKeys": [
           {
-            "table": "default_lessons",
+            "table": "subject_instance",
             "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
-              "default_lesson_id"
+              "subject_instance_ids"
             ],
             "referencedColumns": [
               "id"
@@ -3592,7 +3624,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9063986e6f7beda0897e49d134527c3b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '22086f307b8cb07040f3a25946e1452a')"
     ]
   }
 }

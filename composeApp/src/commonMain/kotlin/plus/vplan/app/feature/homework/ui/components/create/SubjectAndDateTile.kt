@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.utils.DOT
@@ -38,11 +38,11 @@ import vplanplus.composeapp.generated.resources.users
 
 @Composable
 fun SubjectAndDateTile(
-    selectedDefaultLesson: DefaultLesson?,
+    selectedSubjectInstance: SubjectInstance?,
     group: Group,
     selectedDate: LocalDate?,
     isAssessment: Boolean,
-    onClickDefaultLesson: () -> Unit,
+    onClickSubjectInstance: () -> Unit,
     onClickDate: () -> Unit
 ) {
     Row(
@@ -58,19 +58,19 @@ fun SubjectAndDateTile(
                 .clip(RoundedCornerShape(16.dp))
         ) {
             AnimatedContent(
-                targetState = selectedDefaultLesson
-            ) { selectedDefaultLesson ->
+                targetState = selectedSubjectInstance
+            ) { selectedSubjectInstance ->
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable { onClickDefaultLesson() }
+                        .clickable { onClickSubjectInstance() }
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        if (selectedDefaultLesson == null) painterResource(Res.drawable.users)
-                        else painterResource(selectedDefaultLesson.subject.subjectIcon()),
+                        if (selectedSubjectInstance == null) painterResource(Res.drawable.users)
+                        else painterResource(selectedSubjectInstance.subject.subjectIcon()),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.onSurface
@@ -82,8 +82,8 @@ fun SubjectAndDateTile(
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text = selectedDefaultLesson?.let { defaultLesson ->
-                                "${defaultLesson.subject} $DOT ${defaultLesson.teacherItem?.name ?: "Kein Lehrer"}"
+                            text = selectedSubjectInstance?.let { subjectInstance ->
+                                "${subjectInstance.subject} $DOT ${subjectInstance.teacherItem?.name ?: "Kein Lehrer"}"
                             } ?: "Klasse ${group.name}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,

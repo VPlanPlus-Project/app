@@ -1,5 +1,6 @@
 package plus.vplan.app.data.repository
 
+import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -90,12 +91,16 @@ class GroupRepositoryImpl(
             val accessData = ResponseDataWrapper.fromJson<GroupUnauthenticatedResponse>(accessResponse.bodyAsText())
                 ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
 
-            val school = vppDatabase.schoolDao.findById(accessData.schoolId).first()?.toModel()
-                .let {
-                    if (it is School.IndiwareSchool && !it.credentialsValid) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for group $id")))
-                    if (it?.getSchoolApiAccess() == null) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for group $id")))
-                    it.getSchoolApiAccess()!!
-                }
+            val school = accessData.schoolId.let {
+                val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@let null
+                if (school is School.IndiwareSchool && !school.credentialsValid) return@let null
+                return@let school.getSchoolApiAccess()
+            } ?: run {
+                Logger.i { "No school to update group $id" }
+                vppDatabase.groupDao.deleteById(listOf(id))
+                trySend(CacheState.Error(id.toString(), Response.Error.Other("no school for group $id")))
+                return@channelFlow
+            }
 
             val response = httpClient.get("${api.url}/api/v2.2/group/$id") {
                 school.authentication(this)

@@ -44,9 +44,10 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingState
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
-import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.DefaultLessonTitle
+import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.SubjectInstanceTitle
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.ui.components.Button
@@ -95,14 +96,14 @@ private fun OnboardingSelectProfileScreen(
                     if (state.selectedProfile == null) slideInHorizontally { -it / 4 } + fadeIn(tween()) togetherWith slideOutHorizontally { it / 4 } + fadeOut()
                     else slideInHorizontally { it / 4 } + fadeIn(tween()) togetherWith slideOutHorizontally { -it / 4 } + fadeOut()
                 }
-            ) { showDefaultLessonSelection ->
+            ) { showSubjectInstanceSelection ->
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.surface)
                 ) {
-                    if (showDefaultLessonSelection) {
-                        DefaultLessonTitle { onEvent(OnboardingProfileSelectionEvent.SelectProfile(null)) }
+                    if (showSubjectInstanceSelection) {
+                        SubjectInstanceTitle { onEvent(OnboardingProfileSelectionEvent.SelectProfile(null)) }
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -110,7 +111,11 @@ private fun OnboardingSelectProfileScreen(
                                 .padding(bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) listHost@{
-                            val courses = state.defaultLessons.keys.mapNotNull { it.course }.distinct()
+                            @Suppress("ConvertCallChainIntoSequence") // collectAsResultingFlow is a @Composable that cannot be invoked in a sequence
+                            val courses = state.subjectInstances.keys.mapNotNull { it.course }.toSet()
+                                .map { App.courseSource.getById(it).collectAsResultingFlow() }
+                                .mapNotNull { it.value }
+                                .sortedBy { it.name }
 
                             if (courses.isNotEmpty()) {
                                 Column {
@@ -122,53 +127,43 @@ private fun OnboardingSelectProfileScreen(
                                     Column(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        courses.forEach { courseId ->
-                                            val course by App.courseSource.getById(courseId).collectAsLoadingState(courseId.toString())
-                                            val isCourseFullySelected = state.defaultLessons.filterKeys { it.course == courseId }.values.all { it }
-                                            val isCoursePartiallySelected = state.defaultLessons.filterKeys { it.course == courseId }.values.any { it }
+                                        courses.forEach { course ->
+                                            val isCourseFullySelected = state.subjectInstances.filterKeys { it.course == course.id }.values.all { it }
+                                            val isCoursePartiallySelected = state.subjectInstances.filterKeys { it.course == course.id }.values.any { it }
                                             Row (
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .defaultMinSize(minHeight = 48.dp)
                                                     .clip(RoundedCornerShape(8.dp))
                                                     .background(MaterialTheme.colorScheme.surfaceContainer)
-                                                    .clickable { (course as? CacheState.Done)?.let { onEvent(OnboardingProfileSelectionEvent.ToggleCourse(it.data)) } }
+                                                    .clickable { onEvent(OnboardingProfileSelectionEvent.ToggleCourse(course)) }
                                                     .padding(vertical = 8.dp)
                                                     .padding(start = 8.dp, end = 16.dp),
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
-                                                course.let {
-                                                    when (it) {
-                                                        is CacheState.Loading -> return@Row
-                                                        is CacheState.Done -> {
-                                                            val loadedCourse = it.data
-                                                            TriStateCheckbox(
-                                                                state = if (isCourseFullySelected) ToggleableState.On else if (isCoursePartiallySelected) ToggleableState.Indeterminate else ToggleableState.Off,
-                                                                onClick = { onEvent(OnboardingProfileSelectionEvent.ToggleCourse(loadedCourse)) }
-                                                            )
-                                                            Row(
-                                                                modifier = Modifier.fillMaxWidth(),
-                                                                verticalAlignment = Alignment.CenterVertically,
-                                                                horizontalArrangement = Arrangement.SpaceBetween
-                                                            ) detailsRow@{
-                                                                Text(
-                                                                    text = loadedCourse.name,
-                                                                    style = MaterialTheme.typography.titleSmall,
-                                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                                )
-                                                                if (loadedCourse.teacherId == null) return@detailsRow
-                                                                val teacherState by App.teacherSource.getById(loadedCourse.teacherId).collectAsLoadingState(loadedCourse.teacherId.toString())
-                                                                if (teacherState !is CacheState.Done) return@detailsRow
-                                                                Text(
-                                                                    text = (teacherState as? CacheState.Done)?.data?.name ?: "-",
-                                                                    style = MaterialTheme.typography.bodySmall,
-                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                )
-                                                            }
-                                                        }
-                                                        else -> Unit
-                                                    }
+                                                TriStateCheckbox(
+                                                    state = if (isCourseFullySelected) ToggleableState.On else if (isCoursePartiallySelected) ToggleableState.Indeterminate else ToggleableState.Off,
+                                                    onClick = { onEvent(OnboardingProfileSelectionEvent.ToggleCourse(course)) }
+                                                )
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) detailsRow@{
+                                                    Text(
+                                                        text = course.name,
+                                                        style = MaterialTheme.typography.titleSmall,
+                                                        color = MaterialTheme.colorScheme.onSurface,
+                                                    )
+                                                    if (course.teacherId == null) return@detailsRow
+                                                    val teacherState by App.teacherSource.getById(course.teacherId).collectAsLoadingState(course.teacherId.toString())
+                                                    if (teacherState !is CacheState.Done) return@detailsRow
+                                                    Text(
+                                                        text = (teacherState as? CacheState.Done)?.data?.name ?: "-",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    )
                                                 }
                                             }
                                         }
@@ -185,17 +180,17 @@ private fun OnboardingSelectProfileScreen(
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    state.defaultLessons
+                                    state.subjectInstances
                                         .entries
                                         .sortedBy { "${it.key.subject}_${it.key.course ?: ""}" }
-                                        .forEach { (defaultLesson, enabled) ->
+                                        .forEach { (subjectInstance, enabled) ->
                                         Row (
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .defaultMinSize(minHeight = 48.dp)
                                                 .clip(RoundedCornerShape(8.dp))
                                                 .background(MaterialTheme.colorScheme.surfaceContainer)
-                                                .clickable { onEvent(OnboardingProfileSelectionEvent.ToggleDefaultLesson(defaultLesson)) }
+                                                .clickable { onEvent(OnboardingProfileSelectionEvent.ToggleSubjectInstance(subjectInstance)) }
                                                 .padding(vertical = 8.dp)
                                                 .padding(start = 8.dp, end = 16.dp),
                                             verticalAlignment = Alignment.CenterVertically,
@@ -203,7 +198,7 @@ private fun OnboardingSelectProfileScreen(
                                         ) {
                                             Checkbox(
                                                 checked = enabled,
-                                                onCheckedChange = { onEvent(OnboardingProfileSelectionEvent.ToggleDefaultLesson(defaultLesson)) }
+                                                onCheckedChange = { onEvent(OnboardingProfileSelectionEvent.ToggleSubjectInstance(subjectInstance)) }
                                             )
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),
@@ -212,20 +207,20 @@ private fun OnboardingSelectProfileScreen(
                                             ) dataRow@{
                                                 Column subjectAndCourse@{
                                                     Text(
-                                                        text = defaultLesson.subject,
+                                                        text = subjectInstance.subject,
                                                         style = MaterialTheme.typography.titleSmall,
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
-                                                    if (defaultLesson.course == null) return@subjectAndCourse
-                                                    val defaultLessonState by App.courseSource.getById(defaultLesson.course).collectAsLoadingState(defaultLesson.course.toString())
-                                                    if (defaultLessonState is CacheState.Done) Text(
-                                                        text = (defaultLessonState as CacheState.Done).data.name,
+                                                    if (subjectInstance.course == null) return@subjectAndCourse
+                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.course).collectAsLoadingState(subjectInstance.course.toString())
+                                                    if (subjectInstanceState is CacheState.Done) Text(
+                                                        text = (subjectInstanceState as CacheState.Done).data.name,
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
                                                 }
-                                                if (defaultLesson.teacher == null) return@dataRow
-                                                val teacherState by App.teacherSource.getById(defaultLesson.teacher).collectAsLoadingState(defaultLesson.teacher.toString())
+                                                if (subjectInstance.teacher == null) return@dataRow
+                                                val teacherState by App.teacherSource.getById(subjectInstance.teacher).collectAsLoadingState(subjectInstance.teacher.toString())
                                                 if (teacherState is CacheState.Done) Text(
                                                     text = (teacherState as CacheState.Done).data.name,
                                                     style = MaterialTheme.typography.bodySmall,

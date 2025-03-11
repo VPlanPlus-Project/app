@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,11 +55,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.schulverwalter.Interval
+import plus.vplan.app.feature.grades.page.view.ui.components.SelectIntervalDrawer
 import plus.vplan.app.ui.animatePlacement
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
@@ -100,6 +103,8 @@ private fun AnalyticsContent(
     val red = colors[CustomColor.Red]!!.getGroup()
     val green = colors[CustomColor.Green]!!.getGroup()
 
+    var showIntervalFilterDrawer by rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -110,6 +115,16 @@ private fun AnalyticsContent(
                             painter = painterResource(Res.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showIntervalFilterDrawer = true }) {
+                        Icon(
+                            painter = painterResource(Res.drawable.filter),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 },
@@ -408,6 +423,13 @@ private fun AnalyticsContent(
         }
     }
 
+    if (showIntervalFilterDrawer) SelectIntervalDrawer(
+        intervals = state.intervals,
+        selectedInterval = state.interval,
+        onDismiss = { showIntervalFilterDrawer = false },
+        onClickInterval = { onEvent(AnalyticsAction.SetInterval(it)) }
+    )
+
     if (showFilterDrawer) {
         val sheetState = rememberModalBottomSheetState(true)
         ModalBottomSheet(
@@ -418,6 +440,7 @@ private fun AnalyticsContent(
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
+                    .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
                     .fillMaxWidth()
                     .animateContentSize()
             ) {

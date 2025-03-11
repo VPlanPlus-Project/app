@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.model.Course
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.GetProfileOptionsUseCase
@@ -48,24 +48,24 @@ class OnboardingSelectProfileViewModel(
                     }
                     state = state.copy(
                         selectedProfile = event.profile,
-                        defaultLessons = event.profile.defaultLessons.associateWith { true }
+                        subjectInstances = event.profile.subjectInstances.associateWith { true }
                     )
                 }
-                is OnboardingProfileSelectionEvent.ToggleDefaultLesson -> {
+                is OnboardingProfileSelectionEvent.ToggleSubjectInstance -> {
                     state = state.copy(
-                        defaultLessons = state.defaultLessons.plus(event.defaultLesson to !state.defaultLessons[event.defaultLesson]!!)
+                        subjectInstances = state.subjectInstances.plus(event.subjectInstance to !state.subjectInstances[event.subjectInstance]!!)
                     )
                 }
                 is OnboardingProfileSelectionEvent.ToggleCourse -> {
-                    val defaultLessons = state.defaultLessons.filterKeys { it.course == event.course.id }
-                    val isCourseFullySelected = defaultLessons.values.all { it }
+                    val subjectInstances = state.subjectInstances.filterKeys { it.course == event.course.id }
+                    val isCourseFullySelected = subjectInstances.values.all { it }
                     state = state.copy(
-                        defaultLessons = state.defaultLessons.plus(defaultLessons.mapValues { !isCourseFullySelected })
+                        subjectInstances = state.subjectInstances.plus(subjectInstances.mapValues { !isCourseFullySelected })
                     )
                 }
                 is OnboardingProfileSelectionEvent.CommitProfile -> {
                     state = state.copy(saveState = OnboardingProfileSelectionSaveState.IN_PROGRESS)
-                    selectProfileUseCase(state.selectedProfile!!, state.defaultLessons)
+                    selectProfileUseCase(state.selectedProfile!!, state.subjectInstances)
                     state = state.copy(saveState = OnboardingProfileSelectionSaveState.DONE)
                 }
             }
@@ -77,7 +77,7 @@ data class OnboardingSelectProfileUiState(
     val options: List<OnboardingProfile> = emptyList(),
     val selectedProfile: OnboardingProfile? = null,
     val filterProfileType: ProfileType? = null,
-    val defaultLessons: Map<DefaultLesson, Boolean> = emptyMap(),
+    val subjectInstances: Map<SubjectInstance, Boolean> = emptyMap(),
     val saveState: OnboardingProfileSelectionSaveState = OnboardingProfileSelectionSaveState.NOT_STARTED
 )
 
@@ -98,6 +98,6 @@ sealed class OnboardingProfileSelectionEvent {
     data class SelectProfileType(val profileType: ProfileType?) : OnboardingProfileSelectionEvent()
     data class SelectProfile(val profile: OnboardingProfile?) : OnboardingProfileSelectionEvent()
     data object CommitProfile: OnboardingProfileSelectionEvent()
-    data class ToggleDefaultLesson(val defaultLesson: DefaultLesson) : OnboardingProfileSelectionEvent()
+    data class ToggleSubjectInstance(val subjectInstance: SubjectInstance) : OnboardingProfileSelectionEvent()
     data class ToggleCourse(val course: Course) : OnboardingProfileSelectionEvent()
 }

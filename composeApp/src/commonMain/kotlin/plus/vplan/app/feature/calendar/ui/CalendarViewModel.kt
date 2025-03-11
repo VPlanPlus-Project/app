@@ -50,9 +50,8 @@ class CalendarViewModel(
             App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date").filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
                 if (!syncLessons) state = state.copy(days = state.days + (date to CalendarDay(day)))
                 else {
-                    val timetable = day.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { it.data }.first() }.filter { it.isRelevantForProfile(state.currentProfile!!) }.onEach { it.prefetch() }
-                    val substitutionPlan = day.substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { it.data }.first() }.filter { it.isRelevantForProfile(state.currentProfile!!) }.onEach { it.prefetch() }.ifEmpty { null }
-                    state = state.copy(days = state.days + (date to CalendarDay(day, timetable, substitutionPlan)))
+                    val lessons = day.lessons.map { it.filter { lesson -> lesson.isRelevantForProfile(state.currentProfile!!) } }.first().onEach { it.prefetch() }
+                    state = state.copy(days = state.days + (date to CalendarDay(day, lessons)))
                 }
             }
         }
@@ -80,7 +79,7 @@ class CalendarViewModel(
 
                 repeat(31) {
                     val date = LocalDate.now().atStartOfMonth() + it.days
-                    if (syncJobs.any { it.date == date }) return@repeat
+                    if (syncJobs.any { job -> job.date == date }) return@repeat
                     syncJobs.add(
                         SyncJob(
                             job = launchSyncJob(date, false),
@@ -168,20 +167,16 @@ private data class SyncJob(
 
 data class CalendarDay(
     val day: Day,
-    val timetable: List<Lesson.TimetableLesson>,
-    val substitutionPlan: List<Lesson.SubstitutionPlanLesson>?
+    val lessons: List<Lesson>,
 ) {
-    constructor(day: Day) : this(day, emptyList(), emptyList())
-
-    val lessons: List<Lesson>
-        get() = substitutionPlan?.ifEmpty { timetable } ?: timetable
+    constructor(day: Day) : this(day, emptyList())
 }
 
 private suspend fun Lesson.prefetch() {
     this.getLessonTimeItem()
     this.getRoomItems()
     this.getTeacherItems()
-    if (this is Lesson.SubstitutionPlanLesson) this.getDefaultLesson()
+    if (this is Lesson.SubstitutionPlanLesson) this.getSubjectInstance()
 }
 
 enum class DisplayType {

@@ -85,7 +85,7 @@ fun CurrentDayView(
         LaunchedEffect("${contextTime.hour}:${contextTime.minute}") {
             val contextZoned = contextTime.toInstant(TimeZone.currentSystemDefault())
             currentOrNextLesson.clear()
-            currentOrNextLesson.addAll(day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+            currentOrNextLesson.addAll(day.lessons
                 .filter {
                     val lessonTime = it.getLessonTimeItem()
                     val start =
@@ -94,14 +94,14 @@ fun CurrentDayView(
                     contextZoned in start..end
                 }
                 .map { currentLesson ->
-                    currentLesson to day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+                    currentLesson to day.lessons
                         .filter {
                             it.subject == currentLesson.subject
                                     && (it.teachers - currentLesson.teachers.toSet()).size != it.teachers.size
                                     && ((it.rooms.orEmpty() - currentLesson.rooms.orEmpty()
                                 .toSet()).size != it.rooms?.size || it.rooms.orEmpty()
                                 .isEmpty() || currentLesson.rooms.orEmpty().isEmpty())
-                                    && it.defaultLesson == currentLesson.defaultLesson
+                                    && it.subjectInstance == currentLesson.subjectInstance
                                     && it.getLessonTimeItem().lessonNumber > currentLesson.getLessonTimeItem().lessonNumber
                         }.sortedBy { it.lessonTimeItem!!.lessonNumber }
                         .takeContinuousBy { it.lessonTimeItem!!.lessonNumber }
@@ -118,7 +118,7 @@ fun CurrentDayView(
             )
 
             if (currentOrNextLesson.all { it.first.subject == null }) {
-                val nextActualLesson = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+                val nextActualLesson = day.lessons
                     .firstOrNull { lesson -> lesson.subject != null && lesson.lessonTimeItem!!.start > currentOrNextLesson.maxOf { it.first.lessonTimeItem!!.end } }
                 InfoCard(
                     imageVector = Res.drawable.lightbulb,
@@ -150,12 +150,12 @@ fun CurrentDayView(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = "Dein Tag",
                 subtitle = "${day.day.date.format(remember { subtitleDateFormat })}, bis ${
-                    day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+                    day.lessons
                         .maxOf { it.lessonTimeItem!!.end }.format(remember { subtitleTimeFormat })
-                }\n" + (if (day.substitutionPlan == null) "Stundenplan" else "Vertretungsplan")
+                }\n" + (if (day.day.substitutionPlan.isEmpty()) "Stundenplan" else "Vertretungsplan")
             )
             if (day.day.info != null) DayInfoCard(Modifier.padding(vertical = 4.dp), info = day.day.info)
-            val followingLessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }
+            val followingLessons = day.lessons
                 .filter { it.lessonTimeItem!!.lessonNumber > (currentOrNextLesson.lastOrNull()?.first?.lessonTimeItem?.lessonNumber ?: Int.MAX_VALUE) }
                 .sortedBy { it.lessonTimeItem!!.start }
             if (followingLessons.isNotEmpty()) Column {
@@ -174,7 +174,7 @@ fun CurrentDayView(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     showFirstGradient = false,
                     date = day.day.date,
-                    lessons = day.substitutionPlan.orEmpty().ifEmpty { day.timetable }.groupBy { it.lessonTimeItem!!.lessonNumber }
+                    lessons = day.lessons.groupBy { it.lessonTimeItem!!.lessonNumber }
                 )
             }
         }

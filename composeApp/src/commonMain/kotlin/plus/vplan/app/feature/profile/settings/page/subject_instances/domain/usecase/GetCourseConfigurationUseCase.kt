@@ -7,10 +7,10 @@ import plus.vplan.app.domain.model.Profile
 
 class GetCourseConfigurationUseCase {
     suspend operator fun invoke(profile: Profile.StudentProfile): Map<Course, Boolean?> {
-        return profile.getDefaultLessons()
+        return profile.getSubjectInstances()
             .groupBy { it.getCourseItem() }
-            .map { (course, defaultLessons) ->
-                val selections = defaultLessons.map { profile.defaultLessonsConfiguration[it.id] == true }
+            .map { (course, subjectInstances) ->
+                val selections = subjectInstances.map { profile.subjectInstanceConfiguration[it.id] == true }
                 course to if (selections.all { it }) true else if (selections.any { it }) null else false
             }
             .filter { it.first != null }

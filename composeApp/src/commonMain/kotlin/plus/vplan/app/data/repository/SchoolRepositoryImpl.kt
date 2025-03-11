@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
-import plus.vplan.app.data.source.database.model.database.DbSp24SchoolDetails
+import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
@@ -105,7 +105,7 @@ class SchoolRepositoryImpl(
         downloadMode: School.IndiwareSchool.SchoolDownloadMode
     ) {
         vppDatabase.schoolDao.upsertSp24SchoolDetails(
-            DbSp24SchoolDetails(
+            DbSchoolIndiwareAccess(
                 schoolId = school.id,
                 sp24SchoolId = sp24Id.toString(),
                 username = username,
@@ -124,6 +124,10 @@ class SchoolRepositoryImpl(
 
     override suspend fun setIndiwareAccessValidState(school: School, valid: Boolean) {
         vppDatabase.schoolDao.setIndiwareAccessValidState(school.id, valid)
+    }
+
+    override suspend fun deleteSchool(schoolId: Int) {
+        vppDatabase.schoolDao.deleteById(schoolId)
     }
 }
 

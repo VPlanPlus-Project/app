@@ -37,7 +37,7 @@ class UpdateAssessmentUseCase(
     suspend operator fun invoke(allowNotifications: Boolean) {
         val existing = assessmentRepository.getAll().first().map { it.id }.toSet()
         profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>().forEach { profile ->
-            ((assessmentRepository.download(profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchoolItem().getSchoolApiAccess()!!, profile.defaultLessonsConfiguration.filterValues { it }.keys.toList()) as? Response.Success ?: return@forEach)
+            ((assessmentRepository.download(profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchoolItem().getSchoolApiAccess()!!, profile.subjectInstanceConfiguration.filterValues { it }.keys.toList()) as? Response.Success ?: return@forEach)
                 .data - existing)
                 .also { ids ->
                     if (ids.isEmpty() || !allowNotifications) return@forEach
@@ -50,7 +50,7 @@ class UpdateAssessmentUseCase(
                                     newAssessments.first().let { assessment ->
                                         append((assessment.creator as AppEntity.VppId).vppId.getFirstValue()?.name ?: "Unbekannter Nutzer")
                                         append(" hat eine neue Leistungserhebung in ")
-                                        append(assessment.getSubjectInstanceItem().subject)
+                                        append(assessment.subjectInstance.getFirstValue()?.subject ?: "einem Fach")
                                         append(" für ")
                                         (assessment.date untilRelativeText LocalDate.now())?.let { append(it) } ?: append(assessment.date.format(LocalDate.Format {
                                             dayOfWeek(shortDayOfWeekNames)

@@ -11,7 +11,7 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.DefaultLesson
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
@@ -33,7 +33,7 @@ class CreateAssessmentUseCase(
         text: String,
         isPublic: Boolean?,
         date: LocalDate,
-        defaultLesson: DefaultLesson,
+        subjectInstance: SubjectInstance,
         type: Assessment.Type,
         selectedFiles: List<AttachedFile>
     ): Boolean {
@@ -47,7 +47,7 @@ class CreateAssessmentUseCase(
                 vppId = profile.getVppIdItem() as VppId.Active,
                 date = date,
                 type = type,
-                defaultLessonId = defaultLesson.id,
+                subjectInstanceId = subjectInstance.id,
                 isPublic = isPublic ?: false,
                 content = text
             )
@@ -76,7 +76,7 @@ class CreateAssessmentUseCase(
                 createdAt = Clock.System.now().toLocalDateTime(TimeZone.UTC),
                 date = date,
                 isPublic = isPublic ?: false,
-                defaultLessonId = defaultLesson.id,
+                subjectInstanceId = subjectInstance.id,
                 description = text,
                 type = type,
                 files = files.map { it.id }.toList(),
@@ -98,7 +98,7 @@ class CreateAssessmentUseCase(
                 createdAt = Clock.System.now().toLocalDateTime(TimeZone.UTC),
                 date = date,
                 isPublic = false,
-                defaultLessonId = defaultLesson.id,
+                subjectInstanceId = subjectInstance.id,
                 description = text,
                 type = type,
                 files = files.map { it.id }.toList(),

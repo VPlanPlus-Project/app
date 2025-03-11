@@ -1,11 +1,13 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -24,35 +26,18 @@ sealed class Homework(
     abstract val createdAt: Instant
     abstract val dueTo: LocalDate
     abstract val taskIds: List<Int>
-    abstract val defaultLesson: Int?
-    abstract val group: Int?
+    abstract val subjectInstanceId: Int?
     abstract val files: List<Int>
     override fun getEntityId(): String = this.id.toString()
     abstract val cachedAt: Instant
 
-    var defaultLessonItem: DefaultLesson? = null
-        private set
-
-    suspend fun getDefaultLessonItem(): DefaultLesson? {
-        return defaultLessonItem ?: defaultLesson?.let { defaultLessonId ->
-            App.defaultLessonSource.getSingleById(defaultLessonId).also { defaultLessonItem = it }
-        }
-    }
-
-    val subjectInstance by lazy { defaultLesson?.let { App.defaultLessonSource.getById(it) } }
+    val subjectInstance by lazy { this.subjectInstanceId?.let { App.subjectInstanceSource.getById(it) } }
     val tasks by lazy {
         if (taskIds.isEmpty()) return@lazy flowOf(emptyList())
         combine(taskIds.map { id -> App.homeworkTaskSource.getById(id).filterIsInstance<CacheState.Done<HomeworkTask>>().map { it.data } }) { it.toList() }
     }
 
-    var groupItem: Group? = null
-        private set
-
-    suspend fun getGroupItem(): Group? {
-        return groupItem ?: group?.let { groupId ->
-            App.groupSource.getSingleById(groupId).also { groupItem = it }
-        }
-    }
+    abstract val group: Flow<CacheState<Group>>?
 
     var taskItems: List<HomeworkTask>? = null
         private set
@@ -112,24 +97,26 @@ sealed class Homework(
         override val createdAt: Instant,
         override val dueTo: LocalDate,
         override val taskIds: List<Int>,
-        override val defaultLesson: Int?,
-        override val group: Int?,
+        override val subjectInstanceId: Int?,
         override val files: List<Int>,
         override val cachedAt: Instant,
         val isPublic: Boolean,
+        val groupId: Int?,
         val createdBy: Int,
     ) : Homework(
         creator = AppEntity.VppId(createdBy)
     ) {
-        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
+        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, subjectInstance: Int?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
                 taskIds = tasks,
-                defaultLesson = defaultLesson,
-                group = group
+                subjectInstanceId = subjectInstance,
+                groupId = groupId
             )
         }
+
+        override val group: Flow<CacheState<Group>>? = groupId?.let { App.groupSource.getById(groupId) }
 
         var createdByItem: VppId? = null
             private set
@@ -146,34 +133,36 @@ sealed class Homework(
         override val createdAt: Instant,
         override val dueTo: LocalDate,
         override val taskIds: List<Int>,
-        override val defaultLesson: Int?,
+        override val subjectInstanceId: Int?,
         override val files: List<Int>,
         override val cachedAt: Instant,
         val createdByProfile: Uuid
     ) : Homework(
         creator = AppEntity.Profile(createdByProfile)
     ) {
-        override val group: Int
-            get() = groupId ?: runBlocking { getCreatedByProfile().group }
-
-        var groupId: Int? = null
-            private set
-
         var createdByProfileItem: Profile.StudentProfile? = null
             private set
 
         suspend fun getCreatedByProfile(): Profile.StudentProfile {
             return createdByProfileItem ?: createdByProfile.let { createdByProfileId ->
-                App.profileSource.getById(createdByProfileId).getFirstValue().let { it as Profile.StudentProfile }.also { createdByProfileItem = it; groupId = it.group }
+                App.profileSource.getById(createdByProfileId).getFirstValue().let { it as Profile.StudentProfile }.also { createdByProfileItem = it }
             }
         }
 
-        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, defaultLesson: Int?, group: Int?): Homework {
+        @OptIn(ExperimentalCoroutinesApi::class)
+        override val group: Flow<CacheState<Group>> by lazy {
+            App.profileSource.getById(createdByProfile)
+                .filterIsInstance<CacheState.Done<Profile.StudentProfile>>()
+                .map { it.data }
+                .flatMapLatest { App.groupSource.getById(it.group) }
+        }
+
+        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, subjectInstance: Int?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
                 taskIds = tasks,
-                defaultLesson = defaultLesson
+                subjectInstanceId = subjectInstance
             )
         }
     }
@@ -182,8 +171,7 @@ sealed class Homework(
         createdAt: Instant = this.createdAt,
         dueTo: LocalDate = this.dueTo,
         tasks: List<Int> = this.taskIds,
-        defaultLesson: Int? = this.defaultLesson,
-        group: Int? = this.group
+        subjectInstance: Int? = this.subjectInstanceId
     ): Homework
 }
 

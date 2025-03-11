@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import plus.vplan.app.feature.host.domain.usecase.HasProfileUseCase
 
@@ -16,7 +17,7 @@ class NavigationHostViewModel(
 
     init {
         viewModelScope.launch {
-            state = state.copy(hasProfile = hasProfileUseCase())
+            hasProfileUseCase().collectLatest { state = state.copy(hasProfile = it) }
         }
     }
 }

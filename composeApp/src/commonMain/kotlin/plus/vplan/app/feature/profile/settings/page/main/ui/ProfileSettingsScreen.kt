@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -27,11 +29,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +51,7 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.VPP_ID_AUTH_URL
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.main.MainScreen
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.VppIdConnectionState
@@ -60,6 +65,7 @@ import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.circle_user_round
 import vplanplus.composeapp.generated.resources.graduation_cap
 import vplanplus.composeapp.generated.resources.pencil
+import vplanplus.composeapp.generated.resources.trash_2
 import vplanplus.composeapp.generated.resources.x
 
 @Composable
@@ -93,6 +99,7 @@ private fun ProfileSettingsContent(
 
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
     var isVppIdManagementDrawerVisible by rememberSaveable { mutableStateOf(false) }
+    var isDeleteDialogVisible by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -104,6 +111,17 @@ private fun ProfileSettingsContent(
                             painter = painterResource(Res.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { isDeleteDialogVisible = true }
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.trash_2),
+                            modifier = Modifier.size(20.dp),
+                            contentDescription = null
                         )
                     }
                 },
@@ -204,8 +222,9 @@ private fun ProfileSettingsContent(
             )
             Spacer(Modifier.height(8.dp))
             if (state.profile is Profile.StudentProfile) {
+                val vppId = state.profile.vppId?.collectAsState(null)?.value
                 AnimatedContent(
-                    targetState = state.profile.vppIdId,
+                    targetState = vppId,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth()
@@ -231,7 +250,7 @@ private fun ProfileSettingsContent(
                         )
                         Column {
                             Text(
-                                text = state.profile.vppIdItem!!.name,
+                                text = displayVppId.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -296,5 +315,42 @@ private fun ProfileSettingsContent(
                 onDismiss = { isVppIdManagementDrawerVisible = false }
             )
         }
+
+        if (isDeleteDialogVisible) AlertDialog(
+            onDismissRequest = { isDeleteDialogVisible = false },
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.trash_2),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            title = {
+                Text("Profil ${state.profile?.name} löschen?")
+            },
+            text = {
+                if (state.isLastProfileOfSchool) {
+                    val school = state.profile!!.getSchool().collectAsResultingFlow().value ?: return@AlertDialog
+                    Text("Dies ist das letzte Profil der Schule ${school.name}. Wenn du dieses Profil löschst, musst du die Schule erneut hinzufügen.")
+                } else Text("Dieses Profil wird gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { onEvent(ProfileSettingsEvent.DeleteProfile); isDeleteDialogVisible = false },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Löschen")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { isDeleteDialogVisible = false }
+                ) {
+                    Text("Abbrechen")
+                }
+            }
+        )
     }
 }

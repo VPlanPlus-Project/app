@@ -1,13 +1,13 @@
 package plus.vplan.app.feature.search.domain.usecase
 
 import androidx.compose.ui.util.fastFilterNotNull
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
@@ -103,7 +103,7 @@ class SearchUseCase(
             homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
                 val homework = homeworkList.onEach { it.getTaskItems() }
                 results.value = results.value.plus(Result.Homework to homework.filter { it.taskItems!!.any { task -> query in task.content.lowercase() } }.onEach {
-                    it.getDefaultLessonItem() ?: it.getGroupItem()
+                    it.subjectInstance?.getFirstValue() ?: it.group?.getFirstValue()
                     when (it) {
                         is Homework.CloudHomework -> it.getCreatedBy()
                         is Homework.LocalHomework -> it.getCreatedByProfile()
@@ -116,7 +116,6 @@ class SearchUseCase(
             assessmentRepository.getAll().collectLatest { assessmentList ->
                 val assessments = assessmentList.filter { query in it.description.lowercase() }
                     .onEach { assessment ->
-                        assessment.getSubjectInstanceItem()
                         when (assessment.creator) {
                             is AppEntity.VppId -> assessment.getCreatedByVppIdItem()
                             is AppEntity.Profile -> assessment.getCreatedByProfileItem()

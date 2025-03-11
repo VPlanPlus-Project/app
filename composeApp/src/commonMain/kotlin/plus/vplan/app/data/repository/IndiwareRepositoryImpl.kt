@@ -160,13 +160,13 @@ class IndiwareRepositoryImpl(
                                             lessonNumber = baseDataClassLessonTime.lessonNumber
                                         )
                                     },
-                                defaultLessons = baseDataClass.defaultLessons
-                                    .map { baseDataClassDefaultLesson ->
-                                        IndiwareBaseData.Class.DefaultLesson(
-                                            subject = baseDataClassDefaultLesson.defaultLesson.subjectName,
-                                            teacher = baseDataClassDefaultLesson.defaultLesson.teacherName.ifBlank { null },
-                                            defaultLessonNumber = "sp24.$sp24Id.${baseDataClassDefaultLesson.defaultLesson.defaultLessonNumber}",
-                                            course = if (baseDataClassDefaultLesson.defaultLesson.courseName == null) null else baseDataClass.courses.first { it.course.courseName == baseDataClassDefaultLesson.defaultLesson.courseName }.let {
+                                subjectInstances = baseDataClass.subjectInstances
+                                    .map { baseDataClassSubjectInstance ->
+                                        IndiwareBaseData.Class.SubjectInstance(
+                                            subject = baseDataClassSubjectInstance.subjectInstance.subjectName,
+                                            teacher = baseDataClassSubjectInstance.subjectInstance.teacherName.ifBlank { null },
+                                            subjectInstanceNumber = "sp24.$sp24Id.${baseDataClassSubjectInstance.subjectInstance.subjectInstanceNumber}",
+                                            course = if (baseDataClassSubjectInstance.subjectInstance.courseName == null) null else baseDataClass.courses.first { it.course.courseName == baseDataClassSubjectInstance.subjectInstance.courseName }.let {
                                                 IndiwareBaseData.Class.Course(
                                                     name = it.course.courseName,
                                                     teacher = it.course.courseTeacherName.ifBlank { null }
@@ -178,8 +178,8 @@ class IndiwareRepositoryImpl(
                         },
                     teachers = mobileClassBaseData
                         .classes
-                        .flatMap { it.defaultLessons }
-                        .map { it.defaultLesson.teacherName }
+                        .flatMap { it.subjectInstances }
+                        .map { it.subjectInstance.teacherName }
                         .distinct(),
                     rooms = emptyList(),
                     daysPerWeek = mobileClassBaseData.header.daysPerWeek.daysPerWeek,
@@ -318,7 +318,7 @@ class IndiwareRepositoryImpl(
                                     info = substitutionPlanLesson.info.value.ifBlank { null },
                                     start = LocalTime.parse(substitutionPlanLesson.start.value),
                                     end = LocalTime.parse(substitutionPlanLesson.end.value),
-                                    defaultLessonNumber = substitutionPlanLesson.defaultLessonNumber?.value?.toIntOrNull()
+                                    subjectInstanceNumber = substitutionPlanLesson.subjectInstanceNumber?.value?.toIntOrNull()
                                 )
                             }
                         )

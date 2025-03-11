@@ -13,7 +13,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.findByIndiwareId
 import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.DefaultLessonRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
@@ -41,7 +41,7 @@ class UpdateSubstitutionPlanUseCase(
     private val weekRepository: WeekRepository,
     private val dayRepository: DayRepository,
     private val profileRepository: ProfileRepository,
-    private val defaultLessonRepository: DefaultLessonRepository,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val lessonTimeRepository: LessonTimeRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val platformNotificationRepository: PlatformNotificationRepository
@@ -50,13 +50,13 @@ class UpdateSubstitutionPlanUseCase(
         val teachers = teacherRepository.getBySchool(indiwareSchool.id).latest()
         val rooms = roomRepository.getBySchool(indiwareSchool.id).latest()
         val groups = groupRepository.getBySchool(indiwareSchool.id).latest()
-        val defaultLessons = defaultLessonRepository.getBySchool(indiwareSchool.id, false).latest()
+        val subjectInstances = subjectInstanceRepository.getBySchool(indiwareSchool.id, false).latest()
         val week = weekRepository.getBySchool(indiwareSchool.id).latest().firstOrNull { date in it.start..it.end } ?: return Response.Error.Other("Week for $date not found")
 
         val oldPlan = profileRepository.getAll().first()
             .filterIsInstance<Profile.StudentProfile>()
             .filter { it.getSchoolItem().id == indiwareSchool.id }
-            .associateWith { getDayUseCase(it, date).first().getLessonItems() }
+            .associateWith { getDayUseCase(it, date).first().lessons.first() }
 
         val substitutionPlanResponse = indiwareRepository.getSubstitutionPlan(
             sp24Id = indiwareSchool.sp24Id,
@@ -106,7 +106,7 @@ class UpdateSubstitutionPlanUseCase(
                     rooms = rooms.filter { it.name in substitutionPlanLesson.room }.map { it.id },
                     isRoomChanged = substitutionPlanLesson.roomChanged,
                     groups = listOf(group.id),
-                    defaultLesson = substitutionPlanLesson.defaultLessonNumber?.let { defaultLessons.findByIndiwareId(it.toString()) }?.id,
+                    subjectInstance = substitutionPlanLesson.subjectInstanceNumber?.let { subjectInstances.findByIndiwareId(it.toString()) }?.id,
                     lessonTime = lessonTimes.first { it.lessonNumber == substitutionPlanLesson.lessonNumber }.id,
                     info = substitutionPlanLesson.info
                 )
@@ -128,7 +128,7 @@ class UpdateSubstitutionPlanUseCase(
                 val new = newPlan[profile] ?: return@forEach
 
                 val oldLessons = old.map { it.getLessonSignature() }
-                val changedOrNewLessons = new.getLessonItems().filter { it.getLessonSignature() !in oldLessons }
+                val changedOrNewLessons = new.lessons.first().filter { it.getLessonSignature() !in oldLessons }
                 if (changedOrNewLessons.isEmpty()) return@forEach
 
                 Logger.d { "Sending notification for ${profile.name}" }
