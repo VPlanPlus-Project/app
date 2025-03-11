@@ -34,16 +34,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.App
+import plus.vplan.app.Platform
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
+import plus.vplan.app.feature.settings.ui.components.SettingsRecord
+import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.chevron_right
+import vplanplus.composeapp.generated.resources.github
+import vplanplus.composeapp.generated.resources.globe
+import vplanplus.composeapp.generated.resources.google_play
+import vplanplus.composeapp.generated.resources.instagram
 import vplanplus.composeapp.generated.resources.logo
+import vplanplus.composeapp.generated.resources.mastodon
 import vplanplus.composeapp.generated.resources.message_circle_warning
+import vplanplus.composeapp.generated.resources.shield_user
+import vplanplus.composeapp.generated.resources.threads
+import vplanplus.composeapp.generated.resources.whatsapp
 
 expect fun getPlatform(): String
 
@@ -126,7 +138,7 @@ private fun InfoContent(
                     .padding(vertical = 8.dp, horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+            ) feedbackButton@{
                 Icon(
                     painter = painterResource(Res.drawable.message_circle_warning),
                     contentDescription = null,
@@ -152,6 +164,78 @@ private fun InfoContent(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Links",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
+            SettingsRecord(
+                title = "Internetseite",
+                subtitle = "vplan.plus",
+                icon = painterResource(Res.drawable.globe),
+                onClick = { BrowserIntent.openUrl("https://vplan.plus") }
+            )
+            when (plus.vplan.app.getPlatform()) {
+                Platform.Android -> SettingsRecord(
+                    title = "Google Play Store",
+                    subtitle = "VPlanPlus: Digitaler Schultag",
+                    icon = painterResource(Res.drawable.google_play),
+                    onClick = { BrowserIntent.openUrl("https://play.google.com/") }
+                )
+                else -> Unit
+            }
+            SettingsRecord(
+                title = "GitHub-Repository",
+                subtitle = "VPlanPlusProject/app",
+                icon = painterResource(Res.drawable.github),
+                onClick = { BrowserIntent.openUrl("https://github.com/VPlanPlus-Project/app") }
+            )
+            SettingsRecord(
+                title = "Datenschutzerklärung",
+                subtitle = "für VPlanPlus und vpp.ID",
+                icon = painterResource(Res.drawable.shield_user),
+                onClick = { BrowserIntent.openUrl("https://vplan.plus/privacy") }
+            )
+
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Soziale Netzwerke",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
+            SettingsRecord(
+                title = "Instagram",
+                subtitle = "@vplanplus",
+                icon = painterResource(Res.drawable.instagram),
+                onClick = { BrowserIntent.openUrl("https://www.instagram.com/vplanplus") }
+            )
+            SettingsRecord(
+                title = "Threads",
+                subtitle = "@vplanplus",
+                icon = painterResource(Res.drawable.threads),
+                onClick = { BrowserIntent.openUrl("https://www.threads.net/@vplanplus") }
+            )
+            SettingsRecord(
+                title = "Mastodon",
+                subtitle = "@vpp_app@mastodon.social",
+                icon = painterResource(Res.drawable.mastodon),
+                onClick = { BrowserIntent.openUrl("https://mastodon.social/@vpp_app") }
+            )
+            SettingsRecord(
+                title = "WhatsApp-Kanal",
+                subtitle = "Erhalte Statusupdates und Infos in WhatsApp",
+                icon = painterResource(Res.drawable.whatsapp),
+                onClick = { BrowserIntent.openUrl("https://whatsapp.com/channel/0029Vagcelf5q08Vjjc7Of1o") }
+            )
+            Text(
+                text = "Made with ❤️ by Julius Babies",
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.End,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .align(Alignment.End)
+            )
         }
     }
 

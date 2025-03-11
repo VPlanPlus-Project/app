@@ -207,3 +207,9 @@ data class StartTaskJson(
         )
     }
 }
+
+enum class Platform {
+    Android, iOS
+}
+
+expect fun getPlatform(): Platform
