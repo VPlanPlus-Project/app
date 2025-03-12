@@ -18,7 +18,7 @@ import plus.vplan.app.ui.platform.OpenBiometricSettingsImpl
 import plus.vplan.app.ui.platform.RunBiometricAuthentication
 import plus.vplan.app.ui.platform.RunBiometricAuthenticationImpl
 
-actual fun platformModule(): Module = module(createdAtStart = true) {
+actual val platformModule: Module = module(createdAtStart = true) {
     single<VppDatabase>(createdAtStart = true) {
         Room.databaseBuilder<VppDatabase>(
             context = get(),

@@ -12,6 +12,7 @@ import io.ktor.http.URLProtocol
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
 import plus.vplan.app.domain.source.AssessmentSource
@@ -206,6 +207,51 @@ data class StartTaskJson(
             @SerialName("vpp_id") val vppId: Int
         )
     }
+}
+
+fun getTaskFromNotificationString(data: String): StartTask? {
+    val json = Json { ignoreUnknownKeys = true }
+    val taskJson = json.decodeFromString<StartTaskJson>(data)
+    when (taskJson.type) {
+        "navigate_to" -> {
+            val navigationJson = json.decodeFromString<StartTaskJson.StartTaskNavigateTo>(taskJson.value)
+            when (navigationJson.screen) {
+                "calendar" -> {
+                    val payload = json.decodeFromString<StartTaskJson.StartTaskNavigateTo.StartTaskCalendar>(navigationJson.value!!)
+                    return StartTask.NavigateTo.Calendar(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, LocalDate.parse(payload.date))
+                }
+                "settings/school" -> {
+                    val payload = json.decodeFromString<StartTaskJson.StartTaskNavigateTo.SchoolSettings>(navigationJson.value!!)
+                    return StartTask.NavigateTo.SchoolSettings(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.openIndiwareSettingsSchoolId)
+                }
+                "grades" -> {
+                    val payload = json.decodeFromString<StartTaskJson.StartTaskNavigateTo.Grades>(navigationJson.value!!)
+                    return StartTask.NavigateTo.Grades(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.vppId)
+                }
+            }
+        }
+        "open" -> {
+            val openJson = json.decodeFromString<StartTaskJson.StartTaskOpen>(taskJson.value)
+            when (openJson.type) {
+                "homework" -> {
+                    val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.Homework>(openJson.value)
+                    return StartTask.Open.Homework(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.homeworkId)
+                }
+                "assessment" -> {
+                    val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.Assessment>(openJson.value)
+                    return StartTask.Open.Assessment(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.assessmentId)
+                }
+                "grade" -> {
+                    val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.Grade>(openJson.value)
+                    return StartTask.Open.Grade(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.gradeId)
+                }
+            }
+        }
+        "url" -> {
+            return StartTask.OpenUrl(taskJson.value)
+        }
+    }
+    return null
 }
 
 enum class Platform {

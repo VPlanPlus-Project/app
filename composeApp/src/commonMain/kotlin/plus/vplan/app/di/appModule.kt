@@ -7,6 +7,7 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
+import org.koin.core.logger.Level
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.KoinAppDeclaration
@@ -91,7 +92,7 @@ import plus.vplan.app.feature.settings.di.settingsModule
 import plus.vplan.app.feature.sync.di.syncModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
 
-expect fun platformModule(): Module
+expect val platformModule: Module
 
 val appModule = module(createdAtStart = true) {
     single<HttpClient> {
@@ -138,7 +139,7 @@ val appModule = module(createdAtStart = true) {
 fun initKoin(configuration: KoinAppDeclaration? = null) {
     startKoin {
         configuration?.invoke(this)
-        modules(platformModule())
+        modules(platformModule)
         modules(domainModule)
         modules(
             appModule,

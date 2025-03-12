@@ -4,7 +4,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import plus.vplan.app.fragmentActivity
 
-class RunBiometricAuthenticationImpl : RunBiometricAuthentication() {
+class RunBiometricAuthenticationImpl : RunBiometricAuthentication {
 
     override fun run(title: String, subtitle: String, negativeButtonText: String, onSuccess: () -> Unit, onError: () -> Unit, onCancel: () -> Unit) {
         val promptInfo = BiometricPrompt.PromptInfo.Builder()

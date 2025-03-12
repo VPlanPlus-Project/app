@@ -1,4 +1,3 @@
-import com.google.devtools.ksp.gradle.KspTaskMetadata
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -11,17 +10,15 @@ plugins {
     alias(libs.plugins.serialization)
 }
 
-repositories {
-    mavenCentral()
-    google()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev/")
-}
-
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_11)
         }
+    }
+
+    compilerOptions {
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
     }
     
     listOf(
@@ -35,11 +32,6 @@ kotlin {
         }
     }
 
-    compilerOptions {
-        optIn.add("kotlin.uuid.ExperimentalUuidApi")
-        freeCompilerArgs.add("-Xexpect-actual-classes")
-    }
-    
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -101,10 +93,6 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
     }
-
-    compilerOptions {
-        optIn.add("kotlin.uuid.ExperimentalUuidApi")
-    }
 }
 
 android {
@@ -126,17 +114,12 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-}
-
-dependencies {
-    debugImplementation(compose.uiTooling)
 }
 
 room {
@@ -150,32 +133,4 @@ dependencies {
     add("kspIosSimulatorArm64", libs.androidx.room.compiler)
     add("kspIosX64", libs.androidx.room.compiler)
     add("kspIosArm64", libs.androidx.room.compiler)
-}
-
-kotlin.sourceSets.commonMain { tasks.withType<KspTaskMetadata> { kotlin.srcDir(destinationDirectory) } }
-
-tasks.withType<Test> {
-    if (name == "mergeDebugAndroidTestAssets") {
-        enabled = false
-    }
-}
-
-tasks.withType<Test> {
-    if (name == "copyRoomSchemasToAndroidTestAssetsDebugAndroidTest") {
-        enabled = false
-    }
-}
-
-tasks.whenTaskAdded {
-    if (name.contains("copyRoomSchemasToAndroidTestAssetsDebugAndroidTest")) {
-        enabled = false
-    }
-}
-
-gradle.taskGraph.whenReady {
-    allTasks.onEach { task ->
-        if (task.name.contains("androidTest") || task.name.contains("connectedAndroidTest")) {
-            task.enabled = false
-        }
-    }
 }

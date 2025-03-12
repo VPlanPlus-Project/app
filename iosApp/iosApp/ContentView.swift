@@ -3,19 +3,24 @@ import SwiftUI
 import ComposeApp
 
 struct ComposeView: UIViewControllerRepresentable {
+    let url: String
+    let notificationTask: String?
+    let onQuicklook: (String) -> ()
+    
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        return MainViewControllerKt.mainViewController(url: url, notificationTask: notificationTask, quicklookImpl: QuickLookImpl(onQuicklook: onQuicklook))
     }
-
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        MainViewControllerKt.updateView(url: url, notificationTask: notificationTask)
+    }
 }
 
 struct ContentView: View {
+    let url: String
+    let notificationTask: String?
+    let onQuicklook: (String)->()
     var body: some View {
-        ComposeView()
-                .ignoresSafeArea(.keyboard) // Compose has own keyboard handler
+        return ComposeView(url: url, notificationTask: notificationTask, onQuicklook: onQuicklook).ignoresSafeArea()
     }
 }
-
-
-
