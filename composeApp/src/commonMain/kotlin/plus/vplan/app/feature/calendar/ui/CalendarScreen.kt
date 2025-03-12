@@ -137,13 +137,13 @@ private const val CONTENT_PAGER_SIZE = 800
 @Composable
 fun CalendarScreen(
     navHostController: NavHostController,
-    contentPadding: PaddingValues,
+    paddingValues: PaddingValues,
     viewModel: CalendarViewModel
 ) {
     val state = viewModel.state
     CalendarScreenContent(
         state = state,
-        contentPadding = contentPadding,
+        paddingValues = paddingValues,
         onEvent = viewModel::onEvent
     )
 }
@@ -151,7 +151,7 @@ fun CalendarScreen(
 @Composable
 private fun CalendarScreenContent(
     state: CalendarState,
-    contentPadding: PaddingValues,
+    paddingValues: PaddingValues,
     onEvent: (event: CalendarEvent) -> Unit
 ) {
     val localDensity = LocalDensity.current
@@ -211,7 +211,7 @@ private fun CalendarScreenContent(
 
     Box(
         modifier = Modifier
-            .padding(contentPadding)
+            .padding(paddingValues)
             .fillMaxSize()
             .thenIf(Modifier.nestedScroll(scrollConnection)) { state.displayType == DisplayType.Calendar }
     ) {

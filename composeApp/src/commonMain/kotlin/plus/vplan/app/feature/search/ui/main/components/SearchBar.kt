@@ -24,15 +24,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
@@ -69,7 +66,6 @@ fun SearchBar(
         )
     )
 
-    val focusRequester = remember { FocusRequester() }
     var showDateSelectDrawer by remember { mutableStateOf(false) }
 
     Column {
@@ -95,9 +91,7 @@ fun SearchBar(
                     modifier = Modifier.size(24.dp)
                 )
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(focusRequester)
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(Modifier.height(8.dp))
@@ -153,6 +147,4 @@ fun SearchBar(
         onSelectDate = { onSelectDate(it) },
         onDismiss = { showDateSelectDrawer = false }
     )
-
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
 }

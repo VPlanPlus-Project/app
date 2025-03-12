@@ -1,6 +1,7 @@
 package plus.vplan.app.feature.main
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Icon
@@ -101,8 +103,6 @@ fun MainScreenHost(
     val localDensity = LocalDensity.current
     val localLayoutDirection = LocalLayoutDirection.current
 
-    var isBottomBarVisible by rememberSaveable { mutableStateOf(true) }
-    val toggleBottomBar = remember<(Boolean) -> Unit> { { isBottomBarVisible = it } }
     var bottomBarHeight by remember { mutableStateOf(0.dp) }
 
     Box(
@@ -111,22 +111,22 @@ fun MainScreenHost(
         val top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
         val left = WindowInsets.systemBars.asPaddingValues().calculateLeftPadding(localLayoutDirection)
         val right = WindowInsets.systemBars.asPaddingValues().calculateRightPadding(localLayoutDirection)
-        val bottom = bottomBarHeight.let { if (it == 0.dp) WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() else it }
+        val bottom by animateDpAsState(listOf(bottomBarHeight, WindowInsets.ime.asPaddingValues().calculateBottomPadding()).max())
         val contentPadding = PaddingValues(left, top, right, bottom)
 
         AnimatedVisibility(
-            visible = currentDestination?.startsWith("_") == true && isBottomBarVisible,
+            visible = currentDestination?.startsWith("_") == true,
             enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
             exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                .onSizeChanged {
+                    with(localDensity) { bottomBarHeight = it.height.toDp() }
+                }
         ) {
             NavigationBar(
                 modifier = Modifier
-                    .onSizeChanged {
-                        with(localDensity) { bottomBarHeight = it.height.toDp() }
-                    }
                     .shadow(elevation = 4.dp)
             ) {
                 NavigationBarItem(
@@ -167,11 +167,11 @@ fun MainScreenHost(
             navController = navController,
             startDestination = MainScreen.MainHome
         ) {
-            composable<MainScreen.MainHome> { HomeScreen(contentPadding, navController, homeViewModel) }
+            composable<MainScreen.MainHome> { HomeScreen(navController, contentPadding, homeViewModel) }
             composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
-            composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel, toggleBottomBar) }
+            composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel) }
             composable<MainScreen.MainDev> { DevScreen(contentPadding) }
-            composable<MainScreen.MainProfile> { ProfileScreen(contentPadding, navController, profileViewModel) }
+            composable<MainScreen.MainProfile> { ProfileScreen(navController, contentPadding, profileViewModel) }
 
             composable<MainScreen.ProfileSettings> {
                 val args = it.toRoute<MainScreen.ProfileSettings>()

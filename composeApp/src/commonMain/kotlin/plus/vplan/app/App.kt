@@ -2,7 +2,6 @@ package plus.vplan.app
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -18,7 +17,6 @@ import org.koin.compose.KoinContext
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
-import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.FileSource
 import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
@@ -27,6 +25,7 @@ import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.ProfileSource
 import plus.vplan.app.domain.source.RoomSource
 import plus.vplan.app.domain.source.SchoolSource
+import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
@@ -131,7 +130,6 @@ fun App(task: StartTask?) {
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
-                    .imePadding()
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize()
