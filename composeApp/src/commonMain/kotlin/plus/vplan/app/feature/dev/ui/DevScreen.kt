@@ -16,6 +16,7 @@ import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
@@ -31,6 +32,7 @@ fun DevScreen(
     val updateTimetableUseCase = koinInject<UpdateTimetableUseCase>()
     val updateSubstitutionPlanUseCase = koinInject<UpdateSubstitutionPlanUseCase>()
     val fullSyncUseCase = koinInject<FullSyncUseCase>()
+    val rebuildIndices = koinInject<UpdateProfileLessonIndexUseCase>()
 
     Column(
         modifier = Modifier
@@ -48,7 +50,7 @@ fun DevScreen(
         }
         Button(
             onClick = { scope.launch {
-                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, LocalDate(2025, 3, 7), true)
+                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, LocalDate(2025, 3, 12), true)
             } }
         ) {
             Text("VPlan aktualisieren")
@@ -59,6 +61,13 @@ fun DevScreen(
             } }
         ) {
             Text("Full sync")
+        }
+        Button(
+            onClick = { scope.launch {
+                rebuildIndices(state.profile!!)
+            } }
+        ) {
+            Text("Rebuild indices")
         }
     }
 }

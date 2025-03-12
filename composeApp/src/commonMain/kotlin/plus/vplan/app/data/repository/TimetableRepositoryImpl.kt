@@ -11,11 +11,14 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.data.source.database.VppDatabase
+import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.TimetableRepository
 import kotlin.uuid.Uuid
@@ -26,8 +29,11 @@ class TimetableRepositoryImpl(
     override suspend fun insertNewTimetable(schoolId: Int, lessons: List<Lesson.TimetableLesson>) {
         val currentVersion = vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).first()?.toIntOrNull() ?: -1
         val newVersion = currentVersion + 1
+        val versionString = "${schoolId}_$newVersion"
+        vppDatabase.timetableDao.deleteTimetableByVersion(versionString)
         vppDatabase.timetableDao.upsert(
             lessons = lessons.map { lesson ->
+                if (lesson.version.isNotEmpty()) throw IllegalArgumentException("Provided version '${lesson.version}' will not be used in the database. Insert an empty string instead.")
                 DbTimetableLesson(
                     id = lesson.id,
                     dayOfWeek = lesson.dayOfWeek,
@@ -35,7 +41,7 @@ class TimetableRepositoryImpl(
                     weekType = lesson.weekType,
                     lessonTimeId = lesson.lessonTime,
                     subject = lesson.subject,
-                    version = "${schoolId}_$newVersion"
+                    version = versionString
                 )
             },
             groupCrossovers = lessons.flatMap { lesson ->
@@ -92,4 +98,23 @@ class TimetableRepositoryImpl(
         val weeks = vppDatabase.timetableDao.getWeekIds("${schoolId}_$currentVersion", weekIndex).ifEmpty { return@flatMapLatest flowOf(emptySet()) }
         vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion", weeks.last(), dayOfWeek).map { it.toSet() }
     }.distinctUntilChanged()
+
+    override fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> = channelFlow {
+        val school = profile.getSchool().getFirstValue()!!
+        vppDatabase.keyValueDao.get(Keys.timetableVersion(school.id)).collectLatest { versionFlow ->
+            val currentVersion = versionFlow?.toIntOrNull() ?: -1
+            val weeks = vppDatabase.timetableDao.getWeekIds("${school.id}_$currentVersion", weekIndex).ifEmpty { trySend(emptySet()); return@collectLatest }
+            vppDatabase.timetableDao.getLessonsForProfile(profile.id, weeks.last(), dayOfWeek).collectLatest {
+                trySend(it.map { it.timetableLessonId }.toSet())
+            }
+        }
+    }.distinctUntilChanged()
+
+    override suspend fun dropCacheForProfile(profileId: Uuid) {
+        vppDatabase.profileTimetableCacheDao.deleteCacheForProfile(profileId)
+    }
+
+    override suspend fun createCacheForProfile(profileId: Uuid, timetableLessonIds: List<Uuid>) {
+        vppDatabase.profileTimetableCacheDao.upsert(timetableLessonIds.map { DbProfileTimetableCache(profileId, it) })
+    }
 }

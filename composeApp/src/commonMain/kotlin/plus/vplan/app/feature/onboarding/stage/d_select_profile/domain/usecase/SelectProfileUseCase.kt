@@ -10,6 +10,7 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
+import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 
 class SelectProfileUseCase(
     private val onboardingRepository: OnboardingRepository,
@@ -17,7 +18,8 @@ class SelectProfileUseCase(
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
-    private val keyValueRepository: KeyValueRepository
+    private val keyValueRepository: KeyValueRepository,
+    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase
 ) {
     suspend operator fun invoke(
         onboardingProfile: OnboardingProfile,
@@ -42,5 +44,6 @@ class SelectProfileUseCase(
             }
         }
         keyValueRepository.set(Keys.CURRENT_PROFILE, profile.id.toHexString())
+        updateProfileLessonIndexUseCase(profile)
     }
 }

@@ -402,7 +402,7 @@ private fun CalendarScreenContent(
                                                     .fillMaxWidth()
                                                     .height(minute * 24 * 60)
                                             ) {
-                                                val lessons = day.lessons
+                                                val lessons = day.lessons.toList().sortedBy { it.lessonTimeItem!!.start }
                                                 repeat(24) {
                                                     val time = LocalTime(it, 0)
                                                     val y = time.inWholeMinutes().toFloat() * minute
@@ -659,7 +659,7 @@ private fun CalendarScreenContent(
                                                     showFirstGradient = false,
                                                     date = date,
                                                     paddingStart = 8.dp,
-                                                    lessons = day?.lessons.orEmpty().groupBy { l -> l.lessonTimeItem!!.lessonNumber }
+                                                    lessons = day?.lessons.orEmpty().groupBy { l -> l.lessonTimeItem!!.lessonNumber }.toList().sortedBy { it.first }.toMap()
                                                 )
                                             }
                                         }

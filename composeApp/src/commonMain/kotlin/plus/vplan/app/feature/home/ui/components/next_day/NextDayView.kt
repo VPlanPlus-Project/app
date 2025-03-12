@@ -66,7 +66,7 @@ fun NextDayView(day: HomeViewDay) {
                 showFirstGradient = false,
                 paddingStart = 4.dp,
                 date = day.day.date,
-                lessons = day.lessons.groupBy { l -> lessonTimes.first { it.id == l.lessonTime }.lessonNumber }
+                lessons = day.lessons.groupBy { l -> lessonTimes.first { it.id == l.lessonTime }.lessonNumber }.toList().sortedBy { it.first }.toMap()
             )
         }
     }
