@@ -28,6 +28,8 @@ class SubstitutionPlanRepositoryImpl(
     ) {
         val currentVersion = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).first()?.toIntOrNull() ?: -1
         val newVersion = currentVersion + 1
+        val versionString = "${schoolId}_$newVersion"
+        vppDatabase.substitutionPlanDao.deleteSubstitutionPlanByVersion(versionString)
         vppDatabase.substitutionPlanDao.upsert(
             lessons = lessons.map { lesson ->
                 if (lesson.version.isNotEmpty()) throw IllegalArgumentException("Provided version '${lesson.version}' will not be used in the database. Insert an empty string instead.")
@@ -39,7 +41,7 @@ class SubstitutionPlanRepositoryImpl(
                     isSubjectChanged = lesson.isSubjectChanged,
                     info = lesson.info,
                     subjectInstanceId = lesson.subjectInstance,
-                    version = "${schoolId}_$newVersion",
+                    version = versionString,
                     isRoomChanged = lesson.isRoomChanged,
                     isTeacherChanged = lesson.isTeacherChanged
                 )

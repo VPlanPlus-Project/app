@@ -29,6 +29,8 @@ class TimetableRepositoryImpl(
     override suspend fun insertNewTimetable(schoolId: Int, lessons: List<Lesson.TimetableLesson>) {
         val currentVersion = vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).first()?.toIntOrNull() ?: -1
         val newVersion = currentVersion + 1
+        val versionString = "${schoolId}_$newVersion"
+        vppDatabase.timetableDao.deleteTimetableByVersion(versionString)
         vppDatabase.timetableDao.upsert(
             lessons = lessons.map { lesson ->
                 if (lesson.version.isNotEmpty()) throw IllegalArgumentException("Provided version '${lesson.version}' will not be used in the database. Insert an empty string instead.")
@@ -39,7 +41,7 @@ class TimetableRepositoryImpl(
                     weekType = lesson.weekType,
                     lessonTimeId = lesson.lessonTime,
                     subject = lesson.subject,
-                    version = "${schoolId}_$newVersion"
+                    version = versionString
                 )
             },
             groupCrossovers = lessons.flatMap { lesson ->
