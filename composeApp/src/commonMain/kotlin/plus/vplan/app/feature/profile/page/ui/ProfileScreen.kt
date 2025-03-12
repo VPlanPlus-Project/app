@@ -71,8 +71,8 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ProfileScreen(
-    contentPadding: PaddingValues,
     navHostController: NavHostController,
+    contentPadding: PaddingValues,
     viewModel: ProfileViewModel
 ) {
     val state = viewModel.state
@@ -116,8 +116,8 @@ private fun ProfileContent(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
             .padding(contentPadding)
+            .fillMaxSize()
     ) {
         Row(
             modifier = Modifier

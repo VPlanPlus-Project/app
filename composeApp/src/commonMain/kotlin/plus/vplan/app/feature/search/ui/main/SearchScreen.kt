@@ -60,7 +60,6 @@ import plus.vplan.app.feature.search.ui.main.components.LessonRow
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
 import plus.vplan.app.feature.search.ui.main.components.StartScreen
 import plus.vplan.app.feature.search.ui.main.components.hourWidth
-import plus.vplan.app.ui.keyboardAsState
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
@@ -78,15 +77,9 @@ import vplanplus.composeapp.generated.resources.lock_open
 fun SearchScreen(
     navHostController: NavHostController,
     contentPadding: PaddingValues,
-    viewModel: SearchViewModel,
-    onToggleBottomBar: (visible: Boolean) -> Unit
+    viewModel: SearchViewModel
 ) {
     LaunchedEffect(Unit) { viewModel.onEvent(SearchEvent.UpdateQuery("")) }
-
-    val isKeyboardVisible by keyboardAsState()
-    LaunchedEffect(isKeyboardVisible) {
-        onToggleBottomBar(!isKeyboardVisible)
-    }
 
     SearchScreenContent(
         state = viewModel.state,
@@ -112,7 +105,7 @@ private fun SearchScreenContent(
 
     Column(
         modifier = Modifier
-            .padding(top = contentPadding.calculateTopPadding())
+            .padding(contentPadding)
             .fillMaxSize()
             .onSizeChanged { with(localDensity) { width = it.width.toDp() } }
     ) {
