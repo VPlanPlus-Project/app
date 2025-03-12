@@ -8,7 +8,7 @@ import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
 import plus.vplan.app.feature.profile.page.ui.ProfileViewModel
 
-val profileModule = module {
+val profilePageModule = module {
     singleOf(::GetProfilesUseCase)
     singleOf(::GetCurrentProfileUseCase)
     singleOf(::HasVppIdLinkedUseCase)

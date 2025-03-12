@@ -160,7 +160,7 @@ fun CurrentDayView(
                 .sortedBy { it.lessonTimeItem!!.start }
             if (followingLessons.isNotEmpty()) Column {
                 val lessonsGroupedByLessonNumber =
-                    followingLessons.groupBy { it.lessonTimeItem!!.lessonNumber }
+                    followingLessons.groupBy { it.lessonTimeItem!!.lessonNumber }.toList().sortedBy { it.first }.toMap()
                 FollowingLessons(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     showFirstGradient =
@@ -174,7 +174,7 @@ fun CurrentDayView(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     showFirstGradient = false,
                     date = day.day.date,
-                    lessons = day.lessons.groupBy { it.lessonTimeItem!!.lessonNumber }
+                    lessons = day.lessons.groupBy { it.lessonTimeItem!!.lessonNumber }.toList().sortedBy { it.first }.toMap()
                 )
             }
         }

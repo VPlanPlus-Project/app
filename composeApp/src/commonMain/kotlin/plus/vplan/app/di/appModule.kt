@@ -83,7 +83,8 @@ import plus.vplan.app.feature.home.di.homeModule
 import plus.vplan.app.feature.homework.di.homeworkModule
 import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
-import plus.vplan.app.feature.profile.page.di.profileModule
+import plus.vplan.app.feature.profile.di.profileModule
+import plus.vplan.app.feature.profile.page.di.profilePageModule
 import plus.vplan.app.feature.profile.settings.di.profileSettingsModule
 import plus.vplan.app.feature.schulverwalter.di.schulverwalterModule
 import plus.vplan.app.feature.search.di.searchModule
@@ -150,12 +151,13 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             homeworkModule,
             assessmentModule,
             searchModule,
-            profileModule,
+            profilePageModule,
             profileSettingsModule,
             vppIdModule,
             settingsModule,
             schulverwalterModule,
-            gradeModule
+            gradeModule,
+            profileModule
         )
         modules(devModule)
         

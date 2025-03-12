@@ -12,15 +12,9 @@ import plus.vplan.app.domain.model.Profile
 class GetDayUseCase {
     suspend operator fun invoke(profile: Profile, date: LocalDate): Flow<Day> {
         val schoolId = GetSchoolOfProfileUseCase().invoke(profile)
-        return App.daySource.getById("${schoolId}/$date")
+        return App.daySource.getById("${schoolId}/$date", contextProfile = profile)
             .filterIsInstance<CacheState.Done<Day>>()
             .map { dayEmission ->
-//                dayEmission.value.copy(
-//                    timetable = dayEmission.value.timetable.filterProfile(profile),
-//                    nextSchoolDay = (dayEmission.value.nextSchoolDay as Cacheable.Loaded).value.copy(
-//                        timetable = dayEmission.value.nextSchoolDay.value.timetable.filterProfile(profile)
-//                    ).let { Cacheable.Loaded(it) }
-//                )
                 dayEmission.data
             }
     }

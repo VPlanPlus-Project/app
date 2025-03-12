@@ -17,4 +17,8 @@ interface DayDao {
     @Transaction
     @Query("SELECT * FROM day WHERE date = :date AND school_id = :schoolId")
     fun getBySchool(date: LocalDate, schoolId: Int): Flow<DbDay?>
+
+    @Transaction
+    @Query("SELECT * FROM day WHERE school_id = :schoolId")
+    fun getBySchool(schoolId: Int): Flow<List<DbDay>>
 }

@@ -22,6 +22,8 @@ import plus.vplan.app.data.source.database.dao.IndiwareDao
 import plus.vplan.app.data.source.database.dao.KeyValueDao
 import plus.vplan.app.data.source.database.dao.LessonTimeDao
 import plus.vplan.app.data.source.database.dao.ProfileDao
+import plus.vplan.app.data.source.database.dao.ProfileSubstitutionPlanCacheDao
+import plus.vplan.app.data.source.database.dao.ProfileTimetableCacheDao
 import plus.vplan.app.data.source.database.dao.RoomDao
 import plus.vplan.app.data.source.database.dao.SchoolDao
 import plus.vplan.app.data.source.database.dao.SubstitutionPlanDao
@@ -52,6 +54,8 @@ import plus.vplan.app.data.source.database.model.database.DbIndiwareTimetableMet
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbProfile
+import plus.vplan.app.data.source.database.model.database.DbProfileSubstitutionPlanCache
+import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbSchool
@@ -163,6 +167,9 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         FKSchulverwalterGradeSchulverwalterSubject::class,
         FKSchulverwalterGradeSchulverwalterTeacher::class,
         FKSchulverwalterSubjectSchulverwalterFinalGrade::class,
+
+        DbProfileTimetableCache::class,
+        DbProfileSubstitutionPlanCache::class
     ],
     version = 1,
 )
@@ -196,6 +203,8 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val homeworkDao: HomeworkDao
     abstract val fileDao: FileDao
     abstract val assessmentDao: AssessmentDao
+    abstract val profileTimetableCacheDao: ProfileTimetableCacheDao
+    abstract val profileSubstitutionPlanCacheDao: ProfileSubstitutionPlanCacheDao
 
     // Schulverwalter
     abstract val yearDao: YearDao

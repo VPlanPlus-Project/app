@@ -55,6 +55,10 @@ class DayRepositoryImpl(
         return vppDatabase.dayDao.getBySchool(date, schoolId).map { it?.toModel() }
     }
 
+    override fun getBySchool(schoolId: Int): Flow<Set<Day>> {
+        return vppDatabase.dayDao.getBySchool(schoolId).map { it.map { day -> day.toModel() }.toSet() }
+    }
+
     override fun getById(id: String): Flow<Day?> {
         return getBySchool(LocalDate.parse(id.substringAfter("/")), id.substringBefore("/").toInt())
     }

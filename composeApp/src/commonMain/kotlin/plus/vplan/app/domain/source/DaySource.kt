@@ -20,6 +20,7 @@ import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Day
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.AssessmentRepository
@@ -41,7 +42,7 @@ class DaySource(
     private val homeworkRepository: HomeworkRepository
 ) {
     val flows = hashMapOf<String, MutableSharedFlow<CacheState<Day>>>()
-    fun getById(id: String): Flow<CacheState<Day>> {
+    fun getById(id: String, contextProfile: Profile? = null): Flow<CacheState<Day>> {
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Day>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             MainScope().launch {
@@ -71,12 +72,17 @@ class DaySource(
                                 nextSchoolDay
                             }
                             combine(
-                                timetableRepository.getForSchool(
+                                if (contextProfile == null) timetableRepository.getForSchool(
                                     schoolId = schoolId,
                                     dayOfWeek = date.dayOfWeek,
                                     weekIndex = meta.dayWeek.weekIndex
+                                ) else timetableRepository.getForProfile(
+                                    profile = contextProfile,
+                                    dayOfWeek = date.dayOfWeek,
+                                    weekIndex = meta.dayWeek.weekIndex
                                 ),
-                                substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),
+                                if (contextProfile == null) substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
+                                else substitutionPlanRepository.getForProfile(contextProfile, date),
                                 assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
                                 homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
                             ) { timetable, substitutionPlan, assessments, homework ->

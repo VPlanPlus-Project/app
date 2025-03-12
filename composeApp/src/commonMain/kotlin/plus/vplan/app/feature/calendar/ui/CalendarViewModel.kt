@@ -47,10 +47,10 @@ class CalendarViewModel(
 
     private fun launchSyncJob(date: LocalDate, syncLessons: Boolean): Job {
         return viewModelScope.launch {
-            App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date").filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
+            App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
                 if (!syncLessons) state = state.copy(days = state.days + (date to CalendarDay(day)))
                 else {
-                    val lessons = day.lessons.map { it.filter { lesson -> lesson.isRelevantForProfile(state.currentProfile!!) } }.first().onEach { it.prefetch() }
+                    val lessons = day.lessons.first().onEach { it.prefetch() }
                     state = state.copy(days = state.days + (date to CalendarDay(day, lessons)))
                 }
             }
@@ -167,9 +167,9 @@ private data class SyncJob(
 
 data class CalendarDay(
     val day: Day,
-    val lessons: List<Lesson>,
+    val lessons: Set<Lesson>,
 ) {
-    constructor(day: Day) : this(day, emptyList())
+    constructor(day: Day) : this(day, emptySet())
 }
 
 private suspend fun Lesson.prefetch() {
