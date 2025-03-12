@@ -5,7 +5,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.serialization.json.Json
+import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
@@ -13,17 +15,18 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.findByIndiwareId
 import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.domain.usecase.GetDayUseCase
+import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.latest
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormat
@@ -34,6 +37,7 @@ private val LOGGER = Logger.withTag("UpdateSubstitutionPlanUseCase")
 
 class UpdateSubstitutionPlanUseCase(
     private val getDayUseCase: GetDayUseCase,
+    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
     private val indiwareRepository: IndiwareRepository,
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
@@ -46,7 +50,11 @@ class UpdateSubstitutionPlanUseCase(
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val platformNotificationRepository: PlatformNotificationRepository
 ) {
-    suspend operator fun invoke(indiwareSchool: School.IndiwareSchool, date: LocalDate, allowNotification: Boolean): Response.Error? {
+    suspend operator fun invoke(
+        indiwareSchool: School.IndiwareSchool,
+        date: LocalDate,
+        allowNotification: Boolean
+    ): Response.Error? {
         val teachers = teacherRepository.getBySchool(indiwareSchool.id).latest()
         val rooms = roomRepository.getBySchool(indiwareSchool.id).latest()
         val groups = groupRepository.getBySchool(indiwareSchool.id).latest()
@@ -108,6 +116,7 @@ class UpdateSubstitutionPlanUseCase(
                     groups = listOf(group.id),
                     subjectInstance = substitutionPlanLesson.subjectInstanceNumber?.let { subjectInstances.findByIndiwareId(it.toString()) }?.id,
                     lessonTime = lessonTimes.first { it.lessonNumber == substitutionPlanLesson.lessonNumber }.id,
+                    version = "",
                     info = substitutionPlanLesson.info
                 )
             }
@@ -118,7 +127,11 @@ class UpdateSubstitutionPlanUseCase(
         val newPlan = profileRepository.getAll().first()
             .filterIsInstance<Profile.StudentProfile>()
             .filter { it.getSchoolItem().id == indiwareSchool.id }
-            .associateWith { getDayUseCase(it, date).first() }
+            .associateWith {
+                substitutionPlanRepository.getSubstitutionPlanBySchool(indiwareSchool.id, date).first()
+                    .mapNotNull { App.substitutionPlanSource.getById(it).getFirstValue() }
+                    .filter { lesson -> lesson.isRelevantForProfile(it) }
+            }
 
         if (allowNotification) profileRepository.getAll().first()
             .filterIsInstance<Profile.StudentProfile>()
@@ -128,10 +141,12 @@ class UpdateSubstitutionPlanUseCase(
                 val new = newPlan[profile] ?: return@forEach
 
                 val oldLessons = old.map { it.getLessonSignature() }
-                val changedOrNewLessons = new.lessons.first().filter { it.getLessonSignature() !in oldLessons }
+                val changedOrNewLessons = new.filter { it.getLessonSignature() !in oldLessons }
                 if (changedOrNewLessons.isEmpty()) return@forEach
 
                 Logger.d { "Sending notification for ${profile.name}" }
+
+                val newDay = App.daySource.getById("${indiwareSchool.id}/$date", profile).getFirstValue()
 
                 val changedLessons = changedOrNewLessons.filter { it.isRelevantForProfile(profile) }
                 if (changedLessons.isNotEmpty()) {
@@ -149,12 +164,12 @@ class UpdateSubstitutionPlanUseCase(
                                     append(" mit ")
                                     append(lesson.getTeacherItems().joinToString(", ") { teacher -> teacher.name })
                                 }
-                                if (lesson.rooms.orEmpty().isNotEmpty()) {
+                                if (lesson.rooms.isNotEmpty()) {
                                     append(" in ")
-                                    append(lesson.getRoomItems().orEmpty().joinToString(", ") { room -> room.name })
+                                    append(lesson.getRoomItems().joinToString(", ") { room -> room.name })
                                 }
                             }
-                            if (new.info != null) append("\n\nℹ\uFE0F ${new.info}")
+                            if (newDay?.info != null) append("\n\nℹ\uFE0F ${newDay.info}")
                         }.dropLastWhile { it == '\n' }.dropWhile { it == '\n' },
                         category = profile.name,
                         isLarge = true,
@@ -177,6 +192,11 @@ class UpdateSubstitutionPlanUseCase(
                     )
                 }
             }
+
+        LOGGER.i { "Substitution plan updated for indiware school ${indiwareSchool.id}, building caches" }
+        profileRepository.getAll().first().forEach { profile ->
+            updateProfileLessonIndexUseCase(profile)
+        }
 
         return null
     }

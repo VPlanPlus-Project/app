@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "afbc421db9d08873b59e22ce5ebb1f67",
+    "identityHash": "7cc25362f9b42a9f4667f18d230e3e40",
     "entities": [
       {
         "tableName": "schools",
@@ -3623,7 +3623,7 @@
       },
       {
         "tableName": "profile_timetable_cache",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `timetable_lesson_id` TEXT NOT NULL, PRIMARY KEY(`profile_id`, `timetable_lesson_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles_group`(`profile_id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`timetable_lesson_id`) REFERENCES `timetable_lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `timetable_lesson_id` TEXT NOT NULL, PRIMARY KEY(`profile_id`, `timetable_lesson_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`timetable_lesson_id`) REFERENCES `timetable_lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "profileId",
@@ -3667,14 +3667,14 @@
         ],
         "foreignKeys": [
           {
-            "table": "profiles_group",
+            "table": "profiles",
             "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
               "profile_id"
             ],
             "referencedColumns": [
-              "profile_id"
+              "id"
             ]
           },
           {
@@ -3689,11 +3689,80 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "profile_substitution_plan_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `substitution_lesson_id` TEXT NOT NULL, PRIMARY KEY(`profile_id`, `substitution_lesson_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`substitution_lesson_id`) REFERENCES `substitution_plan_lesson`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "profileId",
+            "columnName": "profile_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "substitutionPlanLessonId",
+            "columnName": "substitution_lesson_id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profile_id",
+            "substitution_lesson_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_profile_substitution_plan_cache_profile_id",
+            "unique": false,
+            "columnNames": [
+              "profile_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_substitution_plan_cache_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
+          },
+          {
+            "name": "index_profile_substitution_plan_cache_substitution_lesson_id",
+            "unique": false,
+            "columnNames": [
+              "substitution_lesson_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_substitution_plan_cache_substitution_lesson_id` ON `${TABLE_NAME}` (`substitution_lesson_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "profile_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "substitution_plan_lesson",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "substitution_lesson_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'afbc421db9d08873b59e22ce5ebb1f67')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7cc25362f9b42a9f4667f18d230e3e40')"
     ]
   }
 }

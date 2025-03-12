@@ -31,6 +31,7 @@ class TimetableRepositoryImpl(
         val newVersion = currentVersion + 1
         vppDatabase.timetableDao.upsert(
             lessons = lessons.map { lesson ->
+                if (lesson.version.isNotEmpty()) throw IllegalArgumentException("Provided version '${lesson.version}' will not be used in the database. Insert an empty string instead.")
                 DbTimetableLesson(
                     id = lesson.id,
                     dayOfWeek = lesson.dayOfWeek,

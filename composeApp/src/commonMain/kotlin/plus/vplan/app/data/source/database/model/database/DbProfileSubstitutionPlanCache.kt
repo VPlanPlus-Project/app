@@ -7,8 +7,8 @@ import androidx.room.Index
 import kotlin.uuid.Uuid
 
 @Entity(
-    tableName = "profile_timetable_cache",
-    primaryKeys = ["profile_id", "timetable_lesson_id"],
+    tableName = "profile_substitution_plan_cache",
+    primaryKeys = ["profile_id", "substitution_lesson_id"],
     foreignKeys = [
         ForeignKey(
             entity = DbProfile::class,
@@ -17,18 +17,18 @@ import kotlin.uuid.Uuid
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = DbTimetableLesson::class,
+            entity = DbSubstitutionPlanLesson::class,
             parentColumns = ["id"],
-            childColumns = ["timetable_lesson_id"],
+            childColumns = ["substitution_lesson_id"],
             onDelete = ForeignKey.CASCADE
         )
     ],
     indices = [
         Index("profile_id"),
-        Index("timetable_lesson_id")
+        Index("substitution_lesson_id")
     ]
 )
-data class DbProfileTimetableCache(
+data class DbProfileSubstitutionPlanCache(
     @ColumnInfo("profile_id") val profileId: Uuid,
-    @ColumnInfo("timetable_lesson_id") val timetableLessonId: Uuid
+    @ColumnInfo("substitution_lesson_id") val substitutionPlanLessonId: Uuid
 )

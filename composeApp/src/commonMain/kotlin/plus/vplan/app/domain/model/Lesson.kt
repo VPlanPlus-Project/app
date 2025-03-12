@@ -15,6 +15,7 @@ sealed interface Lesson : Item {
     val groups: List<Int>
     val subjectInstance: Int?
     val lessonTime: String
+    val version: String
 
     fun getLessonSignature(): String
 
@@ -43,6 +44,7 @@ sealed interface Lesson : Item {
         override val rooms: List<Int>?,
         override val groups: List<Int>,
         override val lessonTime: String,
+        override val version: String,
         val weekType: String?
     ) : Lesson {
         override val subjectInstance = null
@@ -87,6 +89,7 @@ sealed interface Lesson : Item {
             rooms: List<Int>?,
             groups: List<Int>,
             lessonTime: String,
+            version: String,
             weekType: String?
         ) : this(
             id = Uuid.random(),
@@ -97,12 +100,14 @@ sealed interface Lesson : Item {
             rooms = rooms,
             groups = groups,
             lessonTime = lessonTime,
-            weekType = weekType
+            weekType = weekType,
+            version = version
         )
     }
 
     data class SubstitutionPlanLesson(
         override val id: Uuid,
+        override val version: String,
         val date: LocalDate,
         override val week: String,
         override val subject: String?,

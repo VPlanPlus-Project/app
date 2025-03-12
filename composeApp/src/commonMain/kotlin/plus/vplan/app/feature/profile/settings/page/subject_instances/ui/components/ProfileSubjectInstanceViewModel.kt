@@ -10,9 +10,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import plus.vplan.app.domain.model.Course
-import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
+import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.GetCourseConfigurationUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileSubjectInstanceEnabledUseCase
 import kotlin.uuid.Uuid
@@ -20,16 +21,23 @@ import kotlin.uuid.Uuid
 class ProfileSubjectInstanceViewModel(
     private val getProfileByIdUseCase: GetProfileByIdUseCase,
     private val getCourseConfigurationUseCase: GetCourseConfigurationUseCase,
-    private val setProfileSubjectInstanceEnabledUseCase: SetProfileSubjectInstanceEnabledUseCase
+    private val setProfileSubjectInstanceEnabledUseCase: SetProfileSubjectInstanceEnabledUseCase,
+    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase
 ) : ViewModel() {
     var state by mutableStateOf(ProfileSubjectInstanceState())
         private set
+
+    private var shouldRebuildIndicesOnProfileReload: Boolean = false
 
     fun init(profileId: Uuid) {
         state = ProfileSubjectInstanceState()
         viewModelScope.launch {
             getProfileByIdUseCase(profileId).collectLatest { profile ->
                 if (profile !is Profile.StudentProfile) return@collectLatest
+                if (shouldRebuildIndicesOnProfileReload) {
+                    shouldRebuildIndicesOnProfileReload = false
+                    updateProfileLessonIndexUseCase(profile)
+                }
                 profile.getSubjectInstances().onEach {
                     it.getCourseItem()
                     it.getTeacherItem()
@@ -59,11 +67,13 @@ class ProfileSubjectInstanceViewModel(
                         .filter { it.getCourseItem()?.id == event.course.id }
                         .let { subjectInstances ->
                             setProfileSubjectInstanceEnabledUseCase(state.profile!!, subjectInstances, event.isSelected)
+                            shouldRebuildIndicesOnProfileReload = true
                             state = state.copy(subjectInstance = state.subjectInstance.plus(subjectInstances.map { it to event.isSelected }))
                         }
                 }
                 is ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection -> {
                     setProfileSubjectInstanceEnabledUseCase(state.profile!!, event.subjectInstance, event.isSelected)
+                    shouldRebuildIndicesOnProfileReload = true
                     state = state.copy(subjectInstance = state.subjectInstance.plus(event.subjectInstance to event.isSelected))
                 }
             }

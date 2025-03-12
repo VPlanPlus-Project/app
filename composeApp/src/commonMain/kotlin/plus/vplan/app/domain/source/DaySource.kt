@@ -81,7 +81,8 @@ class DaySource(
                                     dayOfWeek = date.dayOfWeek,
                                     weekIndex = meta.dayWeek.weekIndex
                                 ),
-                                substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),
+                                if (contextProfile == null) substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
+                                else substitutionPlanRepository.getForProfile(contextProfile, date),
                                 assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
                                 homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
                             ) { timetable, substitutionPlan, assessments, homework ->

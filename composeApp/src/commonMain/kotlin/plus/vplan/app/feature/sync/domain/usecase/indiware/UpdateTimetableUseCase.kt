@@ -7,7 +7,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
@@ -18,11 +17,13 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.latest
 
 private val LOGGER = Logger.withTag("UpdateTimetableUseCase")
 
 class UpdateTimetableUseCase(
+    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
     private val indiwareRepository: IndiwareRepository,
     private val roomRepository: RoomRepository,
     private val groupRepository: GroupRepository,
@@ -84,6 +85,7 @@ class UpdateTimetableUseCase(
             val lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
             clazz.lessons.map { lesson ->
                 Lesson.TimetableLesson(
+                    version = "",
                     dayOfWeek = lesson.dayOfWeek,
                     week = (currentWeek ?: weeks.first()).id,
                     weekType = lesson.weekType,
@@ -102,9 +104,8 @@ class UpdateTimetableUseCase(
         )
 
         LOGGER.i { "Timetable updated for indiware school ${indiwareSchool.id}, building caches" }
-        profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>().forEach { profile ->
-            timetableRepository.dropCacheForProfile(profile.id)
-            timetableRepository.createCacheForProfile(profile.id, lessons.filter { lesson -> lesson.isRelevantForProfile(profile) }.map { it.id })
+        profileRepository.getAll().first().forEach { profile ->
+            updateProfileLessonIndexUseCase(profile)
         }
 
         return null
