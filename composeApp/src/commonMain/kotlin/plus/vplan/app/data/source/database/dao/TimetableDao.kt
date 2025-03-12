@@ -7,6 +7,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.DayOfWeek
+import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
@@ -70,4 +71,9 @@ interface TimetableDao {
     @Transaction
     @Query("DELETE FROM timetable_lessons WHERE version = :version")
     suspend fun deleteTimetableByVersion(version: String)
+
+    @Transaction
+    @RewriteQueriesToDropUnusedColumns
+    @Query("SELECT * FROM profile_timetable_cache LEFT JOIN timetable_lessons ON timetable_lessons.id = profile_timetable_cache.timetable_lesson_id WHERE profile_id = :profileId AND timetable_lessons.week_id = :weekId AND timetable_lessons.day_of_week = :dayOfWeek")
+    fun getLessonsForProfile(profileId: Uuid, weekId: String, dayOfWeek: DayOfWeek): Flow<List<DbProfileTimetableCache>>
 }

@@ -1,16 +1,19 @@
 package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.IndiwareTimeTable
 import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
@@ -26,7 +29,8 @@ class UpdateTimetableUseCase(
     private val teacherRepository: TeacherRepository,
     private val weekRepository: WeekRepository,
     private val lessonTimeRepository: LessonTimeRepository,
-    private val timetableRepository: TimetableRepository
+    private val timetableRepository: TimetableRepository,
+    private val profileRepository: ProfileRepository
 ) {
 
     /**
@@ -75,27 +79,33 @@ class UpdateTimetableUseCase(
             }
         } while (weekIndex >= 0)
 
+        val lessons = downloadedTimetable?.classes.orEmpty().flatMap { clazz ->
+            val group = groups.firstOrNull { it.name == clazz.name } ?: return@flatMap emptyList()
+            val lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
+            clazz.lessons.map { lesson ->
+                Lesson.TimetableLesson(
+                    dayOfWeek = lesson.dayOfWeek,
+                    week = (currentWeek ?: weeks.first()).id,
+                    weekType = lesson.weekType,
+                    subject = lesson.subject,
+                    rooms = lesson.room.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
+                    teachers = lesson.teacher.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
+                    lessonTime = lessonTimes.first { it.lessonNumber == lesson.lessonNumber }.id,
+                    groups = listOf(group.id)
+                )
+            }
+        }
+
         timetableRepository.insertNewTimetable(
             schoolId = indiwareSchool.id,
-            lessons = downloadedTimetable?.classes.orEmpty().flatMap { clazz ->
-                val group = groups.firstOrNull { it.name == clazz.name } ?: return@flatMap emptyList()
-                val lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
-                clazz.lessons.map { lesson ->
-                    Lesson.TimetableLesson(
-                        dayOfWeek = lesson.dayOfWeek,
-                        week = (currentWeek ?: weeks.first()).id,
-                        weekType = lesson.weekType,
-                        subject = lesson.subject,
-                        rooms = lesson.room.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
-                        teachers = lesson.teacher.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
-                        lessonTime = lessonTimes.first { it.lessonNumber == lesson.lessonNumber }.id,
-                        groups = listOf(group.id)
-                    )
-                }
-            }
+            lessons = lessons
         )
 
-        LOGGER.i { "Timetable updated for indiware school ${indiwareSchool.id}" }
+        LOGGER.i { "Timetable updated for indiware school ${indiwareSchool.id}, building caches" }
+        profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>().forEach { profile ->
+            timetableRepository.dropCacheForProfile(profile.id)
+            timetableRepository.createCacheForProfile(profile.id, lessons.filter { lesson -> lesson.isRelevantForProfile(profile) }.map { it.id })
+        }
 
         return null
     }

@@ -50,13 +50,13 @@ class HomeViewModel(
                     .collectLatest { day ->
                         state = state.copy(currentDay = HomeViewDay(
                             day = day,
-                            lessons = day.lessons.map { it.filter { lesson -> lesson.isRelevantForProfile(profile) }.onEach { it.prefetch() } }.first()
+                            lessons = day.lessons.map { it.onEach { it.prefetch() } }.first()
                         ))
                         if (day.nextSchoolDay != null) getDayUseCase(profile, LocalDate.parse(day.nextSchoolDay.split("/")[1])).collectLatest { nextDay ->
                             state = state.copy(
                                 nextDay = HomeViewDay(
                                     day = nextDay,
-                                    lessons = nextDay.lessons.map { it.filter { it.isRelevantForProfile(profile) }.onEach { it.prefetch() } }.first()
+                                    lessons = nextDay.lessons.map { it.onEach { it.prefetch() } }.first()
                                 ),
                                 initDone = true
                             )
@@ -105,7 +105,7 @@ sealed class HomeEvent {
 
 data class HomeViewDay(
     val day: Day,
-    val lessons: List<Lesson>
+    val lessons: Set<Lesson>
 )
 
 private suspend fun Lesson.prefetch() {

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "22086f307b8cb07040f3a25946e1452a",
+    "identityHash": "afbc421db9d08873b59e22ce5ebb1f67",
     "entities": [
       {
         "tableName": "schools",
@@ -3620,11 +3620,80 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_fk_schulverwalter_subject_schulverwalter_final_grade_final_grade_id` ON `${TABLE_NAME}` (`final_grade_id`)"
           }
         ]
+      },
+      {
+        "tableName": "profile_timetable_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `timetable_lesson_id` TEXT NOT NULL, PRIMARY KEY(`profile_id`, `timetable_lesson_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles_group`(`profile_id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`timetable_lesson_id`) REFERENCES `timetable_lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "profileId",
+            "columnName": "profile_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timetableLessonId",
+            "columnName": "timetable_lesson_id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profile_id",
+            "timetable_lesson_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_profile_timetable_cache_profile_id",
+            "unique": false,
+            "columnNames": [
+              "profile_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_timetable_cache_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
+          },
+          {
+            "name": "index_profile_timetable_cache_timetable_lesson_id",
+            "unique": false,
+            "columnNames": [
+              "timetable_lesson_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_timetable_cache_timetable_lesson_id` ON `${TABLE_NAME}` (`timetable_lesson_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "profiles_group",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "profile_id"
+            ],
+            "referencedColumns": [
+              "profile_id"
+            ]
+          },
+          {
+            "table": "timetable_lessons",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "timetable_lesson_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '22086f307b8cb07040f3a25946e1452a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'afbc421db9d08873b59e22ce5ebb1f67')"
     ]
   }
 }
