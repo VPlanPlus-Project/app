@@ -7,6 +7,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,22 +46,34 @@ import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.search.ui.main.NewItem
+import plus.vplan.app.ui.components.Grid
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
+import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.coerceLengthAtMost
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormatWithoutYear
+import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
 import plus.vplan.app.utils.untilRelativeText
 import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.badge_check
 import vplanplus.composeapp.generated.resources.badge_plus
+import vplanplus.composeapp.generated.resources.book_open
+import vplanplus.composeapp.generated.resources.door_open
+import vplanplus.composeapp.generated.resources.notebook_text
+import vplanplus.composeapp.generated.resources.search
+
+@Composable
+private fun sectionTitleFont() = MaterialTheme.typography.titleMedium
 
 @Composable
 fun SearchStart(
     profile: Profile,
     newItems: List<NewItem>,
     onAssessmentClicked: (assessmentId: Int) -> Unit,
-    onHomeworkClicked: (homeworkId: Int) -> Unit
+    onHomeworkClicked: (homeworkId: Int) -> Unit,
+    onOpenRoomSearchClicked: () -> Unit
 ) {
     val localDensity = LocalDensity.current
 
@@ -79,7 +92,7 @@ fun SearchStart(
                 Icon(
                     painter = painterResource(Res.drawable.badge_plus),
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(sectionTitleFont().lineHeight.toDp())
                 )
                 Text(
                     text = buildString {
@@ -90,7 +103,7 @@ fun SearchStart(
                             append(group)
                         }
                     },
-                    style = MaterialTheme.typography.titleMedium
+                    style = sectionTitleFont()
                 )
             }
 
@@ -238,5 +251,71 @@ fun SearchStart(
                 }
             }
         }
+        Spacer(Modifier.size(8.dp))
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.badge_check),
+                contentDescription = null,
+                modifier = Modifier.size(sectionTitleFont().lineHeight.toDp())
+            )
+            Text(
+                text = "Vorgeschlagene Suchen",
+                style = sectionTitleFont()
+            )
+        }
+        Grid(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp)),
+            columns = 2,
+            cellPadding = 4.dp,
+            content = List(3) { { _, _, index ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable {
+                            when (index) {
+                                0 -> Unit
+                                1 -> Unit
+                                2 -> onOpenRoomSearchClicked()
+                            }
+                        }
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(when (index) {
+                            0 -> Res.drawable.notebook_text
+                            1 -> Res.drawable.book_open
+                            2 -> Res.drawable.door_open
+                            else -> Res.drawable.search
+                        }),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(32.dp),
+                        tint = blendColor(MaterialTheme.colorScheme.outline, MaterialTheme.colorScheme.surfaceVariant, .7f)
+                    )
+                    Text(
+                        text = when (index) {
+                            0 -> "Leistungserhebungen"
+                            1 -> "Hausaufgaben"
+                            2 -> "Freie Räume"
+                            else -> "-"
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            } }
+        )
     }
 }

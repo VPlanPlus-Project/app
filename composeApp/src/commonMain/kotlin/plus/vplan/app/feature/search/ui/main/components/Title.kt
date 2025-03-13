@@ -2,6 +2,7 @@ package plus.vplan.app.feature.search.ui.main.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -11,11 +12,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.ui.components.noRippleClickable
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.search
 
 @Composable
-fun Title(modifier: Modifier = Modifier) {
+fun Title(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -28,7 +33,10 @@ fun Title(modifier: Modifier = Modifier) {
         )
         Text(
             text = "Suche",
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .noRippleClickable(onClick)
         )
     }
 }

@@ -34,9 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,7 +60,6 @@ import plus.vplan.app.feature.search.ui.main.components.SearchBar
 import plus.vplan.app.feature.search.ui.main.components.SearchStart
 import plus.vplan.app.feature.search.ui.main.components.StartScreen
 import plus.vplan.app.feature.search.ui.main.components.Title
-import plus.vplan.app.feature.search.ui.main.components.hourWidth
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
@@ -99,8 +97,6 @@ private fun SearchScreenContent(
     contentPadding: PaddingValues
 ) {
     if (state.currentProfile == null) return
-    val localDensity = LocalDensity.current
-    var width by remember { mutableStateOf(0.dp) }
 
     var visibleHomework by rememberSaveable<MutableState<Int?>> { mutableStateOf(null) }
     var visibleAssessment by rememberSaveable<MutableState<Int?>> { mutableStateOf(null) }
@@ -112,12 +108,15 @@ private fun SearchScreenContent(
             .fillMaxSize()
             .padding(bottom = 8.dp)
     ) {
+        val searchBarFocusRequester = remember { FocusRequester() }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f, true)
         ) content@{
-            Title(modifier = Modifier.padding(horizontal = 16.dp))
+            Title(modifier = Modifier.padding(horizontal = 16.dp)) { try {
+                searchBarFocusRequester.requestFocus()
+            } catch (_: Exception) {} }
             Spacer(Modifier.size(8.dp))
             AnimatedContent(
                 targetState = state.query.isBlank(),
@@ -127,13 +126,15 @@ private fun SearchScreenContent(
                     profile = state.currentProfile,
                     newItems = state.newItems,
                     onAssessmentClicked = { visibleAssessment = it },
-                    onHomeworkClicked = { visibleHomework = it }
+                    onHomeworkClicked = { visibleHomework = it },
+                    onOpenRoomSearchClicked = onRoomSearchClicked
                 )
             }
         }
         SearchBar(
             value = state.query,
             selectedDate = state.selectedDate,
+            focusRequester = searchBarFocusRequester,
             onQueryChange = { onEvent(SearchEvent.UpdateQuery(it)) },
             onSelectDate = { onEvent(SearchEvent.SelectDate(it)) }
         )
@@ -160,7 +161,6 @@ private fun SearchScreenContent(
         modifier = Modifier
             .padding(contentPadding)
             .fillMaxSize()
-            .onSizeChanged { with(localDensity) { width = it.width.toDp() } }
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 8.dp)
@@ -182,9 +182,6 @@ private fun SearchScreenContent(
             Spacer(Modifier.height(16.dp))
 
             val lessonScroller = rememberScrollState()
-            LaunchedEffect(width) {
-                lessonScroller.scrollTo(with(localDensity) { (state.currentTime.hour * 60 + state.currentTime.minute) * (hourWidth/60).roundToPx() - (width / 2).roundToPx() }.coerceAtLeast(0))
-            }
 
             state.results.forEach { (type, results) ->
                 Row(

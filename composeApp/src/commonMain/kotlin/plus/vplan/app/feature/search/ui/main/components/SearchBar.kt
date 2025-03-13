@@ -29,6 +29,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,6 +51,7 @@ import vplanplus.composeapp.generated.resources.search
 fun SearchBar(
     value: String,
     selectedDate: LocalDate,
+    focusRequester: FocusRequester?,
     onQueryChange: (to: String) -> Unit,
     onSelectDate: (date: LocalDate) -> Unit,
 ) {
@@ -133,6 +136,10 @@ fun SearchBar(
             modifier = Modifier
                 .padding(horizontal = 8.dp)
                 .fillMaxWidth()
+                .let {
+                    if (focusRequester != null) it.focusRequester(focusRequester)
+                    else it
+                }
         )
     }
 
