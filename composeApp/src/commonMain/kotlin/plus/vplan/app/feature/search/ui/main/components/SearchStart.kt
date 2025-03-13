@@ -59,9 +59,7 @@ import plus.vplan.app.utils.untilRelativeText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.badge_check
 import vplanplus.composeapp.generated.resources.badge_plus
-import vplanplus.composeapp.generated.resources.book_open
 import vplanplus.composeapp.generated.resources.door_open
-import vplanplus.composeapp.generated.resources.notebook_text
 import vplanplus.composeapp.generated.resources.search
 
 @Composable
@@ -283,18 +281,14 @@ fun SearchStart(
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .clickable {
                             when (index) {
-                                0 -> Unit
-                                1 -> Unit
-                                2 -> onOpenRoomSearchClicked()
+                                0 -> onOpenRoomSearchClicked()
                             }
                         }
                         .padding(8.dp)
                 ) {
                     Icon(
                         painter = painterResource(when (index) {
-                            0 -> Res.drawable.notebook_text
-                            1 -> Res.drawable.book_open
-                            2 -> Res.drawable.door_open
+                            0 -> Res.drawable.door_open
                             else -> Res.drawable.search
                         }),
                         contentDescription = null,
@@ -305,9 +299,7 @@ fun SearchStart(
                     )
                     Text(
                         text = when (index) {
-                            0 -> "Leistungserhebungen"
-                            1 -> "Hausaufgaben"
-                            2 -> "Freie Räume"
+                            0 -> "Freie Räume"
                             else -> "-"
                         },
                         style = MaterialTheme.typography.bodyLarge,
