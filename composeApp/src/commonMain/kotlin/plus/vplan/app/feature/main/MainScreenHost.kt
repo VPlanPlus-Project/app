@@ -105,6 +105,14 @@ val defaultExitAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() 
     fadeOut(animationSpec = tween(100))
 }
 
+val defaultMainEnterAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) = {
+    fadeIn(animationSpec = tween(100))
+}
+
+val defaultMainExitAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition) = {
+    fadeOut(animationSpec = tween(100))
+}
+
 @Composable
 fun MainScreenHost(
     onNavigateToOnboarding: (school: School?) -> Unit,
@@ -194,22 +202,62 @@ fun MainScreenHost(
             navController = navController,
             startDestination = MainScreen.MainHome
         ) {
-            composable<MainScreen.MainHome> { HomeScreen(navController, contentPadding, homeViewModel) }
-            composable<MainScreen.MainCalendar> { CalendarScreen(navController, contentPadding, calendarViewModel) }
-            composable<MainScreen.MainSearch> { SearchScreen(navController, contentPadding, searchViewModel) }
-            composable<MainScreen.MainDev> { DevScreen(contentPadding) }
-            composable<MainScreen.MainProfile> { ProfileScreen(navController, contentPadding, profileViewModel) }
+            composable<MainScreen.MainHome>(
+                enterTransition = defaultMainEnterAnimation,
+                exitTransition = defaultMainExitAnimation,
+                popEnterTransition = defaultMainEnterAnimation,
+                popExitTransition = defaultMainExitAnimation
+            ) { HomeScreen(navController, contentPadding, homeViewModel) }
+            composable<MainScreen.MainCalendar>(
+                enterTransition = defaultMainEnterAnimation,
+                exitTransition = defaultMainExitAnimation,
+                popEnterTransition = defaultMainEnterAnimation,
+                popExitTransition = defaultMainExitAnimation
+            ) { CalendarScreen(navController, contentPadding, calendarViewModel) }
+            composable<MainScreen.MainSearch>(
+                enterTransition = defaultMainEnterAnimation,
+                exitTransition = defaultMainExitAnimation,
+                popEnterTransition = defaultMainEnterAnimation,
+                popExitTransition = defaultMainExitAnimation
+            ) { SearchScreen(navController, contentPadding, searchViewModel) }
+            composable<MainScreen.MainDev>(
+                enterTransition = defaultMainEnterAnimation,
+                exitTransition = defaultMainExitAnimation,
+                popEnterTransition = defaultMainEnterAnimation,
+                popExitTransition = defaultMainExitAnimation
+            ) { DevScreen(contentPadding) }
+            composable<MainScreen.MainProfile>(
+                enterTransition = defaultMainEnterAnimation,
+                exitTransition = defaultMainExitAnimation,
+                popEnterTransition = defaultMainEnterAnimation,
+                popExitTransition = defaultMainExitAnimation
+            ) { ProfileScreen(navController, contentPadding, profileViewModel) }
 
-            composable<MainScreen.ProfileSettings> {
+            composable<MainScreen.ProfileSettings>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
                 val args = it.toRoute<MainScreen.ProfileSettings>()
                 ProfileSettingsScreen(args.profileId, navController)
             }
-            composable<MainScreen.ProfileSubjectInstances> {
+            composable<MainScreen.ProfileSubjectInstances>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
                 val args = it.toRoute<MainScreen.ProfileSubjectInstances>()
                 ProfileSubjectInstanceScreen(Uuid.parse(args.profileId), navController)
             }
 
-            composable<MainScreen.RoomSearch> { RoomSearch(navController) }
+            composable<MainScreen.RoomSearch>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) { RoomSearch(navController) }
 
             composable<MainScreen.Settings>(
                 enterTransition = defaultEnterAnimation,
@@ -248,11 +296,21 @@ fun MainScreenHost(
                 InfoScreen(navController)
             }
 
-            composable<MainScreen.Grades> {
+            composable<MainScreen.Grades>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
                 val args = it.toRoute<MainScreen.Grades>()
                 GradesScreen(navController, args.vppId)
             }
-            composable<MainScreen.Analytics> {
+            composable<MainScreen.Analytics>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
                 val args = it.toRoute<MainScreen.Analytics>()
                 AnalyticsScreen(navController, args.vppId)
             }
