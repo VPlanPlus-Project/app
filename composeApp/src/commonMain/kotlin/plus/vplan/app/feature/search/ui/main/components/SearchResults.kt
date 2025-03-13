@@ -42,6 +42,7 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.feature.calendar.ui.components.agenda.GradeCard
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.utils.findCurrentLessons
@@ -145,8 +146,19 @@ fun SearchResults(
                             }
                         }
                     }
-                    else -> results.forEach { result ->
-                        Text(result.toString())
+                    SearchResult.Result.Grade -> {
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                        ) {
+                            results.filterIsInstance<SearchResult.Grade>().forEach { result ->
+                                GradeCard(
+                                    grade = result.grade,
+                                    onClick = { onGradeClicked(result.grade.id) }
+                                )
+                            }
+                        }
                     }
                 }
             }
