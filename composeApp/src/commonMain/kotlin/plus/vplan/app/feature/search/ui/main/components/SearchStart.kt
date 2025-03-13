@@ -272,7 +272,7 @@ fun SearchStart(
                 .clip(RoundedCornerShape(16.dp)),
             columns = 2,
             cellPadding = 4.dp,
-            content = List(3) { { _, _, index ->
+            content = List(1) { { _, _, index ->
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
