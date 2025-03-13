@@ -12,6 +12,7 @@ interface SubstitutionPlanRepository {
     suspend fun deleteSubstitutionPlansByVersion(schoolId: Int, version: String)
 
     fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate): Flow<Set<Uuid>>
+    fun getSubstitutionPlanBySchool(schoolId: Int): Flow<Set<Lesson.SubstitutionPlanLesson>>
     fun getForProfile(profile: Profile, date: LocalDate): Flow<Set<Uuid>>
     fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?>
 

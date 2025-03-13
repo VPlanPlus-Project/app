@@ -76,8 +76,7 @@ class HomeViewModel(
         viewModelScope.launch {
             updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool)
             updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, forceUpdate = false)
-            updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, state.currentDay!!.day.date, allowNotification = false)
-            if (state.nextDay != null) updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, state.nextDay!!.day.date, allowNotification = false)
+            updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, listOfNotNull(state.currentDay!!.day.date, state.nextDay!!.day.date), allowNotification = false)
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }
 

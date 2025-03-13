@@ -28,7 +28,7 @@ fun NavigationHost(task: StartTask?) {
     val navigationHostController = rememberNavController()
     val viewModel = koinViewModel<NavigationHostViewModel>()
     val state = viewModel.state
-    if (state.hasProfile == null) return
+    if (state.hasProfileAtAppStartup == null) return
 
     val setCurrentProfileUseCase = koinInject<SetCurrentProfileUseCase>()
 
@@ -49,7 +49,7 @@ fun NavigationHost(task: StartTask?) {
 
     NavHost(
         navController = navigationHostController,
-        startDestination = if (state.hasProfile == true) AppScreen.MainScreen else AppScreen.Onboarding(null)
+        startDestination = if (state.hasProfileAtAppStartup == true) AppScreen.MainScreen else AppScreen.Onboarding(null)
     ) {
         composable<AppScreen.Onboarding> { route ->
             val args = route.toRoute<AppScreen.Onboarding>()
