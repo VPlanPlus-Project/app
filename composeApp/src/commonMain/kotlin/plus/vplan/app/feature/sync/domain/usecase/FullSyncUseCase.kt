@@ -137,8 +137,7 @@ class FullSyncUseCase(
                 }
 
                 updateTimetableUseCase(school, forceUpdate = false)
-                updateSubstitutionPlanUseCase(school, today, true)
-                updateSubstitutionPlanUseCase(school, nextDay, true)
+                updateSubstitutionPlanUseCase(school, listOf(today, nextDay), true)
             }
 
         updateHomeworkUseCase(true)
