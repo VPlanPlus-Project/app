@@ -39,7 +39,7 @@ class TimetableRepositoryImpl(
                     dayOfWeek = lesson.dayOfWeek,
                     weekId = lesson.week,
                     weekType = lesson.weekType,
-                    lessonTimeId = lesson.lessonTime,
+                    lessonTimeId = lesson.lessonTimeId,
                     subject = lesson.subject,
                     version = versionString
                 )

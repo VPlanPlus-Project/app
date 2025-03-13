@@ -1,6 +1,9 @@
 package plus.vplan.app.feature.search.ui.main
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,10 +56,10 @@ import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.feature.main.MainScreen
-import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.LessonRow
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
+import plus.vplan.app.feature.search.ui.main.components.SearchResults
 import plus.vplan.app.feature.search.ui.main.components.SearchStart
 import plus.vplan.app.feature.search.ui.main.components.StartScreen
 import plus.vplan.app.feature.search.ui.main.components.Title
@@ -120,7 +123,11 @@ private fun SearchScreenContent(
             Spacer(Modifier.size(8.dp))
             AnimatedContent(
                 targetState = state.query.isBlank(),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                transitionSpec = {
+                    if (state.query.isBlank()) slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up) togetherWith slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Up) + scaleOut()
+                    else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Down) togetherWith slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down) + scaleOut()
+                }
             ) { showPlaceholder ->
                 if (showPlaceholder) SearchStart(
                     profile = state.currentProfile,
@@ -128,6 +135,8 @@ private fun SearchScreenContent(
                     onAssessmentClicked = { visibleAssessment = it },
                     onHomeworkClicked = { visibleHomework = it },
                     onOpenRoomSearchClicked = onRoomSearchClicked
+                ) else SearchResults(
+                    results = state.results
                 )
             }
         }
@@ -195,7 +204,7 @@ private fun SearchScreenContent(
                         text = type.toName(),
                         style = MaterialTheme.typography.headlineMedium
                     )
-                    if (type == Result.Grade && state.gradeLockState != GradeLockState.NotConfigured) {
+                    if (type == SearchResult.Result.Grade && state.gradeLockState != GradeLockState.NotConfigured) {
                         TextButton(
                             onClick = {
                                 when (state.gradeLockState) {

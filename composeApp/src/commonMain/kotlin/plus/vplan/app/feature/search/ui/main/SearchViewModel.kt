@@ -22,7 +22,6 @@ import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
-import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.GetAssessmentsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
@@ -98,7 +97,7 @@ class SearchViewModel(
 data class SearchState(
     val query: String = "",
     val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
-    val results: Map<Result, List<SearchResult>> = emptyMap(),
+    val results: Map<SearchResult.Result, List<SearchResult>> = emptyMap(),
     val homework: List<Homework> = emptyList(),
     val assessments: List<Assessment> = emptyList(),
     val currentProfile: Profile? = null,
