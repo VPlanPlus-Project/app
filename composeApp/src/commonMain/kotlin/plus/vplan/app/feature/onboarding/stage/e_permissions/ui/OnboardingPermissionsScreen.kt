@@ -102,9 +102,7 @@ fun OnboardingPermissionsScreen(
             openSetting = false,
             deniedDialogTitle = "",
             deniedDialogDesc = "",
-            isGranted = {
-                viewModel.onNotificationGranted()
-            }
+            isGranted = { viewModel.onNotificationGranted() }
         )
 
         LaunchedEffect(viewModel.state.canContinue) {
