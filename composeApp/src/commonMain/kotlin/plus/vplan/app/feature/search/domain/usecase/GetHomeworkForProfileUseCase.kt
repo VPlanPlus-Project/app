@@ -18,7 +18,7 @@ class GetHomeworkForProfileUseCase(
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(profile: Profile.StudentProfile): Flow<List<Homework>> {
-        val group = profile.group
+        val group = profile.groupId
         val enabledSubjectInstances = profile.subjectInstanceConfiguration.filterValues { it }.keys
         return homeworkRepository.getByGroup(group).map { it.map { homework -> homework.id } }
             .map { combine(it.map { id -> App.homeworkSource.getById(id) }) { items -> items.toList() } }

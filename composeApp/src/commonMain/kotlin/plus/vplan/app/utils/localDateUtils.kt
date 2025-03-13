@@ -83,3 +83,17 @@ val regularDateFormat = LocalDate.Format {
     char('.')
     year(Padding.ZERO)
 }
+
+val dateFormatDDMMMYY = LocalDate.Format {
+    dayOfMonth(Padding.ZERO)
+    chars(". ")
+    monthName(shortMonthNames)
+    char(' ')
+    yearTwoDigits(2000)
+}
+
+val regularDateFormatWithoutYear = LocalDate.Format {
+    dayOfMonth(Padding.ZERO)
+    char('.')
+    monthNumber(Padding.ZERO)
+}

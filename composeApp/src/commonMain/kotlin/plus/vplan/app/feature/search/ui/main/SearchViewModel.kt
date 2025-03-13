@@ -104,7 +104,9 @@ data class SearchState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
     val gradeLockState: GradeLockState = GradeLockState.NotConfigured
-)
+) {
+    val newItems = (assessments.map { NewItem.Assessment(it) } + homework.map { NewItem.Homework(it) }).sortedByDescending { it.createdAt }.take(5)
+}
 
 sealed class SearchEvent {
     data class UpdateQuery(val query: String): SearchEvent()
@@ -112,4 +114,9 @@ sealed class SearchEvent {
 
     data object RequestGradeUnlock: SearchEvent()
     data object RequestGradeLock: SearchEvent()
+}
+
+sealed class NewItem(val createdAt: LocalDate) {
+    data class Assessment(val assessment: plus.vplan.app.domain.model.Assessment): NewItem(assessment.createdAt.date)
+    data class Homework(val homework: plus.vplan.app.domain.model.Homework): NewItem(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date)
 }

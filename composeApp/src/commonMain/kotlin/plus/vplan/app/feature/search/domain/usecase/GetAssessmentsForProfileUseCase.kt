@@ -14,7 +14,7 @@ class GetAssessmentsForProfileUseCase(
             items
                 .filter {
                     (it.creator is AppEntity.Profile && it.creator.id == profile.id) || (it.creator is AppEntity.VppId && it.creator.id == profile.vppIdId) ||
-                            (profile.group in it.subjectInstance.getFirstValue()?.groups.orEmpty() && profile.subjectInstanceConfiguration.any { (id, allowed) -> it.subjectInstanceId == id && allowed })
+                            (profile.groupId in it.subjectInstance.getFirstValue()?.groups.orEmpty() && profile.subjectInstanceConfiguration.any { (id, allowed) -> it.subjectInstanceId == id && allowed })
                 }.onEach {
                     it.getCreatedByProfileItem()
                     it.getCreatedByVppIdItem()

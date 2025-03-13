@@ -58,7 +58,9 @@ import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.LessonRow
 import plus.vplan.app.feature.search.ui.main.components.SearchBar
+import plus.vplan.app.feature.search.ui.main.components.SearchStart
 import plus.vplan.app.feature.search.ui.main.components.StartScreen
+import plus.vplan.app.feature.search.ui.main.components.Title
 import plus.vplan.app.feature.search.ui.main.components.hourWidth
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.ui.theme.CustomColor
@@ -96,6 +98,7 @@ private fun SearchScreenContent(
     onRoomSearchClicked: () -> Unit,
     contentPadding: PaddingValues
 ) {
+    if (state.currentProfile == null) return
     val localDensity = LocalDensity.current
     var width by remember { mutableStateOf(0.dp) }
 
@@ -107,18 +110,62 @@ private fun SearchScreenContent(
         modifier = Modifier
             .padding(contentPadding)
             .fillMaxSize()
+            .padding(bottom = 8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, true)
+        ) content@{
+            Title(modifier = Modifier.padding(horizontal = 16.dp))
+            Spacer(Modifier.size(8.dp))
+            AnimatedContent(
+                targetState = state.query.isBlank(),
+                modifier = Modifier.fillMaxSize()
+            ) { showPlaceholder ->
+                if (showPlaceholder) SearchStart(
+                    profile = state.currentProfile,
+                    newItems = state.newItems,
+                    onAssessmentClicked = { visibleAssessment = it },
+                    onHomeworkClicked = { visibleHomework = it }
+                )
+            }
+        }
+        SearchBar(
+            value = state.query,
+            selectedDate = state.selectedDate,
+            onQueryChange = { onEvent(SearchEvent.UpdateQuery(it)) },
+            onSelectDate = { onEvent(SearchEvent.SelectDate(it)) }
+        )
+    }
+
+    visibleHomework?.let { HomeworkDetailDrawer(
+        homeworkId = it,
+        onDismiss = { visibleHomework = null }
+    ) }
+
+    visibleAssessment?.let { AssessmentDetailDrawer(
+        assessmentId = it,
+        onDismiss = { visibleAssessment = null }
+    ) }
+
+    visibleGrade?.let { GradeDetailDrawer(
+        gradeId = it,
+        onDismiss = { visibleGrade = null }
+    ) }
+
+    return
+
+    Column(
+        modifier = Modifier
+            .padding(contentPadding)
+            .fillMaxSize()
             .onSizeChanged { with(localDensity) { width = it.width.toDp() } }
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 8.dp)
         ) {
-            SearchBar(
-                value = state.query,
-                selectedDate = state.selectedDate,
-                onQueryChange = { onEvent(SearchEvent.UpdateQuery(it)) },
-                onSelectDate = { onEvent(SearchEvent.SelectDate(it)) },
-                onRoomSearchClicked = onRoomSearchClicked
-            )
+
         }
         if (state.query.isBlank()) StartScreen(
             currentProfile = state.currentProfile,
@@ -417,19 +464,4 @@ private fun SearchScreenContent(
             }
         }
     }
-
-    visibleHomework?.let { HomeworkDetailDrawer(
-        homeworkId = it,
-        onDismiss = { visibleHomework = null }
-    ) }
-
-    visibleAssessment?.let { AssessmentDetailDrawer(
-        assessmentId = it,
-        onDismiss = { visibleAssessment = null }
-    ) }
-
-    visibleGrade?.let { GradeDetailDrawer(
-        gradeId = it,
-        onDismiss = { visibleGrade = null }
-    ) }
 }

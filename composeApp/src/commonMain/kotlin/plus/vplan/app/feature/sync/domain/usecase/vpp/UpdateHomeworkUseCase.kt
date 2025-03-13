@@ -35,11 +35,11 @@ class UpdateHomeworkUseCase(
     suspend operator fun invoke(allowNotifications: Boolean) {
         val ids = mutableSetOf<Int>()
         profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>().forEach { studentProfile ->
-            val existingHomework = homeworkRepository.getByGroup(studentProfile.group).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
+            val existingHomework = homeworkRepository.getByGroup(studentProfile.groupId).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
             ids.addAll(
                 (homeworkRepository.download(
                     schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess(studentProfile.getSchoolItem().id) ?: studentProfile.getSchool().getFirstValue()!!.getSchoolApiAccess()!!,
-                    groupId = studentProfile.group,
+                    groupId = studentProfile.groupId,
                     subjectInstanceIds = studentProfile.subjectInstanceConfiguration.map { it.key },
                 ) as? Response.Success)?.data.orEmpty().also {
                     if (allowNotifications) {

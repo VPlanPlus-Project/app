@@ -167,7 +167,7 @@ sealed interface Lesson : Item {
     suspend fun isRelevantForProfile(profile: Profile): Boolean {
         when (profile) {
             is Profile.StudentProfile -> {
-                if (profile.group !in this.groups) return false
+                if (profile.groupId !in this.groups) return false
                 if (profile.subjectInstanceConfiguration.filterValues { false }.any { it.key == this.subjectInstance }) return false
                 if (this is TimetableLesson) {
                     val subjectInstances = profile.subjectInstanceConfiguration.mapKeys { profile.getSubjectInstance(it.key) }
