@@ -41,6 +41,7 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.utils.findCurrentLessons
@@ -63,7 +64,11 @@ private fun sectionTitleFont() = MaterialTheme.typography.titleMedium
 
 @Composable
 fun SearchResults(
-    results: Map<SearchResult.Result, List<SearchResult>>
+    profile: Profile,
+    results: Map<SearchResult.Result, List<SearchResult>>,
+    onHomeworkClicked: (homeworkId: Int) -> Unit,
+    onAssessmentClicked: (assessmentId: Int) -> Unit,
+    onGradeClicked: (gradeId: Int) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -111,6 +116,35 @@ fun SearchResults(
                     SearchResult.Result.Group -> GroupResults(results.filterIsInstance<SearchResult.SchoolEntity.Group>())
                     SearchResult.Result.Room -> RoomResults(results.filterIsInstance<SearchResult.SchoolEntity.Room>())
                     SearchResult.Result.Teacher -> TeacherResults(results.filterIsInstance<SearchResult.SchoolEntity.Teacher>())
+                    SearchResult.Result.Homework -> {
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                        ) {
+                            results.filterIsInstance<SearchResult.Homework>().forEach { result ->
+                                plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard(
+                                    homework = result.homework,
+                                    profile = profile,
+                                    onClick = { onHomeworkClicked(result.homework.id) }
+                                )
+                            }
+                        }
+                    }
+                    SearchResult.Result.Assessment -> {
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                        ) {
+                            results.filterIsInstance<SearchResult.Assessment>().forEach { result ->
+                                plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard(
+                                    assessment = result.assessment,
+                                    onClick = { onAssessmentClicked(result.assessment.id) }
+                                )
+                            }
+                        }
+                    }
                     else -> results.forEach { result ->
                         Text(result.toString())
                     }

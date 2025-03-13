@@ -136,7 +136,11 @@ private fun SearchScreenContent(
                     onHomeworkClicked = { visibleHomework = it },
                     onOpenRoomSearchClicked = onRoomSearchClicked
                 ) else SearchResults(
-                    results = state.results
+                    profile = state.currentProfile,
+                    results = state.results,
+                    onHomeworkClicked = { visibleHomework = it },
+                    onAssessmentClicked = { visibleAssessment = it },
+                    onGradeClicked = { visibleGrade = it }
                 )
             }
         }
