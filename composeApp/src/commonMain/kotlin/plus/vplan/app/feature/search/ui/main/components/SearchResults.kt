@@ -113,6 +113,7 @@ fun SearchResults(
                         )
                     }
                 }
+                Spacer(Modifier.size(4.dp))
                 when (type) {
                     SearchResult.Result.Group -> GroupResults(results.filterIsInstance<SearchResult.SchoolEntity.Group>())
                     SearchResult.Result.Room -> RoomResults(results.filterIsInstance<SearchResult.SchoolEntity.Room>())
