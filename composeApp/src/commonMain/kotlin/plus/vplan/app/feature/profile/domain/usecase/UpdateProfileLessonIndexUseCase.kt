@@ -17,7 +17,7 @@ class UpdateProfileLessonIndexUseCase(
     suspend operator fun invoke(profile: Profile) {
         val school = profile.getSchool().getFirstValue()!!
         val days = dayRepository.getBySchool(school.id).first()
-            .filter { it.dayType == Day.DayType.REGULAR }
+            .filter { it.dayType !in listOf(Day.DayType.HOLIDAY, Day.DayType.WEEKEND) }
 
         days.forEach { day ->
             val substitutionPlanLessons = substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, day.date).first()
