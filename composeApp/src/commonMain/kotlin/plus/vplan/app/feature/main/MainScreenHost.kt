@@ -1,11 +1,17 @@
 package plus.vplan.app.feature.main
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -34,6 +40,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -77,6 +84,26 @@ import vplanplus.composeapp.generated.resources.house
 import vplanplus.composeapp.generated.resources.search
 import vplanplus.composeapp.generated.resources.user
 import kotlin.uuid.Uuid
+
+val defaultEnterAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) = {
+    slideInVertically(
+        animationSpec = tween(300)
+    ) { it/4 } + fadeIn(animationSpec = tween(200))
+}
+
+val defaultPopExitAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition) = {
+    slideOutVertically(
+        animationSpec = tween(300)
+    ) { it/4 } + fadeOut(animationSpec = tween(100))
+}
+
+val defaultPopEnterAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) = {
+    fadeIn(animationSpec = tween(200))
+}
+
+val defaultExitAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition) = {
+    fadeOut(animationSpec = tween(100))
+}
 
 @Composable
 fun MainScreenHost(
@@ -184,20 +211,40 @@ fun MainScreenHost(
 
             composable<MainScreen.RoomSearch> { RoomSearch(navController) }
 
-            composable<MainScreen.Settings> { SettingsScreen(navController) }
-            composable<MainScreen.SchoolSettings> {
+            composable<MainScreen.Settings>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) { SettingsScreen(navController) }
+            composable<MainScreen.SchoolSettings>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
                 val args = it.toRoute<MainScreen.SchoolSettings>()
                 SchoolSettingsScreen(
                     navHostController = navController,
                     openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchoolId
                 )
             }
-            composable<MainScreen.SecuritySettings> {
+            composable<MainScreen.SecuritySettings>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
                 SecuritySettingsScreen(
                     navHostController = navController
                 )
             }
-            composable<MainScreen.InfoFeedbackSettings> {
+            composable<MainScreen.InfoFeedbackSettings>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
                 InfoScreen(navController)
             }
 
