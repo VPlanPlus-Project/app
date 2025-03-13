@@ -13,15 +13,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -47,8 +45,8 @@ import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
-import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.SubjectInstanceTitle
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
+import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.SubjectInstanceTitle
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
@@ -58,7 +56,8 @@ import vplanplus.composeapp.generated.resources.user_pen
 
 @Composable
 fun OnboardingSelectProfileScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    paddingValues: PaddingValues
 ) {
     val viewModel = koinViewModel<OnboardingSelectProfileViewModel>()
     val state = viewModel.state
@@ -71,6 +70,7 @@ fun OnboardingSelectProfileScreen(
 
     OnboardingSelectProfileScreen(
         state = state,
+        paddingValues = paddingValues,
         onEvent = viewModel::onEvent
     )
 }
@@ -78,11 +78,12 @@ fun OnboardingSelectProfileScreen(
 @Composable
 private fun OnboardingSelectProfileScreen(
     state: OnboardingSelectProfileUiState,
+    paddingValues: PaddingValues,
     onEvent: (OnboardingProfileSelectionEvent) -> Unit
 ) {
     Column(
         modifier = Modifier
-            .padding(WindowInsets.systemBars.asPaddingValues())
+            .padding(paddingValues)
             .fillMaxSize()
     ) {
         Column(

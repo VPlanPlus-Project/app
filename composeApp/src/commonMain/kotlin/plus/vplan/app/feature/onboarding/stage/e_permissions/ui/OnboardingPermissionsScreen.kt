@@ -2,14 +2,12 @@ package plus.vplan.app.feature.onboarding.stage.e_permissions.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,14 +38,16 @@ import vplanplus.composeapp.generated.resources.bell_ring
 @Composable
 fun OnboardingPermissionsScreen(
     navHostController: NavHostController,
+    paddingValues: PaddingValues
 ) {
     val viewModel = koinViewModel<OnboardingPermissionViewModel>()
     LaunchedEffect(Unit) {
-        if (isPermissionGranted(PermissionState.POST_NOTIFICATIONS)) viewModel.onNotificationGranted()
+        val isPermissionGranted = isPermissionGranted(PermissionState.POST_NOTIFICATIONS)
+        if (isPermissionGranted) viewModel.onNotificationGranted()
     }
     Column(
         modifier = Modifier
-            .padding(WindowInsets.systemBars.asPaddingValues())
+            .padding(paddingValues)
             .fillMaxSize()
     ) {
         Column(

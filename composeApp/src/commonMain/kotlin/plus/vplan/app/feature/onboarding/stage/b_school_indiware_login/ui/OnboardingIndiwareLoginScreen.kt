@@ -1,14 +1,12 @@
 package plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,7 +27,8 @@ import vplanplus.composeapp.generated.resources.arrow_right
 
 @Composable
 fun OnboardingIndiwareLoginScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    paddingValues: PaddingValues
 ) {
 
     val viewModel = koinViewModel<OnboardingIndiwareLoginViewModel>()
@@ -42,6 +41,7 @@ fun OnboardingIndiwareLoginScreen(
 
     OnboardingIndiwareLoginContent(
         state = state,
+        paddingValues = paddingValues,
         onEvent = viewModel::handleEvent
     )
 }
@@ -49,12 +49,12 @@ fun OnboardingIndiwareLoginScreen(
 @Composable
 private fun OnboardingIndiwareLoginContent(
     state: OnboardingIndiwareLoginState,
+    paddingValues: PaddingValues,
     onEvent: (OnboardingIndiwareLoginEvent) -> Unit
 ) {
     Column(
         modifier = Modifier
-            .padding(WindowInsets.systemBars.asPaddingValues())
-            .padding(bottom = 16.dp)
+            .padding(paddingValues)
             .fillMaxSize()
     ) {
         Label()

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -81,9 +80,7 @@ fun OnboardingScreen(
     val contentPadding = PaddingValues(left, top, right, bottom)
 
     Column(
-        modifier = Modifier
-            .padding(contentPadding)
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         val navController = rememberNavController()
 
@@ -102,31 +99,31 @@ fun OnboardingScreen(
             popExitTransition = exitSlideTransitionRight
         ) {
             composable<OnboardingScreen.OnboardingScreenHome> {
-                OnboardingSchoolSearch(navController)
+                OnboardingSchoolSearch(navController, contentPadding)
             }
 
             composable<OnboardingScreen.OnboardingScreenIndiwareLogin> {
-                OnboardingIndiwareLoginScreen(navController)
+                OnboardingIndiwareLoginScreen(navController, contentPadding)
             }
 
             composable<OnboardingScreen.OnboardingIndiwareInit> {
-                OnboardingIndiwareInitScreen(navController)
+                OnboardingIndiwareInitScreen(navController, contentPadding)
             }
 
             composable<OnboardingScreen.OnboardingIndiwareDataDownload> {
-                OnboardingIndiwareDataDownloadScreen(navController)
+                OnboardingIndiwareDataDownloadScreen(navController, contentPadding)
             }
 
             composable<OnboardingScreen.OnboardingChooseProfile> {
-                OnboardingSelectProfileScreen(navController)
+                OnboardingSelectProfileScreen(navController, contentPadding)
             }
 
             composable<OnboardingScreen.OnboardingPermission> {
-                OnboardingPermissionsScreen(navController)
+                OnboardingPermissionsScreen(navController, contentPadding)
             }
 
             composable<OnboardingScreen.OnboardingFinished> {
-                OnboardingFinishedScreen(onFinish)
+                OnboardingFinishedScreen(onFinish, contentPadding)
             }
         }
     }
