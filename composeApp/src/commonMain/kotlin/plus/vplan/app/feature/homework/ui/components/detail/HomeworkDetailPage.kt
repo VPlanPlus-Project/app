@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -115,9 +115,9 @@ fun DetailPage(
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
+                .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
