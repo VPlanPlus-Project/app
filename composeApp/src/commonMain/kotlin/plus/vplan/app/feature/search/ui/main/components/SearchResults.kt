@@ -7,19 +7,25 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,7 +40,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
@@ -43,15 +51,18 @@ import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.calendar.ui.components.agenda.GradeCard
+import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.utils.findCurrentLessons
 import plus.vplan.app.utils.getLastLessonEnd
 import plus.vplan.app.utils.getNextLessonStart
 import plus.vplan.app.utils.now
+import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
+import plus.vplan.app.utils.untilRelativeText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.book_open
 import vplanplus.composeapp.generated.resources.door_closed
@@ -66,18 +77,20 @@ private fun sectionTitleFont() = MaterialTheme.typography.titleMedium
 @Composable
 fun SearchResults(
     profile: Profile,
-    results: Map<SearchResult.Result, List<SearchResult>>,
+    date: LocalDate,
+    results: Map<SearchResult.Type, List<SearchResult>>,
     onHomeworkClicked: (homeworkId: Int) -> Unit,
     onAssessmentClicked: (assessmentId: Int) -> Unit,
     onGradeClicked: (gradeId: Int) -> Unit
 ) {
+    var visibleResult by remember { mutableStateOf<SearchResult.SchoolEntity?>(null) }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
         results.toList()
-            .sortedBy { (type, _) -> resultTypeSorting.indexOf(type).let { if (it == -1) resultTypeSorting.size + 1 else it } }
+            .sortedBy { (type, _) -> typeTypeSortings.indexOf(type).let { if (it == -1) typeTypeSortings.size + 1 else it } }
             .filter { it.second.isNotEmpty() }
             .forEach { (type, results) ->
                 Row(
@@ -89,12 +102,12 @@ fun SearchResults(
                 ) {
                     Icon(
                         painter = painterResource(when (type) {
-                            SearchResult.Result.Group -> Res.drawable.users
-                            SearchResult.Result.Teacher -> Res.drawable.square_user_round
-                            SearchResult.Result.Room -> Res.drawable.door_closed
-                            SearchResult.Result.Homework -> Res.drawable.book_open
-                            SearchResult.Result.Assessment -> Res.drawable.notebook_text
-                            SearchResult.Result.Grade -> Res.drawable.file_badge
+                            SearchResult.Type.Group -> Res.drawable.users
+                            SearchResult.Type.Teacher -> Res.drawable.square_user_round
+                            SearchResult.Type.Room -> Res.drawable.door_closed
+                            SearchResult.Type.Homework -> Res.drawable.book_open
+                            SearchResult.Type.Assessment -> Res.drawable.notebook_text
+                            SearchResult.Type.Grade -> Res.drawable.file_badge
                         }),
                         contentDescription = null,
                         modifier = Modifier.size(sectionTitleFont().lineHeight.toDp())
@@ -115,10 +128,10 @@ fun SearchResults(
                 }
                 Spacer(Modifier.size(4.dp))
                 when (type) {
-                    SearchResult.Result.Group -> GroupResults(results.filterIsInstance<SearchResult.SchoolEntity.Group>())
-                    SearchResult.Result.Room -> RoomResults(results.filterIsInstance<SearchResult.SchoolEntity.Room>())
-                    SearchResult.Result.Teacher -> TeacherResults(results.filterIsInstance<SearchResult.SchoolEntity.Teacher>())
-                    SearchResult.Result.Homework -> {
+                    SearchResult.Type.Group -> GroupResults(results.filterIsInstance<SearchResult.SchoolEntity.Group>()) { visibleResult = it }
+                    SearchResult.Type.Room -> RoomResults(results.filterIsInstance<SearchResult.SchoolEntity.Room>()) { visibleResult = it }
+                    SearchResult.Type.Teacher -> TeacherResults(results.filterIsInstance<SearchResult.SchoolEntity.Teacher>()) { visibleResult = it }
+                    SearchResult.Type.Homework -> {
                         Column(
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
@@ -133,7 +146,7 @@ fun SearchResults(
                             }
                         }
                     }
-                    SearchResult.Result.Assessment -> {
+                    SearchResult.Type.Assessment -> {
                         Column(
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
@@ -147,7 +160,7 @@ fun SearchResults(
                             }
                         }
                     }
-                    SearchResult.Result.Grade -> {
+                    SearchResult.Type.Grade -> {
                         Column(
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
@@ -164,20 +177,31 @@ fun SearchResults(
                 }
             }
     }
+
+    visibleResult?.let {
+        LessonsDrawer(
+            date = date,
+            lessons = it.lessons,
+            type = it.type,
+            name = it.name,
+            onDismiss = { visibleResult = null }
+        )
+    }
 }
 
-private val resultTypeSorting = listOf(
-    SearchResult.Result.Group,
-    SearchResult.Result.Teacher,
-    SearchResult.Result.Room,
-    SearchResult.Result.Homework,
-    SearchResult.Result.Assessment,
-    SearchResult.Result.Grade,
+private val typeTypeSortings = listOf(
+    SearchResult.Type.Group,
+    SearchResult.Type.Teacher,
+    SearchResult.Type.Room,
+    SearchResult.Type.Homework,
+    SearchResult.Type.Assessment,
+    SearchResult.Type.Grade,
 )
 
 @Composable
 private fun GroupResults(
-    results: List<SearchResult.SchoolEntity.Group>
+    results: List<SearchResult.SchoolEntity.Group>,
+    onClick: (result: SearchResult.SchoolEntity.Group) -> Unit
 ) {
     val localDensity = LocalDensity.current
     var groupNameWidth by remember { mutableStateOf(0.dp) }
@@ -198,7 +222,7 @@ private fun GroupResults(
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable {  }
+                    .clickable { onClick(result) }
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -256,7 +280,8 @@ private fun GroupResults(
 
 @Composable
 private fun RoomResults(
-    results: List<SearchResult.SchoolEntity.Room>
+    results: List<SearchResult.SchoolEntity.Room>,
+    onClick: (result: SearchResult.SchoolEntity.Room) -> Unit
 ) {
     val localDensity = LocalDensity.current
     var roomNameWidth by remember { mutableStateOf(0.dp) }
@@ -277,7 +302,7 @@ private fun RoomResults(
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable {  }
+                    .clickable { onClick(result) }
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -331,7 +356,8 @@ private fun RoomResults(
 
 @Composable
 private fun TeacherResults(
-    results: List<SearchResult.SchoolEntity.Teacher>
+    results: List<SearchResult.SchoolEntity.Teacher>,
+    onClick: (result: SearchResult.SchoolEntity.Teacher) -> Unit
 ) {
     val localDensity = LocalDensity.current
     var teacherNameWidth by remember { mutableStateOf(0.dp) }
@@ -352,7 +378,7 @@ private fun TeacherResults(
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable {  }
+                    .clickable { onClick(result) }
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -403,6 +429,70 @@ private fun TeacherResults(
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LessonsDrawer(
+    date: LocalDate,
+    lessons: List<Lesson>,
+    type: SearchResult.Type,
+    name: String,
+    onDismiss: () -> Unit
+)  {
+    val sheetState = rememberModalBottomSheetState(true)
+
+    ModalBottomSheet(
+        sheetState = sheetState,
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = buildString {
+                        append(when (type) {
+                            SearchResult.Type.Group -> "Klasse"
+                            SearchResult.Type.Teacher -> "Lehrer"
+                            SearchResult.Type.Room -> "Raum"
+                            else -> "Anderes"
+                        })
+                        append(" ")
+                        append(name)
+                    },
+                    style = MaterialTheme.typography.headlineLarge,
+                )
+
+                Text(
+                    text = buildString {
+                        append(when (lessons.size) {
+                            0 -> "Keine Stunden"
+                            1 -> "Eine Stunde"
+                            else -> "${lessons.size} Stunden"
+                        })
+                        append(" für ")
+                        append((LocalDate.now() untilRelativeText date) ?: date.format(regularDateFormat))
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                CalendarView(
+                    date = date,
+                    lessons = lessons,
+                    limitTimeSpanToLessons = true,
+                    info = null,
+                    contentScrollState = null
+                )
             }
         }
     }

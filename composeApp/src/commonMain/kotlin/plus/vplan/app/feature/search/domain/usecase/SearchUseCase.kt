@@ -41,7 +41,7 @@ class SearchUseCase(
     private var lessonDate: LocalDate? = null
 
     operator fun invoke(searchQuery: String, date: LocalDate) = channelFlow {
-        if (searchQuery.isBlank()) return@channelFlow send(emptyMap<SearchResult.Result, List<SearchResult>>())
+        if (searchQuery.isBlank()) return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
         val query = searchQuery.lowercase().trim()
         val profile = getCurrentProfileUseCase().first()
         val school = profile.getSchoolItem()
@@ -58,7 +58,7 @@ class SearchUseCase(
             )
         }
 
-        val results = MutableStateFlow(emptyMap<SearchResult.Result, List<SearchResult>>())
+        val results = MutableStateFlow(emptyMap<SearchResult.Type, List<SearchResult>>())
         launch { results.collect { send(it) } }
 
         launch {
@@ -67,7 +67,7 @@ class SearchUseCase(
                 teacherRepository.getBySchool(school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
                 roomRepository.getBySchool(school.id).map { it.filter { room -> query in room.name.lowercase() } },
             ) { groups, teachers, rooms ->
-                results.value = results.value.plus(SearchResult.Result.Group to groups.map { group ->
+                results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->
                     group.getSchoolItem()
                     SearchResult.SchoolEntity.Group(
                         group = group,
@@ -75,7 +75,7 @@ class SearchUseCase(
                     )
                 })
 
-                results.value = results.value.plus(SearchResult.Result.Teacher to teachers.map { teacher ->
+                results.value = results.value.plus(SearchResult.Type.Teacher to teachers.map { teacher ->
                     teacher.getSchoolItem()
                     SearchResult.SchoolEntity.Teacher(
                         teacher = teacher,
@@ -83,7 +83,7 @@ class SearchUseCase(
                     )
                 })
 
-                results.value = results.value.plus(SearchResult.Result.Room to rooms.map { room ->
+                results.value = results.value.plus(SearchResult.Type.Room to rooms.map { room ->
                     room.getSchoolItem()
                     SearchResult.SchoolEntity.Room(
                         room = room,
@@ -96,7 +96,7 @@ class SearchUseCase(
         launch {
             homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
                 val homework = homeworkList.onEach { it.getTaskItems() }
-                results.value = results.value.plus(SearchResult.Result.Homework to homework.filter { it.taskItems!!.any { task -> query in task.content.lowercase() } }.onEach {
+                results.value = results.value.plus(SearchResult.Type.Homework to homework.filter { it.taskItems!!.any { task -> query in task.content.lowercase() } }.onEach {
                     it.subjectInstance?.getFirstValue() ?: it.group?.getFirstValue()
                     when (it) {
                         is Homework.CloudHomework -> it.getCreatedBy()
@@ -115,7 +115,7 @@ class SearchUseCase(
                             is AppEntity.Profile -> assessment.getCreatedByProfileItem()
                         }
                     }
-                results.value = results.value.plus(SearchResult.Result.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
+                results.value = results.value.plus(SearchResult.Type.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
             }
         }
 
@@ -128,7 +128,7 @@ class SearchUseCase(
                             .filter { grade -> grade.vppIdId == (profile as? Profile.StudentProfile)?.vppIdId }
                     }
                     .distinctBy { it.id }
-                results.value = results.value.plus(SearchResult.Result.Grade to filteredGrades.map { SearchResult.Grade(it) })
+                results.value = results.value.plus(SearchResult.Type.Grade to filteredGrades.map { SearchResult.Grade(it) })
             }
         }
     }

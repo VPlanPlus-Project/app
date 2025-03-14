@@ -97,7 +97,7 @@ class SearchViewModel(
 data class SearchState(
     val query: String = "",
     val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
-    val results: Map<SearchResult.Result, List<SearchResult>> = emptyMap(),
+    val results: Map<SearchResult.Type, List<SearchResult>> = emptyMap(),
     val homework: List<Homework> = emptyList(),
     val assessments: List<Assessment> = emptyList(),
     val currentProfile: Profile? = null,

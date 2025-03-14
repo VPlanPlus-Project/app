@@ -11,11 +11,11 @@ fun Assessment.Type.toName() = when (this) {
     Assessment.Type.OTHER -> "Sonstiges"
 }
 
-fun SearchResult.Result.toName() = when (this) {
-    SearchResult.Result.Group -> "Klassen"
-    SearchResult.Result.Teacher -> "Lehrer"
-    SearchResult.Result.Room -> "Räume"
-    SearchResult.Result.Homework -> "Hausaufgaben"
-    SearchResult.Result.Assessment -> "Leistungserhebungen"
-    SearchResult.Result.Grade -> "Noten"
+fun SearchResult.Type.toName() = when (this) {
+    SearchResult.Type.Group -> "Klassen"
+    SearchResult.Type.Teacher -> "Lehrer"
+    SearchResult.Type.Room -> "Räume"
+    SearchResult.Type.Homework -> "Hausaufgaben"
+    SearchResult.Type.Assessment -> "Leistungserhebungen"
+    SearchResult.Type.Grade -> "Noten"
 }
