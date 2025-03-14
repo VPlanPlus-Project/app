@@ -237,7 +237,7 @@ private fun GroupResults(
             val currentLessons = remember { mutableStateListOf<Lesson>() }
             var end by remember { mutableStateOf<LocalTime?>(null) }
             var hasLessonsLoaded by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) {
+            LaunchedEffect(result.lessons) {
                 currentLessons.clear()
                 currentLessons.addAll(result.lessons.findCurrentLessons(LocalTime.now()).toMutableStateList())
                 if (result.lessons.isNotEmpty()) end = result.lessons.getLastLessonEnd()
@@ -317,7 +317,7 @@ private fun RoomResults(
             val currentLessons = remember { mutableStateListOf<Lesson>() }
             var nextLesson by remember { mutableStateOf<LocalTime?>(null) }
             var hasLessonsLoaded by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) {
+            LaunchedEffect(result.lessons) {
                 currentLessons.clear()
                 currentLessons.addAll(result.lessons.findCurrentLessons(LocalTime.now()).toMutableStateList())
                 nextLesson = result.lessons.getNextLessonStart(LocalTime.now())
@@ -393,7 +393,7 @@ private fun TeacherResults(
             val currentLessons = remember { mutableStateListOf<Lesson>() }
             var end by remember { mutableStateOf<LocalTime?>(null) }
             var hasLessonsLoaded by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) {
+            LaunchedEffect(result.lessons) {
                 currentLessons.clear()
                 currentLessons.addAll(result.lessons.findCurrentLessons(LocalTime(8, 30)).toMutableStateList())
                 if (result.lessons.isNotEmpty()) end = result.lessons.getLastLessonEnd()
