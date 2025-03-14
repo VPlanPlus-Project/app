@@ -380,6 +380,7 @@ private fun CalendarScreenContent(
                             CalendarView(
                                 profile = state.currentProfile ?: return@HorizontalPager,
                                 date = date,
+                                dayType = day?.day?.dayType ?: Day.DayType.UNKNOWN,
                                 lessons = day?.lessons?.toList().orEmpty().sortedBy { it.lessonTimeItem!!.start },
                                 assessments = day?.day?.assessments?.collectAsState(emptySet())?.value?.toList().orEmpty(),
                                 homework = day?.day?.homework?.collectAsState(emptySet())?.value?.toList().orEmpty(),

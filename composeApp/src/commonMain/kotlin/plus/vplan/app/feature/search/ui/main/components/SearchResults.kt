@@ -49,6 +49,7 @@ import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.calendar.ui.components.agenda.GradeCard
@@ -79,6 +80,7 @@ private fun sectionTitleFont() = MaterialTheme.typography.titleMedium
 @Composable
 fun SearchResults(
     profile: Profile,
+    dayType: Day.DayType,
     date: LocalDate,
     results: Map<SearchResult.Type, List<SearchResult>>,
     onHomeworkClicked: (homeworkId: Int) -> Unit,
@@ -209,6 +211,7 @@ fun SearchResults(
         LessonsDrawer(
             date = date,
             lessons = it.lessons,
+            dayType = dayType,
             type = it.type,
             name = it.name,
             onDismiss = { visibleResult = null }
@@ -465,6 +468,7 @@ private fun TeacherResults(
 @Composable
 private fun LessonsDrawer(
     date: LocalDate,
+    dayType: Day.DayType,
     lessons: List<Lesson>,
     type: SearchResult.Type,
     name: String,
@@ -515,6 +519,7 @@ private fun LessonsDrawer(
                 )
                 CalendarView(
                     profile = null,
+                    dayType = dayType,
                     date = date,
                     lessons = lessons,
                     assessments = emptyList(),
