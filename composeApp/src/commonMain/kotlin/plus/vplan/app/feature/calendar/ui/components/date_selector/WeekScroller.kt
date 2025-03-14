@@ -52,7 +52,7 @@ fun WeekScroller(
             startDate = startDate,
             selectedDate = selectedDate,
             onDateSelected = onChangeSelectedDate,
-            height = 56.dp,
+            height = 64.dp,
             scrollProgress = scrollProgress
         )
     }

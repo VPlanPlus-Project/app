@@ -93,6 +93,7 @@ private fun SearchScreenContent(
                     onOpenRoomSearchClicked = onRoomSearchClicked
                 ) else SearchResults(
                     date = state.selectedDate,
+                    dayType = state.selectedDateType,
                     profile = state.currentProfile,
                     results = state.results,
                     onHomeworkClicked = { visibleHomework = it },
