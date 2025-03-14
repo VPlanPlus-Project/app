@@ -514,11 +514,16 @@ private fun LessonsDrawer(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 CalendarView(
+                    profile = null,
                     date = date,
                     lessons = lessons,
+                    assessments = emptyList(),
+                    homework = emptyList(),
                     autoLimitTimeSpanToLessons = true,
                     info = null,
-                    contentScrollState = null
+                    contentScrollState = null,
+                    onHomeworkClicked = {},
+                    onAssessmentClicked = {}
                 )
             }
         }

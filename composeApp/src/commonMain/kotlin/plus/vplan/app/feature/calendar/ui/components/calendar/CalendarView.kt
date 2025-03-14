@@ -1,11 +1,14 @@
 package plus.vplan.app.feature.calendar.ui.components.calendar
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,11 +34,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
@@ -53,8 +59,13 @@ import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
+import plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard
 import plus.vplan.app.feature.home.ui.components.headerFont
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.SubjectIcon
@@ -65,19 +76,28 @@ import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plusWithCapAtMidnight
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
+import plus.vplan.app.utils.transparent
 import plus.vplan.app.utils.until
 import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.chevron_right
 import vplanplus.composeapp.generated.resources.info
+import vplanplus.composeapp.generated.resources.x
 import kotlin.time.Duration.Companion.hours
 
 @Composable
 fun CalendarView(
+    profile: Profile?,
     date: LocalDate,
     lessons: List<Lesson>,
+    assessments: List<Assessment>,
+    homework: List<Homework>,
+    bottomIslandPadding: PaddingValues = PaddingValues(0.dp),
     autoLimitTimeSpanToLessons: Boolean = false,
     limitTimeSpanToLessonsLowerBound: LocalTime? = null,
     info: String?,
-    contentScrollState: ScrollState? = rememberScrollState()
+    contentScrollState: ScrollState? = rememberScrollState(),
+    onHomeworkClicked: (homeworkId: Int) -> Unit,
+    onAssessmentClicked: (assessmentId: Int) -> Unit,
 ) {
     val localDensity = LocalDensity.current
     var availableWidth by remember { mutableStateOf(0.dp) }
@@ -262,15 +282,110 @@ fun CalendarView(
                     }
                 }
 
+            }
+            val colorScheme = MaterialTheme.colorScheme
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .drawWithCache { onDrawBehind { drawRect(Brush.verticalGradient(listOf(colorScheme.surface.transparent(), colorScheme.surface))) } }
+                    .padding(vertical = 4.dp, horizontal = 8.dp)
+                    .padding(bottomIslandPadding),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 if (info != null) {
                     InfoCard(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(vertical = 4.dp, horizontal = 8.dp),
                         imageVector = Res.drawable.info,
                         title = "Informationen deiner Schule",
                         text = info,
+                        shadow = false
                     )
+                }
+
+                var isEntityListExpanded by rememberSaveable { mutableStateOf(false) }
+                if (homework.isNotEmpty() || assessments.isNotEmpty()) Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable(!isEntityListExpanded) { isEntityListExpanded = !isEntityListExpanded }
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .animateContentSize(),
+                ) {
+                    AnimatedContent(
+                        targetState = isEntityListExpanded
+                    ) { showEntities ->
+                        if (!showEntities) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "Für diesen Tag",
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                    listOfNotNull(
+                                        when (homework.size) {
+                                            0 -> null
+                                            1 -> "Eine Hausaufgabe"
+                                            else -> "${homework.size} Hausaufgaben"
+                                        },
+                                        when (assessments.size) {
+                                            0 -> null
+                                            1 -> "Eine Leistungserhebung"
+                                            else -> "${homework.size} Leistungserhebungen"
+                                        },
+                                    ).ifEmpty { null }?.let {
+                                        Text(
+                                            text = it.joinToString(),
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    painter = painterResource(Res.drawable.chevron_right),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            return@AnimatedContent
+                        }
+
+                        Column(Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Für diesen Tag",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                IconButton(onClick = { isEntityListExpanded = false }) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.x),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                assessments.forEach { assessment ->
+                                    AssessmentCard(assessment) { onAssessmentClicked(assessment.id) }
+                                }
+                                homework.forEach { homeworkItem ->
+                                    HomeworkCard(homeworkItem, profile) { onHomeworkClicked(homeworkItem.id) }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -378,11 +378,17 @@ private fun CalendarScreenContent(
                             val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                             val day = state.days[date]
                             CalendarView(
+                                profile = state.currentProfile ?: return@HorizontalPager,
                                 date = date,
                                 lessons = day?.lessons?.toList().orEmpty().sortedBy { it.lessonTimeItem!!.start },
+                                assessments = day?.day?.assessments?.collectAsState(emptySet())?.value?.toList().orEmpty(),
+                                homework = day?.day?.homework?.collectAsState(emptySet())?.value?.toList().orEmpty(),
+                                bottomIslandPadding = PaddingValues(end = 80.dp),
                                 limitTimeSpanToLessonsLowerBound = state.start,
                                 info = day?.day?.info,
-                                contentScrollState = contentScrollState
+                                contentScrollState = contentScrollState,
+                                onHomeworkClicked = { displayHomeworkId = it },
+                                onAssessmentClicked = { displayAssessmentId = it },
                             )
                         }
                     }
