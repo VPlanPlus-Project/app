@@ -55,7 +55,7 @@ data class EmbeddedTimetableLesson(
             teachers = teachers.map { it.id },
             rooms = rooms.map { it.id },
             groups = groups.map { it.groupId },
-            lessonTime = timetableLesson.lessonTimeId,
+            lessonTimeId = timetableLesson.lessonTimeId,
             weekType = timetableLesson.weekType
         )
     }

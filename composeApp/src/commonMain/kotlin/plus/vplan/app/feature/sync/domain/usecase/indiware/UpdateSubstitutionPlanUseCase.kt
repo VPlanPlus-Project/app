@@ -117,7 +117,7 @@ class UpdateSubstitutionPlanUseCase(
                         isRoomChanged = substitutionPlanLesson.roomChanged,
                         groups = listOf(group.id),
                         subjectInstance = substitutionPlanLesson.subjectInstanceNumber?.let { subjectInstances.findByIndiwareId(it.toString()) }?.id,
-                        lessonTime = lessonTimes.first { it.lessonNumber == substitutionPlanLesson.lessonNumber }.id,
+                        lessonTimeId = lessonTimes.first { it.lessonNumber == substitutionPlanLesson.lessonNumber }.id,
                         version = "",
                         info = substitutionPlanLesson.info
                     )

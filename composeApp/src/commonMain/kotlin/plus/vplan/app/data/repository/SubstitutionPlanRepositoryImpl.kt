@@ -36,7 +36,7 @@ class SubstitutionPlanRepositoryImpl(
                 DbSubstitutionPlanLesson(
                     id = lesson.id,
                     dayId = "${schoolId}/${lesson.date}",
-                    lessonTimeId = lesson.lessonTime,
+                    lessonTimeId = lesson.lessonTimeId,
                     subject = lesson.subject,
                     isSubjectChanged = lesson.isSubjectChanged,
                     info = lesson.info,

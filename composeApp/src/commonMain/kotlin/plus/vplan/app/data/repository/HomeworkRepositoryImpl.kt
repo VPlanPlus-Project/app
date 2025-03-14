@@ -72,7 +72,7 @@ class HomeworkRepositoryImpl(
                 DbHomework(
                     id = homeworkItem.id,
                     subjectInstanceId = homeworkItem.subjectInstanceId,
-                    groupId = (homeworkItem as? Homework.LocalHomework)?.getCreatedByProfile()?.group ?: homeworkItem.group?.getFirstValue()?.id,
+                    groupId = (homeworkItem as? Homework.LocalHomework)?.getCreatedByProfile()?.groupId ?: homeworkItem.group?.getFirstValue()?.id,
                     createdAt = homeworkItem.createdAt,
                     createdByProfileId = when (homeworkItem) {
                         is Homework.CloudHomework -> null

@@ -154,7 +154,7 @@ sealed class Homework(
             App.profileSource.getById(createdByProfile)
                 .filterIsInstance<CacheState.Done<Profile.StudentProfile>>()
                 .map { it.data }
-                .flatMapLatest { App.groupSource.getById(it.group) }
+                .flatMapLatest { App.groupSource.getById(it.groupId) }
         }
 
         override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, subjectInstance: Int?): Homework {

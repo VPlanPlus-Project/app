@@ -1,7 +1,7 @@
 package plus.vplan.app.utils
 
 import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.feature.search.domain.model.Result
+import plus.vplan.app.feature.search.domain.model.SearchResult
 
 fun Assessment.Type.toName() = when (this) {
     Assessment.Type.ORAL -> "Mündlich"
@@ -11,11 +11,11 @@ fun Assessment.Type.toName() = when (this) {
     Assessment.Type.OTHER -> "Sonstiges"
 }
 
-fun Result.toName() = when (this) {
-    Result.Group -> "Klassen"
-    Result.Teacher -> "Lehrer"
-    Result.Room -> "Räume"
-    Result.Homework -> "Hausaufgaben"
-    Result.Assessment -> "Leistungserhebungen"
-    Result.Grade -> "Noten"
+fun SearchResult.Type.toName() = when (this) {
+    SearchResult.Type.Group -> "Klassen"
+    SearchResult.Type.Teacher -> "Lehrer"
+    SearchResult.Type.Room -> "Räume"
+    SearchResult.Type.Homework -> "Hausaufgaben"
+    SearchResult.Type.Assessment -> "Leistungserhebungen"
+    SearchResult.Type.Grade -> "Noten"
 }

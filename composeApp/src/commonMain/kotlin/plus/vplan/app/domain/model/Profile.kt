@@ -31,7 +31,7 @@ abstract class Profile : Item {
     data class StudentProfile(
         override val id: Uuid,
         override val name: String,
-        val group: Int,
+        val groupId: Int,
         val subjectInstanceConfiguration: Map<Int, Boolean>,
         val vppIdId: Int?
     ) : Profile() {
@@ -54,7 +54,7 @@ abstract class Profile : Item {
         }
 
         suspend fun getGroupItem(): Group {
-            return groupItem ?: App.groupSource.getById(group).getFirstValue()!!.also { groupItem = it }
+            return groupItem ?: App.groupSource.getById(groupId).getFirstValue()!!.also { groupItem = it }
         }
 
         suspend fun getVppIdItem(): VppId.Active? {
@@ -68,8 +68,10 @@ abstract class Profile : Item {
 
         @OptIn(ExperimentalCoroutinesApi::class)
         override fun getSchool(): Flow<CacheState<School>> {
-            return App.groupSource.getById(group).filterIsInstance<CacheState.Done<Group>>().flatMapLatest { App.schoolSource.getById(it.data.schoolId) }
+            return App.groupSource.getById(groupId).filterIsInstance<CacheState.Done<Group>>().flatMapLatest { App.schoolSource.getById(it.data.schoolId) }
         }
+
+        val group by lazy { App.groupSource.getById(groupId) }
 
         override fun copyBase(id: Uuid, name: String, profileType: ProfileType): Profile {
             if (profileType != ProfileType.STUDENT) throw IllegalArgumentException("Cannot change type of profile")

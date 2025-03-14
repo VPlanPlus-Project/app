@@ -50,14 +50,14 @@ fun NextDayView(day: HomeViewDay) {
         }
 
         Column lessons@{
-            val lessonTimes = combine(day.lessons.map { it.lessonTime }.distinct().map { App.lessonTimeSource.getById(it).filterIsInstance<CacheState.Done<LessonTime>>().map { it.data } }) { it.toList() }.collectAsState(emptyList()).value
+            val lessonTimes = combine(day.lessons.map { it.lessonTimeId }.distinct().map { App.lessonTimeSource.getById(it).filterIsInstance<CacheState.Done<LessonTime>>().map { it.data } }) { it.toList() }.collectAsState(emptyList()).value
             if (lessonTimes.isEmpty()) return@lessons
             SectionTitle(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = "Nächste Stunden",
                 subtitle =
                     if (day.lessons.isEmpty()) "Keine Stunden"
-                    else "${day.lessons.minOf { l -> lessonTimes.first { it.id == l.lessonTime }.start }} bis ${day.lessons.maxOf { l -> lessonTimes.first { it.id == l.lessonTime }.end }}"
+                    else "${day.lessons.minOf { l -> lessonTimes.first { it.id == l.lessonTimeId }.start }} bis ${day.lessons.maxOf { l -> lessonTimes.first { it.id == l.lessonTimeId }.end }}"
             )
             FollowingLessons(
                 modifier = Modifier
@@ -66,7 +66,7 @@ fun NextDayView(day: HomeViewDay) {
                 showFirstGradient = false,
                 paddingStart = 4.dp,
                 date = day.day.date,
-                lessons = day.lessons.groupBy { l -> lessonTimes.first { it.id == l.lessonTime }.lessonNumber }.toList().sortedBy { it.first }.toMap()
+                lessons = day.lessons.groupBy { l -> lessonTimes.first { it.id == l.lessonTimeId }.lessonNumber }.toList().sortedBy { it.first }.toMap()
             )
         }
     }

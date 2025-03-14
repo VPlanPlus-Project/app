@@ -124,7 +124,7 @@ fun FollowingLesson(
                         else MaterialTheme.colorScheme.onSurface
                     )
                 }
-                val lessonTime by App.lessonTimeSource.getById(lesson.lessonTime).collectAsState(null)
+                val lessonTime by App.lessonTimeSource.getById(lesson.lessonTimeId).collectAsState(null)
                 (lessonTime as? CacheState.Done)?.data?.let { lessonTimeData ->
                     Text(
                         text = buildString {

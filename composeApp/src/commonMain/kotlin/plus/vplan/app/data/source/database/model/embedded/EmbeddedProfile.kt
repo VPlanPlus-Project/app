@@ -32,7 +32,7 @@ data class EmbeddedProfile(
             return Profile.StudentProfile(
                 id = profile.id,
                 name = profile.displayName ?: embeddedGroupProfile.group.group.name,
-                group = embeddedGroupProfile.group.group.id,
+                groupId = embeddedGroupProfile.group.group.id,
                 subjectInstanceConfiguration =
                     embeddedGroupProfile.subjectInstances
                         .associateWith { disabledSubjectInstances.contains(it.subjectInstanceId).not() }

@@ -1,8 +1,10 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
 import kotlin.uuid.Uuid
 
@@ -14,12 +16,14 @@ sealed interface Lesson : Item {
     val rooms: List<Int>?
     val groups: List<Int>
     val subjectInstance: Int?
-    val lessonTime: String
+    val lessonTimeId: String
     val version: String
 
     fun getLessonSignature(): String
 
     override fun getEntityId(): String = this.id.toHexString()
+
+    val lessonTime: Flow<CacheState<LessonTime>>
 
     suspend fun getLessonTimeItem(): LessonTime
     val lessonTimeItem: LessonTime?
@@ -43,10 +47,12 @@ sealed interface Lesson : Item {
         override val teachers: List<Int>,
         override val rooms: List<Int>?,
         override val groups: List<Int>,
-        override val lessonTime: String,
+        override val lessonTimeId: String,
         override val version: String,
         val weekType: String?
     ) : Lesson {
+        override val lessonTime by lazy { App.lessonTimeSource.getById(lessonTimeId) }
+
         override val subjectInstance = null
         override val isCancelled: Boolean = false
         override var roomItems: List<Room>? = null
@@ -62,7 +68,7 @@ sealed interface Lesson : Item {
             private set
 
         override suspend fun getLessonTimeItem(): LessonTime {
-            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTime)!!.also { lessonTimeItem = it }
+            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTimeId)!!.also { lessonTimeItem = it }
         }
 
         override suspend fun getRoomItems(): List<Room>? {
@@ -78,7 +84,7 @@ sealed interface Lesson : Item {
         }
 
         override fun getLessonSignature(): String {
-            return "$subject/$teachers/$rooms/$groups/$lessonTime/$dayOfWeek/$weekType"
+            return "$subject/$teachers/$rooms/$groups/$lessonTimeId/$dayOfWeek/$weekType"
         }
 
         constructor(
@@ -99,7 +105,7 @@ sealed interface Lesson : Item {
             teachers = teachers,
             rooms = rooms,
             groups = groups,
-            lessonTime = lessonTime,
+            lessonTimeId = lessonTime,
             weekType = weekType,
             version = version
         )
@@ -118,9 +124,11 @@ sealed interface Lesson : Item {
         val isRoomChanged: Boolean,
         override val groups: List<Int>,
         override val subjectInstance: Int?,
-        override val lessonTime: String,
+        override val lessonTimeId: String,
         val info: String?
     ) : Lesson {
+        override val lessonTime by lazy { App.lessonTimeSource.getById(lessonTimeId) }
+
         override val isCancelled: Boolean
             get() = subject == null && subjectInstance != null
 
@@ -144,11 +152,11 @@ sealed interface Lesson : Item {
         }
 
         override fun getLessonSignature(): String {
-            return "$subject/$teachers/$rooms/$groups/$lessonTime/$date/$subjectInstance"
+            return "$subject/$teachers/$rooms/$groups/$lessonTimeId/$date/$subjectInstance"
         }
 
         override suspend fun getLessonTimeItem(): LessonTime {
-            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTime)!!.also { lessonTimeItem = it }
+            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTimeId)!!.also { lessonTimeItem = it }
         }
 
         override suspend fun getRoomItems(): List<Room> {
@@ -167,7 +175,7 @@ sealed interface Lesson : Item {
     suspend fun isRelevantForProfile(profile: Profile): Boolean {
         when (profile) {
             is Profile.StudentProfile -> {
-                if (profile.group !in this.groups) return false
+                if (profile.groupId !in this.groups) return false
                 if (profile.subjectInstanceConfiguration.filterValues { false }.any { it.key == this.subjectInstance }) return false
                 if (this is TimetableLesson) {
                     val subjectInstances = profile.subjectInstanceConfiguration.mapKeys { profile.getSubjectInstance(it.key) }

@@ -1,5 +1,6 @@
 package plus.vplan.app.utils
 
+import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -61,4 +62,8 @@ val regularTimeFormat = LocalTime.Format {
     hour(Padding.ZERO)
     char(':')
     minute(Padding.ZERO)
+}
+
+fun LocalTime.Companion.now(): LocalTime {
+    return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
 }

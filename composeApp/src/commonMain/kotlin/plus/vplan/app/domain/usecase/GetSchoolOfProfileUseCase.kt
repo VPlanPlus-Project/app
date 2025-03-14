@@ -12,7 +12,7 @@ import plus.vplan.app.domain.model.Teacher
 class GetSchoolOfProfileUseCase {
     suspend operator fun invoke(profile: Profile): Int {
         return when (profile) {
-            is Profile.StudentProfile -> App.groupSource.getById(profile.group).filterIsInstance<CacheState.Done<Group>>().first().data.schoolId
+            is Profile.StudentProfile -> App.groupSource.getById(profile.groupId).filterIsInstance<CacheState.Done<Group>>().first().data.schoolId
             is Profile.TeacherProfile -> App.teacherSource.getById(profile.teacher).filterIsInstance<CacheState.Done<Teacher>>().first().data.schoolId
             is Profile.RoomProfile -> App.roomSource.getById(profile.room).filterIsInstance<CacheState.Done<Room>>().first().data.schoolId
             else -> throw IllegalStateException("Profile type not found")
