@@ -1,14 +1,19 @@
 package plus.vplan.app.feature.search.ui.main.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -46,6 +52,7 @@ import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.chevron_down
 import vplanplus.composeapp.generated.resources.search
+import vplanplus.composeapp.generated.resources.x
 
 @Composable
 fun SearchBar(
@@ -132,6 +139,23 @@ fun SearchBar(
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )
+            },
+            trailingIcon = {
+                AnimatedVisibility(
+                    visible = value.isNotBlank(),
+                    enter = scaleIn() + fadeIn(),
+                    exit = scaleOut() + fadeOut()
+                ) {
+                    IconButton(
+                        onClick = { onQueryChange("") }
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.x),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             },
             modifier = Modifier
                 .padding(horizontal = 8.dp)
