@@ -36,7 +36,7 @@ class SubstitutionPlanRepositoryImpl(
                 DbSubstitutionPlanLesson(
                     id = lesson.id,
                     dayId = "${schoolId}/${lesson.date}",
-                    lessonTimeId = lesson.lessonTime,
+                    lessonTimeId = lesson.lessonTimeId,
                     subject = lesson.subject,
                     isSubjectChanged = lesson.isSubjectChanged,
                     info = lesson.info,
@@ -81,6 +81,13 @@ class SubstitutionPlanRepositoryImpl(
         date: LocalDate
     ): Flow<Set<Uuid>> = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.mapLatest { version ->
         vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version", date).first().toSet()
+    }.distinctUntilChanged()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getSubstitutionPlanBySchool(
+        schoolId: Int
+    ): Flow<Set<Lesson.SubstitutionPlanLesson>> = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.mapLatest { version ->
+        vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version").first().map { it.toModel() }.toSet()
     }.distinctUntilChanged()
 
     override fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?> {

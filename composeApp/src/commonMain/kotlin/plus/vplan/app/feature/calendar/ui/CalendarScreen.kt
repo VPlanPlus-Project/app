@@ -10,8 +10,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -34,7 +33,6 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
@@ -42,27 +40,22 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -73,22 +66,16 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionOnScreen
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
-import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.isoDayNumber
@@ -97,7 +84,6 @@ import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
@@ -105,26 +91,21 @@ import plus.vplan.app.feature.calendar.ui.components.DisplaySelectType
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
 import plus.vplan.app.feature.calendar.ui.components.agenda.Head
 import plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard
+import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeight
 import plus.vplan.app.feature.home.ui.components.FollowingLessons
-import plus.vplan.app.feature.home.ui.components.headerFont
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
-import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.thenIf
-import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
-import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.shortDayOfWeekNames
-import plus.vplan.app.utils.toDp
-import plus.vplan.app.utils.until
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.book_marked
@@ -133,17 +114,18 @@ import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
 
 private const val CONTENT_PAGER_SIZE = 800
+private const val CALENDAR_SCREEN_START_PADDING_MINUTES = 15
 
 @Composable
 fun CalendarScreen(
     navHostController: NavHostController,
-    contentPadding: PaddingValues,
+    paddingValues: PaddingValues,
     viewModel: CalendarViewModel
 ) {
     val state = viewModel.state
     CalendarScreenContent(
         state = state,
-        contentPadding = contentPadding,
+        paddingValues = paddingValues,
         onEvent = viewModel::onEvent
     )
 }
@@ -151,10 +133,11 @@ fun CalendarScreen(
 @Composable
 private fun CalendarScreenContent(
     state: CalendarState,
-    contentPadding: PaddingValues,
+    paddingValues: PaddingValues,
     onEvent: (event: CalendarEvent) -> Unit
 ) {
     val localDensity = LocalDensity.current
+    val scope = rememberCoroutineScope()
 
     var displayHomeworkId by rememberSaveable { mutableStateOf<Int?>(null) }
     var displayAssessmentId by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -180,15 +163,12 @@ private fun CalendarScreenContent(
     )
     val displayScrollProgress = if (isUserScrolling) scrollProgress else animatedScrollProgress
 
-    // calendar content
     val minute = 1.25.dp
-    var availableWidth by remember { mutableStateOf(0.dp) }
 
     val scrollConnection = remember(state.days[state.selectedDate]) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val day = state.days[state.selectedDate]
-                val isContentAtTop = (contentScrollState.value == 0 && day?.lessons.isNullOrEmpty()) || (day?.lessons.orEmpty().isNotEmpty() && with(localDensity) { contentScrollState.value <= ((day?.lessons.orEmpty().minOf { it.lessonTimeItem!!.start }.inWholeMinutes().toFloat() - 60) * minute).roundToPx() })
+                val isContentAtTop = with(localDensity) { contentScrollState.value <= ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).roundToPx() }
                 val y = (with(localDensity) { available.y.toDp() }) / (5 * weekHeight)
 
                 if ((isContentAtTop || scrollProgress > 0 && scrollProgress < 1) && available.y > 0) { // scroll to expand date picker
@@ -209,9 +189,12 @@ private fun CalendarScreenContent(
     var isMultiFabExpanded by rememberSaveable { mutableStateOf(false) }
     var multiFabFabPosition by remember { mutableStateOf(Offset.Zero) }
 
+    val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
+    val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+
     Box(
         modifier = Modifier
-            .padding(contentPadding)
+            .padding(paddingValues)
             .fillMaxSize()
             .thenIf(Modifier.nestedScroll(scrollConnection)) { state.displayType == DisplayType.Calendar }
     ) {
@@ -309,7 +292,11 @@ private fun CalendarScreenContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) }) {
+                        IconButton(onClick = { scope.launch {
+                            pagerState.stopScroll()
+                            lazyListState.stopScroll()
+                            onEvent(CalendarEvent.SelectDate(LocalDate.now()))
+                        } }) {
                             Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(24.dp))
                         }
                         DisplaySelectType(
@@ -334,17 +321,18 @@ private fun CalendarScreenContent(
             }
             HorizontalDivider()
 
-            val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
-            val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
             val isUserDraggingPager = pagerState.interactionSource.collectIsDraggedAsState().value
             val isUserDraggingList = lazyListState.interactionSource.collectIsDraggedAsState().value
             var isScrollAnimationRunning by remember { mutableStateOf(false) }
             LaunchedEffect(pagerState.targetPage, isUserDraggingPager) {
-                if (isUserDraggingPager) return@LaunchedEffect
+                if (state.displayType != DisplayType.Calendar) return@LaunchedEffect
+                if (!isUserDraggingPager && isScrollAnimationRunning) return@LaunchedEffect
+                if (isUserDraggingPager) isScrollAnimationRunning = false
                 val date = LocalDate.now().plus((pagerState.targetPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                 if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
             }
             LaunchedEffect(lazyListState.firstVisibleItemIndex, isUserDraggingList) {
+                if (state.displayType != DisplayType.Agenda) return@LaunchedEffect
                 if (!isUserDraggingList && isScrollAnimationRunning) return@LaunchedEffect
                 if (isUserDraggingList) isScrollAnimationRunning = false
                 val date = LocalDate.now().plus((lazyListState.firstVisibleItemIndex - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
@@ -353,20 +341,28 @@ private fun CalendarScreenContent(
             LaunchedEffect(state.selectedDate) {
                 val currentlyOpenedDate = LocalDate.now().plus(((if (state.displayType == DisplayType.Calendar) pagerState.currentPage else lazyListState.firstVisibleItemIndex) - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                 if (currentlyOpenedDate != state.selectedDate) {
-                    pagerState.animateScrollToPage((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
-                    if (!isUserDraggingList) {
-                        isScrollAnimationRunning = true
-                        lazyListState.animateScrollToItem((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+                    val item = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)
+                    when (state.displayType) {
+                        DisplayType.Calendar -> {
+                            if (!pagerState.isScrollInProgress) {
+                                isScrollAnimationRunning = true
+                                pagerState.animateScrollToPage(item)
+                            }
+                            lazyListState.scrollToItem(item)
+                        }
+                        DisplayType.Agenda -> {
+                            if (!lazyListState.isScrollInProgress) {
+                                isScrollAnimationRunning = true
+                                lazyListState.animateScrollToItem(item)
+                            }
+                            pagerState.scrollToPage(item)
+                        }
                     }
                 }
             }
-            LaunchedEffect(state.days[state.selectedDate]) {
-                val day = state.days[state.selectedDate] ?: return@LaunchedEffect
-                if (day.lessons.isEmpty()) return@LaunchedEffect
-                val lessons = day.lessons
-                if (lessons.isEmpty()) return@LaunchedEffect
-                val startOfDay = lessons.minOf { it.lessonTimeItem!!.start }
-                contentScrollState.animateScrollTo(with(localDensity) { ((startOfDay.inWholeMinutes().toFloat() - 60) * minute).coerceAtLeast(0.dp).roundToPx() })
+
+            LaunchedEffect(state.start) {
+                contentScrollState.animateScrollTo(with(localDensity) { ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).coerceAtLeast(0.dp).roundToPx() })
             }
 
             AnimatedContent(
@@ -384,179 +380,21 @@ private fun CalendarScreenContent(
                                 .fillMaxSize()
                         ) { page ->
                             val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                            Column {
-                                val day = state.days[date]
-                                if (day != null) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .onSizeChanged { availableWidth = with(localDensity) { it.width.toDp() } - 2 * 8.dp - 32.dp }
-                                                .verticalScroll(contentScrollState)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(minute * 24 * 60)
-                                            ) {
-                                                val lessons = day.lessons.toList().sortedBy { it.lessonTimeItem!!.start }
-                                                repeat(24) {
-                                                    val time = LocalTime(it, 0)
-                                                    val y = time.inWholeMinutes().toFloat() * minute
-                                                    if (y < 0.dp) return@repeat
-                                                    HorizontalDivider(Modifier.fillMaxWidth().offset(y = y).zIndex(-10f))
-                                                    Text(
-                                                        text = "${it.toString().padStart(2, '0')}:00",
-                                                        color = Color.Gray,
-                                                        modifier = Modifier.offset(y = y).widthIn(max = 48.dp).align(Alignment.TopEnd),
-                                                        style = MaterialTheme.typography.labelSmall
-                                                    )
-                                                }
-                                                if (date == state.currentTime.date) {
-                                                    val currentTime = state.currentTime.time
-                                                    val y = currentTime.inWholeMinutes().toFloat() * minute
-                                                    HorizontalDivider(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .offset(y = y + 2.dp)
-                                                            .drawWithCache {
-                                                                val triangleShape = Path().apply {
-                                                                    moveTo(0f, 1.dp.toPx())
-                                                                    relativeMoveTo(0f, 6.dp.toPx())
-                                                                    relativeLineTo(0f, -12.dp.toPx())
-                                                                    relativeLineTo(8.dp.toPx(), 6.dp.toPx())
-                                                                    relativeLineTo(-8.dp.toPx(), 6.dp.toPx())
-                                                                    close()
-                                                                }
-                                                                onDrawBehind {
-                                                                    drawPath(
-                                                                        color = Color.Red,
-                                                                        path = triangleShape,
-                                                                        style = Fill
-                                                                    )
-                                                                }
-                                                            }
-                                                            .zIndex(-9f),
-                                                        color = Color.Red,
-                                                        thickness = 2.dp
-                                                    )
-                                                }
-                                                lessons.forEachIndexed { i, lesson ->
-                                                    val start = lesson.lessonTimeItem!!.start
-                                                    val end = lesson.lessonTimeItem!!.end
-
-                                                    val lessonsThatOverlapStart = lessons.filter { start in it.lessonTimeItem!!.start..it.lessonTimeItem!!.end }
-                                                    val lessonsThatOverlapStartAndAreAlreadyDisplayed = lessons.filterIndexed { index, lessonCompare -> start in lessonCompare.lessonTimeItem!!.start..lessonCompare.lessonTimeItem!!.end && index < i }
-
-                                                    val y = start.inWholeMinutes().toFloat() * minute
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .width(availableWidth / lessonsThatOverlapStart.size)
-                                                            .padding(horizontal = 8.dp)
-                                                            .height(start.until(end).inWholeMinutes.toFloat() * minute)
-                                                            .offset(y = y, x = (availableWidth / lessonsThatOverlapStart.size) * lessonsThatOverlapStartAndAreAlreadyDisplayed.size)
-                                                            .clip(RoundedCornerShape(6.dp))
-                                                            .clickable {  }
-                                                            .background(
-                                                                if (lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
-                                                                else MaterialTheme.colorScheme.surfaceVariant)
-                                                            .padding(4.dp)
-                                                    ) {
-                                                        CompositionLocalProvider(
-                                                            LocalContentColor provides if (lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                                        ) {
-                                                            Column {
-                                                                Row(
-                                                                    verticalAlignment = Alignment.Top,
-                                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                                ) {
-                                                                    if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) SubjectIcon(
-                                                                        modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                                                                        subject = lesson.subject,
-                                                                        contentColor = MaterialTheme.colorScheme.onError,
-                                                                        containerColor = MaterialTheme.colorScheme.error
-                                                                    )
-                                                                    else SubjectIcon(
-                                                                        modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                                                                        subject = lesson.subject
-                                                                    )
-                                                                    Column {
-                                                                        Row(
-                                                                            verticalAlignment = Alignment.CenterVertically,
-                                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                                        ) {
-                                                                            Text(text = buildAnnotatedString {
-                                                                                withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
-                                                                                    if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                                        append((lesson as Lesson.SubstitutionPlanLesson).subjectInstanceItem!!.subject)
-                                                                                    } else append(lesson.subject.toString())
-                                                                                }
-                                                                            }, style = MaterialTheme.typography.bodySmall)
-                                                                            if (lesson.roomItems != null) Text(
-                                                                                text = lesson.roomItems.orEmpty().joinToString { it.name },
-                                                                                style = MaterialTheme.typography.labelMedium
-                                                                            )
-                                                                            Text(
-                                                                                text = lesson.teacherItems.orEmpty().joinToString { it.name },
-                                                                                style = MaterialTheme.typography.labelMedium
-                                                                            )
-                                                                        }
-                                                                        Text(
-                                                                            buildString {
-                                                                                append(lesson.lessonTimeItem!!.lessonNumber)
-                                                                                append(". $DOT ")
-                                                                                append(lesson.lessonTimeItem!!.start.format(regularTimeFormat))
-                                                                                append(" - ")
-                                                                                append(lesson.lessonTimeItem!!.end.format(regularTimeFormat))
-                                                                            },
-                                                                            style = MaterialTheme.typography.labelSmall,
-                                                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                            maxLines = 1,
-                                                                            overflow = TextOverflow.Ellipsis
-                                                                        )
-                                                                    }
-                                                                }
-                                                                if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) Row(
-                                                                    verticalAlignment = Alignment.CenterVertically,
-                                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                                    modifier = Modifier.padding(start = 16.dp)
-                                                                ) {
-                                                                    Icon(
-                                                                        painter = painterResource(Res.drawable.info),
-                                                                        contentDescription = null,
-                                                                        modifier = Modifier.size(8.dp),
-                                                                        tint = MaterialTheme.colorScheme.onSurface
-                                                                    )
-                                                                    Text(
-                                                                        text = lesson.info,
-                                                                        style = MaterialTheme.typography.bodySmall,
-                                                                        maxLines = 1,
-                                                                        overflow = TextOverflow.Ellipsis
-                                                                    )
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        if (day.day.info != null) {
-                                            InfoCard(
-                                                modifier = Modifier
-                                                    .align(Alignment.BottomCenter)
-                                                    .padding(vertical = 4.dp, horizontal = 8.dp),
-                                                imageVector = Res.drawable.info,
-                                                title = "Informationen deiner Schule",
-                                                text = day.day.info,
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            val day = state.days[date]
+                            CalendarView(
+                                profile = state.currentProfile ?: return@HorizontalPager,
+                                date = date,
+                                dayType = day?.day?.dayType ?: Day.DayType.UNKNOWN,
+                                lessons = day?.lessons?.toList().orEmpty().sortedBy { it.lessonTimeItem!!.start },
+                                assessments = day?.day?.assessments?.collectAsState(emptySet())?.value?.toList().orEmpty(),
+                                homework = day?.day?.homework?.collectAsState(emptySet())?.value?.toList().orEmpty(),
+                                bottomIslandPadding = PaddingValues(end = 80.dp),
+                                limitTimeSpanToLessonsLowerBound = state.start,
+                                info = day?.day?.info,
+                                contentScrollState = contentScrollState,
+                                onHomeworkClicked = { displayHomeworkId = it },
+                                onAssessmentClicked = { displayAssessmentId = it },
+                            )
                         }
                     }
                     DisplayType.Agenda -> {

@@ -1,4 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -96,6 +105,14 @@ kotlin {
 }
 
 android {
+    signingConfigs {
+        create("default") {
+            storeFile = file(localProperties["signing.default.file"]!!)
+            storePassword = localProperties["signing.default.storepassword"].toString()
+            keyAlias = localProperties["signing.default.keyalias"].toString()
+            keyPassword = localProperties["signing.default.keypassword"].toString()
+        }
+    }
     namespace = "plus.vplan.app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
@@ -112,8 +129,12 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("default")
+        }
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("default")
         }
     }
     compileOptions {

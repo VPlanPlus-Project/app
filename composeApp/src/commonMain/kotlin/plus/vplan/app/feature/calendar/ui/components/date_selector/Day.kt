@@ -1,6 +1,9 @@
 package plus.vplan.app.feature.calendar.ui.components.date_selector
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,12 +48,14 @@ fun RowScope.Day(
         modifier = Modifier
             .weight(1f)
             .height(height),
+        transitionSpec = { fadeIn() togetherWith fadeOut() }
     ) { showSelection ->
         Column (
             modifier = Modifier
                 .fillMaxSize()
                 .thenIf(Modifier.grayScale()) { isOtherMonth }
-                .thenIf(Modifier.border(1.dp, if (showSelection) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))) { date == LocalDate.now() }
+                .thenIf(Modifier.border(1.dp, if (showSelection) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))) { selectedDate == date }
+                .thenIf(Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))) { date == LocalDate.now() }
                 .clip(RoundedCornerShape(4.dp))
                 .clickable { onClick() },
             verticalArrangement = Arrangement.Center,

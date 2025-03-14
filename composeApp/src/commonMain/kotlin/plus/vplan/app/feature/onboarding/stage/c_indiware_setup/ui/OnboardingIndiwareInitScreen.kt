@@ -4,15 +4,13 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +34,8 @@ import vplanplus.composeapp.generated.resources.server_cog
 
 @Composable
 fun OnboardingIndiwareInitScreen(
-    navHostController: NavHostController
+    navHostController: NavHostController,
+    paddingValues: PaddingValues
 ) {
     val viewModel = koinViewModel<OnboardingIndiwareInitViewModel>()
     val state = viewModel.state
@@ -48,16 +47,17 @@ fun OnboardingIndiwareInitScreen(
         }
     }
 
-    OnboardingIndiwareInitContent(state)
+    OnboardingIndiwareInitContent(state, paddingValues)
 }
 
 @Composable
 private fun OnboardingIndiwareInitContent(
-    state: OnboardingIndiwareInitState
+    state: OnboardingIndiwareInitState,
+    paddingValues: PaddingValues
 ) {
     Column(
         modifier = Modifier
-            .padding(WindowInsets.systemBars.asPaddingValues())
+            .padding(paddingValues)
             .padding(bottom = 16.dp)
             .fillMaxSize()
     ) {

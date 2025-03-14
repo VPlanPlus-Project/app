@@ -26,7 +26,7 @@ class AddVppIdUseCase(
         val profile = profileRepository
             .getAll().latest()
             .filterIsInstance<Profile.StudentProfile>()
-            .first { it.group in vppId.data.groups }
+            .first { it.groupId in vppId.data.groups }
         profileRepository.updateVppId(profile.id, vppId.data.id)
         return Response.Success(vppId.data)
     }

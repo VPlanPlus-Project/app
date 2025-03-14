@@ -66,8 +66,8 @@ import vplanplus.composeapp.generated.resources.key_round
 
 @Composable
 fun HomeScreen(
-    contentPadding: PaddingValues,
     navHostController: NavHostController,
+    contentPadding: PaddingValues,
     homeViewModel: HomeViewModel
 ) {
     HomeContent(

@@ -25,7 +25,6 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 
 class SearchUseCase(
@@ -42,7 +41,7 @@ class SearchUseCase(
     private var lessonDate: LocalDate? = null
 
     operator fun invoke(searchQuery: String, date: LocalDate) = channelFlow {
-        if (searchQuery.isBlank()) return@channelFlow send(emptyMap<Result, List<SearchResult>>())
+        if (searchQuery.isBlank()) return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
         val query = searchQuery.lowercase().trim()
         val profile = getCurrentProfileUseCase().first()
         val school = profile.getSchoolItem()
@@ -55,16 +54,11 @@ class SearchUseCase(
                         .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
                         .fastFilterNotNull()
                         .filter { lesson -> lesson.subject != null }
-                        .onEach { lesson ->
-                            lesson.getLessonTimeItem()
-                            lesson.getTeacherItems()
-                            lesson.getRoomItems()
-                        }
                 }.first()
             )
         }
 
-        val results = MutableStateFlow(emptyMap<Result, List<SearchResult>>())
+        val results = MutableStateFlow(emptyMap<SearchResult.Type, List<SearchResult>>())
         launch { results.collect { send(it) } }
 
         launch {
@@ -73,7 +67,7 @@ class SearchUseCase(
                 teacherRepository.getBySchool(school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
                 roomRepository.getBySchool(school.id).map { it.filter { room -> query in room.name.lowercase() } },
             ) { groups, teachers, rooms ->
-                results.value = results.value.plus(Result.Group to groups.map { group ->
+                results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->
                     group.getSchoolItem()
                     SearchResult.SchoolEntity.Group(
                         group = group,
@@ -81,7 +75,7 @@ class SearchUseCase(
                     )
                 })
 
-                results.value = results.value.plus(Result.Teacher to teachers.map { teacher ->
+                results.value = results.value.plus(SearchResult.Type.Teacher to teachers.map { teacher ->
                     teacher.getSchoolItem()
                     SearchResult.SchoolEntity.Teacher(
                         teacher = teacher,
@@ -89,7 +83,7 @@ class SearchUseCase(
                     )
                 })
 
-                results.value = results.value.plus(Result.Room to rooms.map { room ->
+                results.value = results.value.plus(SearchResult.Type.Room to rooms.map { room ->
                     room.getSchoolItem()
                     SearchResult.SchoolEntity.Room(
                         room = room,
@@ -102,7 +96,7 @@ class SearchUseCase(
         launch {
             homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
                 val homework = homeworkList.onEach { it.getTaskItems() }
-                results.value = results.value.plus(Result.Homework to homework.filter { it.taskItems!!.any { task -> query in task.content.lowercase() } }.onEach {
+                results.value = results.value.plus(SearchResult.Type.Homework to homework.filter { it.taskItems!!.any { task -> query in task.content.lowercase() } }.onEach {
                     it.subjectInstance?.getFirstValue() ?: it.group?.getFirstValue()
                     when (it) {
                         is Homework.CloudHomework -> it.getCreatedBy()
@@ -121,7 +115,7 @@ class SearchUseCase(
                             is AppEntity.Profile -> assessment.getCreatedByProfileItem()
                         }
                     }
-                results.value = results.value.plus(Result.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
+                results.value = results.value.plus(SearchResult.Type.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
             }
         }
 
@@ -134,7 +128,7 @@ class SearchUseCase(
                             .filter { grade -> grade.vppIdId == (profile as? Profile.StudentProfile)?.vppIdId }
                     }
                     .distinctBy { it.id }
-                results.value = results.value.plus(Result.Grade to filteredGrades.map { SearchResult.Grade(it) })
+                results.value = results.value.plus(SearchResult.Type.Grade to filteredGrades.map { SearchResult.Grade(it) })
             }
         }
     }

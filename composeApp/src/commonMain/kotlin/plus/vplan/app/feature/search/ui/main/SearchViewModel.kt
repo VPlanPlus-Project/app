@@ -13,7 +13,10 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.App
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
@@ -22,7 +25,6 @@ import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
-import plus.vplan.app.feature.search.domain.model.Result
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.GetAssessmentsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
@@ -85,11 +87,12 @@ class SearchViewModel(
         }
     }
 
-    private fun restartSearch() {
+    private suspend fun restartSearch() {
         searchJob?.cancel()
+        val day = App.daySource.getById(Day.buildId(state.currentProfile!!.getSchool().getFirstValue()!!, state.selectedDate)).getFirstValue()!!
         searchJob = viewModelScope.launch {
             searchUseCase(state.query, state.selectedDate).collectLatest {
-                state = state.copy(results = it)
+                state = state.copy(results = it, selectedDateType = day.dayType)
             }
         }
     }
@@ -98,13 +101,16 @@ class SearchViewModel(
 data class SearchState(
     val query: String = "",
     val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
-    val results: Map<Result, List<SearchResult>> = emptyMap(),
+    val selectedDateType: Day.DayType = Day.DayType.UNKNOWN,
+    val results: Map<SearchResult.Type, List<SearchResult>> = emptyMap(),
     val homework: List<Homework> = emptyList(),
     val assessments: List<Assessment> = emptyList(),
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
     val gradeLockState: GradeLockState = GradeLockState.NotConfigured
-)
+) {
+    val newItems = (assessments.map { NewItem.Assessment(it) } + homework.map { NewItem.Homework(it) }).sortedByDescending { it.createdAt }.take(5)
+}
 
 sealed class SearchEvent {
     data class UpdateQuery(val query: String): SearchEvent()
@@ -112,4 +118,9 @@ sealed class SearchEvent {
 
     data object RequestGradeUnlock: SearchEvent()
     data object RequestGradeLock: SearchEvent()
+}
+
+sealed class NewItem(val createdAt: LocalDate) {
+    data class Assessment(val assessment: plus.vplan.app.domain.model.Assessment): NewItem(assessment.createdAt.date)
+    data class Homework(val homework: plus.vplan.app.domain.model.Homework): NewItem(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date)
 }
