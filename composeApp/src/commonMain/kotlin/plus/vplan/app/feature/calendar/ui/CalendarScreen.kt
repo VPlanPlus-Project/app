@@ -326,7 +326,8 @@ private fun CalendarScreenContent(
             var isScrollAnimationRunning by remember { mutableStateOf(false) }
             LaunchedEffect(pagerState.targetPage, isUserDraggingPager) {
                 if (state.displayType != DisplayType.Calendar) return@LaunchedEffect
-                if (isUserDraggingPager) return@LaunchedEffect
+                if (!isUserDraggingPager && isScrollAnimationRunning) return@LaunchedEffect
+                if (isUserDraggingPager) isScrollAnimationRunning = false
                 val date = LocalDate.now().plus((pagerState.targetPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                 if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
             }
@@ -343,7 +344,10 @@ private fun CalendarScreenContent(
                     val item = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)
                     when (state.displayType) {
                         DisplayType.Calendar -> {
-                            pagerState.animateScrollToPage(item)
+                            if (!pagerState.isScrollInProgress) {
+                                isScrollAnimationRunning = true
+                                pagerState.animateScrollToPage(item)
+                            }
                             lazyListState.scrollToItem(item)
                         }
                         DisplayType.Agenda -> {
