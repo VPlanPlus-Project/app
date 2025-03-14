@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
@@ -68,6 +69,7 @@ import vplanplus.composeapp.generated.resources.book_open
 import vplanplus.composeapp.generated.resources.door_closed
 import vplanplus.composeapp.generated.resources.file_badge
 import vplanplus.composeapp.generated.resources.notebook_text
+import vplanplus.composeapp.generated.resources.search_x
 import vplanplus.composeapp.generated.resources.square_user_round
 import vplanplus.composeapp.generated.resources.users
 
@@ -83,6 +85,31 @@ fun SearchResults(
     onAssessmentClicked: (assessmentId: Int) -> Unit,
     onGradeClicked: (gradeId: Int) -> Unit
 ) {
+    if (results.all { it.value.isEmpty() }) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.search_x),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "Keine Ergebnisse gefunden",
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Versuche es mit einem anderen Suchbegriff",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center
+            )
+        }
+        return
+    }
     var visibleResult by remember { mutableStateOf<SearchResult.SchoolEntity?>(null) }
     Column(
         modifier = Modifier
