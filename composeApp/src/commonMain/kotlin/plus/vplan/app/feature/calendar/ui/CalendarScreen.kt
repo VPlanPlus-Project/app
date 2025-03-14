@@ -67,7 +67,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.navigation.NavHostController
@@ -112,6 +111,7 @@ import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
 
 private const val CONTENT_PAGER_SIZE = 800
+private const val CALENDAR_SCREEN_START_PADDING_MINUTES = 15
 
 @Composable
 fun CalendarScreen(
@@ -159,14 +159,12 @@ private fun CalendarScreenContent(
     )
     val displayScrollProgress = if (isUserScrolling) scrollProgress else animatedScrollProgress
 
-    // calendar content
     val minute = 1.25.dp
 
     val scrollConnection = remember(state.days[state.selectedDate]) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val day = state.days[state.selectedDate]
-                val isContentAtTop = (contentScrollState.value == 0 && day?.lessons.isNullOrEmpty()) || (day?.lessons.orEmpty().isNotEmpty() && with(localDensity) { contentScrollState.value <= ((day?.lessons.orEmpty().minOf { it.lessonTimeItem!!.start }.inWholeMinutes().toFloat() - 60) * minute).roundToPx() })
+                val isContentAtTop = with(localDensity) { contentScrollState.value <= ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).roundToPx() }
                 val y = (with(localDensity) { available.y.toDp() }) / (5 * weekHeight)
 
                 if ((isContentAtTop || scrollProgress > 0 && scrollProgress < 1) && available.y > 0) { // scroll to expand date picker
@@ -331,20 +329,25 @@ private fun CalendarScreenContent(
             LaunchedEffect(state.selectedDate) {
                 val currentlyOpenedDate = LocalDate.now().plus(((if (state.displayType == DisplayType.Calendar) pagerState.currentPage else lazyListState.firstVisibleItemIndex) - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                 if (currentlyOpenedDate != state.selectedDate) {
-                    pagerState.animateScrollToPage((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
-                    if (!isUserDraggingList) {
-                        isScrollAnimationRunning = true
-                        lazyListState.animateScrollToItem((CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+                    val item = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)
+                    when (state.displayType) {
+                        DisplayType.Calendar -> {
+                            pagerState.animateScrollToPage(item)
+                            lazyListState.scrollToItem(item)
+                        }
+                        DisplayType.Agenda -> {
+                            pagerState.scrollToPage(item)
+                            if (!isUserDraggingList) {
+                                isScrollAnimationRunning = true
+                                lazyListState.animateScrollToItem(item)
+                            }
+                        }
                     }
                 }
             }
-            LaunchedEffect(state.days[state.selectedDate]) {
-                val day = state.days[state.selectedDate] ?: return@LaunchedEffect
-                if (day.lessons.isEmpty()) return@LaunchedEffect
-                val lessons = day.lessons
-                if (lessons.isEmpty()) return@LaunchedEffect
-                val startOfDay = lessons.minOf { it.lessonTimeItem!!.start }
-                contentScrollState.animateScrollTo(with(localDensity) { ((startOfDay.inWholeMinutes().toFloat() - 60) * minute).coerceAtLeast(0.dp).roundToPx() })
+
+            LaunchedEffect(state.start) {
+                contentScrollState.animateScrollTo(with(localDensity) { ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).coerceAtLeast(0.dp).roundToPx() })
             }
 
             AnimatedContent(
@@ -366,6 +369,7 @@ private fun CalendarScreenContent(
                             CalendarView(
                                 date = date,
                                 lessons = day?.lessons?.toList().orEmpty().sortedBy { it.lessonTimeItem!!.start },
+                                limitTimeSpanToLessonsLowerBound = state.start,
                                 info = day?.day?.info,
                                 contentScrollState = contentScrollState
                             )

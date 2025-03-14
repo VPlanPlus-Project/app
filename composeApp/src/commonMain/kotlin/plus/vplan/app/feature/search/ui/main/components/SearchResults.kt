@@ -516,7 +516,7 @@ private fun LessonsDrawer(
                 CalendarView(
                     date = date,
                     lessons = lessons,
-                    limitTimeSpanToLessons = true,
+                    autoLimitTimeSpanToLessons = true,
                     info = null,
                     contentScrollState = null
                 )

@@ -74,7 +74,8 @@ import kotlin.time.Duration.Companion.hours
 fun CalendarView(
     date: LocalDate,
     lessons: List<Lesson>,
-    limitTimeSpanToLessons: Boolean = false,
+    autoLimitTimeSpanToLessons: Boolean = false,
+    limitTimeSpanToLessonsLowerBound: LocalTime? = null,
     info: String?,
     contentScrollState: ScrollState? = rememberScrollState()
 ) {
@@ -102,9 +103,9 @@ fun CalendarView(
                 var start by remember { mutableStateOf(LocalTime(0, 0)) }
                 var end by remember { mutableStateOf(LocalTime(23, 59, 59, 99)) }
 
-                LaunchedEffect(lessons.size, limitTimeSpanToLessons, lessonTimes.size) {
-                    if (!limitTimeSpanToLessons || lessonTimes.size < lessons.size || lessons.isEmpty()) return@LaunchedEffect
-                    start = lessonTimes.values.minOf { it.start }.minusWithCapAtMidnight(1.hours)
+                LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons, lessonTimes.size, limitTimeSpanToLessonsLowerBound) {
+                    if ((!autoLimitTimeSpanToLessons || lessonTimes.size < lessons.size || lessons.isEmpty()) && limitTimeSpanToLessonsLowerBound != null) return@LaunchedEffect
+                    start = limitTimeSpanToLessonsLowerBound ?: lessonTimes.values.minOf { it.start }.minusWithCapAtMidnight(1.hours)
                     end = lessonTimes.values.maxOf { it.end }.plusWithCapAtMidnight(1.hours)
                 }
                 Box(

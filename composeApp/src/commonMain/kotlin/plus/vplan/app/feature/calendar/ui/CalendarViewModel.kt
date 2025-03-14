@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
@@ -26,6 +27,7 @@ import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.calendar.domain.usecase.GetFirstLessonStartUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.atStartOfMonth
@@ -38,7 +40,8 @@ class CalendarViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getLastDisplayTypeUseCase: GetLastDisplayTypeUseCase,
-    private val setLastDisplayTypeUseCase: SetLastDisplayTypeUseCase
+    private val setLastDisplayTypeUseCase: SetLastDisplayTypeUseCase,
+    private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase
 ) : ViewModel() {
     var state by mutableStateOf(CalendarState())
         private set
@@ -63,7 +66,10 @@ class CalendarViewModel(
 
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
-                state = state.copy(currentProfile = profile)
+                state = state.copy(
+                    currentProfile = profile,
+                    start = getFirstLessonStartUseCase(profile)
+                )
                 syncJobs.forEach { it.job.cancel() }
                 syncJobs.clear()
                 repeat(7) {
@@ -149,7 +155,8 @@ data class CalendarState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
     val days: Map<LocalDate, CalendarDay> = emptyMap(),
-    val displayType: DisplayType = DisplayType.Calendar
+    val displayType: DisplayType = DisplayType.Calendar,
+    val start: LocalTime = LocalTime(0, 0)
 )
 
 sealed class CalendarEvent {
