@@ -131,7 +131,10 @@ class CalendarViewModel(
                         )
                     )
                 }
-                is CalendarEvent.SelectDisplayType -> setLastDisplayTypeUseCase(event.displayType)
+                is CalendarEvent.SelectDisplayType -> {
+                    setLastDisplayTypeUseCase(event.displayType)
+                    if (event.displayType == DisplayType.Calendar) launchSyncJob(date = state.selectedDate, syncLessons = true)
+                }
                 is CalendarEvent.StartLessonUiSync -> {
                     if (syncJobs.any { it.date == event.date && !it.syncLessons }) {
                         syncJobs.find { it.date == event.date && it.syncLessons }?.job?.cancel()

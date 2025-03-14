@@ -11,6 +11,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +48,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -70,6 +72,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -134,6 +137,7 @@ private fun CalendarScreenContent(
     onEvent: (event: CalendarEvent) -> Unit
 ) {
     val localDensity = LocalDensity.current
+    val scope = rememberCoroutineScope()
 
     var displayHomeworkId by rememberSaveable { mutableStateOf<Int?>(null) }
     var displayAssessmentId by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -184,6 +188,9 @@ private fun CalendarScreenContent(
 
     var isMultiFabExpanded by rememberSaveable { mutableStateOf(false) }
     var multiFabFabPosition by remember { mutableStateOf(Offset.Zero) }
+
+    val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
+    val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
 
     Box(
         modifier = Modifier
@@ -285,7 +292,11 @@ private fun CalendarScreenContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { onEvent(CalendarEvent.SelectDate(LocalDate.now())) }) {
+                        IconButton(onClick = { scope.launch {
+                            pagerState.stopScroll()
+                            lazyListState.stopScroll()
+                            onEvent(CalendarEvent.SelectDate(LocalDate.now()))
+                        } }) {
                             Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(24.dp))
                         }
                         DisplaySelectType(
@@ -310,17 +321,17 @@ private fun CalendarScreenContent(
             }
             HorizontalDivider()
 
-            val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
-            val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
             val isUserDraggingPager = pagerState.interactionSource.collectIsDraggedAsState().value
             val isUserDraggingList = lazyListState.interactionSource.collectIsDraggedAsState().value
             var isScrollAnimationRunning by remember { mutableStateOf(false) }
             LaunchedEffect(pagerState.targetPage, isUserDraggingPager) {
+                if (state.displayType != DisplayType.Calendar) return@LaunchedEffect
                 if (isUserDraggingPager) return@LaunchedEffect
                 val date = LocalDate.now().plus((pagerState.targetPage - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                 if (date != state.selectedDate) onEvent(CalendarEvent.SelectDate(date))
             }
             LaunchedEffect(lazyListState.firstVisibleItemIndex, isUserDraggingList) {
+                if (state.displayType != DisplayType.Agenda) return@LaunchedEffect
                 if (!isUserDraggingList && isScrollAnimationRunning) return@LaunchedEffect
                 if (isUserDraggingList) isScrollAnimationRunning = false
                 val date = LocalDate.now().plus((lazyListState.firstVisibleItemIndex - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
@@ -336,11 +347,11 @@ private fun CalendarScreenContent(
                             lazyListState.scrollToItem(item)
                         }
                         DisplayType.Agenda -> {
-                            pagerState.scrollToPage(item)
-                            if (!isUserDraggingList) {
+                            if (!lazyListState.isScrollInProgress) {
                                 isScrollAnimationRunning = true
                                 lazyListState.animateScrollToItem(item)
                             }
+                            pagerState.scrollToPage(item)
                         }
                     }
                 }
