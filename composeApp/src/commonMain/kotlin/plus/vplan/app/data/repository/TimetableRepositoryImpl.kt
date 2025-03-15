@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
+import plus.vplan.app.data.source.database.model.database.index.DbProfileTimetableIndex
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
@@ -115,6 +115,6 @@ class TimetableRepositoryImpl(
     }
 
     override suspend fun createCacheForProfile(profileId: Uuid, timetableLessonIds: List<Uuid>) {
-        vppDatabase.profileTimetableCacheDao.upsert(timetableLessonIds.map { DbProfileTimetableCache(profileId, it) })
+        vppDatabase.profileTimetableCacheDao.upsert(timetableLessonIds.map { DbProfileTimetableIndex(profileId, it) })
     }
 }

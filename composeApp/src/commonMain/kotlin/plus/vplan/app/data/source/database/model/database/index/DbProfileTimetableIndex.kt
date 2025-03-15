@@ -1,13 +1,15 @@
-package plus.vplan.app.data.source.database.model.database
+package plus.vplan.app.data.source.database.model.database.index
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import plus.vplan.app.data.source.database.model.database.DbProfile
+import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import kotlin.uuid.Uuid
 
 @Entity(
-    tableName = "profile_timetable_cache",
+    tableName = "profile_timetable_index",
     primaryKeys = ["profile_id", "timetable_lesson_id"],
     foreignKeys = [
         ForeignKey(
@@ -28,7 +30,7 @@ import kotlin.uuid.Uuid
         Index("timetable_lesson_id")
     ]
 )
-data class DbProfileTimetableCache(
+data class DbProfileTimetableIndex(
     @ColumnInfo("profile_id") val profileId: Uuid,
     @ColumnInfo("timetable_lesson_id") val timetableLessonId: Uuid
 )

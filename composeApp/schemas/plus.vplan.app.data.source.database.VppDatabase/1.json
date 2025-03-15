@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "7cc25362f9b42a9f4667f18d230e3e40",
+    "identityHash": "2481dab835558a3fdae0482d613ec43c",
     "entities": [
       {
         "tableName": "schools",
@@ -3622,7 +3622,7 @@
         ]
       },
       {
-        "tableName": "profile_timetable_cache",
+        "tableName": "profile_timetable_index",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `timetable_lesson_id` TEXT NOT NULL, PRIMARY KEY(`profile_id`, `timetable_lesson_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`timetable_lesson_id`) REFERENCES `timetable_lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
@@ -3647,22 +3647,22 @@
         },
         "indices": [
           {
-            "name": "index_profile_timetable_cache_profile_id",
+            "name": "index_profile_timetable_index_profile_id",
             "unique": false,
             "columnNames": [
               "profile_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_timetable_cache_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_timetable_index_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
           },
           {
-            "name": "index_profile_timetable_cache_timetable_lesson_id",
+            "name": "index_profile_timetable_index_timetable_lesson_id",
             "unique": false,
             "columnNames": [
               "timetable_lesson_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_timetable_cache_timetable_lesson_id` ON `${TABLE_NAME}` (`timetable_lesson_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_timetable_index_timetable_lesson_id` ON `${TABLE_NAME}` (`timetable_lesson_id`)"
           }
         ],
         "foreignKeys": [
@@ -3691,7 +3691,7 @@
         ]
       },
       {
-        "tableName": "profile_substitution_plan_cache",
+        "tableName": "profile_substitution_plan_index",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `substitution_lesson_id` TEXT NOT NULL, PRIMARY KEY(`profile_id`, `substitution_lesson_id`), FOREIGN KEY(`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`substitution_lesson_id`) REFERENCES `substitution_plan_lesson`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
@@ -3716,22 +3716,22 @@
         },
         "indices": [
           {
-            "name": "index_profile_substitution_plan_cache_profile_id",
+            "name": "index_profile_substitution_plan_index_profile_id",
             "unique": false,
             "columnNames": [
               "profile_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_substitution_plan_cache_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_substitution_plan_index_profile_id` ON `${TABLE_NAME}` (`profile_id`)"
           },
           {
-            "name": "index_profile_substitution_plan_cache_substitution_lesson_id",
+            "name": "index_profile_substitution_plan_index_substitution_lesson_id",
             "unique": false,
             "columnNames": [
               "substitution_lesson_id"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_substitution_plan_cache_substitution_lesson_id` ON `${TABLE_NAME}` (`substitution_lesson_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_profile_substitution_plan_index_substitution_lesson_id` ON `${TABLE_NAME}` (`substitution_lesson_id`)"
           }
         ],
         "foreignKeys": [
@@ -3758,11 +3758,287 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "timetable_lesson_assessment_index",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`timetable_lesson_id` TEXT NOT NULL, `assessment_id` INTEGER NOT NULL, PRIMARY KEY(`timetable_lesson_id`, `assessment_id`), FOREIGN KEY(`timetable_lesson_id`) REFERENCES `timetable_lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`assessment_id`) REFERENCES `assessments`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "timetableLessonId",
+            "columnName": "timetable_lesson_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "assessmentId",
+            "columnName": "assessment_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "timetable_lesson_id",
+            "assessment_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_timetable_lesson_assessment_index_timetable_lesson_id",
+            "unique": false,
+            "columnNames": [
+              "timetable_lesson_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_timetable_lesson_assessment_index_timetable_lesson_id` ON `${TABLE_NAME}` (`timetable_lesson_id`)"
+          },
+          {
+            "name": "index_timetable_lesson_assessment_index_assessment_id",
+            "unique": false,
+            "columnNames": [
+              "assessment_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_timetable_lesson_assessment_index_assessment_id` ON `${TABLE_NAME}` (`assessment_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "timetable_lessons",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "timetable_lesson_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "assessments",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "assessment_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "substitution_plan_lesson_assessment_index",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`substitution_plan_lesson_id` TEXT NOT NULL, `assessment_id` INTEGER NOT NULL, PRIMARY KEY(`substitution_plan_lesson_id`, `assessment_id`), FOREIGN KEY(`substitution_plan_lesson_id`) REFERENCES `substitution_plan_lesson`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`assessment_id`) REFERENCES `assessments`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "substitutionPlanLessonId",
+            "columnName": "substitution_plan_lesson_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "assessmentId",
+            "columnName": "assessment_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "substitution_plan_lesson_id",
+            "assessment_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_substitution_plan_lesson_assessment_index_substitution_plan_lesson_id",
+            "unique": false,
+            "columnNames": [
+              "substitution_plan_lesson_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_lesson_assessment_index_substitution_plan_lesson_id` ON `${TABLE_NAME}` (`substitution_plan_lesson_id`)"
+          },
+          {
+            "name": "index_substitution_plan_lesson_assessment_index_assessment_id",
+            "unique": false,
+            "columnNames": [
+              "assessment_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_lesson_assessment_index_assessment_id` ON `${TABLE_NAME}` (`assessment_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "substitution_plan_lesson",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "substitution_plan_lesson_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "assessments",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "assessment_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "timetable_lesson_homework_index",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`timetable_lesson_id` TEXT NOT NULL, `homework_id` INTEGER NOT NULL, PRIMARY KEY(`timetable_lesson_id`, `homework_id`), FOREIGN KEY(`timetable_lesson_id`) REFERENCES `timetable_lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`homework_id`) REFERENCES `homework`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "timetableLessonId",
+            "columnName": "timetable_lesson_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "homeworkId",
+            "columnName": "homework_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "timetable_lesson_id",
+            "homework_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_timetable_lesson_homework_index_timetable_lesson_id",
+            "unique": false,
+            "columnNames": [
+              "timetable_lesson_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_timetable_lesson_homework_index_timetable_lesson_id` ON `${TABLE_NAME}` (`timetable_lesson_id`)"
+          },
+          {
+            "name": "index_timetable_lesson_homework_index_homework_id",
+            "unique": false,
+            "columnNames": [
+              "homework_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_timetable_lesson_homework_index_homework_id` ON `${TABLE_NAME}` (`homework_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "timetable_lessons",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "timetable_lesson_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "homework",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "homework_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "substitution_plan_lesson_homework_index",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`substitution_plan_lesson_id` TEXT NOT NULL, `homework_id` INTEGER NOT NULL, PRIMARY KEY(`substitution_plan_lesson_id`, `homework_id`), FOREIGN KEY(`substitution_plan_lesson_id`) REFERENCES `substitution_plan_lesson`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`homework_id`) REFERENCES `homework`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "substitutionPlanLessonId",
+            "columnName": "substitution_plan_lesson_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "homeworkId",
+            "columnName": "homework_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "substitution_plan_lesson_id",
+            "homework_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_substitution_plan_lesson_homework_index_substitution_plan_lesson_id",
+            "unique": false,
+            "columnNames": [
+              "substitution_plan_lesson_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_lesson_homework_index_substitution_plan_lesson_id` ON `${TABLE_NAME}` (`substitution_plan_lesson_id`)"
+          },
+          {
+            "name": "index_substitution_plan_lesson_homework_index_homework_id",
+            "unique": false,
+            "columnNames": [
+              "homework_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_substitution_plan_lesson_homework_index_homework_id` ON `${TABLE_NAME}` (`homework_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "substitution_plan_lesson",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "substitution_plan_lesson_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "homework",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "homework_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7cc25362f9b42a9f4667f18d230e3e40')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2481dab835558a3fdae0482d613ec43c')"
     ]
   }
 }

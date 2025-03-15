@@ -54,8 +54,8 @@ import plus.vplan.app.data.source.database.model.database.DbIndiwareTimetableMet
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbProfile
-import plus.vplan.app.data.source.database.model.database.DbProfileSubstitutionPlanCache
-import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
+import plus.vplan.app.data.source.database.model.database.index.DbProfileSubstitutionPlanIndex
+import plus.vplan.app.data.source.database.model.database.index.DbProfileTimetableIndex
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbSchool
@@ -94,6 +94,10 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulver
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterSubjectSchulverwalterFinalGrade
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
+import plus.vplan.app.data.source.database.model.database.index.DbSubstitutionPlanLessonAssessmentIndex
+import plus.vplan.app.data.source.database.model.database.index.DbSubstitutionPlanLessonHomeworkIndex
+import plus.vplan.app.data.source.database.model.database.index.DbTimetableLessonAssessmentIndex
+import plus.vplan.app.data.source.database.model.database.index.DbTimetableLessonHomeworkIndex
 import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as SchulverwalterTeacherDao
 
 @Database(
@@ -168,8 +172,12 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         FKSchulverwalterGradeSchulverwalterTeacher::class,
         FKSchulverwalterSubjectSchulverwalterFinalGrade::class,
 
-        DbProfileTimetableCache::class,
-        DbProfileSubstitutionPlanCache::class
+        DbProfileTimetableIndex::class,
+        DbProfileSubstitutionPlanIndex::class,
+        DbTimetableLessonAssessmentIndex::class,
+        DbSubstitutionPlanLessonAssessmentIndex::class,
+        DbTimetableLessonHomeworkIndex::class,
+        DbSubstitutionPlanLessonHomeworkIndex::class
     ],
     version = 1,
 )

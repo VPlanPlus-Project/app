@@ -1,13 +1,15 @@
-package plus.vplan.app.data.source.database.model.database
+package plus.vplan.app.data.source.database.model.database.index
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import plus.vplan.app.data.source.database.model.database.DbProfile
+import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import kotlin.uuid.Uuid
 
 @Entity(
-    tableName = "profile_substitution_plan_cache",
+    tableName = "profile_substitution_plan_index",
     primaryKeys = ["profile_id", "substitution_lesson_id"],
     foreignKeys = [
         ForeignKey(
@@ -28,7 +30,7 @@ import kotlin.uuid.Uuid
         Index("substitution_lesson_id")
     ]
 )
-data class DbProfileSubstitutionPlanCache(
+data class DbProfileSubstitutionPlanIndex(
     @ColumnInfo("profile_id") val profileId: Uuid,
     @ColumnInfo("substitution_lesson_id") val substitutionPlanLessonId: Uuid
 )

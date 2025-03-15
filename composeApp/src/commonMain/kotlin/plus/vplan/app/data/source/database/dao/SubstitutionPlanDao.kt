@@ -7,7 +7,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.data.source.database.model.database.DbProfileSubstitutionPlanCache
+import plus.vplan.app.data.source.database.model.database.index.DbProfileSubstitutionPlanIndex
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
@@ -65,7 +65,7 @@ interface SubstitutionPlanDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM profile_substitution_plan_cache LEFT JOIN substitution_plan_lesson ON substitution_plan_lesson.id = profile_substitution_plan_cache.substitution_lesson_id LEFT JOIN day ON day.id = substitution_plan_lesson.day_id WHERE profile_substitution_plan_cache.profile_id = :profileId AND day.date = :date")
-    fun getForProfile(profileId: Uuid, date: LocalDate): Flow<List<DbProfileSubstitutionPlanCache>>
+    @Query("SELECT * FROM profile_substitution_plan_index LEFT JOIN substitution_plan_lesson ON substitution_plan_lesson.id = profile_substitution_plan_index.substitution_lesson_id LEFT JOIN day ON day.id = substitution_plan_lesson.day_id WHERE profile_substitution_plan_index.profile_id = :profileId AND day.date = :date")
+    fun getForProfile(profileId: Uuid, date: LocalDate): Flow<List<DbProfileSubstitutionPlanIndex>>
 
 }

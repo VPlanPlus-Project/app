@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbProfileSubstitutionPlanCache
+import plus.vplan.app.data.source.database.model.database.index.DbProfileSubstitutionPlanIndex
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
@@ -104,6 +104,6 @@ class SubstitutionPlanRepositoryImpl(
     }
 
     override suspend fun createCacheForProfile(profileId: Uuid, substitutionLessonIds: List<Uuid>) {
-        vppDatabase.profileSubstitutionPlanCacheDao.upsert(substitutionLessonIds.map { DbProfileSubstitutionPlanCache(profileId, it) })
+        vppDatabase.profileSubstitutionPlanCacheDao.upsert(substitutionLessonIds.map { DbProfileSubstitutionPlanIndex(profileId, it) })
     }
 }
