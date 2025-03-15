@@ -92,7 +92,20 @@ class HomeViewModel(
                                             it.subject != null && it.subject == lesson.subject && it.subjectInstanceId == lesson.subjectInstanceId && nextLessonTimeItem.lessonNumber == lessonTimeItem.lessonNumber + 1
                                         }
                                     )
+                                },
+                            nextLessons = state.day?.lessons?.first().orEmpty()
+                                .filter { lesson ->
+                                    val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                    lessonTimeItem.start > time.time
                                 }
+                                .groupBy { it.lessonTimeId }
+                                .toList()
+                                .associate {
+                                    App.lessonTimeSource.getById(it.first).getFirstValue()!! to it.second
+                                }
+                                .minByOrNull { it.key.lessonNumber }
+                                ?.value
+                                .orEmpty()
                         )
                         lastSpecialLessonUpdate = time
                     }
@@ -126,7 +139,7 @@ data class HomeState(
     val isUpdating: Boolean = false,
 
     val currentLessons: List<CurrentLesson> = emptyList(),
-    val nextLessons: List<CurrentLesson> = emptyList()
+    val nextLessons: List<Lesson> = emptyList()
 )
 
 sealed class HomeEvent {

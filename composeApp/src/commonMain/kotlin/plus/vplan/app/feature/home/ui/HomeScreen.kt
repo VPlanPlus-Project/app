@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
@@ -262,125 +263,62 @@ private fun HomeContent(
                                     .padding(vertical = 4.dp)
                                     .fillMaxWidth()
                             ) {
-                                if (state.currentLessons.isNotEmpty()) {
-                                    Text(
-                                        text = "Aktueller Unterricht",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        modifier = Modifier.padding(horizontal = 16.dp)
-                                    )
-                                    Spacer(Modifier.size(4.dp))
-                                    Column(
-                                        modifier = Modifier
-                                            .padding(horizontal = 16.dp)
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(MaterialTheme.colorScheme.primaryContainer)
-                                    ) {
-                                        val iconSize = 32.dp
-                                        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
-                                            state.currentLessons.forEachIndexed { i, (currentLesson, continuing) ->
-                                                val subject = currentLesson.subjectInstance?.collectAsResultingFlow()?.value
-                                                val rooms by currentLesson.rooms.collectAsSingleFlow()
-                                                val groups by currentLesson.groups.collectAsSingleFlow()
-                                                val teachers by currentLesson.teachers.collectAsSingleFlow()
-                                                val lessonTime = currentLesson.lessonTime.collectAsResultingFlow().value
-                                                if (
-                                                    (subject == null && currentLesson.subjectInstanceId != null) ||
-                                                    (rooms.isEmpty() && currentLesson.roomIds.orEmpty().isNotEmpty()) ||
-                                                    (teachers.isEmpty() && currentLesson.teacherIds.isNotEmpty()) ||
-                                                    (groups.isEmpty() && currentLesson.groupIds.isNotEmpty()) ||
-                                                    lessonTime == null
-                                                ) return@forEachIndexed
-                                                Row {
-                                                    SubjectIcon(
-                                                        modifier = Modifier
-                                                            .padding(8.dp)
-                                                            .size(iconSize),
-                                                        subject = subject?.subject
-                                                    )
-                                                    val titleFont = MaterialTheme.typography.titleMedium
-                                                    Column(
-                                                        modifier = Modifier
-                                                            .padding(top = (iconSize - titleFont.lineHeight.toDp())/2 + 8.dp)
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth(),
-                                                            verticalAlignment = Alignment.CenterVertically,
-                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                        ) {
-                                                            Text(
-                                                                text = currentLesson.subject ?: "Entfall",
-                                                                style = titleFont,
-                                                                color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
-                                                            )
-                                                            if (rooms.isNotEmpty()) Text(
-                                                                text = rooms.joinToString { it.name },
-                                                                style = MaterialTheme.typography.titleSmall,
-                                                                color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
-                                                            )
-                                                            if (teachers.isNotEmpty() && state.currentProfile?.profileType != ProfileType.TEACHER) Text(
-                                                                text = teachers.joinToString { it.name },
-                                                                style = MaterialTheme.typography.titleSmall,
-                                                                color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
-                                                            )
-                                                            if (groups.isNotEmpty() && state.currentProfile?.profileType != ProfileType.STUDENT) Text(
-                                                                text = groups.joinToString { it.name },
-                                                                style = MaterialTheme.typography.titleSmall
-                                                            )
-                                                        }
-                                                        Text(
-                                                            text = buildString {
-                                                                append(lessonTime.lessonNumber)
-                                                                append(". Stunde $DOT ")
-                                                                append(lessonTime.start.format(regularTimeFormat))
-                                                                append(" - ")
-                                                                append(lessonTime.end.format(regularTimeFormat))
-                                                            },
-                                                            style = MaterialTheme.typography.labelMedium
+                                val highlightedLessons = HighlightedLessons(state)
+                                AnimatedContent(
+                                    targetState = highlightedLessons
+                                ) { highlightConfig ->
+                                    Column {
+                                        if (highlightConfig.showCurrent) {
+                                            Text(
+                                                text = "Aktueller Unterricht",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                modifier = Modifier.padding(horizontal = 16.dp)
+                                            )
+                                            Spacer(Modifier.size(4.dp))
+                                            Column(
+                                                modifier = Modifier
+                                                    .padding(horizontal = 16.dp)
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(MaterialTheme.colorScheme.primaryContainer)
+                                            ) {
+                                                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
+                                                    highlightedLessons.currentLessons.forEachIndexed { i, (currentLesson, continuing) ->
+                                                        CurrentOrNextLesson(
+                                                            currentTime = state.currentTime,
+                                                            currentLesson = currentLesson,
+                                                            currentProfileType = state.currentProfile?.profileType,
+                                                            continuing = continuing,
+                                                            progressType = if (i == state.currentLessons.lastIndex) ProgressType.Regular else ProgressType.Rounded
                                                         )
-                                                        val bodyFont = MaterialTheme.typography.bodyMedium
-
-                                                        Column(
-                                                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                                                        ) {
-                                                            if (continuing != null) Row {
-                                                                Icon(
-                                                                    painter = painterResource(Res.drawable.arrow_right),
-                                                                    contentDescription = null,
-                                                                    modifier = Modifier
-                                                                        .padding(end = 4.dp)
-                                                                        .size(bodyFont.lineHeight.toDp())
-                                                                )
-                                                                Text(
-                                                                    text = "Weiter in ${lessonTime.lessonNumber + 1}. Stunde",
-                                                                    style = bodyFont
-                                                                )
-                                                            }
-                                                            if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.info != null) Row {
-                                                                Icon(
-                                                                    painter = painterResource(Res.drawable.info),
-                                                                    contentDescription = null,
-                                                                    modifier = Modifier
-                                                                        .padding(end = 4.dp)
-                                                                        .size(bodyFont.lineHeight.toDp())
-                                                                )
-                                                                Text(
-                                                                    text = currentLesson.info,
-                                                                    style = bodyFont
-                                                                )
-                                                            }
-                                                        }
                                                     }
                                                 }
-                                                Spacer(Modifier.size(4.dp))
-                                                Box(
-                                                    modifier = Modifier
-                                                        .padding(horizontal = 8.dp)
-                                                        .fillMaxWidth((state.currentTime.time progressIn lessonTime.start..lessonTime.end).toFloat())
-                                                        .height(3.dp)
-                                                        .thenIf(Modifier.clip(RoundedCornerShape(3.dp, 3.dp, 0.dp, 0.dp))) { i == state.currentLessons.lastIndex }
-                                                        .background(MaterialTheme.colorScheme.onPrimaryContainer)
-                                                )
+                                            }
+                                        } else {
+                                            Text(
+                                                text = "Nächster Unterricht",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                modifier = Modifier.padding(horizontal = 16.dp)
+                                            )
+                                            Spacer(Modifier.size(4.dp))
+                                            Column(
+                                                modifier = Modifier
+                                                    .padding(horizontal = 16.dp)
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(MaterialTheme.colorScheme.primaryContainer)
+                                            ) {
+                                                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
+                                                    state.nextLessons.forEachIndexed { i, nextLesson ->
+                                                        CurrentOrNextLesson(
+                                                            currentTime = state.currentTime,
+                                                            currentLesson = nextLesson,
+                                                            currentProfileType = state.currentProfile?.profileType,
+                                                            continuing = null,
+                                                            progressType = if (i == state.nextLessons.lastIndex) ProgressType.Regular else ProgressType.Rounded
+                                                        )
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -396,4 +334,131 @@ private fun HomeContent(
     if (isNewHomeworkDrawerVisible) NewHomeworkDrawer { isNewHomeworkDrawerVisible = false }
     if (isNewAssessmentDrawerVisible) NewAssessmentDrawer { isNewAssessmentDrawerVisible = false }
     if (isFeedbackDrawerVisible) FeedbackDrawer { isFeedbackDrawerVisible = false }
+}
+
+@Composable
+private fun CurrentOrNextLesson(
+    currentTime: LocalDateTime,
+    currentLesson: Lesson,
+    currentProfileType: ProfileType?,
+    continuing: Lesson?,
+    progressType: ProgressType
+) {
+    val iconSize = 32.dp
+    val subject = currentLesson.subjectInstance?.collectAsResultingFlow()?.value
+    val rooms by currentLesson.rooms.collectAsSingleFlow()
+    val groups by currentLesson.groups.collectAsSingleFlow()
+    val teachers by currentLesson.teachers.collectAsSingleFlow()
+    val lessonTime = currentLesson.lessonTime.collectAsResultingFlow().value
+    if (
+        (subject == null && currentLesson.subjectInstanceId != null) ||
+        (rooms.isEmpty() && currentLesson.roomIds.orEmpty().isNotEmpty()) ||
+        (teachers.isEmpty() && currentLesson.teacherIds.isNotEmpty()) ||
+        (groups.isEmpty() && currentLesson.groupIds.isNotEmpty()) ||
+        lessonTime == null
+    ) return
+    Row {
+        SubjectIcon(
+            modifier = Modifier
+                .padding(8.dp)
+                .size(iconSize),
+            subject = subject?.subject
+        )
+        val titleFont = MaterialTheme.typography.titleMedium
+        Column(
+            modifier = Modifier
+                .padding(top = (iconSize - titleFont.lineHeight.toDp()) / 2 + 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = currentLesson.subject ?: "Entfall",
+                    style = titleFont,
+                    color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                )
+                if (rooms.isNotEmpty()) Text(
+                    text = rooms.joinToString { it.name },
+                    style = MaterialTheme.typography.titleSmall,
+                    color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                )
+                if (teachers.isNotEmpty() && currentProfileType != ProfileType.TEACHER) Text(
+                    text = teachers.joinToString { it.name },
+                    style = MaterialTheme.typography.titleSmall,
+                    color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                )
+                if (groups.isNotEmpty() && currentProfileType != ProfileType.STUDENT) Text(
+                    text = groups.joinToString { it.name },
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+            Text(
+                text = buildString {
+                    append(lessonTime.lessonNumber)
+                    append(". Stunde $DOT ")
+                    append(lessonTime.start.format(regularTimeFormat))
+                    append(" - ")
+                    append(lessonTime.end.format(regularTimeFormat))
+                },
+                style = MaterialTheme.typography.labelMedium
+            )
+            val bodyFont = MaterialTheme.typography.bodyMedium
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                if (continuing != null) Row {
+                    Icon(
+                        painter = painterResource(Res.drawable.arrow_right),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .size(bodyFont.lineHeight.toDp())
+                    )
+                    Text(
+                        text = "Weiter in ${lessonTime.lessonNumber + 1}. Stunde",
+                        style = bodyFont
+                    )
+                }
+                if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.info != null) Row {
+                    Icon(
+                        painter = painterResource(Res.drawable.info),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .size(bodyFont.lineHeight.toDp())
+                    )
+                    Text(
+                        text = currentLesson.info,
+                        style = bodyFont
+                    )
+                }
+            }
+        }
+    }
+    if (progressType != ProgressType.Disabled) {
+        Spacer(Modifier.size(4.dp))
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .fillMaxWidth((currentTime.time progressIn lessonTime.start..lessonTime.end).toFloat())
+                .height(3.dp)
+                .thenIf(Modifier.clip(RoundedCornerShape(3.dp, 3.dp, 0.dp, 0.dp))) { progressType == ProgressType.Rounded }
+                .background(MaterialTheme.colorScheme.onPrimaryContainer)
+        )
+    }
+}
+
+enum class ProgressType {
+    Disabled, Rounded, Regular
+}
+
+private data class HighlightedLessons(
+    val currentLessons: List<CurrentLesson>,
+    val nextLesson: List<Lesson>,
+    val showCurrent: Boolean
+) {
+    constructor(state: HomeState): this(state.currentLessons, state.nextLessons, state.currentLessons.isNotEmpty())
 }

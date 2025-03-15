@@ -43,7 +43,7 @@ fun FeedTitle(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium)
             )
             endText?.let { Text(
                 text = endText,
