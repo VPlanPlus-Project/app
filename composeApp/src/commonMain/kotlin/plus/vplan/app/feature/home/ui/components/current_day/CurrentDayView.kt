@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -22,10 +23,8 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
+import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.feature.home.ui.HomeViewDay
-import plus.vplan.app.feature.home.ui.components.DayInfoCard
-import plus.vplan.app.feature.home.ui.components.FollowingLessons
 import plus.vplan.app.feature.home.ui.components.SectionTitle
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.utils.takeContinuousBy
@@ -75,7 +74,7 @@ private val subtitleTimeFormat = LocalTime.Format {
 
 @Composable
 fun CurrentDayView(
-    day: HomeViewDay,
+    day: Day,
     contextTime: LocalDateTime
 ) {
     Column(
@@ -85,23 +84,23 @@ fun CurrentDayView(
         LaunchedEffect("${contextTime.hour}:${contextTime.minute}") {
             val contextZoned = contextTime.toInstant(TimeZone.currentSystemDefault())
             currentOrNextLesson.clear()
-            currentOrNextLesson.addAll(day.lessons
+            currentOrNextLesson.addAll(day.lessons.first()
                 .filter {
                     val lessonTime = it.getLessonTimeItem()
                     val start =
-                        lessonTime.start.atDate(day.day.date).toInstant(TimeZone.of("Europe/Berlin"))
-                    val end = lessonTime.end.atDate(day.day.date).toInstant(TimeZone.of("Europe/Berlin"))
+                        lessonTime.start.atDate(day.date).toInstant(TimeZone.of("Europe/Berlin"))
+                    val end = lessonTime.end.atDate(day.date).toInstant(TimeZone.of("Europe/Berlin"))
                     contextZoned in start..end
                 }
                 .map { currentLesson ->
-                    currentLesson to day.lessons
+                    currentLesson to day.lessons.first()
                         .filter {
                             it.subject == currentLesson.subject
-                                    && (it.teachers - currentLesson.teachers.toSet()).size != it.teachers.size
-                                    && ((it.rooms.orEmpty() - currentLesson.rooms.orEmpty()
-                                .toSet()).size != it.rooms?.size || it.rooms.orEmpty()
-                                .isEmpty() || currentLesson.rooms.orEmpty().isEmpty())
-                                    && it.subjectInstance == currentLesson.subjectInstance
+                                    && (it.teacherIds - currentLesson.teacherIds.toSet()).size != it.teacherIds.size
+                                    && ((it.roomIds.orEmpty() - currentLesson.roomIds.orEmpty()
+                                .toSet()).size != it.roomIds?.size || it.roomIds.orEmpty()
+                                .isEmpty() || currentLesson.roomIds.orEmpty().isEmpty())
+                                    && it.subjectInstanceId == currentLesson.subjectInstanceId
                                     && it.getLessonTimeItem().lessonNumber > currentLesson.getLessonTimeItem().lessonNumber
                         }.sortedBy { it.lessonTimeItem!!.lessonNumber }
                         .takeContinuousBy { it.lessonTimeItem!!.lessonNumber }
@@ -118,8 +117,7 @@ fun CurrentDayView(
             )
 
             if (currentOrNextLesson.all { it.first.subject == null }) {
-                val nextActualLesson = day.lessons
-                    .firstOrNull { lesson -> lesson.subject != null && lesson.lessonTimeItem!!.start > currentOrNextLesson.maxOf { it.first.lessonTimeItem!!.end } }
+                val nextActualLesson: Lesson? = null
                 InfoCard(
                     imageVector = Res.drawable.lightbulb,
                     modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp),
@@ -149,34 +147,8 @@ fun CurrentDayView(
             SectionTitle(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = "Dein Tag",
-                subtitle = "${day.day.date.format(remember { subtitleDateFormat })}, bis ${
-                    day.lessons
-                        .maxOf { it.lessonTimeItem!!.end }.format(remember { subtitleTimeFormat })
-                }\n" + (if (day.day.substitutionPlan.isEmpty()) "Stundenplan" else "Vertretungsplan")
+                subtitle = ""
             )
-            if (day.day.info != null) DayInfoCard(Modifier.padding(vertical = 4.dp), info = day.day.info)
-            val followingLessons = day.lessons
-                .filter { it.lessonTimeItem!!.lessonNumber > (currentOrNextLesson.lastOrNull()?.first?.lessonTimeItem?.lessonNumber ?: Int.MAX_VALUE) }
-                .sortedBy { it.lessonTimeItem!!.start }
-            if (followingLessons.isNotEmpty()) Column {
-                val lessonsGroupedByLessonNumber =
-                    followingLessons.groupBy { it.lessonTimeItem!!.lessonNumber }.toList().sortedBy { it.first }.toMap()
-                FollowingLessons(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    showFirstGradient =
-                    lessonsGroupedByLessonNumber.keys.min() > (currentOrNextLesson.minOfOrNull { it.first.lessonTimeItem!!.lessonNumber }
-                        ?: -1),
-                    date = day.day.date,
-                    lessons = lessonsGroupedByLessonNumber
-                )
-            } else Column {
-                FollowingLessons(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    showFirstGradient = false,
-                    date = day.day.date,
-                    lessons = day.lessons.groupBy { it.lessonTimeItem!!.lessonNumber }.toList().sortedBy { it.first }.toMap()
-                )
-            }
         }
     }
 }

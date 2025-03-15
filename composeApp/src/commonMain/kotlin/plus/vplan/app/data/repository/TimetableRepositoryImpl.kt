@@ -45,7 +45,7 @@ class TimetableRepositoryImpl(
                 )
             },
             groupCrossovers = lessons.flatMap { lesson ->
-                lesson.groups.map { group ->
+                lesson.groupIds.map { group ->
                     DbTimetableGroupCrossover(
                         timetableLessonId = lesson.id,
                         groupId = group
@@ -53,7 +53,7 @@ class TimetableRepositoryImpl(
                 }
             },
             teacherCrossovers = lessons.flatMap { lesson ->
-                lesson.teachers.map { teacher ->
+                lesson.teacherIds.map { teacher ->
                     DbTimetableTeacherCrossover(
                         timetableLessonId = lesson.id,
                         teacherId = teacher
@@ -61,7 +61,7 @@ class TimetableRepositoryImpl(
                 }
             },
             roomCrossovers = lessons.flatMap { lesson ->
-                lesson.rooms.orEmpty().map { room ->
+                lesson.roomIds.orEmpty().map { room ->
                     DbTimetableRoomCrossover(
                         timetableLessonId = lesson.id,
                         roomId = room

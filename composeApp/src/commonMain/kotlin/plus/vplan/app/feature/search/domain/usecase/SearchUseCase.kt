@@ -71,7 +71,7 @@ class SearchUseCase(
                     group.getSchoolItem()
                     SearchResult.SchoolEntity.Group(
                         group = group,
-                        lessons = lessons.filter { group.id in it.groups }
+                        lessons = lessons.filter { group.id in it.groupIds }
                     )
                 })
 
@@ -79,7 +79,7 @@ class SearchUseCase(
                     teacher.getSchoolItem()
                     SearchResult.SchoolEntity.Teacher(
                         teacher = teacher,
-                        lessons = lessons.filter { teacher.id in it.teachers }
+                        lessons = lessons.filter { teacher.id in it.teacherIds }
                     )
                 })
 
@@ -87,7 +87,7 @@ class SearchUseCase(
                     room.getSchoolItem()
                     SearchResult.SchoolEntity.Room(
                         room = room,
-                        lessons = lessons.filter { room.id in it.rooms.orEmpty() }
+                        lessons = lessons.filter { room.id in it.roomIds.orEmpty() }
                     )
                 })
             }.collect()

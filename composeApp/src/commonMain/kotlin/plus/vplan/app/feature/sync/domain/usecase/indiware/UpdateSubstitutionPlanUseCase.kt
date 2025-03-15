@@ -85,7 +85,7 @@ class UpdateSubstitutionPlanUseCase(
             val day = Day(
                 id = Day.buildId(indiwareSchool, date),
                 date = date,
-                school = indiwareSchool.id,
+                schoolId = indiwareSchool.id,
                 weekId = week.id,
                 info = substitutionPlan.info,
                 dayType = Day.DayType.REGULAR,
@@ -93,7 +93,7 @@ class UpdateSubstitutionPlanUseCase(
                 timetable = emptySet(),
                 assessmentIds = emptySet(),
                 homeworkIds = emptySet(),
-                nextSchoolDay = null
+                nextSchoolDayId = null
             )
 
             dayRepository.insert(day)
@@ -111,12 +111,12 @@ class UpdateSubstitutionPlanUseCase(
                         week = week.id,
                         subject = substitutionPlanLesson.subject,
                         isSubjectChanged = substitutionPlanLesson.subjectChanged,
-                        teachers = teachers.filter { it.name in substitutionPlanLesson.teacher }.map { it.id },
+                        teacherIds = teachers.filter { it.name in substitutionPlanLesson.teacher }.map { it.id },
                         isTeacherChanged = substitutionPlanLesson.teacherChanged,
-                        rooms = rooms.filter { it.name in substitutionPlanLesson.room }.map { it.id },
+                        roomIds = rooms.filter { it.name in substitutionPlanLesson.room }.map { it.id },
                         isRoomChanged = substitutionPlanLesson.roomChanged,
-                        groups = listOf(group.id),
-                        subjectInstance = substitutionPlanLesson.subjectInstanceNumber?.let { subjectInstances.findByIndiwareId(it.toString()) }?.id,
+                        groupIds = listOf(group.id),
+                        subjectInstanceId = substitutionPlanLesson.subjectInstanceNumber?.let { subjectInstances.findByIndiwareId(it.toString()) }?.id,
                         lessonTimeId = lessonTimes.first { it.lessonNumber == substitutionPlanLesson.lessonNumber }.id,
                         version = "",
                         info = substitutionPlanLesson.info
@@ -160,11 +160,11 @@ class UpdateSubstitutionPlanUseCase(
                                     append(lesson.getLessonTimeItem().lessonNumber)
                                     append(". ")
                                     append(lesson.subject ?: "Entfall")
-                                    if (lesson.teachers.isNotEmpty()) {
+                                    if (lesson.teacherIds.isNotEmpty()) {
                                         append(" mit ")
                                         append(lesson.getTeacherItems().joinToString(", ") { teacher -> teacher.name })
                                     }
-                                    if (lesson.rooms.isNotEmpty()) {
+                                    if (lesson.roomIds.isNotEmpty()) {
                                         append(" in ")
                                         append(lesson.getRoomItems().joinToString(", ") { room -> room.name })
                                     }

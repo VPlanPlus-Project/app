@@ -44,13 +44,13 @@ data class DbDay(
             date = date,
             info = info,
             weekId = weekId,
-            school = schoolId,
+            schoolId = schoolId,
             dayType = Day.DayType.UNKNOWN,
             substitutionPlan = emptySet(),
             timetable = emptySet(),
             assessmentIds = emptySet(),
             homeworkIds = emptySet(),
-            nextSchoolDay = null
+            nextSchoolDayId = null
         )
     }
 }

@@ -41,7 +41,7 @@ fun InfoCard(
 ) {
     Column(
         modifier = modifier
-            .thenIf(Modifier.shadow(5.dp, shape = RoundedCornerShape(16.dp))) { shadow }
+            .thenIf(Modifier.shadow(2.dp, shape = RoundedCornerShape(16.dp))) { shadow }
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
             .padding(start = 4.dp)

@@ -40,24 +40,24 @@ class SubstitutionPlanRepositoryImpl(
                     subject = lesson.subject,
                     isSubjectChanged = lesson.isSubjectChanged,
                     info = lesson.info,
-                    subjectInstanceId = lesson.subjectInstance,
+                    subjectInstanceId = lesson.subjectInstanceId,
                     version = versionString,
                     isRoomChanged = lesson.isRoomChanged,
                     isTeacherChanged = lesson.isTeacherChanged
                 )
             },
             groups = lessons.flatMap { lesson ->
-                lesson.groups.map { group ->
+                lesson.groupIds.map { group ->
                     DbSubstitutionPlanGroupCrossover(group, lesson.id)
                 }
             },
             teachers = lessons.flatMap { lesson ->
-                lesson.teachers.map { teacher ->
+                lesson.teacherIds.map { teacher ->
                     DbSubstitutionPlanTeacherCrossover(teacher, lesson.id)
                 }
             },
             rooms = lessons.flatMap { lesson ->
-                lesson.rooms.map { room ->
+                lesson.roomIds.map { room ->
                     DbSubstitutionPlanRoomCrossover(room, lesson.id)
                 }
             }
