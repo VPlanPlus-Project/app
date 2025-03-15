@@ -35,7 +35,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -222,7 +221,7 @@ private fun ProfileSettingsContent(
             )
             Spacer(Modifier.height(8.dp))
             if (state.profile is Profile.StudentProfile) {
-                val vppId = state.profile.vppId?.collectAsState(null)?.value
+                val vppId = state.profile.vppId?.collectAsResultingFlow()?.value
                 AnimatedContent(
                     targetState = vppId,
                     modifier = Modifier

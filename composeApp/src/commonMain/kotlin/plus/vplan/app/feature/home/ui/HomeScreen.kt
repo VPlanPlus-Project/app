@@ -45,8 +45,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
-import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
@@ -104,19 +104,10 @@ private fun HomeContent(
                 .fillMaxWidth()
         ) {
             run greeting@{
-                val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppIdId?.let {
-                    App.vppIdSource.getById(it).collectAsState(CacheState.Loading(it.toString()))
-                }
+                val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppId?.collectAsResultingFlow()?.value
                 Greeting(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    displayName = vppId?.value.let {
-                        if (it == null) return@let state.currentProfile?.name ?: ""
-                        else return@let when (it) {
-                            is CacheState.Done -> it.data.name
-                            else -> ""
-                        }
-                    },
-                    time = remember(state.currentTime.hour) { state.currentTime.time }
+                    displayName = vppId?.name?.split(" ")?.first() ?: ""
                 )
             }
             Spacer(Modifier.height(4.dp))
@@ -178,7 +169,7 @@ private fun HomeContent(
                         }
                     }
                     item {
-                        val vppId = ((state.currentProfile as? Profile.StudentProfile)?.vppId?.collectAsState(null)?.value as? VppId.Active)
+                        val vppId = ((state.currentProfile as? Profile.StudentProfile)?.vppId?.collectAsResultingFlow()?.value as? VppId.Active)
                         androidx.compose.animation.AnimatedVisibility(
                             visible = vppId?.schulverwalterConnection?.isValid == false,
                             enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),

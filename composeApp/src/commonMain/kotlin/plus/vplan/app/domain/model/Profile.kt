@@ -43,7 +43,7 @@ abstract class Profile : Item {
         var vppIdItem: VppId.Active? = null
             private set
 
-        val vppId by lazy { vppIdId?.let { App.vppIdSource.getById(it).filterIsInstance<CacheState.Done<VppId>>().map { cacheState -> cacheState.data } } }
+        val vppId by lazy { vppIdId?.let { App.vppIdSource.getById(it) } }
         val subjectInstances by lazy { combine(subjectInstanceConfiguration.keys.map { App.subjectInstanceSource.getById(it).filterIsInstance<CacheState.Done<SubjectInstance>>().map { cacheState -> cacheState.data } }) { it.toList() } }
 
         private val subjectInstanceCache = hashMapOf<Int, SubjectInstance>()
