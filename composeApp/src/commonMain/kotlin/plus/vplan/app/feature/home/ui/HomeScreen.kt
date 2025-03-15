@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
@@ -35,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,13 +53,17 @@ import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.Greeting
 import plus.vplan.app.feature.home.ui.components.HolidayScreen
 import plus.vplan.app.feature.home.ui.components.PagerSwitcher
+import plus.vplan.app.feature.home.ui.components.QuickActions
 import plus.vplan.app.feature.home.ui.components.current_day.CurrentDayView
 import plus.vplan.app.feature.home.ui.components.next_day.NextDayView
+import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
 import plus.vplan.app.feature.main.MainScreen
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
+import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.BrowserIntent
@@ -73,6 +79,7 @@ fun HomeScreen(
     HomeContent(
         state = homeViewModel.state,
         contentPadding = contentPadding,
+        onOpenRoomSearch = remember { { navHostController.navigate(MainScreen.RoomSearch) } },
         onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings(openIndiwareSettingsSchoolId = it)) } },
         onEvent = homeViewModel::onEvent
     )
@@ -83,12 +90,17 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeState,
     contentPadding: PaddingValues,
+    onOpenRoomSearch: () -> Unit,
     onOpenSchoolSettings: (schoolId: Int) -> Unit,
     onEvent: (event: HomeEvent) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val pullToRefreshState = rememberPullToRefreshState()
     val initializeSchulverwalterReauthUseCase = koinInject<InitializeSchulverwalterReauthUseCase>()
+
+    var isNewHomeworkDrawerVisible by rememberSaveable { mutableStateOf(false) }
+    var isNewAssessmentDrawerVisible by rememberSaveable { mutableStateOf(false) }
+    var isFeedbackDrawerVisible by rememberSaveable { mutableStateOf(false) }
 
     PullToRefreshBox(
         state = pullToRefreshState,
@@ -142,6 +154,15 @@ private fun HomeContent(
                     modifier = Modifier
                         .fillMaxSize()
                 ) {
+                    item { Spacer(Modifier.size(16.dp)) }
+                    item quickActions@{
+                        QuickActions(
+                            onNewHomeworkClicked = { isNewHomeworkDrawerVisible = true },
+                            onNewAssessmentClicked = { isNewAssessmentDrawerVisible = true },
+                            onRoomSearchClicked = onOpenRoomSearch,
+                            onFeedbackClicked = { isFeedbackDrawerVisible = true }
+                        )
+                    }
                     item schoolAccessInvalid@{
                         androidx.compose.animation.AnimatedVisibility(
                             visible = school is School.IndiwareSchool && !school.credentialsValid,
@@ -243,4 +264,8 @@ private fun HomeContent(
             }
         }
     }
+
+    if (isNewHomeworkDrawerVisible) NewHomeworkDrawer { isNewHomeworkDrawerVisible = false }
+    if (isNewAssessmentDrawerVisible) NewAssessmentDrawer { isNewAssessmentDrawerVisible = false }
+    if (isFeedbackDrawerVisible) FeedbackDrawer { isFeedbackDrawerVisible = false }
 }
