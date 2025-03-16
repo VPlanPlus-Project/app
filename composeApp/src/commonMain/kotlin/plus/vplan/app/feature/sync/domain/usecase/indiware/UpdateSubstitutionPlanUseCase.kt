@@ -60,8 +60,12 @@ class UpdateSubstitutionPlanUseCase(
         val groups = groupRepository.getBySchool(indiwareSchool.id).latest()
         val subjectInstances = subjectInstanceRepository.getBySchool(indiwareSchool.id, false).latest()
         val lessons = mutableListOf<Lesson.SubstitutionPlanLesson>()
+        var error: Response.Error? = null
         dates.forEach forEachDate@{ date ->
-            val week = weekRepository.getBySchool(indiwareSchool.id).latest().firstOrNull { date in it.start..it.end } ?: return Response.Error.Other("Week for $date not found")
+            val week = weekRepository.getBySchool(indiwareSchool.id).latest().firstOrNull { date in it.start..it.end } ?: run {
+                error = Response.Error.Other("Week for $date not found")
+                return@forEachDate
+            }
 
             val oldPlan = profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
@@ -76,8 +80,12 @@ class UpdateSubstitutionPlanUseCase(
                 teacherNames = teachers.map { it.name },
                 roomNames = rooms.map { it.name }
             )
+            if (substitutionPlanResponse is Response.Error.OnlineError.NotFound) return@forEachDate
 
-            if (substitutionPlanResponse is Response.Error) return substitutionPlanResponse
+            if (substitutionPlanResponse is Response.Error) run {
+                error = substitutionPlanResponse
+                return@forEachDate
+            }
             if (substitutionPlanResponse !is Response.Success) throw IllegalStateException("substitutionPlanResponse is not successful: $substitutionPlanResponse")
 
             val substitutionPlan = substitutionPlanResponse.data
@@ -136,13 +144,13 @@ class UpdateSubstitutionPlanUseCase(
             if (allowNotification) profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
                 .filter { it.getSchoolItem().id == indiwareSchool.id }
-                .forEach { profile ->
-                    val old = oldPlan[profile] ?: return@forEach
-                    val new = newPlan[profile] ?: return@forEach
+                .forEach forEachProfile@{ profile ->
+                    val old = oldPlan[profile] ?: return@forEachProfile
+                    val new = newPlan[profile] ?: return@forEachProfile
 
                     val oldLessons = old.map { it.getLessonSignature() }
                     val changedOrNewLessons = new.filter { it.getLessonSignature() !in oldLessons }
-                    if (changedOrNewLessons.isEmpty()) return@forEach
+                    if (changedOrNewLessons.isEmpty()) return@forEachProfile
 
                     Logger.d { "Sending notification for ${profile.name}" }
 
@@ -201,6 +209,6 @@ class UpdateSubstitutionPlanUseCase(
             updateProfileLessonIndexUseCase(profile)
         }
 
-        return null
+        return error
     }
 }

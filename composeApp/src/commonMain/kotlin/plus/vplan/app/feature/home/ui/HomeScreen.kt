@@ -55,6 +55,8 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.cache.collectAsSingleFlow
+import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.ProfileType
@@ -73,7 +75,6 @@ import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
-import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.BrowserIntent
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.longDayOfWeekNames
@@ -85,10 +86,13 @@ import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.untilRelativeText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_right
+import vplanplus.composeapp.generated.resources.book_open
 import vplanplus.composeapp.generated.resources.chart_no_axes_gantt
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.key_round
+import vplanplus.composeapp.generated.resources.notebook_text
 import vplanplus.composeapp.generated.resources.triangle_alert
+import kotlin.uuid.ExperimentalUuidApi
 
 @Composable
 fun HomeScreen(
@@ -105,7 +109,7 @@ fun HomeScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
 private fun HomeContent(
     state: HomeState,
@@ -263,6 +267,8 @@ private fun HomeContent(
                                     .padding(vertical = 4.dp)
                                     .fillMaxWidth()
                             ) {
+                                val homework by state.day.homework.collectAsState(emptySet())
+                                val assessments by state.day.assessments.collectAsState(emptySet())
                                 val highlightedLessons = HighlightedLessons(state)
                                 AnimatedContent(
                                     targetState = highlightedLessons
@@ -279,17 +285,21 @@ private fun HomeContent(
                                                 modifier = Modifier
                                                     .padding(horizontal = 16.dp)
                                                     .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .background(MaterialTheme.colorScheme.primaryContainer)
+                                                    .clip(RoundedCornerShape(8.dp)),
+                                                verticalArrangement = Arrangement.spacedBy(2.dp)
                                             ) {
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
                                                     highlightedLessons.currentLessons.forEachIndexed { i, (currentLesson, continuing) ->
+                                                        val homeworkForLesson = homework.filter { it.subjectInstanceId == currentLesson.subjectInstanceId }
+                                                        val assessmentsForLesson = assessments.filter { it.subjectInstanceId == currentLesson.subjectInstanceId }
                                                         CurrentOrNextLesson(
                                                             currentTime = state.currentTime,
                                                             currentLesson = currentLesson,
                                                             currentProfileType = state.currentProfile?.profileType,
                                                             continuing = continuing,
-                                                            progressType = if (i == state.currentLessons.lastIndex) ProgressType.Regular else ProgressType.Rounded
+                                                            homework = homeworkForLesson,
+                                                            assessments = assessmentsForLesson,
+                                                            progressType = ProgressType.Regular
                                                         )
                                                     }
                                                 }
@@ -305,8 +315,8 @@ private fun HomeContent(
                                                 modifier = Modifier
                                                     .padding(horizontal = 16.dp)
                                                     .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .background(MaterialTheme.colorScheme.primaryContainer)
+                                                    .clip(RoundedCornerShape(8.dp)),
+                                                verticalArrangement = Arrangement.spacedBy(2.dp)
                                             ) {
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
                                                     state.nextLessons.forEachIndexed { i, nextLesson ->
@@ -315,7 +325,9 @@ private fun HomeContent(
                                                             currentLesson = nextLesson,
                                                             currentProfileType = state.currentProfile?.profileType,
                                                             continuing = null,
-                                                            progressType = if (i == state.nextLessons.lastIndex) ProgressType.Regular else ProgressType.Rounded
+                                                            homework = emptyList(),
+                                                            assessments = emptyList(),
+                                                            progressType = ProgressType.Disabled
                                                         )
                                                     }
                                                 }
@@ -341,6 +353,8 @@ private fun CurrentOrNextLesson(
     currentTime: LocalDateTime,
     currentLesson: Lesson,
     currentProfileType: ProfileType?,
+    homework: List<Homework>,
+    assessments: List<Assessment>,
     continuing: Lesson?,
     progressType: ProgressType
 ) {
@@ -357,102 +371,141 @@ private fun CurrentOrNextLesson(
         (groups.isEmpty() && currentLesson.groupIds.isNotEmpty()) ||
         lessonTime == null
     ) return
-    Row {
-        SubjectIcon(
-            modifier = Modifier
-                .padding(8.dp)
-                .size(iconSize),
-            subject = subject?.subject
-        )
-        val titleFont = MaterialTheme.typography.titleMedium
-        Column(
-            modifier = Modifier
-                .padding(top = (iconSize - titleFont.lineHeight.toDp()) / 2 + 8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = currentLesson.subject ?: "Entfall",
-                    style = titleFont,
-                    color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
-                )
-                if (rooms.isNotEmpty()) Text(
-                    text = rooms.joinToString { it.name },
-                    style = MaterialTheme.typography.titleSmall,
-                    color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
-                )
-                if (teachers.isNotEmpty() && currentProfileType != ProfileType.TEACHER) Text(
-                    text = teachers.joinToString { it.name },
-                    style = MaterialTheme.typography.titleSmall,
-                    color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
-                )
-                if (groups.isNotEmpty() && currentProfileType != ProfileType.STUDENT) Text(
-                    text = groups.joinToString { it.name },
-                    style = MaterialTheme.typography.titleSmall
-                )
-            }
-            Text(
-                text = buildString {
-                    append(lessonTime.lessonNumber)
-                    append(". Stunde $DOT ")
-                    append(lessonTime.start.format(regularTimeFormat))
-                    append(" - ")
-                    append(lessonTime.end.format(regularTimeFormat))
-                },
-                style = MaterialTheme.typography.labelMedium
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Row {
+            SubjectIcon(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .size(iconSize),
+                subject = subject?.subject
             )
-            val bodyFont = MaterialTheme.typography.bodyMedium
-
+            val titleFont = MaterialTheme.typography.titleMedium
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier
+                    .padding(top = (iconSize - titleFont.lineHeight.toDp()) / 2 + 8.dp)
             ) {
-                if (continuing != null) Row {
-                    Icon(
-                        painter = painterResource(Res.drawable.arrow_right),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(end = 4.dp)
-                            .size(bodyFont.lineHeight.toDp())
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
-                        text = "Weiter in ${lessonTime.lessonNumber + 1}. Stunde",
-                        style = bodyFont
+                        text = currentLesson.subject ?: "Entfall",
+                        style = titleFont,
+                        color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                    )
+                    if (rooms.isNotEmpty()) Text(
+                        text = rooms.joinToString { it.name },
+                        style = MaterialTheme.typography.titleSmall,
+                        color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                    )
+                    if (teachers.isNotEmpty() && currentProfileType != ProfileType.TEACHER) Text(
+                        text = teachers.joinToString { it.name },
+                        style = MaterialTheme.typography.titleSmall,
+                        color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                    )
+                    if (groups.isNotEmpty() && currentProfileType != ProfileType.STUDENT) Text(
+                        text = groups.joinToString { it.name },
+                        style = MaterialTheme.typography.titleSmall
                     )
                 }
-                if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.info != null) Row {
-                    Icon(
-                        painter = painterResource(Res.drawable.info),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(end = 4.dp)
-                            .size(bodyFont.lineHeight.toDp())
-                    )
-                    Text(
-                        text = currentLesson.info,
-                        style = bodyFont
-                    )
+                Text(
+                    text = buildString {
+                        append(lessonTime.lessonNumber)
+                        append(". Stunde $DOT ")
+                        append(lessonTime.start.format(regularTimeFormat))
+                        append(" - ")
+                        append(lessonTime.end.format(regularTimeFormat))
+                    },
+                    style = MaterialTheme.typography.labelMedium
+                )
+                val bodyFont = MaterialTheme.typography.bodyMedium
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (continuing != null) Row {
+                        Icon(
+                            painter = painterResource(Res.drawable.arrow_right),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .size(bodyFont.lineHeight.toDp())
+                        )
+                        Text(
+                            text = "Weiter in ${lessonTime.lessonNumber + 1}. Stunde",
+                            style = bodyFont
+                        )
+                    }
+                    if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.info != null) Row {
+                        Icon(
+                            painter = painterResource(Res.drawable.info),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .size(bodyFont.lineHeight.toDp())
+                        )
+                        Text(
+                            text = currentLesson.info,
+                            style = bodyFont
+                        )
+                    }
+                    if (homework.isNotEmpty()) Row {
+                        Icon(
+                            painter = painterResource(Res.drawable.book_open),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .size(bodyFont.lineHeight.toDp())
+                        )
+                        Text(
+                            text = when(homework.size) {
+                                1 -> "Eine Hausaufgabe"
+                                else -> "${homework.size} Hausaufgaben"
+                            },
+                            style = bodyFont
+                        )
+                    }
+                    if (assessments.isNotEmpty()) Row {
+                        Icon(
+                            painter = painterResource(Res.drawable.notebook_text),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .size(bodyFont.lineHeight.toDp())
+                        )
+                        Text(
+                            text = when(assessments.size) {
+                                1 -> "Eine Leistung"
+                                else -> "${assessments.size} Leistungen"
+                            },
+                            style = bodyFont
+                        )
+                    }
                 }
             }
         }
-    }
-    if (progressType != ProgressType.Disabled) {
-        Spacer(Modifier.size(4.dp))
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .fillMaxWidth((currentTime.time progressIn lessonTime.start..lessonTime.end).toFloat())
-                .height(3.dp)
-                .thenIf(Modifier.clip(RoundedCornerShape(3.dp, 3.dp, 0.dp, 0.dp))) { progressType == ProgressType.Rounded }
-                .background(MaterialTheme.colorScheme.onPrimaryContainer)
-        )
+        if (progressType != ProgressType.Disabled) {
+            Spacer(Modifier.size(4.dp))
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth((currentTime.time progressIn lessonTime.start..lessonTime.end).toFloat())
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(3.dp, 3.dp, 0.dp, 0.dp))
+                    .background(MaterialTheme.colorScheme.onPrimaryContainer)
+            )
+        }
     }
 }
 
 enum class ProgressType {
-    Disabled, Rounded, Regular
+    Disabled, Regular
 }
 
 private data class HighlightedLessons(
