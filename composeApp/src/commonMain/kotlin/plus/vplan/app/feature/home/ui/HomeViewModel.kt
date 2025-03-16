@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
@@ -80,6 +79,21 @@ class HomeViewModel(
                 .collectLatest { time ->
                     if (lastSpecialLessonUpdate until time < 1.seconds) return@collectLatest
                     if (state.day?.date == time.date) {
+                        val currentLessons = state.day?.lessons?.first().orEmpty()
+                            .filter { lesson ->
+                                val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                time.time in lessonTimeItem.start..lessonTimeItem.end
+                            }.map { lesson ->
+                                val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                CurrentLesson(
+                                    lesson = lesson,
+                                    continuing = state.day?.lessons?.first().orEmpty().firstOrNull {
+                                        val nextLessonTimeItem = it.lessonTime.getFirstValue()!!
+                                        it.subject != null && it.subject == lesson.subject && it.subjectInstanceId == lesson.subjectInstanceId && nextLessonTimeItem.lessonNumber == lessonTimeItem.lessonNumber + 1
+                                    }
+                                )
+                            }
+
                         val nextLessons = state.day?.lessons?.first().orEmpty()
                             .filter { lesson ->
                                 val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
@@ -96,31 +110,18 @@ class HomeViewModel(
 
                         val remainingLessons = state.day?.lessons?.first().orEmpty()
                             .filter { lesson ->
-                                if (lesson in nextLessons) return@filter false
+                                if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
                                 val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
                                 lessonTimeItem.start > time.time
                             }
-                            .sortedBySuspending<Lesson, LocalTime> { lesson ->
+                            .sortedBySuspending { lesson ->
                                 val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
                                 lessonTimeItem.start
                             }
                             .groupBy { it.lessonTime.getFirstValue()!!.lessonNumber }
 
                         state = state.copy(
-                            currentLessons = state.day?.lessons?.first().orEmpty()
-                                .filter { lesson ->
-                                    val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
-                                    time.time in lessonTimeItem.start..lessonTimeItem.end
-                                }.map { lesson ->
-                                    val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
-                                    CurrentLesson(
-                                        lesson = lesson,
-                                        continuing = state.day?.lessons?.first().orEmpty().firstOrNull {
-                                            val nextLessonTimeItem = it.lessonTime.getFirstValue()!!
-                                            it.subject != null && it.subject == lesson.subject && it.subjectInstanceId == lesson.subjectInstanceId && nextLessonTimeItem.lessonNumber == lessonTimeItem.lessonNumber + 1
-                                        }
-                                    )
-                                },
+                            currentLessons = currentLessons,
                             nextLessons = nextLessons,
                             remainingLessons = remainingLessons
                         )
