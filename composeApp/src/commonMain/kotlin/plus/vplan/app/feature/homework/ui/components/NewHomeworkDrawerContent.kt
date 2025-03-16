@@ -2,7 +2,9 @@ package plus.vplan.app.feature.homework.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +52,7 @@ import plus.vplan.app.feature.homework.ui.components.create.RenameFileDialog
 import plus.vplan.app.feature.homework.ui.components.create.SubjectAndDateTile
 import plus.vplan.app.feature.homework.ui.components.create.VisibilityTile
 import plus.vplan.app.feature.homework.ui.components.create.VppIdBanner
+import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
@@ -70,6 +74,10 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var fileToRename by rememberSaveable { mutableStateOf<AttachedFile?>(null) }
+
+    LaunchedEffect(state.savingState) {
+        if (state.savingState == UnoptimisticTaskState.Success) this@NewHomeworkDrawerContent.closeDrawerWithAnimation()
+    }
 
     val filePickerLauncher = rememberFilePickerLauncher(
         mode = PickerMode.Multiple(),
@@ -165,6 +173,21 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
                     }
                 }
             }
+            AnimatedVisibility(
+                visible = state.showTasksError,
+                enter = expandVertically(expandFrom = Alignment.CenterVertically),
+                exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Text(
+                    text = "Füge mindestens eine nicht-leere Aufgabe hinzu",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                )
+            }
             Spacer(Modifier.height(16.dp))
             Text(
                 text = "Fach & Fälligkeit",
@@ -181,6 +204,21 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
                 onClickSubjectInstance = { showLessonSelectDrawer = true },
                 onClickDate = { showDateSelectDrawer = true }
             )
+            AnimatedVisibility(
+                visible = state.showDateError,
+                enter = expandVertically(expandFrom = Alignment.CenterVertically),
+                exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Text(
+                    text = "Wähle ein Datum aus",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                )
+            }
 
             if (state.isPublic != null) VisibilityTile(
                 isPublic = state.isPublic,
@@ -216,8 +254,9 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
             modifier = Modifier.padding(horizontal = 16.dp),
             text = "Speichern",
             icon = Res.drawable.check,
-            state = ButtonState.Enabled,
+            state = if (state.savingState == UnoptimisticTaskState.InProgress) ButtonState.Loading else ButtonState.Enabled,
             size = ButtonSize.Normal,
+            onlyEventOnActive = true,
             onClick = { viewModel.onEvent(NewHomeworkEvent.Save) }
         )
 
