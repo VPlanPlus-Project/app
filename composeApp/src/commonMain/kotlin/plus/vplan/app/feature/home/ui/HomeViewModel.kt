@@ -127,6 +127,15 @@ class HomeViewModel(
                         )
                         lastSpecialLessonUpdate = time
                     }
+                    else {
+                        state = state.copy(
+                            currentLessons = emptyList(),
+                            nextLessons = emptyList(),
+                            remainingLessons = state.day?.lessons?.first().orEmpty()
+                                .sortedBySuspending { it.lessonTime.getFirstValue()!!.lessonNumber }
+                                .groupBy { it.lessonTime.getFirstValue()!!.lessonNumber }
+                        )
+                    }
                 }
         }
     }

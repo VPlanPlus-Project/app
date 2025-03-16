@@ -285,7 +285,7 @@ private fun HomeContent(
                                 val homework by state.day.homework.collectAsState(emptySet())
                                 val assessments by state.day.assessments.collectAsState(emptySet())
                                 val highlightedLessons = HighlightedLessons(state)
-                                AnimatedContent(
+                                if (highlightedLessons.hasLessons) AnimatedContent(
                                     targetState = highlightedLessons
                                 ) { highlightConfig ->
                                     Column {
@@ -352,7 +352,7 @@ private fun HomeContent(
                                 }
                                 Spacer(Modifier.size(8.dp))
                                 Text(
-                                    text = "Weitere Stunden",
+                                    text = if (isYourDayToday) "Weitere Stunden" else "Stundenplan",
                                     style = MaterialTheme.typography.titleSmall,
                                     modifier = Modifier.padding(horizontal = 16.dp)
                                 )
@@ -718,4 +718,6 @@ private data class HighlightedLessons(
     val showCurrent: Boolean
 ) {
     constructor(state: HomeState): this(state.currentLessons, state.nextLessons, state.currentLessons.isNotEmpty())
+
+    val hasLessons = nextLesson.isNotEmpty() || currentLessons.isNotEmpty()
 }
