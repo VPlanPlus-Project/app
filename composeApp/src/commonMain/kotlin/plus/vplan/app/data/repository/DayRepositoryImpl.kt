@@ -19,7 +19,7 @@ class DayRepositoryImpl(
             date = day.date,
             info = day.info,
             weekId = day.weekId!!,
-            schoolId = day.school
+            schoolId = day.schoolId
         ))
     }
 

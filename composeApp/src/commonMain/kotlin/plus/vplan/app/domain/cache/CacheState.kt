@@ -36,3 +36,6 @@ fun <T: Item> Flow<CacheState<T>>.collectAsResultingFlow() = this.filterIsInstan
 
 @Composable
 inline fun <reified T: Item> List<Flow<CacheState<T>>>.collectAsResultingFlow(): State<List<T>> = if (this.isEmpty()) produceState(emptyList()) {} else (combine(this.map { it.filterIsInstance<CacheState.Done<T>>().map { it.data } }) { it.toList() }.collectAsState(emptyList()))
+
+@Composable
+inline fun <reified T: Item> Flow<List<CacheState<T>>>.collectAsSingleFlow(): State<List<T>> = this.map { it.filterIsInstance<CacheState.Done<T>>().map { it.data } }.collectAsState(emptyList())

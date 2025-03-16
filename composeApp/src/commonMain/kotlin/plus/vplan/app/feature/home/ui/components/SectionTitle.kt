@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 
 @Composable
+@Deprecated("Use FeedTitle instead", replaceWith = ReplaceWith("FeedTitle", "plus.vplan.app.feature.home.ui.components.FeedTitle"))
 fun SectionTitle(
     modifier: Modifier = Modifier,
     title: String,
@@ -27,6 +28,7 @@ fun SectionTitle(
 }
 
 @Composable
+@Deprecated("Use FeedTitle instead", replaceWith = ReplaceWith("FeedTitle", "plus.vplan.app.feature.home.ui.components.FeedTitle"))
 private fun SectionTitle(title: String) {
     Text(
         text = title,

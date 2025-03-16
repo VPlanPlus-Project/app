@@ -54,7 +54,7 @@ class GetRoomOccupationMapUseCase(
             )
         }.collectLatest { (rooms, lessons) ->
             rooms.associateWith { room ->
-                lessons.filter { room.id in it.rooms.orEmpty() }.map {
+                lessons.filter { room.id in it.roomIds.orEmpty() }.map {
                     when (it) {
                         is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson(it)
                         is Lesson.TimetableLesson -> Occupancy.Lesson(it, date)

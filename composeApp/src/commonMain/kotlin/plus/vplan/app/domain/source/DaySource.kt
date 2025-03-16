@@ -89,7 +89,7 @@ class DaySource(
                                 send(CacheState.Done(Day(
                                     id = id,
                                     date = date,
-                                    school = schoolId,
+                                    schoolId = schoolId,
                                     weekId = meta.dayWeek.id,
                                     info = meta.dayInfo?.info,
                                     dayType =
@@ -112,7 +112,7 @@ class DaySource(
                                     substitutionPlan = substitutionPlan,
                                     assessmentIds = assessments,
                                     homeworkIds = homework,
-                                    nextSchoolDay = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
+                                    nextSchoolDayId = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
                                 )))
                             }.collect()
                         }

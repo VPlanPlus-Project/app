@@ -64,7 +64,7 @@ fun CurrentLessonCard(
                     Text(
                         text = buildString {
                             if (currentLesson.subject != null) append(currentLesson.subject)
-                            else if (currentLesson.subjectInstance != null && currentLesson is Lesson.SubstitutionPlanLesson) append(currentLesson.subjectInstanceItem!!.subject + " entfällt")
+                            else if (currentLesson.subjectInstanceId != null && currentLesson is Lesson.SubstitutionPlanLesson) append(currentLesson.subjectInstanceItem!!.subject + " entfällt")
                             else append("Entfall")
                         },
                         style = MaterialTheme.typography.titleMedium,
@@ -73,10 +73,10 @@ fun CurrentLessonCard(
                         if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface
                     )
-                    if (currentLesson.rooms != null) Text(
+                    if (currentLesson.roomIds != null) Text(
                         text = buildString {
                             append(currentLesson.roomItems!!.joinToString { it.name })
-                            if (currentLesson.rooms.orEmpty().isEmpty()) append("Kein Raum")
+                            if (currentLesson.roomIds.orEmpty().isEmpty()) append("Kein Raum")
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.alignByBaseline(),
@@ -87,7 +87,7 @@ fun CurrentLessonCard(
                     Text(
                         text = buildString {
                             append(currentLesson.teacherItems!!.joinToString { it.name })
-                            if (currentLesson.teachers.isEmpty()) append("Keine Lehrkraft")
+                            if (currentLesson.teacherIds.isEmpty()) append("Keine Lehrkraft")
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.alignByBaseline(),
