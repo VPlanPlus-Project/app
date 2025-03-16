@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
@@ -16,6 +15,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
@@ -33,13 +33,15 @@ import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPla
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.now
+import plus.vplan.app.utils.sortedBySuspending
 import plus.vplan.app.utils.until
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.ExperimentalUuidApi
 
 private val LOGGER = Logger.withTag("HomeViewModel")
 
-@OptIn(FlowPreview::class)
+@OptIn(ExperimentalUuidApi::class)
 class HomeViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
@@ -78,6 +80,32 @@ class HomeViewModel(
                 .collectLatest { time ->
                     if (lastSpecialLessonUpdate until time < 1.seconds) return@collectLatest
                     if (state.day?.date == time.date) {
+                        val nextLessons = state.day?.lessons?.first().orEmpty()
+                            .filter { lesson ->
+                                val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                lessonTimeItem.start > time.time
+                            }
+                            .groupBy { it.lessonTimeId }
+                            .toList()
+                            .associate {
+                                App.lessonTimeSource.getById(it.first).getFirstValue()!! to it.second
+                            }
+                            .minByOrNull { it.key.lessonNumber }
+                            ?.value
+                            .orEmpty()
+
+                        val remainingLessons = state.day?.lessons?.first().orEmpty()
+                            .filter { lesson ->
+                                if (lesson in nextLessons) return@filter false
+                                val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                lessonTimeItem.start > time.time
+                            }
+                            .sortedBySuspending<Lesson, LocalTime> { lesson ->
+                                val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                lessonTimeItem.start
+                            }
+                            .groupBy { it.lessonTime.getFirstValue()!!.lessonNumber }
+
                         state = state.copy(
                             currentLessons = state.day?.lessons?.first().orEmpty()
                                 .filter { lesson ->
@@ -93,19 +121,8 @@ class HomeViewModel(
                                         }
                                     )
                                 },
-                            nextLessons = state.day?.lessons?.first().orEmpty()
-                                .filter { lesson ->
-                                    val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
-                                    lessonTimeItem.start > time.time
-                                }
-                                .groupBy { it.lessonTimeId }
-                                .toList()
-                                .associate {
-                                    App.lessonTimeSource.getById(it.first).getFirstValue()!! to it.second
-                                }
-                                .minByOrNull { it.key.lessonNumber }
-                                ?.value
-                                .orEmpty()
+                            nextLessons = nextLessons,
+                            remainingLessons = remainingLessons
                         )
                         lastSpecialLessonUpdate = time
                     }
@@ -139,7 +156,8 @@ data class HomeState(
     val isUpdating: Boolean = false,
 
     val currentLessons: List<CurrentLesson> = emptyList(),
-    val nextLessons: List<Lesson> = emptyList()
+    val nextLessons: List<Lesson> = emptyList(),
+    val remainingLessons: Map<Int, List<Lesson>> = emptyMap()
 )
 
 sealed class HomeEvent {

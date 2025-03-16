@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +42,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.filterIsInstance
@@ -83,6 +90,7 @@ import plus.vplan.app.utils.progressIn
 import plus.vplan.app.utils.regularDateFormatWithoutYear
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
+import plus.vplan.app.utils.transparent
 import plus.vplan.app.utils.untilRelativeText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_right
@@ -93,6 +101,9 @@ import vplanplus.composeapp.generated.resources.key_round
 import vplanplus.composeapp.generated.resources.notebook_text
 import vplanplus.composeapp.generated.resources.triangle_alert
 import kotlin.uuid.ExperimentalUuidApi
+
+private val LESSON_NUMBER_TOP_PADDING = 16.dp
+private val LESSON_NUMBER_SIZE = 32.dp
 
 @Composable
 fun HomeScreen(
@@ -119,6 +130,7 @@ private fun HomeContent(
     onEvent: (event: HomeEvent) -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    val localDensity = LocalDensity.current
     val pullToRefreshState = rememberPullToRefreshState()
     val initializeSchulverwalterReauthUseCase = koinInject<InitializeSchulverwalterReauthUseCase>()
 
@@ -230,7 +242,6 @@ private fun HomeContent(
                     }
                     item yourDay@{
                         val isYourDayToday = state.day?.date == state.currentTime.date
-                        val lessons = state.day?.lessons?.collectAsState(null)?.value.orEmpty()
                         val weekState = state.day?.week?.collectAsLoadingState("")?.value
                         if (state.day == null || weekState is CacheState.Loading) return@yourDay
                         val week = (weekState as? CacheState.Done)?.data
@@ -289,7 +300,7 @@ private fun HomeContent(
                                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                                             ) {
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
-                                                    highlightedLessons.currentLessons.forEachIndexed { i, (currentLesson, continuing) ->
+                                                    highlightedLessons.currentLessons.forEach { (currentLesson, continuing) ->
                                                         val homeworkForLesson = homework.filter { it.subjectInstanceId == currentLesson.subjectInstanceId }
                                                         val assessmentsForLesson = assessments.filter { it.subjectInstanceId == currentLesson.subjectInstanceId }
                                                         CurrentOrNextLesson(
@@ -319,7 +330,7 @@ private fun HomeContent(
                                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                                             ) {
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
-                                                    state.nextLessons.forEachIndexed { i, nextLesson ->
+                                                    state.nextLessons.forEach { nextLesson ->
                                                         CurrentOrNextLesson(
                                                             currentTime = state.currentTime,
                                                             currentLesson = nextLesson,
@@ -330,6 +341,72 @@ private fun HomeContent(
                                                             progressType = ProgressType.Disabled
                                                         )
                                                     }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.size(8.dp))
+                                Text(
+                                    text = "Weitere Stunden",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                                Column(
+                                    modifier = Modifier
+                                        .padding(start = 16.dp)
+                                        .fillMaxWidth()
+                                ) {
+                                    state.remainingLessons.toList().forEachIndexed forEachLessonNumber@{ i, (lessonNumber, lessons) ->
+                                        var lessonsHeight by remember { mutableStateOf(0.dp) }
+                                        Row {
+                                            val colorScheme = MaterialTheme.colorScheme
+                                            Box(
+                                                modifier = Modifier
+                                                    .width(32.dp)
+                                                    .height(lessonsHeight)
+                                                    .drawWithContent {
+                                                        if (!(state.currentLessons.isEmpty() || state.nextLessons.isEmpty() && i == 0)) drawLine(
+                                                            brush = Brush.verticalGradient(0f to if (i == 0) colorScheme.secondaryContainer.transparent() else colorScheme.secondaryContainer, 1f to colorScheme.secondaryContainer, startY = 0f, endY = 16.dp.toPx()),
+                                                            start = Offset(size.width/2, 0f),
+                                                            end = Offset(size.width/2, LESSON_NUMBER_TOP_PADDING.toPx()),
+                                                            strokeWidth = 1.dp.toPx()
+                                                        )
+                                                        if (i < state.remainingLessons.size - 1) drawLine(
+                                                            color = colorScheme.secondaryContainer,
+                                                            start = Offset(size.width/2, (LESSON_NUMBER_TOP_PADDING+LESSON_NUMBER_SIZE).toPx()),
+                                                            end = Offset(size.width/2, size.height),
+                                                            strokeWidth = 1.dp.toPx()
+                                                        )
+                                                        drawContent()
+                                                    }
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .align(Alignment.TopCenter)
+                                                        .padding(top = LESSON_NUMBER_TOP_PADDING)
+                                                        .size(LESSON_NUMBER_SIZE)
+                                                        .clip(CircleShape)
+                                                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                                                ) {
+                                                    Text(
+                                                        text = lessonNumber.toString(),
+                                                        modifier = Modifier.align(Alignment.Center),
+                                                        style = MaterialTheme.typography.bodyLarge,
+                                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                                    )
+                                                }
+                                            }
+                                            Spacer(Modifier.size(8.dp))
+                                            Column(
+                                                modifier = Modifier
+                                                    .padding(end = 16.dp)
+                                                    .fillMaxWidth()
+                                                    .onSizeChanged { with(localDensity) { lessonsHeight = it.height.toDp() } }
+                                            ) {
+                                                lessons.forEach forEachLesson@{ lesson ->
+                                                    val lessonTime = lesson.lessonTime.collectAsResultingFlow().value ?: return@forEachLesson
+                                                    Text(lesson.toString())
                                                 }
                                             }
                                         }
@@ -377,7 +454,9 @@ private fun CurrentOrNextLesson(
             .clip(RoundedCornerShape(4.dp))
             .background(MaterialTheme.colorScheme.primaryContainer)
     ) {
-        Row {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             SubjectIcon(
                 modifier = Modifier
                     .padding(8.dp)
@@ -385,10 +464,7 @@ private fun CurrentOrNextLesson(
                 subject = subject?.subject
             )
             val titleFont = MaterialTheme.typography.titleMedium
-            Column(
-                modifier = Modifier
-                    .padding(top = (iconSize - titleFont.lineHeight.toDp()) / 2 + 8.dp)
-            ) {
+            Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -424,70 +500,73 @@ private fun CurrentOrNextLesson(
                     },
                     style = MaterialTheme.typography.labelMedium
                 )
-                val bodyFont = MaterialTheme.typography.bodyMedium
+            }
+        }
+        val bodyFont = MaterialTheme.typography.bodyMedium
 
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    if (continuing != null) Row {
-                        Icon(
-                            painter = painterResource(Res.drawable.arrow_right),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .padding(end = 4.dp)
-                                .size(bodyFont.lineHeight.toDp())
-                        )
-                        Text(
-                            text = "Weiter in ${lessonTime.lessonNumber + 1}. Stunde",
-                            style = bodyFont
-                        )
-                    }
-                    if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.info != null) Row {
-                        Icon(
-                            painter = painterResource(Res.drawable.info),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .padding(end = 4.dp)
-                                .size(bodyFont.lineHeight.toDp())
-                        )
-                        Text(
-                            text = currentLesson.info,
-                            style = bodyFont
-                        )
-                    }
-                    if (homework.isNotEmpty()) Row {
-                        Icon(
-                            painter = painterResource(Res.drawable.book_open),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .padding(end = 4.dp)
-                                .size(bodyFont.lineHeight.toDp())
-                        )
-                        Text(
-                            text = when(homework.size) {
-                                1 -> "Eine Hausaufgabe"
-                                else -> "${homework.size} Hausaufgaben"
-                            },
-                            style = bodyFont
-                        )
-                    }
-                    if (assessments.isNotEmpty()) Row {
-                        Icon(
-                            painter = painterResource(Res.drawable.notebook_text),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .padding(end = 4.dp)
-                                .size(bodyFont.lineHeight.toDp())
-                        )
-                        Text(
-                            text = when(assessments.size) {
-                                1 -> "Eine Leistung"
-                                else -> "${assessments.size} Leistungen"
-                            },
-                            style = bodyFont
-                        )
-                    }
-                }
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            if (continuing != null) Row {
+                Icon(
+                    painter = painterResource(Res.drawable.arrow_right),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .size(bodyFont.lineHeight.toDp())
+                )
+                Text(
+                    text = "Weiter in ${lessonTime.lessonNumber + 1}. Stunde",
+                    style = bodyFont
+                )
+            }
+            if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.info != null) Row {
+                Icon(
+                    painter = painterResource(Res.drawable.info),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .size(bodyFont.lineHeight.toDp())
+                )
+                Text(
+                    text = currentLesson.info,
+                    style = bodyFont
+                )
+            }
+            if (homework.isNotEmpty()) Row {
+                Icon(
+                    painter = painterResource(Res.drawable.book_open),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .size(bodyFont.lineHeight.toDp())
+                )
+                Text(
+                    text = when(homework.size) {
+                        1 -> "Eine Hausaufgabe"
+                        else -> "${homework.size} Hausaufgaben"
+                    },
+                    style = bodyFont
+                )
+            }
+            if (assessments.isNotEmpty()) Row {
+                Icon(
+                    painter = painterResource(Res.drawable.notebook_text),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .size(bodyFont.lineHeight.toDp())
+                )
+                Text(
+                    text = when(assessments.size) {
+                        1 -> "Eine Leistung"
+                        else -> "${assessments.size} Leistungen"
+                    },
+                    style = bodyFont
+                )
             }
         }
         if (progressType != ProgressType.Disabled) {
@@ -500,6 +579,8 @@ private fun CurrentOrNextLesson(
                     .clip(RoundedCornerShape(3.dp, 3.dp, 0.dp, 0.dp))
                     .background(MaterialTheme.colorScheme.onPrimaryContainer)
             )
+        } else {
+            Spacer(Modifier.size(8.dp))
         }
     }
 }
