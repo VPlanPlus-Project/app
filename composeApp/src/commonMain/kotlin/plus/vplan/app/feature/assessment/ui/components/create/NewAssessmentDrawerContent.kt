@@ -1,6 +1,9 @@
 package plus.vplan.app.feature.assessment.ui.components.create
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +52,7 @@ import plus.vplan.app.feature.homework.ui.components.create.RenameFileDialog
 import plus.vplan.app.feature.homework.ui.components.create.SubjectAndDateTile
 import plus.vplan.app.feature.homework.ui.components.create.VisibilityTile
 import plus.vplan.app.feature.homework.ui.components.create.VppIdBanner
+import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
@@ -68,6 +73,10 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showTypeSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var fileToRename by rememberSaveable { mutableStateOf<AttachedFile?>(null) }
+
+    LaunchedEffect(state.savingState) {
+        if (state.savingState == UnoptimisticTaskState.Success) this@NewAssessmentDrawerContent.closeDrawerWithAnimation()
+    }
 
     val filePickerLauncher = rememberFilePickerLauncher(
         mode = PickerMode.Multiple(),
@@ -122,6 +131,21 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
                 minLines = 4,
                 placeholder = { Text(text = "z.B. Bruchrechnung\n\n- Grundrechenarten mit Brüchen\n- Brüche in Dezimalzahlen umwandeln") },
             )
+            AnimatedVisibility(
+                visible = state.showContentError,
+                enter = expandVertically(expandFrom = Alignment.CenterVertically),
+                exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Text(
+                    text = "Beschreibung darf nicht leer sein",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                )
+            }
             Spacer(Modifier.height(16.dp))
             Text(
                 text = "Fach & Datum",
@@ -138,6 +162,36 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
                 onClickSubjectInstance = { showLessonSelectDrawer = true },
                 onClickDate = { showDateSelectDrawer = true }
             )
+            AnimatedVisibility(
+                visible = state.showSubjectInstanceError,
+                enter = expandVertically(expandFrom = Alignment.CenterVertically),
+                exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Text(
+                    text = "Wähle ein Fach aus",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                )
+            }
+            AnimatedVisibility(
+                visible = state.showDateError,
+                enter = expandVertically(expandFrom = Alignment.CenterVertically),
+                exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Text(
+                    text = "Wähle ein Datum aus",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                )
+            }
 
             if (state.isVisible != null) VisibilityTile(
                 isPublic = state.isVisible,
@@ -182,6 +236,21 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
                     )
                 }
             }
+            AnimatedVisibility(
+                visible = state.showTypeError,
+                enter = expandVertically(expandFrom = Alignment.CenterVertically),
+                exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Text(
+                    text = "Wähle eine Kategorie",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -207,8 +276,9 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
             modifier = Modifier.padding(horizontal = 16.dp),
             text = "Speichern",
             icon = Res.drawable.check,
-            state = ButtonState.Enabled,
+            state = if (state.savingState == UnoptimisticTaskState.InProgress) ButtonState.Loading else ButtonState.Enabled,
             size = ButtonSize.Normal,
+            onlyEventOnActive = true,
             onClick = { viewModel.onEvent(NewAssessmentEvent.Save) }
         )
     }

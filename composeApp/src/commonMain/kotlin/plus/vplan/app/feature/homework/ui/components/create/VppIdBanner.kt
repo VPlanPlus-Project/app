@@ -37,10 +37,10 @@ fun VppIdBanner(
                 if (isAssessment) "Teile Leistungserhebungen mit deiner Klasse, wenn du dich mit einer vpp.ID anmeldest."
                 else "Teile Hausaufgaben mit deiner Klasse, wenn du dich mit einer vpp.ID anmeldest."
             },
-            buttonText2 = "Ignorieren",
-            buttonAction2 = onHide,
-            buttonText1 = "Anmelden",
-            buttonAction1 = { BrowserIntent.openUrl(VPP_ID_AUTH_URL) },
+            buttonText1 = "Ignorieren",
+            buttonAction1 = onHide,
+            buttonText2 = "Anmelden",
+            buttonAction2 = { BrowserIntent.openUrl(VPP_ID_AUTH_URL) },
             backgroundColor = customColors[ColorToken.YellowContainer]!!.get(),
             textColor = customColors[ColorToken.OnYellowContainer]!!.get()
         )

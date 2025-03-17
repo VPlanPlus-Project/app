@@ -160,7 +160,7 @@ fun FullscreenDrawer(
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.surface)
             ) {
-                FullscreenDrawerContext(contentScrollState, onDismissRequest, WindowInsets.systemBars.asPaddingValues()).content()
+                FullscreenDrawerContext(contentScrollState, onDismissRequest, { offset = 0.dp }, WindowInsets.systemBars.asPaddingValues()).content()
             }
         }
     }
@@ -169,5 +169,6 @@ fun FullscreenDrawer(
 data class FullscreenDrawerContext(
     val scrollState: ScrollState,
     val hideDrawer: () -> Unit,
+    val closeDrawerWithAnimation: () -> Unit,
     val contentPadding: PaddingValues,
 )
