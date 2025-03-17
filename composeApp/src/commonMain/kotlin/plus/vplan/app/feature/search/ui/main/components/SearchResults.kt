@@ -283,7 +283,7 @@ private fun GroupResults(
                         style = MaterialTheme.typography.bodySmall
                     )
                     else {
-                        val roomIds = currentLessons.mapNotNull { it.rooms }.flatten().distinct()
+                        val roomIds = currentLessons.mapNotNull { it.roomIds }.flatten().distinct()
                         Text(
                             text = if (roomIds.isEmpty()) "Momentan nicht im Haus"
                             else {
@@ -363,7 +363,7 @@ private fun RoomResults(
                         style = MaterialTheme.typography.bodySmall
                     )
                     else {
-                        val groupIds = currentLessons.map { it.groups }.flatten().distinct()
+                        val groupIds = currentLessons.map { it.groupIds }.flatten().distinct()
                         Text(
                             text = if (groupIds.isEmpty()) "Momentan nicht belegt (Keine Gruppen zugeteilt)"
                             else {
@@ -439,7 +439,7 @@ private fun TeacherResults(
                         style = MaterialTheme.typography.bodySmall
                     )
                     else {
-                        val roomIds = currentLessons.mapNotNull { it.rooms }.flatten().distinct()
+                        val roomIds = currentLessons.mapNotNull { it.roomIds }.flatten().distinct()
                         Text(
                             text = if (roomIds.isEmpty()) "Momentan nicht im Haus"
                             else {

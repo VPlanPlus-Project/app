@@ -8,14 +8,17 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.App
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
@@ -27,9 +30,17 @@ import plus.vplan.app.feature.home.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
+import plus.vplan.app.utils.minus
+import plus.vplan.app.utils.now
+import plus.vplan.app.utils.sortedBySuspending
+import plus.vplan.app.utils.until
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.ExperimentalUuidApi
 
 private val LOGGER = Logger.withTag("HomeViewModel")
 
+@OptIn(ExperimentalUuidApi::class)
 class HomeViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
@@ -48,26 +59,84 @@ class HomeViewModel(
                 getDayUseCase(profile, state.currentTime.date)
                     .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.name}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
                     .collectLatest { day ->
-                        state = state.copy(currentDay = HomeViewDay(
+                        if (day.lessons.first().any { it.lessonTime.getFirstValue()!!.end >= state.currentTime.time }) state = state.copy(
                             day = day,
-                            lessons = day.lessons.map { it.onEach { it.prefetch() } }.first()
-                        ))
-                        if (day.nextSchoolDay != null) getDayUseCase(profile, LocalDate.parse(day.nextSchoolDay.split("/")[1])).collectLatest { nextDay ->
+                            initDone = true
+                        ) else if (day.nextSchoolDayId != null) App.daySource.getById(day.nextSchoolDayId, profile).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { nextDay ->
                             state = state.copy(
-                                nextDay = HomeViewDay(
-                                    day = nextDay,
-                                    lessons = nextDay.lessons.map { it.onEach { it.prefetch() } }.first()
-                                ),
+                                day = nextDay,
                                 initDone = true
                             )
-                        } else state = state.copy(initDone = true)
+                        }
                     }
             }
         }
         viewModelScope.launch {
-            getCurrentDateTimeUseCase().collect { time ->
+            var lastSpecialLessonUpdate = LocalDateTime.now() - 1.hours
+            getCurrentDateTimeUseCase().onEach { time ->
                 state = state.copy(currentTime = time)
             }
+                .collectLatest { time ->
+                    if (lastSpecialLessonUpdate until time < 1.seconds) return@collectLatest
+                    if (state.day?.date == time.date) {
+                        val currentLessons = state.day?.lessons?.first().orEmpty()
+                            .filter { lesson ->
+                                val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                time.time in lessonTimeItem.start..lessonTimeItem.end
+                            }.map { lesson ->
+                                val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                CurrentLesson(
+                                    lesson = lesson,
+                                    continuing = state.day?.lessons?.first().orEmpty().firstOrNull {
+                                        val nextLessonTimeItem = it.lessonTime.getFirstValue()!!
+                                        it.subject != null && it.subject == lesson.subject && it.subjectInstanceId == lesson.subjectInstanceId && nextLessonTimeItem.lessonNumber == lessonTimeItem.lessonNumber + 1
+                                    }
+                                )
+                            }
+
+                        val nextLessons = state.day?.lessons?.first().orEmpty()
+                            .filter { lesson ->
+                                val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                lessonTimeItem.start > time.time
+                            }
+                            .groupBy { it.lessonTimeId }
+                            .toList()
+                            .associate {
+                                App.lessonTimeSource.getById(it.first).getFirstValue()!! to it.second
+                            }
+                            .minByOrNull { it.key.lessonNumber }
+                            ?.value
+                            .orEmpty()
+
+                        val remainingLessons = state.day?.lessons?.first().orEmpty()
+                            .filter { lesson ->
+                                if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
+                                val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                lessonTimeItem.start > time.time
+                            }
+                            .sortedBySuspending { lesson ->
+                                val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                lessonTimeItem.start
+                            }
+                            .groupBy { it.lessonTime.getFirstValue()!!.lessonNumber }
+
+                        state = state.copy(
+                            currentLessons = currentLessons,
+                            nextLessons = nextLessons,
+                            remainingLessons = remainingLessons
+                        )
+                        lastSpecialLessonUpdate = time
+                    }
+                    else {
+                        state = state.copy(
+                            currentLessons = emptyList(),
+                            nextLessons = emptyList(),
+                            remainingLessons = state.day?.lessons?.first().orEmpty()
+                                .sortedBySuspending { it.lessonTime.getFirstValue()!!.lessonNumber }
+                                .groupBy { it.lessonTime.getFirstValue()!!.lessonNumber }
+                        )
+                    }
+                }
         }
     }
 
@@ -76,7 +145,7 @@ class HomeViewModel(
         viewModelScope.launch {
             updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool)
             updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, forceUpdate = false)
-            updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, listOfNotNull(state.currentDay!!.day.date, state.nextDay!!.day.date), allowNotification = false)
+            updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, listOfNotNull(state.day?.date, state.day?.nextSchoolDay?.getFirstValue()?.date), allowNotification = false)
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }
 
@@ -93,23 +162,19 @@ data class HomeState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
     val initDone: Boolean = false,
-    val currentDay: HomeViewDay? = null,
-    val nextDay: HomeViewDay? = null,
-    val isUpdating: Boolean = false
+    val day: Day? = null,
+    val isUpdating: Boolean = false,
+
+    val currentLessons: List<CurrentLesson> = emptyList(),
+    val nextLessons: List<Lesson> = emptyList(),
+    val remainingLessons: Map<Int, List<Lesson>> = emptyMap()
 )
 
 sealed class HomeEvent {
     data object OnRefresh : HomeEvent()
 }
 
-data class HomeViewDay(
-    val day: Day,
-    val lessons: Set<Lesson>
+data class CurrentLesson(
+    val lesson: Lesson,
+    val continuing: Lesson?
 )
-
-private suspend fun Lesson.prefetch() {
-    this.getLessonTimeItem()
-    this.getRoomItems()
-    this.getTeacherItems()
-    if (this is Lesson.SubstitutionPlanLesson) this.getSubjectInstance()
-}

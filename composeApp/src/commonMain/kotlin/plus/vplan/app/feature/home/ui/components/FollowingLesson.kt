@@ -83,7 +83,7 @@ fun FollowingLesson(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val subjectInstanceState = lesson.subjectInstance?.let {
+                    val subjectInstanceState = lesson.subjectInstanceId?.let {
                         App.subjectInstanceSource.getById(it).collectAsLoadingState(it.toString())
                     }
                     Text(
@@ -97,8 +97,8 @@ fun FollowingLesson(
                         if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface
                     )
-                    if (lesson.rooms != null && !lesson.isCancelled) {
-                        val rooms by combine(lesson.rooms.orEmpty().map { App.roomSource.getById(it) }) { it.toList() }.collectAsState(null)
+                    if (lesson.roomIds != null && !lesson.isCancelled) {
+                        val rooms by combine(lesson.roomIds.orEmpty().map { App.roomSource.getById(it) }) { it.toList() }.collectAsState(null)
                         Text(
                             text = buildString {
                                 if (rooms == null) return@buildString
@@ -111,7 +111,7 @@ fun FollowingLesson(
                             else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    val teachers by combine(lesson.teachers.map { App.teacherSource.getById(it) }) { it.toList() }.collectAsState(null)
+                    val teachers by combine(lesson.teacherIds.map { App.teacherSource.getById(it) }) { it.toList() }.collectAsState(null)
                     if (!lesson.isCancelled) Text(
                         text = buildString {
                             if (teachers == null) return@buildString

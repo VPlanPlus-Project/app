@@ -17,7 +17,7 @@ import kotlin.uuid.Uuid
 data class Day(
     val id: String,
     val date: LocalDate,
-    val school: Int,
+    val schoolId: Int,
     val weekId: String?,
     val info: String?,
     val dayType: DayType,
@@ -25,7 +25,7 @@ data class Day(
     val substitutionPlan: Set<Uuid>,
     val assessmentIds: Set<Int>,
     val homeworkIds: Set<Int>,
-    val nextSchoolDay: String?
+    val nextSchoolDayId: String?
 ): Item {
     enum class DayType {
         REGULAR, WEEKEND, HOLIDAY, UNKNOWN
@@ -53,7 +53,9 @@ data class Day(
         }.debounce(50)
     }
 
+    val school by lazy { App.schoolSource.getById(schoolId) }
     val week by lazy { if (this.weekId == null) return@lazy null else App.weekSource.getById(weekId) }
+    val nextSchoolDay by lazy { if (this.nextSchoolDayId == null) return@lazy null else App.daySource.getById(nextSchoolDayId) }
 
     val lessons: Flow<Set<Lesson>> by lazy {
         if (timetable.isEmpty()) return@lazy flowOf(emptySet())

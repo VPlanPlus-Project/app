@@ -34,7 +34,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.ui.components.Button
@@ -253,7 +253,7 @@ private fun FeedbackDrawerContent(
                         )
                     }
                 } else {
-                    val vppId = state.currentProfile.vppId?.collectAsState(null)?.value
+                    val vppId = state.currentProfile.vppId?.collectAsResultingFlow()?.value
                     if (vppId != null) {
                         Row(
                             modifier = Modifier
