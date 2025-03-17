@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app
 
 import androidx.compose.foundation.layout.Column
@@ -39,6 +41,7 @@ import plus.vplan.app.domain.source.schulverwalter.SubjectSource
 import plus.vplan.app.domain.source.schulverwalter.YearSource
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.ui.theme.AppTheme
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 data class Host(

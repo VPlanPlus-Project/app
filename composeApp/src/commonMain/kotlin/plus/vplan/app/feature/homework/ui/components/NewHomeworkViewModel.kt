@@ -84,14 +84,13 @@ class NewHomeworkViewModel(
                     if (state.tasks.all { it.value.isBlank() }) state = state.copy(showTasksError = true)
                     if (state.selectedDate == null) state = state.copy(showDateError = true)
                     run save@{
-                        createHomeworkUseCase(
+                        return@save createHomeworkUseCase(
                             tasks = state.tasks.values.mapNotNull { it.ifBlank { null } }.toList().ifEmpty { return@save false },
                             isPublic = state.isPublic,
                             date = state.selectedDate ?: return@save false,
                             subjectInstance = state.selectedSubjectInstance,
                             selectedFiles = state.files
                         )
-                        return@save true
                     }.let { state = state.copy(savingState = if (it) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error) }
                 }
             }
@@ -112,7 +111,9 @@ data class NewHomeworkState(
     val showDateError: Boolean = false,
 
     val savingState: UnoptimisticTaskState? = null
-)
+) {
+    val hasInputErrors = showTasksError || showDateError
+}
 
 sealed class NewHomeworkEvent {
     data class AddTask(val task: String) : NewHomeworkEvent()

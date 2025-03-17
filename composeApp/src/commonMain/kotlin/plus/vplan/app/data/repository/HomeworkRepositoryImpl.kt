@@ -502,14 +502,14 @@ class HomeworkRepositoryImpl(
         tasks: List<String>
     ): Response<CreateHomeworkResponse> {
         return saveRequest {
-            val response = httpClient.post("${api.url}/api/v2.2/school/${group.school}/homework") {
+            val response = httpClient.post("${api.url}/api/v2.2/homework") {
                 bearerAuth(vppId.accessToken)
                 contentType(ContentType.Application.Json)
                 setBody(
                     HomeworkPostRequest(
                         subjectInstance = subjectInstance?.id,
                         groupId = group.id,
-                        dueTo = until.toEpochDays() * 24 * 60 * 60L,
+                        dueTo = until.toString(),
                         isPublic = isPublic,
                         tasks = tasks
                     )
@@ -552,8 +552,8 @@ class HomeworkRepositoryImpl(
 @Serializable
 data class HomeworkPostRequest(
     @SerialName("subject_instance") val subjectInstance: Int? = null,
-    @SerialName("group_id") val groupId: Int? = null,
-    @SerialName("due_to") val dueTo: Long,
+    @SerialName("group") val groupId: Int? = null,
+    @SerialName("due_to") val dueTo: String,
     @SerialName("is_public") val isPublic: Boolean,
     @SerialName("tasks") val tasks: List<String>,
 )
