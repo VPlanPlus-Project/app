@@ -121,8 +121,8 @@ object App {
     lateinit var gradeSource: GradeSource
     lateinit var finalGradeSource: FinalGradeSource
 
-    val versionCode: Int = 1
-    val versionName: String = "0.0.1-alpha" // remember to update build.gradle.kts
+    val versionCode: Int = 2
+    val versionName: String = "0.1-internal" // remember to update build.gradle.kts
 }
 
 @Composable
