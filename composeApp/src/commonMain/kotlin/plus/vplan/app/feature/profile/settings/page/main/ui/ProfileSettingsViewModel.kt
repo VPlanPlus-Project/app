@@ -14,6 +14,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.CheckIfVppIdIsStillConnectedUseCase
+import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.ConnectVppIdUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.DeleteProfileUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.IsLastProfileOfSchoolUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.RenameProfileUseCase
@@ -27,7 +28,8 @@ class ProfileSettingsViewModel(
     private val renameProfileUseCase: RenameProfileUseCase,
     private val checkIfVppIdIsStillConnectedUseCase: CheckIfVppIdIsStillConnectedUseCase,
     private val isLastProfileOfSchoolUseCase: IsLastProfileOfSchoolUseCase,
-    private val deleteProfileUseCase: DeleteProfileUseCase
+    private val deleteProfileUseCase: DeleteProfileUseCase,
+    private val connectVppIdUseCase: ConnectVppIdUseCase
 ) : ViewModel() {
     var state by mutableStateOf(ProfileSettingsState())
         private set
@@ -54,6 +56,7 @@ class ProfileSettingsViewModel(
             when (event) {
                 is ProfileSettingsEvent.RenameProfile -> renameProfileUseCase(state.profile!!, event.newName)
                 is ProfileSettingsEvent.DeleteProfile -> deleteProfileUseCase(state.profile!!)
+                is ProfileSettingsEvent.ConnectVppId -> connectVppIdUseCase(state.profile as Profile.StudentProfile)
             }
         }
     }
@@ -68,6 +71,8 @@ data class ProfileSettingsState(
 sealed class ProfileSettingsEvent {
     data class RenameProfile(val newName: String) : ProfileSettingsEvent()
     data object DeleteProfile : ProfileSettingsEvent()
+
+    data object ConnectVppId: ProfileSettingsEvent()
 }
 
 private suspend fun Profile.prefetch() {
