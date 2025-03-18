@@ -6,13 +6,15 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import plus.vplan.app.utils.latest
 
 private val logger = Logger.withTag("AddVppIdUseCase")
 
 class AddVppIdUseCase(
     private val vppIdRepository: VppIdRepository,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val syncGradesUseCase: SyncGradesUseCase
 ) {
     suspend operator fun invoke(token: String): Response<VppId.Active> {
         val accessToken = vppIdRepository.getAccessToken(token)
@@ -28,6 +30,7 @@ class AddVppIdUseCase(
             .filterIsInstance<Profile.StudentProfile>()
             .first { it.groupId in vppId.data.groups }
         profileRepository.updateVppId(profile.id, vppId.data.id)
+        syncGradesUseCase(false)
         return Response.Success(vppId.data)
     }
 }
