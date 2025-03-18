@@ -244,6 +244,13 @@ private fun HomeContent(
                             )
                         }
                     }
+                    item news@{
+                        Column {
+                            state.news.forEach { news ->
+                                Text(news.toString())
+                            }
+                        }
+                    }
                     item yourDay@{
                         val isYourDayToday = state.day?.date == state.currentTime.date
                         val weekState = state.day?.week?.collectAsLoadingState("")?.value

@@ -1,13 +1,14 @@
 package plus.vplan.app.di
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
-import org.koin.core.logger.Level
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.KoinAppDeclaration
@@ -24,6 +25,7 @@ import plus.vplan.app.data.repository.HomeworkRepositoryImpl
 import plus.vplan.app.data.repository.IndiwareRepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
 import plus.vplan.app.data.repository.LessonTimeRepositoryImpl
+import plus.vplan.app.data.repository.NewsRepositoryImpl
 import plus.vplan.app.data.repository.ProfileRepositoryImpl
 import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.SchoolRepositoryImpl
@@ -43,6 +45,7 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
@@ -111,6 +114,11 @@ val appModule = module(createdAtStart = true) {
                     }
                 }
             }
+
+            install(DefaultRequest) {
+                header("X-App", "VPlanPlus")
+                header("X-App-Version", App.versionCode)
+            }
         }
     }
 
@@ -132,6 +140,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::HomeworkRepositoryImpl).bind<HomeworkRepository>()
     singleOf(::FileRepositoryImpl).bind<FileRepository>()
     singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
+    singleOf(::NewsRepositoryImpl).bind<NewsRepository>()
 
     singleOf(::GetCurrentProfileUseCase)
 }
