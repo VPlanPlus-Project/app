@@ -49,14 +49,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.main.MainScreen
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.VppIdConnectionState
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.VppIdManagementDrawer
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
-import plus.vplan.app.utils.BrowserIntent
 import plus.vplan.app.utils.DOT
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
@@ -231,7 +229,7 @@ private fun ProfileSettingsContent(
                         .background(MaterialTheme.colorScheme.surfaceContainer)
                         .clickable {
                             if (state.profile.vppIdId == null || state.isVppIdStillConnected == VppIdConnectionState.DISCONNECTED) {
-                                BrowserIntent.openUrl(VPP_ID_AUTH_URL)
+                                onEvent(ProfileSettingsEvent.ConnectVppId)
                                 return@clickable
                             }
                             isVppIdManagementDrawerVisible = true
