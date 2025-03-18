@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,7 +48,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.navigation.NavHostController
@@ -80,7 +78,6 @@ import plus.vplan.app.feature.home.ui.components.Greeting
 import plus.vplan.app.feature.home.ui.components.QuickActions
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
 import plus.vplan.app.feature.main.MainScreen
-import plus.vplan.app.feature.news.ui.NewsDrawer
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
 import plus.vplan.app.ui.components.InfoCard
@@ -104,7 +101,6 @@ import vplanplus.composeapp.generated.resources.chart_no_axes_gantt
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.key_round
-import vplanplus.composeapp.generated.resources.megaphone
 import vplanplus.composeapp.generated.resources.minus
 import vplanplus.composeapp.generated.resources.notebook_text
 import vplanplus.composeapp.generated.resources.triangle_alert
@@ -145,8 +141,6 @@ private fun HomeContent(
     var isNewHomeworkDrawerVisible by rememberSaveable { mutableStateOf(false) }
     var isNewAssessmentDrawerVisible by rememberSaveable { mutableStateOf(false) }
     var isFeedbackDrawerVisible by rememberSaveable { mutableStateOf(false) }
-
-    var visibleNews by rememberSaveable { mutableStateOf<Int?>(null) }
 
     PullToRefreshBox(
         state = pullToRefreshState,
@@ -250,45 +244,10 @@ private fun HomeContent(
                             )
                         }
                     }
-                    item unreadNews@{
-                        val unreadNews = state.news.filter { !it.isRead }
-                        if (unreadNews.isEmpty()) return@unreadNews
+                    item news@{
                         Column {
-                            FeedTitle(
-                                icon = Res.drawable.megaphone,
-                                title = "Ungelesene Meldungen"
-                            )
-                            Spacer(Modifier.size(8.dp))
-                            Column(
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp)),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                unreadNews.forEach { news ->
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                                            .clickable { visibleNews = news.id }
-                                            .padding(16.dp)
-                                    ) {
-                                        Text(
-                                            text = news.title,
-                                            style = MaterialTheme.typography.titleLarge,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = news.content,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            maxLines = 4,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                }
+                            state.news.forEach { news ->
+                                Text(news.toString())
                             }
                         }
                     }
@@ -588,49 +547,6 @@ private fun HomeContent(
                             }
                         }
                     }
-                    item readNews@{
-                        val readNews = state.news.filter { it.isRead }
-                        if (readNews.isEmpty()) return@readNews
-                        Column {
-                            FeedTitle(
-                                icon = Res.drawable.megaphone,
-                                title = "Alle Meldungen"
-                            )
-                            Spacer(Modifier.size(8.dp))
-                            Column(
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp)),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                readNews.forEach { news ->
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                                            .clickable { visibleNews = news.id }
-                                            .padding(16.dp)
-                                    ) {
-                                        Text(
-                                            text = news.title,
-                                            style = MaterialTheme.typography.titleLarge,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = news.content,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            maxLines = 4,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    item bottomSpacer@{  }
                 }
             }
         }
@@ -639,7 +555,6 @@ private fun HomeContent(
     if (isNewHomeworkDrawerVisible) NewHomeworkDrawer { isNewHomeworkDrawerVisible = false }
     if (isNewAssessmentDrawerVisible) NewAssessmentDrawer { isNewAssessmentDrawerVisible = false }
     if (isFeedbackDrawerVisible) FeedbackDrawer { isFeedbackDrawerVisible = false }
-    visibleNews?.let { NewsDrawer(it) { visibleNews = null } }
 }
 
 @Composable
