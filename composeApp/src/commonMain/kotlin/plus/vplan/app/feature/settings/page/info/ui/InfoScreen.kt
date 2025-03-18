@@ -181,7 +181,7 @@ private fun InfoContent(
                     title = "Google Play Store",
                     subtitle = "VPlanPlus: Digitaler Schultag",
                     icon = painterResource(Res.drawable.google_play),
-                    onClick = { BrowserIntent.openUrl("https://play.google.com/") }
+                    onClick = { BrowserIntent.openUrl("https://play.google.com/store/apps/details?id=plus.vplan.app") }
                 )
                 else -> Unit
             }
