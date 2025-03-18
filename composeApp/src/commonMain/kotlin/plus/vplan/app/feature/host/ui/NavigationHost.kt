@@ -3,7 +3,6 @@ package plus.vplan.app.feature.host.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -64,12 +63,12 @@ fun NavigationHost(task: StartTask?) {
 
         composable<AppScreen.VppIdLogin> { route ->
             val args = route.toRoute<AppScreen.VppIdLogin>()
-            Text(args.token)
-        }
-
-        composable<AppScreen.VppIdLogin> { route ->
-            val args = route.toRoute<AppScreen.VppIdLogin>()
-            VppIdSetupScreen(args.token)
+            VppIdSetupScreen(
+                token = args.token,
+                onGoToHome = {
+                    navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) }
+                }
+            )
         }
         composable<AppScreen.SchulverwalterReconnect> { route ->
             val args = route.toRoute<AppScreen.SchulverwalterReconnect>()
