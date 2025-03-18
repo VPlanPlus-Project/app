@@ -121,7 +121,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 5
-        versionName = "0.1-2-internal" // remember to update App.kt
+        versionName = "0.1.2-internal" // remember to update App.kt
     }
     packaging {
         resources {
