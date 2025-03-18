@@ -1,13 +1,10 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
-import plus.vplan.app.domain.model.schulverwalter.Grade
 
 sealed class VppId : Item {
     abstract val id: Int
@@ -37,7 +34,7 @@ sealed class VppId : Item {
             return SchoolApiAccess.VppIdAccess(schoolId, accessToken, id)
         }
 
-        val grades by lazy { combine(gradeIds.map { App.gradeSource.getById(it).filterIsInstance<CacheState.Done<Grade>>().map { it.data } }) { it.toList() } }
+        val grades by lazy { gradeIds.ifEmpty { return@lazy flowOf(emptyList()) }.let { combine(it.map { App.gradeSource.getById(it) }) { it.toList() } } }
 
         data class SchulverwalterConnection(
             val accessToken: String,

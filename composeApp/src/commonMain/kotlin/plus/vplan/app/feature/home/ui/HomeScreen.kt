@@ -412,10 +412,10 @@ private fun HomeContent(
                                                 ) {
                                                     val headFont = MaterialTheme.typography.bodyLarge
                                                     lessons.forEach forEachLesson@{ lesson ->
-                                                        val rooms by lesson.rooms.collectAsSingleFlow()
-                                                        val groups by lesson.groups.collectAsSingleFlow()
-                                                        val teachers by lesson.teachers.collectAsSingleFlow()
                                                         val lessonTime = lesson.lessonTime.collectAsResultingFlow().value ?: return@forEachLesson
+                                                        val rooms = lesson.rooms.collectAsSingleFlow().value
+                                                        val groups = lesson.groups.collectAsSingleFlow().value
+                                                        val teachers = lesson.teachers.collectAsSingleFlow().value
                                                         val homeworkForLesson = homework.filter { it.subjectInstanceId == lesson.subjectInstanceId }
                                                         val assessmentsForLesson = assessments.filter { it.subjectInstanceId == lesson.subjectInstanceId }
                                                         Column(Modifier.fillMaxWidth()) {

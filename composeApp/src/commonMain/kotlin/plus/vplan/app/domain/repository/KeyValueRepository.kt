@@ -19,4 +19,6 @@ object Keys {
     const val CALENDAR_DISPLAY_TYPE = "calendar_display_type"
 
     const val SHOW_HOMEWORK_VPP_ID_BANNER = "show_homework_vpp_id_banner"
+
+    const val VPP_ID_LOGIN_LINK_TO_PROFILE = "VPP_ID_LOGIN_LiNK_TO_PROFILE"
 }
