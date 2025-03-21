@@ -14,7 +14,7 @@ class LoadNewsUseCase(
             .mapNotNull { it.getSchool().getFirstValue() }
             .distinctBy { it.id }
             .forEach { school ->
-                newsRepository.getBySchool(school.getSchoolApiAccess() ?: return@forEach, true)
+                newsRepository.download(school.getSchoolApiAccess() ?: return@forEach)
             }
     }
 }

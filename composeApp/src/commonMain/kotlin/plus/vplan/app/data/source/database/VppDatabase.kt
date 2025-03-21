@@ -22,6 +22,7 @@ import plus.vplan.app.data.source.database.dao.HomeworkDao
 import plus.vplan.app.data.source.database.dao.IndiwareDao
 import plus.vplan.app.data.source.database.dao.KeyValueDao
 import plus.vplan.app.data.source.database.dao.LessonTimeDao
+import plus.vplan.app.data.source.database.dao.NewsDao
 import plus.vplan.app.data.source.database.dao.ProfileDao
 import plus.vplan.app.data.source.database.dao.ProfileSubstitutionPlanCacheDao
 import plus.vplan.app.data.source.database.dao.ProfileTimetableCacheDao
@@ -214,6 +215,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val assessmentDao: AssessmentDao
     abstract val profileTimetableCacheDao: ProfileTimetableCacheDao
     abstract val profileSubstitutionPlanCacheDao: ProfileSubstitutionPlanCacheDao
+    abstract val newsDao: NewsDao
 
     // Schulverwalter
     abstract val yearDao: YearDao

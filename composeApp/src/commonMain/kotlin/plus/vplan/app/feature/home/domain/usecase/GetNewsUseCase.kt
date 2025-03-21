@@ -17,10 +17,7 @@ class GetNewsUseCase(
 ) {
     operator fun invoke(profile: Profile): Flow<List<News>> = flow<List<News>> {
         while (coroutineContext.isActive) {
-            newsRepository.getBySchool(profile.getSchool().getFirstValue()?.getSchoolApiAccess() ?: return@flow, false).let {
-                if (it !is Response.Success) emit(emptyList())
-                else emit(it.data.filter { it.schoolIds.isEmpty() || profile.getSchool().getFirstValue()!!.id in it.schoolIds })
-            }
+            emit(emptyList())
             delay(100)
         }
     }.distinctUntilChanged()

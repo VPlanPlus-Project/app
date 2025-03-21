@@ -77,6 +77,8 @@ import plus.vplan.app.feature.settings.page.info.ui.InfoScreen
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
 import plus.vplan.app.feature.settings.page.security.ui.SecuritySettingsScreen
 import plus.vplan.app.feature.settings.ui.SettingsScreen
+import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateNewsUseCase
 import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
@@ -132,8 +134,8 @@ fun MainScreenHost(
             else null
     }
 
-    val loadNewsUseCase = koinInject<LoadNewsUseCase>()
-    LaunchedEffect(Unit) { loadNewsUseCase() }
+    val syncNewsUseCase = koinInject<UpdateNewsUseCase>()
+    LaunchedEffect(Unit) { syncNewsUseCase() }
 
     val homeViewModel = koinViewModel<HomeViewModel>()
     val calendarViewModel = koinViewModel<CalendarViewModel>()

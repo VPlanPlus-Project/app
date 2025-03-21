@@ -1,5 +1,6 @@
 package plus.vplan.app.di
 
+import androidx.room.RoomDatabase
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -34,6 +35,7 @@ import plus.vplan.app.data.repository.TeacherRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
+import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.CourseRepository
@@ -96,6 +98,8 @@ import plus.vplan.app.feature.sync.di.syncModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
 
 expect val platformModule: Module
+
+fun RoomDatabase.Builder<VppDatabase>.config(): RoomDatabase.Builder<VppDatabase> = this
 
 val appModule = module(createdAtStart = true) {
     single<HttpClient> {
