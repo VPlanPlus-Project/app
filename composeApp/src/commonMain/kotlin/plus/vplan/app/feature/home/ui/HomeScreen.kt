@@ -246,8 +246,8 @@ private fun HomeContent(
                     }
                     item news@{
                         Column {
-                            state.news.forEach { news ->
-                                Text(news.toString())
+                            state.news.filter { !it.isRead }.forEach {
+                                Text(it.toString())
                             }
                         }
                     }
