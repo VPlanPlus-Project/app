@@ -5,11 +5,14 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Clock
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.api
+import plus.vplan.app.data.source.database.VppDatabase
+import plus.vplan.app.data.source.database.model.database.DbNews
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsSchool
 import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
@@ -18,16 +21,12 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.repository.NewsRepository
-import kotlin.time.Duration.Companion.minutes
 
 class NewsRepositoryImpl(
+    private val vppDatabase: VppDatabase,
     private val httpClient: HttpClient
 ) : NewsRepository {
-    private val newsCache = mutableMapOf<Int, News>()
-    private var lastReload = Instant.fromEpochSeconds(0)
-
-    override suspend fun getBySchool(schoolApiAccess: SchoolApiAccess, reload: Boolean): Response<List<News>> {
-        if (!reload && lastReload.minus(5.minutes) < Clock.System.now()) return Response.Success(newsCache.values.filter { schoolApiAccess.schoolId in it.schoolIds })
+    override suspend fun download(schoolApiAccess: SchoolApiAccess): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url {
@@ -44,10 +43,27 @@ class NewsRepositoryImpl(
             val data = ResponseDataWrapper.fromJson<List<NewsResponse>>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
 
-            lastReload = Clock.System.now()
+            vppDatabase.newsDao.upsert(
+                news = data.map { DbNews(
+                    id = it.id,
+                    author = it.author,
+                    title = it.title,
+                    content = it.content,
+                    createdAt = Instant.fromEpochSeconds(it.createdAt),
+                    notBefore = Instant.fromEpochSeconds(it.dateFrom),
+                    notAfter = Instant.fromEpochSeconds(it.dateTo),
+                    notBeforeVersion = it.versionFrom,
+                    notAfterVersion = it.versionTo,
+                    isRead = false
+                ) },
+                schools = data.flatMap { news ->
+                    news.schoolIds.map {
+                        FKNewsSchool(newsId = news.id, schoolId = it.id)
+                    }
+                }
+            )
 
-            newsCache.putAll(data.map { it.toModel() }.associateBy { it.id })
-            return Response.Success(newsCache.values.filter { schoolApiAccess.schoolId in it.schoolIds })
+            return Response.Success(data.map { it.id })
         }
         return Response.Error.Cancelled
     }
@@ -56,8 +72,10 @@ class NewsRepositoryImpl(
         TODO("Not yet implemented")
     }
 
-    override fun getAllIds(): Flow<List<Int>> {
-        TODO("Not yet implemented")
+    override fun getAllIds(): Flow<List<Int>> = vppDatabase.newsDao.getAll().map { it.map { n -> n.news.id } }
+    override suspend fun getAll(): Flow<List<News>> = vppDatabase.newsDao.getAll().map { it.map { it.toModel() } }
+    override suspend fun delete(ids: List<Int>) {
+        vppDatabase.newsDao.delete(ids)
     }
 }
 
@@ -69,8 +87,8 @@ private data class NewsResponse(
     @SerialName("created_at") val createdAt: Long,
     @SerialName("app_version_from") val versionFrom: Int?,
     @SerialName("app_version_to") val versionTo: Int?,
-    @SerialName("visibility_start") val dateFrom: Long?,
-    @SerialName("visibility_end") val dateTo: Long?,
+    @SerialName("visibility_start") val dateFrom: Long,
+    @SerialName("visibility_end") val dateTo: Long,
     @SerialName("schools") val schoolIds: List<IncludedModel>,
     @SerialName("author") val author: String
 ) {
@@ -81,8 +99,8 @@ private data class NewsResponse(
         date = Instant.fromEpochSeconds(this.createdAt),
         versionFrom = this.versionFrom,
         versionTo = this.versionTo,
-        dateFrom = this.dateFrom?.let { Instant.fromEpochSeconds(it) },
-        dateTo = this.dateTo?.let { Instant.fromEpochSeconds(it) },
+        dateFrom = this.dateFrom.let { Instant.fromEpochSeconds(it) },
+        dateTo = this.dateTo.let { Instant.fromEpochSeconds(it) },
         schoolIds = this.schoolIds.map { it.id },
         author = this.author
     )
