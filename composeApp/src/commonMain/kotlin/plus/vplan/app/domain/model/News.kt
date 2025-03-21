@@ -16,7 +16,8 @@ data class News(
     val dateFrom: Instant?,
     val dateTo: Instant?,
     val schoolIds: List<Int>,
-    val author: String
+    val author: String,
+    val isRead: Boolean
 ) : Item {
     override fun getEntityId(): String = this.id.toString()
 

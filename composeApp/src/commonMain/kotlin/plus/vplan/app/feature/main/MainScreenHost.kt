@@ -60,7 +60,6 @@ import plus.vplan.app.feature.dev.ui.DevScreen
 import plus.vplan.app.feature.grades.page.analytics.ui.AnalyticsScreen
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.GradesScreen
-import plus.vplan.app.feature.home.domain.usecase.LoadNewsUseCase
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
@@ -77,7 +76,6 @@ import plus.vplan.app.feature.settings.page.info.ui.InfoScreen
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
 import plus.vplan.app.feature.settings.page.security.ui.SecuritySettingsScreen
 import plus.vplan.app.feature.settings.ui.SettingsScreen
-import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateNewsUseCase
 import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.utils.BrowserIntent

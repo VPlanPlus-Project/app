@@ -91,17 +91,4 @@ private data class NewsResponse(
     @SerialName("visibility_end") val dateTo: Long,
     @SerialName("schools") val schoolIds: List<IncludedModel>,
     @SerialName("author") val author: String
-) {
-    fun toModel() = News(
-        id = this.id,
-        title = this.title,
-        content = this.content,
-        date = Instant.fromEpochSeconds(this.createdAt),
-        versionFrom = this.versionFrom,
-        versionTo = this.versionTo,
-        dateFrom = this.dateFrom.let { Instant.fromEpochSeconds(it) },
-        dateTo = this.dateTo.let { Instant.fromEpochSeconds(it) },
-        schoolIds = this.schoolIds.map { it.id },
-        author = this.author
-    )
-}
+)

@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.sync.domain.usecase.vpp
 
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
@@ -10,6 +11,7 @@ class UpdateNewsUseCase(
     private val newsRepository: NewsRepository,
     private val profileRepository: ProfileRepository
 ) {
+    private val logger = Logger.withTag("UpdateNewsUseCase")
     suspend operator fun invoke() {
         val existing = newsRepository.getAll().first()
         val downloadedNewsIds = mutableSetOf<Int>()
@@ -20,6 +22,9 @@ class UpdateNewsUseCase(
                 val response = newsRepository.download(school.getSchoolApiAccess()!!)
                 if (response is Response.Success) {
                     downloadedNewsIds.addAll(response.data)
+                } else {
+                    logger.e { "Cannot update news for school ${school.name} (${school.id}); error: $response" }
+                    return
                 }
             }
 

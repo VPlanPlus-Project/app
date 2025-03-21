@@ -25,7 +25,8 @@ data class EmbeddedNews(
             dateFrom = news.notBefore,
             dateTo = news.notAfter,
             schoolIds = schools.map { it.schoolId },
-            author = news.author
+            author = news.author,
+            isRead = news.isRead
         )
     }
 }
