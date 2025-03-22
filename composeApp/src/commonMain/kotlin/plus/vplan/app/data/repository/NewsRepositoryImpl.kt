@@ -7,6 +7,7 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
@@ -59,7 +60,7 @@ class NewsRepositoryImpl(
                     notAfter = Instant.fromEpochSeconds(it.dateTo),
                     notBeforeVersion = it.versionFrom,
                     notAfterVersion = it.versionTo,
-                    isRead = false
+                    isRead = vppDatabase.newsDao.getById(it.id).first()?.news?.isRead ?: false
                 ) },
                 schools = data.flatMap { news ->
                     news.schoolIds.map {
