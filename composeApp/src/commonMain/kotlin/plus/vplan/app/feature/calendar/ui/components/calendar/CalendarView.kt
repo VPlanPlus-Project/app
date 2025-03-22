@@ -122,7 +122,7 @@ fun CalendarView(
                             .let { if (contentScrollState == null) it else it.verticalScroll(contentScrollState) }
                     ) {
                         val lessonTimes = remember(lessons.size) { mutableStateMapOf<Int, LessonTime>() }
-                        LaunchedEffect(lessons.size) {
+                        LaunchedEffect(lessons.map { it.lessonTimeId }.sorted().distinct()) {
                             lessons.mapIndexed { index, lesson ->
                                 lessonTimes[index] = lesson.lessonTime.getFirstValue()!!
                             }
@@ -132,7 +132,7 @@ fun CalendarView(
                         var end by remember { mutableStateOf(LocalTime(23, 59, 59, 99)) }
 
                         LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons, lessonTimes.size, limitTimeSpanToLessonsLowerBound) {
-                            if ((!autoLimitTimeSpanToLessons || lessonTimes.size < lessons.size || lessons.isEmpty()) && limitTimeSpanToLessonsLowerBound != null) return@LaunchedEffect
+                            if (!autoLimitTimeSpanToLessons || lessonTimes.isEmpty() || lessons.isEmpty()) return@LaunchedEffect
                             start = limitTimeSpanToLessonsLowerBound ?: lessonTimes.values.minOf { it.start }.minusWithCapAtMidnight(1.hours)
                             end = lessonTimes.values.maxOf { it.end }.plusWithCapAtMidnight(1.hours)
                         }
