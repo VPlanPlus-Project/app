@@ -7,5 +7,5 @@ import plus.vplan.app.domain.model.Teacher
 
 interface TeacherRepository: WebEntityRepository<Teacher> {
     fun getBySchool(schoolId: Int): Flow<List<Teacher>>
-    suspend fun getBySchoolWithCaching(school: School): Response<Flow<List<Teacher>>>
+    suspend fun getBySchoolWithCaching(school: School, forceReload: Boolean): Response<Flow<List<Teacher>>>
 }

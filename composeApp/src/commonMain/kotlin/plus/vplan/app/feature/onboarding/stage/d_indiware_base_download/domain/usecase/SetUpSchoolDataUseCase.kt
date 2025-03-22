@@ -84,7 +84,7 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
-            val classes = groupRepository.getBySchoolWithCaching(school).let {
+            groupRepository.getBySchoolWithCaching(school).let {
                 (it as? Response.Success)?.data?.first() ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix groups-Lookup was not successful: $it"))
             }
 
@@ -92,7 +92,7 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_TEACHERS] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
-            val teachers = teacherRepository.getBySchoolWithCaching(school).let {
+            val teachers = teacherRepository.getBySchoolWithCaching(school, forceReload = true).let {
                 (it as? Response.Success)?.data?.first() ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix teachers-Lookup was not successful: $it"))
             }
 
@@ -100,7 +100,7 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_ROOMS] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
-            val rooms = roomRepository.getBySchoolWithCaching(school).let {
+            roomRepository.getBySchoolWithCaching(school, forceReload = true).let {
                 (it as? Response.Success)?.data?.first() ?: return@flow emit(SetUpSchoolDataResult.Error("$prefix rooms-Lookup was not successful: $it"))
             }
 
@@ -131,7 +131,7 @@ class SetUpSchoolDataUseCase(
             emitResult()
 
             courseRepository.getBySchool(school.id, true).first()
-            val courses = baseData.data.classes
+            baseData.data.classes
                 .flatMap { baseDataClass -> baseDataClass.subjectInstances.mapNotNull { it.course }.map { Course.fromIndiware(sp24Id, it.name, teachers.firstOrNull { t -> t.name == it.teacher }) } }
                 .distinct()
                 .onEach { courseRepository.getByIndiwareId(it).getFirstValue() }
@@ -139,7 +139,7 @@ class SetUpSchoolDataUseCase(
             subjectInstanceRepository.download(school.id, school.getSchoolApiAccess())
 
             subjectInstanceRepository.getBySchool(school.id, true).first()
-            val subjectInstances = baseData.data.classes
+            baseData.data.classes
                 .flatMap { baseDataClass -> baseDataClass.subjectInstances.map { it.subjectInstanceNumber } }
                 .distinct()
                 .map { subjectInstanceRepository.getByIndiwareId(it).getFirstValue() }
