@@ -6,6 +6,7 @@ import plus.vplan.app.domain.model.School
 sealed class SearchResult(val type: Type) {
     sealed class SchoolEntity(
         type: Type,
+        val id: Int,
         val name: String,
         val school: School
     ) : SearchResult(type) {
@@ -15,17 +16,17 @@ sealed class SearchResult(val type: Type) {
         data class Group(
             val group: plus.vplan.app.domain.model.Group,
             override val lessons: List<Lesson>
-        ) : SchoolEntity(Type.Group, group.name, group.school!!)
+        ) : SchoolEntity(Type.Group, group.id, group.name, group.school!!)
 
         data class Teacher(
             val teacher: plus.vplan.app.domain.model.Teacher,
             override val lessons: List<Lesson>
-        ) : SchoolEntity(Type.Teacher, teacher.name, teacher.school!!)
+        ) : SchoolEntity(Type.Teacher, teacher.id, teacher.name, teacher.school!!)
 
         data class Room(
             val room: plus.vplan.app.domain.model.Room,
             override val lessons: List<Lesson>
-        ) : SchoolEntity(Type.Room, room.name, room.school!!)
+        ) : SchoolEntity(Type.Room, room.id, room.name, room.school!!)
     }
 
     data class Homework(val homework: plus.vplan.app.domain.model.Homework): SearchResult(Type.Homework)
