@@ -13,8 +13,8 @@ data class News(
     val date: Instant,
     val versionFrom: Int?,
     val versionTo: Int?,
-    val dateFrom: Instant?,
-    val dateTo: Instant?,
+    val dateFrom: Instant,
+    val dateTo: Instant,
     val schoolIds: List<Int>,
     val author: String,
     val isRead: Boolean

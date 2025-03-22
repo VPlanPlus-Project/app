@@ -9,4 +9,5 @@ interface NewsRepository: WebEntityRepository<News> {
     suspend fun download(schoolApiAccess: SchoolApiAccess): Response<List<Int>>
     suspend fun getAll(): Flow<List<News>>
     suspend fun delete(ids: List<Int>)
+    suspend fun upsert(news: News)
 }
