@@ -36,9 +36,9 @@ class TeacherRepositoryImpl(
         return vppDatabase.teacherDao.getBySchool(schoolId).map { result -> result.map { it.toModel() } }
     }
 
-    override suspend fun getBySchoolWithCaching(school: School): Response<Flow<List<Teacher>>> {
+    override suspend fun getBySchoolWithCaching(school: School, forceReload: Boolean): Response<Flow<List<Teacher>>> {
         val flow = getBySchool(school.id)
-        if (flow.first().isNotEmpty()) return Response.Success(flow)
+        if (flow.first().isNotEmpty() && !forceReload) return Response.Success(flow)
         return saveRequest {
             val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/teacher") {
                 school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
