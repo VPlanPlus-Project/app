@@ -11,12 +11,14 @@ import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
+import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
@@ -49,6 +51,7 @@ class FullSyncUseCase(
     private val roomRepository: RoomRepository,
     private val courseRepository: CourseRepository,
     private val vppIdRepository: VppIdRepository,
+    private val profileRepository: ProfileRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
@@ -90,10 +93,16 @@ class FullSyncUseCase(
                 schoolRepository.getById(school.id, true).getFirstValue()
             }
 
-        schoolRepository.getAll().first()
+        profileRepository.getAll().first()
+            .mapNotNull { it.getSchool().getFirstValue() }
+            .distinctBy { it.id }
             .filterIsInstance<School.IndiwareSchool>()
             .filter { it.credentialsValid }
             .forEach { school ->
+                (groupRepository.getBySchoolWithCaching(school, true) as? Response.Success)?.data?.first()
+                (teacherRepository.getBySchoolWithCaching(school, true) as? Response.Success)?.data?.first()
+                (roomRepository.getBySchoolWithCaching(school, true) as? Response.Success)?.data?.first()
+
                 when (checkSp24CredentialsUseCase(school.sp24Id.toInt(), school.username, school.password)) {
                     SchoolSettingsCredentialsState.Error -> return@forEach
                     SchoolSettingsCredentialsState.Invalid -> {

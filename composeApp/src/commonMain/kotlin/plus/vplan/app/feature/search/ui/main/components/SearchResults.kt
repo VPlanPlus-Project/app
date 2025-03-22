@@ -56,8 +56,8 @@ import plus.vplan.app.feature.calendar.ui.components.agenda.GradeCard
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.ui.components.ShimmerLoader
+import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.findCurrentLessons
-import plus.vplan.app.utils.getLastLessonEnd
 import plus.vplan.app.utils.getNextLessonStart
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormat
@@ -157,9 +157,11 @@ fun SearchResults(
                 }
                 Spacer(Modifier.size(4.dp))
                 when (type) {
-                    SearchResult.Type.Group -> GroupResults(results.filterIsInstance<SearchResult.SchoolEntity.Group>()) { visibleResult = it }
-                    SearchResult.Type.Room -> RoomResults(results.filterIsInstance<SearchResult.SchoolEntity.Room>()) { visibleResult = it }
-                    SearchResult.Type.Teacher -> TeacherResults(results.filterIsInstance<SearchResult.SchoolEntity.Teacher>()) { visibleResult = it }
+                    SearchResult.Type.Group, SearchResult.Type.Room, SearchResult.Type.Teacher  -> SchoolEntityResults(
+                        contextDate = date,
+                        results = results.filterIsInstance<SearchResult.SchoolEntity>(),
+                        onClick = { visibleResult = it }
+                    )
                     SearchResult.Type.Homework -> {
                         Column(
                             modifier = Modifier
@@ -229,101 +231,24 @@ private val typeTypeSortings = listOf(
 )
 
 @Composable
-private fun GroupResults(
-    results: List<SearchResult.SchoolEntity.Group>,
-    onClick: (result: SearchResult.SchoolEntity.Group) -> Unit
+private fun SchoolEntityResults(
+    contextDate: LocalDate,
+    results: List<SearchResult.SchoolEntity>,
+    onClick: (result: SearchResult.SchoolEntity) -> Unit
 ) {
     val localDensity = LocalDensity.current
-    var groupNameWidth by remember { mutableStateOf(0.dp) }
+    var schoolEntityNameWidth by remember { mutableStateOf(0.dp) }
     results.forEachIndexed { i, result ->
-        key(result.group.id) {
-            val currentLessons = remember { mutableStateListOf<Lesson>() }
-            var end by remember { mutableStateOf<LocalTime?>(null) }
-            var hasLessonsLoaded by remember { mutableStateOf(false) }
-            LaunchedEffect(result.lessons) {
-                currentLessons.clear()
-                currentLessons.addAll(result.lessons.findCurrentLessons(LocalTime.now()).toMutableStateList())
-                if (result.lessons.isNotEmpty()) end = result.lessons.getLastLessonEnd()
-                hasLessonsLoaded = true
-            }
-            if (i > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onClick(result) }
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .sizeIn(minWidth = groupNameWidth, maxWidth = 72.dp)
-                        .onSizeChanged { with(localDensity) { it.width.toDp().let { width -> if (width > groupNameWidth) groupNameWidth = width } } }
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = result.group.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-                Column {
-                    if (result.lessons.isEmpty()) Text(
-                        text = "Heute keine Stunden",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    else if (currentLessons.isEmpty() && !hasLessonsLoaded) LineShimmer()
-                    else if (currentLessons.isEmpty() && hasLessonsLoaded) Text(
-                        text = "Momentan keine Stunden",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    else {
-                        val roomIds = currentLessons.mapNotNull { it.roomIds }.flatten().distinct()
-                        Text(
-                            text = if (roomIds.isEmpty()) "Momentan nicht im Haus"
-                            else {
-                                val rooms = roomIds.map { App.roomSource.getById(it) }.collectAsResultingFlow().value
-                                val until = currentLessons.map { it.lessonTime }.collectAsResultingFlow().value.maxOfOrNull { it.end }
-                                buildString {
-                                    append("Momentan in ${rooms.map { it.name }.sorted().joinToString()}")
-                                    if (until != null) append(" (bis $until)")
-                                }
-                            },
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    if (end == null && !hasLessonsLoaded) LineShimmer()
-                    else if (hasLessonsLoaded && end != null) Text(
-                        text = "Schulschluss um ${end!!.format(regularTimeFormat)}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RoomResults(
-    results: List<SearchResult.SchoolEntity.Room>,
-    onClick: (result: SearchResult.SchoolEntity.Room) -> Unit
-) {
-    val localDensity = LocalDensity.current
-    var roomNameWidth by remember { mutableStateOf(0.dp) }
-    results.forEachIndexed { i, result ->
-        key(result.room.id) {
+        key(result.id) {
             val currentLessons = remember { mutableStateListOf<Lesson>() }
             var nextLesson by remember { mutableStateOf<LocalTime?>(null) }
             var hasLessonsLoaded by remember { mutableStateOf(false) }
             LaunchedEffect(result.lessons) {
                 currentLessons.clear()
-                currentLessons.addAll(result.lessons.findCurrentLessons(LocalTime.now()).toMutableStateList())
-                nextLesson = result.lessons.getNextLessonStart(LocalTime.now())
+                if (contextDate == LocalDate.now()) {
+                    currentLessons.addAll(result.lessons.findCurrentLessons(LocalTime.now()).toMutableStateList())
+                    nextLesson = result.lessons.getNextLessonStart(LocalTime.now())
+                }
                 hasLessonsLoaded = true
             }
             if (i > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
@@ -339,125 +264,72 @@ private fun RoomResults(
             ) {
                 Box(
                     modifier = Modifier
-                        .sizeIn(minWidth = roomNameWidth, maxWidth = 72.dp)
-                        .onSizeChanged { with(localDensity) { it.width.toDp().let { width -> if (width > roomNameWidth) roomNameWidth = width } } }
+                        .sizeIn(minWidth = schoolEntityNameWidth, maxWidth = 72.dp)
+                        .onSizeChanged { with(localDensity) { it.width.toDp().let { width -> if (width > schoolEntityNameWidth) schoolEntityNameWidth = width } } }
                         .clip(RoundedCornerShape(8.dp))
                         .background(MaterialTheme.colorScheme.primary)
                         .padding(6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = result.room.name,
+                        text = result.name,
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
                 Column {
-                    if (result.lessons.isEmpty()) Text(
-                        text = "Heute nicht belegt",
+                    if (currentLessons.isEmpty() && !hasLessonsLoaded) LineShimmer()
+                    else if (result.lessons.isNotEmpty() && hasLessonsLoaded && contextDate != LocalDate.now()) Text(
+                        text = when (result.lessons.size) {
+                            0 -> "Kein Unterricht"
+                            1 -> "Eine Stunde"
+                            else -> "${result.lessons.size} Stunden"
+                        },
                         style = MaterialTheme.typography.bodySmall
                     )
-                    else if (currentLessons.isEmpty() && !hasLessonsLoaded) LineShimmer()
-                    else if (currentLessons.isEmpty() && hasLessonsLoaded) Text(
-                        text = "Momentan nicht belegt",
+                    else if (result.lessons.isEmpty() && hasLessonsLoaded && contextDate == LocalDate.now()) Text(
+                        text = "Heute kein Unterricht",
                         style = MaterialTheme.typography.bodySmall
                     )
                     else {
-                        val groupIds = currentLessons.map { it.groupIds }.flatten().distinct()
+                        when (result) {
+                            is SearchResult.SchoolEntity.Room -> {
+                                val groupIds = currentLessons.map { it.groupIds }.flatten().distinct()
+                                Text(
+                                    text = if (groupIds.isEmpty()) "Momentan nicht belegt (Keine Gruppen zugeteilt)"
+                                    else {
+                                        val groups = groupIds.map { App.groupSource.getById(it) }.collectAsResultingFlow().value
+                                        "Momentan belegt von ${groups.map { it.name }.sorted().joinToString()}"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            is SearchResult.SchoolEntity.Teacher, is SearchResult.SchoolEntity.Group -> {
+                                val roomIds = currentLessons.mapNotNull { it.roomIds }.flatten().distinct()
+                                Text(
+                                    text = if (roomIds.isEmpty()) "Momentan nicht im Haus"
+                                    else {
+                                        val rooms = roomIds.map { App.roomSource.getById(it) }.collectAsResultingFlow().value
+                                        val until = currentLessons.map { it.lessonTime }.collectAsResultingFlow().value.maxOfOrNull { it.end }
+                                        buildString {
+                                            append("Momentan in ${rooms.map { it.name }.sorted().joinToString()}")
+                                            if (until != null) append(" (bis $until)")
+                                        }
+                                    },
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    }
+                    Row {
                         Text(
-                            text = if (groupIds.isEmpty()) "Momentan nicht belegt (Keine Gruppen zugeteilt)"
-                            else {
-                                val groups = groupIds.map { App.groupSource.getById(it) }.collectAsResultingFlow().value
-                                "Momentan belegt von ${groups.map { it.name }.sorted().joinToString()}"
+                            text = buildString {
+                                append("Tippe für alle Stunden ")
+                                if (currentLessons.isEmpty() && hasLessonsLoaded && nextLesson != null) append("$DOT Nächster Unterricht ab ${nextLesson!!.format(regularTimeFormat)}")
                             },
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-                    if (nextLesson == null && !hasLessonsLoaded) LineShimmer()
-                    else if (currentLessons.isEmpty() && hasLessonsLoaded && nextLesson != null) Text(
-                        text = "Nächster Unterricht ab ${nextLesson!!.format(regularTimeFormat)}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TeacherResults(
-    results: List<SearchResult.SchoolEntity.Teacher>,
-    onClick: (result: SearchResult.SchoolEntity.Teacher) -> Unit
-) {
-    val localDensity = LocalDensity.current
-    var teacherNameWidth by remember { mutableStateOf(0.dp) }
-    results.forEachIndexed { i, result ->
-        key(result.teacher.id) {
-            val currentLessons = remember { mutableStateListOf<Lesson>() }
-            var end by remember { mutableStateOf<LocalTime?>(null) }
-            var hasLessonsLoaded by remember { mutableStateOf(false) }
-            LaunchedEffect(result.lessons) {
-                currentLessons.clear()
-                currentLessons.addAll(result.lessons.findCurrentLessons(LocalTime(8, 30)).toMutableStateList())
-                if (result.lessons.isNotEmpty()) end = result.lessons.getLastLessonEnd()
-                hasLessonsLoaded = true
-            }
-            if (i > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onClick(result) }
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .sizeIn(minWidth = teacherNameWidth, maxWidth = 72.dp)
-                        .onSizeChanged { with(localDensity) { it.width.toDp().let { width -> if (width > teacherNameWidth) teacherNameWidth = width } } }
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = result.teacher.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-                Column {
-                    if (result.lessons.isEmpty()) Text(
-                        text = "Heute keine Stunden",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    else if (currentLessons.isEmpty() && !hasLessonsLoaded) LineShimmer()
-                    else if (currentLessons.isEmpty() && hasLessonsLoaded) Text(
-                        text = "Momentan keine Stunden",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    else {
-                        val roomIds = currentLessons.mapNotNull { it.roomIds }.flatten().distinct()
-                        Text(
-                            text = if (roomIds.isEmpty()) "Momentan nicht im Haus"
-                            else {
-                                val rooms = roomIds.map { App.roomSource.getById(it) }.collectAsResultingFlow().value
-                                val until = currentLessons.map { it.lessonTime }.collectAsResultingFlow().value.maxOfOrNull { it.end }
-                                buildString {
-                                    append("Momentan in ${rooms.map { it.name }.sorted().joinToString()}")
-                                    if (until != null) append(" (bis $until)")
-                                }
-                            },
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    if (end == null && !hasLessonsLoaded) LineShimmer()
-                    else if (hasLessonsLoaded && end != null) Text(
-                        text = "Letzte Stunde endet ${end!!.format(regularTimeFormat)}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
                 }
             }
         }
