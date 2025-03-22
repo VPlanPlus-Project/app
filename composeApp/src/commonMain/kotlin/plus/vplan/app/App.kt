@@ -24,6 +24,7 @@ import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
+import plus.vplan.app.domain.source.NewsSource
 import plus.vplan.app.domain.source.ProfileSource
 import plus.vplan.app.domain.source.RoomSource
 import plus.vplan.app.domain.source.SchoolSource
@@ -112,6 +113,7 @@ object App {
     lateinit var substitutionPlanSource: SubstitutionPlanSource
     lateinit var assessmentSource: AssessmentSource
     lateinit var fileSource: FileSource
+    lateinit var newsSource: NewsSource
 
     lateinit var yearSource: YearSource
     lateinit var intervalSource: IntervalSource
@@ -121,8 +123,8 @@ object App {
     lateinit var gradeSource: GradeSource
     lateinit var finalGradeSource: FinalGradeSource
 
-    val versionCode: Int = 7
-    val versionName: String = "0.1.2-closed" // remember to update build.gradle.kts
+    val versionCode: Int = 8
+    val versionName: String = "0.1.3-closed" // remember to update build.gradle.kts
 }
 
 @Composable

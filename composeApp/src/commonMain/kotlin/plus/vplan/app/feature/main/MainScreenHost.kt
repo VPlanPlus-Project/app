@@ -47,6 +47,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
 import plus.vplan.app.VPP_ID_AUTH_URL
@@ -75,6 +76,7 @@ import plus.vplan.app.feature.settings.page.info.ui.InfoScreen
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
 import plus.vplan.app.feature.settings.page.security.ui.SecuritySettingsScreen
 import plus.vplan.app.feature.settings.ui.SettingsScreen
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateNewsUseCase
 import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
@@ -129,6 +131,9 @@ fun MainScreenHost(
             else if (destination.route.orEmpty().startsWith(MainScreen.MainProfile::class.qualifiedName ?: "__")) "_Profile"
             else null
     }
+
+    val syncNewsUseCase = koinInject<UpdateNewsUseCase>()
+    LaunchedEffect(Unit) { syncNewsUseCase() }
 
     val homeViewModel = koinViewModel<HomeViewModel>()
     val calendarViewModel = koinViewModel<CalendarViewModel>()

@@ -1,5 +1,6 @@
 package plus.vplan.app.data.source.database
 
+import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
@@ -21,6 +22,7 @@ import plus.vplan.app.data.source.database.dao.HomeworkDao
 import plus.vplan.app.data.source.database.dao.IndiwareDao
 import plus.vplan.app.data.source.database.dao.KeyValueDao
 import plus.vplan.app.data.source.database.dao.LessonTimeDao
+import plus.vplan.app.data.source.database.dao.NewsDao
 import plus.vplan.app.data.source.database.dao.ProfileDao
 import plus.vplan.app.data.source.database.dao.ProfileSubstitutionPlanCacheDao
 import plus.vplan.app.data.source.database.dao.ProfileTimetableCacheDao
@@ -53,6 +55,7 @@ import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProf
 import plus.vplan.app.data.source.database.model.database.DbIndiwareTimetableMetadata
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
+import plus.vplan.app.data.source.database.model.database.DbNews
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbProfileSubstitutionPlanCache
 import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
@@ -86,6 +89,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsSchool
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
@@ -169,9 +173,15 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         FKSchulverwalterSubjectSchulverwalterFinalGrade::class,
 
         DbProfileTimetableCache::class,
-        DbProfileSubstitutionPlanCache::class
+        DbProfileSubstitutionPlanCache::class,
+
+        DbNews::class,
+        FKNewsSchool::class,
     ],
-    version = 1,
+    version = 2,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2)
+    ]
 )
 @TypeConverters(
     value = [
@@ -205,6 +215,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val assessmentDao: AssessmentDao
     abstract val profileTimetableCacheDao: ProfileTimetableCacheDao
     abstract val profileSubstitutionPlanCacheDao: ProfileSubstitutionPlanCacheDao
+    abstract val newsDao: NewsDao
 
     // Schulverwalter
     abstract val yearDao: YearDao
@@ -217,7 +228,7 @@ abstract class VppDatabase : RoomDatabase() {
 }
 
 // Room compiler generates the `actual` implementations
-@Suppress("NO_ACTUAL_FOR_EXPECT")
+@Suppress("NO_ACTUAL_FOR_EXPECT", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect object VppDatabaseConstructor : RoomDatabaseConstructor<VppDatabase> {
     override fun initialize(): VppDatabase
 }
