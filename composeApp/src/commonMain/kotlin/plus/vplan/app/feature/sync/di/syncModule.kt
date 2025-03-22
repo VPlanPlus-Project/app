@@ -12,6 +12,7 @@ import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPla
 import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateNewsUseCase
 
 val syncModule = module {
     singleOf(::UpdateWeeksUseCase)
@@ -20,6 +21,7 @@ val syncModule = module {
     singleOf(::UpdateTimetableUseCase)
     singleOf(::UpdateSubstitutionPlanUseCase)
     singleOf(::UpdateHolidaysUseCase)
+    singleOf(::UpdateNewsUseCase)
 
     singleOf(::UpdateHomeworkUseCase)
     singleOf(::UpdateAssessmentUseCase)
