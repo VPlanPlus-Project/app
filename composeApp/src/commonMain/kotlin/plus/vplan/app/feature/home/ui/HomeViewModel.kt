@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
@@ -22,11 +23,13 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.home.domain.usecase.GetNewsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
@@ -48,14 +51,19 @@ class HomeViewModel(
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
+    private val getNewsUseCase: GetNewsUseCase
 ) : ViewModel() {
     var state by mutableStateOf(HomeState())
         private set
 
     init {
         viewModelScope.launch {
+            var newsJob: Job? = null
             getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(currentProfile = profile)
+                newsJob?.cancel()
+                newsJob = launch { getNewsUseCase(profile).collectLatest { state = state.copy(news = it) } }
+
                 getDayUseCase(profile, state.currentTime.date)
                     .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.name}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
                     .collectLatest { day ->
@@ -164,6 +172,8 @@ data class HomeState(
     val initDone: Boolean = false,
     val day: Day? = null,
     val isUpdating: Boolean = false,
+
+    val news: List<News> = emptyList(),
 
     val currentLessons: List<CurrentLesson> = emptyList(),
     val nextLessons: List<Lesson> = emptyList(),
