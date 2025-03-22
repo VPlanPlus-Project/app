@@ -50,7 +50,7 @@ fun DevScreen(
         }
         Button(
             onClick = { scope.launch {
-                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, listOf(LocalDate(2025, 3, 13)), true)
+                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, listOf(LocalDate(2025, 3, 21)), true)
             } }
         ) {
             Text("VPlan aktualisieren")
