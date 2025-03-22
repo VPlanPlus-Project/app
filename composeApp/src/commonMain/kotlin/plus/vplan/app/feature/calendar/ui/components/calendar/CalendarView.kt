@@ -58,6 +58,7 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsSingleFlow
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
@@ -197,6 +198,8 @@ fun CalendarView(
                                 }
 
                                 val y = (lessonStart.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
+                                val rooms by lesson.rooms.collectAsSingleFlow()
+                                val teachers by lesson.teachers.collectAsSingleFlow()
                                 Box(
                                     modifier = Modifier
                                         .width(availableWidth / lessonsThatOverlapStart.size)
@@ -237,16 +240,16 @@ fun CalendarView(
                                                         Text(text = buildAnnotatedString {
                                                             withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
                                                                 if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                    append((lesson as Lesson.SubstitutionPlanLesson).subjectInstanceItem!!.subject)
-                                                                } else append(lesson.subject.toString())
+                                                                    append(lesson.subject)
+                                                                } else append(lesson.subject)
                                                             }
                                                         }, style = MaterialTheme.typography.bodySmall)
-                                                        if (lesson.roomItems != null) Text(
-                                                            text = lesson.roomItems.orEmpty().joinToString { it.name },
+                                                        if (rooms.isNotEmpty()) Text(
+                                                            text = rooms.joinToString { it.name },
                                                             style = MaterialTheme.typography.labelMedium
                                                         )
-                                                        Text(
-                                                            text = lesson.teacherItems.orEmpty().joinToString { it.name },
+                                                        if (teachers.isNotEmpty()) Text(
+                                                            text = teachers.joinToString { it.name },
                                                             style = MaterialTheme.typography.labelMedium
                                                         )
                                                     }
