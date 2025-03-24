@@ -96,18 +96,18 @@ class CourseRepositoryImpl(
                 if (hadData) return@channelFlow
             }
 
-            send(CacheState.Loading(id.toString()))
+            trySend(CacheState.Loading(id.toString()))
 
-            safeRequest(onError = { send(CacheState.Error(id.toString(), it)) }) {
+            safeRequest(onError = { trySend(CacheState.Error(id.toString(), it)) }) {
                 val accessResponse = httpClient.get("${api.url}/api/v2.2/subject/course/$id")
                 if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
                     vppDatabase.courseDao.deleteById(listOf(id))
-                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+                    return@channelFlow run { trySend(CacheState.NotExisting(id.toString())) }
                 }
 
-                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Course>()))
+                if (!accessResponse.status.isSuccess()) return@channelFlow run { trySend(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Course>())) }
                 val accessData = ResponseDataWrapper.fromJson<CourseUnauthenticatedResponse>(accessResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
+                    ?: return@channelFlow run { trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText()))) }
 
                 val school = accessData.schoolIds.mapNotNull {
                     val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@mapNotNull null
@@ -122,9 +122,9 @@ class CourseRepositoryImpl(
                 val response = httpClient.get("${api.url}/api/v2.2/subject/course/$id?include_teacher=true") {
                     school.authentication(this)
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Course>()))
+                if (!response.status.isSuccess()) return@channelFlow run { trySend(CacheState.Error(id.toString(), response.toErrorResponse<Course>())) }
                 val data = ResponseDataWrapper.fromJson<CourseItemResponse>(response.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                    ?: return@channelFlow run { trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText()))) }
 
                 vppDatabase.courseDao.upsert(
                     courses = listOf(DbCourse(
@@ -146,7 +146,7 @@ class CourseRepositoryImpl(
                     }
                 )
 
-                return@channelFlow sendAll(getById(id, false))
+                return@channelFlow run { sendAll(getById(id, false)) }
             }
         }
     }

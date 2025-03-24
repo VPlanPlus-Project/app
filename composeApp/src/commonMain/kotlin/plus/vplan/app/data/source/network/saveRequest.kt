@@ -14,7 +14,7 @@ inline fun safeRequest(
     try {
         request()
     } catch (e: Exception) {
-        Logger.e { "Error: ${e.stackTraceToString()}" }
+        if (e !is CancellationException) Logger.e { "Error: ${e.stackTraceToString()}" }
         onError(
             when (e) {
                 is ClientRequestException, is ConnectionException, is HttpRequestTimeoutException -> Response.Error.OnlineError.ConnectionError
