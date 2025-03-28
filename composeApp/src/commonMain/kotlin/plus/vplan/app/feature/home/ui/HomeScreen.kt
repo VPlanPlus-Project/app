@@ -398,7 +398,7 @@ private fun HomeContent(
                                         }
                                     }
                                 }
-                                if ((state.remainingLessons.values.flatten() - highlightedLessons.nextLesson.toSet()).isNotEmpty()) {
+                                if ((state.remainingLessons.values.flatten() - (if (highlightedLessons.showCurrent) emptySet() else highlightedLessons.nextLesson.toSet())).isNotEmpty()) {
                                     Spacer(Modifier.size(8.dp))
                                     Text(
                                         text = if (isYourDayToday) "Weitere Stunden" else "Stundenplan",
