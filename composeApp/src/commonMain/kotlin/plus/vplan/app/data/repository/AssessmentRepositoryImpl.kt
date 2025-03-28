@@ -49,6 +49,7 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository
@@ -209,40 +210,49 @@ class AssessmentRepositoryImpl(
                 onError = { trySend(CacheState.Error(id.toString(), it)); return@channelFlow }
             ) {
                 trySend(CacheState.Loading(id.toString())).onFailure { return@channelFlow }
-                val metadataResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id")
-                if (metadataResponse.status == HttpStatusCode.NotFound && metadataResponse.isResponseFromBackend()) {
-                    trySend(CacheState.NotExisting(id.toString()))
-                    vppDatabase.assessmentDao.deleteById(listOf(id))
-                    return@channelFlow
+                val existing = vppDatabase.assessmentDao.getById(id).first()
+                var vppId: VppId.Active? = null
+                var school: School? = null
+                if (existing != null) {
+                    if (existing.assessment.createdBy != null) vppId = vppDatabase.vppIdDao.getById(existing.assessment.createdBy).first()?.toModel() as? VppId.Active
                 }
-
-                if (metadataResponse.status != HttpStatusCode.OK) {
-                    trySend(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
-                    return@channelFlow
-                }
-
-                val metadataResponseData = ResponseDataWrapper.fromJson<AssessmentMetadataResponse>(metadataResponse.bodyAsText())
-                    ?: run {
-                        trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
-                        return@channelFlow
-                    }
-
-                val vppId = vppDatabase.vppIdDao.getById(metadataResponseData.createdBy).first()?.toModel() as? VppId.Active
-                val school = vppDatabase.schoolDao.getAll().first().firstOrNull { it.school.id in metadataResponseData.schoolIds }?.toModel()
-                    ?: run {
+                if (existing == null || vppId == null) {
+                    val metadataResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id")
+                    if (metadataResponse.status == HttpStatusCode.NotFound && metadataResponse.isResponseFromBackend()) {
                         trySend(CacheState.NotExisting(id.toString()))
+                        vppDatabase.assessmentDao.deleteById(listOf(id))
                         return@channelFlow
                     }
+
+                    if (metadataResponse.status != HttpStatusCode.OK) {
+                        trySend(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
+                        return@channelFlow
+                    }
+
+                    val metadataResponseData = ResponseDataWrapper.fromJson<AssessmentMetadataResponse>(metadataResponse.bodyAsText())
+                        ?: run {
+                            trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
+                            return@channelFlow
+                        }
+
+                    vppId = vppDatabase.vppIdDao.getById(metadataResponseData.createdBy).first()?.toModel() as? VppId.Active
+                    school = vppDatabase.schoolDao.getAll().first().firstOrNull { it.school.id in metadataResponseData.schoolIds }?.toModel()
+                        ?: run {
+                            trySend(CacheState.NotExisting(id.toString()))
+                            return@channelFlow
+                        }
+                }
+
 
                 val assessmentResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id") {
-                    vppId?.let { bearerAuth(it.accessToken) } ?: school.getSchoolApiAccess()?.authentication(this) ?: run {
+                    vppId?.let { bearerAuth(it.accessToken) } ?: school?.getSchoolApiAccess()?.authentication(this) ?: run {
                         vppDatabase.assessmentDao.deleteById(listOf(id))
                         trySend(CacheState.NotExisting(id.toString()))
                         return@channelFlow
                     }
                 }
                 if (assessmentResponse.status != HttpStatusCode.OK) {
-                    trySend(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
+                    trySend(CacheState.Error(id.toString(), assessmentResponse.toErrorResponse<Any>()))
                     return@channelFlow
                 }
                 val data = ResponseDataWrapper.fromJson<AssessmentGetResponse>(assessmentResponse.bodyAsText())
