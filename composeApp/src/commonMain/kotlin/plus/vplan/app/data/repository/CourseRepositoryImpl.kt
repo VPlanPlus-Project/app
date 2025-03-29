@@ -116,6 +116,7 @@ class CourseRepositoryImpl(
                     }.firstOrNull() ?: run {
                         Logger.i { "No school to update course $id" }
                         vppDatabase.courseDao.deleteById(id)
+                        trySend(CacheState.NotExisting(id.toString()))
                         return@channelFlow
                 }
 
