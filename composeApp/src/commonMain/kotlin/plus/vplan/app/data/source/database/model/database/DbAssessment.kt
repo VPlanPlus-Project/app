@@ -15,7 +15,7 @@ import kotlin.uuid.Uuid
         ForeignKey(
             entity = DbSubjectInstance::class,
             parentColumns = ["id"],
-            childColumns = ["subject_instance_ids"],
+            childColumns = ["subject_instance_id"],
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
@@ -26,7 +26,7 @@ import kotlin.uuid.Uuid
         )
     ],
     indices = [
-        Index("subject_instance_ids", unique = false),
+        Index("subject_instance_id", unique = false),
         Index("created_by_profile", unique = false)
     ]
 )
@@ -37,7 +37,7 @@ data class DbAssessment(
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "date") val date: LocalDate,
     @ColumnInfo(name = "is_public") val isPublic: Boolean,
-    @ColumnInfo(name = "subject_instance_ids") val subjectInstanceId: Int,
+    @ColumnInfo(name = "subject_instance_id") val subjectInstanceId: Int,
     @ColumnInfo(name = "description") val description: String,
     @ColumnInfo(name = "type") val type: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant

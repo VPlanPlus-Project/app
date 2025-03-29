@@ -11,14 +11,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
@@ -36,7 +35,6 @@ fun DevScreen(
     val updateSubstitutionPlanUseCase = koinInject<UpdateSubstitutionPlanUseCase>()
     val fullSyncUseCase = koinInject<FullSyncUseCase>()
     val rebuildIndices = koinInject<UpdateProfileLessonIndexUseCase>()
-    val courseRepository = koinInject<CourseRepository>()
 
     Column(
         modifier = Modifier
@@ -54,7 +52,7 @@ fun DevScreen(
         }
         Button(
             onClick = { scope.launch {
-                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, listOf(LocalDate(2025, 3, 21)), true)
+                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, listOf(LocalDate(2025, 3, 13)), true)
             } }
         ) {
             Text("VPlan aktualisieren")
@@ -68,20 +66,17 @@ fun DevScreen(
         }
         Button(
             onClick = { scope.launch {
+                App.roomSource.getById(203, true).getFirstValue()
+            } }
+        ) {
+            Text("Update R203")
+        }
+        Button(
+            onClick = { scope.launch {
                 rebuildIndices(state.profile!!)
             } }
         ) {
             Text("Rebuild indices")
-        }
-
-        Button(onClick = { scope.launch {
-            courseRepository.getAll().first()
-                .take(1)
-                .forEach { course ->
-                    courseRepository.getById(course.id, true).getFirstValue()
-                }
-        } }) {
-            Text("Course Update (force)")
         }
     }
 }
