@@ -120,6 +120,7 @@ class SubjectInstanceRepositoryImpl(
                 }.firstOrNull() ?: run {
                     Logger.i { "No school to update subjectInstance $id" }
                     vppDatabase.subjectInstanceDao.deleteById(id)
+                    trySend(CacheState.NotExisting(id.toString()))
                     return@channelFlow
                 }
 
