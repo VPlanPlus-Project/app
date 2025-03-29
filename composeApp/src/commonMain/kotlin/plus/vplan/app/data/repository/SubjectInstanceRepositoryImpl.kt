@@ -103,28 +103,40 @@ class SubjectInstanceRepositoryImpl(
             send(CacheState.Loading(id.toString()))
 
             safeRequest(onError = { send(CacheState.Error(id.toString(), it)) }) {
-                val accessResponse = httpClient.get("${api.url}/api/v2.2/subject/instance/$id")
-                if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
-                    vppDatabase.subjectInstanceDao.deleteById(listOf(id))
-                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+                val existing = vppDatabase.subjectInstanceDao.getById(id).first()
+                var schoolApiAccess: SchoolApiAccess? = null
+                if (existing != null) {
+                    schoolApiAccess = existing.groups
+                        .mapNotNull { vppDatabase.groupDao.getById(it.groupId).first() }
+                        .firstNotNullOfOrNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
+                }
+                if (schoolApiAccess == null) {
+                    val accessResponse = httpClient.get("${api.url}/api/v2.2/subject/instance/$id")
+                    if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
+                        vppDatabase.subjectInstanceDao.deleteById(listOf(id))
+                        return@channelFlow send(CacheState.NotExisting(id.toString()))
+                    }
+
+                    if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<SubjectInstance>()))
+                    val accessData = ResponseDataWrapper.fromJson<SubjectInstanceUnauthenticatedResponse>(accessResponse.bodyAsText())
+                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
+
+                    schoolApiAccess = accessData.schoolIds.mapNotNull {
+                        val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@mapNotNull null
+                        if (school is School.IndiwareSchool && !school.credentialsValid) return@mapNotNull null
+                        return@mapNotNull school.getSchoolApiAccess()
+                    }.firstOrNull()
                 }
 
-                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<SubjectInstance>()))
-                val accessData = ResponseDataWrapper.fromJson<SubjectInstanceUnauthenticatedResponse>(accessResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
-
-                val school = accessData.schoolIds.mapNotNull {
-                    val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@mapNotNull null
-                    if (school is School.IndiwareSchool && !school.credentialsValid) return@mapNotNull null
-                    return@mapNotNull school.getSchoolApiAccess()
-                }.firstOrNull() ?: run {
+                if (schoolApiAccess == null) {
                     Logger.i { "No school to update subjectInstance $id" }
                     vppDatabase.subjectInstanceDao.deleteById(id)
+                    trySend(CacheState.NotExisting(id.toString()))
                     return@channelFlow
                 }
 
                 val response = httpClient.get("${api.url}/api/v2.2/subject/instance/$id?include_subject=true") {
-                    school.authentication(this)
+                    schoolApiAccess.authentication(this)
                 }
                 if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<SubjectInstance>()))
                 val data = ResponseDataWrapper.fromJson<SubjectInstanceResponseWithSubject>(response.bodyAsText()) ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
@@ -132,7 +144,7 @@ class SubjectInstanceRepositoryImpl(
                     listOf(
                         DbSubjectInstance(
                             id = data.subjectInstanceId,
-                            indiwareId = if (school is SchoolApiAccess.IndiwareAccess && data.sp24Id != null) "sp24.${school.sp24id}.${data.sp24Id}" else null,
+                            indiwareId = if (schoolApiAccess is SchoolApiAccess.IndiwareAccess && data.sp24Id != null) "sp24.${schoolApiAccess.sp24id}.${data.sp24Id}" else null,
                             subject = data.subject.subject.name,
                             teacherId = data.teacher?.id,
                             courseId = data.course?.id,

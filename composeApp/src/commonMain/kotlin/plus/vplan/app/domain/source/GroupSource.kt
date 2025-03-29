@@ -17,11 +17,12 @@ class GroupSource(
     private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Group>>>()
     private val cacheItems = hashMapOf<Int, CacheState<Group>>()
 
-    fun getById(id: Int): Flow<CacheState<Group>> {
+    fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<Group>> {
+        if (forceReload) flows.remove(id)
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Group>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             MainScope().launch {
-                groupRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+                groupRepository.getById(id, forceReload).collectLatest { flow.tryEmit(it) }
             }
             flow
         }

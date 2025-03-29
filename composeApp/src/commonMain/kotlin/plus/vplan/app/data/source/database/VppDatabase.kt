@@ -3,9 +3,11 @@ package plus.vplan.app.data.source.database
 import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
+import androidx.room.RenameColumn
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 import plus.vplan.app.data.source.database.converters.InstantConverter
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
 import plus.vplan.app.data.source.database.converters.LocalDateTimeConverter
@@ -178,9 +180,10 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         DbNews::class,
         FKNewsSchool::class,
     ],
-    version = 2,
+    version = VppDatabase.DATABASE_VERSION,
     autoMigrations = [
-        AutoMigration(from = 1, to = 2)
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3, spec = VppDatabase.Migration3::class),
     ]
 )
 @TypeConverters(
@@ -225,6 +228,13 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val schulverwalterTeacherDao: SchulverwalterTeacherDao
     abstract val gradeDao: GradeDao
     abstract val finalGradeDao: FinalGradeDao
+
+    companion object {
+        const val DATABASE_VERSION = 3
+    }
+
+    @RenameColumn(tableName = "assessments", fromColumnName = "subject_instance_ids", toColumnName = "subject_instance_id")
+    class Migration3 : AutoMigrationSpec
 }
 
 // Room compiler generates the `actual` implementations

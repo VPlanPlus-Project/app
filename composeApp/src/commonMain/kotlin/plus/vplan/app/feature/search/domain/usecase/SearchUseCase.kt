@@ -14,6 +14,7 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
@@ -26,6 +27,7 @@ import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.search.domain.model.SearchResult
+import plus.vplan.app.utils.now
 
 class SearchUseCase(
     private val groupRepository: GroupRepository,
@@ -40,16 +42,16 @@ class SearchUseCase(
     private val lessons = mutableListOf<Lesson>()
     private var lessonDate: LocalDate? = null
 
-    operator fun invoke(searchQuery: String, date: LocalDate) = channelFlow {
-        if (searchQuery.isBlank()) return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
-        val query = searchQuery.lowercase().trim()
+    operator fun invoke(searchRequest: SearchRequest) = channelFlow {
+        if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
+        val query = searchRequest.query.lowercase().trim()
         val profile = getCurrentProfileUseCase().first()
         val school = profile.getSchoolItem()
 
-        if (lessons.isEmpty() || lessonDate != date) {
+        if (lessons.isEmpty() || lessonDate != searchRequest.date) {
             lessons.clear()
             lessons.addAll(substitutionPlanRepository
-                .getSubstitutionPlanBySchool(school.id, date).map {
+                .getSubstitutionPlanBySchool(school.id, searchRequest.date).map {
                     it
                         .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
                         .fastFilterNotNull()
@@ -61,7 +63,7 @@ class SearchUseCase(
         val results = MutableStateFlow(emptyMap<SearchResult.Type, List<SearchResult>>())
         launch { results.collect { send(it) } }
 
-        launch {
+        if (searchRequest.query.isNotEmpty()) launch {
             combine(
                 groupRepository.getBySchool(school.id).map { it.filter { group -> query in group.name.lowercase() } },
                 teacherRepository.getBySchool(school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
@@ -96,19 +98,23 @@ class SearchUseCase(
         launch {
             homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
                 val homework = homeworkList.onEach { it.getTaskItems() }
-                results.value = results.value.plus(SearchResult.Type.Homework to homework.filter { it.taskItems!!.any { task -> query in task.content.lowercase() } }.onEach {
-                    it.subjectInstance?.getFirstValue() ?: it.group?.getFirstValue()
-                    when (it) {
-                        is Homework.CloudHomework -> it.getCreatedBy()
-                        is Homework.LocalHomework -> it.getCreatedByProfile()
+                results.value = results.value.plus(SearchResult.Type.Homework to homework
+                    .filter { (query.isEmpty() || it.taskItems!!.any { task -> query in task.content.lowercase() }) && (searchRequest.subject == null || it.subjectInstance?.getFirstValue()?.subject == searchRequest.subject) }
+                    .onEach {
+                        it.subjectInstance?.getFirstValue() ?: it.group?.getFirstValue()
+                        when (it) {
+                            is Homework.CloudHomework -> it.getCreatedBy()
+                            is Homework.LocalHomework -> it.getCreatedByProfile()
+                        }
                     }
-                }.map { SearchResult.Homework(it) })
+                    .map { SearchResult.Homework(it) })
             }
         }
 
         launch {
             assessmentRepository.getAll().collectLatest { assessmentList ->
-                val assessments = assessmentList.filter { query in it.description.lowercase() }
+                val assessments = assessmentList
+                    .filter { (query.isEmpty() || query in it.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.getFirstValue()?.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.type == searchRequest.assessmentType) }
                     .onEach { assessment ->
                         when (assessment.creator) {
                             is AppEntity.VppId -> assessment.getCreatedByVppIdItem()
@@ -132,4 +138,13 @@ class SearchUseCase(
             }
         }
     }
+}
+
+data class SearchRequest(
+    val query: String = "",
+    val date: LocalDate = LocalDate.now(),
+    val subject: String? = null,
+    val assessmentType: Assessment.Type? = null
+) {
+    val hasActiveFilters = query.isNotEmpty() || subject != null
 }
