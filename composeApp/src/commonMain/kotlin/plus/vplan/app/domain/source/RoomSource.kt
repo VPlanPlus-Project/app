@@ -16,11 +16,12 @@ class RoomSource(
 ) {
     private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Room>>>()
     private val cacheItems = hashMapOf<Int, CacheState<Room>>()
-    fun getById(id: Int): Flow<CacheState<Room>> {
+    fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<Room>> {
+        if (forceReload) flows.remove(id)
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Room>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             MainScope().launch {
-                roomRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+                roomRepository.getById(id, forceReload).collectLatest { flow.tryEmit(it) }
             }
             flow
         }

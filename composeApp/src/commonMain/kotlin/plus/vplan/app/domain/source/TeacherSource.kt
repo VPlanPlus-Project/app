@@ -17,11 +17,12 @@ class TeacherSource(
 
     private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Teacher>>>()
     private val cacheItems = hashMapOf<Int, CacheState<Teacher>>()
-    fun getById(id: Int): Flow<CacheState<Teacher>> {
+    fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<Teacher>> {
+        if (forceReload) flows.remove(id)
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Teacher>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             MainScope().launch {
-                teacherRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+                teacherRepository.getById(id, forceReload = forceReload).collectLatest { flow.tryEmit(it) }
             }
             flow
         }
