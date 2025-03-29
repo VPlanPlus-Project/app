@@ -28,6 +28,8 @@ import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.GetAssessmentsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
+import plus.vplan.app.feature.search.domain.usecase.GetSubjectsUseCase
+import plus.vplan.app.feature.search.domain.usecase.SearchRequest
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
 
 class SearchViewModel(
@@ -38,7 +40,8 @@ class SearchViewModel(
     private val getAssessmentsForProfileUseCase: GetAssessmentsForProfileUseCase,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val lockGradesUseCase: LockGradesUseCase,
-    private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase
+    private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
+    private val getSubjectsUseCase: GetSubjectsUseCase
 ) : ViewModel() {
 
     var state by mutableStateOf(SearchState())
@@ -66,6 +69,7 @@ class SearchViewModel(
                     homeworkJob = launch { getHomeworkForProfileUseCase(currentProfile).collectLatest { state = state.copy(homework = it) } }
                     assessmentJob = launch { getAssessmentsForProfileUseCase(currentProfile).collectLatest { state = state.copy(assessments = it) } }
                 }
+                getSubjectsUseCase(currentProfile).let { state = state.copy(subjects = it) }
             }
         }
     }
@@ -74,11 +78,19 @@ class SearchViewModel(
         viewModelScope.launch {
             when (event) {
                 is SearchEvent.UpdateQuery -> {
-                    state = state.copy(query = event.query)
+                    state = state.copy(query = state.query.copy(query = event.query))
                     restartSearch()
                 }
                 is SearchEvent.SelectDate -> {
-                    state = state.copy(selectedDate = event.date)
+                    state = state.copy(query = state.query.copy(date = event.date))
+                    restartSearch()
+                }
+                is SearchEvent.FilterForSubject -> {
+                    state = state.copy(query = state.query.copy(subject = event.subject))
+                    restartSearch()
+                }
+                is SearchEvent.FitlerForAssessmentType -> {
+                    state = state.copy(query = state.query.copy(assessmentType = event.type))
                     restartSearch()
                 }
                 is SearchEvent.RequestGradeLock -> lockGradesUseCase()
@@ -89,9 +101,9 @@ class SearchViewModel(
 
     private suspend fun restartSearch() {
         searchJob?.cancel()
-        val day = App.daySource.getById(Day.buildId(state.currentProfile!!.getSchool().getFirstValue()!!, state.selectedDate)).getFirstValue()!!
+        val day = App.daySource.getById(Day.buildId(state.currentProfile!!.getSchool().getFirstValue()!!, state.query.date)).getFirstValue()!!
         searchJob = viewModelScope.launch {
-            searchUseCase(state.query, state.selectedDate).collectLatest {
+            searchUseCase(state.query).collectLatest {
                 state = state.copy(results = it, selectedDateType = day.dayType)
             }
         }
@@ -99,15 +111,15 @@ class SearchViewModel(
 }
 
 data class SearchState(
-    val query: String = "",
-    val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+    val query: SearchRequest = SearchRequest(),
     val selectedDateType: Day.DayType = Day.DayType.UNKNOWN,
     val results: Map<SearchResult.Type, List<SearchResult>> = emptyMap(),
     val homework: List<Homework> = emptyList(),
     val assessments: List<Assessment> = emptyList(),
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
-    val gradeLockState: GradeLockState = GradeLockState.NotConfigured
+    val gradeLockState: GradeLockState = GradeLockState.NotConfigured,
+    val subjects: List<String> = emptyList()
 ) {
     val newItems = (assessments.map { NewItem.Assessment(it) } + homework.map { NewItem.Homework(it) }).sortedByDescending { it.createdAt }.take(5)
 }
@@ -115,6 +127,8 @@ data class SearchState(
 sealed class SearchEvent {
     data class UpdateQuery(val query: String): SearchEvent()
     data class SelectDate(val date: LocalDate): SearchEvent()
+    data class FilterForSubject(val subject: String?): SearchEvent()
+    data class FitlerForAssessmentType(val type: Assessment.Type?): SearchEvent()
 
     data object RequestGradeUnlock: SearchEvent()
     data object RequestGradeLock: SearchEvent()
