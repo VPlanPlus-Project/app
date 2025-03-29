@@ -78,21 +78,21 @@ private fun SearchScreenContent(
             } catch (_: Exception) {} }
             Spacer(Modifier.size(8.dp))
             AnimatedContent(
-                targetState = state.query.isBlank(),
+                targetState = state.query.hasActiveFilters,
                 modifier = Modifier.fillMaxSize(),
                 transitionSpec = {
-                    if (state.query.isBlank()) slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up) togetherWith slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Up) + scaleOut()
+                    if (state.query.query.isBlank()) slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up) togetherWith slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Up) + scaleOut()
                     else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Down) togetherWith slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down) + scaleOut()
                 }
-            ) { showPlaceholder ->
-                if (showPlaceholder) SearchStart(
+            ) { hasFiltersActive ->
+                if (!hasFiltersActive) SearchStart(
                     profile = state.currentProfile,
                     newItems = state.newItems,
                     onAssessmentClicked = { visibleAssessment = it },
                     onHomeworkClicked = { visibleHomework = it },
                     onOpenRoomSearchClicked = onRoomSearchClicked
                 ) else SearchResults(
-                    date = state.selectedDate,
+                    date = state.query.date,
                     dayType = state.selectedDateType,
                     profile = state.currentProfile,
                     results = state.results,
@@ -103,11 +103,16 @@ private fun SearchScreenContent(
             }
         }
         SearchBar(
-            value = state.query,
-            selectedDate = state.selectedDate,
+            value = state.query.query,
+            selectedDate = state.query.date,
             focusRequester = searchBarFocusRequester,
+            subjects = state.subjects,
+            selectedSubject = state.query.subject,
+            selectedAssessmentType = state.query.assessmentType,
             onQueryChange = { onEvent(SearchEvent.UpdateQuery(it)) },
-            onSelectDate = { onEvent(SearchEvent.SelectDate(it)) }
+            onSelectDate = { onEvent(SearchEvent.SelectDate(it)) },
+            onSelectSubject = { onEvent(SearchEvent.FilterForSubject(it)) },
+            onSelectAssessmentType = { onEvent(SearchEvent.FitlerForAssessmentType(it)) }
         )
     }
 
