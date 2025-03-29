@@ -17,6 +17,7 @@ import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.App
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
@@ -65,6 +66,13 @@ fun DevScreen(
             } }
         ) {
             Text("Full sync")
+        }
+        Button(
+            onClick = { scope.launch {
+                App.roomSource.getById(203, true).getFirstValue()
+            } }
+        ) {
+            Text("Update R203")
         }
         Button(
             onClick = { scope.launch {

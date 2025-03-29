@@ -27,6 +27,7 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.utils.sendAll
 
@@ -82,20 +83,30 @@ class GroupRepositoryImpl(
             }
             send(CacheState.Loading(id.toString()))
 
-            val accessResponse = httpClient.get("${api.url}/api/v2.2/group/$id")
-            if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
-                vppDatabase.groupDao.deleteById(listOf(id))
-                return@channelFlow send(CacheState.NotExisting(id.toString()))
+            val existing = vppDatabase.groupDao.getById(id).first()
+            var schoolApiAccess: SchoolApiAccess? = null
+            if (existing != null) {
+                schoolApiAccess = vppDatabase.schoolDao.findById(existing.school.schoolId).first()?.toModel()?.getSchoolApiAccess()
             }
-            if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Group>()))
-            val accessData = ResponseDataWrapper.fromJson<GroupUnauthenticatedResponse>(accessResponse.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
 
-            val school = accessData.schoolId.let {
-                val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@let null
-                if (school is School.IndiwareSchool && !school.credentialsValid) return@let null
-                return@let school.getSchoolApiAccess()
-            } ?: run {
+            if (schoolApiAccess == null) {
+                val accessResponse = httpClient.get("${api.url}/api/v2.2/group/$id")
+                if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
+                    vppDatabase.groupDao.deleteById(listOf(id))
+                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+                }
+                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Group>()))
+                val accessData = ResponseDataWrapper.fromJson<GroupUnauthenticatedResponse>(accessResponse.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
+
+                schoolApiAccess = accessData.schoolId.let {
+                    val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@let null
+                    if (school is School.IndiwareSchool && !school.credentialsValid) return@let null
+                    return@let school.getSchoolApiAccess()
+                }
+            }
+
+            if (schoolApiAccess == null) {
                 Logger.i { "No school to update group $id" }
                 vppDatabase.groupDao.deleteById(listOf(id))
                 trySend(CacheState.Error(id.toString(), Response.Error.Other("no school for group $id")))
@@ -103,7 +114,7 @@ class GroupRepositoryImpl(
             }
 
             val response = httpClient.get("${api.url}/api/v2.2/group/$id") {
-                school.authentication(this)
+                schoolApiAccess.authentication(this)
             }
             if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Group>()))
             val data = ResponseDataWrapper.fromJson<GroupItemResponse>(response.bodyAsText())

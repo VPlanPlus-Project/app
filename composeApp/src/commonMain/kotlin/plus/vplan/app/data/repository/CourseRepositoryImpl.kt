@@ -99,29 +99,40 @@ class CourseRepositoryImpl(
             trySend(CacheState.Loading(id.toString()))
 
             safeRequest(onError = { trySend(CacheState.Error(id.toString(), it)) }) {
-                val accessResponse = httpClient.get("${api.url}/api/v2.2/subject/course/$id")
-                if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
-                    vppDatabase.courseDao.deleteById(listOf(id))
-                    return@channelFlow run { trySend(CacheState.NotExisting(id.toString())) }
+                val existing = vppDatabase.courseDao.getById(id).first()
+                var schoolApiAccess: SchoolApiAccess? = null
+                if (existing != null) {
+                    schoolApiAccess = existing.groups
+                        .mapNotNull { vppDatabase.groupDao.getById(it.groupId).first() }
+                        .firstNotNullOfOrNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
                 }
+                if (schoolApiAccess == null) {
+                    val accessResponse = httpClient.get("${api.url}/api/v2.2/subject/course/$id")
+                    if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
+                        vppDatabase.courseDao.deleteById(listOf(id))
+                        return@channelFlow run { trySend(CacheState.NotExisting(id.toString())) }
+                    }
 
-                if (!accessResponse.status.isSuccess()) return@channelFlow run { trySend(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Course>())) }
-                val accessData = ResponseDataWrapper.fromJson<CourseUnauthenticatedResponse>(accessResponse.bodyAsText())
-                    ?: return@channelFlow run { trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText()))) }
+                    if (!accessResponse.status.isSuccess()) return@channelFlow run { trySend(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Course>())) }
+                    val accessData = ResponseDataWrapper.fromJson<CourseUnauthenticatedResponse>(accessResponse.bodyAsText())
+                        ?: return@channelFlow run { trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText()))) }
 
-                val school = accessData.schoolIds.mapNotNull {
-                    val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@mapNotNull null
+                    schoolApiAccess = accessData.schoolIds.mapNotNull {
+                        val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@mapNotNull null
                         if (school is School.IndiwareSchool && !school.credentialsValid) return@mapNotNull null
                         return@mapNotNull school.getSchoolApiAccess()
-                    }.firstOrNull() ?: run {
-                        Logger.i { "No school to update course $id" }
-                        vppDatabase.courseDao.deleteById(id)
-                        trySend(CacheState.NotExisting(id.toString()))
-                        return@channelFlow
+                    }.firstOrNull()
+                }
+
+                if (schoolApiAccess == null) {
+                    Logger.i { "No school to update course $id" }
+                    vppDatabase.courseDao.deleteById(id)
+                    trySend(CacheState.NotExisting(id.toString()))
+                    return@channelFlow
                 }
 
                 val response = httpClient.get("${api.url}/api/v2.2/subject/course/$id?include_teacher=true") {
-                    school.authentication(this)
+                    schoolApiAccess.authentication(this)
                 }
                 if (!response.status.isSuccess()) return@channelFlow run { trySend(CacheState.Error(id.toString(), response.toErrorResponse<Course>())) }
                 val data = ResponseDataWrapper.fromJson<CourseItemResponse>(response.bodyAsText())
@@ -130,7 +141,7 @@ class CourseRepositoryImpl(
                 vppDatabase.courseDao.upsert(
                     courses = listOf(DbCourse(
                         id = data.courseId,
-                        indiwareId = (school as? SchoolApiAccess.IndiwareAccess)?.let {
+                        indiwareId = (schoolApiAccess as? SchoolApiAccess.IndiwareAccess)?.let {
                             val group = data.groups.firstOrNull()?.group?.let { groupId -> vppDatabase.groupDao.getById(groupId).first()?.group?.name }
                             val teacher = data.teacher?.value?.name
                             "sp24.${it.sp24id}.${group}+$teacher"
