@@ -11,9 +11,11 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
+import plus.vplan.app.domain.model.Holiday
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.CourseRepository
+import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
@@ -31,6 +33,7 @@ class SetUpSchoolDataUseCase(
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
+    private val dayRepository: DayRepository,
     private val courseRepository: CourseRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val weekRepository: WeekRepository,
@@ -81,6 +84,10 @@ class SetUpSchoolDataUseCase(
             } as School.IndiwareSchool
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE
+            result[SetUpSchoolDataStep.GET_HOLIDAYS] = SetUpSchoolDataState.IN_PROGRESS
+            dayRepository.upsert(baseData.data.holidays.map { Holiday(it, school.id) })
+            result[SetUpSchoolDataStep.GET_HOLIDAYS] = SetUpSchoolDataState.DONE
+
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.IN_PROGRESS
             emitResult()
 
@@ -165,6 +172,7 @@ sealed class SetUpSchoolDataResult {
 enum class SetUpSchoolDataStep {
     DOWNLOAD_BASE_DATA,
     GET_SCHOOL_INFORMATION,
+    GET_HOLIDAYS,
     GET_GROUPS,
     GET_TEACHERS,
     GET_ROOMS,
