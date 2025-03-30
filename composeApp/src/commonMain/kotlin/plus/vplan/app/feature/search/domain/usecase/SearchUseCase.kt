@@ -63,7 +63,7 @@ class SearchUseCase(
         val results = MutableStateFlow(emptyMap<SearchResult.Type, List<SearchResult>>())
         launch { results.collect { send(it) } }
 
-        if (searchRequest.query.isNotEmpty()) launch {
+        if (searchRequest.query.isNotEmpty() && searchRequest.assessmentType == null) launch {
             combine(
                 groupRepository.getBySchool(school.id).map { it.filter { group -> query in group.name.lowercase() } },
                 teacherRepository.getBySchool(school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
@@ -95,7 +95,7 @@ class SearchUseCase(
             }.collect()
         }
 
-        launch {
+        if (searchRequest.assessmentType == null) launch {
             homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
                 val homework = homeworkList.onEach { it.getTaskItems() }
                 results.value = results.value.plus(SearchResult.Type.Homework to homework
@@ -121,11 +121,12 @@ class SearchUseCase(
                             is AppEntity.Profile -> assessment.getCreatedByProfileItem()
                         }
                     }
+                    .sortedByDescending { (if (it.date < LocalDate.now()) "" else "_") + it.date.toString() }
                 results.value = results.value.plus(SearchResult.Type.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
             }
         }
 
-        launch {
+        if (searchRequest.assessmentType == null) launch {
             App.collectionSource.getAll().map { it.filterIsInstance<CacheState.Done<Collection>>().map { it.data } }.collectLatest { collections ->
                 val filteredGrades = collections
                     .filter { query in it.name.lowercase() }
