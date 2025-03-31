@@ -482,7 +482,7 @@ private fun HomeContent(
                                                                         .clip(RoundedCornerShape(8.dp))
                                                                 )
                                                                 Text(
-                                                                    text = lesson.subject ?: "Entfall",
+                                                                    text = lesson.subject ?: "${lesson.subjectInstance?.collectAsResultingFlow()?.value?.subject?.plus(" ").orEmpty()}Entfall",
                                                                     style = headFont,
                                                                     color = if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
                                                                 )
