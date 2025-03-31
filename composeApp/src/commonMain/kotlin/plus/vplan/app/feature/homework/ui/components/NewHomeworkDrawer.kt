@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.ui.components.FullscreenDrawer
 import vplanplus.composeapp.generated.resources.Res
@@ -22,6 +23,7 @@ import vplanplus.composeapp.generated.resources.x
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewHomeworkDrawer(
+    selectedDate: LocalDate? = null,
     onDismissRequest: () -> Unit
 ) {
     val density = LocalDensity.current
@@ -51,7 +53,9 @@ fun NewHomeworkDrawer(
             )
         },
         content = {
-            NewHomeworkDrawerContent()
+            NewHomeworkDrawerContent(
+                selectedDate = selectedDate
+            )
         }
     )
 }

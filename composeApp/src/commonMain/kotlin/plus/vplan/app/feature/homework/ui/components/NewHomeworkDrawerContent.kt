@@ -42,6 +42,7 @@ import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
@@ -68,10 +69,16 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
-fun FullscreenDrawerContext.NewHomeworkDrawerContent() {
+fun FullscreenDrawerContext.NewHomeworkDrawerContent(
+    selectedDate: LocalDate? = null
+) {
     val viewModel = koinViewModel<NewHomeworkViewModel>()
     val state = viewModel.state
     if (state.currentProfile == null) return
+
+    LaunchedEffect(selectedDate) {
+        if (selectedDate != null) viewModel.onEvent(NewHomeworkEvent.SelectDate(selectedDate))
+    }
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
