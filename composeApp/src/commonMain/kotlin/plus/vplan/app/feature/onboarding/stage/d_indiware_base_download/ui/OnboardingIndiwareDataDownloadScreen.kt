@@ -137,6 +137,7 @@ private fun OnboardingIndiwareDataDownloadContent(
                                 SetUpSchoolDataStep.SET_UP_DATA -> "Daten anpassen"
                                 SetUpSchoolDataStep.DOWNLOAD_BASE_DATA -> "Daten herunterladen"
                                 SetUpSchoolDataStep.GET_SCHOOL_INFORMATION -> "Schulinformationen laden"
+                                SetUpSchoolDataStep.GET_HOLIDAYS -> "Ferientage laden"
                                 SetUpSchoolDataStep.GET_GROUPS -> "Gruppen laden"
                                 SetUpSchoolDataStep.GET_TEACHERS -> "Lehrer laden"
                                 SetUpSchoolDataStep.GET_ROOMS -> "Räume laden"

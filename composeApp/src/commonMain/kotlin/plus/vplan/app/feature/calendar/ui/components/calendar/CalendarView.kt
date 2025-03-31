@@ -240,7 +240,7 @@ fun CalendarView(
                                                         Text(text = buildAnnotatedString {
                                                             withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
                                                                 if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                    append(lesson.subject)
+                                                                    append(lesson.subjectInstance?.collectAsResultingFlow()?.value?.subject?.plus(" ").orEmpty() + "Entfall")
                                                                 } else append(lesson.subject)
                                                             }
                                                         }, style = MaterialTheme.typography.bodySmall)

@@ -41,6 +41,7 @@ import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.Profile
@@ -65,9 +66,15 @@ import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.shapes
 
 @Composable
-fun FullscreenDrawerContext.NewAssessmentDrawerContent() {
+fun FullscreenDrawerContext.NewAssessmentDrawerContent(
+    selectedDate: LocalDate? = null
+) {
     val viewModel = koinViewModel<NewAssessmentViewModel>()
     val state = viewModel.state
+
+    LaunchedEffect(selectedDate) {
+        if (selectedDate != null) viewModel.onEvent(NewAssessmentEvent.SelectDate(selectedDate))
+    }
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
     var showDateSelectDrawer by rememberSaveable { mutableStateOf(false) }
