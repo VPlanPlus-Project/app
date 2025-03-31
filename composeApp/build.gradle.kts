@@ -120,8 +120,8 @@ android {
         applicationId = "plus.vplan.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 15
-        versionName = "0.1.6-internal" // remember to update App.kt
+        versionCode = 17
+        versionName = "0.1.7-internal" // remember to update App.kt
     }
     packaging {
         resources {

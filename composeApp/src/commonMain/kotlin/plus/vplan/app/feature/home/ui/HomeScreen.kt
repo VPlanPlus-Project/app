@@ -367,7 +367,8 @@ private fun HomeContent(
                                                     }
                                                 }
                                             }
-                                        } else {
+                                        }
+                                        else {
                                             Text(
                                                 text = "Nächster Unterricht",
                                                 style = MaterialTheme.typography.titleSmall,
@@ -398,7 +399,7 @@ private fun HomeContent(
                                         }
                                     }
                                 }
-                                if ((state.remainingLessons.values.flatten() - highlightedLessons.nextLesson.toSet()).isNotEmpty()) {
+                                if ((state.remainingLessons.values.flatten() - (if (!highlightedLessons.showCurrent) highlightedLessons.nextLesson.toSet() else emptySet())).isNotEmpty()) {
                                     Spacer(Modifier.size(8.dp))
                                     Text(
                                         text = if (isYourDayToday) "Weitere Stunden" else "Stundenplan",
