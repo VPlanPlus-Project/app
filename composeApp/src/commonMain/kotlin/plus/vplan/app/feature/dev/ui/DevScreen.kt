@@ -20,6 +20,7 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 
@@ -35,6 +36,7 @@ fun DevScreen(
     val updateSubstitutionPlanUseCase = koinInject<UpdateSubstitutionPlanUseCase>()
     val fullSyncUseCase = koinInject<FullSyncUseCase>()
     val rebuildIndices = koinInject<UpdateProfileLessonIndexUseCase>()
+    val updateHolidaysUseCase = koinInject<UpdateHolidaysUseCase>()
 
     Column(
         modifier = Modifier
@@ -70,6 +72,13 @@ fun DevScreen(
             } }
         ) {
             Text("Update R203")
+        }
+        Button(
+            onClick = { scope.launch {
+                updateHolidaysUseCase(state.profile!!.getSchool().getFirstValue() as School.IndiwareSchool)
+            } }
+        ) {
+            Text("Update Holidays")
         }
         Button(
             onClick = { scope.launch {

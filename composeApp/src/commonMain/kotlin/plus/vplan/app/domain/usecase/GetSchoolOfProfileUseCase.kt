@@ -9,6 +9,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.model.Teacher
 
+@Deprecated("Use school attribute of profile instead")
 class GetSchoolOfProfileUseCase {
     suspend operator fun invoke(profile: Profile): Int {
         return when (profile) {

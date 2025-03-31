@@ -67,14 +67,11 @@ class HomeViewModel(
                 getDayUseCase(profile, state.currentTime.date)
                     .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.name}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
                     .collectLatest { day ->
+                        state = state.copy(initDone = true)
                         if (day.lessons.first().any { it.lessonTime.getFirstValue()!!.end >= state.currentTime.time }) state = state.copy(
-                            day = day,
-                            initDone = true
+                            day = day
                         ) else if (day.nextSchoolDayId != null) App.daySource.getById(day.nextSchoolDayId, profile).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { nextDay ->
-                            state = state.copy(
-                                day = nextDay,
-                                initDone = true
-                            )
+                            state = state.copy(day = nextDay)
                         }
                     }
             }
