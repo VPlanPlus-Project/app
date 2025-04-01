@@ -73,6 +73,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -87,7 +88,6 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
@@ -392,10 +392,7 @@ private fun CalendarScreenContent(
                         ) { page ->
                             val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                             val day = state.days[date]
-                            val lessons = remember(day?.lessons) { mutableListOf<Lesson>() }
-                            LaunchedEffect(day?.lessons) {
-                                lessons.addAll(day?.lessons?.toList().orEmpty().sortedBySuspending { it.lessonTime.getFirstValue()!!.start })
-                            }
+                            val lessons = day?.day?.lessons?.map { it.sortedBySuspending { it.lessonTime.getFirstValue()!!.start }.toList() }?.collectAsState(emptyList())?.value.orEmpty()
                             CalendarView(
                                 profile = state.currentProfile ?: return@HorizontalPager,
                                 date = date,
@@ -419,6 +416,7 @@ private fun CalendarScreenContent(
                             items(CONTENT_PAGER_SIZE) { page ->
                                 val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                                 val day = state.days[date]
+                                val lessons = remember { day?.day?.lessons?.map { it.sortedBySuspending { it.lessonTime.getFirstValue()!!.start }.toList().groupBy { it.lessonTime.getFirstValue()!!.lessonNumber } } }?.collectAsState(null)?.value
                                 var showLessons by rememberSaveable { mutableStateOf(false) }
                                 Row(
                                     modifier = Modifier.fillMaxWidth()
@@ -474,15 +472,10 @@ private fun CalendarScreenContent(
                                         }
                                     }
                                     Column {
-                                        var lessonCount by remember { mutableStateOf<Int?>(null) }
+                                        var lessonCount = lessons?.size
                                         var start by remember { mutableStateOf<LocalTime?>(null) }
                                         var end by remember { mutableStateOf<LocalTime?>(null) }
 
-                                        LaunchedEffect(day?.lessons) {
-                                            lessonCount = day?.lessons.orEmpty().distinctBy { it.lessonTime.getFirstValue()!!.lessonNumber }.count()
-                                            start = day?.lessons?.minOfOrNull { it.lessonTime.getFirstValue()!!.start }
-                                            end = day?.lessons?.maxOfOrNull { it.lessonTime.getFirstValue()!!.end }
-                                        }
                                         Head(
                                             date = date,
                                             dayType = day?.day?.dayType ?: Day.DayType.UNKNOWN,
@@ -514,17 +507,12 @@ private fun CalendarScreenContent(
                                             modifier = Modifier.fillMaxWidth()
                                         ) lessonsSection@{
                                             Column {
-                                                val lessons = remember { mutableMapOf<Int, List<Lesson>>() }
-                                                LaunchedEffect(day?.lessons) {
-                                                    lessons.clear()
-                                                    lessons.putAll(day?.lessons.orEmpty().groupBy { l -> l.lessonTime.getFirstValue()!!.lessonNumber }.toList().sortedBy { it.first }.toMap())
-                                                }
                                                 FollowingLessons(
                                                     modifier = Modifier.padding(horizontal = 4.dp),
                                                     showFirstGradient = false,
                                                     date = date,
                                                     paddingStart = 8.dp,
-                                                    lessons = lessons
+                                                    lessons = lessons.orEmpty()
                                                 )
                                             }
                                         }
