@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.stopScroll
@@ -40,8 +41,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -72,7 +73,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
-import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -114,7 +114,6 @@ import plus.vplan.app.utils.sortedBySuspending
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.book_marked
-import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
 
@@ -123,7 +122,6 @@ private const val CALENDAR_SCREEN_START_PADDING_MINUTES = 15
 
 @Composable
 fun CalendarScreen(
-    navHostController: NavHostController,
     paddingValues: PaddingValues,
     viewModel: CalendarViewModel
 ) {
@@ -297,12 +295,17 @@ private fun CalendarScreenContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { scope.launch {
-                            pagerState.stopScroll()
-                            lazyListState.stopScroll()
-                            onEvent(CalendarEvent.SelectDate(LocalDate.now()))
-                        } }) {
-                            Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(24.dp))
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    if (pagerState.isScrollInProgress) pagerState.stopScroll(MutatePriority.PreventUserInput)
+                                    if (lazyListState.isScrollInProgress) lazyListState.stopScroll(MutatePriority.PreventUserInput)
+                                    onEvent(CalendarEvent.SelectDate(LocalDate.now()))
+                                }
+                            },
+                            enabled = state.selectedDate != LocalDate.now()
+                        ) {
+                            Text("Heute")
                         }
                         DisplaySelectType(
                             displayType = state.displayType,
