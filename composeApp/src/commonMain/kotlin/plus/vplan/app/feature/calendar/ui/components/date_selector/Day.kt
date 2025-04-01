@@ -4,14 +4,19 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,12 +32,15 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import plus.vplan.app.ui.grayScale
+import plus.vplan.app.ui.theme.CustomColor
+import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.toDp
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RowScope.Day(
     date: LocalDate,
@@ -40,7 +48,9 @@ fun RowScope.Day(
     onClick: () -> Unit = {},
     height: Dp,
     isOtherMonth: Boolean,
-    scrollProgress: Float
+    scrollProgress: Float,
+    homework: Int,
+    assessments: Int,
 ) {
     val isWeekSelected = selectedDate.atStartOfWeek() == date.atStartOfWeek()
     AnimatedContent(
@@ -75,10 +85,27 @@ fun RowScope.Day(
                 else MaterialTheme.colorScheme.onSurface,
                 style = (if (showSelection) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall).copy(fontWeight = if (showSelection) FontWeight.Black else FontWeight.Bold),
             )
-            Row(
+            FlowRow(
                 modifier = Modifier.height(MaterialTheme.typography.labelSmall.lineHeight.toDp()),
+                verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+                horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally)
             ) {
-
+                repeat(assessments) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(colors[CustomColor.WineRed]!!.getGroup().color)
+                    )
+                }
+                repeat(homework) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(colors[CustomColor.Cyan]!!.getGroup().color)
+                    )
+                }
             }
         }
     }
