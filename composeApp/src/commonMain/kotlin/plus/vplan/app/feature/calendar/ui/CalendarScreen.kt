@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -46,7 +47,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -320,6 +320,7 @@ private fun CalendarScreenContent(
                         scrollProgress = displayScrollProgress,
                         allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
                         selectedDate = state.selectedDate,
+                        days = state.days.values.toList(),
                         onSelectDate = { onEvent(CalendarEvent.SelectDate(it)) }
                     )
                 }
@@ -370,6 +371,8 @@ private fun CalendarScreenContent(
                 contentScrollState.animateScrollTo(with(localDensity) { ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).coerceAtLeast(0.dp).roundToPx() })
             }
 
+            val infiniteTransition = rememberInfiniteTransition()
+
             AnimatedContent(
                 targetState = state.displayType,
                 modifier = Modifier.fillMaxSize()
@@ -414,9 +417,6 @@ private fun CalendarScreenContent(
                                 val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                                 val day = state.days[date]
                                 var showLessons by rememberSaveable { mutableStateOf(false) }
-                                LaunchedEffect(Unit) {
-                                    onEvent(CalendarEvent.StartLessonUiSync(date))
-                                }
                                 Row(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
@@ -471,7 +471,7 @@ private fun CalendarScreenContent(
                                         }
                                     }
                                     Column {
-                                        var lessonCount by remember { mutableIntStateOf(0) }
+                                        var lessonCount by remember { mutableStateOf<Int?>(null) }
                                         var start by remember { mutableStateOf<LocalTime?>(null) }
                                         var end by remember { mutableStateOf<LocalTime?>(null) }
 
@@ -487,6 +487,7 @@ private fun CalendarScreenContent(
                                             start = start,
                                             end = end,
                                             showLessons = showLessons,
+                                            infiniteTransition = infiniteTransition,
                                             onClick = {
                                                 when (day?.day?.dayType) {
                                                     Day.DayType.REGULAR -> showLessons = !showLessons
@@ -510,8 +511,9 @@ private fun CalendarScreenContent(
                                             modifier = Modifier.fillMaxWidth()
                                         ) lessonsSection@{
                                             Column {
-                                                val lessons = remember(day?.lessons) { mutableMapOf<Int, List<Lesson>>() }
+                                                val lessons = remember { mutableMapOf<Int, List<Lesson>>() }
                                                 LaunchedEffect(day?.lessons) {
+                                                    lessons.clear()
                                                     lessons.putAll(day?.lessons.orEmpty().groupBy { l -> l.lessonTime.getFirstValue()!!.lessonNumber }.toList().sortedBy { it.first }.toMap())
                                                 }
                                                 FollowingLessons(
