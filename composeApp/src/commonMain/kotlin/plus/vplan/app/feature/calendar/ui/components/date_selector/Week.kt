@@ -31,9 +31,9 @@ fun Week(
             Day(
                 date = day.day.date,
                 selectedDate = selectedDate,
-                onClick = { onDateSelected(day.day.date) },
+                onClick = { onDateSelected(date) },
                 height = height,
-                isOtherMonth = false,
+                isOtherMonth = selectedDate.month != date.month,
                 scrollProgress = scrollProgress,
                 homework = day.homework,
                 assessments = day.assessments

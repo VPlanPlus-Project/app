@@ -26,7 +26,7 @@ fun Month(
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        repeat(6) {
+        repeat(5) {
             val date = startDate + (it*7).days
             Week(
                 startDate = date,
