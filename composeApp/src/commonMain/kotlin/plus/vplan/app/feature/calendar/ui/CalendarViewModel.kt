@@ -10,7 +10,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -23,7 +22,6 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
@@ -34,8 +32,6 @@ import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
-
-private const val PREVIEW_DAYS_WITH_LESSONS_FROM_MONDAY = 14
 
 class CalendarViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
@@ -49,36 +45,28 @@ class CalendarViewModel(
 
     private val syncJobs = mutableListOf<SyncJob>()
 
-    private fun launchSyncJob(date: LocalDate, syncLessons: Boolean): Job {
-        syncJobs
-            .filter { it.date == date && it.syncLessons == syncLessons }
-            .onEach { it.job.cancel(); syncJobs.remove(it) }
-        return viewModelScope.launch {
+    private fun launchSyncJob(date: LocalDate): Job {
+        return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
             App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
-                val lessons = if (syncLessons) day.lessons.first().onEach { it.prefetch() } else null
                 state = state.copy(days = state.days + (date to CalendarDay(
                     day = day,
-                    lessons = lessons,
                     homework = day.homeworkIds.size,
                     assessments = day.assessmentIds.size
                 )))
             }
         }.also {
-            syncJobs.add(SyncJob(it, date, syncLessons))
+            syncJobs.add(SyncJob(it, date))
         }
     }
 
     private fun startDaySyncJobsFromSelectedDate() {
         val startOfWeek = state.selectedDate.atStartOfWeek()
         val startOfMonth = startOfWeek.atStartOfMonth()
-        repeat(PREVIEW_DAYS_WITH_LESSONS_FROM_MONDAY) {
-            val date = startOfWeek + it.days
-            launchSyncJob(date, true)
-        }
+        val coveredDates = mutableListOf<LocalDate>()
         repeat(2*31) {
             val date = startOfMonth + it.days
-            syncJobs.firstOrNull { it.date == date && it.syncLessons && it.date !in startOfWeek..startOfWeek.plus(PREVIEW_DAYS_WITH_LESSONS_FROM_MONDAY.days) }?.also { syncJobs.remove(it) }?.job?.cancel()
-            if (syncJobs.none { it.date == date }) syncJobs.add(SyncJob(launchSyncJob(date, false), date, syncLessons = false))
+            coveredDates.add(date)
+            launchSyncJob(date)
         }
     }
 
@@ -135,25 +123,16 @@ sealed class CalendarEvent {
 
 private data class SyncJob(
     val job: Job,
-    val date: LocalDate,
-    val syncLessons: Boolean,
+    val date: LocalDate
 )
 
 data class CalendarDay(
     val day: Day,
-    val lessons: Set<Lesson>?,
     val homework: Int,
     val assessments: Int
 ) {
-    constructor(day: Day) : this(day, emptySet(), 0, 0)
+    constructor(day: Day) : this(day, 0, 0)
     constructor(date: LocalDate) : this(Day(id = "", date, -1, null, null, Day.DayType.UNKNOWN, emptySet(), emptySet(), emptySet(), emptySet(), null))
-}
-
-private suspend fun Lesson.prefetch() {
-    this.getLessonTimeItem()
-    this.getRoomItems()
-    this.getTeacherItems()
-    if (this is Lesson.SubstitutionPlanLesson) this.getSubjectInstance()
 }
 
 enum class DisplayType {
