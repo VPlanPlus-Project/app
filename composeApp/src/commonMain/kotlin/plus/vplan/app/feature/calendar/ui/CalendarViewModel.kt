@@ -32,9 +32,10 @@ import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
+
+private const val PREVIEW_DAYS_WITH_LESSONS_FROM_MONDAY = 14
 
 class CalendarViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
@@ -49,14 +50,35 @@ class CalendarViewModel(
     private val syncJobs = mutableListOf<SyncJob>()
 
     private fun launchSyncJob(date: LocalDate, syncLessons: Boolean): Job {
+        syncJobs
+            .filter { it.date == date && it.syncLessons == syncLessons }
+            .onEach { it.job.cancel(); syncJobs.remove(it) }
         return viewModelScope.launch {
             App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
-                if (!syncLessons) state = state.copy(days = state.days + (date to CalendarDay(day)))
-                else {
-                    val lessons = day.lessons.first().onEach { it.prefetch() }
-                    state = state.copy(days = state.days + (date to CalendarDay(day, lessons)))
-                }
+                val lessons = if (syncLessons) day.lessons.first().onEach { it.prefetch() } else null
+                state = state.copy(days = state.days + (date to CalendarDay(
+                    day = day,
+                    lessons = lessons,
+                    homework = day.homeworkIds.size,
+                    assessments = day.assessmentIds.size
+                )))
             }
+        }.also {
+            syncJobs.add(SyncJob(it, date, syncLessons))
+        }
+    }
+
+    private fun startDaySyncJobsFromSelectedDate() {
+        val startOfWeek = state.selectedDate.atStartOfWeek()
+        val startOfMonth = startOfWeek.atStartOfMonth()
+        repeat(PREVIEW_DAYS_WITH_LESSONS_FROM_MONDAY) {
+            val date = startOfWeek + it.days
+            launchSyncJob(date, true)
+        }
+        repeat(2*31) {
+            val date = startOfMonth + it.days
+            syncJobs.firstOrNull { it.date == date && it.syncLessons && it.date !in startOfWeek..startOfWeek.plus(PREVIEW_DAYS_WITH_LESSONS_FROM_MONDAY.days) }?.also { syncJobs.remove(it) }?.job?.cancel()
+            if (syncJobs.none { it.date == date }) syncJobs.add(SyncJob(launchSyncJob(date, false), date, syncLessons = false))
         }
     }
 
@@ -72,41 +94,8 @@ class CalendarViewModel(
                 )
                 syncJobs.forEach { it.job.cancel() }
                 syncJobs.clear()
-                repeat(7) {
-                    val date = LocalDate.now().atStartOfWeek() + it.days
-                    syncJobs.add(
-                        SyncJob(
-                            job = launchSyncJob(date, true),
-                            date = date,
-                            syncLessons = true
-                        )
-                    )
-                }
-
-                repeat(31) {
-                    val date = LocalDate.now().atStartOfMonth() + it.days
-                    if (syncJobs.any { job -> job.date == date }) return@repeat
-                    syncJobs.add(
-                        SyncJob(
-                            job = launchSyncJob(date, false),
-                            date = date,
-                            syncLessons = false
-                        )
-                    )
-                }
-
-                if (syncJobs.none { it.syncLessons && it.date == state.selectedDate }) {
-                    syncJobs.filter { it.date == state.selectedDate }.forEach { it.job.cancel(); syncJobs.remove(it) }
-                    syncJobs.add(
-                        SyncJob(
-                            job = launchSyncJob(state.selectedDate, true),
-                            date = state.selectedDate,
-                            syncLessons = true
-                        )
-                    )
-                }
+                startDaySyncJobsFromSelectedDate()
             }
-
         }
     }
 
@@ -119,34 +108,10 @@ class CalendarViewModel(
                         Logger.d { "Waiting for profile" }
                     }
                     state = state.copy(selectedDate = event.date)
-                    if (syncJobs.any { it.date == event.date && !it.syncLessons }) {
-                        syncJobs.find { it.date == event.date && it.syncLessons }?.job?.cancel()
-                        syncJobs.removeAll { it.date == event.date && it.syncLessons }
-                    }
-                    syncJobs.add(
-                        SyncJob(
-                            job = launchSyncJob(event.date, true),
-                            date = event.date,
-                            syncLessons = true
-                        )
-                    )
+                    startDaySyncJobsFromSelectedDate()
                 }
                 is CalendarEvent.SelectDisplayType -> {
                     setLastDisplayTypeUseCase(event.displayType)
-                    if (event.displayType == DisplayType.Calendar) launchSyncJob(date = state.selectedDate, syncLessons = true)
-                }
-                is CalendarEvent.StartLessonUiSync -> {
-                    if (syncJobs.any { it.date == event.date && !it.syncLessons }) {
-                        syncJobs.find { it.date == event.date && it.syncLessons }?.job?.cancel()
-                        syncJobs.removeAll { it.date == event.date && it.syncLessons }
-                    }
-                    syncJobs.add(
-                        SyncJob(
-                            job = launchSyncJob(event.date, true),
-                            date = event.date,
-                            syncLessons = true
-                        )
-                    )
                 }
             }
         }
@@ -164,7 +129,6 @@ data class CalendarState(
 
 sealed class CalendarEvent {
     data class SelectDate(val date: LocalDate) : CalendarEvent()
-    data class StartLessonUiSync(val date: LocalDate): CalendarEvent()
 
     data class SelectDisplayType(val displayType: DisplayType): CalendarEvent()
 }
@@ -177,9 +141,12 @@ private data class SyncJob(
 
 data class CalendarDay(
     val day: Day,
-    val lessons: Set<Lesson>,
+    val lessons: Set<Lesson>?,
+    val homework: Int,
+    val assessments: Int
 ) {
-    constructor(day: Day) : this(day, emptySet())
+    constructor(day: Day) : this(day, emptySet(), 0, 0)
+    constructor(date: LocalDate) : this(Day(id = "", date, -1, null, null, Day.DayType.UNKNOWN, emptySet(), emptySet(), emptySet(), emptySet(), null))
 }
 
 private suspend fun Lesson.prefetch() {

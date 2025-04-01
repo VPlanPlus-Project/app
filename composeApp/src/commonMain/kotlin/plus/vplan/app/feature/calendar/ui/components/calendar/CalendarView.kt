@@ -346,7 +346,7 @@ fun CalendarView(
                                         when (assessments.size) {
                                             0 -> null
                                             1 -> "Eine Leistungserhebung"
-                                            else -> "${homework.size} Leistungserhebungen"
+                                            else -> "${assessments.size} Leistungserhebungen"
                                         },
                                     ).ifEmpty { null }?.let {
                                         Text(
