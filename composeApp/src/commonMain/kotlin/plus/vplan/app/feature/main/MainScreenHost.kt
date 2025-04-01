@@ -218,7 +218,7 @@ fun MainScreenHost(
                 exitTransition = defaultMainExitAnimation,
                 popEnterTransition = defaultMainEnterAnimation,
                 popExitTransition = defaultMainExitAnimation
-            ) { CalendarScreen(navController, contentPadding, calendarViewModel) }
+            ) { CalendarScreen(contentPadding, calendarViewModel) }
             composable<MainScreen.MainSearch>(
                 enterTransition = defaultMainEnterAnimation,
                 exitTransition = defaultMainExitAnimation,
