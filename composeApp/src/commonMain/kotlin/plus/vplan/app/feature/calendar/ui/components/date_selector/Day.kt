@@ -31,11 +31,11 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
-import plus.vplan.app.ui.grayScale
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.toDp
@@ -63,7 +63,6 @@ fun RowScope.Day(
         Column (
             modifier = Modifier
                 .fillMaxSize()
-                .thenIf(Modifier.grayScale()) { isOtherMonth }
                 .thenIf(Modifier.border(1.dp, if (showSelection) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))) { selectedDate == date }
                 .thenIf(Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))) { date == LocalDate.now() }
                 .clip(RoundedCornerShape(4.dp))
@@ -71,18 +70,19 @@ fun RowScope.Day(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            fun grayScaledIfRequired(color: Color) = if (isOtherMonth) blendColor(color, Color.Gray, scrollProgress) else color
             Text(
                 text = date.format(LocalDate.Format { dayOfWeek(shortDayOfWeekNames) }),
                 style = MaterialTheme.typography.labelSmall,
-                color = (if (showSelection) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline).copy(alpha = 1-(if (isWeekSelected) scrollProgress.coerceAtMost(1f) else 1f))
+                color = grayScaledIfRequired(if (showSelection) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline).copy(alpha = 1-(if (isWeekSelected) scrollProgress.coerceAtMost(1f) else 1f))
             )
             Text(
                 text = date.dayOfMonth.toString(),
-                color =
-                if (isOtherMonth) Color.Gray
-                else if (showSelection) MaterialTheme.colorScheme.tertiary
-                else if (date.dayOfWeek in listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.onSurface,
+                color = grayScaledIfRequired(
+                    if (showSelection) MaterialTheme.colorScheme.tertiary
+                    else if (date.dayOfWeek in listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurface
+                ),
                 style = (if (showSelection) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall).copy(fontWeight = if (showSelection) FontWeight.Black else FontWeight.Bold),
             )
             FlowRow(
@@ -95,7 +95,7 @@ fun RowScope.Day(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(colors[CustomColor.WineRed]!!.getGroup().color)
+                            .background(grayScaledIfRequired(colors[CustomColor.WineRed]!!.getGroup().color))
                     )
                 }
                 repeat(homework) {
@@ -103,7 +103,7 @@ fun RowScope.Day(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(colors[CustomColor.Cyan]!!.getGroup().color)
+                            .background(grayScaledIfRequired(colors[CustomColor.Cyan]!!.getGroup().color))
                     )
                 }
             }
