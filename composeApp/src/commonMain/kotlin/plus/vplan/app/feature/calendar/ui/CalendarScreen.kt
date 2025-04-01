@@ -4,11 +4,13 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.stopScroll
@@ -39,14 +41,13 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -72,7 +73,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
-import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -114,7 +114,6 @@ import plus.vplan.app.utils.sortedBySuspending
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.book_marked
-import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
 
@@ -123,7 +122,6 @@ private const val CALENDAR_SCREEN_START_PADDING_MINUTES = 15
 
 @Composable
 fun CalendarScreen(
-    navHostController: NavHostController,
     paddingValues: PaddingValues,
     viewModel: CalendarViewModel
 ) {
@@ -297,12 +295,17 @@ private fun CalendarScreenContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { scope.launch {
-                            pagerState.stopScroll()
-                            lazyListState.stopScroll()
-                            onEvent(CalendarEvent.SelectDate(LocalDate.now()))
-                        } }) {
-                            Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(24.dp))
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    if (pagerState.isScrollInProgress) pagerState.stopScroll(MutatePriority.PreventUserInput)
+                                    if (lazyListState.isScrollInProgress) lazyListState.stopScroll(MutatePriority.PreventUserInput)
+                                    onEvent(CalendarEvent.SelectDate(LocalDate.now()))
+                                }
+                            },
+                            enabled = state.selectedDate != LocalDate.now()
+                        ) {
+                            Text("Heute")
                         }
                         DisplaySelectType(
                             displayType = state.displayType,
@@ -320,6 +323,7 @@ private fun CalendarScreenContent(
                         scrollProgress = displayScrollProgress,
                         allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
                         selectedDate = state.selectedDate,
+                        days = state.days.values.toList(),
                         onSelectDate = { onEvent(CalendarEvent.SelectDate(it)) }
                     )
                 }
@@ -370,6 +374,8 @@ private fun CalendarScreenContent(
                 contentScrollState.animateScrollTo(with(localDensity) { ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).coerceAtLeast(0.dp).roundToPx() })
             }
 
+            val infiniteTransition = rememberInfiniteTransition()
+
             AnimatedContent(
                 targetState = state.displayType,
                 modifier = Modifier.fillMaxSize()
@@ -414,9 +420,6 @@ private fun CalendarScreenContent(
                                 val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                                 val day = state.days[date]
                                 var showLessons by rememberSaveable { mutableStateOf(false) }
-                                LaunchedEffect(Unit) {
-                                    onEvent(CalendarEvent.StartLessonUiSync(date))
-                                }
                                 Row(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
@@ -471,7 +474,7 @@ private fun CalendarScreenContent(
                                         }
                                     }
                                     Column {
-                                        var lessonCount by remember { mutableIntStateOf(0) }
+                                        var lessonCount by remember { mutableStateOf<Int?>(null) }
                                         var start by remember { mutableStateOf<LocalTime?>(null) }
                                         var end by remember { mutableStateOf<LocalTime?>(null) }
 
@@ -487,6 +490,7 @@ private fun CalendarScreenContent(
                                             start = start,
                                             end = end,
                                             showLessons = showLessons,
+                                            infiniteTransition = infiniteTransition,
                                             onClick = {
                                                 when (day?.day?.dayType) {
                                                     Day.DayType.REGULAR -> showLessons = !showLessons
@@ -510,8 +514,9 @@ private fun CalendarScreenContent(
                                             modifier = Modifier.fillMaxWidth()
                                         ) lessonsSection@{
                                             Column {
-                                                val lessons = remember(day?.lessons) { mutableMapOf<Int, List<Lesson>>() }
+                                                val lessons = remember { mutableMapOf<Int, List<Lesson>>() }
                                                 LaunchedEffect(day?.lessons) {
+                                                    lessons.clear()
                                                     lessons.putAll(day?.lessons.orEmpty().groupBy { l -> l.lessonTime.getFirstValue()!!.lessonNumber }.toList().sortedBy { it.first }.toMap())
                                                 }
                                                 FollowingLessons(
