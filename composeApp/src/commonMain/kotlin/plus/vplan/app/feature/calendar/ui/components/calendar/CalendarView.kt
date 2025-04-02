@@ -58,6 +58,7 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsSingleFlow
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
@@ -121,7 +122,7 @@ fun CalendarView(
                             .let { if (contentScrollState == null) it else it.verticalScroll(contentScrollState) }
                     ) {
                         val lessonTimes = remember(lessons.size) { mutableStateMapOf<Int, LessonTime>() }
-                        LaunchedEffect(lessons.size) {
+                        LaunchedEffect(lessons.map { it.lessonTimeId }.sorted().distinct()) {
                             lessons.mapIndexed { index, lesson ->
                                 lessonTimes[index] = lesson.lessonTime.getFirstValue()!!
                             }
@@ -131,7 +132,7 @@ fun CalendarView(
                         var end by remember { mutableStateOf(LocalTime(23, 59, 59, 99)) }
 
                         LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons, lessonTimes.size, limitTimeSpanToLessonsLowerBound) {
-                            if ((!autoLimitTimeSpanToLessons || lessonTimes.size < lessons.size || lessons.isEmpty()) && limitTimeSpanToLessonsLowerBound != null) return@LaunchedEffect
+                            if (!autoLimitTimeSpanToLessons || lessonTimes.isEmpty() || lessons.isEmpty()) return@LaunchedEffect
                             start = limitTimeSpanToLessonsLowerBound ?: lessonTimes.values.minOf { it.start }.minusWithCapAtMidnight(1.hours)
                             end = lessonTimes.values.maxOf { it.end }.plusWithCapAtMidnight(1.hours)
                         }
@@ -197,6 +198,8 @@ fun CalendarView(
                                 }
 
                                 val y = (lessonStart.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
+                                val rooms by lesson.rooms.collectAsSingleFlow()
+                                val teachers by lesson.teachers.collectAsSingleFlow()
                                 Box(
                                     modifier = Modifier
                                         .width(availableWidth / lessonsThatOverlapStart.size)
@@ -237,16 +240,16 @@ fun CalendarView(
                                                         Text(text = buildAnnotatedString {
                                                             withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
                                                                 if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                    append((lesson as Lesson.SubstitutionPlanLesson).subjectInstanceItem!!.subject)
-                                                                } else append(lesson.subject.toString())
+                                                                    append(lesson.subjectInstance?.collectAsResultingFlow()?.value?.subject?.plus(" ").orEmpty() + "Entfall")
+                                                                } else append(lesson.subject)
                                                             }
                                                         }, style = MaterialTheme.typography.bodySmall)
-                                                        if (lesson.roomItems != null) Text(
-                                                            text = lesson.roomItems.orEmpty().joinToString { it.name },
+                                                        if (rooms.isNotEmpty()) Text(
+                                                            text = rooms.joinToString { it.name },
                                                             style = MaterialTheme.typography.labelMedium
                                                         )
-                                                        Text(
-                                                            text = lesson.teacherItems.orEmpty().joinToString { it.name },
+                                                        if (teachers.isNotEmpty()) Text(
+                                                            text = teachers.joinToString { it.name },
                                                             style = MaterialTheme.typography.labelMedium
                                                         )
                                                     }
@@ -343,7 +346,7 @@ fun CalendarView(
                                         when (assessments.size) {
                                             0 -> null
                                             1 -> "Eine Leistungserhebung"
-                                            else -> "${homework.size} Leistungserhebungen"
+                                            else -> "${assessments.size} Leistungserhebungen"
                                         },
                                     ).ifEmpty { null }?.let {
                                         Text(

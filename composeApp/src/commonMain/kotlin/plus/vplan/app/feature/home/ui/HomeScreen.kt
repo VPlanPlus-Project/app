@@ -367,7 +367,8 @@ private fun HomeContent(
                                                     }
                                                 }
                                             }
-                                        } else {
+                                        }
+                                        else {
                                             Text(
                                                 text = "Nächster Unterricht",
                                                 style = MaterialTheme.typography.titleSmall,
@@ -398,7 +399,7 @@ private fun HomeContent(
                                         }
                                     }
                                 }
-                                if ((state.remainingLessons.values.flatten() - highlightedLessons.nextLesson.toSet()).isNotEmpty()) {
+                                if ((state.remainingLessons.values.flatten() - (if (!highlightedLessons.showCurrent) highlightedLessons.nextLesson.toSet() else emptySet())).isNotEmpty()) {
                                     Spacer(Modifier.size(8.dp))
                                     Text(
                                         text = if (isYourDayToday) "Weitere Stunden" else "Stundenplan",
@@ -482,7 +483,7 @@ private fun HomeContent(
                                                                         .clip(RoundedCornerShape(8.dp))
                                                                 )
                                                                 Text(
-                                                                    text = lesson.subject ?: "Entfall",
+                                                                    text = lesson.subject ?: "${lesson.subjectInstance?.collectAsResultingFlow()?.value?.subject?.plus(" ").orEmpty()}Entfall",
                                                                     style = headFont,
                                                                     color = if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
                                                                 )

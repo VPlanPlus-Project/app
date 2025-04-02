@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.calendar.ui.components.agenda
 
+import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -29,10 +31,12 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Day
+import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.grayScale
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularTimeFormat
+import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.chevron_down
 
@@ -40,7 +44,8 @@ import vplanplus.composeapp.generated.resources.chevron_down
 fun Head(
     date: LocalDate,
     dayType: Day.DayType,
-    lessons: Int = 0,
+    lessons: Int?,
+    infiniteTransition: InfiniteTransition,
     start: LocalTime? = null,
     end: LocalTime? = null,
     showLessons: Boolean,
@@ -79,10 +84,23 @@ fun Head(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text(
-                                text = "$lessons Stunden",
-                                style = MaterialTheme.typography.titleMedium
-                            )
+                            Row {
+                                val style = MaterialTheme.typography.titleMedium
+                                if (lessons == null) ShimmerLoader(
+                                    modifier = Modifier
+                                        .alignByBaseline()
+                                        .padding(end = 8.dp)
+                                        .width(16.dp)
+                                        .height(style.lineHeight.toDp())
+                                        .clip(RoundedCornerShape(4.dp)),
+                                    infiniteTransition = infiniteTransition
+                                )
+                                Text(
+                                    text = "${lessons?.toString()?.plus(" ").orEmpty()}Stunden",
+                                    style = style,
+                                    modifier = Modifier.alignByBaseline()
+                                )
+                            }
                             if (start != null && end != null) Text(
                                 text = buildString {
                                     append(start.format(regularTimeFormat))

@@ -11,15 +11,19 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
+import plus.vplan.app.feature.calendar.ui.CalendarDay
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.now
+import kotlin.time.Duration.Companion.days
 
 const val MONTH_PAGER_SIZE = Int.MAX_VALUE
 
 @Composable
 fun MonthScroller(
     selectedDate: LocalDate,
+    days: List<CalendarDay>,
     onChangeSelectedDate: (LocalDate) -> Unit
 ) {
     val referenceDate = LocalDate.now().atStartOfMonth()
@@ -46,8 +50,10 @@ fun MonthScroller(
         beyondViewportPageCount = 2
     ) { page ->
         val startDate = referenceDate.plus((page - MONTH_PAGER_SIZE / 2), DateTimeUnit.MONTH).atStartOfWeek()
+        val days = days.filter { it.day.date >= startDate && it.day.date - 31.days < startDate }
         Month(
-            startDate = startDate.atStartOfWeek(),
+            startDate = startDate,
+            days = days,
             selectedDate = selectedDate,
             keepWeek = selectedDate.atStartOfWeek(),
             scrollProgress = 1f,

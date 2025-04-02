@@ -1,5 +1,6 @@
 package plus.vplan.app.data.repository
 
+import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -26,6 +27,7 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.utils.sendAll
 
@@ -37,9 +39,9 @@ class RoomRepositoryImpl(
         return vppDatabase.roomDao.getBySchool(schoolId).map { result -> result.map { it.toModel() } }
     }
 
-    override suspend fun getBySchoolWithCaching(school: School): Response<Flow<List<Room>>> {
+    override suspend fun getBySchoolWithCaching(school: School, forceReload: Boolean): Response<Flow<List<Room>>> {
         val flow = getBySchool(school.id)
-        if (flow.first().isNotEmpty()) return Response.Success(flow)
+        if (flow.first().isNotEmpty() && !forceReload) return Response.Success(flow)
 
         return saveRequest {
             val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/room") {
@@ -74,27 +76,37 @@ class RoomRepositoryImpl(
             send(CacheState.Loading(id.toString()))
 
             safeRequest(onError = { send(CacheState.Error(id.toString(), it)) }) {
-                val accessResponse = httpClient.get("${api.url}/api/v2.2/room/$id")
-                if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
-                    vppDatabase.roomDao.deleteById(listOf(id))
-                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+                val existing = vppDatabase.roomDao.getById(id).first()
+                var schoolApiAccess: SchoolApiAccess? = null
+                if (existing != null) {
+                    schoolApiAccess = existing.schoolId.let { vppDatabase.schoolDao.findById(it).first()?.toModel()?.getSchoolApiAccess() }
                 }
 
-                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Room>()))
-                val accessData = ResponseDataWrapper.fromJson<RoomUnauthenticatedResponse>(accessResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
-
-                val school = vppDatabase.schoolDao.findById(accessData.schoolId).first()?.toModel()
-                    .let {
-                        if (it is School.IndiwareSchool && !it.credentialsValid) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for room $id")))
-                        it?.getSchoolApiAccess() ?: run {
-                            vppDatabase.roomDao.deleteById(listOf(id))
-                            return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for room $id")))
-                        }
+                if (schoolApiAccess == null) {
+                    val accessResponse = httpClient.get("${api.url}/api/v2.2/room/$id")
+                    if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
+                        vppDatabase.roomDao.deleteById(listOf(id))
+                        return@channelFlow send(CacheState.NotExisting(id.toString()))
                     }
 
+                    if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Room>()))
+                    val accessData = ResponseDataWrapper.fromJson<RoomUnauthenticatedResponse>(accessResponse.bodyAsText())
+                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
+
+                    schoolApiAccess = vppDatabase.schoolDao.findById(accessData.schoolId).first()?.toModel().let {
+                        if (it is School.IndiwareSchool && !it.credentialsValid) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for room $id")))
+                        it?.getSchoolApiAccess()
+                    }
+                }
+                if (schoolApiAccess == null) {
+                    Logger.i { "No school to update room $id" }
+                    vppDatabase.roomDao.deleteById(listOf(id))
+                    trySend(CacheState.NotExisting(id.toString()))
+                    return@channelFlow
+                }
+
                 val response = httpClient.get("${api.url}/api/v2.2/room/$id") {
-                    school.authentication(this)
+                    schoolApiAccess.authentication(this)
                 }
                 if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Room>()))
                 val data = ResponseDataWrapper.fromJson<RoomItemResponse>(response.bodyAsText())

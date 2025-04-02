@@ -4,11 +4,13 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.stopScroll
@@ -39,8 +41,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,11 +73,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
-import androidx.navigation.NavHostController
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.isoDayNumber
@@ -83,6 +86,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
@@ -106,10 +110,10 @@ import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
+import plus.vplan.app.utils.sortedBySuspending
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.book_marked
-import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
 
@@ -118,7 +122,6 @@ private const val CALENDAR_SCREEN_START_PADDING_MINUTES = 15
 
 @Composable
 fun CalendarScreen(
-    navHostController: NavHostController,
     paddingValues: PaddingValues,
     viewModel: CalendarViewModel
 ) {
@@ -292,12 +295,17 @@ private fun CalendarScreenContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { scope.launch {
-                            pagerState.stopScroll()
-                            lazyListState.stopScroll()
-                            onEvent(CalendarEvent.SelectDate(LocalDate.now()))
-                        } }) {
-                            Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(24.dp))
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    if (pagerState.isScrollInProgress) pagerState.stopScroll(MutatePriority.PreventUserInput)
+                                    if (lazyListState.isScrollInProgress) lazyListState.stopScroll(MutatePriority.PreventUserInput)
+                                    onEvent(CalendarEvent.SelectDate(LocalDate.now()))
+                                }
+                            },
+                            enabled = state.selectedDate != LocalDate.now()
+                        ) {
+                            Text("Heute")
                         }
                         DisplaySelectType(
                             displayType = state.displayType,
@@ -315,6 +323,7 @@ private fun CalendarScreenContent(
                         scrollProgress = displayScrollProgress,
                         allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
                         selectedDate = state.selectedDate,
+                        days = state.days.values.toList(),
                         onSelectDate = { onEvent(CalendarEvent.SelectDate(it)) }
                     )
                 }
@@ -365,6 +374,8 @@ private fun CalendarScreenContent(
                 contentScrollState.animateScrollTo(with(localDensity) { ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).coerceAtLeast(0.dp).roundToPx() })
             }
 
+            val infiniteTransition = rememberInfiniteTransition()
+
             AnimatedContent(
                 targetState = state.displayType,
                 modifier = Modifier.fillMaxSize()
@@ -381,11 +392,12 @@ private fun CalendarScreenContent(
                         ) { page ->
                             val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                             val day = state.days[date]
+                            val lessons = day?.day?.lessons?.map { it.sortedBySuspending { it.lessonTime.getFirstValue()!!.start }.toList() }?.collectAsState(emptyList())?.value.orEmpty()
                             CalendarView(
                                 profile = state.currentProfile ?: return@HorizontalPager,
                                 date = date,
                                 dayType = day?.day?.dayType ?: Day.DayType.UNKNOWN,
-                                lessons = day?.lessons?.toList().orEmpty().sortedBy { it.lessonTimeItem!!.start },
+                                lessons = lessons,
                                 assessments = day?.day?.assessments?.collectAsState(emptySet())?.value?.toList().orEmpty(),
                                 homework = day?.day?.homework?.collectAsState(emptySet())?.value?.toList().orEmpty(),
                                 bottomIslandPadding = PaddingValues(end = 80.dp),
@@ -404,10 +416,8 @@ private fun CalendarScreenContent(
                             items(CONTENT_PAGER_SIZE) { page ->
                                 val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                                 val day = state.days[date]
+                                val lessons = remember { day?.day?.lessons?.map { it.sortedBySuspending { it.lessonTime.getFirstValue()!!.start }.toList().groupBy { it.lessonTime.getFirstValue()!!.lessonNumber } } }?.collectAsState(null)?.value
                                 var showLessons by rememberSaveable { mutableStateOf(false) }
-                                LaunchedEffect(Unit) {
-                                    onEvent(CalendarEvent.StartLessonUiSync(date))
-                                }
                                 Row(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
@@ -462,13 +472,18 @@ private fun CalendarScreenContent(
                                         }
                                     }
                                     Column {
+                                        var lessonCount = lessons?.size
+                                        var start by remember { mutableStateOf<LocalTime?>(null) }
+                                        var end by remember { mutableStateOf<LocalTime?>(null) }
+
                                         Head(
                                             date = date,
                                             dayType = day?.day?.dayType ?: Day.DayType.UNKNOWN,
-                                            lessons = day?.lessons.orEmpty().distinctBy { it.lessonTimeItem!!.lessonNumber }.count(),
-                                            start = day?.lessons?.minOfOrNull { it.lessonTimeItem!!.start },
-                                            end = day?.lessons?.maxOfOrNull { it.lessonTimeItem!!.end },
+                                            lessons = lessonCount,
+                                            start = start,
+                                            end = end,
                                             showLessons = showLessons,
+                                            infiniteTransition = infiniteTransition,
                                             onClick = {
                                                 when (day?.day?.dayType) {
                                                     Day.DayType.REGULAR -> showLessons = !showLessons
@@ -497,7 +512,7 @@ private fun CalendarScreenContent(
                                                     showFirstGradient = false,
                                                     date = date,
                                                     paddingStart = 8.dp,
-                                                    lessons = day?.lessons.orEmpty().groupBy { l -> l.lessonTimeItem!!.lessonNumber }.toList().sortedBy { it.first }.toMap()
+                                                    lessons = lessons.orEmpty()
                                                 )
                                             }
                                         }
@@ -576,6 +591,6 @@ private fun CalendarScreenContent(
         onDismiss = { displayHomeworkId = null }
     ) }
 
-    if (isNewAssessmentDrawerOpen) NewAssessmentDrawer { isNewAssessmentDrawerOpen = false }
-    if (isNewHomeworkDrawerOpen) NewHomeworkDrawer { isNewHomeworkDrawerOpen = false }
+    if (isNewAssessmentDrawerOpen) NewAssessmentDrawer(selectedDate = state.selectedDate) { isNewAssessmentDrawerOpen = false }
+    if (isNewHomeworkDrawerOpen) NewHomeworkDrawer(selectedDate = state.selectedDate) { isNewHomeworkDrawerOpen = false }
 }
