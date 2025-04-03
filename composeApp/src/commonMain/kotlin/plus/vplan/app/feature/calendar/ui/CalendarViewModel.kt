@@ -47,15 +47,19 @@ class CalendarViewModel(
         private set
 
     private val syncJobs = mutableListOf<SyncJob>()
+    val days: MutableMap<LocalDate, CalendarDay> = mutableMapOf()
 
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
             App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
-                state = state.copy(days = state.days + (date to CalendarDay(
+                days[date] = CalendarDay(
                     day = day,
                     homework = day.homeworkIds.size,
                     assessments = day.assessmentIds.size
-                )))
+                )
+                state = state.copy(
+                    uiUpdateVersion = state.uiUpdateVersion + 1
+                )
             }
         }.also {
             syncJobs.add(SyncJob(it, date))
@@ -113,7 +117,7 @@ data class CalendarState(
     val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
-    val days: Map<LocalDate, CalendarDay> = emptyMap(),
+    val uiUpdateVersion: Int = 0,
     val displayType: DisplayType = DisplayType.Calendar,
     val start: LocalTime = LocalTime(0, 0)
 )
