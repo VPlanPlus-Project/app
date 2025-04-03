@@ -1,5 +1,6 @@
 package plus.vplan.app.domain.model
 
+import androidx.compose.runtime.Stable
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -14,6 +15,7 @@ import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
 
+@Stable
 data class Day(
     val id: String,
     val date: LocalDate,
