@@ -43,6 +43,7 @@ class UpdateAssessmentUseCase(
                     if (ids.isEmpty() || !allowNotifications) return@forEach
                     combine(ids.map { assessmentId -> App.assessmentSource.getById(assessmentId).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }.first()
                         .filter { it.creator is AppEntity.VppId && it.creator.id != profile.vppIdId && (it.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
+                        .filter { it.subjectInstance.getFirstValue()!!.id in profile.subjectInstanceConfiguration.filterValues { it }.keys }
                         .let { newAssessments ->
                             if (newAssessments.isEmpty()) return@forEach
                             if (newAssessments.size == 1) {

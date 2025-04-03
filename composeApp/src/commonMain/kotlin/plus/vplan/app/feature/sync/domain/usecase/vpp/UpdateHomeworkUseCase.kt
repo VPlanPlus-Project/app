@@ -46,6 +46,7 @@ class UpdateHomeworkUseCase(
                         val newHomework = combine((it - existingHomework).ifEmpty { return@also }.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
                             .filterIsInstance<Homework.CloudHomework>()
                             .filter { homework -> homework.createdBy != studentProfile.vppIdId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days }
+                            .filter { it.subjectInstanceId == null || it.subjectInstanceId in studentProfile.subjectInstanceConfiguration.filterValues { it }.keys }
 
                         if (newHomework.size == 1) {
                             platformNotificationRepository.sendNotification(
