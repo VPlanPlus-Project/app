@@ -46,8 +46,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,9 +72,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -88,8 +83,6 @@ import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
@@ -113,7 +106,6 @@ import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
-import plus.vplan.app.utils.sortedBySuspending
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.book_marked
@@ -132,15 +124,13 @@ fun CalendarScreen(
     CalendarScreenContent(
         state = state,
         paddingValues = paddingValues,
-        days = remember(state.uiUpdateVersion) { derivedStateOf { viewModel.days.toMap() } }.value,
-        onEvent = remember { viewModel::onEvent }
+        onEvent = viewModel::onEvent
     )
 }
 
 @Composable
 private fun CalendarScreenContent(
     state: CalendarState,
-    days: Map<LocalDate, CalendarDay>,
     paddingValues: PaddingValues,
     onEvent: (event: CalendarEvent) -> Unit
 ) {
@@ -328,7 +318,7 @@ private fun CalendarScreenContent(
                         scrollProgress = displayScrollProgress,
                         allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
                         selectedDate = state.selectedDate,
-                        days = remember(state.uiUpdateVersion) { days.values.toList() },
+                        days = state.selecorDays.values.toList(),
                         onSelectDate = { onEvent(CalendarEvent.SelectDate(it)) }
                     )
                 }
@@ -391,23 +381,21 @@ private fun CalendarScreenContent(
                             state = pagerState,
                             pageSize = PageSize.Fill,
                             verticalAlignment = Alignment.Top,
-                            beyondViewportPageCount = 7,
-                            modifier = Modifier
-                                .fillMaxSize()
+                            beyondViewportPageCount = 3,
+                            modifier = Modifier.fillMaxSize()
                         ) { page ->
                             val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                            val day = remember(state.uiUpdateVersion) { days[date] }
-                            val lessons = day?.day?.lessons?.map { it.sortedBySuspending { it.lessonTime.getFirstValue()!!.start }.toList() }?.collectAsState(emptyList())?.value.orEmpty()
+                            val day = state.calendarDays[date] ?: CalendarDay(date)
                             CalendarView(
                                 profile = state.currentProfile ?: return@HorizontalPager,
                                 date = date,
-                                dayType = day?.day?.dayType ?: Day.DayType.UNKNOWN,
-                                lessons = lessons,
-                                assessments = day?.day?.assessments?.collectAsState(emptySet())?.value?.toList().orEmpty(),
-                                homework = day?.day?.homework?.collectAsState(emptySet())?.value?.toList().orEmpty(),
+                                dayType = day.dayType,
+                                lessons = day.layoutedLessons,
+                                assessments = day.assessments,
+                                homework = day.homework,
                                 bottomIslandPadding = PaddingValues(end = 80.dp),
                                 limitTimeSpanToLessonsLowerBound = state.start,
-                                info = day?.day?.info,
+                                info = day.info,
                                 contentScrollState = contentScrollState,
                                 onHomeworkClicked = { displayHomeworkId = it },
                                 onAssessmentClicked = { displayAssessmentId = it },
@@ -415,24 +403,24 @@ private fun CalendarScreenContent(
                         }
                     }
                     DisplayType.Agenda -> {
+                        val heights = remember { mutableMapOf<LocalDate, Int>() }
                         LazyColumn(
                             state = lazyListState
                         ) {
                             items(CONTENT_PAGER_SIZE) { page ->
-                                val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                                val day = remember(state.uiUpdateVersion) { days[date] }
-                                val lessons = remember(day?.day?.timetable?.toList().orEmpty().plus(day?.day?.substitutionPlan)) { day?.day?.lessons?.map { it.sortedBySuspending { it.lessonTime.getFirstValue()!!.start }.toList().groupBy { it.lessonTime.getFirstValue()!!.lessonNumber } } }?.collectAsState(null, Dispatchers.IO)?.value
+                                val date = remember(page) { LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY) }
+                                val day = state.calendarDays[date] ?: CalendarDay(date)
                                 var showLessons by rememberSaveable { mutableStateOf(false) }
                                 Row(
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.Top
                                 ) {
-                                    var stickySideHeight by remember { mutableStateOf(0) }
                                     val currentDayHeight = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 0
                                     Column(
                                         modifier = Modifier
                                             .width(48.dp)
-                                            .thenIf(Modifier.offset { IntOffset(0, lazyListState.firstVisibleItemScrollOffset.coerceAtMost((currentDayHeight-stickySideHeight).coerceAtLeast(0))) }) { state.selectedDate == date }
-                                            .onSizeChanged { stickySideHeight = it.height },
+                                            .thenIf(Modifier.offset { IntOffset(0, lazyListState.firstVisibleItemScrollOffset.coerceAtMost((currentDayHeight-(heights[date] ?: 0)).coerceAtLeast(0))) }) { state.selectedDate == date }
+                                            .onSizeChanged { heights[date] = it.height },
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         Box(
@@ -467,9 +455,8 @@ private fun CalendarScreenContent(
                                             }
                                         }
                                         if (date.dayOfWeek == DayOfWeek.MONDAY) {
-                                            val week = day?.day?.week?.collectAsResultingFlow()?.value
-                                            if (week != null) Text(
-                                                text = listOf("KW ${week.calendarWeek}", "SW ${week.weekIndex}", week.weekType).joinToString("\n"),
+                                            if (day.week != null) Text(
+                                                text = listOf("KW ${day.week.calendarWeek}", "SW ${day.week.weekIndex}", day.week.weekType).joinToString("\n"),
                                                 color = MaterialTheme.colorScheme.outline,
                                                 style = MaterialTheme.typography.labelSmall,
                                                 textAlign = TextAlign.Center
@@ -477,32 +464,32 @@ private fun CalendarScreenContent(
                                         }
                                     }
                                     Column {
-                                        var lessonCount = lessons?.size
+                                        var lessonCount = day.lessons?.size
                                         var start by remember { mutableStateOf<LocalTime?>(null) }
                                         var end by remember { mutableStateOf<LocalTime?>(null) }
 
                                         Head(
                                             date = date,
-                                            dayType = day?.day?.dayType ?: Day.DayType.UNKNOWN,
+                                            dayType = day.dayType,
                                             lessons = lessonCount,
                                             start = start,
                                             end = end,
                                             showLessons = showLessons,
                                             infiniteTransition = infiniteTransition,
                                             onClick = {
-                                                when (day?.day?.dayType) {
+                                                when (day.dayType) {
                                                     Day.DayType.REGULAR -> showLessons = !showLessons
                                                     else -> Unit
                                                 }
                                             }
                                         )
-                                        if (day?.day?.info != null) {
+                                        if (day.info != null) {
                                             InfoCard(
                                                 modifier = Modifier
                                                     .padding(vertical = 4.dp, horizontal = 8.dp),
                                                 imageVector = Res.drawable.info,
                                                 title = "Informationen deiner Schule",
-                                                text = day.day.info,
+                                                text = day.info,
                                             )
                                         }
                                         AnimatedVisibility(
@@ -517,28 +504,24 @@ private fun CalendarScreenContent(
                                                     showFirstGradient = false,
                                                     date = date,
                                                     paddingStart = 8.dp,
-                                                    lessons = lessons.orEmpty()
+                                                    lessons = day.lessons.orEmpty()
                                                 )
                                             }
                                         }
                                         Column(Modifier.fillMaxWidth()) assessments@{
-                                            day?.day?.assessments?.collectAsState(emptyList())?.value?.let { assessments ->
-                                                assessments.forEach forEachAssessment@{ assessment ->
-                                                    AssessmentCard(
-                                                        assessment = assessment,
-                                                        onClick = { displayAssessmentId = assessment.id }
-                                                    )
-                                                }
+                                            day.assessments.forEach forEachAssessment@{ assessment ->
+                                                AssessmentCard(
+                                                    assessment = assessment,
+                                                    onClick = { displayAssessmentId = assessment.id }
+                                                )
                                             }
                                             if (state.currentProfile == null) return@items
-                                            day?.day?.homework?.collectAsState(emptySet())?.value?.let { homeworkItems ->
-                                                homeworkItems.forEach forEachHomework@{ homework ->
-                                                    HomeworkCard(
-                                                        homework = homework,
-                                                        profile = state.currentProfile,
-                                                        onClick = { displayHomeworkId = homework.id }
-                                                    )
-                                                }
+                                            day.homework.forEach forEachHomework@{ homework ->
+                                                HomeworkCard(
+                                                    homework = homework,
+                                                    profile = state.currentProfile,
+                                                    onClick = { displayHomeworkId = homework.id }
+                                                )
                                             }
                                         }
                                     }

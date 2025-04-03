@@ -8,14 +8,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.feature.calendar.ui.CalendarDay
+import plus.vplan.app.feature.calendar.ui.DateSelectorDay
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
 @Composable
 fun Week(
     startDate: LocalDate,
-    days: List<CalendarDay>,
+    days: List<DateSelectorDay>,
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit = {},
     height: Dp,
@@ -28,9 +28,9 @@ fun Week(
     ) {
         repeat(7) {
             val date = startDate + it.days
-            val day = remember(days) { days.firstOrNull { it.day.date == date } ?: CalendarDay(date) }
+            val day = remember(days) { days.firstOrNull { it.date == date } ?: DateSelectorDay(date) }
             Day(
-                date = day.day.date,
+                date = day.date,
                 selectedDate = selectedDate,
                 onClick = { onDateSelected(date) },
                 height = height,

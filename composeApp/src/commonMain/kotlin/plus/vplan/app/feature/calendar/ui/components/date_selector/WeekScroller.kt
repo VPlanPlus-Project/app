@@ -13,7 +13,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
-import plus.vplan.app.feature.calendar.ui.CalendarDay
+import plus.vplan.app.feature.calendar.ui.DateSelectorDay
 import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.now
@@ -25,7 +25,7 @@ const val WEEK_PAGER_SIZE = Int.MAX_VALUE
 @Composable
 fun WeekScroller(
     selectedDate: LocalDate,
-    days: List<CalendarDay>,
+    days: List<DateSelectorDay>,
     scrollProgress: Float,
     onChangeSelectedDate: (LocalDate) -> Unit
 ) {
@@ -54,7 +54,7 @@ fun WeekScroller(
         val startDate = referenceWeek + ((page - WEEK_PAGER_SIZE / 2) * 7).days
         Week(
             startDate = startDate,
-            days = remember(days) { days.filter { it.day.date >= startDate && (it.day.date.minus(7.days)) < startDate } },
+            days = remember(days) { days.filter { it.date >= startDate && (it.date.minus(7.days)) < startDate } },
             selectedDate = selectedDate,
             onDateSelected = onChangeSelectedDate,
             height = 64.dp,
