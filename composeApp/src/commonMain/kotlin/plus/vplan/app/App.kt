@@ -123,8 +123,8 @@ object App {
     lateinit var gradeSource: GradeSource
     lateinit var finalGradeSource: FinalGradeSource
 
-    val versionCode: Int = 25
-    val versionName: String = "0.1.11-closed" // remember to update build.gradle.kts
+    val versionCode: Int = 27
+    val versionName: String = "0.1.12-closed" // remember to update build.gradle.kts
 }
 
 @Composable
