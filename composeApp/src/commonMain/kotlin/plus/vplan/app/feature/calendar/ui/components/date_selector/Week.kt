@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import kotlinx.datetime.LocalDate
@@ -27,7 +28,7 @@ fun Week(
     ) {
         repeat(7) {
             val date = startDate + it.days
-            val day = days.firstOrNull { it.day.date == date } ?: CalendarDay(date)
+            val day = remember(days) { days.firstOrNull { it.day.date == date } ?: CalendarDay(date) }
             Day(
                 date = day.day.date,
                 selectedDate = selectedDate,

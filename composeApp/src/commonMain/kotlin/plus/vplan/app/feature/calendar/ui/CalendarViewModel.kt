@@ -6,9 +6,11 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -33,6 +35,7 @@ import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
+@OptIn(FlowPreview::class)
 class CalendarViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
@@ -44,15 +47,19 @@ class CalendarViewModel(
         private set
 
     private val syncJobs = mutableListOf<SyncJob>()
+    val days: MutableMap<LocalDate, CalendarDay> = mutableMapOf()
 
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
             App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
-                state = state.copy(days = state.days + (date to CalendarDay(
+                days[date] = CalendarDay(
                     day = day,
                     homework = day.homeworkIds.size,
                     assessments = day.assessmentIds.size
-                )))
+                )
+                state = state.copy(
+                    uiUpdateVersion = state.uiUpdateVersion + 1
+                )
             }
         }.also {
             syncJobs.add(SyncJob(it, date))
@@ -71,7 +78,7 @@ class CalendarViewModel(
     }
 
     init {
-        viewModelScope.launch { getCurrentDateTimeUseCase().collectLatest { state = state.copy(currentTime = it) } }
+        viewModelScope.launch { getCurrentDateTimeUseCase().debounce(100).collectLatest { state = state.copy(currentTime = it) } }
         viewModelScope.launch { getLastDisplayTypeUseCase().collectLatest { state = state.copy(displayType = it) } }
 
         viewModelScope.launch {
@@ -110,7 +117,7 @@ data class CalendarState(
     val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
-    val days: Map<LocalDate, CalendarDay> = emptyMap(),
+    val uiUpdateVersion: Int = 0,
     val displayType: DisplayType = DisplayType.Calendar,
     val start: LocalTime = LocalTime(0, 0)
 )

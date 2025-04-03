@@ -47,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,6 +74,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -129,13 +132,15 @@ fun CalendarScreen(
     CalendarScreenContent(
         state = state,
         paddingValues = paddingValues,
-        onEvent = viewModel::onEvent
+        days = remember(state.uiUpdateVersion) { derivedStateOf { viewModel.days.toMap() } }.value,
+        onEvent = remember { viewModel::onEvent }
     )
 }
 
 @Composable
 private fun CalendarScreenContent(
     state: CalendarState,
+    days: Map<LocalDate, CalendarDay>,
     paddingValues: PaddingValues,
     onEvent: (event: CalendarEvent) -> Unit
 ) {
@@ -168,7 +173,7 @@ private fun CalendarScreenContent(
 
     val minute = 1.25.dp
 
-    val scrollConnection = remember(state.days[state.selectedDate]) {
+    val scrollConnection = remember(state.selectedDate) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val isContentAtTop = with(localDensity) { contentScrollState.value <= ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).roundToPx() }
@@ -323,7 +328,7 @@ private fun CalendarScreenContent(
                         scrollProgress = displayScrollProgress,
                         allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
                         selectedDate = state.selectedDate,
-                        days = state.days.values.toList(),
+                        days = remember(state.uiUpdateVersion) { days.values.toList() },
                         onSelectDate = { onEvent(CalendarEvent.SelectDate(it)) }
                     )
                 }
@@ -391,7 +396,7 @@ private fun CalendarScreenContent(
                                 .fillMaxSize()
                         ) { page ->
                             val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                            val day = state.days[date]
+                            val day = remember(state.uiUpdateVersion) { days[date] }
                             val lessons = day?.day?.lessons?.map { it.sortedBySuspending { it.lessonTime.getFirstValue()!!.start }.toList() }?.collectAsState(emptyList())?.value.orEmpty()
                             CalendarView(
                                 profile = state.currentProfile ?: return@HorizontalPager,
@@ -415,8 +420,8 @@ private fun CalendarScreenContent(
                         ) {
                             items(CONTENT_PAGER_SIZE) { page ->
                                 val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                                val day = state.days[date]
-                                val lessons = remember { day?.day?.lessons?.map { it.sortedBySuspending { it.lessonTime.getFirstValue()!!.start }.toList().groupBy { it.lessonTime.getFirstValue()!!.lessonNumber } } }?.collectAsState(null)?.value
+                                val day = remember(state.uiUpdateVersion) { days[date] }
+                                val lessons = remember(day?.day?.timetable?.toList().orEmpty().plus(day?.day?.substitutionPlan)) { day?.day?.lessons?.map { it.sortedBySuspending { it.lessonTime.getFirstValue()!!.start }.toList().groupBy { it.lessonTime.getFirstValue()!!.lessonNumber } } }?.collectAsState(null, Dispatchers.IO)?.value
                                 var showLessons by rememberSaveable { mutableStateOf(false) }
                                 Row(
                                     modifier = Modifier.fillMaxWidth()
