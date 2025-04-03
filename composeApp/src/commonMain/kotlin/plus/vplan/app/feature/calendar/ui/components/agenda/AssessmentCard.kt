@@ -37,6 +37,7 @@ import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.utils.regularDateFormat
@@ -55,7 +56,6 @@ fun AssessmentCard(
         is AppEntity.VppId -> assessment.creator.vppId.collectAsLoadingState("")
         is AppEntity.Profile -> assessment.creator.profile.collectAsLoadingState("")
     }
-    if (subject == null) return
     var boxHeight by remember { mutableStateOf(0.dp) }
     Box(
         modifier = Modifier
@@ -71,7 +71,7 @@ fun AssessmentCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background(subject.subject.subjectColor().getGroup().color)
+                .background(subject?.subject.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -79,7 +79,8 @@ fun AssessmentCard(
                 .fillMaxWidth()
         ) {
             Row {
-                SubjectIcon(
+                if (subject == null) ShimmerLoader(Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()))
+                else SubjectIcon(
                     modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
                     subject = subject.subject
                 )
@@ -89,7 +90,7 @@ fun AssessmentCard(
                         text = buildString {
                             append(assessment.type.toName())
                             append(" in ")
-                            append(subject.subject)
+                            if (subject != null) append(subject.subject)
                         },
                         style = MaterialTheme.typography.titleLarge
                     )
