@@ -59,6 +59,8 @@ import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbNews
 import plus.vplan.app.data.source.database.model.database.DbProfile
+import plus.vplan.app.data.source.database.model.database.DbProfileAssessmentIndex
+import plus.vplan.app.data.source.database.model.database.DbProfileHomeworkIndex
 import plus.vplan.app.data.source.database.model.database.DbProfileSubstitutionPlanCache
 import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
 import plus.vplan.app.data.source.database.model.database.DbRoom
@@ -117,6 +119,9 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         FKGroupProfileDisabledSubjectInstances::class,
         DbTeacherProfile::class,
         DbRoomProfile::class,
+
+        DbProfileAssessmentIndex::class,
+        DbProfileHomeworkIndex::class,
 
         DbSubjectInstance::class,
         FKSubjectInstanceGroup::class,
@@ -184,6 +189,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = VppDatabase.Migration3::class),
+        AutoMigration(from = 3, to = 4)
     ]
 )
 @TypeConverters(
@@ -230,7 +236,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 3
+        const val DATABASE_VERSION = 4
     }
 
     @RenameColumn(tableName = "assessments", fromColumnName = "subject_instance_ids", toColumnName = "subject_instance_id")
@@ -238,7 +244,7 @@ abstract class VppDatabase : RoomDatabase() {
 }
 
 // Room compiler generates the `actual` implementations
-@Suppress("NO_ACTUAL_FOR_EXPECT", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
+@Suppress("NO_ACTUAL_FOR_EXPECT", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "KotlinNoActualForExpect")
 expect object VppDatabaseConstructor : RoomDatabaseConstructor<VppDatabase> {
     override fun initialize(): VppDatabase
 }
