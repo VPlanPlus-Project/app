@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -23,8 +24,13 @@ import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
+import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetFirstLessonStartUseCase
@@ -32,6 +38,7 @@ import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
@@ -47,19 +54,57 @@ class CalendarViewModel(
         private set
 
     private val syncJobs = mutableListOf<SyncJob>()
-    val days: MutableMap<LocalDate, CalendarDay> = mutableMapOf()
 
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
             App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
-                days[date] = CalendarDay(
-                    day = day,
+                val selectorDay = DateSelectorDay(
+                    date = date,
                     homework = day.homeworkIds.size,
                     assessments = day.assessmentIds.size
                 )
-                state = state.copy(
-                    uiUpdateVersion = state.uiUpdateVersion + 1
+
+                var calendarDay = CalendarDay(
+                    date = date,
+                    info = day.info,
+                    dayType = day.dayType,
+                    week = day.week?.getFirstValue(),
+                    assessments = emptyList(),
+                    homework = emptyList(),
+                    lessons = emptyMap(),
+                    layoutedLessons = emptyList()
                 )
+
+                fun updateState() {
+                    state = state.copy(
+                        uiUpdateVersion = state.uiUpdateVersion + 1,
+                        calendarDays = state.calendarDays + (date to calendarDay),
+                        selecorDays = state.selecorDays + (date to selectorDay)
+                    )
+                }
+
+                coroutineScope {
+                    launch {
+                        day.lessons.collectLatest {
+                            val lessons = it.groupBy { it.lessonTime.getFirstValue()!!.lessonNumber }.mapValues { it.value.sortedBy { it.subject } }
+                            val layoutedLessons = it.calculateLayouting()
+                            calendarDay = calendarDay.copy(layoutedLessons = layoutedLessons, lessons = lessons)
+                            updateState()
+                        }
+                    }
+                    launch {
+                        day.assessments.collectLatest {
+                            calendarDay = calendarDay.copy(assessments = it.toList())
+                            updateState()
+                        }
+                    }
+                    launch {
+                        day.homework.collectLatest {
+                            calendarDay = calendarDay.copy(homework = it.toList())
+                            updateState()
+                        }
+                    }
+                }
             }
         }.also {
             syncJobs.add(SyncJob(it, date))
@@ -119,7 +164,9 @@ data class CalendarState(
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
     val uiUpdateVersion: Int = 0,
     val displayType: DisplayType = DisplayType.Calendar,
-    val start: LocalTime = LocalTime(0, 0)
+    val start: LocalTime = LocalTime(0, 0),
+    val selecorDays: Map<LocalDate, DateSelectorDay> = emptyMap(),
+    val calendarDays: Map<LocalDate, CalendarDay> = emptyMap()
 )
 
 sealed class CalendarEvent {
@@ -133,14 +180,47 @@ private data class SyncJob(
     val date: LocalDate
 )
 
-data class CalendarDay(
-    val day: Day,
+data class DateSelectorDay(
+    val date: LocalDate,
     val homework: Int,
     val assessments: Int
 ) {
-    constructor(day: Day) : this(day, 0, 0)
-    constructor(date: LocalDate) : this(Day(id = "", date, -1, null, null, Day.DayType.UNKNOWN, emptySet(), emptySet(), emptySet(), emptySet(), null))
+    constructor(date: LocalDate) : this(date, 0, 0)
 }
+
+data class CalendarDay(
+    val date: LocalDate,
+    val info: String? = null,
+    val dayType: Day.DayType,
+    val week: Week?,
+    val assessments: List<Assessment>,
+    val homework: List<Homework>,
+    val lessons: Map<Int, List<Lesson>>?,
+    val layoutedLessons: List<LessonLayoutingInfo>
+) {
+    constructor(date: LocalDate): this(date, null, Day.DayType.UNKNOWN, null, emptyList(), emptyList(), null, emptyList())
+}
+
+/**
+ * Creates a layout for a calendar view of the given lessons based on their overlap if some exists.
+ */
+suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> {
+    val lessons = this.associateWith { it.lessonTime.getFirstValue()!! }.toList().sortedBy { it.second.start.inWholeMinutes().toString().padStart(4, '0') + " " + it.first.subject }
+    val layoutingInfo = mutableListOf<LessonLayoutingInfo>()
+    lessons.forEach { (lesson, lessonTime) ->
+        val overlapping = layoutingInfo.filter { it.lessonTime.start in lessonTime.start..lessonTime.end || it.lessonTime.end in lessonTime.start..lessonTime.end || lessonTime.start in it.lessonTime.start..it.lessonTime.end || lessonTime.end in it.lessonTime.start..it.lessonTime.end }
+        overlapping.onEach { layoutingInfo[layoutingInfo.indexOf(it)] = it.copy(of = it.of + 1) }
+        layoutingInfo.add(LessonLayoutingInfo(lesson, lessonTime, overlapping.maxOfOrNull { it.sideShift }?.plus(1) ?: 0, overlapping.size+1))
+    }
+    return layoutingInfo
+}
+
+data class LessonLayoutingInfo(
+    val lesson: Lesson,
+    val lessonTime: LessonTime,
+    val sideShift: Int,
+    val of: Int
+)
 
 enum class DisplayType {
     Agenda, Calendar

@@ -52,6 +52,7 @@ import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.components.agenda.GradeCard
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
 import plus.vplan.app.feature.search.domain.model.SearchResult
@@ -246,8 +247,8 @@ private fun SchoolEntityResults(
             LaunchedEffect(result.lessons) {
                 currentLessons.clear()
                 if (contextDate == LocalDate.now()) {
-                    currentLessons.addAll(result.lessons.findCurrentLessons(LocalTime.now()).toMutableStateList())
-                    nextLesson = result.lessons.getNextLessonStart(LocalTime.now())
+                    currentLessons.addAll(result.lessons.map { it.lesson }.findCurrentLessons(LocalTime.now()).toMutableStateList())
+                    nextLesson = result.lessons.map { it.lesson }.getNextLessonStart(LocalTime.now())
                 }
                 hasLessonsLoaded = true
             }
@@ -341,7 +342,7 @@ private fun SchoolEntityResults(
 private fun LessonsDrawer(
     date: LocalDate,
     dayType: Day.DayType,
-    lessons: List<Lesson>,
+    lessons: List<LessonLayoutingInfo>,
     type: SearchResult.Type,
     name: String,
     onDismiss: () -> Unit
