@@ -22,6 +22,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
+import plus.vplan.app.feature.profile.domain.usecase.UpdateAssessmentIndicesUseCase
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.shortMonthNames
@@ -32,11 +33,13 @@ import kotlin.time.Duration.Companion.days
 class UpdateAssessmentUseCase(
     private val assessmentRepository: AssessmentRepository,
     private val profileRepository: ProfileRepository,
-    private val platformNotificationRepository: PlatformNotificationRepository
+    private val platformNotificationRepository: PlatformNotificationRepository,
+    private val updateAssessmentIndicesUseCase: UpdateAssessmentIndicesUseCase
 ) {
     suspend operator fun invoke(allowNotifications: Boolean) {
         val existing = assessmentRepository.getAll().first().map { it.id }.toSet()
-        profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>().forEach { profile ->
+        val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
+        profiles.forEach { profile ->
             ((assessmentRepository.download(profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchoolItem().getSchoolApiAccess()!!, profile.subjectInstanceConfiguration.filterValues { it }.keys.toList()) as? Response.Success ?: return@forEach)
                 .data - existing)
                 .also { ids ->
@@ -97,6 +100,10 @@ class UpdateAssessmentUseCase(
                             )
                         }
                 }
+        }
+
+        profiles.forEach {
+            updateAssessmentIndicesUseCase(it)
         }
     }
 }

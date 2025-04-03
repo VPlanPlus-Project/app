@@ -16,11 +16,11 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.CourseRepository
-import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
+import plus.vplan.app.feature.profile.domain.usecase.UpdateAssessmentIndicesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
@@ -37,7 +37,7 @@ fun DevScreen(
     val updateTimetableUseCase = koinInject<UpdateTimetableUseCase>()
     val updateSubstitutionPlanUseCase = koinInject<UpdateSubstitutionPlanUseCase>()
     val fullSyncUseCase = koinInject<FullSyncUseCase>()
-    val rebuildIndices = koinInject<UpdateProfileLessonIndexUseCase>()
+    val rebuildIndices = koinInject<UpdateAssessmentIndicesUseCase>()
     val updateHolidaysUseCase = koinInject<UpdateHolidaysUseCase>()
     val courseRepository = koinInject<CourseRepository>()
 

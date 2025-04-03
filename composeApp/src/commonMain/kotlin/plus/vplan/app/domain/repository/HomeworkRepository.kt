@@ -11,6 +11,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.ui.common.AttachedFile
+import kotlin.uuid.Uuid
 
 interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
@@ -20,6 +21,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
 
     fun getAll(): Flow<List<CacheState<Homework>>>
     fun getByDate(date: LocalDate): Flow<List<Homework>>
+    fun getByProfile(profileId: Uuid, date: LocalDate? = null): Flow<List<Homework>>
 
     suspend fun deleteById(id: Int)
     suspend fun deleteById(ids: List<Int>)
@@ -66,6 +68,9 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
         homeworkId: Int,
         document: AttachedFile
     ): Response<Int>
+
+    suspend fun dropIndexForProfile(profileId: Uuid)
+    suspend fun createCacheForProfile(profileId: Uuid, homeworkIds: Collection<Int>)
 }
 
 data class CreateHomeworkResponse(

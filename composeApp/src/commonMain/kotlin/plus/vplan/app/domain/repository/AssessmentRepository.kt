@@ -7,6 +7,7 @@ import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
+import kotlin.uuid.Uuid
 
 interface AssessmentRepository: WebEntityRepository<Assessment> {
 
@@ -41,6 +42,7 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
     fun getAll(): Flow<List<Assessment>>
 
     fun getByDate(date: LocalDate): Flow<List<Assessment>>
+    fun getByProfile(profileId: Uuid, date: LocalDate? = null): Flow<List<Assessment>>
 
     suspend fun deleteAssessment(assessment: Assessment, profile: Profile.StudentProfile): Response.Error?
 
@@ -72,4 +74,7 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
     )
 
     suspend fun clearCache()
+
+    suspend fun dropIndicesForProfile(profileId: Uuid)
+    suspend fun createCacheForProfile(profileId: Uuid, assessmentIds: Collection<Int>)
 }

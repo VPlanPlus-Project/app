@@ -12,7 +12,6 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
-import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 import plus.vplan.app.utils.now
@@ -24,7 +23,6 @@ class SelectProfileUseCase(
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
     private val keyValueRepository: KeyValueRepository,
-    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase
 ) {
@@ -51,7 +49,6 @@ class SelectProfileUseCase(
             }
         }
         keyValueRepository.set(Keys.CURRENT_PROFILE, profile.id.toHexString())
-        updateProfileLessonIndexUseCase(profile)
 
         (profile.getSchool().getFirstValue() as? School.IndiwareSchool)?.let {
             updateTimetableUseCase(it, false)

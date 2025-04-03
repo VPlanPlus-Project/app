@@ -20,6 +20,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
+import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileHomeworkIndexUseCase
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.shortMonthNames
@@ -30,11 +31,13 @@ import kotlin.time.Duration.Companion.days
 class UpdateHomeworkUseCase(
     private val profileRepository: ProfileRepository,
     private val homeworkRepository: HomeworkRepository,
-    private val platformNotificationRepository: PlatformNotificationRepository
+    private val platformNotificationRepository: PlatformNotificationRepository,
+    private val updateProfileHomeworkIndexUseCase: UpdateProfileHomeworkIndexUseCase
 ) {
     suspend operator fun invoke(allowNotifications: Boolean) {
         val ids = mutableSetOf<Int>()
-        profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>().forEach { studentProfile ->
+        val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
+        profiles.forEach { studentProfile ->
             val existingHomework = homeworkRepository.getByGroup(studentProfile.groupId).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
             ids.addAll(
                 (homeworkRepository.download(
@@ -116,5 +119,9 @@ class UpdateHomeworkUseCase(
                 .map { it.id }
                 .toList()
         )
+
+        profiles.forEach {
+            updateProfileHomeworkIndexUseCase(it)
+        }
     }
 }
