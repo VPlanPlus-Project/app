@@ -30,8 +30,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -57,15 +57,16 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.cache.collectAsSingleFlow
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.Room
+import plus.vplan.app.domain.model.Teacher
+import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
 import plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard
 import plus.vplan.app.feature.home.ui.components.HolidayScreen
@@ -92,7 +93,7 @@ fun CalendarView(
     profile: Profile?,
     date: LocalDate,
     dayType: Day.DayType,
-    lessons: List<Lesson>,
+    lessons: List<LessonLayoutingInfo>,
     assessments: List<Assessment>,
     homework: List<Homework>,
     bottomIslandPadding: PaddingValues = PaddingValues(0.dp),
@@ -121,20 +122,13 @@ fun CalendarView(
                             .onSizeChanged { availableWidth = with(localDensity) { it.width.toDp() } - 2 * 8.dp - 32.dp }
                             .let { if (contentScrollState == null) it else it.verticalScroll(contentScrollState) }
                     ) {
-                        val lessonTimes = remember(lessons.size) { mutableStateMapOf<Int, LessonTime>() }
-                        LaunchedEffect(lessons.map { it.lessonTimeId }.sorted().distinct()) {
-                            lessons.mapIndexed { index, lesson ->
-                                lessonTimes[index] = lesson.lessonTime.getFirstValue()!!
-                            }
-                        }
-
                         var start by remember { mutableStateOf(LocalTime(0, 0)) }
                         var end by remember { mutableStateOf(LocalTime(23, 59, 59, 99)) }
 
-                        LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons, lessonTimes.size, limitTimeSpanToLessonsLowerBound) {
-                            if (!autoLimitTimeSpanToLessons || lessonTimes.isEmpty() || lessons.isEmpty()) return@LaunchedEffect
-                            start = limitTimeSpanToLessonsLowerBound ?: lessonTimes.values.minOf { it.start }.minusWithCapAtMidnight(1.hours)
-                            end = lessonTimes.values.maxOf { it.end }.plusWithCapAtMidnight(1.hours)
+                        LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons, limitTimeSpanToLessonsLowerBound) {
+                            if (!autoLimitTimeSpanToLessons || lessons.isEmpty()) return@LaunchedEffect
+                            start = limitTimeSpanToLessonsLowerBound ?: lessons.minOf { it.lessonTime.start }.minusWithCapAtMidnight(1.hours)
+                            end = lessons.maxOf { it.lessonTime.end }.plusWithCapAtMidnight(1.hours)
                         }
                         Box(
                             modifier = Modifier
@@ -182,55 +176,40 @@ fun CalendarView(
                                     thickness = 2.dp
                                 )
                             }
-                            if (lessonTimes.size == lessons.size) lessons.forEachIndexed { i, lesson ->
-                                val lessonTimeItem = lesson.lessonTime.collectAsResultingFlow().value ?: return@forEachIndexed
-                                if (!lessonTimes.containsKey(i)) lessonTimes[i] = lessonTimeItem
-                                val lessonStart = lessonTimeItem.start
-                                val lessonEnd = lessonTimeItem.end
-
-                                val lessonsThatOverlapStart = lessons.filterIndexed { index, _ ->
-                                    val lessonTimeForComparison = lessonTimes[index] ?: return@filterIndexed false
-                                    lessonStart in lessonTimeForComparison.start..lessonTimeForComparison.end
-                                }
-                                val lessonsThatOverlapStartAndAreAlreadyDisplayed = lessons.filterIndexed { index, _ ->
-                                    val lessonTimeForComparison = lessonTimes[index] ?: return@filterIndexed false
-                                    lessonStart in lessonTimeForComparison.start..lessonTimeForComparison.end && index < i
-                                }
-
-                                val y = (lessonStart.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
-                                val rooms by lesson.rooms.collectAsSingleFlow()
-                                val teachers by lesson.teachers.collectAsSingleFlow()
+                            lessons.forEachIndexed { i, lesson ->
+                                val y = (lesson.lessonTime.start.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
+                                val rooms = remember(lesson.lesson.roomIds) { lesson.lesson.rooms }.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Room>>().map { it.data }
+                                val teachers = remember(lesson.lesson.teacherIds) { lesson.lesson.teachers }.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Teacher>>().map { it.data }
                                 Box(
                                     modifier = Modifier
-                                        .width(availableWidth / lessonsThatOverlapStart.size)
+                                        .width(availableWidth / lesson.of)
                                         .padding(horizontal = 8.dp)
-                                        .height(lessonStart.until(lessonEnd).inWholeMinutes.toFloat() * minute)
-                                        .offset(y = y, x = (availableWidth / lessonsThatOverlapStart.size) * lessonsThatOverlapStartAndAreAlreadyDisplayed.size)
+                                        .height(lesson.lessonTime.start.until(lesson.lessonTime.end).inWholeMinutes.toFloat() * minute)
+                                        .offset(y = y, x = (availableWidth / lesson.of) * lesson.sideShift)
                                         .clip(RoundedCornerShape(6.dp))
-                                        .clickable { }
                                         .background(
-                                            if (lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
+                                            if (lesson.lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
                                             else MaterialTheme.colorScheme.surfaceVariant
                                         )
                                         .padding(4.dp)
                                 ) {
                                     CompositionLocalProvider(
-                                        LocalContentColor provides if (lesson is Lesson.SubstitutionPlanLesson && lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                        LocalContentColor provides if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                     ) {
                                         Column {
                                             Row(
                                                 verticalAlignment = Alignment.Top,
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
-                                                if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) SubjectIcon(
+                                                if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.isSubjectChanged) SubjectIcon(
                                                     modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                                                    subject = lesson.subject,
+                                                    subject = lesson.lesson.subject,
                                                     contentColor = MaterialTheme.colorScheme.onError,
                                                     containerColor = MaterialTheme.colorScheme.error
                                                 )
                                                 else SubjectIcon(
                                                     modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                                                    subject = lesson.subject
+                                                    subject = lesson.lesson.subject
                                                 )
                                                 Column {
                                                     Row(
@@ -239,9 +218,9 @@ fun CalendarView(
                                                     ) {
                                                         Text(text = buildAnnotatedString {
                                                             withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
-                                                                if (lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                    append(lesson.subjectInstance?.collectAsResultingFlow()?.value?.subject?.plus(" ").orEmpty() + "Entfall")
-                                                                } else append(lesson.subject)
+                                                                if (lesson.lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
+                                                                    append(lesson.lesson.subjectInstance?.collectAsResultingFlow()?.value?.subject?.plus(" ").orEmpty() + "Entfall")
+                                                                } else append(lesson.lesson.subject)
                                                             }
                                                         }, style = MaterialTheme.typography.bodySmall)
                                                         if (rooms.isNotEmpty()) Text(
@@ -255,11 +234,11 @@ fun CalendarView(
                                                     }
                                                     Text(
                                                         buildString {
-                                                            append(lessonTimeItem.lessonNumber)
+                                                            append(lesson.lessonTime.lessonNumber)
                                                             append(". $DOT ")
-                                                            append(lessonTimeItem.start.format(regularTimeFormat))
+                                                            append(lesson.lessonTime.start.format(regularTimeFormat))
                                                             append(" - ")
-                                                            append(lessonTimeItem.end.format(regularTimeFormat))
+                                                            append(lesson.lessonTime.end.format(regularTimeFormat))
                                                         },
                                                         style = MaterialTheme.typography.labelSmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -268,7 +247,7 @@ fun CalendarView(
                                                     )
                                                 }
                                             }
-                                            if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) Row(
+                                            if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.info != null) Row(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                                 modifier = Modifier.padding(start = 16.dp)
@@ -280,7 +259,7 @@ fun CalendarView(
                                                     tint = MaterialTheme.colorScheme.onSurface
                                                 )
                                                 Text(
-                                                    text = lesson.info,
+                                                    text = lesson.lesson.info,
                                                     style = MaterialTheme.typography.bodySmall,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis

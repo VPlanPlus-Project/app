@@ -55,7 +55,6 @@ fun AssessmentCard(
         is AppEntity.VppId -> assessment.creator.vppId.collectAsLoadingState("")
         is AppEntity.Profile -> assessment.creator.profile.collectAsLoadingState("")
     }
-    if (subject == null) return
     var boxHeight by remember { mutableStateOf(0.dp) }
     Box(
         modifier = Modifier
@@ -71,7 +70,7 @@ fun AssessmentCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background(subject.subject.subjectColor().getGroup().color)
+                .background(subject?.subject.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -79,7 +78,8 @@ fun AssessmentCard(
                 .fillMaxWidth()
         ) {
             Row {
-                SubjectIcon(
+                if (subject == null) ShimmerLoader(Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()))
+                else SubjectIcon(
                     modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
                     subject = subject.subject
                 )
@@ -87,7 +87,7 @@ fun AssessmentCard(
                 Column {
                     Text(
                         text = buildString {
-                            append(subject.subject)
+                            append(subject?.subject ?: "")
                             append(": ")
                             append(assessment.type.toName())
                         },

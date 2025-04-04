@@ -26,6 +26,7 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.utils.now
 
@@ -73,7 +74,7 @@ class SearchUseCase(
                     group.getSchoolItem()
                     SearchResult.SchoolEntity.Group(
                         group = group,
-                        lessons = lessons.filter { group.id in it.groupIds }
+                        lessons = lessons.filter { group.id in it.groupIds }.calculateLayouting()
                     )
                 })
 
@@ -81,7 +82,7 @@ class SearchUseCase(
                     teacher.getSchoolItem()
                     SearchResult.SchoolEntity.Teacher(
                         teacher = teacher,
-                        lessons = lessons.filter { teacher.id in it.teacherIds }
+                        lessons = lessons.filter { teacher.id in it.teacherIds }.calculateLayouting()
                     )
                 })
 
@@ -89,7 +90,7 @@ class SearchUseCase(
                     room.getSchoolItem()
                     SearchResult.SchoolEntity.Room(
                         room = room,
-                        lessons = lessons.filter { room.id in it.roomIds.orEmpty() }
+                        lessons = lessons.filter { room.id in it.roomIds.orEmpty() }.calculateLayouting()
                     )
                 })
             }.collect()
