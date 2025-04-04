@@ -104,6 +104,7 @@ import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
+import plus.vplan.app.ui.grayScale
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.thenIf
@@ -419,7 +420,9 @@ private fun CalendarScreenContent(
                                 val lessons = remember { day?.day?.lessons?.map { it.sortedBySuspending { it.lessonTime.getFirstValue()!!.start }.toList().groupBy { it.lessonTime.getFirstValue()!!.lessonNumber } } }?.collectAsState(null)?.value
                                 var showLessons by rememberSaveable { mutableStateOf(false) }
                                 Row(
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .thenIf(Modifier.grayScale()) { LocalDate.now() > date }
                                 ) {
                                     var stickySideHeight by remember { mutableStateOf(0) }
                                     val currentDayHeight = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 0
