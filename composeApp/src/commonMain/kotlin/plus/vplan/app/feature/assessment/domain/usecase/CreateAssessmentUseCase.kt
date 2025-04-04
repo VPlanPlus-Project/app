@@ -118,6 +118,7 @@ class CreateAssessmentUseCase(
             ))
         }
         assessmentRepository.upsert(listOf(assessment))
+        assessmentRepository.createCacheForProfile(profile.id, setOf(assessment.id))
         return true
     }
 }

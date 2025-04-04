@@ -9,9 +9,9 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
@@ -45,7 +45,7 @@ class CreateHomeworkUseCase(
                 until = date,
                 group = profile.getGroupItem(),
                 subjectInstance = subjectInstance,
-                isPublic = isPublic ?: false,
+                isPublic = isPublic == true,
                 tasks = tasks
             )
             if (result !is Response.Success) return false
@@ -59,7 +59,7 @@ class CreateHomeworkUseCase(
                 groupId = profile.groupId,
                 createdAt = Clock.System.now(),
                 createdBy = profile.vppIdId!!,
-                isPublic = isPublic ?: false,
+                isPublic = isPublic == true,
                 dueTo = date,
                 files = emptyList(),
                 taskIds = taskIds.map { it.value },
@@ -104,6 +104,7 @@ class CreateHomeworkUseCase(
         }
 
         homeworkRepository.upsert(listOf(homework), homeworkTasks, files)
+        homeworkRepository.createCacheForProfile(profile.id, setOf(homework.id))
         files.forEach { file ->
             localFileRepository.writeFile("./homework_files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
         }
