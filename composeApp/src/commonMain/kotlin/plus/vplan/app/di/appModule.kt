@@ -88,6 +88,7 @@ import plus.vplan.app.feature.grades.di.gradeModule
 import plus.vplan.app.feature.home.di.homeModule
 import plus.vplan.app.feature.homework.di.homeworkModule
 import plus.vplan.app.feature.host.di.hostModule
+import plus.vplan.app.feature.main.di.mainModule
 import plus.vplan.app.feature.news.di.newsModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
 import plus.vplan.app.feature.profile.di.profileModule
@@ -159,6 +160,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         modules(
             appModule,
             hostModule,
+            mainModule,
             syncModule,
             onboardingModule,
             homeModule,

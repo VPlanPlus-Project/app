@@ -61,7 +61,7 @@ import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.cache.collectAsSingleFlow
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.feature.main.MainScreen
+import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon

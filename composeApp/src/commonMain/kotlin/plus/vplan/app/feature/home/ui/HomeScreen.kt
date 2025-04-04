@@ -79,7 +79,7 @@ import plus.vplan.app.feature.home.ui.components.FeedTitle
 import plus.vplan.app.feature.home.ui.components.Greeting
 import plus.vplan.app.feature.home.ui.components.QuickActions
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
-import plus.vplan.app.feature.main.MainScreen
+import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.news.ui.NewsDrawer
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
