@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.search.domain.model
 
-import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 
 sealed class SearchResult(val type: Type) {
     sealed class SchoolEntity(
@@ -11,21 +11,21 @@ sealed class SearchResult(val type: Type) {
         val school: School
     ) : SearchResult(type) {
 
-        abstract val lessons: List<Lesson>
+        abstract val lessons: List<LessonLayoutingInfo>
 
         data class Group(
             val group: plus.vplan.app.domain.model.Group,
-            override val lessons: List<Lesson>
+            override val lessons: List<LessonLayoutingInfo>
         ) : SchoolEntity(Type.Group, group.id, group.name, group.school!!)
 
         data class Teacher(
             val teacher: plus.vplan.app.domain.model.Teacher,
-            override val lessons: List<Lesson>
+            override val lessons: List<LessonLayoutingInfo>
         ) : SchoolEntity(Type.Teacher, teacher.id, teacher.name, teacher.school!!)
 
         data class Room(
             val room: plus.vplan.app.domain.model.Room,
-            override val lessons: List<Lesson>
+            override val lessons: List<LessonLayoutingInfo>
         ) : SchoolEntity(Type.Room, room.id, room.name, room.school!!)
     }
 

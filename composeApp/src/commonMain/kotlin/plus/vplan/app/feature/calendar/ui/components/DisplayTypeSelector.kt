@@ -17,10 +17,11 @@ import vplanplus.composeapp.generated.resources.table_properties
 
 @Composable
 fun DisplaySelectType(
+    modifier: Modifier = Modifier,
     displayType: DisplayType,
     onSelectType: (DisplayType) -> Unit
 ) {
-    SingleChoiceSegmentedButtonRow {
+    SingleChoiceSegmentedButtonRow(modifier = modifier) {
         SegmentedButton(
             shape = RoundedCornerShape(50, 0, 0, 50),
             onClick = { onSelectType(DisplayType.Calendar) },
