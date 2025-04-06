@@ -17,7 +17,7 @@ fun Week(
     startDate: LocalDate,
     days: List<DateSelectorDay>,
     selectedDate: LocalDate,
-    onDateSelected: (LocalDate) -> Unit = {},
+    onDateSelected: (DateSelectionCause, LocalDate) -> Unit = { _, _ -> },
     height: Dp,
     scrollProgress: Float
 ) {
@@ -32,7 +32,7 @@ fun Week(
             Day(
                 date = day.date,
                 selectedDate = selectedDate,
-                onClick = { onDateSelected(date) },
+                onClick = { onDateSelected(DateSelectionCause.DayClick, date) },
                 height = height,
                 isOtherMonth = selectedDate.month != date.month,
                 scrollProgress = scrollProgress,

@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +41,8 @@ import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.toDp
 
+val weekHeightDefault = 64.dp
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RowScope.Day(
@@ -49,8 +52,8 @@ fun RowScope.Day(
     height: Dp,
     isOtherMonth: Boolean,
     scrollProgress: Float,
-    homework: Int,
-    assessments: Int,
+    homework: List<String>,
+    assessments: List<String>,
 ) {
     val isWeekSelected = selectedDate.atStartOfWeek() == date.atStartOfWeek()
     AnimatedContent(
@@ -67,10 +70,10 @@ fun RowScope.Day(
                 .thenIf(Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))) { date == LocalDate.now() }
                 .clip(RoundedCornerShape(4.dp))
                 .clickable { onClick() },
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            fun grayScaledIfRequired(color: Color) = if (isOtherMonth) blendColor(color, Color.Gray, scrollProgress) else color
+            fun grayScaledIfRequired(color: Color) = if (isOtherMonth) blendColor(color, Color.Gray, scrollProgress.coerceAtMost(1f)) else color
             Text(
                 text = date.format(LocalDate.Format { dayOfWeek(shortDayOfWeekNames) }),
                 style = MaterialTheme.typography.labelSmall,
@@ -85,26 +88,52 @@ fun RowScope.Day(
                 ),
                 style = (if (showSelection) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall).copy(fontWeight = if (showSelection) FontWeight.Black else FontWeight.Bold),
             )
-            FlowRow(
-                modifier = Modifier.height(MaterialTheme.typography.labelSmall.lineHeight.toDp()),
-                verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
-                horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally)
+            Box(
+                contentAlignment = Alignment.TopCenter
             ) {
-                repeat(assessments) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(grayScaledIfRequired(colors[CustomColor.WineRed]!!.getGroup().color))
-                    )
+                FlowRow(
+                    modifier = Modifier
+                        .height(MaterialTheme.typography.labelSmall.lineHeight.toDp())
+                        .alpha(1-(scrollProgress - 1).coerceIn(0f, 1f)),
+                    verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally)
+                ) {
+                    repeat(assessments.size) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(grayScaledIfRequired(colors[CustomColor.WineRed]!!.getGroup().color))
+                        )
+                    }
+                    repeat(homework.size) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(grayScaledIfRequired(colors[CustomColor.Cyan]!!.getGroup().color))
+                        )
+                    }
                 }
-                repeat(homework) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(grayScaledIfRequired(colors[CustomColor.Cyan]!!.getGroup().color))
-                    )
+                FlowRow(
+                    modifier = Modifier.alpha((scrollProgress-1).coerceIn(0f, 1f)),
+                    verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
+                ) {
+                    repeat(assessments.size) {
+                        Text(
+                            text = assessments[it],
+                            style = MaterialTheme.typography.labelSmall,
+                            color = grayScaledIfRequired(colors[CustomColor.WineRed]!!.getGroup().color)
+                        )
+                    }
+                    repeat(homework.size) {
+                        Text(
+                            text = homework[it],
+                            style = MaterialTheme.typography.labelSmall,
+                            color = grayScaledIfRequired(colors[CustomColor.Cyan]!!.getGroup().color)
+                        )
+                    }
                 }
             }
         }

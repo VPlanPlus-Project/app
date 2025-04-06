@@ -58,10 +58,10 @@ class CalendarViewModel(
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
             App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
-                val selectorDay = DateSelectorDay(
+                var selectorDay = DateSelectorDay(
                     date = date,
-                    homework = day.homeworkIds.size,
-                    assessments = day.assessmentIds.size
+                    homework = day.homeworkIds.map { "" },
+                    assessments = day.assessmentIds.map { "" }
                 )
 
                 var calendarDay = CalendarDay(
@@ -95,12 +95,14 @@ class CalendarViewModel(
                     launch {
                         day.assessments.collectLatest {
                             calendarDay = calendarDay.copy(assessments = it.toList())
+                            it.map { it.subjectInstance.getFirstValue()?.subject ?: "?" }.sorted().let { selectorDay = selectorDay.copy(assessments = it) }
                             updateState()
                         }
                     }
                     launch {
                         day.homework.collectLatest {
                             calendarDay = calendarDay.copy(homework = it.toList())
+                            it.map { it.subjectInstance?.getFirstValue()?.subject ?: it.group?.getFirstValue()?.name ?: "?" }.sorted().let { selectorDay = selectorDay.copy(homework = it) }
                             updateState()
                         }
                     }
@@ -182,10 +184,10 @@ private data class SyncJob(
 
 data class DateSelectorDay(
     val date: LocalDate,
-    val homework: Int,
-    val assessments: Int
+    val homework: List<String>,
+    val assessments: List<String>
 ) {
-    constructor(date: LocalDate) : this(date, 0, 0)
+    constructor(date: LocalDate) : this(date, emptyList(), emptyList())
 }
 
 data class CalendarDay(

@@ -8,6 +8,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,6 +53,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
 import kotlinx.datetime.LocalDate
@@ -88,6 +91,7 @@ import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.x
 import kotlin.time.Duration.Companion.hours
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CalendarView(
     profile: Profile?,
@@ -175,7 +179,7 @@ fun CalendarView(
                                     color = Color.Red,
                                     thickness = 2.dp
                                 )
-                            }
+                            } 
                             lessons.forEachIndexed { i, lesson ->
                                 val y = (lesson.lessonTime.start.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
                                 val rooms = remember(lesson.lesson.roomIds) { lesson.lesson.rooms }.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Room>>().map { it.data }
@@ -212,25 +216,45 @@ fun CalendarView(
                                                     subject = lesson.lesson.subject
                                                 )
                                                 Column {
-                                                    Row(
-                                                        verticalAlignment = Alignment.CenterVertically,
+                                                    FlowRow(
+                                                        verticalArrangement = Arrangement.spacedBy(4.dp),
                                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                                     ) {
-                                                        Text(text = buildAnnotatedString {
-                                                            withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
-                                                                if (lesson.lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                    append(lesson.lesson.subjectInstance?.collectAsResultingFlow()?.value?.subject?.plus(" ").orEmpty() + "Entfall")
-                                                                } else append(lesson.lesson.subject)
-                                                            }
-                                                        }, style = MaterialTheme.typography.bodySmall)
-                                                        if (rooms.isNotEmpty()) Text(
-                                                            text = rooms.joinToString { it.name },
-                                                            style = MaterialTheme.typography.labelMedium
-                                                        )
-                                                        if (teachers.isNotEmpty()) Text(
-                                                            text = teachers.joinToString { it.name },
-                                                            style = MaterialTheme.typography.labelMedium
-                                                        )
+                                                        val subjectInstance = remember { lesson.lesson.subjectInstance }?.collectAsResultingFlow()?.value
+                                                        val itemHeight = max(MaterialTheme.typography.bodyMedium.lineHeight.toDp(), MaterialTheme.typography.bodySmall.lineHeight.toDp())
+                                                        Box(
+                                                            modifier = Modifier.height(itemHeight),
+                                                            contentAlignment = Alignment.BottomStart
+                                                        ) {
+                                                            Text(
+                                                                text = buildAnnotatedString {
+                                                                    withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
+                                                                        if (lesson.lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
+                                                                            append(subjectInstance?.subject?.plus(" ").orEmpty() + "Entfall")
+                                                                        } else append(lesson.lesson.subject)
+                                                                    }
+                                                                },
+                                                                style = MaterialTheme.typography.bodySmall
+                                                            )
+                                                        }
+                                                        if (rooms.isNotEmpty()) Box(
+                                                            modifier = Modifier.height(itemHeight),
+                                                            contentAlignment = Alignment.BottomStart
+                                                        ) {
+                                                            Text(
+                                                                text = rooms.joinToString { it.name },
+                                                                style = MaterialTheme.typography.labelMedium
+                                                            )
+                                                        }
+                                                        if (teachers.isNotEmpty()) Box(
+                                                            modifier = Modifier.height(itemHeight),
+                                                            contentAlignment = Alignment.BottomStart
+                                                        ) {
+                                                            Text(
+                                                                text = teachers.joinToString { it.name },
+                                                                style = MaterialTheme.typography.labelMedium
+                                                            )
+                                                        }
                                                     }
                                                     Text(
                                                         buildString {

@@ -6,6 +6,7 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.unit.Dp
 import co.touchlab.kermit.Logger
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -24,7 +25,9 @@ const val MONTH_PAGER_SIZE = Int.MAX_VALUE
 fun MonthScroller(
     selectedDate: LocalDate,
     days: List<DateSelectorDay>,
-    onChangeSelectedDate: (LocalDate) -> Unit
+    scrollProgress: Float,
+    containerMaxHeight: Dp,
+    onChangeSelectedDate: (DateSelectionCause, LocalDate) -> Unit
 ) {
     val referenceDate = LocalDate.now().atStartOfMonth()
     val pagerState = rememberPagerState(initialPage = (MONTH_PAGER_SIZE / 2) + referenceDate.until(selectedDate.atStartOfMonth(), DateTimeUnit.MONTH)) { MONTH_PAGER_SIZE }
@@ -32,7 +35,7 @@ fun MonthScroller(
     LaunchedEffect(pagerState.targetPage, isUserDragging) {
         if (isUserDragging) return@LaunchedEffect
         val date = referenceDate.plus((pagerState.targetPage - MONTH_PAGER_SIZE / 2), DateTimeUnit.MONTH).atStartOfMonth()
-        if (date.month != selectedDate.month) onChangeSelectedDate(date)
+        if (date.month != selectedDate.month) onChangeSelectedDate(DateSelectionCause.IntervalScroll, date)
     }
 
     LaunchedEffect(selectedDate) {
@@ -56,7 +59,8 @@ fun MonthScroller(
             days = days,
             selectedDate = selectedDate,
             keepWeek = selectedDate.atStartOfWeek(),
-            scrollProgress = 1f,
+            scrollProgress = scrollProgress,
+            containerMaxHeight = containerMaxHeight,
             onDateSelected = onChangeSelectedDate
         )
     }

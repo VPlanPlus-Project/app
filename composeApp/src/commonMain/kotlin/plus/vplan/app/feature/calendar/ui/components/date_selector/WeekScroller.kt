@@ -7,7 +7,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
@@ -27,7 +26,7 @@ fun WeekScroller(
     selectedDate: LocalDate,
     days: List<DateSelectorDay>,
     scrollProgress: Float,
-    onChangeSelectedDate: (LocalDate) -> Unit
+    onChangeSelectedDate: (DateSelectionCause, LocalDate) -> Unit
 ) {
     val referenceWeek = LocalDate.now().atStartOfWeek()
     val pagerState = rememberPagerState(initialPage = (WEEK_PAGER_SIZE / 2) + referenceWeek.until(selectedDate.atStartOfWeek(), DateTimeUnit.WEEK)) { WEEK_PAGER_SIZE }
@@ -35,7 +34,7 @@ fun WeekScroller(
     LaunchedEffect(pagerState.targetPage, isUserDragging) {
         if (isUserDragging) return@LaunchedEffect
         val date = (referenceWeek + ((pagerState.targetPage - WEEK_PAGER_SIZE / 2) * 7).days) + selectedDate.dayOfWeek.isoDayNumber.minus(1).days
-        if (date.atStartOfWeek() != selectedDate.atStartOfWeek()) onChangeSelectedDate(date)
+        if (date.atStartOfWeek() != selectedDate.atStartOfWeek()) onChangeSelectedDate(DateSelectionCause.IntervalScroll, date)
     }
 
     LaunchedEffect(selectedDate) {
@@ -57,7 +56,7 @@ fun WeekScroller(
             days = remember(days) { days.filter { it.date >= startDate && (it.date.minus(7.days)) < startDate } },
             selectedDate = selectedDate,
             onDateSelected = onChangeSelectedDate,
-            height = 64.dp,
+            height = weekHeightDefault,
             scrollProgress = scrollProgress
         )
     }

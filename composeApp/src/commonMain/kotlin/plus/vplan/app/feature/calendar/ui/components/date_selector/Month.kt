@@ -2,9 +2,13 @@ package plus.vplan.app.feature.calendar.ui.components.date_selector
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.feature.calendar.ui.DateSelectorDay
@@ -12,27 +16,32 @@ import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
-val weekHeight = 64.dp
-
 @Composable
 fun Month(
     startDate: LocalDate,
     days: List<DateSelectorDay>,
     selectedDate: LocalDate,
+    containerMaxHeight: Dp,
     keepWeek: LocalDate,
     scrollProgress: Float,
-    onDateSelected: (LocalDate) -> Unit = {},
+    onDateSelected: (DateSelectionCause, LocalDate) -> Unit = { _, _ -> },
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        repeat(5) {
-            val date = startDate + (it*7).days
+    var weekRowHeight = if (scrollProgress <= 1f) weekHeightDefault * scrollProgress
+    else (containerMaxHeight / 5) * (scrollProgress/2).coerceIn(0f, 1f)
+
+    Column(Modifier.fillMaxWidth()) {
+        repeat(5) { i ->
+            val date = startDate + (i*7).days
+            if (i > 0) HorizontalDivider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .alpha((scrollProgress - 1).coerceIn(0f, 1f))
+            )
             Week(
                 startDate = date,
                 days = remember(days) { days.filter { it.date >= date && it.date - 7.days < date } },
-                height = if (keepWeek == date) weekHeight else weekHeight * scrollProgress,
+                height = if (keepWeek == date && scrollProgress <= 1f) weekHeightDefault else weekRowHeight,
                 selectedDate = selectedDate,
                 onDateSelected = onDateSelected,
                 scrollProgress = scrollProgress
