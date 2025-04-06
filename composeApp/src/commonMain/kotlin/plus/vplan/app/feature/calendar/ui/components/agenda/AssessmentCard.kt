@@ -87,9 +87,11 @@ fun AssessmentCard(
                 Column {
                     Text(
                         text = buildString {
-                            append(subject.subject)
-                            append(": ")
-                            if (subject != null) append(assessment.type.toName())
+                            if (subject != null) {
+                                append(subject.subject)
+                                append(": ")
+                            }
+                            append(assessment.type.toName())
                         },
                         style = MaterialTheme.typography.titleLarge
                     )
