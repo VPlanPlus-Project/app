@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.calendar.ui.components.date_selector
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,20 +33,23 @@ fun Month(
     Column(Modifier.fillMaxWidth()) {
         repeat(5) { i ->
             val date = startDate + (i*7).days
-            if (i > 0) HorizontalDivider(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .alpha((scrollProgress - 1).coerceIn(0f, 1f))
-            )
-            Week(
-                startDate = date,
-                days = remember(days) { days.filter { it.date >= date && it.date - 7.days < date } },
-                height = if (keepWeek == date && scrollProgress <= 1f) weekHeightDefault else weekRowHeight,
-                selectedDate = selectedDate,
-                onDateSelected = onDateSelected,
-                scrollProgress = scrollProgress
-            )
+            val height = if (keepWeek == date && scrollProgress <= 1f) weekHeightDefault else weekRowHeight
+            Box(Modifier.height(height)) {
+                if (i > 0) HorizontalDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .alpha((scrollProgress - 1).coerceIn(0f, 1f))
+                )
+                Week(
+                    startDate = date,
+                    days = remember(days) { days.filter { it.date >= date && it.date - 7.days < date } },
+                    height = height,
+                    selectedDate = selectedDate,
+                    onDateSelected = onDateSelected,
+                    scrollProgress = scrollProgress
+                )
+            }
         }
     }
 }

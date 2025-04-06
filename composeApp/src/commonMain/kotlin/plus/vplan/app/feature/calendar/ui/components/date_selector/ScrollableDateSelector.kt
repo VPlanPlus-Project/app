@@ -3,7 +3,6 @@ package plus.vplan.app.feature.calendar.ui.components.date_selector
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.Dp
-import co.touchlab.kermit.Logger
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.feature.calendar.ui.DateSelectorDay
 import plus.vplan.app.utils.atStartOfMonth
@@ -20,7 +19,6 @@ fun ScrollableDateSelector(
     selectedDate: LocalDate,
     onSelectDate: (cause: DateSelectionCause, LocalDate) -> Unit
 ) {
-    Logger.d { "ScrollProgress: $scrollProgress" }
     if (scrollProgress == 0f && allowInteractions) WeekScroller(
         selectedDate = selectedDate,
         scrollProgress = scrollProgress,

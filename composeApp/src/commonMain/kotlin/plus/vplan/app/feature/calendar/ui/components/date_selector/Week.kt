@@ -36,6 +36,7 @@ fun Week(
                 height = height,
                 isOtherMonth = selectedDate.month != date.month,
                 scrollProgress = scrollProgress,
+                isHoliday = day.isHoliday,
                 homework = day.homework,
                 assessments = day.assessments
             )

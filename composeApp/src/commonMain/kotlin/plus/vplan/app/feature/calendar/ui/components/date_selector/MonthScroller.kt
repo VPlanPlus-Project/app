@@ -7,7 +7,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.Dp
-import co.touchlab.kermit.Logger
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
@@ -41,7 +40,6 @@ fun MonthScroller(
     LaunchedEffect(selectedDate) {
         val currentlyOpenedMonth = referenceDate.plus((pagerState.currentPage - MONTH_PAGER_SIZE / 2), DateTimeUnit.MONTH).atStartOfMonth()
         if (currentlyOpenedMonth.month != selectedDate.month) {
-            Logger.d { "Switching to month ${selectedDate.month}" }
             val newPage = (MONTH_PAGER_SIZE / 2) + referenceDate.until(selectedDate.atStartOfMonth(), DateTimeUnit.MONTH)
             pagerState.animateScrollToPage(newPage)
         }

@@ -292,7 +292,7 @@ private fun CalendarScreenContent(
                             Icon(
                                 painter = painterResource(Res.drawable.calendar),
                                 contentDescription = null,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
@@ -555,7 +555,7 @@ private fun CalendarScreenContent(
             }
         }
 
-        FloatingActionButton(
+        if (scrollProgress < 2f) FloatingActionButton(
             onClick = { isMultiFabExpanded = !isMultiFabExpanded },
             modifier = Modifier
                 .alpha(1 - (scrollProgress - 1).coerceIn(0f, 1f))

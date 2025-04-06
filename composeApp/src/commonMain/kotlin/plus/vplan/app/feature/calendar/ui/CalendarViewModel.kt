@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -34,6 +35,7 @@ import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetFirstLessonStartUseCase
+import plus.vplan.app.feature.calendar.domain.usecase.GetHolidaysUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.atStartOfMonth
@@ -48,20 +50,23 @@ class CalendarViewModel(
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getLastDisplayTypeUseCase: GetLastDisplayTypeUseCase,
     private val setLastDisplayTypeUseCase: SetLastDisplayTypeUseCase,
-    private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase
+    private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase,
+    private val getHolidaysUseCase: GetHolidaysUseCase
 ) : ViewModel() {
     var state by mutableStateOf(CalendarState())
         private set
 
     private val syncJobs = mutableListOf<SyncJob>()
+    private val holidays: MutableList<LocalDate> = mutableListOf()
 
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
             App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
                 var selectorDay = DateSelectorDay(
                     date = date,
-                    homework = day.homeworkIds.map { "" },
-                    assessments = day.assessmentIds.map { "" }
+                    homework = day.homeworkIds.map { DateSelectorDay.HomeworkItem(subject = "", isDone = false) },
+                    assessments = day.assessmentIds.map { "" },
+                    isHoliday = date in holidays
                 )
 
                 var calendarDay = CalendarDay(
@@ -102,7 +107,10 @@ class CalendarViewModel(
                     launch {
                         day.homework.collectLatest {
                             calendarDay = calendarDay.copy(homework = it.toList())
-                            it.map { it.subjectInstance?.getFirstValue()?.subject ?: it.group?.getFirstValue()?.name ?: "?" }.sorted().let { selectorDay = selectorDay.copy(homework = it) }
+                            it
+                                .map { DateSelectorDay.HomeworkItem(subject = it.subjectInstance?.getFirstValue()?.subject ?: it.group?.getFirstValue()?.name ?: "?", isDone = state.currentProfile is Profile.StudentProfile && it.tasks.first().all { it.isDone(state.currentProfile as Profile.StudentProfile) }) }
+                                .sortedBy { it.subject }
+                                .let { selectorDay = selectorDay.copy(homework = it) }
                             updateState()
                         }
                     }
@@ -136,7 +144,25 @@ class CalendarViewModel(
                 )
                 syncJobs.forEach { it.job.cancel() }
                 syncJobs.clear()
-                startDaySyncJobsFromSelectedDate()
+
+                var hasHolidaysInitialized = false
+
+                launch {
+                    getHolidaysUseCase(profile)
+                        .collectLatest {
+                            hasHolidaysInitialized = true
+                            holidays.clear()
+                            holidays.addAll(it)
+                        }
+                }
+
+                launch {
+                    while (!hasHolidaysInitialized) {
+                        delay(10)
+                    }
+                    startDaySyncJobsFromSelectedDate()
+                }
+
             }
         }
     }
@@ -184,10 +210,16 @@ private data class SyncJob(
 
 data class DateSelectorDay(
     val date: LocalDate,
-    val homework: List<String>,
-    val assessments: List<String>
+    val homework: List<HomeworkItem>,
+    val assessments: List<String>,
+    val isHoliday: Boolean
 ) {
-    constructor(date: LocalDate) : this(date, emptyList(), emptyList())
+    constructor(date: LocalDate) : this(date, emptyList(), emptyList(), false)
+
+    data class HomeworkItem(
+        val subject: String,
+        val isDone: Boolean
+    )
 }
 
 data class CalendarDay(

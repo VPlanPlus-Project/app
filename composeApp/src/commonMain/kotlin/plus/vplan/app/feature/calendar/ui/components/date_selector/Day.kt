@@ -27,11 +27,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
+import plus.vplan.app.feature.calendar.ui.DateSelectorDay
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.thenIf
@@ -52,8 +54,9 @@ fun RowScope.Day(
     height: Dp,
     isOtherMonth: Boolean,
     scrollProgress: Float,
-    homework: List<String>,
+    homework: List<DateSelectorDay.HomeworkItem>,
     assessments: List<String>,
+    isHoliday: Boolean
 ) {
     val isWeekSelected = selectedDate.atStartOfWeek() == date.atStartOfWeek()
     AnimatedContent(
@@ -67,7 +70,7 @@ fun RowScope.Day(
             modifier = Modifier
                 .fillMaxSize()
                 .thenIf(Modifier.border(1.dp, if (showSelection) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))) { selectedDate == date }
-                .thenIf(Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))) { date == LocalDate.now() }
+                .thenIf(Modifier.border(1.dp, if (selectedDate.atStartOfWeek() == LocalDate.now().atStartOfWeek()) MaterialTheme.colorScheme.outline else blendColor(Color.Transparent, MaterialTheme.colorScheme.outline, ((2*scrollProgress-1).coerceAtMost(1f))), RoundedCornerShape(4.dp))) { date == LocalDate.now() }
                 .clip(RoundedCornerShape(4.dp))
                 .clickable { onClick() },
             verticalArrangement = Arrangement.Top,
@@ -83,7 +86,7 @@ fun RowScope.Day(
                 text = date.dayOfMonth.toString(),
                 color = grayScaledIfRequired(
                     if (showSelection) MaterialTheme.colorScheme.tertiary
-                    else if (date.dayOfWeek in listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) MaterialTheme.colorScheme.error
+                    else if (date.dayOfWeek in listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY) || isHoliday) MaterialTheme.colorScheme.error
                     else MaterialTheme.colorScheme.onSurface
                 ),
                 style = (if (showSelection) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall).copy(fontWeight = if (showSelection) FontWeight.Black else FontWeight.Bold),
@@ -94,7 +97,7 @@ fun RowScope.Day(
                 FlowRow(
                     modifier = Modifier
                         .height(MaterialTheme.typography.labelSmall.lineHeight.toDp())
-                        .alpha(1-(scrollProgress - 1).coerceIn(0f, 1f)),
+                        .alpha((-2*scrollProgress + 3).coerceIn(0f, 1f)),
                     verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
                     horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally)
                 ) {
@@ -116,7 +119,7 @@ fun RowScope.Day(
                     }
                 }
                 FlowRow(
-                    modifier = Modifier.alpha((scrollProgress-1).coerceIn(0f, 1f)),
+                    modifier = Modifier.alpha((2*scrollProgress - 3).coerceIn(0f, 1f)),
                     verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
                     horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
                 ) {
@@ -129,9 +132,10 @@ fun RowScope.Day(
                     }
                     repeat(homework.size) {
                         Text(
-                            text = homework[it],
+                            text = homework[it].subject,
                             style = MaterialTheme.typography.labelSmall,
-                            color = grayScaledIfRequired(colors[CustomColor.Cyan]!!.getGroup().color)
+                            color = grayScaledIfRequired(colors[CustomColor.Cyan]!!.getGroup().color),
+                            textDecoration = if (homework[it].isDone) TextDecoration.LineThrough else null
                         )
                     }
                 }
