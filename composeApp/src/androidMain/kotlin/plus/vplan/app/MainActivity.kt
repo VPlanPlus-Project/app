@@ -10,6 +10,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentActivity
 import co.touchlab.kermit.Logger
+import com.google.firebase.Firebase
+import com.google.firebase.FirebaseApp
+import com.google.firebase.crashlytics.crashlytics
 import io.github.vinceglb.filekit.core.FileKit
 import io.ktor.http.URLBuilder
 
@@ -26,6 +29,9 @@ class MainActivity : FragmentActivity() {
         activity = this
         FileKit.init(this)
         enableEdgeToEdge()
+
+        FirebaseApp.initializeApp(this)
+        Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
 
         setContent {
             fragmentActivity = LocalActivity.current as FragmentActivity

@@ -17,6 +17,8 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.google.gms)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 kotlin {
@@ -58,6 +60,11 @@ kotlin {
             implementation(libs.androidx.material)
             implementation(libs.androidx.sqlite.framework)
             implementation(libs.androidx.work.runtime.ktx)
+
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.messaging)
+            implementation(libs.firebase.analytics)
+            implementation(libs.firebase.crashlytics)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
