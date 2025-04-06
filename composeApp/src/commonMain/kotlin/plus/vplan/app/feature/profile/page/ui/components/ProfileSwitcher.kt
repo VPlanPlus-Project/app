@@ -6,7 +6,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -38,6 +41,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Profile
@@ -51,7 +55,7 @@ import plus.vplan.app.utils.blendColor
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.logo_dark
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileSwitcher(
     profiles: Map<School, List<Profile>>,
@@ -63,7 +67,7 @@ fun ProfileSwitcher(
     onConnectVppId: () -> Unit,
     onOpenProfileSettings: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val hideSheet = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } }
 
@@ -177,28 +181,33 @@ fun ProfileSwitcher(
                     }
                 }
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Button(
-                    text = "Weitere Schule",
-                    state = ButtonState.Enabled,
-                    size = ButtonSize.Normal,
-                    type = ButtonType.Outlined,
-                    center = true,
-                    onClick = { hideSheet(); onCreateNewProfile(null) },
-                    modifier = Modifier.weight(1f, true)
-                )
-                Button(
-                    text = "Profileinstellungen",
-                    state = ButtonState.Enabled,
-                    size = ButtonSize.Normal,
-                    type = ButtonType.Primary,
-                    center = true,
-                    onClick = { hideSheet(); onOpenProfileSettings() },
-                    modifier = Modifier.weight(1f, true)
-                )
+            BoxWithConstraints {
+                val stack = maxWidth < 360.dp
+                Logger.d { "Stack: $stack ($maxWidth)" }
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        text = "Weitere Schule",
+                        state = ButtonState.Enabled,
+                        size = ButtonSize.Normal,
+                        type = ButtonType.Outlined,
+                        center = true,
+                        onClick = { hideSheet(); onCreateNewProfile(null) },
+                        modifier = if (stack) Modifier.fillMaxWidth() else Modifier.weight(1f, true)
+                    )
+                    Button(
+                        text = "Profileinstellungen",
+                        state = ButtonState.Enabled,
+                        size = ButtonSize.Normal,
+                        type = ButtonType.Primary,
+                        center = true,
+                        onClick = { hideSheet(); onOpenProfileSettings() },
+                        modifier = if (stack) Modifier.fillMaxWidth() else Modifier.weight(1f, true)
+                    )
+                }
             }
         }
     }
