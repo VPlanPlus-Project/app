@@ -49,6 +49,7 @@ import vplanplus.composeapp.generated.resources.chevron_right
 import vplanplus.composeapp.generated.resources.github
 import vplanplus.composeapp.generated.resources.globe
 import vplanplus.composeapp.generated.resources.google_play
+import vplanplus.composeapp.generated.resources.handshake
 import vplanplus.composeapp.generated.resources.instagram
 import vplanplus.composeapp.generated.resources.logo
 import vplanplus.composeapp.generated.resources.mastodon
@@ -196,6 +197,12 @@ private fun InfoContent(
                 subtitle = "für VPlanPlus und vpp.ID",
                 icon = painterResource(Res.drawable.shield_user),
                 onClick = { BrowserIntent.openUrl("https://vplan.plus/privacy") }
+            )
+            SettingsRecord(
+                title = "Nutzungsbedingungen",
+                subtitle = "für VPlanPlus und vpp.ID",
+                icon = painterResource(Res.drawable.handshake),
+                onClick = { BrowserIntent.openUrl("https://vplan.plus/tos") }
             )
 
             Spacer(Modifier.height(16.dp))
