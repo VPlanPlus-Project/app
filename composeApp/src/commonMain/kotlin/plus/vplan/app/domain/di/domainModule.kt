@@ -8,6 +8,7 @@ import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
 import plus.vplan.app.domain.usecase.OnNotificationGrantedUseCase
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
+import plus.vplan.app.domain.usecase.UpdateFirebaseTokenUseCase
 
 val domainModule = module {
     singleOf(::GetCurrentDateTimeUseCase)
@@ -16,4 +17,5 @@ val domainModule = module {
     singleOf(::GetProfileByIdUseCase)
     singleOf(::OnNotificationGrantedUseCase)
     singleOf(::CheckEMailStructureUseCase)
+    singleOf(::UpdateFirebaseTokenUseCase)
 }

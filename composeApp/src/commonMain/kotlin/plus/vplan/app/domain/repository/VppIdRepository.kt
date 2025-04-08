@@ -20,6 +20,7 @@ interface VppIdRepository: WebEntityRepository<VppId> {
     fun getVppIds(): Flow<List<VppId>>
 
     suspend fun sendFeedback(access: SchoolApiAccess, content: String, email: String?): Response<Unit>
+    suspend fun updateFirebaseToken(vppId: VppId.Active, token: String): Response.Error?
 }
 
 data class VppIdDevice(

@@ -12,11 +12,12 @@ data class Group(
     val cachedAt: Instant
 ) : Item {
     override fun getEntityId(): String = id.toString()
+    val school by lazy { App.schoolSource.getById(schoolId) }
 
-    var school: School? = null
+    var schoolItem: School? = null
         private set
 
     suspend fun getSchoolItem(): School {
-        return school ?: App.schoolSource.getById(schoolId).getFirstValue()!!.also { school = it }
+        return schoolItem ?: App.schoolSource.getById(schoolId).getFirstValue()!!.also { schoolItem = it }
     }
 }
