@@ -51,7 +51,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.feature.main.MainScreen
+import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.VppIdConnectionState
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.VppIdManagementDrawer
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord

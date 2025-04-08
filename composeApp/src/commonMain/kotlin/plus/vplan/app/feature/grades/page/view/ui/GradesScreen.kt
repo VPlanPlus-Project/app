@@ -81,7 +81,7 @@ import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.AddGradeDialog
 import plus.vplan.app.feature.grades.page.view.ui.components.SelectIntervalDrawer
-import plus.vplan.app.feature.main.MainScreen
+import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
@@ -233,7 +233,7 @@ private fun GradesContent(
                     return@gradeLockStateAvailable
                 }
                 AnimatedContent(
-                    targetState = state.gradeLockState?.canAccess?.not() ?: true,
+                    targetState = state.gradeLockState?.canAccess?.not() != false,
                     modifier = Modifier.fillMaxSize(),
                 ) { areGradesLocked ->
                     if (areGradesLocked) {
@@ -669,7 +669,7 @@ private fun GradesContent(
                                                         )
 
                                                         val textColor by animateColorAsState(
-                                                            when (state.currentInterval!!.type) {
+                                                            when (state.currentInterval.type) {
                                                                 Interval.Type.SEK1 -> blendColor(blendColor(green.onContainer, red.onContainer, (grade-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                                 Interval.Type.SEK2 -> blendColor(blendColor(red.onContainer, green.onContainer, grade /15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                             }

@@ -21,7 +21,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.feature.main.MainScreen
+import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left

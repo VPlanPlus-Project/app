@@ -17,6 +17,7 @@ class UpdateFirebaseTokenUseCase(
     private val keyVppIdRepository: KeyValueRepository
 ) {
     suspend operator fun invoke(token: String) {
+        keyVppIdRepository.set(Keys.FIREBASE_TOKEN, token)
         val profiles = profileRepository.getAll().first()
         var success = true
         profiles.forEach { profile ->
@@ -32,7 +33,6 @@ class UpdateFirebaseTokenUseCase(
                 }
             }
         }
-        keyVppIdRepository.set(Keys.FIREBASE_TOKEN, token)
         keyVppIdRepository.set(Keys.FIREBASE_TOKEN_UPLOAD_SUCCESS, success.toString())
     }
 }
