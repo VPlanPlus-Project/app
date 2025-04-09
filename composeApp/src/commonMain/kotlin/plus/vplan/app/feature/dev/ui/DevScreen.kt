@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -57,7 +58,9 @@ fun DevScreen(
         }
         Button(
             onClick = { scope.launch {
-                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, listOf(LocalDate(2025, 3, 21)), true)
+                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, listOf(LocalDate(2025, 4, 10)), true)?.let {
+                    Logger.e { "Error on updating substitution plan: $it" }
+                }
             } }
         ) {
             Text("VPlan aktualisieren")

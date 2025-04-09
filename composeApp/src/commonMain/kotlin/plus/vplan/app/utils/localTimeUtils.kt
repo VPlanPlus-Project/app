@@ -67,3 +67,11 @@ val regularTimeFormat = LocalTime.Format {
 fun LocalTime.Companion.now(): LocalTime {
     return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
 }
+
+fun LocalTime.Companion.parseOrNull(time: String): LocalTime? {
+    return try {
+        parse(time)
+    } catch (_: IllegalArgumentException) {
+        null
+    }
+}

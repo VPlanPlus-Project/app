@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -30,6 +31,7 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingState
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.model.Teacher
@@ -39,6 +41,7 @@ import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
+import vplanplus.composeapp.generated.resources.triangle_alert
 
 private fun LocalDateTime.format(): String {
     return toInstant(TimeZone.of("Europe/Berlin")).toLocalDateTime(TimeZone.currentSystemDefault()).format(
@@ -124,15 +127,15 @@ fun FollowingLesson(
                         else MaterialTheme.colorScheme.onSurface
                     )
                 }
-                val lessonTime by App.lessonTimeSource.getById(lesson.lessonTimeId).collectAsState(null)
-                (lessonTime as? CacheState.Done)?.data?.let { lessonTimeData ->
+                val lessonTime = remember(lesson.id) { lesson.lessonTime }.collectAsResultingFlow().value
+                lessonTime?.let {
                     Text(
                         text = buildString {
-                            append(lessonTimeData.lessonNumber)
+                            append(lessonTime.lessonNumber)
                             append(". Stunde $DOT ")
-                            append(lessonTimeData.start.atDate(date).format())
+                            append(lessonTime.start.atDate(date).format())
                             append(" - ")
-                            append(lessonTimeData.end.atDate(date).format())
+                            append(lessonTime.end.atDate(date).format())
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface
@@ -178,6 +181,27 @@ fun FollowingLesson(
                             )
                             Text(
                                 text = lesson.info,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    if (lessonTime?.interpolated == true) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) info@{
+                            Icon(
+                                painter = painterResource(Res.drawable.triangle_alert),
+                                modifier = Modifier
+                                    .padding(end = 2.dp)
+                                    .size(MaterialTheme.typography.bodySmall.lineHeight.toDp()),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Diese Stundenzeit wurde automatisch anhand der vorherigen Stundenzeit generiert. Sie stimmt möglicherweise nicht mit der tatsächlichen Planung überein.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )

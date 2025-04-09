@@ -35,6 +35,7 @@ import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.IndiwareSubstitutionPlan
 import plus.vplan.app.domain.repository.IndiwareTimeTable
+import plus.vplan.app.utils.parseOrNull
 import plus.vplan.app.utils.sha256
 import plus.vplan.app.utils.splitWithKnownValuesBySpace
 
@@ -316,8 +317,8 @@ class IndiwareRepositoryImpl(
                                     teacher = substitutionPlanLesson.teacher.value.splitWithKnownValuesBySpace(teacherNames),
                                     teacherChanged = (substitutionPlanLesson.teacher.changed ?: "").isNotBlank(),
                                     info = substitutionPlanLesson.info.value.ifBlank { null },
-                                    start = LocalTime.parse(substitutionPlanLesson.start.value),
-                                    end = LocalTime.parse(substitutionPlanLesson.end.value),
+                                    start = LocalTime.parseOrNull(substitutionPlanLesson.start.value),
+                                    end = LocalTime.parseOrNull(substitutionPlanLesson.end.value),
                                     subjectInstanceNumber = substitutionPlanLesson.subjectInstanceNumber?.value?.toIntOrNull()
                                 )
                             }

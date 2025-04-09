@@ -124,8 +124,8 @@ data class IndiwareSubstitutionPlan(
             val roomChanged: Boolean,
             val info: String?,
             val subjectInstanceNumber: Int?,
-            val start: LocalTime,
-            val end: LocalTime
+            val start: LocalTime?,
+            val end: LocalTime?
         )
     }
 }
