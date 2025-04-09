@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +47,7 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.ui.theme.CustomColor
@@ -125,8 +124,11 @@ fun HomeworkCard(
                 Column {
                     Text(
                         text = buildString {
-                            append("Hausaufgabe in ")
-                            append((subject as? CacheState.Done<SubjectInstance>)?.data?.subject ?: "Unbekanntes Fach")
+                            if (homework.subjectInstanceId != null) {
+                                append((subject as? CacheState.Done<SubjectInstance>)?.data?.subject ?: "Unbekanntes Fach")
+                                append(": ")
+                            }
+                            append("Hausaufgabe")
                         },
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -172,10 +174,15 @@ fun HomeworkCard(
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                if (createdBy is CacheState.Loading) CircularProgressIndicator(Modifier.size(MaterialTheme.typography.labelMedium.lineHeight.toDp()))
-                else Text(
+                val font = MaterialTheme.typography.labelMedium
+                if (createdBy is CacheState.Loading) ShimmerLoader(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .fillMaxWidth(.3f)
+                        .height(font.lineHeight.toDp())
+                )
+                Text(
                     text = buildString {
                         val creator = (createdBy as? CacheState.Done)?.data
                         append(when (creator) {
@@ -183,13 +190,11 @@ fun HomeworkCard(
                             is Profile -> creator.name
                             else -> ""
                         })
+                        append(", am ")
+                        append(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date.format(regularDateFormat))
+                        append(" erstellt")
                     },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.outline
-                )
-                Text(
-                    text = homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date.format(regularDateFormat),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = font,
                     color = MaterialTheme.colorScheme.outline
                 )
             }
