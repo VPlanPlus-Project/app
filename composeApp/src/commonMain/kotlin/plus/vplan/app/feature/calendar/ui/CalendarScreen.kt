@@ -103,7 +103,6 @@ import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
-import plus.vplan.app.ui.grayScale
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.thenIf
