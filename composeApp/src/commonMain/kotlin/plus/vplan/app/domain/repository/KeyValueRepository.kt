@@ -25,4 +25,7 @@ object Keys {
     const val PREVIOUS_APP_VERSION = "previous_app_version"
 
     const val MIGRATION_FLAG_ASSESSMENTS_HOMEWORK_INDICES = "migration_flag_assessments_homework_indices"
+
+    const val FIREBASE_TOKEN = "firebase_token"
+    const val FIREBASE_TOKEN_UPLOAD_SUCCESS = "firebase_token_upload_success"
 }

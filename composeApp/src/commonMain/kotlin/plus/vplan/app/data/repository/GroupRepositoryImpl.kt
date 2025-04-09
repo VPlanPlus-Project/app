@@ -3,8 +3,12 @@ package plus.vplan.app.data.repository
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -21,9 +25,11 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.data.source.network.isResponseFromBackend
+import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.School
@@ -133,6 +139,25 @@ class GroupRepositoryImpl(
 
             return@channelFlow sendAll(getById(id, false))
         }
+    }
+
+    override suspend fun updateFirebaseToken(group: Group, token: String): Response.Error? {
+        safeRequest(onError = { return it }) {
+            val response = httpClient.post {
+                url {
+                    protocol = api.protocol
+                    host = api.host
+                    port = api.port
+                    pathSegments = listOf("api", "v2.2", "group", group.id.toString(), "firebase")
+                }
+                group.school.getFirstValue()?.getSchoolApiAccess()?.authentication(this) ?: return Response.Error.Other("No school api access to update firebase token")
+                contentType(ContentType.Application.Json)
+                setBody(FirebaseTokenRequest(token))
+            }
+            if (response.status.isSuccess()) return null
+            return response.toErrorResponse<Unit>()
+        }
+        return Response.Error.Cancelled
     }
 }
 

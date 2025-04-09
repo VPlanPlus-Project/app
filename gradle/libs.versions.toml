@@ -30,6 +30,9 @@ kotlinSerialization = "1.8.0"
 
 coroutines = "1.10.1"
 
+google-gms = "4.4.2"
+firebase-bom = "33.12.0"
+
 ktor = "3.1.1"
 
 xmlutil = "0.90.2"
@@ -53,6 +56,11 @@ kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 skiko = { module = "org.jetbrains.skiko:skiko", version.ref = "skiko" }
 sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
+
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
@@ -90,3 +98,5 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 room = { id = "androidx.room", version.ref = "androidx-room" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref="kotlinSerializationPlugin" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.3" }
+google-gms = { id = "com.google.gms.google-services", version.ref = "google-gms" }
