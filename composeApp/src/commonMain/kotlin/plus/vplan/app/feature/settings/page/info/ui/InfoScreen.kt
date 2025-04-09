@@ -49,6 +49,7 @@ import vplanplus.composeapp.generated.resources.chevron_right
 import vplanplus.composeapp.generated.resources.github
 import vplanplus.composeapp.generated.resources.globe
 import vplanplus.composeapp.generated.resources.google_play
+import vplanplus.composeapp.generated.resources.handshake
 import vplanplus.composeapp.generated.resources.instagram
 import vplanplus.composeapp.generated.resources.logo
 import vplanplus.composeapp.generated.resources.mastodon
@@ -176,6 +177,18 @@ private fun InfoContent(
                 icon = painterResource(Res.drawable.globe),
                 onClick = { BrowserIntent.openUrl("https://vplan.plus") }
             )
+            SettingsRecord(
+                title = "Datenschutzerklärung",
+                subtitle = "für VPlanPlus und vpp.ID",
+                icon = painterResource(Res.drawable.shield_user),
+                onClick = { BrowserIntent.openUrl("https://vplan.plus/privacy") }
+            )
+            SettingsRecord(
+                title = "Nutzungsbedingungen",
+                subtitle = "für VPlanPlus und vpp.ID",
+                icon = painterResource(Res.drawable.handshake),
+                onClick = { BrowserIntent.openUrl("https://vplan.plus/tos") }
+            )
             when (plus.vplan.app.getPlatform()) {
                 Platform.Android -> SettingsRecord(
                     title = "Google Play Store",
@@ -190,12 +203,6 @@ private fun InfoContent(
                 subtitle = "VPlanPlusProject/app",
                 icon = painterResource(Res.drawable.github),
                 onClick = { BrowserIntent.openUrl("https://github.com/VPlanPlus-Project/app") }
-            )
-            SettingsRecord(
-                title = "Datenschutzerklärung",
-                subtitle = "für VPlanPlus und vpp.ID",
-                icon = painterResource(Res.drawable.shield_user),
-                onClick = { BrowserIntent.openUrl("https://vplan.plus/privacy") }
             )
 
             Spacer(Modifier.height(16.dp))
