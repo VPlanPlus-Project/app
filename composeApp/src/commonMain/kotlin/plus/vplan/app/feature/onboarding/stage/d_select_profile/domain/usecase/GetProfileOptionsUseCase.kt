@@ -37,17 +37,17 @@ class GetProfileOptionsUseCase(
                         name = it.name,
                         subjectInstances = subjectInstanceRepository.getByGroup(it.id).first().map { App.subjectInstanceSource.getById(it.id).filterIsInstance<CacheState.Done<SubjectInstance>>().first().data }
                     )
-                } + teachers.map {
+                }.sortedBy { it.name.first().isDigit().not().toString() + it.name.takeWhile { n -> n.isDigit() }.padStart(10, '0') + it.name.dropWhile { n -> n.isDigit() }} + teachers.map {
                     OnboardingProfile.TeacherProfile(
                         id = it.id,
                         name = it.name
                     )
-                } + rooms.map {
+                }.sortedBy { it.name } + rooms.map {
                     OnboardingProfile.RoomProfile(
                         id = it.id,
                         name = it.name
                     )
-                }
+                }.sortedBy { it.name }
             }.collect {
                 send(it)
             }
