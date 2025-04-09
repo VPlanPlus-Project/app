@@ -8,7 +8,7 @@ import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
 
 class SetupApplicationUseCase(
-    private val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase
+    private val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase,
     private val keyValueRepository: KeyValueRepository,
     private val doAssessmentsAndHomeworkIndexMigrationUseCase: DoAssessmentsAndHomeworkIndexMigrationUseCase
 ) {
