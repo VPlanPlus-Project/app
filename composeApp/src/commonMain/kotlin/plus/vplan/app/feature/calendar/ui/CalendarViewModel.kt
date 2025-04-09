@@ -93,7 +93,7 @@ class CalendarViewModel(
                         day.lessons.collectLatest {
                             val lessons = it.groupBy { it.lessonTime.getFirstValue()!!.lessonNumber }.mapValues { it.value.sortedBy { it.subject } }
                             val layoutedLessons = it.calculateLayouting()
-                            calendarDay = calendarDay.copy(layoutedLessons = layoutedLessons, lessons = lessons)
+                            calendarDay = calendarDay.copy(layoutedLessons = layoutedLessons, lessons = lessons.toList().sortedBy { it.first }.toMap())
                             updateState()
                         }
                     }

@@ -527,6 +527,27 @@ private fun HomeContent(
                                                                         style = MaterialTheme.typography.bodyMedium
                                                                     )
                                                                 }
+                                                                if (lessonTime.interpolated) {
+                                                                    Row(
+                                                                        modifier = Modifier.fillMaxWidth(),
+                                                                        verticalAlignment = Alignment.Top,
+                                                                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                                                    ) info@{
+                                                                        Icon(
+                                                                            painter = painterResource(Res.drawable.triangle_alert),
+                                                                            modifier = Modifier
+                                                                                .padding(end = 2.dp)
+                                                                                .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp()),
+                                                                            contentDescription = null,
+                                                                            tint = MaterialTheme.colorScheme.primary
+                                                                        )
+                                                                        Text(
+                                                                            text = "Diese Stundenzeit wurde automatisch anhand der vorherigen Stundenzeit generiert. Sie stimmt möglicherweise nicht mit der tatsächlichen Planung überein.",
+                                                                            style = MaterialTheme.typography.bodyMedium,
+                                                                            color = MaterialTheme.colorScheme.primary
+                                                                        )
+                                                                    }
+                                                                }
                                                                 if (assessmentsForLesson.isNotEmpty()) Row {
                                                                     Icon(
                                                                         painter = painterResource(Res.drawable.notebook_text),

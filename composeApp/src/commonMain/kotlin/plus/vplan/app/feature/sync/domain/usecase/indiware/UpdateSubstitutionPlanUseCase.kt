@@ -7,12 +7,16 @@ import kotlinx.datetime.format
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.model.findByIndiwareId
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
@@ -29,8 +33,10 @@ import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.latest
 import plus.vplan.app.utils.now
+import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.untilRelativeText
+import kotlin.time.Duration.Companion.minutes
 import kotlin.uuid.Uuid
 
 private val LOGGER = Logger.withTag("UpdateSubstitutionPlanUseCase")
@@ -111,8 +117,25 @@ class UpdateSubstitutionPlanUseCase(
                     LOGGER.w { "Group ${substitutionPlanClass.name} not found" }
                     return@flatMap emptyList()
                 }
-                val lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
-                substitutionPlanClass.lessons.map { substitutionPlanLesson ->
+                var lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
+                if (lessonTimes.isEmpty()) {
+                    Logger.e { "No lesson times found for group ${group.name}" }
+                    return@flatMap emptyList()
+                }
+                while (substitutionPlanClass.lessons.any { it.lessonNumber > lessonTimes.maxOf { it.lessonNumber } }) {
+                    val nextLessonTime = lessonTimes.maxBy { it.lessonNumber }
+                    val newLessonTime = LessonTime(
+                        id = "${group.schoolId}/${group.id}/${nextLessonTime.lessonNumber + 1}",
+                        start = nextLessonTime.end,
+                        end = nextLessonTime.end + 45.minutes,
+                        lessonNumber = nextLessonTime.lessonNumber + 1,
+                        group = group.id,
+                        interpolated = true
+                    )
+                    lessonTimeRepository.upsert(newLessonTime)
+                    lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
+                }
+                substitutionPlanClass.lessons.mapNotNull { substitutionPlanLesson ->
                     Lesson.SubstitutionPlanLesson(
                         id = Uuid.random(),
                         date = date,
@@ -125,7 +148,10 @@ class UpdateSubstitutionPlanUseCase(
                         isRoomChanged = substitutionPlanLesson.roomChanged,
                         groupIds = listOf(group.id),
                         subjectInstanceId = substitutionPlanLesson.subjectInstanceNumber?.let { subjectInstances.findByIndiwareId(it.toString()) }?.id,
-                        lessonTimeId = lessonTimes.first { it.lessonNumber == substitutionPlanLesson.lessonNumber }.id,
+                        lessonTimeId = lessonTimes.firstOrNull { it.lessonNumber == substitutionPlanLesson.lessonNumber }?.id ?: run {
+                            Logger.e { "No lesson time found for lesson number ${substitutionPlanLesson.lessonNumber} in group ${group.name} at $date" }
+                            return@mapNotNull null
+                        },
                         version = "",
                         info = substitutionPlanLesson.info
                     )
@@ -165,16 +191,16 @@ class UpdateSubstitutionPlanUseCase(
                             largeText = buildString {
                                 changedLessons.forEachIndexed { i, lesson ->
                                     if (i > 0) append("\n")
-                                    append(lesson.getLessonTimeItem().lessonNumber)
+                                    append(lesson.lessonTime.getFirstValue()?.lessonNumber)
                                     append(". ")
                                     append(lesson.subject ?: "Entfall")
                                     if (lesson.teacherIds.isNotEmpty()) {
                                         append(" mit ")
-                                        append(lesson.getTeacherItems().joinToString(", ") { teacher -> teacher.name })
+                                        append(lesson.teachers.first().filterIsInstance<CacheState.Done<Teacher>>().joinToString(", ") { it.data.name })
                                     }
                                     if (lesson.roomIds.isNotEmpty()) {
                                         append(" in ")
-                                        append(lesson.getRoomItems().joinToString(", ") { room -> room.name })
+                                        append(lesson.rooms.first().filterIsInstance<CacheState.Done<Room>>().joinToString(", ") { it.data.name })
                                     }
                                 }
                                 if (newDay?.info != null) append("\n\nℹ\uFE0F ${newDay.info}")
