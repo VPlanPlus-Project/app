@@ -2,6 +2,7 @@ package plus.vplan.app.feature.onboarding.stage.a_school_search.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,7 +53,13 @@ fun SearchBar(
             TextField(
                 value = query,
                 onValueChange = { onEvent(OnboardingSchoolSearchEvent.OnQueryChanged(it)) },
-                label = { Text("Schule oder Stundenplan24.de-ID") },
+                label = { Text(
+                    text = "Schule oder Stundenplan24.de-Schulnummer",
+                    maxLines = 1,
+                    modifier = Modifier.basicMarquee(
+                        iterations = Int.MAX_VALUE
+                    )
+                ) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -82,7 +89,7 @@ fun SearchBar(
                 Text(
                     text = when (error) {
                         null -> ""
-                        OnboardingSchoolSearchTextFieldError.BadSp24Id -> "Schulnummer muss 8-stellig sein"
+                        OnboardingSchoolSearchTextFieldError.BadSp24Id -> "Schulnummer muss 8-stellig sein oder nach Schule suchen"
                         OnboardingSchoolSearchTextFieldError.SchoolNotFound -> "Die angegebene Schule wurde nicht gefunden"
                     },
                     style = MaterialTheme.typography.labelMedium,
