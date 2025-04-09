@@ -194,8 +194,13 @@ class HomeworkRepositoryImpl(
                     val metadataResponseData = ResponseDataWrapper.fromJson<HomeworkMetadataResponse>(metadataResponse.bodyAsText())
                         ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
 
-                    val schools = vppDatabase.schoolDao.getAll().first().filter { it.school.id in metadataResponseData.schoolIds }.map { it.toModel() }
-                    schoolApiAccess = schools.firstNotNullOfOrNull { it.getSchoolApiAccess() }
+                    val schools = vppDatabase.schoolDao.getAll().first()
+                    schoolApiAccess = schools.filter { it.school.id in metadataResponseData.schoolIds }.map { it.toModel() }.firstNotNullOfOrNull { it.getSchoolApiAccess() }
+                }
+
+                if (schoolApiAccess == null) {
+                    logger.e { "No school api access found for homework $id" }
+                    return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("No school api access found for homework $id")))
                 }
 
                 val homeworkResponse = httpClient.get {
@@ -206,7 +211,7 @@ class HomeworkRepositoryImpl(
                         pathSegments = listOf("api", "v2.2", "homework", id.toString())
                         parameter("include_tasks", "true")
                     }
-                    schoolApiAccess?.authentication(this)
+                    schoolApiAccess.authentication(this)
                 }
                 if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), homeworkResponse.toErrorResponse<Homework>()))
                 val data = ResponseDataWrapper.fromJson<HomeworkGetResponse>(homeworkResponse.bodyAsText())

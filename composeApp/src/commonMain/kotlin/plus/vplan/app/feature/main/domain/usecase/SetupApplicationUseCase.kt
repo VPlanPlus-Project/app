@@ -9,10 +9,12 @@ import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomework
 
 class SetupApplicationUseCase(
     private val keyValueRepository: KeyValueRepository,
-    private val doAssessmentsAndHomeworkIndexMigrationUseCase: DoAssessmentsAndHomeworkIndexMigrationUseCase
+    private val doAssessmentsAndHomeworkIndexMigrationUseCase: DoAssessmentsAndHomeworkIndexMigrationUseCase,
+    private val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase
 ) {
     private val logger = Logger.withTag("SetupApplicationUseCase")
     suspend operator fun invoke() {
+        updateFirebaseTokenUseCase()
         if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != App.versionCode.toString()) {
             logger.i { "First run of VPlanPlus" }
             logger.d { "Saving migration flags" }

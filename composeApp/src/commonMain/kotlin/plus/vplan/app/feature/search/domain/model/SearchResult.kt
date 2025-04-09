@@ -16,7 +16,7 @@ sealed class SearchResult(val type: Type) {
         data class Group(
             val group: plus.vplan.app.domain.model.Group,
             override val lessons: List<LessonLayoutingInfo>
-        ) : SchoolEntity(Type.Group, group.id, group.name, group.school!!)
+        ) : SchoolEntity(Type.Group, group.id, group.name, group.schoolItem!!)
 
         data class Teacher(
             val teacher: plus.vplan.app.domain.model.Teacher,
