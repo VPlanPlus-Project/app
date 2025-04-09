@@ -164,18 +164,17 @@ class HomeworkRepositoryImpl(
                 if (existing != null) {
                     if (existing.homework.createdBy != null) schoolApiAccess = (vppDatabase.vppIdDao.getById(existing.homework.createdBy).first()?.toModel() as? VppId.Active)?.buildSchoolApiAccess()
                     schoolApiAccess =
-                        if (schoolApiAccess != null) schoolApiAccess
-                        else (if (existing.homework.subjectInstanceId != null) vppDatabase.subjectInstanceDao.getById(existing.homework.subjectInstanceId).first()?.groups
-                            ?.mapNotNull { vppDatabase.groupDao.getById(it.groupId).first() }
-                            ?.mapNotNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
-                        else if (existing.homework.groupId != null) existing.homework.groupId.let {
-                            vppDatabase.groupDao.getById(existing.homework.groupId).first()?.school?.schoolId?.let {
-                                listOf(vppDatabase.schoolDao.findById(it).first()?.toModel()?.getSchoolApiAccess())
-                            }
-                        }
-                    else null)
-                            .orEmpty()
-                            .firstOrNull()
+                        schoolApiAccess
+                            ?: (if (existing.homework.subjectInstanceId != null) vppDatabase.subjectInstanceDao.getById(existing.homework.subjectInstanceId).first()?.groups
+                                ?.mapNotNull { vppDatabase.groupDao.getById(it.groupId).first() }
+                                ?.mapNotNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
+                            else existing.homework.groupId?.let {
+                                vppDatabase.groupDao.getById(existing.homework.groupId).first()?.school?.schoolId?.let {
+                                    listOf(vppDatabase.schoolDao.findById(it).first()?.toModel()?.getSchoolApiAccess())
+                                }
+                            })
+                                .orEmpty()
+                                .firstOrNull()
                 }
                 if (schoolApiAccess == null) {
                     val metadataResponse = httpClient.get("${api.url}/api/v2.2/homework/$id")
@@ -188,8 +187,13 @@ class HomeworkRepositoryImpl(
                     val metadataResponseData = ResponseDataWrapper.fromJson<HomeworkMetadataResponse>(metadataResponse.bodyAsText())
                         ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
 
-                    val schools = vppDatabase.schoolDao.getAll().first().filter { it.school.id in metadataResponseData.schoolIds }.map { it.toModel() }
-                    schoolApiAccess = schools.mapNotNull { it.getSchoolApiAccess() }.firstOrNull()
+                    val schools = vppDatabase.schoolDao.getAll().first()
+                    schoolApiAccess = schools.filter { it.school.id in metadataResponseData.schoolIds }.map { it.toModel() }.firstNotNullOfOrNull { it.getSchoolApiAccess() }
+                }
+
+                if (schoolApiAccess == null) {
+                    logger.e { "No school api access found for homework $id" }
+                    return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("No school api access found for homework $id")))
                 }
 
                 val homeworkResponse = httpClient.get {
@@ -200,7 +204,7 @@ class HomeworkRepositoryImpl(
                         pathSegments = listOf("api", "v2.2", "homework", id.toString())
                         parameter("include_tasks", "true")
                     }
-                    schoolApiAccess?.authentication(this)
+                    schoolApiAccess.authentication(this)
                 }
                 if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), homeworkResponse.toErrorResponse<Homework>()))
                 val data = ResponseDataWrapper.fromJson<HomeworkGetResponse>(homeworkResponse.bodyAsText())

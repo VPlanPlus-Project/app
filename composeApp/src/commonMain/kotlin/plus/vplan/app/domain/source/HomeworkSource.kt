@@ -21,11 +21,12 @@ class HomeworkSource(
     private val homeworkRepository: HomeworkRepository
 ) {
     private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Homework>>>()
-    fun getById(id: Int): Flow<CacheState<Homework>> {
+    fun getById(id: Int, forceUpdate: Boolean = false): Flow<CacheState<Homework>> {
+        if (forceUpdate) flows.remove(id)
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Homework>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             MainScope().launch {
-                homeworkRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+                homeworkRepository.getById(id, forceUpdate).collectLatest { flow.tryEmit(it) }
             }
             flow
         }

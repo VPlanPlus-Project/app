@@ -19,11 +19,12 @@ class AssessmentSource(
     private val assessmentRepository: AssessmentRepository
 ) {
     private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Assessment>>>()
-    fun getById(id: Int): Flow<CacheState<Assessment>> {
+    fun getById(id: Int, forceUpdate: Boolean = false): Flow<CacheState<Assessment>> {
+        if (forceUpdate) flows.remove(id)
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Assessment>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             MainScope().launch {
-                assessmentRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+                assessmentRepository.getById(id, forceUpdate).collectLatest { flow.tryEmit(it) }
             }
             flow
         }
