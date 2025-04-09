@@ -37,6 +37,7 @@ import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
+import plus.vplan.app.data.source.database.model.database.DbProfileHomeworkIndex
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
@@ -58,6 +59,7 @@ import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.utils.sendAll
 import plus.vplan.app.utils.sha256
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private val logger = Logger.withTag("HomeworkRepositoryImpl")
 
@@ -140,6 +142,11 @@ class HomeworkRepositoryImpl(
         return vppDatabase.homeworkDao.getByDate(date).map { it.map { it.toModel() } }
     }
 
+    override fun getByProfile(profileId: Uuid, date: LocalDate?): Flow<List<Homework>> {
+        if (date == null) return vppDatabase.homeworkDao.getByProfile(profileId).map { it.map { it.toModel() } }
+        return vppDatabase.homeworkDao.getByProfileAndDate(profileId, date).map { it.map { it.toModel() } }
+    }
+
     override fun getAllIds(): Flow<List<Int>> {
         return vppDatabase.homeworkDao.getAll().map { it.map { homework -> homework.homework.id } }
     }
@@ -164,18 +171,17 @@ class HomeworkRepositoryImpl(
                 if (existing != null) {
                     if (existing.homework.createdBy != null) schoolApiAccess = (vppDatabase.vppIdDao.getById(existing.homework.createdBy).first()?.toModel() as? VppId.Active)?.buildSchoolApiAccess()
                     schoolApiAccess =
-                        if (schoolApiAccess != null) schoolApiAccess
-                        else (if (existing.homework.subjectInstanceId != null) vppDatabase.subjectInstanceDao.getById(existing.homework.subjectInstanceId).first()?.groups
-                            ?.mapNotNull { vppDatabase.groupDao.getById(it.groupId).first() }
-                            ?.mapNotNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
-                        else if (existing.homework.groupId != null) existing.homework.groupId.let {
-                            vppDatabase.groupDao.getById(existing.homework.groupId).first()?.school?.schoolId?.let {
-                                listOf(vppDatabase.schoolDao.findById(it).first()?.toModel()?.getSchoolApiAccess())
-                            }
-                        }
-                    else null)
-                            .orEmpty()
-                            .firstOrNull()
+                        schoolApiAccess
+                            ?: (if (existing.homework.subjectInstanceId != null) vppDatabase.subjectInstanceDao.getById(existing.homework.subjectInstanceId).first()?.groups
+                                ?.mapNotNull { vppDatabase.groupDao.getById(it.groupId).first() }
+                                ?.mapNotNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
+                            else existing.homework.groupId?.let {
+                                vppDatabase.groupDao.getById(existing.homework.groupId).first()?.school?.schoolId?.let {
+                                    listOf(vppDatabase.schoolDao.findById(it).first()?.toModel()?.getSchoolApiAccess())
+                                }
+                            })
+                                .orEmpty()
+                                .firstOrNull()
                 }
                 if (schoolApiAccess == null) {
                     val metadataResponse = httpClient.get("${api.url}/api/v2.2/homework/$id")
@@ -188,8 +194,13 @@ class HomeworkRepositoryImpl(
                     val metadataResponseData = ResponseDataWrapper.fromJson<HomeworkMetadataResponse>(metadataResponse.bodyAsText())
                         ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
 
-                    val schools = vppDatabase.schoolDao.getAll().first().filter { it.school.id in metadataResponseData.schoolIds }.map { it.toModel() }
-                    schoolApiAccess = schools.mapNotNull { it.getSchoolApiAccess() }.firstOrNull()
+                    val schools = vppDatabase.schoolDao.getAll().first()
+                    schoolApiAccess = schools.filter { it.school.id in metadataResponseData.schoolIds }.map { it.toModel() }.firstNotNullOfOrNull { it.getSchoolApiAccess() }
+                }
+
+                if (schoolApiAccess == null) {
+                    logger.e { "No school api access found for homework $id" }
+                    return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("No school api access found for homework $id")))
                 }
 
                 val homeworkResponse = httpClient.get {
@@ -200,7 +211,7 @@ class HomeworkRepositoryImpl(
                         pathSegments = listOf("api", "v2.2", "homework", id.toString())
                         parameter("include_tasks", "true")
                     }
-                    schoolApiAccess?.authentication(this)
+                    schoolApiAccess.authentication(this)
                 }
                 if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), homeworkResponse.toErrorResponse<Homework>()))
                 val data = ResponseDataWrapper.fromJson<HomeworkGetResponse>(homeworkResponse.bodyAsText())
@@ -565,6 +576,14 @@ class HomeworkRepositoryImpl(
             return ResponseDataWrapper.fromJson<Int>(response.bodyAsText())?.let { Response.Success(it) } ?: Response.Error.ParsingError(response.bodyAsText())
         }
         return Response.Error.Cancelled
+    }
+
+    override suspend fun dropIndexForProfile(profileId: Uuid) {
+        vppDatabase.homeworkDao.dropHomeworkIndexForProfile(profileId)
+    }
+
+    override suspend fun createCacheForProfile(profileId: Uuid, homeworkIds: Collection<Int>) {
+        vppDatabase.homeworkDao.upsertHomeworkIndex(homeworkIds.map { DbProfileHomeworkIndex(it, profileId) })
     }
 }
 

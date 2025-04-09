@@ -39,6 +39,7 @@ import kotlinx.serialization.Serializable
 import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbAssessment
+import plus.vplan.app.data.source.database.model.database.DbProfileAssessmentIndex
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
@@ -53,6 +54,7 @@ import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.utils.sendAll
+import kotlin.uuid.Uuid
 
 private val logger = Logger.withTag("AssessmentRepositoryImpl")
 
@@ -182,6 +184,11 @@ class AssessmentRepositoryImpl(
         return vppDatabase.assessmentDao.getByDate(date).map { it.map { it.toModel() } }
     }
 
+    override fun getByProfile(profileId: Uuid, date: LocalDate?): Flow<List<Assessment>> {
+        if (date == null) return vppDatabase.assessmentDao.getByProfile(profileId).map { it.map { it.toModel() } }
+        return vppDatabase.assessmentDao.getByProfileAndDate(profileId, date).map { it.map { it.toModel() } }
+    }
+
     override fun getAllIds(): Flow<List<Int>> {
         return vppDatabase.assessmentDao.getAll().map { it.map { it.assessment.id } }
     }
@@ -215,7 +222,7 @@ class AssessmentRepositoryImpl(
                 if (existing != null) {
                     if (existing.assessment.createdBy != null) vppId = vppDatabase.vppIdDao.getById(existing.assessment.createdBy).first()?.toModel() as? VppId.Active
                     if (vppId == null) {
-                        school = existing.subjectInstance.groups.mapNotNull { vppDatabase.groupDao.getById(it.groupId).first() }.mapNotNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }.firstOrNull()
+                        school = existing.subjectInstance.groups.mapNotNull { vppDatabase.groupDao.getById(it.groupId).first() }.firstNotNullOfOrNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
                     }
                 }
                 if (existing == null || (vppId == null && school == null)) {
@@ -483,6 +490,14 @@ class AssessmentRepositoryImpl(
 
     override suspend fun clearCache() {
         vppDatabase.assessmentDao.clearCache()
+    }
+
+    override suspend fun dropIndicesForProfile(profileId: Uuid) {
+        vppDatabase.assessmentDao.dropAssessmentsIndexForProfile(profileId)
+    }
+
+    override suspend fun createCacheForProfile(profileId: Uuid, assessmentIds: Collection<Int>) {
+        vppDatabase.assessmentDao.upsertAssessmentsIndex(assessmentIds.map { DbProfileAssessmentIndex(it, profileId) })
     }
 }
 

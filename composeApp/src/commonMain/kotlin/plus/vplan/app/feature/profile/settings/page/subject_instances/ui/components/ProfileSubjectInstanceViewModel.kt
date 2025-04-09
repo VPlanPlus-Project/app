@@ -13,7 +13,7 @@ import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
-import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
+import plus.vplan.app.feature.profile.domain.usecase.UpdateIndicesUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.GetCourseConfigurationUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileSubjectInstanceEnabledUseCase
 import kotlin.uuid.Uuid
@@ -22,7 +22,7 @@ class ProfileSubjectInstanceViewModel(
     private val getProfileByIdUseCase: GetProfileByIdUseCase,
     private val getCourseConfigurationUseCase: GetCourseConfigurationUseCase,
     private val setProfileSubjectInstanceEnabledUseCase: SetProfileSubjectInstanceEnabledUseCase,
-    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase
+    private val updateIndicesUseCase: UpdateIndicesUseCase
 ) : ViewModel() {
     var state by mutableStateOf(ProfileSubjectInstanceState())
         private set
@@ -36,7 +36,7 @@ class ProfileSubjectInstanceViewModel(
                 if (profile !is Profile.StudentProfile) return@collectLatest
                 if (shouldRebuildIndicesOnProfileReload) {
                     shouldRebuildIndicesOnProfileReload = false
-                    updateProfileLessonIndexUseCase(profile)
+                    updateIndicesUseCase(profile)
                 }
                 profile.getSubjectInstances().onEach {
                     it.getCourseItem()

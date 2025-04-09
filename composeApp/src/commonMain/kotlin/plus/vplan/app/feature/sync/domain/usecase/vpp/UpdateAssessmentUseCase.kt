@@ -22,6 +22,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
+import plus.vplan.app.feature.profile.domain.usecase.UpdateAssessmentIndicesUseCase
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.shortMonthNames
@@ -32,17 +33,20 @@ import kotlin.time.Duration.Companion.days
 class UpdateAssessmentUseCase(
     private val assessmentRepository: AssessmentRepository,
     private val profileRepository: ProfileRepository,
-    private val platformNotificationRepository: PlatformNotificationRepository
+    private val platformNotificationRepository: PlatformNotificationRepository,
+    private val updateAssessmentIndicesUseCase: UpdateAssessmentIndicesUseCase
 ) {
     suspend operator fun invoke(allowNotifications: Boolean) {
         val existing = assessmentRepository.getAll().first().map { it.id }.toSet()
-        profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>().forEach { profile ->
+        val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
+        profiles.forEach { profile ->
             ((assessmentRepository.download(profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchoolItem().getSchoolApiAccess()!!, profile.subjectInstanceConfiguration.filterValues { it }.keys.toList()) as? Response.Success ?: return@forEach)
                 .data - existing)
                 .also { ids ->
                     if (ids.isEmpty() || !allowNotifications) return@forEach
                     combine(ids.map { assessmentId -> App.assessmentSource.getById(assessmentId).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }.first()
                         .filter { it.creator is AppEntity.VppId && it.creator.id != profile.vppIdId && (it.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
+                        .filter { it.subjectInstance.getFirstValue()!!.id in profile.subjectInstanceConfiguration.filterValues { it }.keys }
                         .let { newAssessments ->
                             if (newAssessments.isEmpty()) return@forEach
                             if (newAssessments.size == 1) {
@@ -96,6 +100,10 @@ class UpdateAssessmentUseCase(
                             )
                         }
                 }
+        }
+
+        profiles.forEach {
+            updateAssessmentIndicesUseCase(it)
         }
     }
 }

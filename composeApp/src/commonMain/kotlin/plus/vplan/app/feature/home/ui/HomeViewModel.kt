@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
@@ -43,7 +44,7 @@ import kotlin.uuid.ExperimentalUuidApi
 
 private val LOGGER = Logger.withTag("HomeViewModel")
 
-@OptIn(ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class, FlowPreview::class)
 class HomeViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
@@ -78,11 +79,10 @@ class HomeViewModel(
         }
         viewModelScope.launch {
             var lastSpecialLessonUpdate = LocalDateTime.now() - 1.hours
-            getCurrentDateTimeUseCase().onEach { time ->
-                state = state.copy(currentTime = time)
-            }
+            getCurrentDateTimeUseCase()
+                .onEach { time -> state = state.copy(currentTime = time) }
                 .collectLatest { time ->
-                    if (lastSpecialLessonUpdate until time < 1.seconds) return@collectLatest
+                    if (lastSpecialLessonUpdate until time < 5.seconds) return@collectLatest
                     if (state.day?.date == time.date) {
                         val currentLessons = state.day?.lessons?.first().orEmpty()
                             .filter { lesson ->

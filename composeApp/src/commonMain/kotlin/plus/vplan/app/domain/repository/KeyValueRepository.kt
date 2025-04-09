@@ -21,4 +21,11 @@ object Keys {
     const val SHOW_HOMEWORK_VPP_ID_BANNER = "show_homework_vpp_id_banner"
 
     const val VPP_ID_LOGIN_LINK_TO_PROFILE = "VPP_ID_LOGIN_LiNK_TO_PROFILE"
+
+    const val PREVIOUS_APP_VERSION = "previous_app_version"
+
+    const val MIGRATION_FLAG_ASSESSMENTS_HOMEWORK_INDICES = "migration_flag_assessments_homework_indices"
+
+    const val FIREBASE_TOKEN = "firebase_token"
+    const val FIREBASE_TOKEN_UPLOAD_SUCCESS = "firebase_token_upload_success"
 }

@@ -83,8 +83,10 @@ class DaySource(
                                 ),
                                 if (contextProfile == null) substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
                                 else substitutionPlanRepository.getForProfile(contextProfile, date),
-                                assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
-                                homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
+                                if (contextProfile == null) assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged()
+                                else assessmentRepository.getByProfile(contextProfile.id, date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
+                                if (contextProfile == null) homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
+                                else homeworkRepository.getByProfile(contextProfile.id, date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
                             ) { timetable, substitutionPlan, assessments, homework ->
                                 send(CacheState.Done(Day(
                                     id = id,

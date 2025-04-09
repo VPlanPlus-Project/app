@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.main
+package plus.vplan.app.feature.main.ui
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility

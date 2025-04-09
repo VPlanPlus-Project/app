@@ -8,8 +8,10 @@ import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.data.source.database.model.database.DbAssessment
+import plus.vplan.app.data.source.database.model.database.DbProfileAssessmentIndex
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedAssessment
+import kotlin.uuid.Uuid
 
 @Dao
 interface AssessmentDao {
@@ -62,4 +64,18 @@ interface AssessmentDao {
 
     @Query("DELETE FROM fk_assessment_file WHERE assessment_id IN (:assessmentIds)")
     suspend fun deleteFileLinks(assessmentIds: List<Int>)
+
+    @Transaction
+    @Query("SELECT * FROM profile_assessment_index LEFT JOIN assessments ON profile_assessment_index.assessment_id = assessments.id WHERE profile_id = :profileId")
+    fun getByProfile(profileId: Uuid): Flow<List<EmbeddedAssessment>>
+
+    @Transaction
+    @Query("SELECT * FROM profile_assessment_index LEFT JOIN assessments ON profile_assessment_index.assessment_id = assessments.id WHERE profile_id = :profileId AND assessments.date = :date")
+    fun getByProfileAndDate(profileId: Uuid, date: LocalDate): Flow<List<EmbeddedAssessment>>
+
+    @Query("DELETE FROM profile_assessment_index WHERE profile_id = :profileId")
+    suspend fun dropAssessmentsIndexForProfile(profileId: Uuid)
+
+    @Upsert
+    suspend fun upsertAssessmentsIndex(indices: List<DbProfileAssessmentIndex>)
 }

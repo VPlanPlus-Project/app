@@ -271,7 +271,31 @@ class VppIdRepositoryImpl(
         }
         return Response.Error.Cancelled
     }
+
+    override suspend fun updateFirebaseToken(vppId: VppId.Active, token: String): Response.Error? {
+        safeRequest(onError = { return it }) {
+            val response = httpClient.post {
+                url {
+                    protocol = api.protocol
+                    host = api.host
+                    port = api.port
+                    pathSegments = listOf("api", "v2.2", "user", "firebase")
+                }
+                bearerAuth(vppId.accessToken)
+                contentType(ContentType.Application.Json)
+                setBody(FirebaseTokenRequest(token))
+            }
+            if (response.status.isSuccess()) return null
+            return response.toErrorResponse<Unit>()
+        }
+        return Response.Error.Cancelled
+    }
 }
+
+@Serializable
+data class FirebaseTokenRequest(
+    @SerialName("token") val token: String
+)
 
 @Serializable
 private data class TokenResponse(

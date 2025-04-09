@@ -11,9 +11,11 @@ import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
+import plus.vplan.app.data.source.database.model.database.DbProfileHomeworkIndex
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedHomework
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedHomeworkTask
+import kotlin.uuid.Uuid
 
 @Dao
 interface HomeworkDao {
@@ -67,6 +69,14 @@ interface HomeworkDao {
     fun getByDate(date: LocalDate): Flow<List<EmbeddedHomework>>
 
     @Transaction
+    @Query("SELECT * FROM profile_homework_index LEFT JOIN homework on homework.id = homework_id WHERE profile_id = :profileId")
+    fun getByProfile(profileId: Uuid): Flow<List<EmbeddedHomework>>
+
+    @Transaction
+    @Query("SELECT * FROM profile_homework_index LEFT JOIN homework on homework.id = homework_id WHERE profile_id = :profileId AND homework.due_to = :date")
+    fun getByProfileAndDate(profileId: Uuid, date: LocalDate): Flow<List<EmbeddedHomework>>
+
+    @Transaction
     @Query("SELECT * FROM homework WHERE id = :id")
     fun getById(id: Int): Flow<EmbeddedHomework?>
 
@@ -116,4 +126,10 @@ interface HomeworkDao {
 
     @Query("UPDATE homework_task SET content = :content WHERE id = :taskId")
     suspend fun updateTaskContent(taskId: Int, content: String)
+
+    @Query("DELETE FROM profile_homework_index WHERE profile_id = :profileId")
+    suspend fun dropHomeworkIndexForProfile(profileId: Uuid)
+
+    @Upsert
+    suspend fun upsertHomeworkIndex(indices: List<DbProfileHomeworkIndex>)
 }

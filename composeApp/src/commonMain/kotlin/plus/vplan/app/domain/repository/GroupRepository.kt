@@ -8,4 +8,6 @@ import plus.vplan.app.domain.model.School
 interface GroupRepository: WebEntityRepository<Group> {
     fun getBySchool(schoolId: Int): Flow<List<Group>>
     suspend fun getBySchoolWithCaching(school: School, forceReload: Boolean = false): Response<Flow<List<Group>>>
+
+    suspend fun updateFirebaseToken(group: Group, token: String): Response.Error?
 }

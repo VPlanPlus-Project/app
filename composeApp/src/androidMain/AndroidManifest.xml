@@ -14,7 +14,8 @@
         android:supportsRtl="true"
         android:name=".MainApplication"
         android:enableOnBackInvokedCallback="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@android:style/Theme.Material.Light.NoActionBar"
+        tools:targetApi="33">
         <activity
             android:exported="true"
             android:windowSoftInputMode="adjustNothing"
@@ -35,6 +36,14 @@
                     android:host="app" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".android.service.FcmPushNotificationService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <provider
             android:authorities="${applicationId}.fileprovider"

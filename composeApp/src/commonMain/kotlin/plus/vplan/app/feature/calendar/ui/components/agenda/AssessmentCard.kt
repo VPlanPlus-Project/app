@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,6 +36,7 @@ import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.utils.regularDateFormat
@@ -55,7 +55,6 @@ fun AssessmentCard(
         is AppEntity.VppId -> assessment.creator.vppId.collectAsLoadingState("")
         is AppEntity.Profile -> assessment.creator.profile.collectAsLoadingState("")
     }
-    if (subject == null) return
     var boxHeight by remember { mutableStateOf(0.dp) }
     Box(
         modifier = Modifier
@@ -71,7 +70,7 @@ fun AssessmentCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background(subject.subject.subjectColor().getGroup().color)
+                .background(subject?.subject.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -79,7 +78,8 @@ fun AssessmentCard(
                 .fillMaxWidth()
         ) {
             Row {
-                SubjectIcon(
+                if (subject == null) ShimmerLoader(Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()))
+                else SubjectIcon(
                     modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
                     subject = subject.subject
                 )
@@ -87,9 +87,11 @@ fun AssessmentCard(
                 Column {
                     Text(
                         text = buildString {
+                            if (subject?.subject != null) {
+                                append(subject.subject)
+                                append(": ")
+                            }
                             append(assessment.type.toName())
-                            append(" in ")
-                            append(subject.subject)
                         },
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -107,8 +109,14 @@ fun AssessmentCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                if (createdBy is CacheState.Loading) CircularProgressIndicator(Modifier.size(MaterialTheme.typography.labelMedium.lineHeight.toDp()))
-                else Text(
+                val font = MaterialTheme.typography.labelMedium
+                if (createdBy is CacheState.Loading) ShimmerLoader(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .fillMaxWidth(.3f)
+                        .height(font.lineHeight.toDp())
+                )
+                Text(
                     text = buildString {
                         val creator = (createdBy as? CacheState.Done)?.data
                         append(when (creator) {
@@ -116,13 +124,11 @@ fun AssessmentCard(
                             is Profile -> creator.name
                             else -> ""
                         })
+                        append(", am ")
+                        append(assessment.date.format(regularDateFormat))
+                        append(" erstellt")
                     },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.outline
-                )
-                Text(
-                    text = assessment.createdAt.date.format(regularDateFormat),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = font,
                     color = MaterialTheme.colorScheme.outline
                 )
             }
