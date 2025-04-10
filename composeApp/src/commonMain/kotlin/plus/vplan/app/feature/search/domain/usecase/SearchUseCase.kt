@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.feature.search.domain.usecase
 
 import androidx.compose.ui.util.fastFilterNotNull
@@ -16,12 +18,13 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -29,6 +32,7 @@ import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.utils.now
+import kotlin.uuid.ExperimentalUuidApi
 
 class SearchUseCase(
     private val groupRepository: GroupRepository,
@@ -37,106 +41,103 @@ class SearchUseCase(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val homeworkRepository: HomeworkRepository,
-    private val assessmentRepository: AssessmentRepository
+    private val assessmentRepository: AssessmentRepository,
+    private val keyValueRepository: KeyValueRepository
 ) {
-
-    private val lessons = mutableListOf<Lesson>()
-    private var lessonDate: LocalDate? = null
-
     operator fun invoke(searchRequest: SearchRequest) = channelFlow {
         if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
         val query = searchRequest.query.lowercase().trim()
         val profile = getCurrentProfileUseCase().first()
         val school = profile.getSchoolItem()
 
-        if (lessons.isEmpty() || lessonDate != searchRequest.date) {
-            lessons.clear()
-            lessons.addAll(substitutionPlanRepository
-                .getSubstitutionPlanBySchool(school.id, searchRequest.date).map {
-                    it
-                        .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
-                        .fastFilterNotNull()
-                        .filter { lesson -> lesson.subject != null }
-                }.first()
-            )
-        }
-
-        val results = MutableStateFlow(emptyMap<SearchResult.Type, List<SearchResult>>())
-        launch { results.collect { send(it) } }
-
-        if (searchRequest.query.isNotEmpty() && searchRequest.assessmentType == null) launch {
-            combine(
-                groupRepository.getBySchool(school.id).map { it.filter { group -> query in group.name.lowercase() } },
-                teacherRepository.getBySchool(school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
-                roomRepository.getBySchool(school.id).map { it.filter { room -> query in room.name.lowercase() } },
-            ) { groups, teachers, rooms ->
-                results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->
-                    group.getSchoolItem()
-                    SearchResult.SchoolEntity.Group(
-                        group = group,
-                        lessons = lessons.filter { group.id in it.groupIds }.calculateLayouting()
-                    )
-                })
-
-                results.value = results.value.plus(SearchResult.Type.Teacher to teachers.map { teacher ->
-                    teacher.getSchoolItem()
-                    SearchResult.SchoolEntity.Teacher(
-                        teacher = teacher,
-                        lessons = lessons.filter { teacher.id in it.teacherIds }.calculateLayouting()
-                    )
-                })
-
-                results.value = results.value.plus(SearchResult.Type.Room to rooms.map { room ->
-                    room.getSchoolItem()
-                    SearchResult.SchoolEntity.Room(
-                        room = room,
-                        lessons = lessons.filter { room.id in it.roomIds.orEmpty() }.calculateLayouting()
-                    )
-                })
-            }.collect()
-        }
-
-        if (searchRequest.assessmentType == null) launch {
-            homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
-                val homework = homeworkList.onEach { it.getTaskItems() }
-                results.value = results.value.plus(SearchResult.Type.Homework to homework
-                    .filter { (query.isEmpty() || it.taskItems!!.any { task -> query in task.content.lowercase() }) && (searchRequest.subject == null || it.subjectInstance?.getFirstValue()?.subject == searchRequest.subject) }
-                    .onEach {
-                        it.subjectInstance?.getFirstValue() ?: it.group?.getFirstValue()
-                        when (it) {
-                            is Homework.CloudHomework -> it.getCreatedBy()
-                            is Homework.LocalHomework -> it.getCreatedByProfile()
-                        }
-                    }
-                    .map { SearchResult.Homework(it) })
-            }
-        }
-
         launch {
-            assessmentRepository.getAll().collectLatest { assessmentList ->
-                val assessments = assessmentList
-                    .filter { (query.isEmpty() || query in it.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.getFirstValue()?.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.type == searchRequest.assessmentType) }
-                    .onEach { assessment ->
-                        when (assessment.creator) {
-                            is AppEntity.VppId -> assessment.getCreatedByVppIdItem()
-                            is AppEntity.Profile -> assessment.getCreatedByProfileItem()
-                        }
-                    }
-                    .sortedByDescending { (if (it.date < LocalDate.now()) "" else "_") + it.date.toString() }
-                results.value = results.value.plus(SearchResult.Type.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
-            }
-        }
+            keyValueRepository.get(Keys.substitutionPlanVersion(school.id)).collectLatest { versionFlow ->
+                val currentVersion = versionFlow?.toIntOrNull() ?: -1
+                val versionString = "${school.id}_$currentVersion"
+                val lessons = substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, searchRequest.date, versionString)
+                    .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
+                    .fastFilterNotNull()
+                    .filter { lesson -> lesson.subject != null }
 
-        if (searchRequest.assessmentType == null) launch {
-            App.collectionSource.getAll().map { it.filterIsInstance<CacheState.Done<Collection>>().map { it.data } }.collectLatest { collections ->
-                val filteredGrades = collections
-                    .filter { query in it.name.lowercase() }
-                    .flatMap { collection ->
-                        collection.grades.first()
-                            .filter { grade -> grade.vppIdId == (profile as? Profile.StudentProfile)?.vppIdId }
+                val results = MutableStateFlow(emptyMap<SearchResult.Type, List<SearchResult>>())
+                launch { results.collect { send(it) } }
+
+                if (searchRequest.query.isNotEmpty() && searchRequest.assessmentType == null) launch {
+                    combine(
+                        groupRepository.getBySchool(school.id).map { it.filter { group -> query in group.name.lowercase() } },
+                        teacherRepository.getBySchool(school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
+                        roomRepository.getBySchool(school.id).map { it.filter { room -> query in room.name.lowercase() } },
+                    ) { groups, teachers, rooms ->
+                        results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->
+                            group.getSchoolItem()
+                            SearchResult.SchoolEntity.Group(
+                                group = group,
+                                lessons = lessons.filter { group.id in it.groupIds }.calculateLayouting()
+                            )
+                        })
+
+                        results.value = results.value.plus(SearchResult.Type.Teacher to teachers.map { teacher ->
+                            teacher.getSchoolItem()
+                            SearchResult.SchoolEntity.Teacher(
+                                teacher = teacher,
+                                lessons = lessons.filter { teacher.id in it.teacherIds }.calculateLayouting()
+                            )
+                        })
+
+                        results.value = results.value.plus(SearchResult.Type.Room to rooms.map { room ->
+                            room.getSchoolItem()
+                            SearchResult.SchoolEntity.Room(
+                                room = room,
+                                lessons = lessons.filter { room.id in it.roomIds }.calculateLayouting()
+                            )
+                        })
+                    }.collect()
+                }
+
+                if (searchRequest.assessmentType == null) launch {
+                    homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
+                        val homework = homeworkList.onEach { it.getTaskItems() }
+                        results.value = results.value.plus(
+                            SearchResult.Type.Homework to homework
+                                .filter { (query.isEmpty() || it.taskItems!!.any { task -> query in task.content.lowercase() }) && (searchRequest.subject == null || it.subjectInstance?.getFirstValue()?.subject == searchRequest.subject) }
+                                .onEach {
+                                    it.subjectInstance?.getFirstValue() ?: it.group?.getFirstValue()
+                                    when (it) {
+                                        is Homework.CloudHomework -> it.getCreatedBy()
+                                        is Homework.LocalHomework -> it.getCreatedByProfile()
+                                    }
+                                }
+                                .map { SearchResult.Homework(it) })
                     }
-                    .distinctBy { it.id }
-                results.value = results.value.plus(SearchResult.Type.Grade to filteredGrades.map { SearchResult.Grade(it) })
+                }
+
+                launch {
+                    assessmentRepository.getAll().collectLatest { assessmentList ->
+                        val assessments = assessmentList
+                            .filter { (query.isEmpty() || query in it.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.getFirstValue()?.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.type == searchRequest.assessmentType) }
+                            .onEach { assessment ->
+                                when (assessment.creator) {
+                                    is AppEntity.VppId -> assessment.getCreatedByVppIdItem()
+                                    is AppEntity.Profile -> assessment.getCreatedByProfileItem()
+                                }
+                            }
+                            .sortedByDescending { (if (it.date < LocalDate.now()) "" else "_") + it.date.toString() }
+                        results.value = results.value.plus(SearchResult.Type.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
+                    }
+                }
+
+                if (searchRequest.assessmentType == null) launch {
+                    App.collectionSource.getAll().map { it.filterIsInstance<CacheState.Done<Collection>>().map { it.data } }.collectLatest { collections ->
+                        val filteredGrades = collections
+                            .filter { query in it.name.lowercase() }
+                            .flatMap { collection ->
+                                collection.grades.first()
+                                    .filter { grade -> grade.vppIdId == (profile as? Profile.StudentProfile)?.vppIdId }
+                            }
+                            .distinctBy { it.id }
+                        results.value = results.value.plus(SearchResult.Type.Grade to filteredGrades.map { SearchResult.Grade(it) })
+                    }
+                }
             }
         }
     }

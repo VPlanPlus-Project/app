@@ -1,13 +1,9 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.data.repository
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.data.source.database.VppDatabase
@@ -16,11 +12,11 @@ import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.TimetableRepository
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class TimetableRepositoryImpl(
@@ -81,34 +77,23 @@ class TimetableRepositoryImpl(
         vppDatabase.timetableDao.deleteTimetableByVersion("${schoolId}_$version")
     }
 
-    override fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>> = channelFlow {
-        vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).collectLatest { currentVersionFlow ->
-            val currentVersion = currentVersionFlow?.toIntOrNull() ?: -1
-            send(vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion").first().map { it.toModel() })
-        }
+    override suspend fun getTimetableForSchool(schoolId: Int, versionString: String): List<Lesson.TimetableLesson> {
+        return vppDatabase.timetableDao.getTimetableLessons(schoolId, versionString).first().map { it.toModel() }
     }
 
     override fun getById(id: Uuid): Flow<Lesson.TimetableLesson?> {
         return vppDatabase.timetableDao.getById(id.toString()).map { it?.toModel() }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> = vppDatabase.keyValueDao.get(Keys.timetableVersion(schoolId)).flatMapLatest { versionFlow ->
-        val currentVersion = versionFlow?.toIntOrNull() ?: -1
-        val weeks = vppDatabase.timetableDao.getWeekIds("${schoolId}_$currentVersion", weekIndex).ifEmpty { return@flatMapLatest flowOf(emptySet()) }
-        vppDatabase.timetableDao.getTimetableLessons(schoolId, "${schoolId}_$currentVersion", weeks.last(), dayOfWeek).map { it.toSet() }
-    }.distinctUntilChanged()
+    override suspend fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek, versionString: String): Set<Uuid> {
+        val weeks = vppDatabase.timetableDao.getWeekIds(versionString, weekIndex).ifEmpty { return emptySet() }
+        return vppDatabase.timetableDao.getTimetableLessons(schoolId, versionString, weeks.last(), dayOfWeek).first().toSet()
+    }
 
-    override fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> = channelFlow {
-        val school = profile.getSchool().getFirstValue()!!
-        vppDatabase.keyValueDao.get(Keys.timetableVersion(school.id)).collectLatest { versionFlow ->
-            val currentVersion = versionFlow?.toIntOrNull() ?: -1
-            val weeks = vppDatabase.timetableDao.getWeekIds("${school.id}_$currentVersion", weekIndex).ifEmpty { trySend(emptySet()); return@collectLatest }
-            vppDatabase.timetableDao.getLessonsForProfile(profile.id, weeks.last(), dayOfWeek).collectLatest {
-                trySend(it.map { it.timetableLessonId }.toSet())
-            }
-        }
-    }.distinctUntilChanged()
+    override suspend fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek, versionString: String): Set<Uuid> {
+        val weeks = vppDatabase.timetableDao.getWeekIds(versionString, weekIndex).ifEmpty { return emptySet() }
+        return vppDatabase.timetableDao.getLessonsForProfile(profile.id, weeks.last(), dayOfWeek).first().map { it.timetableLessonId }.toSet()
+    }
 
     override suspend fun dropCacheForProfile(profileId: Uuid) {
         vppDatabase.profileTimetableCacheDao.deleteCacheForProfile(profileId)

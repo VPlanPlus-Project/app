@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.domain.source
 
 import co.touchlab.kermit.Logger
@@ -26,12 +28,15 @@ import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
+import kotlin.uuid.ExperimentalUuidApi
 
 class DaySource(
     private val dayRepository: DayRepository,
@@ -39,7 +44,8 @@ class DaySource(
     private val timetableRepository: TimetableRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val assessmentRepository: AssessmentRepository,
-    private val homeworkRepository: HomeworkRepository
+    private val homeworkRepository: HomeworkRepository,
+    private val keyValueRepository: KeyValueRepository
 ) {
     val flows = hashMapOf<String, MutableSharedFlow<CacheState<Day>>>()
     fun getById(id: String, contextProfile: Profile? = null): Flow<CacheState<Day>> {
@@ -71,52 +77,53 @@ class DaySource(
                                 }
                                 nextSchoolDay
                             }
-                            combine(
-                                if (contextProfile == null) timetableRepository.getForSchool(
-                                    schoolId = schoolId,
-                                    dayOfWeek = date.dayOfWeek,
-                                    weekIndex = meta.dayWeek.weekIndex
-                                ) else timetableRepository.getForProfile(
-                                    profile = contextProfile,
-                                    dayOfWeek = date.dayOfWeek,
-                                    weekIndex = meta.dayWeek.weekIndex
-                                ),
-                                if (contextProfile == null) substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
-                                else substitutionPlanRepository.getForProfile(contextProfile, date),
-                                if (contextProfile == null) assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged()
-                                else assessmentRepository.getByProfile(contextProfile.id, date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
-                                if (contextProfile == null) homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
-                                else homeworkRepository.getByProfile(contextProfile.id, date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
-                            ) { timetable, substitutionPlan, assessments, homework ->
-                                send(CacheState.Done(Day(
-                                    id = id,
-                                    date = date,
-                                    schoolId = schoolId,
-                                    weekId = meta.dayWeek.id,
-                                    info = meta.dayInfo?.info,
-                                    dayType =
-                                        if (date in meta.holidays) Day.DayType.HOLIDAY
-                                        else if (date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY) {
-                                            var friday = date
-                                            while (friday.dayOfWeek != DayOfWeek.FRIDAY) {
-                                                friday -= 1.days
+                            launch {
+                                combine(
+                                    keyValueRepository.get(Keys.substitutionPlanVersion(schoolId)),
+                                    keyValueRepository.get(Keys.timetableVersion(schoolId)),
+                                    if (contextProfile == null) assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged()
+                                    else assessmentRepository.getByProfile(contextProfile.id, date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
+                                    if (contextProfile == null) homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
+                                    else homeworkRepository.getByProfile(contextProfile.id, date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged(),
+                                ) { substitutionPlanVersion, timetableVersion, assessments, homework ->
+                                    val substitutionPlanVersionString = "${schoolId}_$substitutionPlanVersion"
+                                    val timetableVersionString = "${schoolId}_$timetableVersion"
+                                    val timetable = if (contextProfile == null) timetableRepository.getForSchool(schoolId, meta.dayWeek.weekIndex, dayOfWeek = date.dayOfWeek, version = timetableVersionString)
+                                    else timetableRepository.getForProfile(contextProfile, meta.dayWeek.weekIndex, dayOfWeek = date.dayOfWeek, version = timetableVersionString)
+
+                                    val substitutionPlan = if (contextProfile == null) substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date, substitutionPlanVersionString)
+                                    else substitutionPlanRepository.getForProfile(contextProfile, date, substitutionPlanVersionString)
+
+                                    send(CacheState.Done(Day(
+                                        id = Day.buildId(school, date),
+                                        date = date,
+                                        schoolId = schoolId,
+                                        weekId = meta.dayWeek.id,
+                                        info = meta.dayInfo?.info,
+                                        dayType =
+                                            if (date in meta.holidays) Day.DayType.HOLIDAY
+                                            else if (date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY) {
+                                                var friday = date
+                                                while (friday.dayOfWeek != DayOfWeek.FRIDAY) {
+                                                    friday -= 1.days
+                                                }
+                                                var monday = date
+                                                while (monday.dayOfWeek != DayOfWeek.MONDAY) {
+                                                    monday += 1.days
+                                                }
+                                                if (meta.holidays.any { it == friday } || meta.holidays.any { it == monday }) Day.DayType.HOLIDAY
+                                                else Day.DayType.WEEKEND
                                             }
-                                            var monday = date
-                                            while (monday.dayOfWeek != DayOfWeek.MONDAY) {
-                                                monday += 1.days
-                                            }
-                                            if (meta.holidays.any { it == friday } || meta.holidays.any { it == monday }) Day.DayType.HOLIDAY
-                                            else Day.DayType.WEEKEND
-                                        }
-                                        else if (timetable.isNotEmpty()) Day.DayType.REGULAR
-                                        else Day.DayType.UNKNOWN,
-                                    timetable = timetable,
-                                    substitutionPlan = substitutionPlan,
-                                    assessmentIds = assessments,
-                                    homeworkIds = homework,
-                                    nextSchoolDayId = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
-                                )))
-                            }.collect()
+                                            else if (timetable.isNotEmpty()) Day.DayType.REGULAR
+                                            else Day.DayType.UNKNOWN,
+                                        timetable = timetable,
+                                        substitutionPlan = substitutionPlan,
+                                        assessmentIds = assessments,
+                                        homeworkIds = homework,
+                                        nextSchoolDayId = findNextRegularSchoolDayAfter(date)?.let { "$schoolId/$it" }
+                                    )))
+                                }.collect()
+                            }
                         }
                     } catch (e: NoSuchElementException) {
                         Logger.e { "NoSuchElementException: ${e.stackTraceToString()}" }
