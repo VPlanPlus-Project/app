@@ -188,7 +188,7 @@ fun FullscreenDrawer(
                     .padding(
                         start = WindowInsets.safeDrawing.asPaddingValues().calculateStartPadding(LocalLayoutDirection.current),
                         end = WindowInsets.safeDrawing.asPaddingValues().calculateEndPadding(LocalLayoutDirection.current),
-                        bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
+                        bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() * scrollProgress
                     )
             ) {
                 FullscreenDrawerContext(
