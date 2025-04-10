@@ -30,6 +30,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -152,13 +153,22 @@ private fun HomeContent(
         state = pullToRefreshState,
         onRefresh = { onEvent(HomeEvent.OnRefresh) },
         isRefreshing = state.isUpdating,
+        indicator = {
+            Indicator(
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .align(Alignment.TopCenter),
+                isRefreshing = state.isUpdating,
+                state = pullToRefreshState
+            )
+        },
         modifier = Modifier
-            .padding(contentPadding)
             .fillMaxSize()
     ) {
         Column(
             modifier = Modifier
                 .padding(top = 8.dp)
+                .padding(contentPadding)
                 .fillMaxWidth()
         ) {
             run greeting@{
