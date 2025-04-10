@@ -13,12 +13,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,8 +56,7 @@ import vplanplus.composeapp.generated.resources.user_pen
 
 @Composable
 fun OnboardingSelectProfileScreen(
-    navController: NavHostController,
-    paddingValues: PaddingValues
+    navController: NavHostController
 ) {
     val viewModel = koinViewModel<OnboardingSelectProfileViewModel>()
     val state = viewModel.state
@@ -70,7 +69,6 @@ fun OnboardingSelectProfileScreen(
 
     OnboardingSelectProfileScreen(
         state = state,
-        paddingValues = paddingValues,
         onEvent = viewModel::onEvent
     )
 }
@@ -78,12 +76,11 @@ fun OnboardingSelectProfileScreen(
 @Composable
 private fun OnboardingSelectProfileScreen(
     state: OnboardingSelectProfileUiState,
-    paddingValues: PaddingValues,
     onEvent: (OnboardingProfileSelectionEvent) -> Unit
 ) {
     Column(
         modifier = Modifier
-            .padding(paddingValues)
+            .safeDrawingPadding()
             .fillMaxSize()
     ) {
         Column(

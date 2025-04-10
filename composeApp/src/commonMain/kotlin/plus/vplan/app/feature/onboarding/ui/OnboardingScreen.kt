@@ -3,22 +3,14 @@ package plus.vplan.app.feature.onboarding.ui
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -71,13 +63,6 @@ fun OnboardingScreen(
     onFinish: () -> Unit,
 ) {
     val viewModel = koinViewModel<OnboardingHostViewModel>()
-    val localLayoutDirection = LocalLayoutDirection.current
-
-    val top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
-    val left = WindowInsets.systemBars.asPaddingValues().calculateLeftPadding(localLayoutDirection)
-    val right = WindowInsets.systemBars.asPaddingValues().calculateRightPadding(localLayoutDirection)
-    val bottom by animateDpAsState(listOf(WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(), WindowInsets.ime.asPaddingValues().calculateBottomPadding()).max())
-    val contentPadding = PaddingValues(left, top, right, bottom)
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -99,31 +84,31 @@ fun OnboardingScreen(
             popExitTransition = exitSlideTransitionRight
         ) {
             composable<OnboardingScreen.OnboardingScreenHome> {
-                OnboardingSchoolSearch(navController, contentPadding)
+                OnboardingSchoolSearch(navController)
             }
 
             composable<OnboardingScreen.OnboardingScreenIndiwareLogin> {
-                OnboardingIndiwareLoginScreen(navController, contentPadding)
+                OnboardingIndiwareLoginScreen(navController)
             }
 
             composable<OnboardingScreen.OnboardingIndiwareInit> {
-                OnboardingIndiwareInitScreen(navController, contentPadding)
+                OnboardingIndiwareInitScreen(navController)
             }
 
             composable<OnboardingScreen.OnboardingIndiwareDataDownload> {
-                OnboardingIndiwareDataDownloadScreen(navController, contentPadding)
+                OnboardingIndiwareDataDownloadScreen(navController)
             }
 
             composable<OnboardingScreen.OnboardingChooseProfile> {
-                OnboardingSelectProfileScreen(navController, contentPadding)
+                OnboardingSelectProfileScreen(navController)
             }
 
             composable<OnboardingScreen.OnboardingPermission> {
-                OnboardingPermissionsScreen(navController, contentPadding)
+                OnboardingPermissionsScreen(navController)
             }
 
             composable<OnboardingScreen.OnboardingFinished> {
-                OnboardingFinishedScreen(onFinish, contentPadding)
+                OnboardingFinishedScreen(onFinish)
             }
         }
     }

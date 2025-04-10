@@ -2,9 +2,8 @@ package plus.vplan.app.feature.onboarding.stage.a_school_search.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -16,7 +15,6 @@ import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.components.sea
 @Composable
 fun OnboardingSchoolSearch(
     navController: NavHostController,
-    contentPadding: PaddingValues
 ) {
     val viewModel = koinViewModel<OnboardingSchoolSearchViewModel>()
     LaunchedEffect(Unit) {
@@ -24,7 +22,6 @@ fun OnboardingSchoolSearch(
     }
     OnboardingSchoolSearchContent(
         state = viewModel.state,
-        contentPadding = contentPadding,
         onEvent = viewModel::handleEvent
     )
 }
@@ -32,12 +29,11 @@ fun OnboardingSchoolSearch(
 @Composable
 private fun OnboardingSchoolSearchContent(
     state: OnboardingSchoolSearchState,
-    contentPadding: PaddingValues,
     onEvent: (OnboardingSchoolSearchEvent) -> Unit,
 ) {
     Column(
         modifier = Modifier
-            .padding(contentPadding)
+            .safeDrawingPadding()
             .fillMaxSize(),
         verticalArrangement = Arrangement.Bottom
     ) {

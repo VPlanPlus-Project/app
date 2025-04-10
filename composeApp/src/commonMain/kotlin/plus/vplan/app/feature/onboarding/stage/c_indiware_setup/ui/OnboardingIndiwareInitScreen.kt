@@ -4,12 +4,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -35,7 +35,6 @@ import vplanplus.composeapp.generated.resources.server_cog
 @Composable
 fun OnboardingIndiwareInitScreen(
     navHostController: NavHostController,
-    paddingValues: PaddingValues
 ) {
     val viewModel = koinViewModel<OnboardingIndiwareInitViewModel>()
     val state = viewModel.state
@@ -47,17 +46,16 @@ fun OnboardingIndiwareInitScreen(
         }
     }
 
-    OnboardingIndiwareInitContent(state, paddingValues)
+    OnboardingIndiwareInitContent(state)
 }
 
 @Composable
 private fun OnboardingIndiwareInitContent(
     state: OnboardingIndiwareInitState,
-    paddingValues: PaddingValues
 ) {
     Column(
         modifier = Modifier
-            .padding(paddingValues)
+            .safeDrawingPadding()
             .padding(bottom = 16.dp)
             .fillMaxSize()
     ) {
