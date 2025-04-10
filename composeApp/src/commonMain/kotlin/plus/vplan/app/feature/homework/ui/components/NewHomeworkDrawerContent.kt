@@ -111,7 +111,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
 
     Column(
         modifier = Modifier
-            .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
+            .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 16.dp)
             .fillMaxSize()
     ) {
         Column(

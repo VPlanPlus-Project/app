@@ -51,7 +51,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
@@ -91,6 +90,7 @@ fun FeedbackDrawer(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        contentWindowInsets = { WindowInsets(0.dp) },
         sheetState = modalState
     ) {
         FeedbackDrawerContent(
@@ -114,7 +114,7 @@ private fun FeedbackDrawerContent(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
+            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
     ) {
         AnimatedContent(
             targetState = state.sendResult is Response.Success

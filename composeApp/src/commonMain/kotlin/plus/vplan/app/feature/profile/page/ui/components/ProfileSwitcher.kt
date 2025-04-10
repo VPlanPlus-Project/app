@@ -39,7 +39,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
@@ -73,12 +72,13 @@ fun ProfileSwitcher(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        contentWindowInsets = { WindowInsets(0.dp) },
         sheetState = sheetState
     ) {
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
+                .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
         ) {
