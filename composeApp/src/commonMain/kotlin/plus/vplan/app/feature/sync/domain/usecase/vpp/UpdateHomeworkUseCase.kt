@@ -37,6 +37,7 @@ class UpdateHomeworkUseCase(
     suspend operator fun invoke(allowNotifications: Boolean) {
         val ids = mutableSetOf<Int>()
         val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
+        var hadErrors = false
         profiles.forEach { studentProfile ->
             val existingHomework = homeworkRepository.getByGroup(studentProfile.groupId).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
             ids.addAll(
@@ -44,7 +45,7 @@ class UpdateHomeworkUseCase(
                     schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess(studentProfile.getSchoolItem().id) ?: studentProfile.getSchool().getFirstValue()!!.getSchoolApiAccess()!!,
                     groupId = studentProfile.groupId,
                     subjectInstanceIds = studentProfile.subjectInstanceConfiguration.map { it.key },
-                ) as? Response.Success)?.data.orEmpty().also {
+                ) as? Response.Success)?.data.also { if (it == null) hadErrors = true }.orEmpty().also {
                     if (allowNotifications) {
                         val newHomework = combine((it - existingHomework).ifEmpty { return@also }.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
                             .filterIsInstance<Homework.CloudHomework>()
@@ -107,7 +108,7 @@ class UpdateHomeworkUseCase(
             )
         }
 
-        homeworkRepository.deleteById(
+        if (!hadErrors) homeworkRepository.deleteById(
             homeworkRepository
                 .getAll()
                 .first()
