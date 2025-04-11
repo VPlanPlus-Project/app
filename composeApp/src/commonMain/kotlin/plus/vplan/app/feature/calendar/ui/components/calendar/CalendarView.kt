@@ -64,6 +64,7 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
+import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
@@ -182,6 +183,7 @@ fun CalendarView(
                             } 
                             lessons.forEachIndexed { i, lesson ->
                                 val y = (lesson.lessonTime.start.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
+                                val groups = remember(lesson.lesson.groupIds) { lesson.lesson.groups }.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Group>>().map { it.data }
                                 val rooms = remember(lesson.lesson.roomIds) { lesson.lesson.rooms }.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Room>>().map { it.data }
                                 val teachers = remember(lesson.lesson.teacherIds) { lesson.lesson.teachers }.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Teacher>>().map { it.data }
                                 Box(
@@ -235,6 +237,15 @@ fun CalendarView(
                                                                     }
                                                                 },
                                                                 style = MaterialTheme.typography.bodySmall
+                                                            )
+                                                        }
+                                                        if (groups.isNotEmpty() && profile !is Profile.StudentProfile) Box(
+                                                            modifier = Modifier.height(itemHeight),
+                                                            contentAlignment = Alignment.BottomStart
+                                                        ) {
+                                                            Text(
+                                                                text = groups.joinToString { it.name },
+                                                                style = MaterialTheme.typography.labelMedium
                                                             )
                                                         }
                                                         if (rooms.isNotEmpty()) Box(
