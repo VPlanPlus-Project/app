@@ -401,7 +401,7 @@ private fun CalendarScreenContent(
                                 val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                                 val day = state.calendarDays[date] ?: CalendarDay(date)
                                 CalendarView(
-                                    profile = state.currentProfile ?: return@HorizontalPager,
+                                    profile = state.currentProfile,
                                     date = date,
                                     dayType = day.dayType,
                                     lessons = day.layoutedLessons,
