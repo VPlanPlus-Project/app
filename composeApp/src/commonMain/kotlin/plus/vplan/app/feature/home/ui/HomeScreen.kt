@@ -171,13 +171,6 @@ private fun HomeContent(
                 .padding(contentPadding)
                 .fillMaxWidth()
         ) {
-            run greeting@{
-                Greeting(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    displayName = vppId?.name?.split(" ")?.first() ?: ""
-                )
-            }
-            Spacer(Modifier.height(4.dp))
             AnimatedContent(
                 targetState = state.initDone
             ) { initDone ->
@@ -197,6 +190,12 @@ private fun HomeContent(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    item {
+                        Greeting(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            displayName = vppId?.name?.split(" ")?.first() ?: ""
+                        )
+                    }
                     item { Spacer(Modifier.size(8.dp)) }
                     item quickActions@{
                         QuickActions(
