@@ -1,13 +1,14 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.feature.search.subfeature.room_search.domain.usecase
 
+import androidx.compose.ui.util.fastFilterNotNull
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -15,44 +16,47 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atDate
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.Room
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.overlaps
+import kotlin.uuid.ExperimentalUuidApi
 
 class GetRoomOccupationMapUseCase(
     private val roomRepository: RoomRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val timetableRepository: TimetableRepository,
-    private val weekRepository: WeekRepository
+    private val weekRepository: WeekRepository,
+    private val keyValueRepository: KeyValueRepository
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> = channelFlow {
         val schoolId = profile.getSchool().first().entityId.toInt()
         combine(
-            roomRepository.getBySchool(schoolId),
-            timetableRepository.getTimetableForSchool(schoolId),
-            substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date).flatMapLatest { ids -> if (ids.isEmpty()) flowOf(emptyList()) else combine(ids.map { App.substitutionPlanSource.getById(it) }) { it.toList().filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { result -> result.data } } },
-            weekRepository.getBySchool(schoolId)
-        ) { rooms, timetable, substitution, weeks ->
+            keyValueRepository.get(Keys.substitutionPlanVersion(schoolId)),
+            keyValueRepository.get(Keys.timetableVersion(schoolId)),
+            weekRepository.getBySchool(schoolId),
+            roomRepository.getBySchool(schoolId)
+        ) { versionFlow, timetableVersionFlow, weeks, rooms ->
             val currentWeek = weeks.firstOrNull { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date in it.start..it.end }
-            substitution.hashCode()
-            Pair(
-                rooms.sortedBy { it.name },
-                substitution
-                    .ifEmpty { timetable.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } }
-                    .onEach {
-                        it.getLessonTimeItem()
-                        it.getGroupItems()
-                    }
-            )
-        }.collectLatest { (rooms, lessons) ->
+            val substitutionPlanVersionString = "${schoolId}_${versionFlow?.toIntOrNull() ?: -1}"
+            val timetableVersionString = "${schoolId}_${timetableVersionFlow?.toIntOrNull() ?: -1}"
+
+            val substitution = substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date, substitutionPlanVersionString)
+                .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
+                .fastFilterNotNull()
+                .filter { lesson -> lesson.subject != null }
+
+            val lessons = substitution.ifEmpty { timetableRepository.getTimetableForSchool(schoolId, timetableVersionString).filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } }
+
             rooms.associateWith { room ->
                 lessons.filter { room.id in it.roomIds.orEmpty() }.map {
                     when (it) {
@@ -61,7 +65,7 @@ class GetRoomOccupationMapUseCase(
                     }
                 }.toSet()
             }.let { map -> send(map.map { OccupancyMapRecord(it.key, it.value) }) }
-        }
+        }.collect()
     }
 }
 
@@ -70,8 +74,8 @@ sealed class Occupancy(
     val end: LocalDateTime
 ) {
     data class Lesson(val lesson: plus.vplan.app.domain.model.Lesson, val date: LocalDate) : Occupancy(lesson.lessonTimeItem!!.start.atDate(date), lesson.lessonTimeItem!!.end.atDate(date)) {
-        constructor(lesson: plus.vplan.app.domain.model.Lesson.SubstitutionPlanLesson): this(lesson, lesson.date)
-        constructor(lesson: plus.vplan.app.domain.model.Lesson.TimetableLesson, contextDate: LocalDate): this(lesson, date = contextDate)
+        constructor(lesson: plus.vplan.app.domain.model.Lesson.SubstitutionPlanLesson) : this(lesson, lesson.date)
+        constructor(lesson: plus.vplan.app.domain.model.Lesson.TimetableLesson, contextDate: LocalDate) : this(lesson, date = contextDate)
     }
 }
 

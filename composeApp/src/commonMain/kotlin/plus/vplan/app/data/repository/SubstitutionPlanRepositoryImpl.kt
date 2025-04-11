@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,6 +19,7 @@ import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class SubstitutionPlanRepositoryImpl(
@@ -75,13 +78,14 @@ class SubstitutionPlanRepositoryImpl(
         vppDatabase.substitutionPlanDao.deleteSubstitutionPlanByVersion("${schoolId}_$version")
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getSubstitutionPlanBySchool(
-        schoolId: Int,
-        date: LocalDate
-    ): Flow<Set<Uuid>> = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.mapLatest { version ->
-        vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version", date).first().toSet()
-    }.distinctUntilChanged()
+    override suspend fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate, versionString: String): Set<Uuid> {
+        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, versionString, date).first().toSet()
+    }
+
+    override suspend fun getForProfile(profile: Profile, date: LocalDate, versionString: String): Set<Uuid> {
+        return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date).map { it.map { profileSubstitutionPlanCache -> profileSubstitutionPlanCache.substitutionPlanLessonId }.toSet() }.first()
+    }
+
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getSubstitutionPlanBySchool(
@@ -92,11 +96,6 @@ class SubstitutionPlanRepositoryImpl(
 
     override fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?> {
         return vppDatabase.substitutionPlanDao.getById(id).map { it?.toModel() }
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getForProfile(profile: Profile, date: LocalDate): Flow<Set<Uuid>> {
-        return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date).mapLatest { it.map { profileSubstitutionPlanCache -> profileSubstitutionPlanCache.substitutionPlanLessonId }.toSet() }
     }
 
     override suspend fun dropCacheForProfile(profileId: Uuid) {

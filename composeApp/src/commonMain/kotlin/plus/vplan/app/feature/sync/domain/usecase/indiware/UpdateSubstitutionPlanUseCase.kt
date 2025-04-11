@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
@@ -21,6 +23,8 @@ import plus.vplan.app.domain.model.findByIndiwareId
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -37,6 +41,7 @@ import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.untilRelativeText
 import kotlin.time.Duration.Companion.minutes
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private val LOGGER = Logger.withTag("UpdateSubstitutionPlanUseCase")
@@ -54,7 +59,8 @@ class UpdateSubstitutionPlanUseCase(
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val lessonTimeRepository: LessonTimeRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
-    private val platformNotificationRepository: PlatformNotificationRepository
+    private val platformNotificationRepository: PlatformNotificationRepository,
+    private val keyValueRepository: KeyValueRepository
 ) {
     suspend operator fun invoke(
         indiwareSchool: School.IndiwareSchool,
@@ -158,11 +164,12 @@ class UpdateSubstitutionPlanUseCase(
                 }
             }.let { lessons.addAll(it) }
 
+            val newVersion = keyValueRepository.get(Keys.substitutionPlanVersion(indiwareSchool.id)).first()
             val newPlan = profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
                 .filter { it.getSchoolItem().id == indiwareSchool.id }
                 .associateWith {
-                    substitutionPlanRepository.getSubstitutionPlanBySchool(indiwareSchool.id, date).first()
+                    substitutionPlanRepository.getSubstitutionPlanBySchool(indiwareSchool.id, date, "${indiwareSchool.id}_$newVersion")
                         .mapNotNull { App.substitutionPlanSource.getById(it).getFirstValue() }
                         .filter { lesson -> lesson.isRelevantForProfile(it) }
                 }

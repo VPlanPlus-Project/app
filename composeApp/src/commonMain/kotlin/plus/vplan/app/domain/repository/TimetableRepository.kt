@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 interface TimetableRepository {
@@ -11,10 +14,10 @@ interface TimetableRepository {
     suspend fun deleteAllTimetables()
     suspend fun deleteTimetableByVersion(schoolId: Int, version: Int)
 
-    fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>>
+    suspend fun getTimetableForSchool(schoolId: Int, versionString: String): List<Lesson.TimetableLesson>
     fun getById(id: Uuid): Flow<Lesson.TimetableLesson?>
-    fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
-    fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
+    suspend fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek, version: String): Set<Uuid>
+    suspend fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek, version: String): Set<Uuid>
 
     suspend fun dropCacheForProfile(profileId: Uuid)
     suspend fun createCacheForProfile(profileId: Uuid, timetableLessonIds: List<Uuid>)
