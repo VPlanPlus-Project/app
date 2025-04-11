@@ -1,10 +1,12 @@
 package plus.vplan.app.feature.assessment.ui.components.detail
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 
@@ -32,6 +34,7 @@ fun AssessmentDetailDrawer(
     if (!state.initDone) return
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        contentWindowInsets = { WindowInsets(0.dp) },
         sheetState = sheetState
     ) {
         DetailPage(state, viewModel::onEvent)

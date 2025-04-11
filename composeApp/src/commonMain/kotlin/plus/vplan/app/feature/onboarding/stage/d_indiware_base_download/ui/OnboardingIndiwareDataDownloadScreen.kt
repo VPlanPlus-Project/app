@@ -4,12 +4,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -34,15 +34,13 @@ import vplanplus.composeapp.generated.resources.download
 
 @Composable
 fun OnboardingIndiwareDataDownloadScreen(
-    navHostController: NavHostController,
-    paddingValues: PaddingValues
+    navHostController: NavHostController
 ) {
     val viewModel = koinViewModel<OnboardingIndiwareDataDownloadViewModel>()
     val state = viewModel.state
 
     OnboardingIndiwareDataDownloadContent(
-        state = state,
-        paddingValues = paddingValues
+        state = state
     )
 
     LaunchedEffect(state.steps) {
@@ -55,13 +53,11 @@ fun OnboardingIndiwareDataDownloadScreen(
 
 @Composable
 private fun OnboardingIndiwareDataDownloadContent(
-    state: OnboardingIndiwareDataDownloadUiState,
-    paddingValues: PaddingValues
+    state: OnboardingIndiwareDataDownloadUiState
 ) {
     Column(
         modifier = Modifier
-            .padding(paddingValues)
-            .padding(bottom = 16.dp)
+            .safeDrawingPadding()
             .fillMaxSize()
     ) {
         Column(

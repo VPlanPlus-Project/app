@@ -10,12 +10,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -109,11 +106,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
-            .fillMaxSize()
-    ) {
+    Column(Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -277,7 +270,9 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
         }
 
         Button(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
             text = "Speichern",
             icon = Res.drawable.check,
             state = if (state.savingState == UnoptimisticTaskState.InProgress) ButtonState.Loading else ButtonState.Enabled,

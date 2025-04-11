@@ -35,12 +35,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Group
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.thenIf
 import vplanplus.composeapp.generated.resources.Res
@@ -61,6 +60,7 @@ import vplanplus.composeapp.generated.resources.users
     val hideSheet = remember { { scope.launch { modalState.hide() }.invokeOnCompletion { onDismiss() } } }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        contentWindowInsets = { WindowInsets(0.dp) },
         sheetState = modalState
     ) {
         LessonSelectContent(
@@ -85,7 +85,7 @@ private fun LessonSelectContent(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
+            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
     ) {
         if (allowGroup) {
             AnimatedContent(

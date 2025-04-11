@@ -103,7 +103,6 @@ import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
-import plus.vplan.app.ui.grayScale
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.thenIf
@@ -173,8 +172,8 @@ private fun CalendarScreenContent(
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val isContentAtTop = with(localDensity) { contentScrollState.value <= ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).roundToPx() }
-                val y = ((with(localDensity) { available.y.toDp() }) / (5 * weekHeightDefault)).let {
-                    if (it > 1) 1 + (with(localDensity) { available.y.toDp() }) / (containerHeight - (5*weekHeightDefault))
+                val y = ((with(localDensity) { available.y.toDp()/2 }) / (5 * weekHeightDefault)).let {
+                    if (it > 1) 1 + (with(localDensity) { available.y.toDp()/2 }) / (containerHeight - (5*weekHeightDefault))
                     else it
                 }
 
@@ -322,8 +321,8 @@ private fun CalendarScreenContent(
                             },
                         ) { event, dragAmount ->
                             dateSelectorVelocityTracker.addPointerInputChange(event)
-                            val y = ((with(localDensity) { dragAmount.toDp() }) / (5 * weekHeightDefault)).let {
-                                if (it > 1) 1 + (with(localDensity) { dragAmount.toDp() }) / (containerHeight - (5*weekHeightDefault))
+                            val y = ((with(localDensity) { dragAmount.toDp()/2 }) / (5 * weekHeightDefault)).let {
+                                if (it > 1) 1 + (with(localDensity) { dragAmount.toDp()/2 }) / (containerHeight - (5*weekHeightDefault))
                                 else it
                             }
                             scrollProgress = (scrollProgress + y).coerceIn(0f, 2f)
@@ -402,7 +401,7 @@ private fun CalendarScreenContent(
                                 val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                                 val day = state.calendarDays[date] ?: CalendarDay(date)
                                 CalendarView(
-                                    profile = state.currentProfile ?: return@HorizontalPager,
+                                    profile = state.currentProfile,
                                     date = date,
                                     dayType = day.dayType,
                                     lessons = day.layoutedLessons,

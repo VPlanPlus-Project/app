@@ -2,11 +2,11 @@ package plus.vplan.app.feature.onboarding.stage.f_finished.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,12 +25,11 @@ import vplanplus.composeapp.generated.resources.check
 
 @Composable
 fun OnboardingFinishedScreen(
-    onFinish: () -> Unit,
-    paddingValues: PaddingValues
+    onFinish: () -> Unit
 ) {
     Column(
         modifier = Modifier
-            .padding(paddingValues)
+            .safeDrawingPadding()
             .fillMaxSize()
     ) {
         Column(

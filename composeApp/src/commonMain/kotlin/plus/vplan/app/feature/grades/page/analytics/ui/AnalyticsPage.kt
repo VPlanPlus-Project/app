@@ -55,7 +55,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
@@ -434,13 +433,13 @@ private fun AnalyticsContent(
         val sheetState = rememberModalBottomSheetState(true)
         ModalBottomSheet(
             sheetState = sheetState,
-            modifier = Modifier.fillMaxWidth(),
+            contentWindowInsets = { WindowInsets(0.dp) },
             onDismissRequest = { showFilterDrawer = false }
         ) {
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
+                    .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
                     .fillMaxWidth()
                     .animateContentSize()
             ) {

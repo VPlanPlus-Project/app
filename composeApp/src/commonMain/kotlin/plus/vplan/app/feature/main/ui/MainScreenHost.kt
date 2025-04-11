@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -14,13 +13,11 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -118,6 +115,7 @@ val defaultMainExitAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>
 @Composable
 fun MainScreenHost(
     onNavigateToOnboarding: (school: School?) -> Unit,
+    contentPaddingDevice: PaddingValues,
     navigationTask: StartTask?
 ) {
     val navController = rememberNavController()
@@ -141,19 +139,19 @@ fun MainScreenHost(
     val profileViewModel = koinViewModel<ProfileViewModel>()
 
     val localDensity = LocalDensity.current
-    val localLayoutDirection = LocalLayoutDirection.current
+    val layoutDirection = LocalLayoutDirection.current
 
     var bottomBarHeight by remember { mutableStateOf(0.dp) }
+    val contentPadding = PaddingValues(
+        start = contentPaddingDevice.calculateStartPadding(layoutDirection),
+        top = contentPaddingDevice.calculateTopPadding(),
+        end = contentPaddingDevice.calculateEndPadding(layoutDirection),
+        bottom = listOf(contentPaddingDevice.calculateBottomPadding(), bottomBarHeight).max()
+    )
 
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        val top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
-        val left = WindowInsets.systemBars.asPaddingValues().calculateLeftPadding(localLayoutDirection)
-        val right = WindowInsets.systemBars.asPaddingValues().calculateRightPadding(localLayoutDirection)
-        val bottom by animateDpAsState(listOf(bottomBarHeight, WindowInsets.ime.asPaddingValues().calculateBottomPadding()).max())
-        val contentPadding = PaddingValues(left, top, right, bottom)
-
         AnimatedVisibility(
             visible = currentDestination?.startsWith("_") == true,
             enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),

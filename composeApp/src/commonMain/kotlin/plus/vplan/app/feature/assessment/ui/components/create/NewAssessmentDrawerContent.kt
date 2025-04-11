@@ -9,13 +9,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,7 +42,6 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
@@ -59,6 +55,7 @@ import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.DateSelectConfiguration
+import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.FullscreenDrawerContext
 import plus.vplan.app.utils.toName
 import vplanplus.composeapp.generated.resources.Res
@@ -106,11 +103,7 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
-            .fillMaxSize()
-    ) {
+    Column(Modifier.fillMaxSize()) {
         if (state.currentProfile == null) return
         Column(
             modifier = Modifier
@@ -280,7 +273,9 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent(
         }
 
         Button(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
             text = "Speichern",
             icon = Res.drawable.check,
             state = if (state.savingState == UnoptimisticTaskState.InProgress) ButtonState.Loading else ButtonState.Enabled,

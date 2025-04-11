@@ -33,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
@@ -73,7 +72,7 @@ private fun VppIdManagementDrawerContent(
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp)
-            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
+            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
     ) {
@@ -203,7 +202,7 @@ fun VppIdManagementDrawer(
     }
 
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val hideSheet = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } }
 
     LaunchedEffect(state.logoutState) {
@@ -214,6 +213,7 @@ fun VppIdManagementDrawer(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        contentWindowInsets = { WindowInsets(0.dp) },
         sheetState = sheetState
     ) {
         VppIdManagementDrawerContent(

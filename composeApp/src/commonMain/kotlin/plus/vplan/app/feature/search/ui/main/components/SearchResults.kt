@@ -41,7 +41,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -351,6 +350,7 @@ private fun LessonsDrawer(
 
     ModalBottomSheet(
         sheetState = sheetState,
+        contentWindowInsets = { WindowInsets(0.dp) },
         onDismissRequest = onDismiss
     ) {
         Column(
@@ -360,7 +360,7 @@ private fun LessonsDrawer(
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding().coerceAtLeast(16.dp))
+                    .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {

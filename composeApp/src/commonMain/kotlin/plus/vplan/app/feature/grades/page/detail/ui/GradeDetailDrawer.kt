@@ -1,10 +1,12 @@
 package plus.vplan.app.feature.grades.page.detail.ui
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 
@@ -28,6 +30,7 @@ fun GradeDetailDrawer(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        contentWindowInsets = { WindowInsets(0.dp) },
         sheetState = sheetState
     ) {
         GradeDetailPage(state, viewModel::onEvent)

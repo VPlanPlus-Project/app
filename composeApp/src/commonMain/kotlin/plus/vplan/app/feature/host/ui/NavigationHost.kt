@@ -1,11 +1,19 @@
 package plus.vplan.app.feature.host.ui
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -29,6 +37,17 @@ fun NavigationHost(task: StartTask?) {
     val viewModel = koinViewModel<NavigationHostViewModel>()
     val state = viewModel.state
     if (state.hasProfileAtAppStartup == null) return
+
+    val localLayoutDirection = LocalLayoutDirection.current
+
+    val top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
+    val left = WindowInsets.safeDrawing.asPaddingValues().calculateLeftPadding(localLayoutDirection)
+    val right = WindowInsets.safeDrawing.asPaddingValues().calculateRightPadding(localLayoutDirection)
+    with (LocalDensity.current) {
+
+    }
+    val bottom by animateDpAsState(WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding())
+    val contentPadding = PaddingValues(left, top, right, bottom)
 
     val setCurrentProfileUseCase = koinInject<SetCurrentProfileUseCase>()
 
@@ -57,13 +76,17 @@ fun NavigationHost(task: StartTask?) {
     ) {
         composable<AppScreen.Onboarding> { route ->
             val args = route.toRoute<AppScreen.Onboarding>()
-            OnboardingScreen(args.schoolId) { navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) } }
+            OnboardingScreen(
+                schoolId = args.schoolId,
+            ) { navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) } }
         }
 
         composable<AppScreen.MainScreen> {
-            MainScreenHost(onNavigateToOnboarding = {
-                navigationHostController.navigate(AppScreen.Onboarding(it?.id))
-            }, navigationTask = task)
+            MainScreenHost(
+                onNavigateToOnboarding = { navigationHostController.navigate(AppScreen.Onboarding(it?.id)) },
+                contentPaddingDevice = contentPadding,
+                navigationTask = task
+            )
         }
 
         composable<AppScreen.VppIdLogin> { route ->
