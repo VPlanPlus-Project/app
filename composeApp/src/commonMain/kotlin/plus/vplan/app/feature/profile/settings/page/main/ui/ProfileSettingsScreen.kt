@@ -51,6 +51,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.VppIdConnectionState
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.VppIdManagementDrawer
@@ -97,6 +98,10 @@ private fun ProfileSettingsContent(
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
     var isVppIdManagementDrawerVisible by rememberSaveable { mutableStateOf(false) }
     var isDeleteDialogVisible by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(state.profileDeletionState) {
+        if (state.profileDeletionState == UnoptimisticTaskState.Success) onBack()
+    }
 
     Scaffold(
         topBar = {
@@ -219,7 +224,7 @@ private fun ProfileSettingsContent(
             )
             Spacer(Modifier.height(8.dp))
             if (state.profile is Profile.StudentProfile) {
-                val vppId = state.profile.vppId?.collectAsResultingFlow()?.value
+                val vppId = remember(state.profile.vppIdId) { state.profile.vppId }?.collectAsResultingFlow()?.value
                 AnimatedContent(
                     targetState = vppId,
                     modifier = Modifier

@@ -13,6 +13,7 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
+import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.CheckIfVppIdIsStillConnectedUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.ConnectVppIdUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.DeleteProfileUseCase
@@ -36,6 +37,7 @@ class ProfileSettingsViewModel(
 
     fun init(profileId: String) {
         viewModelScope.launch {
+            state = state.copy(profileDeletionState = null)
             logger.d { "Init profile settings for profile $profileId" }
             getProfileByIdUseCase(Uuid.parse(profileId)).collect { profile ->
                 logger.d { "Got profile $profile" }
@@ -55,7 +57,11 @@ class ProfileSettingsViewModel(
         viewModelScope.launch {
             when (event) {
                 is ProfileSettingsEvent.RenameProfile -> renameProfileUseCase(state.profile!!, event.newName)
-                is ProfileSettingsEvent.DeleteProfile -> deleteProfileUseCase(state.profile!!)
+                is ProfileSettingsEvent.DeleteProfile -> {
+                    state = state.copy(profileDeletionState = UnoptimisticTaskState.InProgress)
+                    deleteProfileUseCase(state.profile!!)
+                    state = state.copy(profileDeletionState = UnoptimisticTaskState.Success)
+                }
                 is ProfileSettingsEvent.ConnectVppId -> connectVppIdUseCase(state.profile as Profile.StudentProfile)
             }
         }
@@ -64,6 +70,7 @@ class ProfileSettingsViewModel(
 
 data class ProfileSettingsState(
     val profile: Profile? = null,
+    val profileDeletionState: UnoptimisticTaskState? = null,
     val isLastProfileOfSchool: Boolean = false,
     val isVppIdStillConnected: VppIdConnectionState = VppIdConnectionState.UNKNOWN
 )
