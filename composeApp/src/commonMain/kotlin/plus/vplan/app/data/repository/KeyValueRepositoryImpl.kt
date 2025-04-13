@@ -1,6 +1,7 @@
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.domain.repository.KeyValueRepository
 
@@ -16,6 +17,6 @@ class KeyValueRepositoryImpl(
     }
 
     override fun get(key: String): Flow<String?> {
-        return vppDatabase.keyValueDao.get(key)
+        return vppDatabase.keyValueDao.get(key).distinctUntilChanged()
     }
 }
