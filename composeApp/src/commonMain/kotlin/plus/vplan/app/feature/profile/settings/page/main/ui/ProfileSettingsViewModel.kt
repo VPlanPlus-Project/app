@@ -39,9 +39,9 @@ class ProfileSettingsViewModel(
         viewModelScope.launch {
             state = state.copy(profileDeletionState = null)
             logger.d { "Init profile settings for profile $profileId" }
-            getProfileByIdUseCase(Uuid.parse(profileId)).collect { profile ->
+            getProfileByIdUseCase(Uuid.parse(profileId)).collectLatest { profile ->
                 logger.d { "Got profile $profile" }
-                state = state.copy(profile = profile.also { it?.prefetch() })
+                state = state.copy(profile = profile)
                 if (profile is Profile.StudentProfile && profile.vppIdId != null) {
                     checkIfVppIdIsStillConnectedUseCase(App.vppIdSource.getById(profile.vppIdId).getFirstValue() as VppId.Active).let {
                         state = state.copy(isVppIdStillConnected = it)
@@ -80,9 +80,4 @@ sealed class ProfileSettingsEvent {
     data object DeleteProfile : ProfileSettingsEvent()
 
     data object ConnectVppId: ProfileSettingsEvent()
-}
-
-private suspend fun Profile.prefetch() {
-    this.getSchoolItem()
-    if (this is Profile.StudentProfile) this.getVppIdItem()
 }

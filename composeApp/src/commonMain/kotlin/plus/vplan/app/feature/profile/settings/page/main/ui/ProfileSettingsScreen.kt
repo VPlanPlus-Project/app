@@ -51,6 +51,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.VppIdConnectionState
@@ -94,7 +95,6 @@ private fun ProfileSettingsContent(
     onOpenSubjectInstances: () -> Unit,
     onEvent: (event: ProfileSettingsEvent) -> Unit
 ) {
-
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
     var isVppIdManagementDrawerVisible by rememberSaveable { mutableStateOf(false) }
     var isDeleteDialogVisible by rememberSaveable { mutableStateOf(false) }
@@ -102,6 +102,9 @@ private fun ProfileSettingsContent(
     LaunchedEffect(state.profileDeletionState) {
         if (state.profileDeletionState == UnoptimisticTaskState.Success) onBack()
     }
+
+    val vppId = remember((state.profile as? Profile.StudentProfile)?.vppIdId) { (state.profile as? Profile.StudentProfile)?.vppId }?.collectAsResultingFlow()?.value as? VppId.Active
+    val school = remember(state.profile?.id) { state.profile?.getSchool() }?.collectAsResultingFlow()?.value
 
     Scaffold(
         topBar = {
@@ -215,7 +218,7 @@ private fun ProfileSettingsContent(
                     }
                     append(state.profile.name)
                     append(" $DOT ")
-                    append(state.profile.schoolItem!!.name)
+                    append(school?.name ?: "")
                 },
                 modifier = Modifier.padding(horizontal = 16.dp),
                 style = MaterialTheme.typography.labelMedium,
@@ -224,7 +227,6 @@ private fun ProfileSettingsContent(
             )
             Spacer(Modifier.height(8.dp))
             if (state.profile is Profile.StudentProfile) {
-                val vppId = remember(state.profile.vppIdId) { state.profile.vppId }?.collectAsResultingFlow()?.value
                 AnimatedContent(
                     targetState = vppId,
                     modifier = Modifier
@@ -309,11 +311,9 @@ private fun ProfileSettingsContent(
             )
         }
 
-        if (isVppIdManagementDrawerVisible &&
-            state.profile is Profile.StudentProfile &&
-            state.profile.vppIdId != null) {
+        if (isVppIdManagementDrawerVisible && vppId != null) {
             VppIdManagementDrawer(
-                vppId = state.profile.vppIdItem!!,
+                vppId = vppId,
                 onDismiss = { isVppIdManagementDrawerVisible = false }
             )
         }
