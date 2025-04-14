@@ -89,7 +89,7 @@ class SearchViewModel(
                     state = state.copy(query = state.query.copy(subject = event.subject))
                     restartSearch()
                 }
-                is SearchEvent.FitlerForAssessmentType -> {
+                is SearchEvent.FilterForAssessmentType -> {
                     state = state.copy(query = state.query.copy(assessmentType = event.type))
                     restartSearch()
                 }
@@ -101,10 +101,16 @@ class SearchViewModel(
 
     private suspend fun restartSearch() {
         searchJob?.cancel()
-        val day = App.daySource.getById(Day.buildId(state.currentProfile!!.getSchool().getFirstValue()!!, state.query.date)).getFirstValue()!!
+        val schoolId = state.currentProfile?.getSchool()?.getFirstValue()?.id
+        if (state.currentProfile == null || schoolId == null) {
+            state = state.copy(results = emptyMap())
+            return
+        }
+        val day = App.daySource.getById(Day.buildId(schoolId, state.query.date)).getFirstValue()
         searchJob = viewModelScope.launch {
+            state = state.copy(isLoading = true)
             searchUseCase(state.query).collectLatest {
-                state = state.copy(results = it, selectedDateType = day.dayType)
+                state = state.copy(results = it, selectedDateType = day?.dayType ?: Day.DayType.UNKNOWN, isLoading = false)
             }
         }
     }
@@ -112,6 +118,7 @@ class SearchViewModel(
 
 data class SearchState(
     val query: SearchRequest = SearchRequest(),
+    val isLoading: Boolean = false,
     val selectedDateType: Day.DayType = Day.DayType.UNKNOWN,
     val results: Map<SearchResult.Type, List<SearchResult>> = emptyMap(),
     val homework: List<Homework> = emptyList(),
@@ -128,7 +135,7 @@ sealed class SearchEvent {
     data class UpdateQuery(val query: String): SearchEvent()
     data class SelectDate(val date: LocalDate): SearchEvent()
     data class FilterForSubject(val subject: String?): SearchEvent()
-    data class FitlerForAssessmentType(val type: Assessment.Type?): SearchEvent()
+    data class FilterForAssessmentType(val type: Assessment.Type?): SearchEvent()
 
     data object RequestGradeUnlock: SearchEvent()
     data object RequestGradeLock: SearchEvent()
