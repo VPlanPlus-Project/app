@@ -60,8 +60,8 @@ class GetRoomOccupationMapUseCase(
             rooms.associateWith { room ->
                 lessons.filter { room.id in it.roomIds.orEmpty() }.map {
                     when (it) {
-                        is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson(it)
-                        is Lesson.TimetableLesson -> Occupancy.Lesson(it, date)
+                        is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson.fromLesson(it, date)
+                        is Lesson.TimetableLesson -> Occupancy.Lesson.fromLesson(it, date)
                     }
                 }.toSet()
             }.let { map -> send(map.map { OccupancyMapRecord(it.key, it.value) }) }
@@ -70,12 +70,15 @@ class GetRoomOccupationMapUseCase(
 }
 
 sealed class Occupancy(
-    val start: LocalDateTime,
-    val end: LocalDateTime
+    open val start: LocalDateTime,
+    open val end: LocalDateTime
 ) {
-    data class Lesson(val lesson: plus.vplan.app.domain.model.Lesson, val date: LocalDate) : Occupancy(lesson.lessonTimeItem!!.start.atDate(date), lesson.lessonTimeItem!!.end.atDate(date)) {
-        constructor(lesson: plus.vplan.app.domain.model.Lesson.SubstitutionPlanLesson) : this(lesson, lesson.date)
-        constructor(lesson: plus.vplan.app.domain.model.Lesson.TimetableLesson, contextDate: LocalDate) : this(lesson, date = contextDate)
+    data class Lesson(val lesson: plus.vplan.app.domain.model.Lesson, val date: LocalDate, override val start: LocalDateTime, override val end: LocalDateTime) : Occupancy(start, end) {
+        companion object {
+            suspend fun fromLesson(lesson: plus.vplan.app.domain.model.Lesson, contextDate: LocalDate): Occupancy {
+                return Lesson(lesson, contextDate, lesson.lessonTime.getFirstValue()!!.start.atDate(contextDate), lesson.lessonTime.getFirstValue()!!.end.atDate(contextDate))
+            }
+        }
     }
 }
 
