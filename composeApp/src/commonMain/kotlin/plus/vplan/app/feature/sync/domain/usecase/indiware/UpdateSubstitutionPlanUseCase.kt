@@ -183,7 +183,7 @@ class UpdateSubstitutionPlanUseCase(
                     val old = oldPlan[profile] ?: return@forEachProfile
                     val new = newPlan[profile] ?: return@forEachProfile
 
-                    if (old.mapNotNull { it.lessonTime.getFirstValue()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachProfile
+                    if ((old + new).mapNotNull { it.lessonTime.getFirstValue()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachProfile
 
                     val oldLessons = old.map { it.getLessonSignature() }
                     val changedOrNewLessons = new.filter { it.getLessonSignature() !in oldLessons }
