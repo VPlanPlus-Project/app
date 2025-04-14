@@ -4,13 +4,15 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.EaseInOutQuint
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -84,24 +86,32 @@ import vplanplus.composeapp.generated.resources.search
 import vplanplus.composeapp.generated.resources.user
 import kotlin.uuid.Uuid
 
+const val ANIMATION_DURATION = 150
+val easingMove = EaseInOut
+val easingFade = EaseInOutQuint
+
 val defaultEnterAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) = {
-    slideInVertically(
-        animationSpec = tween(300)
-    ) { it/4 } + fadeIn(animationSpec = tween(200))
+    slideInHorizontally(
+        animationSpec = tween(ANIMATION_DURATION, easing = easingMove),
+    ) { it/10 } + fadeIn(animationSpec = tween(ANIMATION_DURATION/2, easing = easingFade, delayMillis = ANIMATION_DURATION/2))
 }
 
 val defaultPopExitAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition) = {
-    slideOutVertically(
-        animationSpec = tween(300)
-    ) { it/4 } + fadeOut(animationSpec = tween(100))
+    slideOutHorizontally(
+        animationSpec = tween(ANIMATION_DURATION, easing = easingMove),
+    ) { it/10 } + fadeOut(animationSpec = tween(ANIMATION_DURATION, easing = easingFade))
 }
 
 val defaultPopEnterAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) = {
-    fadeIn(animationSpec = tween(200))
+    slideInHorizontally(
+        animationSpec = tween(ANIMATION_DURATION, easing = easingMove),
+    ) { -it/10 }
 }
 
 val defaultExitAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition) = {
-    fadeOut(animationSpec = tween(100))
+    slideOutHorizontally(
+        animationSpec = tween(ANIMATION_DURATION, easing = easingMove),
+    ) { -it/10 } + fadeOut(animationSpec = tween(ANIMATION_DURATION/2, easing = easingFade, delayMillis = ANIMATION_DURATION/2))
 }
 
 val defaultMainEnterAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) = {

@@ -26,6 +26,7 @@ import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 
 @Composable
 fun DevScreen(
@@ -40,6 +41,7 @@ fun DevScreen(
     val fullSyncUseCase = koinInject<FullSyncUseCase>()
     val rebuildIndices = koinInject<UpdateAssessmentIndicesUseCase>()
     val updateHolidaysUseCase = koinInject<UpdateHolidaysUseCase>()
+    val updateHomeworkUseCase = koinInject<UpdateHomeworkUseCase>()
     val courseRepository = koinInject<CourseRepository>()
 
     Column(
@@ -64,6 +66,13 @@ fun DevScreen(
             } }
         ) {
             Text("VPlan aktualisieren")
+        }
+        Button(
+            onClick = { scope.launch {
+                updateHomeworkUseCase(true)
+            } }
+        ) {
+            Text("Homework aktualisieren")
         }
         Button(
             onClick = { scope.launch {

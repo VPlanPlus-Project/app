@@ -190,7 +190,8 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = VppDatabase.Migration3::class),
         AutoMigration(from = 3, to = 4)
-    ]
+    ],
+    exportSchema = true
 )
 @TypeConverters(
     value = [

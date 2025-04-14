@@ -22,7 +22,7 @@ class ProfileRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : ProfileRepository {
     override fun getById(id: Uuid): Flow<Profile?> {
-        return vppDatabase.profileDao.getById(id).map { it?.toModel() }
+        return vppDatabase.profileDao.getById(id).map { it?.toModel() }.distinctUntilChanged()
     }
 
     override fun getAll(): Flow<List<Profile>> {

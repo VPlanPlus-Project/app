@@ -21,9 +21,11 @@ abstract class Profile : Item {
     override fun getEntityId(): String = this.id.toHexString()
     abstract fun getSchool(): Flow<CacheState<School>>
 
+    @Deprecated("Use getSchool() instead")
     var schoolItem: School? = null
         private set
 
+    @Deprecated("Use getSchool() instead")
     suspend fun getSchoolItem(): School {
         return schoolItem ?: getSchool().getFirstValue()!!.also { schoolItem = it }
     }
