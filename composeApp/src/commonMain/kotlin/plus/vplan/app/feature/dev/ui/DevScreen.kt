@@ -53,14 +53,18 @@ fun DevScreen(
         Text(state.profile?.name.toString())
         Button(
             onClick = { scope.launch {
-                updateTimetableUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, true)
+                val school = state.profile?.getSchool()?.getFirstValue() as? School.IndiwareSchool
+                if (school == null) return@launch
+                updateTimetableUseCase(school, true)
             } }
         ) {
             Text("Stundenplan aktualisieren")
         }
         Button(
             onClick = { scope.launch {
-                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, listOf(LocalDate(2025, 4, 10)), true)?.let {
+                val school = state.profile?.getSchool()?.getFirstValue() as? School.IndiwareSchool
+                if (school == null) return@launch
+                updateSubstitutionPlanUseCase(school, listOf(LocalDate(2025, 4, 10)), true)?.let {
                     Logger.e { "Error on updating substitution plan: $it" }
                 }
             } }
