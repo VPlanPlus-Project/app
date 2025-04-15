@@ -24,7 +24,7 @@ suspend fun <T> ProducerScope<T>.sendAll(flow: Flow<T>) {
 }
 
 @Composable
-fun <T: Item> Flow<CacheState<T>>.getState(initialValue: T? = null) = this
+fun <T: Item<*>> Flow<CacheState<T>>.getState(initialValue: T? = null) = this
     .filterIsInstance<CacheState.Done<T>>()
     .map { it.data }
     .collectAsState(initialValue)

@@ -4,11 +4,14 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.basicAuth
 import io.ktor.client.request.bearerAuth
 import kotlinx.datetime.Instant
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 
-sealed interface School: Item {
+sealed interface School: Item<DataTag> {
     val id: Int
     override fun getEntityId(): String = id.toString()
+    override val tags: Set<DataTag>
+        get() = emptySet()
 
     val groups: List<Int>
 

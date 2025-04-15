@@ -2,6 +2,7 @@ package plus.vplan.app.domain.model
 
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 
@@ -16,8 +17,9 @@ data class SubjectInstance(
     val teacher: Int?,
     val groups: List<Int>,
     val cachedAt: Instant
-) : Item {
+) : Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     var courseItem: Course? = null
         private set

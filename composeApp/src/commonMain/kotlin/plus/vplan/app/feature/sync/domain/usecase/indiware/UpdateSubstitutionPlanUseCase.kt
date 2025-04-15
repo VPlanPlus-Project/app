@@ -115,7 +115,8 @@ class UpdateSubstitutionPlanUseCase(
                 timetable = emptySet(),
                 assessmentIds = emptySet(),
                 homeworkIds = emptySet(),
-                nextSchoolDayId = null
+                nextSchoolDayId = null,
+                tags = emptySet()
             )
 
             dayRepository.insert(day)

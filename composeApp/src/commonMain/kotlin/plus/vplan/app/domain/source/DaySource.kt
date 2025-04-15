@@ -81,7 +81,8 @@ class DaySource(
                         substitutionPlan = emptySet(),
                         assessmentIds = emptySet(),
                         homeworkIds = emptySet(),
-                        nextSchoolDayId = null
+                        nextSchoolDayId = null,
+                        tags = emptySet()
                     )
                 )
 
@@ -109,7 +110,8 @@ class DaySource(
                                         }
                                         if (holidays.any { it == friday } || holidays.any { it == monday }) Day.DayType.HOLIDAY else Day.DayType.WEEKEND
                                     } else if (dayInfo?.timetable != null) Day.DayType.REGULAR
-                                    else Day.DayType.UNKNOWN
+                                    else Day.DayType.UNKNOWN,
+                                tags = it.tags + Day.DayTags.HAS_METADATA
                             )
                         }
                     }
@@ -153,7 +155,8 @@ class DaySource(
                                 assessmentIds = assessments,
                                 homeworkIds = homework,
                                 nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },
-                                dayType = if (timetable.isNotEmpty() || substitutionPlan.isNotEmpty()) Day.DayType.REGULAR else it.dayType
+                                dayType = if (timetable.isNotEmpty() || substitutionPlan.isNotEmpty()) Day.DayType.REGULAR else it.dayType,
+                                tags = it.tags + Day.DayTags.HAS_LESSONS
                             )
                         }
                     }.collect()
