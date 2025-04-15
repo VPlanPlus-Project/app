@@ -36,19 +36,30 @@ class UpdateAssessmentUseCase(
     private val platformNotificationRepository: PlatformNotificationRepository,
     private val updateAssessmentIndicesUseCase: UpdateAssessmentIndicesUseCase
 ) {
+    private val logger = Logger.withTag("UpdateAssessmentUseCase")
+
     suspend operator fun invoke(allowNotifications: Boolean) {
         val existing = assessmentRepository.getAll().first().map { it.id }.toSet()
         val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
-        profiles.forEach { profile ->
-            ((assessmentRepository.download(profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchoolItem().getSchoolApiAccess()!!, profile.subjectInstanceConfiguration.filterValues { it }.keys.toList()) as? Response.Success ?: return@forEach)
-                .data - existing)
+        profiles.forEach forEachProfile@{ profile ->
+            val apiAuthentication = profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchool().getFirstValue()?.getSchoolApiAccess()
+            if (apiAuthentication == null) {
+                logger.e { "No api authentication found for profile ${profile.id} (${profile.name})" }
+                return@forEachProfile
+            }
+            val apiResponse = assessmentRepository.download(apiAuthentication, profile.subjectInstanceConfiguration.filterValues { it }.keys.toList())
+            if (apiResponse !is Response.Success) {
+                logger.w { "Error downloading assessments for profile ${profile.id} (${profile.name}): $apiResponse" }
+                return@forEachProfile
+            }
+            (apiResponse.data - existing)
                 .also { ids ->
-                    if (ids.isEmpty() || !allowNotifications) return@forEach
+                    if (ids.isEmpty() || !allowNotifications) return@forEachProfile
                     combine(ids.map { assessmentId -> App.assessmentSource.getById(assessmentId).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }.first()
                         .filter { it.creator is AppEntity.VppId && it.creator.id != profile.vppIdId && (it.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
                         .filter { it.subjectInstance.getFirstValue()!!.id in profile.subjectInstanceConfiguration.filterValues { it }.keys }
                         .let { newAssessments ->
-                            if (newAssessments.isEmpty()) return@forEach
+                            if (newAssessments.isEmpty()) return@forEachProfile
                             if (newAssessments.size == 1) {
                                 val message =  buildString {
                                     newAssessments.first().let { assessment ->
