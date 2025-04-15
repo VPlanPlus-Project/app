@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
@@ -28,7 +29,7 @@ data class Day(
     val assessmentIds: Set<Int>,
     val homeworkIds: Set<Int>,
     val nextSchoolDayId: String?
-): Item {
+): Item<Day.DayTags> {
     enum class DayType {
         REGULAR, WEEKEND, HOLIDAY, UNKNOWN
     }
@@ -68,5 +69,9 @@ data class Day(
                 lessons.filter { lesson ->
                     lesson is Lesson.SubstitutionPlanLesson || (lesson is Lesson.TimetableLesson && (lesson.weekType == null || week?.weekType == lesson.weekType))
             }.toSet() }
+    }
+
+    enum class DayTags: DataTag {
+        HAS_METADATA, HAS_LESSONS
     }
 }

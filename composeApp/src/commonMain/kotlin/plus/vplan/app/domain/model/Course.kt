@@ -2,6 +2,7 @@ package plus.vplan.app.domain.model
 
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 
 data class Course(
@@ -11,7 +12,7 @@ data class Course(
     val name: String,
     val teacherId: Int?,
     val cachedAt: Instant
-): Item {
+): Item<DataTag> {
     override fun getEntityId(): String = id.toString()
 
     companion object {

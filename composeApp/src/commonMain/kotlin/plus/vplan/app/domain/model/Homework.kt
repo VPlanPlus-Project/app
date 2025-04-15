@@ -15,13 +15,14 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
 
 sealed class Homework(
     val creator: AppEntity
-) : Item {
+) : Item<DataTag> {
     abstract val id: Int
     abstract val createdAt: Instant
     abstract val dueTo: LocalDate
@@ -70,7 +71,7 @@ sealed class Homework(
         val doneByVppIds: List<Int>,
         val homework: Int,
         val cachedAt: Instant
-    ) : Item {
+    ) : Item<DataTag> {
         override fun getEntityId(): String = this.id.toString()
 
         var homeworkItem: Homework? = null
@@ -88,7 +89,7 @@ sealed class Homework(
         val name: String,
         val homework: Int,
         val size: Long,
-    ) : Item {
+    ) : Item<DataTag> {
         override fun getEntityId(): String = this.id.toString()
     }
 

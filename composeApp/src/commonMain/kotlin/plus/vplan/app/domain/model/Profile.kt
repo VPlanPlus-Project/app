@@ -9,11 +9,12 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.Uuid
 
-abstract class Profile : Item {
+abstract class Profile : Item<DataTag> {
     abstract val id: Uuid
     abstract val profileType: ProfileType
     abstract val name: String

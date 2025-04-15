@@ -7,6 +7,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 
@@ -21,7 +22,7 @@ data class Assessment(
     val type: Type,
     val files: List<Int>,
     val cachedAt: Instant
-): Item {
+): Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
 
     enum class Type {
@@ -53,7 +54,7 @@ data class Assessment(
         val name: String,
         val assessment: Int,
         val size: Long
-    ): Item {
+    ): Item<DataTag> {
         override fun getEntityId(): String = this.id.toString()
     }
 }

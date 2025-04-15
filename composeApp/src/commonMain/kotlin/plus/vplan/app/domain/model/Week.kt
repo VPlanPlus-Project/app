@@ -1,6 +1,7 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 
 /**
@@ -14,7 +15,7 @@ data class Week(
     val weekType: String,
     val weekIndex: Int,
     val school: Int
-): Item {
+): Item<DataTag> {
     constructor(
         calendarWeek: Int,
         start: LocalDate,

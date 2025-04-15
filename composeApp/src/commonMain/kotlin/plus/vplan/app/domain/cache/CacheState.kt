@@ -15,29 +15,31 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import plus.vplan.app.domain.data.Response
 
-sealed class CacheState<out T: Item>(val entityId: String) {
+sealed class CacheState<out T: Item<*>>(val entityId: String) {
     data class Loading(val id: String): CacheState<Nothing>(id)
     data class NotExisting(val id: String): CacheState<Nothing>(id)
     data class Error(val id: String, val error: Response.Error): CacheState<Nothing>(id)
-    data class Done<T: Item>(val data: T): CacheState<T>(data.getEntityId())
+    data class Done<T: Item<*>>(val data: T): CacheState<T>(data.getEntityId())
 }
 
-interface Item {
+interface Item<T: DataTag> {
     fun getEntityId(): String
 }
 
-suspend fun <T: Item> Flow<CacheState<T>>.getFirstValue() = (this.onEach { if (it is CacheState.Error) Logger.e {
+interface DataTag
+
+suspend fun <T: Item<*>> Flow<CacheState<T>>.getFirstValue() = (this.onEach { if (it is CacheState.Error) Logger.e {
     "Failed to load entity ${it.entityId}: ${it.error}"
 } }.filter { it is CacheState.NotExisting || it is CacheState.Done || it is CacheState.Error }.first() as? CacheState.Done<T>)?.data
 
 @Composable
-fun <T: Item> Flow<CacheState<T>>.collectAsLoadingState(id: String = "Unbekannt") = this.collectAsState(CacheState.Loading(id))
+fun <T: Item<*>> Flow<CacheState<T>>.collectAsLoadingState(id: String = "Unbekannt") = this.collectAsState(CacheState.Loading(id))
 
 @Composable
-fun <T: Item> Flow<CacheState<T>>.collectAsResultingFlow() = this.filterIsInstance<CacheState.Done<T>>().map { it.data }.collectAsState(null)
+fun <T: Item<*>> Flow<CacheState<T>>.collectAsResultingFlow() = this.filterIsInstance<CacheState.Done<T>>().map { it.data }.collectAsState(null)
 
 @Composable
-inline fun <reified T: Item> List<Flow<CacheState<T>>>.collectAsResultingFlow(): State<List<T>> = if (this.isEmpty()) produceState(emptyList()) {} else (combine(this.map { it.filterIsInstance<CacheState.Done<T>>().map { it.data } }) { it.toList() }.collectAsState(emptyList()))
+inline fun <reified T: Item<*>> List<Flow<CacheState<T>>>.collectAsResultingFlow(): State<List<T>> = if (this.isEmpty()) produceState(emptyList()) {} else (combine(this.map { it.filterIsInstance<CacheState.Done<T>>().map { it.data } }) { it.toList() }.collectAsState(emptyList()))
 
 @Composable
-inline fun <reified T: Item> Flow<List<CacheState<T>>>.collectAsSingleFlow(): State<List<T>> = this.map { it.filterIsInstance<CacheState.Done<T>>().map { it.data } }.distinctUntilChanged().collectAsState(emptyList())
+inline fun <reified T: Item<*>> Flow<List<CacheState<T>>>.collectAsSingleFlow(): State<List<T>> = this.map { it.filterIsInstance<CacheState.Done<T>>().map { it.data } }.distinctUntilChanged().collectAsState(emptyList())

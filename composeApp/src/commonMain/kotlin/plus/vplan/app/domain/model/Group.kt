@@ -2,6 +2,7 @@ package plus.vplan.app.domain.model
 
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 
@@ -10,7 +11,7 @@ data class Group(
     val schoolId: Int,
     val name: String,
     val cachedAt: Instant
-) : Item {
+) : Item<DataTag> {
     override fun getEntityId(): String = id.toString()
     val school by lazy { App.schoolSource.getById(schoolId) }
 

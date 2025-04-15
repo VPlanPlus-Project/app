@@ -1,6 +1,7 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.datetime.LocalTime
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 
 data class LessonTime(
@@ -10,6 +11,6 @@ data class LessonTime(
     val lessonNumber: Int,
     val group: Int,
     val interpolated: Boolean = false
-) : Item {
+) : Item<DataTag> {
     override fun getEntityId(): String = this.id
 }

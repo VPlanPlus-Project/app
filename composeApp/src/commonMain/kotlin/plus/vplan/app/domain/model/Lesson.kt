@@ -7,10 +7,11 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import kotlin.uuid.Uuid
 
-sealed interface Lesson : Item {
+sealed interface Lesson : Item<DataTag> {
     val id: Uuid
     val week: String
     val subject: String?
