@@ -50,6 +50,7 @@ data class FeedbackDeviceInfo(
     val osVersion: String,
     val manufacturer: String,
     val device: String,
+    val deviceName: String = device
 )
 
 data class FeedbackProfileInfo(

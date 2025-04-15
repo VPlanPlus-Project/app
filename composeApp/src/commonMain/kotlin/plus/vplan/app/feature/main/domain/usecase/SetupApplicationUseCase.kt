@@ -15,7 +15,7 @@ class SetupApplicationUseCase(
     private val logger = Logger.withTag("SetupApplicationUseCase")
     suspend operator fun invoke() {
         updateFirebaseTokenUseCase()
-        if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != App.versionCode.toString()) {
+        if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != App.VERSION_CODE.toString()) {
             logger.i { "First run of VPlanPlus" }
             logger.d { "Saving migration flags" }
 
@@ -27,6 +27,6 @@ class SetupApplicationUseCase(
             doAssessmentsAndHomeworkIndexMigrationUseCase()
         }
 
-        keyValueRepository.set(Keys.PREVIOUS_APP_VERSION, App.versionCode.toString())
+        keyValueRepository.set(Keys.PREVIOUS_APP_VERSION, App.VERSION_CODE.toString())
     }
 }
