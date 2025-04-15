@@ -62,7 +62,7 @@ data class Day(
     val nextSchoolDay by lazy { if (this.nextSchoolDayId == null) return@lazy null else App.daySource.getById(nextSchoolDayId) }
 
     val lessons: Flow<Set<Lesson>> by lazy {
-        if (timetable.isEmpty()) return@lazy flowOf(emptySet())
+        if (timetable.isEmpty() && substitutionPlan.isEmpty()) return@lazy flowOf(emptySet())
         (if (substitutionPlan.isEmpty()) combine(timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { it.data } }) { it.toSet() }
         else combine(substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { it.data } }) { it.toSet() })
             .map { lessons ->
