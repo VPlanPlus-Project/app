@@ -94,7 +94,7 @@ val VPP_ID_AUTH_URL = URLBuilder(
     }
 ).build().toString()
 
-const val isDeveloperMode = true
+const val isDeveloperMode = false
 
 object App {
     lateinit var vppIdSource: VppIdSource
@@ -124,8 +124,8 @@ object App {
     lateinit var gradeSource: GradeSource
     lateinit var finalGradeSource: FinalGradeSource
 
-    const val VERSION_CODE: Int = 1
-    const val VERSION_NAME: String = "0.0.1-alpha" // remember to update build.gradle.kts
+    const val VERSION_CODE: Int = 50
+    const val VERSION_NAME: String = "0.1.24-closed" // remember to update build.gradle.kts
 }
 
 @Composable
