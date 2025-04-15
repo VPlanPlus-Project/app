@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
@@ -87,6 +86,12 @@ class DaySource(
                 )
 
                 launch {
+                    day.collect {
+                        flow.tryEmit(CacheState.Done(it))
+                    }
+                }
+
+                launch {
                     combine(
                         weekRepository.getBySchool(schoolId).distinctUntilChanged(),
                         dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } }.distinctUntilChanged(),
@@ -115,13 +120,6 @@ class DaySource(
                             )
                         }
                     }
-                        .onStart {
-                            launch {
-                                day.collect {
-                                    flow.tryEmit(CacheState.Done(it))
-                                }
-                            }
-                        }
                         .collect()
                 }
 
