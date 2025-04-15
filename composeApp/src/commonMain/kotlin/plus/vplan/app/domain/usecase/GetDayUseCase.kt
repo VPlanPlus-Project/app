@@ -1,6 +1,7 @@
 package plus.vplan.app.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
@@ -15,6 +16,7 @@ class GetDayUseCase {
         val schoolId = profile.getSchool().getFirstValue()!!.id
         return App.daySource.getById("${schoolId}/$date", contextProfile = profile)
             .filterIsInstance<CacheState.Done<Day>>()
+            .filter { Day.DayTags.HAS_LESSONS in it.data.tags }
             .map { it.data }
     }
 }

@@ -28,7 +28,8 @@ data class Day(
     val substitutionPlan: Set<Uuid>,
     val assessmentIds: Set<Int>,
     val homeworkIds: Set<Int>,
-    val nextSchoolDayId: String?
+    val nextSchoolDayId: String?,
+    override val tags: Set<DayTags>
 ): Item<Day.DayTags> {
     enum class DayType {
         REGULAR, WEEKEND, HOLIDAY, UNKNOWN

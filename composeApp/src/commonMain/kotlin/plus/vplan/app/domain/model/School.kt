@@ -10,6 +10,8 @@ import plus.vplan.app.domain.cache.Item
 sealed interface School: Item<DataTag> {
     val id: Int
     override fun getEntityId(): String = id.toString()
+    override val tags: Set<DataTag>
+        get() = emptySet()
 
     val groups: List<Int>
 

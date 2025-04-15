@@ -18,6 +18,7 @@ data class Year(
     val cachedAt: Instant
 ) : Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     val intervals: Flow<List<CacheState<Interval>>> = combine(intervalIds.map { App.intervalSource.getById(it) }) { it.toList() }
 }

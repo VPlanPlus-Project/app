@@ -25,6 +25,8 @@ sealed interface Lesson : Item<DataTag> {
     fun getLessonSignature(): String
 
     override fun getEntityId(): String = this.id.toHexString()
+    override val tags: Set<DataTag>
+        get() = emptySet()
 
     val lessonTime: Flow<CacheState<LessonTime>>
     val subjectInstance: Flow<CacheState<SubjectInstance>>?

@@ -24,6 +24,7 @@ data class Assessment(
     val cachedAt: Instant
 ): Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     enum class Type {
         SHORT_TEST, CLASS_TEST, PROJECT, ORAL, OTHER
@@ -56,5 +57,6 @@ data class Assessment(
         val size: Long
     ): Item<DataTag> {
         override fun getEntityId(): String = this.id.toString()
+        override val tags: Set<DataTag> = emptySet()
     }
 }

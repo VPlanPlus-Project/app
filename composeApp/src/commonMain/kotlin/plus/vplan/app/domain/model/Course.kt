@@ -14,6 +14,7 @@ data class Course(
     val cachedAt: Instant
 ): Item<DataTag> {
     override fun getEntityId(): String = id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     companion object {
         fun fromIndiware(

@@ -14,6 +14,7 @@ sealed class VppId : Item<DataTag> {
     abstract val cachedAt: Instant
 
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     data class Cached(
         override val id: Int,

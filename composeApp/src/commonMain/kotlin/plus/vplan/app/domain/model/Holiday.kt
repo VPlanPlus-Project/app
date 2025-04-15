@@ -12,4 +12,5 @@ data class Holiday(
     constructor(date: LocalDate, school: Int) : this(id = "${school}/$date", date = date, school = school)
 
     override fun getEntityId(): String = this.id
+    override val tags: Set<DataTag> = emptySet()
 }

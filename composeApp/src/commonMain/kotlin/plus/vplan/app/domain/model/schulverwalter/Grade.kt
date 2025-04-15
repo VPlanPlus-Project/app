@@ -19,6 +19,7 @@ data class Grade(
     val cachedAt: Instant
 ): Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     val collection by lazy { App.collectionSource.getById(collectionId) }
     val subject by lazy { App.subjectSource.getById(subjectId) }
@@ -27,12 +28,6 @@ data class Grade(
 
     val numericValue: Int?
         get() {
-            return if (this.value == null) null
-            else this.value
-                .replace("(", "")
-                .replace(")", "")
-                .replace("+", "")
-                .replace("-", "")
-                .toIntOrNull()
+            return this.value?.replace("(", "")?.replace(")", "")?.replace("+", "")?.replace("-", "")?.toIntOrNull()
         }
 }

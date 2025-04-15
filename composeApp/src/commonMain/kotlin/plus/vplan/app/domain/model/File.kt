@@ -16,6 +16,7 @@ data class File(
     val cachedAt: Instant
 ) : Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     var preview: ImageBitmap? = null
         private set

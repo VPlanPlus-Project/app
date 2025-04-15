@@ -19,6 +19,7 @@ data class Subject(
     val cachedAt: Instant
 ): Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     val collections: Flow<List<CacheState<Collection>>> = combine(collectionIds.map { App.collectionSource.getById(it) }) { it.toList() }
     val finalGrade: Flow<FinalGrade>? by lazy { finalGradeId?.let { App.finalGradeSource.getById(finalGradeId).filterIsInstance<CacheState.Done<FinalGrade>>().map { finalGrade -> finalGrade.data } } }

@@ -19,6 +19,7 @@ data class SubjectInstance(
     val cachedAt: Instant
 ) : Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     var courseItem: Course? = null
         private set

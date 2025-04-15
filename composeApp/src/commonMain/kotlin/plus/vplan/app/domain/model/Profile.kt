@@ -20,6 +20,7 @@ abstract class Profile : Item<DataTag> {
     abstract val name: String
 
     override fun getEntityId(): String = this.id.toHexString()
+    override val tags: Set<DataTag> = emptySet()
     abstract fun getSchool(): Flow<CacheState<School>>
 
     @Deprecated("Use getSchool() instead")

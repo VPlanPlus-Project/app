@@ -13,4 +13,5 @@ data class LessonTime(
     val interpolated: Boolean = false
 ) : Item<DataTag> {
     override fun getEntityId(): String = this.id
+    override val tags: Set<DataTag> = emptySet()
 }

@@ -13,6 +13,7 @@ data class Room(
     val cachedAt: Instant
 ) : Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     var school: School? = null
         private set

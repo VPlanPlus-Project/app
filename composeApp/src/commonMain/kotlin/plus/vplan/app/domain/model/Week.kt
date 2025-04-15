@@ -34,4 +34,5 @@ data class Week(
     )
 
     override fun getEntityId(): String = this.id
+    override val tags: Set<DataTag> = emptySet()
 }

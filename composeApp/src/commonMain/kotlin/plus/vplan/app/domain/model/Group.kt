@@ -13,6 +13,8 @@ data class Group(
     val cachedAt: Instant
 ) : Item<DataTag> {
     override fun getEntityId(): String = id.toString()
+    override val tags: Set<DataTag> = emptySet()
+
     val school by lazy { App.schoolSource.getById(schoolId) }
 
     var schoolItem: School? = null

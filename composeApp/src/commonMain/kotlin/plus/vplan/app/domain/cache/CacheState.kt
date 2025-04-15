@@ -24,13 +24,22 @@ sealed class CacheState<out T: Item<*>>(val entityId: String) {
 
 interface Item<T: DataTag> {
     fun getEntityId(): String
+    val tags: Set<T>
 }
 
+/**
+ * Tags that can be used to indicate how much data is already loaded for an entity.
+ */
 interface DataTag
 
-suspend fun <T: Item<*>> Flow<CacheState<T>>.getFirstValue() = (this.onEach { if (it is CacheState.Error) Logger.e {
-    "Failed to load entity ${it.entityId}: ${it.error}"
-} }.filter { it is CacheState.NotExisting || it is CacheState.Done || it is CacheState.Error }.first() as? CacheState.Done<T>)?.data
+suspend fun <T: Item<*>> Flow<CacheState<T>>.getFirstValue(vararg requiredTags: DataTag) = this
+    .onEach { if (it is CacheState.Error) Logger.e { "Failed to load entity ${it.entityId}: ${it.error}" } }
+    .filter { it is CacheState.NotExisting || it is CacheState.Done || it is CacheState.Error }
+    .map {
+        if (it is CacheState.Done && it.data.tags.all { it in requiredTags }) it.data
+        else null
+    }
+    .first()
 
 @Composable
 fun <T: Item<*>> Flow<CacheState<T>>.collectAsLoadingState(id: String = "Unbekannt") = this.collectAsState(CacheState.Loading(id))

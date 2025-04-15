@@ -11,4 +11,5 @@ data class FinalGrade(
     val cachedAt: Instant
 ): Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 }

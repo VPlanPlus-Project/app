@@ -23,6 +23,7 @@ import kotlin.uuid.Uuid
 sealed class Homework(
     val creator: AppEntity
 ) : Item<DataTag> {
+    override val tags: Set<DataTag> = emptySet()
     abstract val id: Int
     abstract val createdAt: Instant
     abstract val dueTo: LocalDate
@@ -73,6 +74,7 @@ sealed class Homework(
         val cachedAt: Instant
     ) : Item<DataTag> {
         override fun getEntityId(): String = this.id.toString()
+        override val tags: Set<DataTag> = emptySet()
 
         var homeworkItem: Homework? = null
             private set
@@ -91,6 +93,7 @@ sealed class Homework(
         val size: Long,
     ) : Item<DataTag> {
         override fun getEntityId(): String = this.id.toString()
+        override val tags: Set<DataTag> = emptySet()
     }
 
     data class CloudHomework(

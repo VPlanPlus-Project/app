@@ -22,6 +22,7 @@ data class Collection(
     val cachedAt: Instant
 ): Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     val interval by lazy { App.intervalSource.getById(intervalId) }
     val subject by lazy { App.subjectSource.getById(subjectId) }
