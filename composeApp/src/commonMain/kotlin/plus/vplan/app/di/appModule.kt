@@ -124,7 +124,7 @@ val appModule = module(createdAtStart = true) {
 
             install(DefaultRequest) {
                 header("X-App", "VPlanPlus")
-                header("X-App-Version", App.versionCode)
+                header("X-App-Version", App.VERSION_CODE)
             }
         }
     }

@@ -123,7 +123,7 @@ private fun InfoContent(
                         style = MaterialTheme.typography.headlineSmall
                     )
                     Text(
-                        text = "${App.versionName} (${App.versionCode})",
+                        text = "${App.VERSION_NAME} (${App.VERSION_CODE})",
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
