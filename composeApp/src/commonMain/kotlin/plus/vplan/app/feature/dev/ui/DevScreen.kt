@@ -60,7 +60,7 @@ fun DevScreen(
         }
         Button(
             onClick = { scope.launch {
-                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, listOf(LocalDate(2025, 4, 10)), true)?.let {
+                updateSubstitutionPlanUseCase(state.profile!!.getSchoolItem() as School.IndiwareSchool, listOf(LocalDate(2025, 4, 15)), true)?.let {
                     Logger.e { "Error on updating substitution plan: $it" }
                 }
             } }

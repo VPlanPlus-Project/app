@@ -5,6 +5,8 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.atDate
 import kotlinx.datetime.format
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
@@ -79,9 +81,9 @@ class UpdateSubstitutionPlanUseCase(
                 return@forEachDate
             }
 
-            val oldPlan = profileRepository.getAll().first()
+            val oldPlan: Map<Profile, Set<Lesson>> = profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
-                .filter { it.getSchoolItem().id == indiwareSchool.id }
+                .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
                 .associateWith { getDayUseCase(it, date).first().lessons.first() }
 
             val substitutionPlanResponse = indiwareRepository.getSubstitutionPlan(
@@ -167,7 +169,7 @@ class UpdateSubstitutionPlanUseCase(
             val newVersion = keyValueRepository.get(Keys.substitutionPlanVersion(indiwareSchool.id)).first()
             val newPlan = profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
-                .filter { it.getSchoolItem().id == indiwareSchool.id }
+                .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
                 .associateWith {
                     substitutionPlanRepository.getSubstitutionPlanBySchool(indiwareSchool.id, date, "${indiwareSchool.id}_$newVersion")
                         .mapNotNull { App.substitutionPlanSource.getById(it).getFirstValue() }
@@ -176,10 +178,12 @@ class UpdateSubstitutionPlanUseCase(
 
             if (allowNotification) profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
-                .filter { it.getSchoolItem().id == indiwareSchool.id }
+                .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
                 .forEach forEachProfile@{ profile ->
                     val old = oldPlan[profile] ?: return@forEachProfile
                     val new = newPlan[profile] ?: return@forEachProfile
+
+                    if ((old + new).mapNotNull { it.lessonTime.getFirstValue()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachProfile
 
                     val oldLessons = old.map { it.getLessonSignature() }
                     val changedOrNewLessons = new.filter { it.getLessonSignature() !in oldLessons }
