@@ -16,6 +16,7 @@ import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import plus.vplan.app.App
+import plus.vplan.app.ENABLE_KTOR_LOGGING
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DayRepositoryImpl
@@ -102,6 +103,7 @@ import plus.vplan.app.feature.vpp_id.di.vppIdModule
 
 expect val platformModule: Module
 
+@Suppress("unused")
 fun RoomDatabase.Builder<VppDatabase>.config(): RoomDatabase.Builder<VppDatabase> = this
 
 val appModule = module(createdAtStart = true) {
@@ -114,7 +116,7 @@ val appModule = module(createdAtStart = true) {
                 })
             }
 
-            install(Logging) {
+            if (ENABLE_KTOR_LOGGING) install(Logging) {
                 logger = object : Logger {
                     override fun log(message: String) {
                         appLogger.i { message }
