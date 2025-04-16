@@ -1,7 +1,9 @@
 package plus.vplan.app.domain.source
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,7 +25,7 @@ class AssessmentSource(
         if (forceUpdate) flows.remove(id)
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Assessment>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            MainScope().launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 assessmentRepository.getById(id, forceUpdate).collectLatest { flow.tryEmit(it) }
             }
             flow

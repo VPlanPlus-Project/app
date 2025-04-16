@@ -1,6 +1,8 @@
 package plus.vplan.app.domain.source
 
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -20,7 +22,7 @@ class LessonTimeSource(
     fun getById(id: String): Flow<CacheState<LessonTime>> {
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<LessonTime>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            MainScope().launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 lessonTimeRepository.getById(id).map { if (it == null) return@map CacheState.NotExisting(id) else CacheState.Done(it) }
                     .collectLatest { flow.tryEmit(it) }
             }

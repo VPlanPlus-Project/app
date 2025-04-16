@@ -1,6 +1,8 @@
 package plus.vplan.app.domain.source.schulverwalter
 
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -17,7 +19,7 @@ class FinalGradeSource(
     fun getById(id: Int): MutableSharedFlow<CacheState<FinalGrade>> {
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<FinalGrade>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            MainScope().launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 finalGradeRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
             }
             flow

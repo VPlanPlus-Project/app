@@ -1,6 +1,8 @@
 package plus.vplan.app.domain.source
 
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -18,7 +20,7 @@ class NewsSource(
     fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<News>> {
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<News>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            MainScope().launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 newsRepository.getById(id, forceReload)
                     .collectLatest { flow.tryEmit(it) }
             }
