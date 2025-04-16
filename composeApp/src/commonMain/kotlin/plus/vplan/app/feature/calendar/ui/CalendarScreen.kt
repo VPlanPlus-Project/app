@@ -337,10 +337,10 @@ private fun CalendarScreenContent(
                         selectedDate = state.selectedDate,
                         days = state.selecorDays.values.toList(),
                         containerMaxHeight = containerHeight,
-                        onSelectDate = { cause, date ->
+                        onSelectDate = remember { { cause, date ->
                             onEvent(CalendarEvent.SelectDate(date))
                             if (cause == DateSelectionCause.DayClick && scrollProgress == 2f) scrollProgress = 0f
-                        }
+                        } }
                     )
                     HorizontalDivider()
                     val isUserDraggingPager = pagerState.interactionSource.collectIsDraggedAsState().value
@@ -398,8 +398,8 @@ private fun CalendarScreenContent(
                                 beyondViewportPageCount = 3,
                                 modifier = Modifier.fillMaxSize()
                             ) { page ->
-                                val date = LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
-                                val day = state.calendarDays[date] ?: CalendarDay(date)
+                                val date = remember(page) { LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY) }
+                                val day = remember(date) { state.calendarDays[date] ?: CalendarDay(date) }
                                 CalendarView(
                                     profile = state.currentProfile,
                                     date = date,
@@ -407,12 +407,12 @@ private fun CalendarScreenContent(
                                     lessons = day.layoutedLessons,
                                     assessments = day.assessments,
                                     homework = day.homework,
-                                    bottomIslandPadding = PaddingValues(end = 80.dp),
+                                    bottomIslandPadding = remember { PaddingValues(end = 80.dp) },
                                     limitTimeSpanToLessonsLowerBound = state.start,
                                     info = day.info,
                                     contentScrollState = contentScrollState,
-                                    onHomeworkClicked = { displayHomeworkId = it },
-                                    onAssessmentClicked = { displayAssessmentId = it },
+                                    onHomeworkClicked = remember { { displayHomeworkId = it } },
+                                    onAssessmentClicked = remember { { displayAssessmentId = it } },
                                 )
                             }
                         }

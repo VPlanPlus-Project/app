@@ -75,8 +75,8 @@ class HomeViewModel(
                     var lastSpecialLessonUpdate = LocalDateTime.now() - 1.hours
                     getCurrentDateTimeUseCase()
                         .onEach { time -> state = state.copy(currentTime = time) }
-                        .collectLatest { time ->
-                            if (lastSpecialLessonUpdate until time < 5.seconds) return@collectLatest
+                        .collect { time ->
+                            if (lastSpecialLessonUpdate until time < 5.seconds) return@collect
                             if (state.day?.date == time.date) {
                                 val currentLessons = state.day?.lessons?.first().orEmpty()
                                     .filter { lesson ->

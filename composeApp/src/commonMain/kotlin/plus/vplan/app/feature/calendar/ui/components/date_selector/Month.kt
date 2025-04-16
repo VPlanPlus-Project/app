@@ -27,13 +27,13 @@ fun Month(
     scrollProgress: Float,
     onDateSelected: (DateSelectionCause, LocalDate) -> Unit = { _, _ -> },
 ) {
-    var weekRowHeight = if (scrollProgress <= 1f) weekHeightDefault * scrollProgress
-    else (containerMaxHeight / 5) * (scrollProgress/2).coerceIn(0f, 1f)
+    var weekRowHeight = remember(scrollProgress, containerMaxHeight) { if (scrollProgress <= 1f) weekHeightDefault * scrollProgress
+    else (containerMaxHeight / 5) * (scrollProgress/2).coerceIn(0f, 1f) }
 
     Column(Modifier.fillMaxWidth()) {
         repeat(5) { i ->
-            val date = startDate + (i*7).days
-            val height = if (keepWeek == date && scrollProgress <= 1f) weekHeightDefault else weekRowHeight
+            val date = remember(startDate, i) { startDate + (i * 7).days }
+            val height = remember(date, keepWeek, scrollProgress, weekRowHeight) { if (keepWeek == date && scrollProgress <= 1f) weekHeightDefault else weekRowHeight }
             Box(Modifier.height(height)) {
                 if (i > 0) HorizontalDivider(
                     modifier = Modifier
