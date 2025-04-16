@@ -236,11 +236,11 @@ class UpdateSubstitutionPlanUseCase(
                 }
         }
 
-        substitutionPlanRepository.insertNewSubstitutionPlan(indiwareSchool.id, lessons)
-
-        LOGGER.i { "Substitution plan updated for indiware school ${indiwareSchool.id}, building caches" }
-        profileRepository.getAll().first().forEach { profile ->
-            updateProfileLessonIndexUseCase(profile)
+        substitutionPlanRepository.insertNewSubstitutionPlan(indiwareSchool.id, lessons) { newVersion ->
+            LOGGER.i { "Substitution plan updated for indiware school ${indiwareSchool.id}, building caches" }
+            profileRepository.getAll().first().forEach { profile ->
+                updateProfileLessonIndexUseCase(profile, newVersion)
+            }
         }
 
         return error

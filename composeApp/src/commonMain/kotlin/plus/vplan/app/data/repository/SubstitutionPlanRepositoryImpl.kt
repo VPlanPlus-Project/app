@@ -27,7 +27,8 @@ class SubstitutionPlanRepositoryImpl(
 ) : SubstitutionPlanRepository {
     override suspend fun insertNewSubstitutionPlan(
         schoolId: Int,
-        lessons: List<Lesson.SubstitutionPlanLesson>
+        lessons: List<Lesson.SubstitutionPlanLesson>,
+        beforeVersionBump: suspend (newVersion: String) -> Unit
     ) {
         val currentVersion = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).first()?.toIntOrNull() ?: -1
         val newVersion = currentVersion + 1
@@ -66,6 +67,7 @@ class SubstitutionPlanRepositoryImpl(
             }
         )
 
+        beforeVersionBump("${schoolId}_$newVersion")
         vppDatabase.keyValueDao.set(Keys.substitutionPlanVersion(schoolId), newVersion.toString())
         vppDatabase.substitutionPlanDao.deleteSubstitutionPlanByVersion("${schoolId}_$currentVersion")
     }
@@ -89,17 +91,21 @@ class SubstitutionPlanRepositoryImpl(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getSubstitutionPlanBySchool(
-        schoolId: Int
-    ): Flow<Set<Lesson.SubstitutionPlanLesson>> = vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.mapLatest { version ->
-        vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version").first().map { it.toModel() }.toSet()
-    }.distinctUntilChanged()
+        schoolId: Int,
+        versionString: String?
+    ): Flow<Set<Lesson.SubstitutionPlanLesson>> {
+        return if (versionString == null) vppDatabase.keyValueDao.get(Keys.substitutionPlanVersion(schoolId)).map { it?.toIntOrNull() ?: -1 }.mapLatest { version ->
+            vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, "${schoolId}_$version").first().map { it.toModel() }.toSet()
+        }.distinctUntilChanged()
+        else vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, versionString).map { items -> items.map { it.toModel() }.toSet() }.distinctUntilChanged()
+    }
 
     override fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?> {
         return vppDatabase.substitutionPlanDao.getById(id).map { it?.toModel() }
     }
 
-    override suspend fun dropCacheForProfile(profileId: Uuid) {
-        vppDatabase.profileSubstitutionPlanCacheDao.deleteCacheForProfile(profileId)
+    override suspend fun dropCacheForProfile(profileId: Uuid, version: String?) {
+        vppDatabase.profileSubstitutionPlanCacheDao.deleteCacheForProfile(profileId, version)
     }
 
     override suspend fun createCacheForProfile(profileId: Uuid, substitutionLessonIds: List<Uuid>) {

@@ -90,6 +90,7 @@ fun DevScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
+                enabled = !fullSyncRunning,
                 onClick = {
                     fullSyncRunning = true
                     fullSyncUseCase().invokeOnCompletion {
