@@ -6,7 +6,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -155,9 +158,11 @@ class HomeViewModel(
     private fun update() {
         state = state.copy(isUpdating = true)
         viewModelScope.launch {
-            updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool)
-            updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, forceUpdate = false)
-            updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, listOfNotNull(state.day?.date, state.day?.nextSchoolDay?.getFirstValue()?.date), allowNotification = false)
+            withContext(Dispatchers.IO) {
+                updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool)
+                updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, forceUpdate = false)
+                updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, listOfNotNull(state.day?.date, state.day?.nextSchoolDay?.getFirstValue()?.date), allowNotification = false)
+            }
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }
 

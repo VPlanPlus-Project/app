@@ -5,6 +5,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 
 data class Interval(
@@ -17,8 +18,10 @@ data class Interval(
     val yearId: Int,
     val collectionIds: List<Int>,
     val cachedAt: Instant
-): Item {
+): Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
+
     enum class Type {
         SEK1, SEK2;
 

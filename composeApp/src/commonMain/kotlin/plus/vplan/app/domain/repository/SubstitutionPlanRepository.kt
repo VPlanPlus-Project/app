@@ -10,15 +10,15 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 interface SubstitutionPlanRepository {
-    suspend fun insertNewSubstitutionPlan(schoolId: Int, lessons: List<Lesson.SubstitutionPlanLesson>)
+    suspend fun insertNewSubstitutionPlan(schoolId: Int, lessons: List<Lesson.SubstitutionPlanLesson>, beforeVersionBump: suspend (newVersion: String) -> Unit = {})
     suspend fun deleteAllSubstitutionPlans()
     suspend fun deleteSubstitutionPlansByVersion(schoolId: Int, version: String)
 
     suspend fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate, versionString: String): Set<Uuid>
     suspend fun getForProfile(profile: Profile, date: LocalDate, versionString: String): Set<Uuid>
-    fun getSubstitutionPlanBySchool(schoolId: Int): Flow<Set<Lesson.SubstitutionPlanLesson>>
+    fun getSubstitutionPlanBySchool(schoolId: Int, versionString: String?): Flow<Set<Lesson.SubstitutionPlanLesson>>
     fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?>
 
-    suspend fun dropCacheForProfile(profileId: Uuid)
+    suspend fun dropCacheForProfile(profileId: Uuid, version: String? = null)
     suspend fun createCacheForProfile(profileId: Uuid, substitutionLessonIds: List<Uuid>)
 }

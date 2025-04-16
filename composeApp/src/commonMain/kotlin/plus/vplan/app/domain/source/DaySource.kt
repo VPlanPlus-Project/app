@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
@@ -81,9 +80,16 @@ class DaySource(
                         substitutionPlan = emptySet(),
                         assessmentIds = emptySet(),
                         homeworkIds = emptySet(),
-                        nextSchoolDayId = null
+                        nextSchoolDayId = null,
+                        tags = emptySet()
                     )
                 )
+
+                launch {
+                    day.collect {
+                        flow.tryEmit(CacheState.Done(it))
+                    }
+                }
 
                 launch {
                     combine(
@@ -109,17 +115,11 @@ class DaySource(
                                         }
                                         if (holidays.any { it == friday } || holidays.any { it == monday }) Day.DayType.HOLIDAY else Day.DayType.WEEKEND
                                     } else if (dayInfo?.timetable != null) Day.DayType.REGULAR
-                                    else Day.DayType.UNKNOWN
+                                    else Day.DayType.UNKNOWN,
+                                tags = it.tags + Day.DayTags.HAS_METADATA
                             )
                         }
                     }
-                        .onStart {
-                            launch {
-                                day.collect {
-                                    flow.tryEmit(CacheState.Done(it))
-                                }
-                            }
-                        }
                         .collect()
                 }
 
@@ -153,7 +153,8 @@ class DaySource(
                                 assessmentIds = assessments,
                                 homeworkIds = homework,
                                 nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },
-                                dayType = if (timetable.isNotEmpty() || substitutionPlan.isNotEmpty()) Day.DayType.REGULAR else it.dayType
+                                dayType = if (timetable.isNotEmpty() || substitutionPlan.isNotEmpty()) Day.DayType.REGULAR else it.dayType,
+                                tags = it.tags + Day.DayTags.HAS_LESSONS
                             )
                         }
                     }.collect()

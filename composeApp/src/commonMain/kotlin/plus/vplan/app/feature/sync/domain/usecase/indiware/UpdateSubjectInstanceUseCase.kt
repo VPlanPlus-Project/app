@@ -23,10 +23,13 @@ class UpdateSubjectInstanceUseCase(
     private val teacherRepository: TeacherRepository,
     private val courseRepository: CourseRepository
 ) {
-    suspend operator fun invoke(school: School.IndiwareSchool): Response.Error? {
-        val baseData = indiwareRepository.getBaseData(school.sp24Id, school.username, school.password)
-        if (baseData is Response.Error) return baseData
-        if (baseData !is Response.Success) throw IllegalStateException("baseData is not successful: $baseData")
+    suspend operator fun invoke(school: School.IndiwareSchool, indiwareBaseData: IndiwareBaseData? = null): Response.Error? {
+        val baseData = indiwareBaseData ?: run {
+            val baseData = indiwareRepository.getBaseData(school.sp24Id, school.username, school.password)
+            if (baseData is Response.Error) return baseData
+            if (baseData !is Response.Success) throw IllegalStateException("baseData is not successful: $baseData")
+            baseData.data
+        }
 
         val teachers = teacherRepository.getBySchool(schoolId = school.id).first()
         val existingCourses = courseRepository.getBySchool(schoolId = school.id, false)
@@ -34,13 +37,13 @@ class UpdateSubjectInstanceUseCase(
 
         updateCourses(
             school = school,
-            baseData = baseData.data,
+            baseData = baseData,
             existingCourses = existingCourses.latest(),
             teachers = teachers
         )
 
         updateSubjectInstances(
-            baseData = baseData.data,
+            baseData = baseData,
             existingSubjectInstances = existingSubjectInstances.latest(),
         )
 

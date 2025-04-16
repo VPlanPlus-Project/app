@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 import kotlin.uuid.ExperimentalUuidApi
@@ -30,8 +31,9 @@ data class Day(
     val substitutionPlan: Set<Uuid>,
     val assessmentIds: Set<Int>,
     val homeworkIds: Set<Int>,
-    val nextSchoolDayId: String?
-): Item {
+    val nextSchoolDayId: String?,
+    override val tags: Set<DayTags>
+): Item<Day.DayTags> {
     enum class DayType {
         REGULAR, WEEKEND, HOLIDAY, UNKNOWN
     }
@@ -64,7 +66,7 @@ data class Day(
     val nextSchoolDay by lazy { if (this.nextSchoolDayId == null) return@lazy null else App.daySource.getById(nextSchoolDayId) }
 
     val lessons: Flow<Set<Lesson>> by lazy {
-        if (timetable.isEmpty()) return@lazy flowOf(emptySet())
+        if (timetable.isEmpty() && substitutionPlan.isEmpty()) return@lazy flowOf(emptySet())
         (if (substitutionPlan.isEmpty()) combine(timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { it.data } }) { it.toSet() }
         else combine(substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { it.data } }) { it.toSet() })
             .map { lessons ->
@@ -72,5 +74,9 @@ data class Day(
                 lessons.filter { lesson ->
                     lesson is Lesson.SubstitutionPlanLesson || (lesson is Lesson.TimetableLesson && (lesson.weekType == null || week?.weekType == lesson.weekType))
             }.toSet() }
+    }
+
+    enum class DayTags: DataTag {
+        HAS_METADATA, HAS_LESSONS
     }
 }
