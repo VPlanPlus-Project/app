@@ -1,6 +1,8 @@
 package plus.vplan.app.domain.source
 
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -36,7 +38,7 @@ class ProfileSource(
     fun getById(id: Uuid): Flow<CacheState<Profile>> {
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Profile>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            MainScope().launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 profileRepository.getById(id).map { profile -> profile?.let { CacheState.Done(it).also { cacheItems[id] = it } } ?: CacheState.NotExisting(id.toHexString()) }
                     .collectLatest { flow.tryEmit(it) }
             }

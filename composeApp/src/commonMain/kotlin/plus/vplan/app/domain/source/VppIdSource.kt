@@ -1,6 +1,8 @@
 package plus.vplan.app.domain.source
 
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,7 +21,7 @@ class VppIdSource(
     fun getById(id: Int): Flow<CacheState<VppId>> {
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<VppId>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            MainScope().launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 vppIdRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
             }
             flow

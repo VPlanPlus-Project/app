@@ -28,7 +28,7 @@ fun WeekScroller(
     scrollProgress: Float,
     onChangeSelectedDate: (DateSelectionCause, LocalDate) -> Unit
 ) {
-    val referenceWeek = LocalDate.now().atStartOfWeek()
+    val referenceWeek = remember(LocalDate.now()) { LocalDate.now().atStartOfWeek() }
     val pagerState = rememberPagerState(initialPage = (WEEK_PAGER_SIZE / 2) + referenceWeek.until(selectedDate.atStartOfWeek(), DateTimeUnit.WEEK)) { WEEK_PAGER_SIZE }
     val isUserDragging = pagerState.interactionSource.collectIsDraggedAsState().value
     LaunchedEffect(pagerState.targetPage, isUserDragging) {
@@ -50,7 +50,7 @@ fun WeekScroller(
         pageSize = PageSize.Fill,
         beyondViewportPageCount = 2
     ) { page ->
-        val startDate = referenceWeek + ((page - WEEK_PAGER_SIZE / 2) * 7).days
+        val startDate = remember(page) { referenceWeek + ((page - WEEK_PAGER_SIZE / 2) * 7).days }
         Week(
             startDate = startDate,
             days = remember(days) { days.filter { it.date >= startDate && (it.date.minus(7.days)) < startDate } },

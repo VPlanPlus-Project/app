@@ -27,12 +27,12 @@ fun Week(
             .height(height),
     ) {
         repeat(7) {
-            val date = startDate + it.days
+            val date = remember(startDate, it) { startDate + it.days }
             val day = remember(days) { days.firstOrNull { it.date == date } ?: DateSelectorDay(date) }
             Day(
                 date = day.date,
                 selectedDate = selectedDate,
-                onClick = { onDateSelected(DateSelectionCause.DayClick, date) },
+                onClick = remember(date) { { onDateSelected(DateSelectionCause.DayClick, date) } },
                 height = height,
                 isOtherMonth = selectedDate.month != date.month,
                 scrollProgress = scrollProgress,

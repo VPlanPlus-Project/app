@@ -2,7 +2,9 @@
 
 package plus.vplan.app.domain.source
 
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -64,7 +66,7 @@ class DaySource(
     fun getById(id: String, contextProfile: Profile? = null): Flow<CacheState<Day>> {
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Day>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            MainScope().launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 val schoolId = id.substringBefore("/").toInt()
                 val date = LocalDate.parse(id.substringAfter("/"))
                 val school = App.schoolSource.getById(schoolId).filterIsInstance<CacheState.Done<School>>().firstOrNull()?.data ?: return@launch
