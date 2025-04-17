@@ -332,7 +332,7 @@ private fun ProfileSettingsContent(
             },
             text = {
                 if (state.isLastProfileOfSchool) {
-                    val school = state.profile!!.getSchool().collectAsResultingFlow().value ?: return@AlertDialog
+                    val school = remember(state.profile?.id) { state.profile?.getSchool() }?.collectAsResultingFlow()?.value ?: return@AlertDialog
                     Text("Dies ist das letzte Profil der Schule ${school.name}. Wenn du dieses Profil löschst, musst du die Schule erneut hinzufügen.")
                 } else Text("Dieses Profil wird gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.")
             },
