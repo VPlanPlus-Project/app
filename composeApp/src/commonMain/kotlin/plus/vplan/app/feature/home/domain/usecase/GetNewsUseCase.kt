@@ -25,8 +25,8 @@ class GetNewsUseCase(
                 (news.schoolIds.isEmpty() || school.id in news.schoolIds) &&
                         news.dateFrom?.let { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date >= news.dateFrom.toLocalDateTime(TimeZone.currentSystemDefault()).date } ?: true &&
                         news.dateTo?.let { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date <= news.dateTo.toLocalDateTime(TimeZone.currentSystemDefault()).date } ?: true &&
-                        news.versionFrom?.let { App.versionCode >= news.versionFrom } ?: true &&
-                        news.versionTo?.let { App.versionCode <= news.versionTo } ?: true
+                        news.versionFrom?.let { App.VERSION_CODE >= news.versionFrom } ?: true &&
+                        news.versionTo?.let { App.VERSION_CODE <= news.versionTo } ?: true
             }
         }.distinctUntilChanged()
     }
