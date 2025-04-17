@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package plus.vplan.app.domain.model
 
 import androidx.compose.runtime.Stable
@@ -13,6 +15,7 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @Stable
@@ -35,6 +38,7 @@ data class Day(
 
     companion object {
         fun buildId(school: School, date: LocalDate) = "${school.id}/$date"
+        fun buildId(schoolId: Int, date: LocalDate) = "$schoolId/$date"
     }
 
     override fun getEntityId(): String = this.id

@@ -92,6 +92,7 @@ private fun SearchScreenContent(
                     onHomeworkClicked = { visibleHomework = it },
                     onOpenRoomSearchClicked = onRoomSearchClicked
                 ) else SearchResults(
+                    isLoading = state.isLoading,
                     date = state.query.date,
                     dayType = state.selectedDateType,
                     profile = state.currentProfile,
@@ -112,7 +113,7 @@ private fun SearchScreenContent(
             onQueryChange = { onEvent(SearchEvent.UpdateQuery(it)) },
             onSelectDate = { onEvent(SearchEvent.SelectDate(it)) },
             onSelectSubject = { onEvent(SearchEvent.FilterForSubject(it)) },
-            onSelectAssessmentType = { onEvent(SearchEvent.FitlerForAssessmentType(it)) }
+            onSelectAssessmentType = { onEvent(SearchEvent.FilterForAssessmentType(it)) }
         )
     }
 

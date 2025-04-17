@@ -156,7 +156,6 @@ private fun HomeContent(
         indicator = {
             Indicator(
                 modifier = Modifier
-                    .padding(top = 16.dp)
                     .align(Alignment.TopCenter),
                 isRefreshing = state.isUpdating,
                 state = pullToRefreshState
