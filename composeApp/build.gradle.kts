@@ -139,11 +139,11 @@ android {
     }
     buildTypes {
         getByName("debug") {
-            signingConfig = signingConfigs.getByName("default")
+            signingConfig = signingConfigs.findByName("default")
         }
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("default")
+            signingConfig = signingConfigs.findByName("default")
         }
     }
     compileOptions {
