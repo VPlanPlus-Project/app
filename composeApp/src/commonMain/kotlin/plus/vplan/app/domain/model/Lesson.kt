@@ -31,26 +31,6 @@ sealed interface Lesson : Item {
     val groups: Flow<List<CacheState<Group>>>
     val teachers: Flow<List<CacheState<Teacher>>>
 
-    @Deprecated("Use Flow instead")
-    suspend fun getLessonTimeItem(): LessonTime
-    @Deprecated("Use Flow instead")
-    val lessonTimeItem: LessonTime?
-
-    @Deprecated("Use Flow instead")
-    suspend fun getRoomItems(): List<Room>?
-    @Deprecated("Use Flow instead")
-    val roomItems: List<Room>?
-
-    @Deprecated("Use Flow instead")
-    suspend fun getTeacherItems(): List<Teacher>
-    @Deprecated("Use Flow instead")
-    val teacherItems: List<Teacher>?
-
-    @Deprecated("Use Flow instead")
-    suspend fun getGroupItems(): List<Group>
-    @Deprecated("Use Flow instead")
-    val groupItems: List<Group>?
-
     val isCancelled: Boolean
 
     data class TimetableLesson(
@@ -73,41 +53,6 @@ sealed interface Lesson : Item {
 
         override val subjectInstanceId = null
         override val isCancelled: Boolean = false
-        @Deprecated("Use Flow instead")
-        override var roomItems: List<Room>? = null
-            private set
-
-        @Deprecated("Use Flow instead")
-        override var teacherItems: List<Teacher>? = null
-            private set
-
-        @Deprecated("Use Flow instead")
-        override var lessonTimeItem: LessonTime? = null
-            private set
-
-        @Deprecated("Use Flow instead")
-        override var groupItems: List<Group>? = null
-            private set
-
-        @Deprecated("Use Flow instead")
-        override suspend fun getLessonTimeItem(): LessonTime {
-            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTimeId)!!.also { lessonTimeItem = it }
-        }
-
-        @Deprecated("Use Flow instead")
-        override suspend fun getRoomItems(): List<Room>? {
-            return roomItems ?: roomIds?.mapNotNull { App.roomSource.getSingleById(it) }?.also { roomItems = it }
-        }
-
-        @Deprecated("Use Flow instead")
-        override suspend fun getTeacherItems(): List<Teacher> {
-            return teacherItems ?: teacherIds.mapNotNull { App.teacherSource.getSingleById(it) }.also { teacherItems = it }
-        }
-
-        @Deprecated("Use Flow instead")
-        override suspend fun getGroupItems(): List<Group> {
-            return groupItems ?: groupIds.mapNotNull { App.groupSource.getSingleById(it) }.also { groupItems = it }
-        }
 
         override fun getLessonSignature(): String {
             return "$subject/$teacherIds/$roomIds/$groupIds/$lessonTimeId/$dayOfWeek/$weekType"
@@ -162,53 +107,8 @@ sealed interface Lesson : Item {
         override val isCancelled: Boolean
             get() = subject == null && subjectInstanceId != null
 
-        @Deprecated("Use Flow instead")
-        override var lessonTimeItem: LessonTime? = null
-            private set
-
-        @Deprecated("Use Flow instead")
-        override var roomItems: List<Room>? = null
-            private set
-
-        @Deprecated("Use Flow instead")
-        override var teacherItems: List<Teacher>? = null
-            private set
-
-        @Deprecated("Use Flow instead")
-        var subjectInstanceItem: SubjectInstance? = null
-            private set
-
-        @Deprecated("Use Flow instead")
-        override var groupItems: List<Group>? = null
-            private set
-
-        @Deprecated("Use Flow instead")
-        suspend fun getSubjectInstance(): SubjectInstance? {
-            return subjectInstanceItem ?: if (subjectInstanceId == null) null else App.subjectInstanceSource.getSingleById(subjectInstanceId).also { subjectInstanceItem = it }
-        }
-
         override fun getLessonSignature(): String {
-            return "$subject/$teacherIds/$roomIds/$groupIds/$lessonTimeId/$date/$subjectInstanceId"
-        }
-
-        @Deprecated("Use Flow instead")
-        override suspend fun getLessonTimeItem(): LessonTime {
-            return lessonTimeItem ?: App.lessonTimeSource.getSingleById(lessonTimeId)!!.also { lessonTimeItem = it }
-        }
-
-        @Deprecated("Use Flow instead")
-        override suspend fun getRoomItems(): List<Room> {
-            return roomItems ?: roomIds.mapNotNull { App.roomSource.getSingleById(it) }.also { roomItems = it }
-        }
-
-        @Deprecated("Use Flow instead")
-        override suspend fun getTeacherItems(): List<Teacher> {
-            return teacherItems ?: teacherIds.mapNotNull { App.teacherSource.getSingleById(it) }.also { teacherItems = it }
-        }
-
-        @Deprecated("Use Flow instead")
-        override suspend fun getGroupItems(): List<Group> {
-            return groupItems ?: groupIds.mapNotNull { App.groupSource.getSingleById(it) }.also { groupItems = it }
+            return "$subject/${teacherIds.sorted()}/${roomIds.sorted()}/${groupIds.sorted()}/$lessonTimeId/$date/$subjectInstanceId"
         }
     }
 

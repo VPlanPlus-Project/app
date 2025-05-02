@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package plus.vplan.app.utils
 
 import kotlin.math.abs
@@ -30,7 +32,7 @@ fun <T> List<T>.lastContinuousBy(predicate: (T) -> Int): T? {
     return null
 }
 
-fun <T> List<T>.takeContinuousBy(predicate: (T) -> Int): List<T> {
+inline fun <T> List<T>.takeContinuousBy(predicate: (T) -> Int): List<T> {
     if (isEmpty()) return emptyList()
     val result = mutableListOf<T>()
     result.add(first())
