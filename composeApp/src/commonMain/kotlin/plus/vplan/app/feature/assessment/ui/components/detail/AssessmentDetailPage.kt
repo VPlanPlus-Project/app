@@ -223,7 +223,7 @@ fun DetailPage(
                     HorizontalDivider()
                 }
             }
-            if (assessment.creator is AppEntity.VppId && assessment.createdByVppId != null) CreatedByRow(createdBy = assessment.createdByVppId!!)
+            if (assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = assessment.creator)
             else SavedLocalRow()
 
             CreatedAtRow(createdAt = assessment.createdAt.toInstant(TimeZone.UTC))
@@ -247,7 +247,6 @@ fun DetailPage(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Logger.d { "Files raw: ${assessment.fileIds.joinToString()}" }
                 remember(assessment.fileIds) { assessment.files }.collectAsSingleFlow().value.forEach { file ->
                     FileRow(
                         file = file,
