@@ -48,7 +48,7 @@ class SearchUseCase(
         if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
         val query = searchRequest.query.lowercase().trim()
         val profile = getCurrentProfileUseCase().first()
-        val school = profile.getSchoolItem()
+        val school = profile.getSchool().getFirstValue() ?: return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
 
         launch {
             keyValueRepository.get(Keys.substitutionPlanVersion(school.id)).collectLatest { versionFlow ->

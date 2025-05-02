@@ -41,6 +41,7 @@ import plus.vplan.app.domain.source.schulverwalter.IntervalSource
 import plus.vplan.app.domain.source.schulverwalter.SubjectSource
 import plus.vplan.app.domain.source.schulverwalter.YearSource
 import plus.vplan.app.feature.host.ui.NavigationHost
+import plus.vplan.app.feature.settings.page.info.domain.usecase.getSystemInfo
 import plus.vplan.app.ui.theme.AppTheme
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -89,7 +90,7 @@ val VPP_ID_AUTH_URL = URLBuilder(
         append("client_id", APP_ID)
         append("client_secret", APP_SECRET)
         append("redirect_uri", APP_REDIRECT_URI)
-        append("device_name", "mein telefon")
+        append("device_name", getSystemInfo().let { "${it.manufacturer} ${it.deviceName} (${it.device})" })
     }
 ).build().toString()
 
@@ -123,8 +124,8 @@ object App {
     lateinit var gradeSource: GradeSource
     lateinit var finalGradeSource: FinalGradeSource
 
-    val versionCode: Int = 1
-    val versionName: String = "0.0.1-alpha" // remember to update build.gradle.kts
+    const val VERSION_CODE: Int = 1
+    const val VERSION_NAME: String = "0.0.1-alpha" // remember to update build.gradle.kts
 }
 
 @Composable
