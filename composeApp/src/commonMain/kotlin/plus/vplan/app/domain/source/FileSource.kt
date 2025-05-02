@@ -1,7 +1,9 @@
 package plus.vplan.app.domain.source
 
 import androidx.compose.ui.graphics.ImageBitmap
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -39,7 +41,7 @@ class FileSource(
                 } else it
             }
             val flow = MutableSharedFlow<CacheState<File>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            MainScope().launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 fileFlow.collectLatest { flow.tryEmit(it) }
             }
             flow

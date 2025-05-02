@@ -6,6 +6,7 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.Dp
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -28,7 +29,7 @@ fun MonthScroller(
     containerMaxHeight: Dp,
     onChangeSelectedDate: (DateSelectionCause, LocalDate) -> Unit
 ) {
-    val referenceDate = LocalDate.now().atStartOfMonth()
+    val referenceDate = remember(LocalDate.now()) { LocalDate.now().atStartOfMonth() }
     val pagerState = rememberPagerState(initialPage = (MONTH_PAGER_SIZE / 2) + referenceDate.until(selectedDate.atStartOfMonth(), DateTimeUnit.MONTH)) { MONTH_PAGER_SIZE }
     val isUserDragging = pagerState.interactionSource.collectIsDraggedAsState().value
     LaunchedEffect(pagerState.targetPage, isUserDragging) {
@@ -48,15 +49,15 @@ fun MonthScroller(
     HorizontalPager(
         state = pagerState,
         pageSize = PageSize.Fill,
-        beyondViewportPageCount = 2
+        beyondViewportPageCount = 1
     ) { page ->
-        val startDate = referenceDate.plus((page - MONTH_PAGER_SIZE / 2), DateTimeUnit.MONTH).atStartOfWeek()
-        val days = days.filter { it.date >= startDate && it.date - 31.days < startDate }
+        val startDate = remember(referenceDate, page) { referenceDate.plus((page - MONTH_PAGER_SIZE / 2), DateTimeUnit.MONTH).atStartOfWeek() }
+        val days = remember(days, startDate) { days.filter { it.date >= startDate && it.date - 31.days < startDate } }
         Month(
             startDate = startDate,
             days = days,
             selectedDate = selectedDate,
-            keepWeek = selectedDate.atStartOfWeek(),
+            keepWeek = remember(selectedDate) { selectedDate.atStartOfWeek() },
             scrollProgress = scrollProgress,
             containerMaxHeight = containerMaxHeight,
             onDateSelected = onChangeSelectedDate
