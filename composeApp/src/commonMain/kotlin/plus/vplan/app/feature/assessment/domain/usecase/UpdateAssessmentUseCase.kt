@@ -12,7 +12,7 @@ class UpdateAssessmentUseCase(
     suspend operator fun invoke(id: Int): UpdateResult {
         return when(assessmentRepository.getById(id, true).first { it !is CacheState.Loading }.also {
             if (it is CacheState.Done) {
-                it.data.files.map { fileId ->
+                it.data.fileIds.map { fileId ->
                     fileRepository.getById(fileId, true).first { it !is CacheState.Loading }
                 }
             }

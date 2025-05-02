@@ -32,7 +32,7 @@ data class EmbeddedAssessment(
         subjectInstanceId = assessment.subjectInstanceId,
         description = assessment.description,
         type = Assessment.Type.entries[assessment.type],
-        files = files.map { it.fileId },
+        fileIds = files.map { it.fileId },
         cachedAt = assessment.cachedAt
     )
 }

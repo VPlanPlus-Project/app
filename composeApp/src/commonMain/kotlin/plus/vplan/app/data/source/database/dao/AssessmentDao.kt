@@ -78,4 +78,7 @@ interface AssessmentDao {
 
     @Upsert
     suspend fun upsertAssessmentsIndex(indices: List<DbProfileAssessmentIndex>)
+
+    @Query("DELETE FROM fk_assessment_file WHERE assessment_id = :assessmentId AND file_id = :fileId")
+    suspend fun deleteFileAssessmentConnections(assessmentId: Int, fileId: Int)
 }

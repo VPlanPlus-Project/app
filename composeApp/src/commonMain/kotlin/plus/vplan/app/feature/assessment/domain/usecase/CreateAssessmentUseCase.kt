@@ -79,7 +79,7 @@ class CreateAssessmentUseCase(
                 subjectInstanceId = subjectInstance.id,
                 description = text,
                 type = type,
-                files = files.map { it.id }.toList(),
+                fileIds = files.map { it.id }.toList(),
                 cachedAt = Clock.System.now()
             )
         } else {
@@ -101,7 +101,7 @@ class CreateAssessmentUseCase(
                 subjectInstanceId = subjectInstance.id,
                 description = text,
                 type = type,
-                files = files.map { it.id }.toList(),
+                fileIds = files.map { it.id }.toList(),
                 cachedAt = Clock.System.now()
             )
         }
