@@ -4,15 +4,17 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 
-sealed class VppId : Item {
+sealed class VppId : Item<DataTag> {
     abstract val id: Int
     abstract val name: String
     abstract val groups: List<Int>
     abstract val cachedAt: Instant
 
     override fun getEntityId(): String = this.id.toString()
+    override val tags: Set<DataTag> = emptySet()
 
     data class Cached(
         override val id: Int,
