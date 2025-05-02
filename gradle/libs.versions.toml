@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.1"
+agp = "8.9.2"
 android-compileSdk = "35"
 android-minSdk = "24"
 android-targetSdk = "35"
@@ -15,7 +15,7 @@ kotlinxDatetime = "0.6.2"
 biometric = "1.1.0"
 
 ksp = "2.1.10-1.0.31"
-androidx-room = "2.7.0"
+androidx-room = "2.7.1"
 androidx-sqlite = "2.5.0"
 navigationCompose = "2.9.0-alpha16"
 skiko = "0.9.4"
@@ -31,13 +31,13 @@ kotlinSerialization = "1.8.1"
 coroutines = "1.10.1"
 
 google-gms = "4.4.2"
-firebase-bom = "33.12.0"
+firebase-bom = "33.13.0"
 
 ktor = "3.1.2"
 
 xmlutil = "0.90.2"
 androidBrowser = "1.8.0"
-workRuntimeKtx = "2.10.0"
+workRuntimeKtx = "2.10.1"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
