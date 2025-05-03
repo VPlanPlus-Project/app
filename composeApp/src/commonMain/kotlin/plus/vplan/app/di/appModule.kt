@@ -99,6 +99,7 @@ import plus.vplan.app.feature.schulverwalter.di.schulverwalterModule
 import plus.vplan.app.feature.search.di.searchModule
 import plus.vplan.app.feature.settings.di.settingsModule
 import plus.vplan.app.feature.sync.di.syncModule
+import plus.vplan.app.feature.system.di.systemModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
 
 expect val platformModule: Module
@@ -161,6 +162,7 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         modules(domainModule)
         modules(
             appModule,
+            systemModule,
             hostModule,
             mainModule,
             syncModule,
