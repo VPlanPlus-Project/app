@@ -43,6 +43,7 @@ import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingScho
 fun ColumnScope.SearchResults(
     query: String,
     results: Response<List<OnlineSchool>>,
+    onImportFromOldAppClicked: () -> Unit,
     onEvent: (OnboardingSchoolSearchEvent) -> Unit
 ) {
     var showAnimation by rememberSaveable { mutableStateOf(true) }
@@ -55,7 +56,7 @@ fun ColumnScope.SearchResults(
         modifier = Modifier.weight(1f, true)
     ) { queryIsBlank ->
         if (queryIsBlank) {
-            WelcomeScreen(showAnimation)
+            WelcomeScreen(showAnimation, onImportFromOldAppClicked)
             return@AnimatedContent
         }
         AnimatedContent(
