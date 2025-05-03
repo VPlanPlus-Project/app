@@ -40,7 +40,6 @@ import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
 import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
@@ -60,7 +59,7 @@ class VppIdRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : VppIdRepository {
     override suspend fun getAccessToken(code: String): Response<String> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.submitForm(
                 url = "${api.url}/api/v2.2/auth/token",
                 formParameters = Parameters.build {
@@ -80,10 +79,11 @@ class VppIdRepositoryImpl(
 
             return Response.Success(data.accessToken)
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun getUserByToken(token: String, upsert: Boolean): Response<VppId.Active> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get("${api.url}/api/v2.2/user/me") {
                 bearerAuth(token)
             }
@@ -121,6 +121,7 @@ class VppIdRepositoryImpl(
             )
             return Response.Success(getById(data.id, false).getFirstValue()!! as VppId.Active)
         }
+        return Response.Error.Cancelled
     }
 
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<VppId>> {
@@ -191,7 +192,7 @@ class VppIdRepositoryImpl(
     }
 
     override suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get("${api.url}/api/v2.2/user/me/session") {
                 bearerAuth(vppId.accessToken)
             }
@@ -205,10 +206,11 @@ class VppIdRepositoryImpl(
 
             return Response.Success(data.map { it.toModel() })
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun logoutDevice(vppId: VppId.Active, deviceId: Int): Response<Unit> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.delete("${api.url}/api/v2.2/user/me/session/$deviceId") {
                 bearerAuth(vppId.accessToken)
             }
@@ -218,10 +220,11 @@ class VppIdRepositoryImpl(
             }
             return Response.Success(Unit)
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun logout(token: String): Response<Unit> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get("${api.url}/api/v2.2/auth/logout") {
                 bearerAuth(token)
             }
@@ -231,6 +234,7 @@ class VppIdRepositoryImpl(
             }
             return Response.Success(Unit)
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun deleteAccessTokens(vppId: VppId.Active) {

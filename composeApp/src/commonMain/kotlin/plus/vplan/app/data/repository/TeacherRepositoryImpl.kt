@@ -20,7 +20,7 @@ import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.network.isResponseFromBackend
-import plus.vplan.app.data.source.network.saveRequest
+import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
@@ -41,7 +41,7 @@ class TeacherRepositoryImpl(
     override suspend fun getBySchoolWithCaching(school: School, forceReload: Boolean): Response<Flow<List<Teacher>>> {
         val flow = getBySchool(school.id)
         if (flow.first().isNotEmpty() && !forceReload) return Response.Success(flow)
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/teacher") {
                 school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
@@ -61,6 +61,7 @@ class TeacherRepositoryImpl(
             }
             return Response.Success(getBySchool(school.id))
         }
+        return Response.Error.Cancelled
     }
 
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Teacher>> {

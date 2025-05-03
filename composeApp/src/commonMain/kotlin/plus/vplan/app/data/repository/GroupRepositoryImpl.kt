@@ -26,7 +26,6 @@ import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
@@ -54,7 +53,7 @@ class GroupRepositoryImpl(
         val flow = getBySchool(school.id)
         if (flow.first().isNotEmpty() && !forceReload) return Response.Success(flow)
 
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/group") {
                 school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
@@ -77,6 +76,8 @@ class GroupRepositoryImpl(
             }
             return Response.Success(getBySchool(school.id))
         }
+
+        return Response.Error.Cancelled
     }
 
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Group>> {

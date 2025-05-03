@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.data.repository.ResponseDataWrapper
-import plus.vplan.app.data.source.network.saveRequest
+import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.feature.onboarding.data.source.database.OnboardingDatabase
@@ -88,7 +88,7 @@ class OnboardingRepositoryImpl(
         val sp24Id = onboardingDatabase.keyValueDao.get("indiware.sp24_id").first() ?: return Response.Error.Other("schoolId is null")
         val username = onboardingDatabase.keyValueDao.get("indiware.username").first() ?: return Response.Error.Other("username is null")
         val password = onboardingDatabase.keyValueDao.get("indiware.password").first() ?: return Response.Error.Other("password is null")
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val result = httpClient.get {
                 url("${sp24Service.url}/school/sp24/$sp24Id/initialize")
                 basicAuth("$username@$sp24Id", password)
@@ -101,6 +101,7 @@ class OnboardingRepositoryImpl(
             }
             return result.toResponse()
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun getSp24UpdateJobProgress(): Response<List<String>> {
@@ -108,7 +109,7 @@ class OnboardingRepositoryImpl(
         val username = onboardingDatabase.keyValueDao.get("indiware.username").first() ?: return Response.Error.Other("username is null")
         val password = onboardingDatabase.keyValueDao.get("indiware.password").first() ?: return Response.Error.Other("password is null")
         val sp24Id = onboardingDatabase.keyValueDao.get("indiware.sp24_id").first() ?: return Response.Error.Other("schoolId is null")
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url("${sp24Service.url}/school/sp24/$sp24Id/status/$jobId")
                 basicAuth("$username@$sp24Id", password)
@@ -121,6 +122,7 @@ class OnboardingRepositoryImpl(
             }
             return response.toResponse()
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun setSelectedProfile(onboardingProfile: OnboardingProfile) {

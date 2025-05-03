@@ -26,7 +26,7 @@ import plus.vplan.app.data.source.indiware.model.MobdatenClassData
 import plus.vplan.app.data.source.indiware.model.SPlan
 import plus.vplan.app.data.source.indiware.model.VPlan
 import plus.vplan.app.data.source.indiware.model.WplanBaseData
-import plus.vplan.app.data.source.network.saveRequest
+import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
@@ -49,7 +49,7 @@ class IndiwareRepositoryImpl(
         username: String,
         password: String
     ): Response<Boolean> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url("https://stundenplan24.de/$sp24Id/mobil/")
                 basicAuth(username, password)
@@ -58,6 +58,7 @@ class IndiwareRepositoryImpl(
             if (response.status == HttpStatusCode.Unauthorized) return Response.Success(false)
             return response.toResponse()
         }
+        return Response.Error.Cancelled
     }
 
     @OptIn(ExperimentalXmlUtilApi::class)
@@ -66,7 +67,7 @@ class IndiwareRepositoryImpl(
         username: String,
         password: String
     ): Response<IndiwareBaseData> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val mobileDataResponse = httpClient.get {
                 url(
                     scheme = "https",
@@ -190,6 +191,7 @@ class IndiwareRepositoryImpl(
                 )
             )
         }
+        return Response.Error.Cancelled
     }
 
     @OptIn(ExperimentalXmlUtilApi::class)
@@ -202,7 +204,7 @@ class IndiwareRepositoryImpl(
     ): Response<IndiwareTimeTable> {
         val hasTimetableInWeek = vppDatabase.indiwareDao.getHasTimetableInWeek(week.id, sp24Id)
         if (hasTimetableInWeek?.hasData == false) return Response.Error.OnlineError.NotFound
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url(
                     scheme = "https",
@@ -256,6 +258,7 @@ class IndiwareRepositoryImpl(
                 )
             )
         }
+        return Response.Error.Cancelled
     }
 
     @OptIn(ExperimentalXmlUtilApi::class)
@@ -267,7 +270,7 @@ class IndiwareRepositoryImpl(
         teacherNames: List<String>,
         roomNames: List<String>
     ): Response<IndiwareSubstitutionPlan> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url(
                     scheme = "https",
@@ -327,5 +330,6 @@ class IndiwareRepositoryImpl(
                 )
             )
         }
+        return Response.Error.Cancelled
     }
 }
