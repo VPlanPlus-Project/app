@@ -19,8 +19,8 @@ class HandlePushNotificationUseCase {
                 }
             }
             "ASSESSMENT_UPDATE" -> {
-                val data = json.decodeFromString<HomeworkUpdate>(payload)
-                data.homeworkIds.forEach {
+                val data = json.decodeFromString<AssessmentUpdate>(payload)
+                data.assessmentIds.forEach {
                     App.assessmentSource.getById(it, forceUpdate = true).getFirstValue()
                 }
             }
@@ -31,4 +31,9 @@ class HandlePushNotificationUseCase {
 @Serializable
 private data class HomeworkUpdate(
     @SerialName("homework_ids") val homeworkIds: List<Int>
+)
+
+@Serializable
+private data class AssessmentUpdate(
+    @SerialName("assessment_ids") val assessmentIds: List<Int>
 )
