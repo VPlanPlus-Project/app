@@ -18,7 +18,9 @@ import plus.vplan.app.domain.data.Response
 sealed class CacheState<out T: Item<*>>(val entityId: String) {
     data class Loading(val id: String): CacheState<Nothing>(id)
     data class NotExisting(val id: String): CacheState<Nothing>(id)
-    data class Error(val id: String, val error: Response.Error): CacheState<Nothing>(id)
+    data class Error(val id: String, val error: Response.Error): CacheState<Nothing>(id) {
+        constructor(id: Int, error: Response.Error): this(id.toString(), error)
+    }
     data class Done<T: Item<*>>(val data: T): CacheState<T>(data.getEntityId())
 }
 

@@ -134,50 +134,52 @@ class VppIdRepositoryImpl(
             }
             send(CacheState.Loading(id.toString()))
 
-            val existing = vppDatabase.vppIdDao.getById(id).first()?.toModel() as? VppId.Active
-            val response = if (existing == null) {
-                val accessResponse = httpClient.get("${api.url}/api/v2.2/user/$id")
-                if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
-                    vppDatabase.vppIdDao.deleteById(listOf(id))
-                    return@channelFlow send(CacheState.NotExisting(id.toString()))
-                }
-                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<VppId>()))
-                val accessData = ResponseDataWrapper.fromJson<UserSchoolResponse>(accessResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
+            safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+                val existing = vppDatabase.vppIdDao.getById(id).first()?.toModel() as? VppId.Active
+                val response = if (existing == null) {
+                    val accessResponse = httpClient.get("${api.url}/api/v2.2/user/$id")
+                    if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
+                        vppDatabase.vppIdDao.deleteById(listOf(id))
+                        return@channelFlow send(CacheState.NotExisting(id.toString()))
+                    }
+                    if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<VppId>()))
+                    val accessData = ResponseDataWrapper.fromJson<UserSchoolResponse>(accessResponse.bodyAsText())
+                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
 
-                val school = vppDatabase.schoolDao.getAll().first()
-                    .map { it.toModel() }
-                    .firstOrNull { it.id in accessData.schoolIds && it.getSchoolApiAccess() != null }
-                    ?.getSchoolApiAccess() ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for vppId $id")))
+                    val school = vppDatabase.schoolDao.getAll().first()
+                        .map { it.toModel() }
+                        .firstOrNull { it.id in accessData.schoolIds && it.getSchoolApiAccess() != null }
+                        ?.getSchoolApiAccess() ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for vppId $id")))
 
-                httpClient.get("${api.url}/api/v2.2/user/$id") {
-                    school.authentication(this)
+                    httpClient.get("${api.url}/api/v2.2/user/$id") {
+                        school.authentication(this)
+                    }
+                } else {
+                    httpClient.get("${api.url}/api/v2.2/user/$id") {
+                        existing.buildSchoolApiAccess().authentication(this)
+                    }
                 }
-            } else {
-                httpClient.get("${api.url}/api/v2.2/user/$id") {
-                    existing.buildSchoolApiAccess().authentication(this)
-                }
+
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<VppId>()))
+                val data = ResponseDataWrapper.fromJson<UserItemResponse>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+
+                vppDatabase.vppIdDao.upsert(
+                    vppId = DbVppId(
+                        id = data.id,
+                        name = data.username,
+                        cachedAt = Clock.System.now()
+                    ),
+                    groupCrossovers = data.groups.map {
+                        DbVppIdGroupCrossover(
+                            vppId = data.id,
+                            groupId = it
+                        )
+                    }
+                )
+
+                return@channelFlow sendAll(getById(data.id, false))
             }
-
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<VppId>()))
-            val data = ResponseDataWrapper.fromJson<UserItemResponse>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
-
-            vppDatabase.vppIdDao.upsert(
-                vppId = DbVppId(
-                    id = data.id,
-                    name = data.username,
-                    cachedAt = Clock.System.now()
-                ),
-                groupCrossovers = data.groups.map {
-                    DbVppIdGroupCrossover(
-                        vppId = data.id,
-                        groupId = it
-                    )
-                }
-            )
-
-            return@channelFlow sendAll(getById(data.id, false))
         }
     }
 

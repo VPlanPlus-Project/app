@@ -74,52 +74,54 @@ class TeacherRepositoryImpl(
             }
             send(CacheState.Loading(id.toString()))
 
-            val existing = vppDatabase.teacherDao.getById(id).first()
-            var schoolApiAccess: SchoolApiAccess? = null
-            if (existing != null) {
-                schoolApiAccess = existing.schoolId.let { vppDatabase.schoolDao.findById(it).first()?.toModel()?.getSchoolApiAccess() }
-            }
-            if (schoolApiAccess == null) {
-                val accessResponse = httpClient.get("${api.url}/api/v2.2/teacher/$id")
-                if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
-                    vppDatabase.teacherDao.deleteById(listOf(id))
-                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+            safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+                val existing = vppDatabase.teacherDao.getById(id).first()
+                var schoolApiAccess: SchoolApiAccess? = null
+                if (existing != null) {
+                    schoolApiAccess = existing.schoolId.let { vppDatabase.schoolDao.findById(it).first()?.toModel()?.getSchoolApiAccess() }
                 }
-                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Teacher>()))
-                val accessData = ResponseDataWrapper.fromJson<TeacherUnauthenticatedResponse>(accessResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
-
-                schoolApiAccess = vppDatabase.schoolDao.findById(accessData.schoolId).first()?.toModel()
-                    .let {
-                        if (it is School.IndiwareSchool && !it.credentialsValid) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for teacher $id")))
-                        if (it?.getSchoolApiAccess() == null) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for teacher $id")))
-                        it.getSchoolApiAccess()
+                if (schoolApiAccess == null) {
+                    val accessResponse = httpClient.get("${api.url}/api/v2.2/teacher/$id")
+                    if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
+                        vppDatabase.teacherDao.deleteById(listOf(id))
+                        return@channelFlow send(CacheState.NotExisting(id.toString()))
                     }
-            }
+                    if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Teacher>()))
+                    val accessData = ResponseDataWrapper.fromJson<TeacherUnauthenticatedResponse>(accessResponse.bodyAsText())
+                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
 
-            if (schoolApiAccess == null) {
-                Logger.i { "No school to update teacher $id" }
-                vppDatabase.teacherDao.deleteById(listOf(id))
-                trySend(CacheState.NotExisting(id.toString()))
-                return@channelFlow
-            }
+                    schoolApiAccess = vppDatabase.schoolDao.findById(accessData.schoolId).first()?.toModel()
+                        .let {
+                            if (it is School.IndiwareSchool && !it.credentialsValid) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for teacher $id")))
+                            if (it?.getSchoolApiAccess() == null) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for teacher $id")))
+                            it.getSchoolApiAccess()
+                        }
+                }
 
-            val response = httpClient.get("${api.url}/api/v2.2/teacher/$id") {
-                schoolApiAccess.authentication(this)
-            }
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Teacher>()))
-            val data = ResponseDataWrapper.fromJson<TeacherItemResponse>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                if (schoolApiAccess == null) {
+                    Logger.i { "No school to update teacher $id" }
+                    vppDatabase.teacherDao.deleteById(listOf(id))
+                    trySend(CacheState.NotExisting(id.toString()))
+                    return@channelFlow
+                }
 
-            vppDatabase.teacherDao.upsertTeacher(
-                DbTeacher(
-                    id = data.id,
-                    schoolId = data.school.id,
-                    name = data.name,
-                    cachedAt = Clock.System.now()
+                val response = httpClient.get("${api.url}/api/v2.2/teacher/$id") {
+                    schoolApiAccess.authentication(this)
+                }
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Teacher>()))
+                val data = ResponseDataWrapper.fromJson<TeacherItemResponse>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+
+                vppDatabase.teacherDao.upsertTeacher(
+                    DbTeacher(
+                        id = data.id,
+                        schoolId = data.school.id,
+                        name = data.name,
+                        cachedAt = Clock.System.now()
+                    )
                 )
-            )
-            return@channelFlow sendAll(getById(id, false))
+                return@channelFlow sendAll(getById(id, false))
+            }
         }
     }
 

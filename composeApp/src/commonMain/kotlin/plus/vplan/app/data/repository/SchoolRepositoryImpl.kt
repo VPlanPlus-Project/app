@@ -54,20 +54,22 @@ class SchoolRepositoryImpl(
             }
             send(CacheState.Loading(id.toString()))
 
-            val response = httpClient.get("${api.url}/api/v2.2/school/$id")
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<School>()))
-            val data = ResponseDataWrapper.fromJson<SchoolItemResponse>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+            safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+                val response = httpClient.get("${api.url}/api/v2.2/school/$id")
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<School>()))
+                val data = ResponseDataWrapper.fromJson<SchoolItemResponse>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
-            vppDatabase.schoolDao.upsertSchool(
-                DbSchool(
-                    id = data.id,
-                    name = data.name,
-                    cachedAt = Clock.System.now()
+                vppDatabase.schoolDao.upsertSchool(
+                    DbSchool(
+                        id = data.id,
+                        name = data.name,
+                        cachedAt = Clock.System.now()
+                    )
                 )
-            )
 
-            return@channelFlow sendAll(getById(id, false))
+                return@channelFlow sendAll(getById(id, false))
+            }
         }
     }
 

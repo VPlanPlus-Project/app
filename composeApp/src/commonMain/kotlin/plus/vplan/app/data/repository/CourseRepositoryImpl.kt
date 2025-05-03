@@ -48,39 +48,41 @@ class CourseRepositoryImpl(
     override fun getBySchool(schoolId: Int, forceReload: Boolean): Flow<List<Course>> {
         if (forceReload) {
             return channelFlow {
-                val school = vppDatabase.schoolDao.findById(schoolId).first()?.toModel() ?: return@channelFlow
-                val response = httpClient.get {
-                    url {
-                        protocol = api.protocol
-                        host = api.host
-                        port = api.port
-                        pathSegments = listOf("api", "v2.2", "subject", "course")
-                        parameters.append("include_teacher", "true")
-                    }
-                    school.getSchoolApiAccess()?.authentication(this) ?: return@channelFlow
-                }
-                if (!response.status.isSuccess()) return@channelFlow
-                val data = ResponseDataWrapper.fromJson<List<CourseItemResponse>>(response.bodyAsText()) ?: return@channelFlow
-                vppDatabase.courseDao.upsert(
-                    courses = data.map {
-                        DbCourse(
-                            id = it.courseId,
-                            indiwareId = if (school is School.IndiwareSchool) "sp24.${school.sp24Id}.${it.name}+${it.teacher?.value?.name ?: ""}" else null,
-                            name = it.name,
-                            teacherId = it.teacher?.teacher,
-                            cachedAt = Clock.System.now()
-                        )
-                    },
-                    courseGroupCrossovers = data.flatMap {
-                        it.groups.map { groupId ->
-                            DbCourseGroupCrossover(
-                                groupId = groupId.group,
-                                courseId = it.courseId
-                            )
+                safeRequest(onError = { trySend(emptyList()) }) {
+                    val school = vppDatabase.schoolDao.findById(schoolId).first()?.toModel() ?: return@channelFlow
+                    val response = httpClient.get {
+                        url {
+                            protocol = api.protocol
+                            host = api.host
+                            port = api.port
+                            pathSegments = listOf("api", "v2.2", "subject", "course")
+                            parameters.append("include_teacher", "true")
                         }
+                        school.getSchoolApiAccess()?.authentication(this) ?: return@channelFlow
                     }
-                )
-                sendAll(getBySchool(schoolId, false))
+                    if (!response.status.isSuccess()) return@channelFlow
+                    val data = ResponseDataWrapper.fromJson<List<CourseItemResponse>>(response.bodyAsText()) ?: return@channelFlow
+                    vppDatabase.courseDao.upsert(
+                        courses = data.map {
+                            DbCourse(
+                                id = it.courseId,
+                                indiwareId = if (school is School.IndiwareSchool) "sp24.${school.sp24Id}.${it.name}+${it.teacher?.value?.name ?: ""}" else null,
+                                name = it.name,
+                                teacherId = it.teacher?.teacher,
+                                cachedAt = Clock.System.now()
+                            )
+                        },
+                        courseGroupCrossovers = data.flatMap {
+                            it.groups.map { groupId ->
+                                DbCourseGroupCrossover(
+                                    groupId = groupId.group,
+                                    courseId = it.courseId
+                                )
+                            }
+                        }
+                    )
+                    sendAll(getBySchool(schoolId, false))
+                }
             }
         }
         return vppDatabase.courseDao.getBySchool(schoolId)

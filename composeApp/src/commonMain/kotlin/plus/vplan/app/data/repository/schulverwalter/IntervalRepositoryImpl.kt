@@ -89,51 +89,53 @@ class IntervalRepositoryImpl(
         }
         send(CacheState.Loading(id.toString()))
 
-        val existing = vppDatabase.intervalDao.getById(id).first()
-        val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.interval.userForRequest).first()) }
-            ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
+        safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+            val existing = vppDatabase.intervalDao.getById(id).first()
+            val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.interval.userForRequest).first()) }
+                ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
 
-        accessTokens.forEach { accessToken ->
-            val response = httpClient.get {
-                url {
-                    protocol = URLProtocol.HTTPS
-                    host = "beste.schule"
-                    port = 443
-                    pathSegments = listOf("api", "intervals")
+            accessTokens.forEach { accessToken ->
+                val response = httpClient.get {
+                    url {
+                        protocol = URLProtocol.HTTPS
+                        host = "beste.schule"
+                        port = 443
+                        pathSegments = listOf("api", "intervals")
+                    }
+                    bearerAuth(accessToken.schulverwalterAccessToken)
                 }
-                bearerAuth(accessToken.schulverwalterAccessToken)
-            }
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Interval>()))
-            val data = ResponseDataWrapper.fromJson<List<IntervalItemResponse>>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Interval>()))
+                val data = ResponseDataWrapper.fromJson<List<IntervalItemResponse>>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
-            vppDatabase.intervalDao.upsert(
-                intervals = data.map {
-                    DbSchulverwalterInterval(
-                        id = it.id,
-                        name = it.name,
-                        type = it.type,
-                        from = LocalDate.parse(it.from),
-                        to = LocalDate.parse(it.to),
-                        includedIntervalId = it.includedIntervalId,
-                        userForRequest = accessToken.schulverwalterUserId,
-                        cachedAt = Clock.System.now()
-                    )
-                },
-                intervalYearCrossovers = data.map { interval ->
-                    FKSchulverwalterYearSchulverwalterInterval(
-                        yearId = interval.year,
-                        intervalId = interval.id
-                    )
+                vppDatabase.intervalDao.upsert(
+                    intervals = data.map {
+                        DbSchulverwalterInterval(
+                            id = it.id,
+                            name = it.name,
+                            type = it.type,
+                            from = LocalDate.parse(it.from),
+                            to = LocalDate.parse(it.to),
+                            includedIntervalId = it.includedIntervalId,
+                            userForRequest = accessToken.schulverwalterUserId,
+                            cachedAt = Clock.System.now()
+                        )
+                    },
+                    intervalYearCrossovers = data.map { interval ->
+                        FKSchulverwalterYearSchulverwalterInterval(
+                            yearId = interval.year,
+                            intervalId = interval.id
+                        )
+                    }
+                )
+                data.forEach { interval ->
+                    vppDatabase.intervalDao.deleteSchulverwalterYearSchulverwalterInterval(intervalId = interval.id, yearIds = listOf(interval.year))
                 }
-            )
-            data.forEach { interval ->
-                vppDatabase.intervalDao.deleteSchulverwalterYearSchulverwalterInterval(intervalId = interval.id, yearIds = listOf(interval.year))
             }
+
+            if (intervalFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
+            return@channelFlow sendAll(getById(id, false))
         }
-
-        if (intervalFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
-        return@channelFlow sendAll(getById(id, false))
     }
 
     override fun getAllIds(): Flow<List<Int>> = vppDatabase.intervalDao.getAll()

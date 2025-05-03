@@ -76,7 +76,6 @@ class GroupRepositoryImpl(
             }
             return Response.Success(getBySchool(school.id))
         }
-
         return Response.Error.Cancelled
     }
 
@@ -90,55 +89,57 @@ class GroupRepositoryImpl(
             }
             send(CacheState.Loading(id.toString()))
 
-            val existing = vppDatabase.groupDao.getById(id).first()
-            var schoolApiAccess: SchoolApiAccess? = null
-            if (existing != null) {
-                schoolApiAccess = vppDatabase.schoolDao.findById(existing.school.schoolId).first()?.toModel()?.getSchoolApiAccess()
-            }
+            safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+                val existing = vppDatabase.groupDao.getById(id).first()
+                var schoolApiAccess: SchoolApiAccess? = null
+                if (existing != null) {
+                    schoolApiAccess = vppDatabase.schoolDao.findById(existing.school.schoolId).first()?.toModel()?.getSchoolApiAccess()
+                }
 
-            if (schoolApiAccess == null) {
-                val accessResponse = httpClient.get("${api.url}/api/v2.2/group/$id")
-                if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
+                if (schoolApiAccess == null) {
+                    val accessResponse = httpClient.get("${api.url}/api/v2.2/group/$id")
+                    if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
+                        vppDatabase.groupDao.deleteById(listOf(id))
+                        return@channelFlow send(CacheState.NotExisting(id.toString()))
+                    }
+                    if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Group>()))
+                    val accessData = ResponseDataWrapper.fromJson<GroupUnauthenticatedResponse>(accessResponse.bodyAsText())
+                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
+
+                    schoolApiAccess = accessData.schoolId.let {
+                        val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@let null
+                        if (school is School.IndiwareSchool && !school.credentialsValid) return@let null
+                        return@let school.getSchoolApiAccess()
+                    }
+                }
+
+                if (schoolApiAccess == null) {
+                    Logger.i { "No school to update group $id" }
                     vppDatabase.groupDao.deleteById(listOf(id))
-                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+                    trySend(CacheState.Error(id.toString(), Response.Error.Other("no school for group $id")))
+                    return@channelFlow
                 }
-                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Group>()))
-                val accessData = ResponseDataWrapper.fromJson<GroupUnauthenticatedResponse>(accessResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
 
-                schoolApiAccess = accessData.schoolId.let {
-                    val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@let null
-                    if (school is School.IndiwareSchool && !school.credentialsValid) return@let null
-                    return@let school.getSchoolApiAccess()
+                val response = httpClient.get("${api.url}/api/v2.2/group/$id") {
+                    schoolApiAccess.authentication(this)
                 }
-            }
-
-            if (schoolApiAccess == null) {
-                Logger.i { "No school to update group $id" }
-                vppDatabase.groupDao.deleteById(listOf(id))
-                trySend(CacheState.Error(id.toString(), Response.Error.Other("no school for group $id")))
-                return@channelFlow
-            }
-
-            val response = httpClient.get("${api.url}/api/v2.2/group/$id") {
-                schoolApiAccess.authentication(this)
-            }
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Group>()))
-            val data = ResponseDataWrapper.fromJson<GroupItemResponse>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
-            vppDatabase.groupDao.upsert(
-                DbGroup(
-                    id = data.id,
-                    name = data.name,
-                    cachedAt = Clock.System.now()
-                ),
-                FKSchoolGroup(
-                    schoolId = data.school.id,
-                    groupId = data.id
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Group>()))
+                val data = ResponseDataWrapper.fromJson<GroupItemResponse>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                vppDatabase.groupDao.upsert(
+                    DbGroup(
+                        id = data.id,
+                        name = data.name,
+                        cachedAt = Clock.System.now()
+                    ),
+                    FKSchoolGroup(
+                        schoolId = data.school.id,
+                        groupId = data.id
+                    )
                 )
-            )
 
-            return@channelFlow sendAll(getById(id, false))
+                return@channelFlow sendAll(getById(id, false))
+            }
         }
     }
 
