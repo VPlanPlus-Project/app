@@ -32,8 +32,8 @@ class CreateHomeworkUseCase(
         date: LocalDate,
         subjectInstance: SubjectInstance?,
         selectedFiles: List<AttachedFile>
-    ): Boolean {
-        val profile = keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().first().let { App.profileSource.getById(Uuid.parseHex(it)).getFirstValue() as? Profile.StudentProfile } ?: return false
+    ): Int? {
+        val profile = keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().first().let { App.profileSource.getById(Uuid.parseHex(it)).getFirstValue() as? Profile.StudentProfile } ?: return null
         val id: Int
         val taskIds: Map<String, Int>
         var homework: Homework
@@ -48,7 +48,7 @@ class CreateHomeworkUseCase(
                 isPublic = isPublic == true,
                 tasks = tasks
             )
-            if (result !is Response.Success) return false
+            if (result !is Response.Success) return null
 
             val idMapping = result.data
             id = idMapping.id
@@ -109,6 +109,6 @@ class CreateHomeworkUseCase(
             localFileRepository.writeFile("./homework_files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
         }
 
-        return true
+        return id
     }
 }
