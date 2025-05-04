@@ -53,36 +53,38 @@ class SubjectInstanceRepositoryImpl(
     override fun getBySchool(schoolId: Int, forceReload: Boolean): Flow<List<SubjectInstance>> {
         if (forceReload) return channelFlow {
             val school = vppDatabase.schoolDao.findById(schoolId).first()?.toModel() ?: return@channelFlow
-            val response = httpClient.get {
-                url {
-                    protocol = api.protocol
-                    host = api.host
-                    port = api.port
-                    pathSegments = listOf("api", "v2.2", "subject", "instance")
-                    parameter("include_subject", "true")
-                }
-                school.getSchoolApiAccess()?.authentication(this) ?: return@channelFlow
-            }
-            if (!response.status.isSuccess()) return@channelFlow
-            val data = ResponseDataWrapper.fromJson<List<SubjectInstanceResponseWithSubject>>(response.bodyAsText()) ?: return@channelFlow
-            vppDatabase.subjectInstanceDao.upsert(
-                subjectInstances = data.map {
-                    DbSubjectInstance(
-                        id = it.subjectInstanceId,
-                        indiwareId = if (school is School.IndiwareSchool && it.sp24Id != null) "sp24.${school.sp24Id}.${it.sp24Id}" else null,
-                        subject = it.subject.subject.name,
-                        teacherId = it.teacher?.id,
-                        courseId = it.course?.id,
-                        cachedAt = Clock.System.now()
-                    )
-                },
-                subjectInstanceGroupCrossovers = data.flatMap {
-                    it.groups.map { groupId ->
-                        FKSubjectInstanceGroup(subjectInstanceId = it.subjectInstanceId, groupId = groupId.id)
+            safeRequest(onError = { trySend(emptyList()) }) {
+                val response = httpClient.get {
+                    url {
+                        protocol = api.protocol
+                        host = api.host
+                        port = api.port
+                        pathSegments = listOf("api", "v2.2", "subject", "instance")
+                        parameter("include_subject", "true")
                     }
+                    school.getSchoolApiAccess()?.authentication(this) ?: return@channelFlow
                 }
-            )
-            sendAll(getBySchool(schoolId, false))
+                if (!response.status.isSuccess()) return@channelFlow
+                val data = ResponseDataWrapper.fromJson<List<SubjectInstanceResponseWithSubject>>(response.bodyAsText()) ?: return@channelFlow
+                vppDatabase.subjectInstanceDao.upsert(
+                    subjectInstances = data.map {
+                        DbSubjectInstance(
+                            id = it.subjectInstanceId,
+                            indiwareId = if (school is School.IndiwareSchool && it.sp24Id != null) "sp24.${school.sp24Id}.${it.sp24Id}" else null,
+                            subject = it.subject.subject.name,
+                            teacherId = it.teacher?.id,
+                            courseId = it.course?.id,
+                            cachedAt = Clock.System.now()
+                        )
+                    },
+                    subjectInstanceGroupCrossovers = data.flatMap {
+                        it.groups.map { groupId ->
+                            FKSubjectInstanceGroup(subjectInstanceId = it.subjectInstanceId, groupId = groupId.id)
+                        }
+                    }
+                )
+                sendAll(getBySchool(schoolId, false))
+            }
         }
         return vppDatabase.subjectInstanceDao.getBySchool(schoolId).map { it.map { dl -> dl.toModel() } }
     }

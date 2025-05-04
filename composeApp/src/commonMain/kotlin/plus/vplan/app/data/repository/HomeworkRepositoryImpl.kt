@@ -41,7 +41,6 @@ import plus.vplan.app.data.source.database.model.database.DbProfileHomeworkIndex
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
@@ -535,7 +534,7 @@ class HomeworkRepositoryImpl(
         isPublic: Boolean,
         tasks: List<String>
     ): Response<CreateHomeworkResponse> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.post("${api.url}/api/v2.2/homework") {
                 bearerAuth(vppId.accessToken)
                 contentType(ContentType.Application.Json)
@@ -565,6 +564,7 @@ class HomeworkRepositoryImpl(
                 )
             )
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun uploadHomeworkDocument(vppId: VppId.Active, homeworkId: Int, document: AttachedFile): Response<Int> {
