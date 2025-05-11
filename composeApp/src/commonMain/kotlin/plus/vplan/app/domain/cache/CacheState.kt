@@ -6,6 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.produceState
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -32,14 +33,19 @@ interface Item<T: DataTag> {
  */
 interface DataTag
 
-suspend fun <T: Item<*>> Flow<CacheState<T>>.getFirstValue(vararg requiredTags: DataTag) = this
-    .onEach { if (it is CacheState.Error) Logger.e { "Failed to load entity ${it.entityId}: ${it.error}" } }
-    .filter { it is CacheState.NotExisting || it is CacheState.Done || it is CacheState.Error }
-    .map {
-        if (it is CacheState.Done && it.data.tags.all { it in requiredTags }) it.data
-        else null
-    }
-    .first()
+suspend inline fun <reified T : Item<*>> Flow<CacheState<T>>.getFirstValue(vararg requiredTags: DataTag): T? {
+    return this
+        .onEach { if (it is CacheState.Error) Logger.e { "Failed to load entity ${it.entityId}: ${it.error}" } }
+        .filter { it is CacheState.NotExisting || it is CacheState.Done || it is CacheState.Error }
+        .map {
+            if (it is CacheState.Done && it.data.tags.all { it in requiredTags }) it.data
+            else null
+        }
+        .catch {
+            throw RuntimeException("Failed to load entity ${T::class.simpleName}, required tags: $requiredTags", it)
+        }
+        .first()
+}
 
 @Composable
 fun <T: Item<*>> Flow<CacheState<T>>.collectAsLoadingState(id: String = "Unbekannt") = this.collectAsState(CacheState.Loading(id))
