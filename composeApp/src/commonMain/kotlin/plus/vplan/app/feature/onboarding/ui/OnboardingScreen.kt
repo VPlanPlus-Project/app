@@ -76,6 +76,7 @@ fun OnboardingScreen(
                 popUpTo(0)
             }
         }
+
         NavHost(
             navController = navController,
             startDestination = OnboardingScreen.OnboardingScreenHome,

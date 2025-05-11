@@ -11,14 +11,10 @@ import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,18 +33,13 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.painterResource
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.smartphone
 
 @Composable
 fun WelcomeScreen(
-    showAnimation: Boolean,
-    onImportFromOldAppClicked: () -> Unit
+    showAnimation: Boolean
 ) {
     var titleVisible by remember { mutableStateOf(!showAnimation) }
     var subtitleVisible by remember { mutableStateOf(!showAnimation) }
-    var importFromOldAppVisible by remember { mutableStateOf(!showAnimation) }
 
     LaunchedEffect(Unit) {
         if (!showAnimation) return@LaunchedEffect
@@ -56,8 +47,6 @@ fun WelcomeScreen(
         titleVisible = true
         delay(1000)
         subtitleVisible = true
-        delay(500)
-        importFromOldAppVisible = true
     }
 
     val animationDuration = 1000
@@ -97,28 +86,6 @@ fun WelcomeScreen(
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
-            }
-            AnimatedVisibility(
-                visible = importFromOldAppVisible,
-                enter = enterAnimation,
-                exit = exitAnimation
-            ) {
-                TextButton(
-                    modifier = Modifier.padding(top = 8.dp),
-                    onClick = onImportFromOldAppClicked
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.smartphone),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text("Aus VPlanPlus importieren")
-                    }
-                }
             }
         }
 
