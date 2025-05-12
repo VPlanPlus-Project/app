@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:name=".MainApplication"
         android:enableOnBackInvokedCallback="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar"
+        android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
         tools:targetApi="33">
         <activity
             android:exported="true"
