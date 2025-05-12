@@ -18,7 +18,7 @@ import plus.vplan.app.api
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
-import plus.vplan.app.data.source.network.saveRequest
+import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
@@ -33,7 +33,7 @@ class SchoolRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : SchoolRepository {
     override suspend fun fetchAllOnline(): Response<List<OnlineSchool>> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get("${api.url}/api/v2.2/school")
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<List<OnlineSchoolResponse>>(response.bodyAsText())
@@ -41,6 +41,7 @@ class SchoolRepositoryImpl(
 
             return Response.Success(data.map { it.toModel() })
         }
+        return Response.Error.Cancelled
     }
 
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<School>> {
@@ -53,20 +54,22 @@ class SchoolRepositoryImpl(
             }
             send(CacheState.Loading(id.toString()))
 
-            val response = httpClient.get("${api.url}/api/v2.2/school/$id")
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<School>()))
-            val data = ResponseDataWrapper.fromJson<SchoolItemResponse>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+            safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+                val response = httpClient.get("${api.url}/api/v2.2/school/$id")
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<School>()))
+                val data = ResponseDataWrapper.fromJson<SchoolItemResponse>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
-            vppDatabase.schoolDao.upsertSchool(
-                DbSchool(
-                    id = data.id,
-                    name = data.name,
-                    cachedAt = Clock.System.now()
+                vppDatabase.schoolDao.upsertSchool(
+                    DbSchool(
+                        id = data.id,
+                        name = data.name,
+                        cachedAt = Clock.System.now()
+                    )
                 )
-            )
 
-            return@channelFlow sendAll(getById(id, false))
+                return@channelFlow sendAll(getById(id, false))
+            }
         }
     }
 
@@ -85,7 +88,7 @@ class SchoolRepositoryImpl(
             .filterIsInstance<School.IndiwareSchool>()
             .firstOrNull { it.sp24Id == sp24Id.toString() }
         if (indiwareSchool != null) return Response.Success(indiwareSchool.id)
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get("${sp24Service.url}/school/sp24/$sp24Id")
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<Int>(response.bodyAsText())
@@ -93,6 +96,7 @@ class SchoolRepositoryImpl(
 
             return Response.Success(data)
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun setSp24Info(
