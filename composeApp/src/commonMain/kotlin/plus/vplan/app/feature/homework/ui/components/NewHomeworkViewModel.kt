@@ -91,7 +91,7 @@ class NewHomeworkViewModel(
                             subjectInstance = state.selectedSubjectInstance,
                             selectedFiles = state.files
                         )
-                    }.let { state = state.copy(savingState = if (it) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error) }
+                    }.let { state = state.copy(savingState = if (it != null) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error) }
                 }
             }
         }
