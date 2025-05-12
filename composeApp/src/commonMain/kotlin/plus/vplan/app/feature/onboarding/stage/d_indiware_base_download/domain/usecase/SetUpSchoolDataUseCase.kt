@@ -107,8 +107,9 @@ class SetUpSchoolDataUseCase(
             trySendResult()
 
             groupRepository.getBySchoolWithCaching(school).let {
-                (it as? Response.Success)?.data?.first() ?: return@channelFlow run {
+                (it as? Response.Success)?.data?.first() ?: run {
                     trySend(SetUpSchoolDataResult.Error("$prefix groups-Lookup was not successful: $it"))
+                    return@channelFlow
                 }
             }
 
@@ -117,8 +118,9 @@ class SetUpSchoolDataUseCase(
             trySendResult()
 
             val teachers = teacherRepository.getBySchoolWithCaching(school, forceReload = true).let {
-                (it as? Response.Success)?.data?.first() ?: return@channelFlow run {
+                (it as? Response.Success)?.data?.first() ?: run {
                     trySend(SetUpSchoolDataResult.Error("$prefix teachers-Lookup was not successful: $it"))
+                    return@channelFlow
                 }
             }
 
@@ -127,8 +129,9 @@ class SetUpSchoolDataUseCase(
             trySendResult()
 
             roomRepository.getBySchoolWithCaching(school, forceReload = true).let {
-                (it as? Response.Success)?.data?.first() ?: return@channelFlow run {
+                (it as? Response.Success)?.data?.first() ?: run {
                     trySend(SetUpSchoolDataResult.Error("$prefix rooms-Lookup was not successful: $it"))
+                    return@channelFlow
                 }
             }
 
