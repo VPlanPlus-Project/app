@@ -223,7 +223,7 @@ class VppIdRepositoryImpl(
 
     override suspend fun logout(token: String): Response<Unit> {
         return saveRequest {
-            val response = httpClient.get("${api.url}/api/v2.2/auth/logout") {
+            val response = httpClient.get("${auth.url}/oauth/logout") {
                 bearerAuth(token)
             }
             if (response.status != HttpStatusCode.OK) {
