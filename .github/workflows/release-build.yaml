@@ -106,4 +106,3 @@ jobs:
                     releaseFiles: ${{ env.TAG_NAME }}.aab
                     track: ${{ endsWith(env.TAG_NAME, '-internal') && 'qa' || endsWith(env.TAG_NAME, '-closed') && 'alpha' || endsWith(env.TAG_NAME, '-open') && 'beta' || 'production' }}
                     releaseName: ${{ env.TAG_NAME }}
-                    userFraction: 1.0
