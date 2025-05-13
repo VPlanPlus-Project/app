@@ -1,11 +1,14 @@
 package plus.vplan.app.feature.settings.page.developer.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -14,11 +17,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 
@@ -26,8 +31,13 @@ import vplanplus.composeapp.generated.resources.arrow_left
 fun DeveloperSettingsScreen(
     navHostController: NavHostController,
 ) {
+    val viewModel = koinViewModel<DeveloperSettingsViewModel>()
+    val state = viewModel.state
+
     DeveloperSettingsContent(
-        onBack = navHostController::navigateUp
+        onBack = navHostController::navigateUp,
+        onEvent = viewModel::handleEvent,
+        state = state
     )
 }
 
@@ -35,6 +45,8 @@ fun DeveloperSettingsScreen(
 @Composable
 private fun DeveloperSettingsContent(
     onBack: () -> Unit,
+    onEvent: (DeveloperSettingsEvent) -> Unit,
+    state: DeveloperSettingsState
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
 
@@ -63,7 +75,15 @@ private fun DeveloperSettingsContent(
                 .nestedScroll(scrollBehaviour.nestedScrollConnection)
                 .padding(top = 4.dp)
         ) {
-            Text("Hallo")
+            Row {
+                Button(
+                    onClick = remember { { onEvent(DeveloperSettingsEvent.StartFullSync) } },
+                    enabled = !state.isFullSyncRunning,
+                ) {
+                    Text("Full sync")
+                }
+                if (state.isFullSyncRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
+            }
         }
     }
 }
