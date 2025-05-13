@@ -56,11 +56,11 @@ jobs:
             -   name: Add keystore key password to local.properties
                 run: echo "signing.default.keypassword=${{secrets.KEYSTORE_PASSWORD}}" >> local.properties
 
-            -   name: Build App Bundle
-                run: ./gradlew :composeApp:bundleRelease
-
             -   name: Build APK
                 run: ./gradlew :composeApp:assembleRelease
+
+            -   name: Build App Bundle
+                run: ./gradlew :composeApp:bundleRelease
 
             -   name: Export AAB as artifact
                 uses: actions/upload-artifact@v4

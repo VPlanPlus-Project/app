@@ -116,9 +116,9 @@ android {
         signingConfigs {
             create("default") {
                 storeFile = file(localProperties["signing.default.file"]!!)
-                storePassword = localProperties["signing.default.storepassword"].toString()
-                keyAlias = localProperties["signing.default.keyalias"].toString()
-                keyPassword = localProperties["signing.default.keypassword"].toString()
+                storePassword = localProperties["signing.default.storepassword"]!!.toString()
+                keyAlias = localProperties["signing.default.keyalias"]!!.toString()
+                keyPassword = localProperties["signing.default.keypassword"]!!.toString()
             }
         }
     }
