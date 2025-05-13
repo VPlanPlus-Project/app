@@ -1,5 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
+import java.util.Base64
+import kotlin.text.Charsets
 
 
 val localProperties = Properties().apply {
@@ -116,9 +118,9 @@ android {
         signingConfigs {
             create("default") {
                 storeFile = file(localProperties["signing.default.file"]!!)
-                storePassword = localProperties["signing.default.storepassword"].toString()
-                keyAlias = localProperties["signing.default.keyalias"].toString()
-                keyPassword = localProperties["signing.default.keypassword"].toString()
+                storePassword = Base64.getDecoder().decode(localProperties["signing.default.storepassword"]!!.toString()).toString(Charsets.US_ASCII)
+                keyAlias = localProperties["signing.default.keyalias"]!!.toString()
+                keyPassword = Base64.getDecoder().decode(localProperties["signing.default.keypassword"]!!.toString()).toString(Charsets.US_ASCII)
             }
         }
     }

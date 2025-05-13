@@ -1,0 +1,89 @@
+name: Release Build
+
+on:
+    push:
+        branches:
+            - "release/**"
+
+permissions:
+    contents: write
+
+env:
+    BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
+jobs:
+    build-release:
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Name release
+                run: |
+                    value=${{ env.BRANCH_NAME }}
+                    echo "RELEASE_NAME=${value#release/}" >> $GITHUB_ENV
+                    echo "Version: ${value#release/}"
+            -   name: Checkout sources
+                uses: actions/checkout@v4
+            -   name: Setup Java
+                uses: actions/setup-java@v4
+                with:
+                    distribution: 'temurin'
+                    java-version: 17
+                    cache: 'gradle'
+                    cache-dependency-path: |
+                        ${{ github.workspace }}/gradle/wrapper/gradle-wrapper.properties
+                        ${{ github.workspace }}/**/*.gradle*
+
+            -   name: Setup Android SDK
+                uses: android-actions/setup-android@v2
+
+            -   name: Make gradlew executable
+                run: chmod +x ./gradlew
+
+            -   name: Restore google-services.json
+                run: echo ${{ secrets.GOOGLE_SERVICES }} | base64 -d > ${GITHUB_WORKSPACE}/composeApp/google-services.json
+
+            -   name: Restore playstore.keystore.jks
+                run: echo ${{ secrets.KEYSTORE_FILE }} | base64 -d > ${GITHUB_WORKSPACE}/keystore.jks
+
+            -   name: Add keystore information to local.properties
+                run: echo "signing.default.file=${GITHUB_WORKSPACE}/keystore.jks" >> local.properties
+
+            -   name: Add keystore password to local.properties
+                run: echo "signing.default.storepassword=${{secrets.KEYSTORE_PASSWORD}}" >> local.properties
+
+            -   name: Add keystore alias to local.properties
+                run: echo "signing.default.keyalias=key0" >> local.properties
+
+            -   name: Add keystore key password to local.properties
+                run: echo "signing.default.keypassword=${{secrets.KEYSTORE_PASSWORD}}" >> local.properties
+
+            -   uses: actions/cache@v4
+                with:
+                    path: |
+                        ~/.gradle/caches
+                        ~/.gradle/wrapper
+                    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                    restore-keys: |
+                        ${{ runner.os }}-gradle-
+                
+
+            -   name: Build APK
+                run: ./gradlew :composeApp:assembleRelease
+
+            -   name: Build App Bundle
+                run: ./gradlew :composeApp:bundleRelease
+
+            -   name: Export AAB as artifact
+                uses: actions/upload-artifact@v4
+                with:
+                    name: ${{ env.RELEASE_NAME }}.aab
+                    path: composeApp/build/outputs/bundle/release/composeApp-release.aab
+                    compression-level: 0
+                    if-no-files-found: error
+
+            -   name: Export APK as artifact
+                uses: actions/upload-artifact@v4
+                with:
+                    name: ${{ env.RELEASE_NAME }}.apk
+                    path: composeApp/build/outputs/apk/release/composeApp-release.apk
+                    compression-level: 0
+                    if-no-files-found: error
