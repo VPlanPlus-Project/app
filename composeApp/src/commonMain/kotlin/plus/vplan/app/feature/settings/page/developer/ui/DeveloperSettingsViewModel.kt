@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import plus.vplan.app.feature.sync.domain.usecase.FullSyncCause
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 
 class DeveloperSettingsViewModel(
@@ -20,7 +21,7 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.StartFullSync -> {
                     if (state.isFullSyncRunning) return@launch
                     state = state.copy(isFullSyncRunning = true)
-                    launch { fullSyncUseCase().join() }.invokeOnCompletion {
+                    launch { fullSyncUseCase(FullSyncCause.Manual).join() }.invokeOnCompletion {
                         state = state.copy(isFullSyncRunning = false)
                     }
                 }
