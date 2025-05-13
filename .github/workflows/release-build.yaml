@@ -10,11 +10,12 @@ env:
     TAG_NAME: ${{ github.ref_name }}
 
 jobs:
-    build-release:
+    build:
         runs-on: ubuntu-latest
         steps:
             -   name: Checkout sources
                 uses: actions/checkout@v4
+
             -   name: Setup Java
                 uses: actions/setup-java@v4
                 with:
@@ -57,7 +58,6 @@ jobs:
                     key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
                     restore-keys: |
                         ${{ runner.os }}-gradle-
-                
 
             -   name: Build APK
                 run: ./gradlew :composeApp:assembleRelease
@@ -65,25 +65,28 @@ jobs:
             -   name: Build App Bundle
                 run: ./gradlew :composeApp:bundleRelease
 
-            -   name: Export AAB as artifact
+            -   name: Upload build artifacts
                 uses: actions/upload-artifact@v4
                 with:
-                    name: ${{ env.TAG_NAME }}.aab
-                    path: composeApp/build/outputs/bundle/release/composeApp-release.aab
-                    compression-level: 0
-                    if-no-files-found: error
+                    name: build-artifacts
+                    path: |
+                        composeApp/build/outputs/apk/release/composeApp-release.apk
+                        composeApp/build/outputs/bundle/release/composeApp-release.aab
 
-            -   name: Export APK as artifact
-                uses: actions/upload-artifact@v4
+    release:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Download build artifacts
+                uses: actions/download-artifact@v4
                 with:
-                    name: ${{ env.TAG_NAME }}.apk
-                    path: composeApp/build/outputs/apk/release/composeApp-release.apk
-                    compression-level: 0
-                    if-no-files-found: error
+                    name: build-artifacts
+
             -   name: Rename output files
                 run: |
-                    mv composeApp/build/outputs/apk/release/composeApp-release.apk ${{ env.TAG_NAME }}.apk
-                    mv composeApp/build/outputs/bundle/release/composeApp-release.aab ${{ env.TAG_NAME }}.aab
+                    mv composeApp-release.apk ${{ env.TAG_NAME }}.apk
+                    mv composeApp-release.aab ${{ env.TAG_NAME }}.aab
+
             -   name: Create release
                 uses: softprops/action-gh-release@v2
                 with:
@@ -95,3 +98,12 @@ jobs:
                     make_latest: true
                     name: VPlanPlus ${{ env.TAG_NAME }}
                     fail_on_unmatched_files: true
+            -   name: Deploy on Google Play
+                uses: r0adkll/upload-google-play@v1
+                with:
+                    serviceAccountJson: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+                    packageName: plus.vplan.app
+                    releaseFiles: ${{ env.TAG_NAME }}.aab
+                    track: ${{ endsWith(env.TAG_NAME, '-internal') && 'qa' || endsWith(env.TAG_NAME, '-closed') && 'alpha' || endsWith(env.TAG_NAME, '-open') && 'beta' || 'production' }}
+                    releaseName: ${{ env.TAG_NAME }}
+                    userFraction: 1
