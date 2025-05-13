@@ -36,7 +36,10 @@ sealed class VppId : Item<DataTag> {
             return SchoolApiAccess.VppIdAccess(schoolId, accessToken, id)
         }
 
-        val grades by lazy { gradeIds.ifEmpty { return@lazy flowOf(emptyList()) }.let { combine(it.map { App.gradeSource.getById(it) }) { it.toList() } } }
+        val grades by lazy {
+            if (gradeIds.isEmpty()) return@lazy flowOf(emptyList())
+            combine(gradeIds.map { App.gradeSource.getById(it) }) { it.toList() }
+        }
 
         data class SchulverwalterConnection(
             val accessToken: String,

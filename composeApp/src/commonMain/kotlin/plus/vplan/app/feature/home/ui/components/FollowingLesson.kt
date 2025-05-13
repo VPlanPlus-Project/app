@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -101,7 +102,7 @@ fun FollowingLesson(
                         else MaterialTheme.colorScheme.onSurface
                     )
                     if (lesson.roomIds != null && !lesson.isCancelled) {
-                        val rooms by combine(lesson.roomIds.orEmpty().map { App.roomSource.getById(it) }) { it.toList() }.collectAsState(null)
+                        val rooms by (if (lesson.roomIds.isNullOrEmpty()) flowOf(emptyList()) else combine(lesson.roomIds.orEmpty().map { App.roomSource.getById(it) }) { it.toList() }).collectAsState(null)
                         Text(
                             text = buildString {
                                 if (rooms == null) return@buildString
@@ -114,7 +115,7 @@ fun FollowingLesson(
                             else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    val teachers by combine(lesson.teacherIds.map { App.teacherSource.getById(it) }) { it.toList() }.collectAsState(null)
+                    val teachers by (if (lesson.teacherIds.isEmpty()) flowOf(emptyList()) else combine(lesson.teacherIds.map { App.teacherSource.getById(it) }) { it.toList() }).collectAsState(null)
                     if (!lesson.isCancelled) Text(
                         text = buildString {
                             if (teachers == null) return@buildString
