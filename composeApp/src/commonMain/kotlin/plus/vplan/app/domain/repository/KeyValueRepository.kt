@@ -28,4 +28,6 @@ object Keys {
 
     const val FIREBASE_TOKEN = "firebase_token"
     const val FIREBASE_TOKEN_UPLOAD_SUCCESS = "firebase_token_upload_success"
+
+    const val DEVELOPER_SETTINGS_ACTIVE = "developer_settings_active"
 }

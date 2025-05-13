@@ -94,7 +94,6 @@ val VPP_ID_AUTH_URL = URLBuilder(
     }
 ).build().toString()
 
-const val isDeveloperMode = true
 const val ENABLE_KTOR_LOGGING = false
 
 object App {
