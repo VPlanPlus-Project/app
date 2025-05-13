@@ -77,6 +77,6 @@ data class Day(
     }
 
     enum class DayTags: DataTag {
-        HAS_METADATA, HAS_LESSONS
+        HAS_METADATA, HAS_LESSONS, HAS_HOMEWORK, HAS_ASSESSMENTS
     }
 }
