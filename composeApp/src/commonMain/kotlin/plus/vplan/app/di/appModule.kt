@@ -122,7 +122,7 @@ val appModule = module(createdAtStart = true) {
                 retryOnServerErrors(maxRetries = 5)
                 exponentialDelay()
                 retryIf { request, response ->
-                    response.headers["X-Backend-Family"] != "vpp.ID"
+                    response.headers["X-Backend-Family"] != "vpp.ID" && request.url.host.endsWith("vplan.plus")
                 }
             }
 
