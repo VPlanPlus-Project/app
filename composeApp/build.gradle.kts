@@ -115,6 +115,7 @@ android {
     if (listOf("signing.default.file", "signing.default.storepassword", "signing.default.keyalias", "signing.default.keypassword").all { localProperties.containsKey(it) }) {
         signingConfigs {
             create("default") {
+                println("STORE PASSWORD !!!!!" + localProperties["signing.default.storepassword"]!!.toString())
                 storeFile = file(localProperties["signing.default.file"]!!)
                 storePassword = localProperties["signing.default.storepassword"]!!.toString()
                 keyAlias = localProperties["signing.default.keyalias"]!!.toString()
