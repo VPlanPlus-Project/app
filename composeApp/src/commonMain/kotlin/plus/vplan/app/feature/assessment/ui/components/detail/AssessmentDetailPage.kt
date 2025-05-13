@@ -25,9 +25,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,11 +38,11 @@ import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
-import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsSingleFlow
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
@@ -223,7 +223,7 @@ fun DetailPage(
                     HorizontalDivider()
                 }
             }
-            if (assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = assessment.createdByVppId!!)
+            if (assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = assessment.creator)
             else SavedLocalRow()
 
             CreatedAtRow(createdAt = assessment.createdAt.toInstant(TimeZone.UTC))
@@ -247,7 +247,7 @@ fun DetailPage(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                assessment.getFilesFlow().onEach { it.onEach { file -> if (file.isOfflineReady) file.getPreview() } }.collectAsState(emptyList()).value.forEach { file ->
+                remember(assessment.fileIds) { assessment.files }.collectAsSingleFlow().value.forEach { file ->
                     FileRow(
                         file = file,
                         canEdit = state.canEdit,

@@ -1,23 +1,23 @@
-package plus.vplan.app.feature.homework.domain.usecase
+package plus.vplan.app.feature.assessment.domain.usecase
 
+import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
-import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.FileRepository
-import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
 
 class DeleteFileUseCase(
     private val fileRepository: FileRepository,
-    private val homeworkRepository: HomeworkRepository,
+    private val assessmentRepository: AssessmentRepository,
     private val localFileRepository: LocalFileRepository
 ) {
-    suspend operator fun invoke(file: File, homework: Homework, profile: Profile.StudentProfile): Boolean {
+    suspend operator fun invoke(file: File, assessment: Assessment, profile: Profile.StudentProfile): Boolean {
         if (fileRepository.deleteFile(file, profile.getVppIdItem()) != null) return false
         if (file.isOfflineReady) {
             localFileRepository.deleteFile("./homework_files/" + file.id)
         }
-        homeworkRepository.unlinkHomeworkFileLocally(homework, file.id)
+        assessmentRepository.unlinkFileFromAssessment(assessment.id, file.id)
         return true
     }
 }

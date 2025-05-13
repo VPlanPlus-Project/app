@@ -25,9 +25,9 @@ import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentDateUseC
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentTypeUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentVisibilityUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.DeleteAssessmentUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.DeleteFileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
-import plus.vplan.app.feature.homework.domain.usecase.DeleteFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DownloadFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.RenameFileUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
@@ -61,9 +61,6 @@ class AssessmentDetailViewModel(
             ) { profile, assessmentData ->
                 if (assessmentData !is CacheState.Done || profile !is Profile.StudentProfile) return@combine null
                 val assessment = assessmentData.data
-
-                assessment.prefetch()
-                profile.prefetch()
 
                 val isOtherAssessment = state.assessment?.id != assessmentId
 
@@ -114,7 +111,7 @@ class AssessmentDetailViewModel(
                     state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
                 }
                 is AssessmentDetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
-                is AssessmentDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.profile!!)
+                is AssessmentDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.assessment!!, state.profile!!)
             }
         }
     }
@@ -129,21 +126,6 @@ data class AssessmentDetailState(
     val initDone: Boolean = false,
     val fileDownloadState: Map<Int, Float> = emptyMap()
 )
-
-private suspend fun Profile.StudentProfile.prefetch() {
-    this.getGroupItem()
-    this.getSubjectInstances().onEach {
-        it.getCourseItem()
-        it.getTeacherItem()
-    }
-}
-
-private suspend fun Assessment.prefetch() {
-    when (this.creator) {
-        is AppEntity.VppId -> this.getCreatedByVppIdItem()
-        is AppEntity.Profile -> this.getCreatedByProfileItem()!!.getGroupItem()
-    }
-}
 
 sealed class AssessmentDetailEvent {
     data class AddFile(val file: AttachedFile): AssessmentDetailEvent()

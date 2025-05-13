@@ -69,61 +69,63 @@ class FileRepositoryImpl(
                 if (hadData || id < 0) return@channelFlow
             }
             send(CacheState.Loading(id.toString()))
-            val response = httpClient.get("${api.url}/api/v2.2/file/$id")
-            if (response.status == HttpStatusCode.NotFound && response.isResponseFromBackend()) {
-                vppDatabase.fileDao.deleteById(listOf(id))
+            safeRequest(onError = { trySend(CacheState.Error(id.toString(), it)) }) {
+                val response = httpClient.get("${api.url}/api/v2.2/file/$id")
+                if (response.status == HttpStatusCode.NotFound && response.isResponseFromBackend()) {
+                    vppDatabase.fileDao.deleteById(listOf(id))
+                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+                }
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<File>()))
+                val data = ResponseDataWrapper.fromJson<FileItemSimpleGetRequest>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+
+                val creator = vppDatabase.vppIdDao.getById(data.createdBy).first()?.toModel() as? VppId.Active
+                if (creator != null) {
+                    val fileResponse = httpClient.get("${api.url}/api/v2.2/file/$id") {
+                        creator.buildSchoolApiAccess().authentication(this)
+                    }
+                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
+                    val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
+                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
+                    val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
+                    vppDatabase.fileDao.upsert(
+                        DbFile(
+                            id = id,
+                            createdAt = Clock.System.now(),
+                            createdByVppId = data.createdBy,
+                            fileName = fileData.fileName,
+                            size = fileData.size,
+                            isOfflineReady = existing?.isOfflineReady == true,
+                            cachedAt = Clock.System.now()
+                        )
+                    )
+                    return@channelFlow sendAll(getById(id, false))
+                }
+                val schools = vppDatabase.schoolDao.getAll().first().distinctBy { it.school.id }.filter { it.school.id in data.schoolIds }.mapNotNull { try { it.toModel().getSchoolApiAccess() } catch (_: Exception) { null } }
+                schools.forEach { school ->
+                    val fileResponse = httpClient.get("${api.url}/api/v2.2/file/$id") {
+                        school.authentication(this)
+                    }
+                    if (fileResponse.status == HttpStatusCode.Forbidden) return@forEach
+                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
+                    val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
+                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
+                    val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
+                    vppDatabase.fileDao.upsert(
+                        DbFile(
+                            id = id,
+                            createdAt = Clock.System.now(),
+                            createdByVppId = data.createdBy,
+                            fileName = fileData.fileName,
+                            size = fileData.size,
+                            isOfflineReady = existing?.isOfflineReady == true,
+                            cachedAt = Clock.System.now()
+                        )
+                    )
+                    return@channelFlow sendAll(getById(id, false))
+                }
                 return@channelFlow send(CacheState.NotExisting(id.toString()))
             }
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<File>()))
-            val data = ResponseDataWrapper.fromJson<FileItemSimpleGetRequest>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
-
-            val creator = vppDatabase.vppIdDao.getById(data.createdBy).first()?.toModel() as? VppId.Active
-            if (creator != null) {
-                val fileResponse = httpClient.get("${api.url}/api/v2.2/file/$id") {
-                    creator.buildSchoolApiAccess().authentication(this)
-                }
-                if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
-                val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
-                val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
-                vppDatabase.fileDao.upsert(
-                    DbFile(
-                        id = id,
-                        createdAt = Clock.System.now(),
-                        createdByVppId = data.createdBy,
-                        fileName = fileData.fileName,
-                        size = fileData.size,
-                        isOfflineReady = existing?.isOfflineReady ?: false,
-                        cachedAt = Clock.System.now()
-                    )
-                )
-                return@channelFlow sendAll(getById(id, false))
-            }
-            val schools = vppDatabase.schoolDao.getAll().first().distinctBy { it.school.id }.filter { it.school.id in data.schoolIds }.mapNotNull { try { it.toModel().getSchoolApiAccess() } catch (e: Exception) { null } }
-            schools.forEach { school ->
-                val fileResponse = httpClient.get("${api.url}/api/v2.2/file/$id") {
-                    school.authentication(this)
-                }
-                if (fileResponse.status == HttpStatusCode.Forbidden) return@forEach
-                if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
-                val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
-                val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
-                vppDatabase.fileDao.upsert(
-                    DbFile(
-                        id = id,
-                        createdAt = Clock.System.now(),
-                        createdByVppId = data.createdBy,
-                        fileName = fileData.fileName,
-                        size = fileData.size,
-                        isOfflineReady = existing?.isOfflineReady ?: false,
-                        cachedAt = Clock.System.now()
-                    )
-                )
-                return@channelFlow sendAll(getById(id, false))
-            }
-            return@channelFlow send(CacheState.NotExisting(id.toString()))
         }
     }
 
@@ -132,18 +134,20 @@ class FileRepositoryImpl(
     }
 
     override fun cacheFile(file: File, schoolApiAccess: SchoolApiAccess): Flow<FileDownloadProgress> = channelFlow {
-        val response = httpClient.get("${api.url}/api/v2.2/file/${file.id}/download") {
-            schoolApiAccess.authentication(this)
-            onDownload { bytesSentTotal, contentLength ->
-                if (contentLength == null) send(FileDownloadProgress.InProgress(0f))
-                else send(FileDownloadProgress.InProgress((bytesSentTotal.toFloat() / contentLength.toFloat())))
+        safeRequest(onError = { trySend(FileDownloadProgress.Error(it)) }) {
+            val response = httpClient.get("${api.url}/api/v2.2/file/${file.id}/download") {
+                schoolApiAccess.authentication(this)
+                onDownload { bytesSentTotal, contentLength ->
+                    if (contentLength == null) send(FileDownloadProgress.InProgress(0f))
+                    else send(FileDownloadProgress.InProgress((bytesSentTotal.toFloat() / contentLength.toFloat())))
+                }
             }
+            if (!response.status.isSuccess()) return@channelFlow send(FileDownloadProgress.Error(response.toErrorResponse<File>()))
+            val data = response.bodyAsBytes()
+            return@channelFlow send(FileDownloadProgress.Done(data) {
+                vppDatabase.fileDao.setOfflineReady(file.id, true)
+            })
         }
-        if (!response.status.isSuccess()) return@channelFlow send(FileDownloadProgress.Error(response.toErrorResponse<File>()))
-        val data = response.bodyAsBytes()
-        return@channelFlow send(FileDownloadProgress.Done(data) {
-            vppDatabase.fileDao.setOfflineReady(file.id, true)
-        })
     }
 
     override suspend fun uploadFile(

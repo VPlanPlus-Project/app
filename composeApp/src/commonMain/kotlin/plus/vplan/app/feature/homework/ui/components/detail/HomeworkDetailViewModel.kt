@@ -138,7 +138,7 @@ class HomeworkDetailViewModel(
                     state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
                 }
                 is HomeworkDetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
-                is HomeworkDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.profile!!)
+                is HomeworkDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.homework!!, state.profile!!)
                 is HomeworkDetailEvent.AddFile -> addFileUseCase(state.homework!!, event.file.platformFile, state.profile!!)
             }
         }
