@@ -3,6 +3,7 @@ package plus.vplan.app.di
 import androidx.room.RoomDatabase
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
@@ -115,6 +116,14 @@ val appModule = module(createdAtStart = true) {
                 json(Json {
                     ignoreUnknownKeys = true
                 })
+            }
+
+            install(HttpRequestRetry) {
+                retryOnServerErrors(maxRetries = 5)
+                exponentialDelay()
+                retryIf { request, response ->
+                    response.headers["X-Backend-Family"] != "vpp.ID"
+                }
             }
 
             if (ENABLE_KTOR_LOGGING) install(Logging) {
