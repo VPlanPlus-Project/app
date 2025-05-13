@@ -16,7 +16,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             -   name: Name release
-                run: echo "RELEASE_NAME=${{ env.BRANCH_NAME##release/ }}" >> $GITHUB_ENV
+                run: echo "RELEASE_NAME=${${{ env.BRANCH_NAME }}#release/}" >> $GITHUB_ENV
             -   name: Print release
                 run: echo "Release name is ${{ env.RELEASE_NAME }}"
             -   name: Checkout sources
