@@ -2,6 +2,7 @@ package plus.vplan.app.domain.model.schulverwalter
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
@@ -20,5 +21,5 @@ data class Year(
     override fun getEntityId(): String = this.id.toString()
     override val tags: Set<DataTag> = emptySet()
 
-    val intervals: Flow<List<CacheState<Interval>>> = combine(intervalIds.map { App.intervalSource.getById(it) }) { it.toList() }
+    val intervals: Flow<List<CacheState<Interval>>> = if (intervalIds.isEmpty()) flowOf(emptyList()) else combine(intervalIds.map { App.intervalSource.getById(it) }) { it.toList() }
 }

@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +39,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.openFile
@@ -62,6 +66,11 @@ fun FileRow(
 ) {
     var isDropdownOpen by remember { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(file.isOfflineReady) {
+        withContext(Dispatchers.IO) {
+            if (file.isOfflineReady) file.getPreview()
+        }
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
@@ -48,7 +49,10 @@ abstract class Profile : Item<DataTag> {
             private set
 
         val vppId by lazy { vppIdId?.let { App.vppIdSource.getById(it) } }
-        val subjectInstances by lazy { combine(subjectInstanceConfiguration.keys.map { App.subjectInstanceSource.getById(it).filterIsInstance<CacheState.Done<SubjectInstance>>().map { cacheState -> cacheState.data } }) { it.toList() } }
+        val subjectInstances by lazy {
+            if (subjectInstanceConfiguration.isEmpty()) return@lazy flowOf(emptyList())
+            combine(subjectInstanceConfiguration.keys.map { App.subjectInstanceSource.getById(it).filterIsInstance<CacheState.Done<SubjectInstance>>().map { cacheState -> cacheState.data } }) { it.toList() }
+        }
 
         private val subjectInstanceCache = hashMapOf<Int, SubjectInstance>()
         val subjectInstanceItems: List<SubjectInstance>

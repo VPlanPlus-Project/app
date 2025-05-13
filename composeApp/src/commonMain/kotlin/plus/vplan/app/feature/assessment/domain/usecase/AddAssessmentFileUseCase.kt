@@ -1,13 +1,13 @@
 package plus.vplan.app.feature.assessment.domain.usecase
 
 import io.github.vinceglb.filekit.core.PlatformFile
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
@@ -20,8 +20,9 @@ class AddAssessmentFileUseCase(
 ) {
     suspend operator fun invoke(assessment: Assessment, file: PlatformFile, profile: Profile.StudentProfile): Boolean {
         val id: Int
-        if (assessment.id > 0 && profile.getVppIdItem() != null) {
-            val response = fileRepository.uploadFile(profile.getVppIdItem()!!, AttachedFile.Other(
+        val vppId = profile.vppId?.getFirstValue() as? VppId.Active
+        if (assessment.id > 0 && vppId != null) {
+            val response = fileRepository.uploadFile(vppId, AttachedFile.Other(
                 platformFile = file,
                 bitmap = null,
                 size = file.getSize() ?: 0L,
@@ -34,17 +35,19 @@ class AddAssessmentFileUseCase(
         }
 
         localFileRepository.writeFile("./homework_files/$id", file.readBytes())
-        fileRepository.upsert(plus.vplan.app.domain.model.File(
-            id = id,
-            name = file.name,
-            size = file.getSize() ?: 0L,
-            isOfflineReady = true,
-            getBitmap = { null },
-            cachedAt = Clock.System.now()
-        ))
+        fileRepository.upsert(
+            File(
+                id = id,
+                name = file.name,
+                size = file.getSize() ?: 0L,
+                isOfflineReady = true,
+                getBitmap = { null },
+                cachedAt = Clock.System.now()
+            )
+        )
 
-        val fileItem = fileRepository.getById(id, forceReload = false).filterIsInstance<CacheState.Done<plus.vplan.app.domain.model.File>>().first().data
-        if (id > 0) assessmentRepository.linkFileToAssessmentOnline(profile.getVppIdItem()!!, assessment.id, fileItem.id)
+        val fileItem = fileRepository.getById(id, forceReload = false).getFirstValue()!!
+        if (id > 0 && vppId != null) assessmentRepository.linkFileToAssessmentOnline(vppId, assessment.id, fileItem.id)
         assessmentRepository.linkFileToAssessment(assessment.id, fileItem.id)
         return true
     }

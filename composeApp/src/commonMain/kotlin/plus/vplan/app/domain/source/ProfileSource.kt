@@ -29,7 +29,8 @@ class ProfileSource(
             return@run channelFlow<List<CacheState<Profile>>> {
                 profileRepository.getAll().map { it.map { it.id } }
                     .collectLatest {
-                        combine(it.map { getById(it) }) { it.toList() }.collectLatest { send(it) }
+                        if (it.isEmpty()) send(emptyList())
+                        else combine(it.map { getById(it) }) { it.toList() }.collectLatest { send(it) }
                     }
             }.also { allProfilesFlow = it }
         }

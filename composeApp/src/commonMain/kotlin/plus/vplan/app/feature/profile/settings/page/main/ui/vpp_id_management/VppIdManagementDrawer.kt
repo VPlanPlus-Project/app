@@ -3,6 +3,7 @@ package plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -114,8 +115,8 @@ private fun VppIdManagementDrawerContent(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(Modifier.weight(1f)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
+                                    FlowRow(
+                                        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
                                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
                                         Text(

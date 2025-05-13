@@ -31,7 +31,8 @@ class TimetableSource(
             val currentVersion = versionFlow?.toIntOrNull() ?: -1
             val versionString = "${schoolId}_$currentVersion"
             timetableRepository.getTimetableForSchool(schoolId, versionString).map { lesson -> lesson.id }.let { timetableLessonIds ->
-                combine(timetableLessonIds.map { getById(it) }) { it }.collectLatest { send(it.toList()) }
+                if (timetableLessonIds.isEmpty()) send(emptyList())
+                else combine(timetableLessonIds.map { getById(it) }) { it }.collectLatest { send(it.toList()) }
             }
         }
     }

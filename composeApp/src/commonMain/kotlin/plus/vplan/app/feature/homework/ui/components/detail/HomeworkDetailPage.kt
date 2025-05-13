@@ -40,6 +40,7 @@ import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
@@ -225,7 +226,7 @@ fun DetailPage(
                 }
             }
             StatusRow(status = homework.getStatusFlow(state.profile).collectAsState(null).value)
-            if (homework is Homework.CloudHomework) CreatedByRow(createdBy = homework.createdByItem!!)
+            if (homework.creator is AppEntity.VppId) CreatedByRow(createdBy = homework.creator)
             else SavedLocalRow()
 
             CreatedAtRow(createdAt = homework.createdAt)
