@@ -65,13 +65,18 @@ jobs:
             -   name: Build App Bundle
                 run: ./gradlew :composeApp:bundleRelease
 
+            -   name: Rename output files
+                run: |
+                    mv composeApp/build/outputs/apk/release/composeApp-release.apk ${{ env.TAG_NAME }}.apk
+                    mv composeApp/build/outputs/bundle/release/composeApp-release.aab ${{ env.TAG_NAME }}.aab
+
             -   name: Upload build artifacts
                 uses: actions/upload-artifact@v4
                 with:
                     name: build-artifacts
                     path: |
-                        composeApp/build/outputs/apk/release/composeApp-release.apk
-                        composeApp/build/outputs/bundle/release/composeApp-release.aab
+                        ${{ env.TAG_NAME }}.apk
+                        ${ env.TAG_NAME }}.aab
 
     release:
         needs: build
@@ -81,11 +86,6 @@ jobs:
                 uses: actions/download-artifact@v4
                 with:
                     name: build-artifacts
-
-            -   name: Rename output files
-                run: |
-                    mv composeApp/build/outputs/apk/release/composeApp-release.apk ${{ env.TAG_NAME }}.apk
-                    mv composeApp/build/outputs/bundle/release/composeApp-release.aab ${{ env.TAG_NAME }}.aab
 
             -   name: Create release
                 uses: softprops/action-gh-release@v2
