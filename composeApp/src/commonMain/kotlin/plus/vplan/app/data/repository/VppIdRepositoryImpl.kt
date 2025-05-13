@@ -41,7 +41,6 @@ import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
 import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.data.source.network.saveRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
@@ -61,7 +60,7 @@ class VppIdRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : VppIdRepository {
     override suspend fun getAccessToken(code: String): Response<String> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.submitForm(
                 url = "${auth.url}/oauth/token",
                 formParameters = Parameters.build {
@@ -81,10 +80,11 @@ class VppIdRepositoryImpl(
 
             return Response.Success(data.accessToken)
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun getUserByToken(token: String, upsert: Boolean): Response<VppId.Active> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get("${api.url}/api/v2.2/user/me") {
                 bearerAuth(token)
             }
@@ -122,6 +122,7 @@ class VppIdRepositoryImpl(
             )
             return Response.Success(getById(data.id, false).getFirstValue()!! as VppId.Active)
         }
+        return Response.Error.Cancelled
     }
 
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<VppId>> {
@@ -134,50 +135,52 @@ class VppIdRepositoryImpl(
             }
             send(CacheState.Loading(id.toString()))
 
-            val existing = vppDatabase.vppIdDao.getById(id).first()?.toModel() as? VppId.Active
-            val response = if (existing == null) {
-                val accessResponse = httpClient.get("${api.url}/api/v2.2/user/$id")
-                if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
-                    vppDatabase.vppIdDao.deleteById(listOf(id))
-                    return@channelFlow send(CacheState.NotExisting(id.toString()))
-                }
-                if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<VppId>()))
-                val accessData = ResponseDataWrapper.fromJson<UserSchoolResponse>(accessResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
+            safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+                val existing = vppDatabase.vppIdDao.getById(id).first()?.toModel() as? VppId.Active
+                val response = if (existing == null) {
+                    val accessResponse = httpClient.get("${api.url}/api/v2.2/user/$id")
+                    if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
+                        vppDatabase.vppIdDao.deleteById(listOf(id))
+                        return@channelFlow send(CacheState.NotExisting(id.toString()))
+                    }
+                    if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<VppId>()))
+                    val accessData = ResponseDataWrapper.fromJson<UserSchoolResponse>(accessResponse.bodyAsText())
+                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
 
-                val school = vppDatabase.schoolDao.getAll().first()
-                    .map { it.toModel() }
-                    .firstOrNull { it.id in accessData.schoolIds && it.getSchoolApiAccess() != null }
-                    ?.getSchoolApiAccess() ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for vppId $id")))
+                    val school = vppDatabase.schoolDao.getAll().first()
+                        .map { it.toModel() }
+                        .firstOrNull { it.id in accessData.schoolIds && it.getSchoolApiAccess() != null }
+                        ?.getSchoolApiAccess() ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for vppId $id")))
 
-                httpClient.get("${api.url}/api/v2.2/user/$id") {
-                    school.authentication(this)
+                    httpClient.get("${api.url}/api/v2.2/user/$id") {
+                        school.authentication(this)
+                    }
+                } else {
+                    httpClient.get("${api.url}/api/v2.2/user/$id") {
+                        existing.buildSchoolApiAccess().authentication(this)
+                    }
                 }
-            } else {
-                httpClient.get("${api.url}/api/v2.2/user/$id") {
-                    existing.buildSchoolApiAccess().authentication(this)
-                }
+
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<VppId>()))
+                val data = ResponseDataWrapper.fromJson<UserItemResponse>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+
+                vppDatabase.vppIdDao.upsert(
+                    vppId = DbVppId(
+                        id = data.id,
+                        name = data.username,
+                        cachedAt = Clock.System.now()
+                    ),
+                    groupCrossovers = data.groups.map {
+                        DbVppIdGroupCrossover(
+                            vppId = data.id,
+                            groupId = it
+                        )
+                    }
+                )
+
+                return@channelFlow sendAll(getById(data.id, false))
             }
-
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<VppId>()))
-            val data = ResponseDataWrapper.fromJson<UserItemResponse>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
-
-            vppDatabase.vppIdDao.upsert(
-                vppId = DbVppId(
-                    id = data.id,
-                    name = data.username,
-                    cachedAt = Clock.System.now()
-                ),
-                groupCrossovers = data.groups.map {
-                    DbVppIdGroupCrossover(
-                        vppId = data.id,
-                        groupId = it
-                    )
-                }
-            )
-
-            return@channelFlow sendAll(getById(data.id, false))
         }
     }
 
@@ -192,7 +195,7 @@ class VppIdRepositoryImpl(
     }
 
     override suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get("${api.url}/api/v2.2/user/me/session") {
                 bearerAuth(vppId.accessToken)
             }
@@ -206,10 +209,11 @@ class VppIdRepositoryImpl(
 
             return Response.Success(data.map { it.toModel() })
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun logoutDevice(vppId: VppId.Active, deviceId: Int): Response<Unit> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.delete("${api.url}/api/v2.2/user/me/session/$deviceId") {
                 bearerAuth(vppId.accessToken)
             }
@@ -219,10 +223,11 @@ class VppIdRepositoryImpl(
             }
             return Response.Success(Unit)
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun logout(token: String): Response<Unit> {
-        return saveRequest {
+        safeRequest(onError = { return it }) {
             val response = httpClient.get("${auth.url}/oauth/logout") {
                 bearerAuth(token)
             }
@@ -232,6 +237,7 @@ class VppIdRepositoryImpl(
             }
             return Response.Success(Unit)
         }
+        return Response.Error.Cancelled
     }
 
     override suspend fun deleteAccessTokens(vppId: VppId.Active) {

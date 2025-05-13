@@ -74,29 +74,31 @@ class CollectionRepositoryImpl(
         }
         send(CacheState.Loading(id.toString()))
 
-        val existing = vppDatabase.collectionDao.getById(id).first()
-        val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.collection.userForRequest).first()) }
-            ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
+        safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+            val existing = vppDatabase.collectionDao.getById(id).first()
+            val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.collection.userForRequest).first()) }
+                ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
 
-        accessTokens.forEach { accessToken ->
-            val response = httpClient.get {
-                url {
-                    protocol = URLProtocol.HTTPS
-                    host = "beste.schule"
-                    port = 443
-                    pathSegments = listOf("api", "collections")
+            accessTokens.forEach { accessToken ->
+                val response = httpClient.get {
+                    url {
+                        protocol = URLProtocol.HTTPS
+                        host = "beste.schule"
+                        port = 443
+                        pathSegments = listOf("api", "collections")
+                    }
+                    bearerAuth(accessToken.schulverwalterAccessToken)
                 }
-                bearerAuth(accessToken.schulverwalterAccessToken)
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Collection>()))
+                val data = ResponseDataWrapper.fromJson<CollectionItemResponse>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+
+                handleResponse(listOf(data), accessToken.schulverwalterUserId)
             }
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Collection>()))
-            val data = ResponseDataWrapper.fromJson<CollectionItemResponse>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
-            handleResponse(listOf(data), accessToken.schulverwalterUserId)
+            if (collectionFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
+            return@channelFlow sendAll(getById(id, false))
         }
-
-        if (collectionFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
-        return@channelFlow sendAll(getById(id, false))
     }
 
     override fun getAllIds(): Flow<List<Int>> = vppDatabase.collectionDao.getAll()

@@ -69,29 +69,31 @@ class FinalGradeRepositoryImpl(
         }
         send(CacheState.Loading(id.toString()))
 
-        val existing = vppDatabase.gradeDao.getById(id).first()
-        val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.grade.userForRequest).first()) }
-            ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
+        safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+            val existing = vppDatabase.gradeDao.getById(id).first()
+            val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.grade.userForRequest).first()) }
+                ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
 
-        accessTokens.forEach { accessToken ->
-            val response = httpClient.get {
-                url {
-                    protocol = URLProtocol.HTTPS
-                    host = "beste.schule"
-                    port = 443
-                    pathSegments = listOf("api", "finalgrades")
+            accessTokens.forEach { accessToken ->
+                val response = httpClient.get {
+                    url {
+                        protocol = URLProtocol.HTTPS
+                        host = "beste.schule"
+                        port = 443
+                        pathSegments = listOf("api", "finalgrades")
+                    }
+                    bearerAuth(accessToken.schulverwalterAccessToken)
                 }
-                bearerAuth(accessToken.schulverwalterAccessToken)
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Grade>()))
+                val data = ResponseDataWrapper.fromJson<List<FinalGradeResponse>>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+
+                handleResponse(data, accessToken.schulverwalterUserId)
             }
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Grade>()))
-            val data = ResponseDataWrapper.fromJson<List<FinalGradeResponse>>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
-            handleResponse(data, accessToken.schulverwalterUserId)
+            if (finalGradeFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
+            return@channelFlow sendAll(getById(id, false))
         }
-
-        if (finalGradeFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
-        return@channelFlow sendAll(getById(id, false))
     }
 
     override fun getAllIds(): Flow<List<Int>> = vppDatabase.finalGradeDao.getAll()

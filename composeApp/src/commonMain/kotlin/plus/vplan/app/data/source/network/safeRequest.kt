@@ -28,20 +28,4 @@ inline fun safeRequest(
     }
 }
 
-inline fun <T> saveRequest(
-    request: () -> Unit,
-): Response<T> {
-     try {
-        request()
-    } catch (e: Exception) {
-        return when (e) {
-            is ClientRequestException, is ConnectionException, is HttpRequestTimeoutException -> Response.Error.OnlineError.ConnectionError
-            is ServerResponseException -> Response.Error.Other(e.message)
-            is CancellationException -> Response.Error.Cancelled
-            else -> Response.Error.Other(e.stackTraceToString())
-        }
-    }
-    return Response.Error.Other("Not implemented")
-}
-
 class ConnectionException: Exception()

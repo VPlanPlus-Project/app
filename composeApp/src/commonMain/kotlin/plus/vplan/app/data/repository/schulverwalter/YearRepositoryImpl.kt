@@ -43,65 +43,67 @@ class YearRepositoryImpl(
         }
         send(CacheState.Loading(id.toString()))
 
-        val existing = vppDatabase.yearDao.getById(id).first()
-        val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.year.userForRequest).first()) }
-            ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
+        safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+            val existing = vppDatabase.yearDao.getById(id).first()
+            val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.year.userForRequest).first()) }
+                ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
 
-        accessTokens.forEach { accessToken ->
-            val response = httpClient.get {
-                url {
-                    protocol = URLProtocol.HTTPS
-                    host = "beste.schule"
-                    port = 443
-                    pathSegments = listOf("api", "years")
-                }
-                bearerAuth(accessToken.schulverwalterAccessToken)
-            }
-            if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Year>()))
-            val data = ResponseDataWrapper.fromJson<List<YearItemResponse>>(response.bodyAsText())
-                ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
-
-            vppDatabase.yearDao.upsert(
-                years = data.map {
-                    DbSchulverwalterYear(
-                        id = it.id,
-                        name = it.name,
-                        from = LocalDate.parse(it.from),
-                        to = LocalDate.parse(it.to),
-                        userForRequest = accessToken.schulverwalterUserId,
-                        cachedAt = Clock.System.now()
-                    )
-                },
-                intervalsCrossovers = data.flatMap { year ->
-                    year.intervals.map { interval ->
-                        FKSchulverwalterYearSchulverwalterInterval(
-                            yearId = year.id,
-                            intervalId = interval.id
-                        )
+            accessTokens.forEach { accessToken ->
+                val response = httpClient.get {
+                    url {
+                        protocol = URLProtocol.HTTPS
+                        host = "beste.schule"
+                        port = 443
+                        pathSegments = listOf("api", "years")
                     }
-                },
-                intervals = data.flatMap { year ->
-                    year.intervals.map { interval ->
-                        DbSchulverwalterInterval(
-                            id = interval.id,
-                            name = interval.name,
-                            type = interval.type,
-                            from = LocalDate.parse(interval.from),
-                            to = LocalDate.parse(interval.to),
-                            includedIntervalId = interval.includedIntervalId,
+                    bearerAuth(accessToken.schulverwalterAccessToken)
+                }
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Year>()))
+                val data = ResponseDataWrapper.fromJson<List<YearItemResponse>>(response.bodyAsText())
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+
+                vppDatabase.yearDao.upsert(
+                    years = data.map {
+                        DbSchulverwalterYear(
+                            id = it.id,
+                            name = it.name,
+                            from = LocalDate.parse(it.from),
+                            to = LocalDate.parse(it.to),
                             userForRequest = accessToken.schulverwalterUserId,
                             cachedAt = Clock.System.now()
                         )
+                    },
+                    intervalsCrossovers = data.flatMap { year ->
+                        year.intervals.map { interval ->
+                            FKSchulverwalterYearSchulverwalterInterval(
+                                yearId = year.id,
+                                intervalId = interval.id
+                            )
+                        }
+                    },
+                    intervals = data.flatMap { year ->
+                        year.intervals.map { interval ->
+                            DbSchulverwalterInterval(
+                                id = interval.id,
+                                name = interval.name,
+                                type = interval.type,
+                                from = LocalDate.parse(interval.from),
+                                to = LocalDate.parse(interval.to),
+                                includedIntervalId = interval.includedIntervalId,
+                                userForRequest = accessToken.schulverwalterUserId,
+                                cachedAt = Clock.System.now()
+                            )
+                        }
                     }
+                )
+                data.forEach { year ->
+                    vppDatabase.yearDao.deleteSchulverwalterYearSchulverwalterInterval(year.id, year.intervals.map { it.id })
                 }
-            )
-            data.forEach { year ->
-                vppDatabase.yearDao.deleteSchulverwalterYearSchulverwalterInterval(year.id, year.intervals.map { it.id })
             }
-        }
 
-        if (yearFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
-        return@channelFlow sendAll(getById(id, false))
+            if (yearFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
+            return@channelFlow sendAll(getById(id, false))
+        }
     }
 
     override fun getAllIds(): Flow<List<Int>> = vppDatabase.yearDao.getAll()
