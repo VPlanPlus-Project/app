@@ -84,8 +84,8 @@ jobs:
 
             -   name: Rename output files
                 run: |
-                    mv composeApp-release.apk ${{ env.TAG_NAME }}.apk
-                    mv composeApp-release.aab ${{ env.TAG_NAME }}.aab
+                    mv composeApp/build/outputs/apk/release/composeApp-release.apk ${{ env.TAG_NAME }}.apk
+                    mv composeApp/build/outputs/bundle/release/composeApp-release.aab ${{ env.TAG_NAME }}.aab
 
             -   name: Create release
                 uses: softprops/action-gh-release@v2
