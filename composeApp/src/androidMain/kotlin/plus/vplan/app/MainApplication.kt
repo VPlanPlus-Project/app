@@ -6,6 +6,9 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.posthog.PostHog
+import com.posthog.android.PostHogAndroid
+import com.posthog.android.PostHogAndroidConfig
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.androidx.workmanager.koin.workManagerFactory
@@ -16,8 +19,22 @@ import java.util.concurrent.TimeUnit
 
 class MainApplication : Application() {
 
+    companion object {
+        const val POSTHOG_API_KEY = "phc_cS4RpGEmiGQJLvKLm5TFCZ4aEaqGRkWvWsOo7ko6pC6"
+        const val POSTHOG_HOST = "https://eu.i.posthog.com"
+    }
+
     override fun onCreate() {
         super.onCreate()
+
+        val config = PostHogAndroidConfig(
+            apiKey = POSTHOG_API_KEY,
+            host = POSTHOG_HOST
+        )
+
+        // Setup PostHog with the given Context and Config
+        PostHogAndroid.setup(this, config)
+        PostHog.capture(event = "AppStart", properties = mapOf("\$app_build" to App.VERSION_CODE))
 
         initKoin {
             androidContext(this@MainApplication)
