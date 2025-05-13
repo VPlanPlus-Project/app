@@ -118,9 +118,9 @@ android {
         signingConfigs {
             create("default") {
                 storeFile = file(localProperties["signing.default.file"]!!)
-                storePassword = Base64.getDecoder().decode(localProperties["signing.default.storepassword"]!!.toString()).toString(Charsets.UTF_8)
+                storePassword = Base64.getDecoder().decode(localProperties["signing.default.storepassword"]!!.toString()).toString(Charsets.US_ASCII)
                 keyAlias = localProperties["signing.default.keyalias"]!!.toString()
-                keyPassword = Base64.getDecoder().decode(localProperties["signing.default.keypassword"]!!.toString()).toString(Charsets.UTF_8)
+                keyPassword = Base64.getDecoder().decode(localProperties["signing.default.keypassword"]!!.toString()).toString(Charsets.US_ASCII)
             }
         }
     }
