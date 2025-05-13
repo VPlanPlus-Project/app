@@ -10,6 +10,7 @@ import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentDateUseC
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentVisibilityUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.CreateAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.DeleteAssessmentUseCase
+import plus.vplan.app.feature.assessment.domain.usecase.DeleteFileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentViewModel
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailViewModel
@@ -23,6 +24,7 @@ val assessmentModule = module {
     singleOf(::ChangeAssessmentVisibilityUseCase)
     singleOf(::ChangeAssessmentContentUseCase)
     singleOf(::AddAssessmentFileUseCase)
+    singleOf(::DeleteFileUseCase)
 
     viewModelOf(::NewAssessmentViewModel)
     viewModelOf(::AssessmentDetailViewModel)

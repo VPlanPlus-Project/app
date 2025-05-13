@@ -1,12 +1,11 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
@@ -20,7 +19,7 @@ data class Assessment(
     val subjectInstanceId: Int,
     val description: String,
     val type: Type,
-    val files: List<Int>,
+    val fileIds: List<Int>,
     val cachedAt: Instant
 ): Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
@@ -48,7 +47,10 @@ data class Assessment(
         return this.createdByProfile ?: (App.profileSource.getById(this.creator.id).getFirstValue() as? Profile.StudentProfile)?.also { createdByProfile = it }
     }
 
-    fun getFilesFlow() = combine(files.map { App.fileSource.getById(it).filterIsInstance<CacheState.Done<File>>() }) { it.toList().map { it.data } }
+    val files by lazy {
+        if (fileIds.isEmpty()) return@lazy flowOf(emptyList())
+        return@lazy combine(fileIds.map { App.fileSource.getById(it) }) { it.toList() }
+    }
 
     data class AssessmentFile(
         val id: Int,
