@@ -71,6 +71,7 @@ import plus.vplan.app.feature.profile.settings.page.subject_instances.ui.compone
 import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
+import plus.vplan.app.feature.settings.page.developer.ui.DeveloperSettingsScreen
 import plus.vplan.app.feature.settings.page.info.ui.InfoScreen
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
 import plus.vplan.app.feature.settings.page.security.ui.SecuritySettingsScreen
@@ -300,6 +301,14 @@ fun MainScreenHost(
                     navHostController = navController
                 )
             }
+            composable<MainScreen.DeveloperSettings>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
+                DeveloperSettingsScreen(navHostController = navController)
+            }
             composable<MainScreen.InfoFeedbackSettings>(
                 enterTransition = defaultEnterAnimation,
                 exitTransition = defaultExitAnimation,
@@ -404,6 +413,7 @@ sealed class MainScreen(val name: String) {
     @Serializable data object Settings : MainScreen("Settings")
     @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: Int? = null) : MainScreen("SchoolSettings")
     @Serializable data object SecuritySettings : MainScreen("SecuritySettings")
+    @Serializable data object DeveloperSettings : MainScreen("DeveloperSettings")
     @Serializable data object InfoFeedbackSettings : MainScreen("InfoFeedbackSettings")
 
     @Serializable data class Grades(val vppId: Int) : MainScreen("Grades")
