@@ -43,9 +43,9 @@ fun WelcomeScreen(
 
     LaunchedEffect(Unit) {
         if (!showAnimation) return@LaunchedEffect
-        delay(1000)
+        delay(500)
         titleVisible = true
-        delay(2000)
+        delay(1000)
         subtitleVisible = true
     }
 

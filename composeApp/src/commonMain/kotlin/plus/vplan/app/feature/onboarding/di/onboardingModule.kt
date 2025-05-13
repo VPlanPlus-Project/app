@@ -24,6 +24,9 @@ import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.G
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.SelectProfileUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileViewModel
 import plus.vplan.app.feature.onboarding.stage.e_permissions.ui.OnboardingPermissionViewModel
+import plus.vplan.app.feature.onboarding.stage.migrate.a_read.domain.usecase.GenerateNewAccessCodeUseCase
+import plus.vplan.app.feature.onboarding.stage.migrate.a_read.domain.usecase.ReadMigrationDataUseCase
+import plus.vplan.app.feature.onboarding.stage.migrate.a_read.ui.ImportScreenViewModel
 import plus.vplan.app.feature.onboarding.ui.OnboardingHostViewModel
 
 expect fun onboardingDatabaseModule(): Module
@@ -45,6 +48,9 @@ val onboardingModule = module {
     singleOf(::GetProfileOptionsUseCase)
     singleOf(::SelectProfileUseCase)
 
+    singleOf(::ReadMigrationDataUseCase)
+    singleOf(::GenerateNewAccessCodeUseCase)
+
     viewModelOf(::OnboardingHostViewModel)
     viewModelOf(::OnboardingSchoolSearchViewModel)
     viewModelOf(::OnboardingIndiwareLoginViewModel)
@@ -52,4 +58,6 @@ val onboardingModule = module {
     viewModelOf(::OnboardingIndiwareDataDownloadViewModel)
     viewModelOf(::OnboardingSelectProfileViewModel)
     viewModelOf(::OnboardingPermissionViewModel)
+
+    viewModelOf(::ImportScreenViewModel)
 }

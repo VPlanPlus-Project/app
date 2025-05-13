@@ -24,6 +24,7 @@ import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.ui.Onboa
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileScreen
 import plus.vplan.app.feature.onboarding.stage.e_permissions.ui.OnboardingPermissionsScreen
 import plus.vplan.app.feature.onboarding.stage.f_finished.ui.OnboardingFinishedScreen
+import plus.vplan.app.feature.onboarding.stage.migrate.a_read.ui.ImportScreen
 
 val enterSlideTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) =
     {
@@ -75,6 +76,7 @@ fun OnboardingScreen(
                 popUpTo(0)
             }
         }
+
         NavHost(
             navController = navController,
             startDestination = OnboardingScreen.OnboardingScreenHome,
@@ -110,6 +112,10 @@ fun OnboardingScreen(
             composable<OnboardingScreen.OnboardingFinished> {
                 OnboardingFinishedScreen(onFinish)
             }
+
+            composable<OnboardingScreen.OnboardingImportStart> {
+                ImportScreen(navController)
+            }
         }
     }
 }
@@ -123,4 +129,6 @@ sealed class OnboardingScreen(val name: String) {
     @Serializable data object OnboardingChooseProfile : OnboardingScreen("OnboardingScreenChooseProfileType")
     @Serializable data object OnboardingPermission : OnboardingScreen("OnboardingScreenPermission")
     @Serializable data object OnboardingFinished : OnboardingScreen("OnboardingScreenFinished")
+
+   @Serializable data object OnboardingImportStart : OnboardingScreen("OnboardingImportStart")
 }

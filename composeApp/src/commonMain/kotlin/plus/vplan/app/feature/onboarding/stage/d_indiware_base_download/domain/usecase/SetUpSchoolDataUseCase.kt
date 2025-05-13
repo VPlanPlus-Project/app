@@ -41,7 +41,7 @@ class SetUpSchoolDataUseCase(
 ) {
     operator fun invoke(): Flow<SetUpSchoolDataResult> = channelFlow {
         val result = SetUpSchoolDataStep.entries.associateWith { SetUpSchoolDataState.NOT_STARTED }.toMutableMap()
-        val emitResult: suspend () -> Unit = { this@channelFlow.trySend(SetUpSchoolDataResult.Loading(result.toMap())) }
+        val trySendResult: suspend () -> Unit = { this@channelFlow.trySend(SetUpSchoolDataResult.Loading(result.toMap())) }
         trySend(SetUpSchoolDataResult.Loading(result.toMap()))
         val prefix = "Onboarding/${this::class.simpleName}"
         try {
@@ -62,7 +62,7 @@ class SetUpSchoolDataUseCase(
                 }
 
             result[SetUpSchoolDataStep.DOWNLOAD_BASE_DATA] = SetUpSchoolDataState.IN_PROGRESS
-            emitResult()
+            trySendResult()
             val baseData = indiwareRepository.getBaseData(
                 sp24Id = sp24Id,
                 username = username,
@@ -74,7 +74,7 @@ class SetUpSchoolDataUseCase(
             }
             result[SetUpSchoolDataStep.DOWNLOAD_BASE_DATA] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.IN_PROGRESS
-            emitResult()
+            trySendResult()
 
             val schoolId = schoolRepository.getIdFromSp24Id(sp24Id.toInt())
             if (schoolId !is Response.Success) throw IllegalStateException("$prefix school-Lookup by sp24 was not successful: $schoolId")
@@ -104,7 +104,7 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_HOLIDAYS] = SetUpSchoolDataState.DONE
 
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.IN_PROGRESS
-            emitResult()
+            trySendResult()
 
             groupRepository.getBySchoolWithCaching(school).let {
                 (it as? Response.Success)?.data?.first() ?: run {
@@ -115,7 +115,7 @@ class SetUpSchoolDataUseCase(
 
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_TEACHERS] = SetUpSchoolDataState.IN_PROGRESS
-            emitResult()
+            trySendResult()
 
             val teachers = teacherRepository.getBySchoolWithCaching(school, forceReload = true).let {
                 (it as? Response.Success)?.data?.first() ?: run {
@@ -126,7 +126,7 @@ class SetUpSchoolDataUseCase(
 
             result[SetUpSchoolDataStep.GET_TEACHERS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_ROOMS] = SetUpSchoolDataState.IN_PROGRESS
-            emitResult()
+            trySendResult()
 
             roomRepository.getBySchoolWithCaching(school, forceReload = true).let {
                 (it as? Response.Success)?.data?.first() ?: run {
@@ -137,7 +137,7 @@ class SetUpSchoolDataUseCase(
 
             result[SetUpSchoolDataStep.GET_ROOMS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.IN_PROGRESS
-            emitResult()
+            trySendResult()
 
             baseData.data.weeks?.map { baseDataWeek ->
                 Week(
@@ -153,13 +153,13 @@ class SetUpSchoolDataUseCase(
 
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.IN_PROGRESS
-            emitResult()
+            trySendResult()
 
             updateLessonTimesUseCase(school)
 
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.IN_PROGRESS
-            emitResult()
+            trySendResult()
 
             courseRepository.getBySchool(school.id, true).first()
             baseData.data.classes
@@ -176,7 +176,7 @@ class SetUpSchoolDataUseCase(
                 .map { subjectInstanceRepository.getByIndiwareId(it).getFirstValue() }
 
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.DONE
-            return@channelFlow emitResult()
+            return@channelFlow trySendResult()
         } catch (e: Exception) {
             e.printStackTrace()
             trySend(SetUpSchoolDataResult.Error(e.message ?: "Unknown error"))
