@@ -17,8 +17,9 @@ jobs:
         steps:
             -   name: Name release
                 run: |
-                    value="${{ env.BRANCH_NAME }}"; echo "RELEASE_NAME=${value#release/}" >> $GITHUB_ENV
-                    echo "Release name: ${{ env.RELEASE_NAME }}"
+                    value=${{ env.BRANCH_NAME }}
+                    echo "RELEASE_NAME=${value#release/}" >> $GITHUB_ENV
+                    echo "Version: ${value#release/}"
             -   name: Checkout sources
                 uses: actions/checkout@v4
             -   name: Setup Java
@@ -53,10 +54,10 @@ jobs:
                 run: echo "signing.default.keypassword=${{secrets.KEYSTORE_PASSWORD}}" >> local.properties
 
             -   name: Build App Bundle
-                run: ./gradlew :bundleRelease
+                run: ./gradlew :composeApp:bundleRelease
 
             -   name: Build APK
-                run: ./gradlew :assembleRelease
+                run: ./gradlew :composeApp:assembleRelease
 
             -   name: Export AAB as artifact
                 uses: actions/upload-artifact@v4
