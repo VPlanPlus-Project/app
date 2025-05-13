@@ -176,6 +176,10 @@ class AssessmentRepositoryImpl(
         vppDatabase.assessmentDao.upsert(FKAssessmentFile(assessmentId, fileId))
     }
 
+    override suspend fun unlinkFileFromAssessment(assessmentId: Int, fileId: Int) {
+        vppDatabase.assessmentDao.deleteFileAssessmentConnections(assessmentId, fileId)
+    }
+
     override fun getAll(): Flow<List<Assessment>> {
         return vppDatabase.assessmentDao.getAll().map { it.map { item -> item.toModel() } }
     }
@@ -335,7 +339,7 @@ class AssessmentRepositoryImpl(
                 cachedAt = it.cachedAt
             ) },
             files = assessments.flatMap { assessment ->
-                assessment.files.map { fileId -> FKAssessmentFile(
+                assessment.fileIds.map { fileId -> FKAssessmentFile(
                     fileId = fileId,
                     assessmentId = assessment.id
                 ) }

@@ -39,6 +39,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun editHomeworkTask(task: Homework.HomeworkTask, newContent: String, profile: Profile.StudentProfile)
 
     suspend fun linkHomeworkFileLocally(homework: Homework, file: plus.vplan.app.domain.model.File)
+    suspend fun unlinkHomeworkFileLocally(homework: Homework, fileId: Int)
 
     suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error?
     suspend fun deleteHomeworkTask(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Response.Error?

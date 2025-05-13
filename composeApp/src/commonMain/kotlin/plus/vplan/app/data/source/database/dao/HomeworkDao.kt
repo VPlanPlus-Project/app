@@ -45,6 +45,9 @@ interface HomeworkDao {
     @Query("DELETE FROM fk_homework_file WHERE homework_id IN (:homeworkId)")
     suspend fun deleteFileHomeworkConnections(homeworkId: List<Int>)
 
+    @Query("DELETE FROM fk_homework_file WHERE homework_id = :homeworkId AND file_id = :fileId")
+    suspend fun deleteFileHomeworkConnections(homeworkId: Int, fileId: Int)
+
     @Transaction
     suspend fun upsertMany(
         homework: List<DbHomework>,

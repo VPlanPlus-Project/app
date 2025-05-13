@@ -39,6 +39,8 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
         fileId: Int
     )
 
+    suspend fun unlinkFileFromAssessment(assessmentId: Int, fileId: Int)
+
     fun getAll(): Flow<List<Assessment>>
 
     fun getByDate(date: LocalDate): Flow<List<Assessment>>

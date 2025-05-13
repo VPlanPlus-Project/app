@@ -17,7 +17,11 @@ import kotlinx.coroutines.flow.onEach
 import plus.vplan.app.domain.data.Response
 
 sealed class CacheState<out T: Item<*>>(val entityId: String) {
-    data class Loading(val id: String): CacheState<Nothing>(id)
+    data class Loading(val id: String, val source: Source? = null): CacheState<Nothing>(id) {
+        enum class Source {
+            Network, Local
+        }
+    }
     data class NotExisting(val id: String): CacheState<Nothing>(id)
     data class Error(val id: String, val error: Response.Error): CacheState<Nothing>(id)
     data class Done<T: Item<*>>(val data: T): CacheState<T>(data.getEntityId())

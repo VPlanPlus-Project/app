@@ -30,7 +30,7 @@ interface FileDao {
     @Query("DELETE FROM file WHERE id IN (:ids)")
     suspend fun deleteById(ids: List<Int>)
 
-    @Query("SELECT MIN(id) FROM file WHERE id > 0")
+    @Query("SELECT MIN(id) FROM file WHERE id < 0")
     suspend fun getLocalMinId(): Int?
 
     @Query("DELETE FROM fk_homework_file WHERE file_id = :fileId")

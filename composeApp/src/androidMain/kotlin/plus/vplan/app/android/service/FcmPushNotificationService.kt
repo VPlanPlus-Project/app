@@ -7,14 +7,15 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.usecase.UpdateFirebaseTokenUseCase
+import plus.vplan.app.feature.system.usecase.HandlePushNotificationUseCase
 import plus.vplan.app.isDeveloperMode
 
 class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
 
     val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase by inject()
+    val handlePushNotificationService: HandlePushNotificationUseCase by inject()
+
     private val logger = Logger.withTag("FcmPushNotificationService")
 
     override fun onNewToken(token: String) {
@@ -31,6 +32,7 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
             Logger.w { "No type found in FCM message, ignoring" }
             return
         }).let {
+            @Suppress("KotlinConstantConditions")
             if (it.startsWith("DEV_") && !isDeveloperMode) {
                 Logger.w { "DEV_ message received, but developer mode is not enabled, ignoring" }
                 return
@@ -41,23 +43,7 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
         }
 
         MainScope().launch {
-            when (type) {
-                "HOMEWORK_UPDATE" -> {
-                    val homeworkIds = message.data["homework_ids"]?.split(",").orEmpty().mapNotNull { it.toIntOrNull() }
-                    Logger.d { "Homework ids: $homeworkIds" }
-                    homeworkIds.forEach {
-                        App.homeworkSource.getById(it, forceUpdate = true).getFirstValue()
-                    }
-                }
-
-                "ASSESSMENT_UPDATE" -> {
-                    val assessmentIds = message.data["assessment_ids"]?.split(",").orEmpty().mapNotNull { it.toIntOrNull() }
-                    Logger.d { "Assessment ids: $assessmentIds" }
-                    assessmentIds.forEach {
-                        App.assessmentSource.getById(it, forceUpdate = true).getFirstValue()
-                    }
-                }
-            }
+            handlePushNotificationService(type, message.data["data"].orEmpty())
         }
     }
 }

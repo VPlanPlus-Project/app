@@ -33,6 +33,7 @@ import plus.vplan.app.APP_ID
 import plus.vplan.app.APP_REDIRECT_URI
 import plus.vplan.app.APP_SECRET
 import plus.vplan.app.api
+import plus.vplan.app.auth
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
@@ -62,7 +63,7 @@ class VppIdRepositoryImpl(
     override suspend fun getAccessToken(code: String): Response<String> {
         return saveRequest {
             val response = httpClient.submitForm(
-                url = "${api.url}/api/v2.2/auth/token",
+                url = "${auth.url}/oauth/token",
                 formParameters = Parameters.build {
                     append("grant_type", "authorization_code")
                     append("code", code)
@@ -222,7 +223,7 @@ class VppIdRepositoryImpl(
 
     override suspend fun logout(token: String): Response<Unit> {
         return saveRequest {
-            val response = httpClient.get("${api.url}/api/v2.2/auth/logout") {
+            val response = httpClient.get("${auth.url}/oauth/logout") {
                 bearerAuth(token)
             }
             if (response.status != HttpStatusCode.OK) {

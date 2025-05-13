@@ -399,7 +399,7 @@ private fun CalendarScreenContent(
                                 modifier = Modifier.fillMaxSize()
                             ) { page ->
                                 val date = remember(page) { LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY) }
-                                val day = remember(date) { state.calendarDays[date] ?: CalendarDay(date) }
+                                val day = state.calendarDays[date] ?: CalendarDay(date)
                                 CalendarView(
                                     profile = state.currentProfile,
                                     date = date,

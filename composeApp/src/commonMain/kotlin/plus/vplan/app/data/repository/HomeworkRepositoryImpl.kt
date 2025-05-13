@@ -409,6 +409,10 @@ class HomeworkRepositoryImpl(
         vppDatabase.homeworkDao.upsertFileHomeworkConnections(listOf(FKHomeworkFile(homeworkId = homework.id, fileId = file.id)))
     }
 
+    override suspend fun unlinkHomeworkFileLocally(homework: Homework, fileId: Int) {
+        vppDatabase.homeworkDao.deleteFileHomeworkConnections(homework.id, fileId)
+    }
+
     override suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error? {
         if (homework.id < 0 || profile.getVppIdItem() == null) {
             vppDatabase.homeworkDao.deleteById(listOf(homework.id))
