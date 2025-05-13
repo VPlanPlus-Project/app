@@ -34,7 +34,8 @@ class MainApplication : Application() {
 
         // Setup PostHog with the given Context and Config
         PostHogAndroid.setup(this, config)
-        PostHog.capture(event = "AppStart", properties = mapOf("\$app_build" to App.VERSION_CODE))
+        PostHog.register("\$app_build", App.VERSION_CODE)
+        PostHog.register("\$os_name", "Android")
 
         initKoin {
             androidContext(this@MainApplication)
