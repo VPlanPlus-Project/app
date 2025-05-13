@@ -38,6 +38,9 @@ jobs:
             -   name: Make gradlew executable
                 run: chmod +x ./gradlew
 
+            -   name: Restore google-services.json
+                run: echo ${{ secrets.KEYSTORE_FILE }} | base64 -d > ${GITHUB_WORKSPACE}/composeApp/google-services.json
+
             -   name: Restore playstore.keystore.jks
                 run: echo ${{ secrets.KEYSTORE_FILE }} | base64 -d > ${GITHUB_WORKSPACE}/keystore.jks
 
