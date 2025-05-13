@@ -56,6 +56,16 @@ jobs:
             -   name: Add keystore key password to local.properties
                 run: echo "signing.default.keypassword=${{secrets.KEYSTORE_PASSWORD}}" >> local.properties
 
+            -   uses: actions/cache@v2
+                with:
+                    path: |
+                        ~/.gradle/caches
+                        ~/.gradle/wrapper
+                    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                    restore-keys: |
+                        ${{ runner.os }}-gradle-
+                
+
             -   name: Build APK
                 run: ./gradlew :composeApp:assembleRelease
 
