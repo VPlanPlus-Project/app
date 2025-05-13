@@ -16,9 +16,9 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             -   name: Name release
-                run: echo "RELEASE_NAME=${${{ env.BRANCH_NAME }}#release/}" >> $GITHUB_ENV
-            -   name: Print release
-                run: echo "Release name is ${{ env.RELEASE_NAME }}"
+                run: |
+                    value="${{ env.BRANCH_NAME }}"; echo "RELEASE_NAME=${value#release/}" >> $GITHUB_ENV
+                    echo "Release name: ${{ env.RELEASE_NAME }}"
             -   name: Checkout sources
                 uses: actions/checkout@v4
             -   name: Setup Java
