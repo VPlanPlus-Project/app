@@ -76,7 +76,7 @@ jobs:
                     name: build-artifacts
                     path: |
                         ${{ env.TAG_NAME }}.apk
-                        ${ env.TAG_NAME }}.aab
+                        ${{ env.TAG_NAME }}.aab
 
     release:
         needs: build
