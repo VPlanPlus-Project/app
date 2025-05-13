@@ -21,6 +21,8 @@ import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.homework.domain.usecase.AddFileUseCase
@@ -53,12 +55,21 @@ class HomeworkDetailViewModel(
     private val downloadFileUseCase: DownloadFileUseCase,
     private val renameFileUseCase: RenameFileUseCase,
     private val deleteFileUseCase: DeleteFileUseCase,
-    private val addFileUseCase: AddFileUseCase
+    private val addFileUseCase: AddFileUseCase,
+    private val keyValueRepository: KeyValueRepository
 ) : ViewModel() {
     var state by mutableStateOf(HomeworkDetailState())
         private set
 
     private var mainJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).collectLatest {
+                state = state.copy(isDeveloperMode = it == "true")
+            }
+        }
+    }
 
     fun init(homeworkId: Int) {
         state = HomeworkDetailState()
@@ -155,6 +166,7 @@ data class HomeworkDetailState(
     val newTaskState: UnoptimisticTaskState? = null,
     val taskDeleteState: Map<Int, UnoptimisticTaskState> = emptyMap(),
     val fileDownloadState: Map<Int, Float> = emptyMap(),
+    val isDeveloperMode: Boolean = false
 )
 
 sealed class HomeworkDetailEvent {
