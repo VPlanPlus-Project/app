@@ -31,6 +31,7 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateAssessmentIndicesUseCase
+import plus.vplan.app.feature.sync.domain.usecase.FullSyncCause
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
@@ -97,7 +98,7 @@ fun DevScreen(
                 enabled = !fullSyncRunning,
                 onClick = {
                     fullSyncRunning = true
-                    fullSyncUseCase().invokeOnCompletion {
+                    fullSyncUseCase(FullSyncCause.Manual).invokeOnCompletion {
                         fullSyncRunning = false
                     }
                 }
