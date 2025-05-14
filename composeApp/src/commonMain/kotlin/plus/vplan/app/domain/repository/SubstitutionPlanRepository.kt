@@ -14,6 +14,9 @@ interface SubstitutionPlanRepository {
     suspend fun deleteAllSubstitutionPlans()
     suspend fun deleteSubstitutionPlansByVersion(schoolId: Int, version: String)
 
+    /**
+     * @param versionString The string of the version key, contains school id and version int, e.g.: <school_id>_<version> ("7_20")
+     */
     suspend fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate, versionString: String): Set<Uuid>
     suspend fun getForProfile(profile: Profile, date: LocalDate, versionString: String): Set<Uuid>
     fun getSubstitutionPlanBySchool(schoolId: Int, versionString: String?): Flow<Set<Lesson.SubstitutionPlanLesson>>
