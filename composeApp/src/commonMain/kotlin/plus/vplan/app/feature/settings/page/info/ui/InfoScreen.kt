@@ -24,7 +24,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -37,11 +39,14 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
 import plus.vplan.app.Platform
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
+import plus.vplan.app.ui.components.noRippleClickable
 import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
@@ -64,15 +69,20 @@ expect fun getPlatform(): String
 fun InfoScreen(
     navHostController: NavHostController
 ) {
+
+    val viewModel = koinViewModel<InfoViewModel>()
+
     InfoContent(
-        onBack = remember { { navHostController.navigateUp() } }
+        onBack = remember { { navHostController.navigateUp() } },
+        onEvent = viewModel::handleEvent
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InfoContent(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onEvent: (InfoEvent) -> Unit
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
     var showFeedbackDrawer by rememberSaveable { mutableStateOf(false) }
@@ -122,9 +132,19 @@ private fun InfoContent(
                         text = "VPlanPlus für ${getPlatform()}",
                         style = MaterialTheme.typography.headlineSmall
                     )
+
+                    var clickCounter by remember { mutableIntStateOf(0) }
+                    LaunchedEffect(clickCounter) {
+                        if (clickCounter == 0) return@LaunchedEffect
+                        if (clickCounter == 10) onEvent(InfoEvent.EnableDeveloperMode)
+                        delay(1000)
+                        clickCounter = 0
+                    }
                     Text(
                         text = "${App.VERSION_NAME} (${App.VERSION_CODE})",
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier
+                            .noRippleClickable { clickCounter++ }
                     )
                 }
             }
