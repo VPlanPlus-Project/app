@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.settings.page.developer.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -73,7 +74,8 @@ private fun DeveloperSettingsContent(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .nestedScroll(scrollBehaviour.nestedScrollConnection)
-                .padding(top = 4.dp)
+                .padding(top = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row {
                 Button(
@@ -83,6 +85,16 @@ private fun DeveloperSettingsContent(
                     Text("Full sync")
                 }
                 if (state.isFullSyncRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
+            }
+            Button(
+                onClick = remember { { onEvent(DeveloperSettingsEvent.ClearLessonCache) } }
+            ) {
+                Text("Clear lesson cache")
+            }
+            Button(
+                onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateSubstitutionPlan) } }
+            ) {
+                Text("Update substitution plan")
             }
         }
     }
