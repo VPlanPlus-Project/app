@@ -104,5 +104,5 @@ jobs:
                     serviceAccountJsonPlainText: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
                     packageName: plus.vplan.app
                     releaseFiles: ${{ env.TAG_NAME }}.aab
-                    track: ${{ endsWith(env.TAG_NAME, '-internal') && 'qa' || endsWith(env.TAG_NAME, '-closed') && 'alpha' || endsWith(env.TAG_NAME, '-open') && 'beta' || 'production' }}
+                    track: ${{ endsWith(env.TAG_NAME, '-internal') && 'internal' || endsWith(env.TAG_NAME, '-closed') && 'alpha' || endsWith(env.TAG_NAME, '-open') && 'beta' || 'production' }}
                     releaseName: ${{ env.TAG_NAME }}
