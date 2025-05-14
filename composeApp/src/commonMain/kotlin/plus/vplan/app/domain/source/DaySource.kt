@@ -126,14 +126,38 @@ class DaySource(
                 }
 
                 launch {
+                    (if (contextProfile == null) homeworkRepository.getByDate(date) else homeworkRepository.getByProfile(contextProfile.id, date))
+                        .map { homework -> homework.map { it.id }.toSet() }
+                        .distinctUntilChanged()
+                        .collect { homework ->
+                            day.update {
+                                it.copy(
+                                    homeworkIds = homework,
+                                    tags = it.tags + Day.DayTags.HAS_HOMEWORK
+                                )
+                            }
+                        }
+                }
+
+                launch {
+                    (if (contextProfile == null) assessmentRepository.getByDate(date) else assessmentRepository.getByProfile(contextProfile.id, date))
+                        .map { assessments -> assessments.map { it.id }.toSet() }
+                        .distinctUntilChanged()
+                        .collect { assessments ->
+                            day.update {
+                                it.copy(
+                                    assessmentIds = assessments,
+                                    tags = it.tags + Day.DayTags.HAS_ASSESSMENTS
+                                )
+                            }
+                        }
+                }
+
+                launch {
                     combine(
                         keyValueRepository.get(Keys.substitutionPlanVersion(schoolId)),
                         keyValueRepository.get(Keys.timetableVersion(schoolId)),
-                        if (contextProfile == null) assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged()
-                        else assessmentRepository.getByProfile(contextProfile.id, date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
-                        if (contextProfile == null) homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
-                        else homeworkRepository.getByProfile(contextProfile.id, date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged(),
-                    ) { substitutionPlanVersion, timetableVersion, assessments, homework ->
+                    ) { substitutionPlanVersion, timetableVersion ->
                         val substitutionPlanVersionString = "${schoolId}_$substitutionPlanVersion"
                         val timetableVersionString = "${schoolId}_$timetableVersion"
                         val week = day.value.week?.getFirstValue()
@@ -152,8 +176,6 @@ class DaySource(
                             it.copy(
                                 timetable = timetable,
                                 substitutionPlan = substitutionPlan,
-                                assessmentIds = assessments,
-                                homeworkIds = homework,
                                 nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },
                                 dayType = if (timetable.isNotEmpty() || substitutionPlan.isNotEmpty()) Day.DayType.REGULAR else it.dayType,
                                 tags = it.tags + Day.DayTags.HAS_LESSONS
