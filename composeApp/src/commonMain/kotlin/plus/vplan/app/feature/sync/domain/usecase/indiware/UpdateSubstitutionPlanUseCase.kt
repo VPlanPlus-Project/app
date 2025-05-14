@@ -35,7 +35,6 @@ import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.latest
 import plus.vplan.app.utils.now
@@ -49,7 +48,6 @@ import kotlin.uuid.Uuid
 private val LOGGER = Logger.withTag("UpdateSubstitutionPlanUseCase")
 
 class UpdateSubstitutionPlanUseCase(
-    private val getDayUseCase: GetDayUseCase,
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
     private val indiwareRepository: IndiwareRepository,
     private val groupRepository: GroupRepository,
@@ -77,14 +75,20 @@ class UpdateSubstitutionPlanUseCase(
         var error: Response.Error? = null
         dates.forEach forEachDate@{ date ->
             val week = weekRepository.getBySchool(indiwareSchool.id).latest().firstOrNull { date in it.start..it.end } ?: run {
-                error = Response.Error.Other("Week for $date not found")
+                val errorMessage = "Week for $date not found"
+                Logger.d { errorMessage }
+                error = Response.Error.Other(errorMessage)
                 return@forEachDate
             }
 
-            val oldPlan: Map<Profile, Set<Lesson>> = profileRepository.getAll().first()
+            val oldLessons = substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId = indiwareSchool.id, date = date, versionString = "${indiwareSchool.id}_${keyValueRepository.get(Keys.substitutionPlanVersion(indiwareSchool.id)).first() ?: "-1"}")
+                .map { App.substitutionPlanSource.getById(it).getFirstValue()!! }
+
+            val oldPlan: Map<Uuid, Set<Lesson>> = profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
                 .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
-                .associateWith { getDayUseCase(it, date).first().lessons.first() }
+                .associateWith { profile -> oldLessons.filter { it.isRelevantForProfile(profile) }.toSet() }
+                .mapKeys { it.key.id }
 
             val substitutionPlanResponse = indiwareRepository.getSubstitutionPlan(
                 sp24Id = indiwareSchool.sp24Id,
@@ -165,24 +169,24 @@ class UpdateSubstitutionPlanUseCase(
                         info = substitutionPlanLesson.info
                     )
                 }
+            }.also {
+                Logger.d { "Lessons: ${it.filter { it.groupIds.contains(165) }}" }
             }.let { lessons.addAll(it) }
 
-            val newVersion = keyValueRepository.get(Keys.substitutionPlanVersion(indiwareSchool.id)).first()
             val newPlan = profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
                 .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
                 .associateWith {
-                    substitutionPlanRepository.getSubstitutionPlanBySchool(indiwareSchool.id, date, "${indiwareSchool.id}_$newVersion")
-                        .mapNotNull { App.substitutionPlanSource.getById(it).getFirstValue() }
-                        .filter { lesson -> lesson.isRelevantForProfile(it) }
+                    lessons.filter { lesson -> lesson.date == date && lesson.isRelevantForProfile(it) }
                 }
+                .mapKeys { it.key.id }
 
             if (allowNotification) profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
                 .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
                 .forEach forEachProfile@{ profile ->
-                    val old = oldPlan[profile] ?: return@forEachProfile
-                    val new = newPlan[profile] ?: return@forEachProfile
+                    val old = oldPlan[profile.id] ?: return@forEachProfile
+                    val new = newPlan[profile.id] ?: return@forEachProfile
 
                     if ((old + new).mapNotNull { it.lessonTime.getFirstValue()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachProfile
 
