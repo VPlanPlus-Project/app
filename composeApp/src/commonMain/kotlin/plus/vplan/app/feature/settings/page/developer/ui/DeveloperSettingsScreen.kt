@@ -91,10 +91,14 @@ private fun DeveloperSettingsContent(
             ) {
                 Text("Clear lesson cache")
             }
-            Button(
-                onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateSubstitutionPlan) } }
-            ) {
-                Text("Update substitution plan")
+            Row {
+                Button(
+                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateSubstitutionPlan) } },
+                    enabled = !state.isSubstitutionPlanUpdateRunning,
+                ) {
+                    Text("Update substitution plan")
+                }
+                if (state.isSubstitutionPlanUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
             }
         }
     }

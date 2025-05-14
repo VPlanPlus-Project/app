@@ -54,10 +54,13 @@ class DeveloperSettingsViewModel(
                     timetableRepository.deleteAllTimetables()
                 }
                 DeveloperSettingsEvent.UpdateSubstitutionPlan -> {
+                    if (state.isSubstitutionPlanUpdateRunning) return@launch
+                    state = state.copy(isSubstitutionPlanUpdateRunning = true)
                     updateSubstitutionPlanUseCase(
                         state.profile!!.getSchool().getFirstValue()!! as School.IndiwareSchool, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
                         allowNotification = true
                     )
+                    state = state.copy(isSubstitutionPlanUpdateRunning = false)
                 }
             }
         }
@@ -66,6 +69,7 @@ class DeveloperSettingsViewModel(
 
 data class DeveloperSettingsState(
     val isFullSyncRunning: Boolean = false,
+    val isSubstitutionPlanUpdateRunning: Boolean = false,
     val profile: Profile? = null,
 )
 
