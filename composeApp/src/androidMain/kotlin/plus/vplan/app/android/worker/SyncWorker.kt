@@ -8,6 +8,7 @@ import androidx.work.WorkerParameters
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.data.repository.PlatformNotificationImpl
+import plus.vplan.app.feature.sync.domain.usecase.FullSyncCause
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 
 class SyncWorker(
@@ -16,7 +17,7 @@ class SyncWorker(
 ): CoroutineWorker(context, workerParameters), KoinComponent {
     private val fullSyncUseCase: FullSyncUseCase by inject()
     override suspend fun doWork(): Result {
-        fullSyncUseCase()
+        fullSyncUseCase(FullSyncCause.Job)
         return Result.success()
     }
 
