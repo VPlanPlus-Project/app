@@ -21,10 +21,12 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
+import vplanplus.composeapp.generated.resources.bug_play
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.lock
 import vplanplus.composeapp.generated.resources.school
@@ -33,11 +35,16 @@ import vplanplus.composeapp.generated.resources.school
 fun SettingsScreen(
     navHostController: NavHostController,
 ) {
+    val viewModel = koinViewModel<SettingsViewModel>()
+    val state = viewModel.state
+
     SettingsContent(
         onBack = navHostController::navigateUp,
         onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings()) } },
         onOpenSecuritySettings = remember { { navHostController.navigate(MainScreen.SecuritySettings) } },
-        onOpenInfoAndFeedback = remember { { navHostController.navigate(MainScreen.InfoFeedbackSettings) } }
+        onOpenDeveloperSettings = remember { { navHostController.navigate(MainScreen.DeveloperSettings) } },
+        onOpenInfoAndFeedback = remember { { navHostController.navigate(MainScreen.InfoFeedbackSettings) } },
+        state = state
     )
 }
 
@@ -47,7 +54,9 @@ private fun SettingsContent(
     onBack: () -> Unit,
     onOpenSchoolSettings: () -> Unit,
     onOpenSecuritySettings: () -> Unit,
-    onOpenInfoAndFeedback: () -> Unit
+    onOpenDeveloperSettings: () -> Unit,
+    onOpenInfoAndFeedback: () -> Unit,
+    state: SettingsState
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
 
@@ -90,6 +99,15 @@ private fun SettingsContent(
                 onClick = onOpenSecuritySettings
             )
             HorizontalDivider(Modifier.padding(horizontal = 24.dp))
+            if (state.isDeveloperSettingsEnabled) {
+                SettingsRecord(
+                    title = "Entwickleroptionen",
+                    subtitle = "Flags, Diagnose und erweiterte Optionen",
+                    icon = painterResource(Res.drawable.bug_play),
+                    onClick = onOpenDeveloperSettings
+                )
+                HorizontalDivider(Modifier.padding(horizontal = 24.dp))
+            }
             SettingsRecord(
                 title = "Info & Feedback",
                 subtitle = "Über VPlanPlus, Rückmeldung an die Entwickler",
