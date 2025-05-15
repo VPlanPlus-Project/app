@@ -151,26 +151,36 @@ class DaySource(
                 }
 
                 launch {
-                    combine(
-                        if (contextProfile == null) assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged()
-                        else assessmentRepository.getByProfile(contextProfile.id, date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
-                        if (contextProfile == null) homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
-                        else homeworkRepository.getByProfile(contextProfile.id, date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged(),
-                    ) { assessments, homework ->
-
-                        val holidays = dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } }.first()
-
-                        val nextSchoolDay = findNextRegularSchoolDayAfter(holidays, date, (school as? School.IndiwareSchool)?.daysPerWeek)
-
+                    (if (contextProfile == null) assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged()
+                    else assessmentRepository.getByProfile(contextProfile.id, date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged()).collectLatest { assessmentIds ->
                         day.update {
                             it.copy(
-                                assessmentIds = assessments,
-                                homeworkIds = homework,
-                                nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },
-                                tags = it.tags + Day.DayTags.HAS_LESSONS
+                                assessmentIds = assessmentIds
                             )
                         }
-                    }.collect()
+                    }
+                }
+
+                launch {
+                    (if (contextProfile == null) homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
+                    else homeworkRepository.getByProfile(contextProfile.id, date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()).collectLatest { homeworkIds ->
+                        day.update {
+                            it.copy(
+                                homeworkIds = homeworkIds
+                            )
+                        }
+                    }
+                }
+
+                launch {
+                    dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } }.collectLatest { holidays ->
+                        val nextSchoolDay = findNextRegularSchoolDayAfter(holidays, date, (school as? School.IndiwareSchool)?.daysPerWeek)
+                        day.update {
+                            it.copy(
+                                nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },
+                            )
+                        }
+                    }
                 }
             }
             flow
