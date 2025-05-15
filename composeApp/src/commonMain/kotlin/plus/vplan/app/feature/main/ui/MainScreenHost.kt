@@ -55,7 +55,6 @@ import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDr
 import plus.vplan.app.feature.calendar.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
-import plus.vplan.app.feature.dev.ui.DevScreen
 import plus.vplan.app.feature.grades.page.analytics.ui.AnalyticsScreen
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.GradesScreen
@@ -71,15 +70,14 @@ import plus.vplan.app.feature.profile.settings.page.subject_instances.ui.compone
 import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
+import plus.vplan.app.feature.settings.page.developer.ui.DeveloperSettingsScreen
 import plus.vplan.app.feature.settings.page.info.ui.InfoScreen
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
 import plus.vplan.app.feature.settings.page.security.ui.SecuritySettingsScreen
 import plus.vplan.app.feature.settings.ui.SettingsScreen
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateNewsUseCase
-import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.utils.BrowserIntent
 import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.bug_play
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.house
 import vplanplus.composeapp.generated.resources.search
@@ -135,7 +133,6 @@ fun MainScreenHost(
             if (destination.route.orEmpty().startsWith(MainScreen.MainHome::class.qualifiedName ?: "__")) "_Home"
             else if (destination.route.orEmpty().startsWith(MainScreen.MainCalendar::class.qualifiedName ?: "__")) "_Calendar"
             else if (destination.route.orEmpty().startsWith(MainScreen.MainSearch::class.qualifiedName ?: "__")) "_Search"
-            else if (destination.route.orEmpty().startsWith(MainScreen.MainDev::class.qualifiedName ?: "__")) "_Dev"
             else if (destination.route.orEmpty().startsWith(MainScreen.MainProfile::class.qualifiedName ?: "__")) "_Profile"
             else null
     }
@@ -195,12 +192,6 @@ fun MainScreenHost(
                     icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
                     onClick = { navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) } }
                 )
-                if (isDeveloperMode) NavigationBarItem(
-                    selected = currentDestination == "_Dev",
-                    label = { Text("Dev") },
-                    icon = { Icon(painter = painterResource(Res.drawable.bug_play), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainDev) { popUpTo(MainScreen.MainHome) } }
-                )
                 NavigationBarItem(
                     selected = currentDestination == "_Profile",
                     label = { Text("Profil") },
@@ -233,12 +224,6 @@ fun MainScreenHost(
                 popEnterTransition = defaultMainEnterAnimation,
                 popExitTransition = defaultMainExitAnimation
             ) { SearchScreen(navController, contentPadding, searchViewModel) }
-            composable<MainScreen.MainDev>(
-                enterTransition = defaultMainEnterAnimation,
-                exitTransition = defaultMainExitAnimation,
-                popEnterTransition = defaultMainEnterAnimation,
-                popExitTransition = defaultMainExitAnimation
-            ) { DevScreen(contentPadding) }
             composable<MainScreen.MainProfile>(
                 enterTransition = defaultMainEnterAnimation,
                 exitTransition = defaultMainExitAnimation,
@@ -299,6 +284,14 @@ fun MainScreenHost(
                 SecuritySettingsScreen(
                     navHostController = navController
                 )
+            }
+            composable<MainScreen.DeveloperSettings>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
+                DeveloperSettingsScreen(navHostController = navController)
             }
             composable<MainScreen.InfoFeedbackSettings>(
                 enterTransition = defaultEnterAnimation,
@@ -393,7 +386,6 @@ sealed class MainScreen(val name: String) {
     @Serializable data object MainHome : MainScreen("_Home")
     @Serializable data object MainCalendar : MainScreen("_Calendar")
     @Serializable data object MainSearch : MainScreen("_Search")
-    @Serializable data object MainDev : MainScreen("_Dev")
     @Serializable data object MainProfile : MainScreen("_Profile")
 
     @Serializable data class ProfileSettings(val profileId: String) : MainScreen("ProfileSettings")
@@ -404,6 +396,7 @@ sealed class MainScreen(val name: String) {
     @Serializable data object Settings : MainScreen("Settings")
     @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: Int? = null) : MainScreen("SchoolSettings")
     @Serializable data object SecuritySettings : MainScreen("SecuritySettings")
+    @Serializable data object DeveloperSettings : MainScreen("DeveloperSettings")
     @Serializable data object InfoFeedbackSettings : MainScreen("InfoFeedbackSettings")
 
     @Serializable data class Grades(val vppId: Int) : MainScreen("Grades")
