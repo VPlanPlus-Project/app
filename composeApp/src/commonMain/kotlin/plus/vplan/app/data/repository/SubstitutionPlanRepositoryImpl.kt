@@ -72,6 +72,15 @@ class SubstitutionPlanRepositoryImpl(
         )
     }
 
+    override suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>) {
+        vppDatabase.substitutionPlanDao.replaceIndex(lessonIds.map {
+            DbProfileSubstitutionPlanCache(
+                profileId = profileId,
+                substitutionPlanLessonId = it
+            )
+        })
+    }
+
     override suspend fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate): Flow<Set<Uuid>> {
         return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date).map { it.toSet() }.distinctUntilChanged()
     }

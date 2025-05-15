@@ -19,6 +19,8 @@ interface SubstitutionPlanRepository {
         profiles: List<Profile.StudentProfile>
     )
 
+    suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>)
+
     suspend fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate): Flow<Set<Uuid>>
     suspend fun getForProfile(profile: Profile, date: LocalDate): Flow<Set<Uuid>>
     suspend fun getAll(): Set<Uuid>

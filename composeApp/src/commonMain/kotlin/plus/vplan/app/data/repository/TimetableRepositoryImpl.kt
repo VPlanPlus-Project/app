@@ -73,6 +73,16 @@ class TimetableRepositoryImpl(
         )
     }
 
+
+    override suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>) {
+        vppDatabase.timetableDao.replaceIndex(lessonIds.map {
+            DbProfileTimetableCache(
+                profileId = profileId,
+                timetableLessonId = it
+            )
+        })
+    }
+
     override suspend fun deleteAllTimetables() {
         vppDatabase.timetableDao.deleteAll()
     }
@@ -93,13 +103,5 @@ class TimetableRepositoryImpl(
     override suspend fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
         val weeks = vppDatabase.timetableDao.getWeekIds(weekIndex).ifEmpty { return flowOf(emptySet()) }
         return vppDatabase.timetableDao.getLessonsForProfile(profile.id, weeks.last(), dayOfWeek).map { it.map { it.timetableLessonId }.toSet() }.distinctUntilChanged()
-    }
-
-    override suspend fun dropCacheForProfile(profileId: Uuid) {
-        vppDatabase.profileTimetableCacheDao.deleteCacheForProfile(profileId)
-    }
-
-    override suspend fun createCacheForProfile(profileId: Uuid, timetableLessonIds: List<Uuid>) {
-        vppDatabase.profileTimetableCacheDao.upsert(timetableLessonIds.map { DbProfileTimetableCache(profileId, it) })
     }
 }

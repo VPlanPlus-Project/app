@@ -63,6 +63,12 @@ interface SubstitutionPlanDao {
         upsert(profileIndex)
     }
 
+    @Transaction
+    suspend fun replaceIndex(index: List<DbProfileSubstitutionPlanCache>) {
+        index.map { it.profileId }.distinct().forEach { dropCacheForProfile(it) }
+        upsert(index)
+    }
+
     @Query("SELECT substitution_plan_lesson.id FROM substitution_plan_lesson LEFT JOIN day ON day.id = substitution_plan_lesson.day_id WHERE school_id = :schoolId AND day.date = :date")
     suspend fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate): List<Uuid>
 
@@ -89,6 +95,9 @@ interface SubstitutionPlanDao {
     @Transaction
     @Query("SELECT * FROM substitution_plan_lesson")
     fun getAll(): Flow<List<EmbeddedSubstitutionPlanLesson>>
+
+    @Query("DELETE FROM profile_substitution_plan_cache WHERE profile_id = :profileId")
+    suspend fun dropCacheForProfile(profileId: Uuid)
 
     @Upsert
     suspend fun upsert(entries: List<DbProfileSubstitutionPlanCache>)

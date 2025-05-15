@@ -60,6 +60,12 @@ interface TimetableDao {
     }
 
     @Transaction
+    suspend fun replaceIndex(index: List<DbProfileTimetableCache>) {
+        index.map { it.profileId }.distinct().forEach { dropIndexForProfile(it) }
+        upsert(index)
+    }
+
+    @Transaction
     @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM timetable_lessons LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId")
     fun getBySchool(schoolId: Int): Flow<List<EmbeddedTimetableLesson>>
@@ -88,6 +94,9 @@ interface TimetableDao {
     @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM profile_timetable_cache LEFT JOIN timetable_lessons ON timetable_lessons.id = profile_timetable_cache.timetable_lesson_id WHERE profile_id = :profileId AND timetable_lessons.week_id = :weekId AND timetable_lessons.day_of_week = :dayOfWeek")
     fun getLessonsForProfile(profileId: Uuid, weekId: String, dayOfWeek: DayOfWeek): Flow<List<DbProfileTimetableCache>>
+
+    @Query("DELETE FROM profile_timetable_cache WHERE profile_id = :profileId")
+    suspend fun dropIndexForProfile(profileId: Uuid)
 
     @Upsert
     suspend fun upsert(entries: List<DbProfileTimetableCache>)

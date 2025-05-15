@@ -23,6 +23,5 @@ interface TimetableRepository {
     suspend fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
     suspend fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
 
-    suspend fun dropCacheForProfile(profileId: Uuid)
-    suspend fun createCacheForProfile(profileId: Uuid, timetableLessonIds: List<Uuid>)
+    suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>)
 }
