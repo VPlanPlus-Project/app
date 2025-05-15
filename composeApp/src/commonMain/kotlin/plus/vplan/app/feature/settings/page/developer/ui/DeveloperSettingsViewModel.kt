@@ -17,6 +17,7 @@ import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 import plus.vplan.app.utils.now
 
 class DeveloperSettingsViewModel(
@@ -24,6 +25,7 @@ class DeveloperSettingsViewModel(
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val timetableRepository: TimetableRepository,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase
 ) : ViewModel() {
 
@@ -62,6 +64,12 @@ class DeveloperSettingsViewModel(
                     )
                     state = state.copy(isSubstitutionPlanUpdateRunning = false)
                 }
+                DeveloperSettingsEvent.UpdateTimetable -> {
+                    if (state.isTimetableUpdateRunning) return@launch
+                    state = state.copy(isTimetableUpdateRunning = true)
+                    updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!! as School.IndiwareSchool, true)
+                    state = state.copy(isTimetableUpdateRunning = false)
+                }
             }
         }
     }
@@ -70,11 +78,13 @@ class DeveloperSettingsViewModel(
 data class DeveloperSettingsState(
     val isFullSyncRunning: Boolean = false,
     val isSubstitutionPlanUpdateRunning: Boolean = false,
-    val profile: Profile? = null,
+    val isTimetableUpdateRunning: Boolean = false,
+    val profile: Profile? = null
 )
 
 sealed class DeveloperSettingsEvent {
     object StartFullSync : DeveloperSettingsEvent()
     object ClearLessonCache : DeveloperSettingsEvent()
     object UpdateSubstitutionPlan : DeveloperSettingsEvent()
+    object UpdateTimetable : DeveloperSettingsEvent()
 }

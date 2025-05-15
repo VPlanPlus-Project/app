@@ -20,14 +20,14 @@ class PlatformNotificationImpl(
     private val context: Context
 ) : PlatformNotificationRepository {
     companion object {
-        val channelId = "VPlanPlus"
+        const val VPLANPLUS = "VPlanPlus"
     }
     override suspend fun initialize() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "VPlanPlus Benachrichtigungen"
             val descriptionText = "Benachrichtigungen für VPlanPlus"
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val mChannel = NotificationChannel(channelId, name, importance)
+            val mChannel = NotificationChannel(VPLANPLUS, name, importance)
             mChannel.description = descriptionText
             val notificationManager = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(mChannel)
@@ -44,8 +44,8 @@ class PlatformNotificationImpl(
     ) {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
 
-        val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+        val builder = NotificationCompat.Builder(context, VPLANPLUS)
+            .setSmallIcon(R.drawable.app_icon_full)
             .setContentTitle(title)
             .setContentText(message)
             .setAutoCancel(true)
