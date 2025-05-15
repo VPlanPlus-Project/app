@@ -20,8 +20,8 @@ interface TimetableRepository {
 
     suspend fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>>
     fun getById(id: Uuid): Flow<Lesson.TimetableLesson?>
-    suspend fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
-    suspend fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
+    fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
+    fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
 
     suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>)
 }

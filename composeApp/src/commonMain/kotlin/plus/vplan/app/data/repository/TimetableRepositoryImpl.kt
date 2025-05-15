@@ -2,8 +2,10 @@
 
 package plus.vplan.app.data.repository
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DayOfWeek
@@ -95,13 +97,19 @@ class TimetableRepositoryImpl(
         return vppDatabase.timetableDao.getById(id.toString()).map { it?.toModel() }
     }
 
-    override suspend fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
-        val weeks = vppDatabase.timetableDao.getWeekIds(weekIndex).ifEmpty { return flowOf(emptySet()) }
-        return vppDatabase.timetableDao.getBySchool(schoolId, weeks.last(), dayOfWeek).map { it.toSet() }.distinctUntilChanged()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
+        return vppDatabase.timetableDao.getWeekIds(weekIndex).flatMapLatest { weeks ->
+            if (weeks.isEmpty()) flowOf(emptySet())
+            else vppDatabase.timetableDao.getBySchool(schoolId, weeks.last(), dayOfWeek).map { it.toSet() }.distinctUntilChanged()
+        }
     }
 
-    override suspend fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
-        val weeks = vppDatabase.timetableDao.getWeekIds(weekIndex).ifEmpty { return flowOf(emptySet()) }
-        return vppDatabase.timetableDao.getLessonsForProfile(profile.id, weeks.last(), dayOfWeek).map { it.map { it.timetableLessonId }.toSet() }.distinctUntilChanged()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
+        return vppDatabase.timetableDao.getWeekIds(weekIndex).flatMapLatest { weeks ->
+            if (weeks.isEmpty()) flowOf(emptySet())
+            else vppDatabase.timetableDao.getLessonsForProfile(profile.id, weeks.last(), dayOfWeek).map { it.map { it.timetableLessonId }.toSet() }.distinctUntilChanged()
+        }
     }
 }

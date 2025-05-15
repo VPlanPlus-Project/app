@@ -76,7 +76,7 @@ interface TimetableDao {
 
     @Transaction
     @Query("SELECT DISTINCT weeks.id FROM timetable_lessons LEFT JOIN weeks ON weeks.id = timetable_lessons.week_id WHERE week_index <= :maxWeekIndex")
-    suspend fun getWeekIds(maxWeekIndex: Int): List<String>
+    fun getWeekIds(maxWeekIndex: Int): Flow<List<String>>
 
     @Transaction
     @Query("SELECT * FROM timetable_lessons WHERE id = :id")
