@@ -100,6 +100,15 @@ private fun DeveloperSettingsContent(
                 }
                 if (state.isSubstitutionPlanUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
             }
+            Row {
+                Button(
+                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateTimetable) } },
+                    enabled = !state.isTimetableUpdateRunning,
+                ) {
+                    Text("Update timetable")
+                }
+                if (state.isTimetableUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
+            }
         }
     }
 }

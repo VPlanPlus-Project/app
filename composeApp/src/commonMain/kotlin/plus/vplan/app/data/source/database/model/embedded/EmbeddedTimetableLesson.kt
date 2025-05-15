@@ -48,7 +48,6 @@ data class EmbeddedTimetableLesson(
     fun toModel(): Lesson.TimetableLesson {
         return Lesson.TimetableLesson(
             id = timetableLesson.id,
-            version = timetableLesson.version,
             dayOfWeek = timetableLesson.dayOfWeek,
             week = timetableLesson.weekId,
             subject = timetableLesson.subject,

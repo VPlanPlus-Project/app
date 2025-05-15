@@ -25,8 +25,6 @@ import plus.vplan.app.domain.model.findByIndiwareId
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -35,8 +33,6 @@ import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.domain.usecase.GetDayUseCase
-import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.latest
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
@@ -49,8 +45,6 @@ import kotlin.uuid.Uuid
 private val LOGGER = Logger.withTag("UpdateSubstitutionPlanUseCase")
 
 class UpdateSubstitutionPlanUseCase(
-    private val getDayUseCase: GetDayUseCase,
-    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
     private val indiwareRepository: IndiwareRepository,
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
@@ -61,8 +55,7 @@ class UpdateSubstitutionPlanUseCase(
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val lessonTimeRepository: LessonTimeRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
-    private val platformNotificationRepository: PlatformNotificationRepository,
-    private val keyValueRepository: KeyValueRepository
+    private val platformNotificationRepository: PlatformNotificationRepository
 ) {
     suspend operator fun invoke(
         indiwareSchool: School.IndiwareSchool,
@@ -73,18 +66,26 @@ class UpdateSubstitutionPlanUseCase(
         val rooms = roomRepository.getBySchool(indiwareSchool.id).latest()
         val groups = groupRepository.getBySchool(indiwareSchool.id).latest()
         val subjectInstances = subjectInstanceRepository.getBySchool(indiwareSchool.id, false).latest()
-        val lessons = mutableListOf<Lesson.SubstitutionPlanLesson>()
         var error: Response.Error? = null
+
+        val studentProfilesForSchool = profileRepository.getAll().first()
+        .filterIsInstance<Profile.StudentProfile>()
+            .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
+
         dates.forEach forEachDate@{ date ->
             val week = weekRepository.getBySchool(indiwareSchool.id).latest().firstOrNull { date in it.start..it.end } ?: run {
-                error = Response.Error.Other("Week for $date not found")
+                val errorMessage = "Week for $date not found"
+                Logger.d { errorMessage }
+                error = Response.Error.Other(errorMessage)
                 return@forEachDate
             }
 
-            val oldPlan: Map<Profile, Set<Lesson>> = profileRepository.getAll().first()
-                .filterIsInstance<Profile.StudentProfile>()
-                .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
-                .associateWith { getDayUseCase(it, date).first().lessons.first() }
+            val oldLessons = substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId = indiwareSchool.id, date = date).first()
+                .map { App.substitutionPlanSource.getById(it).getFirstValue()!! }
+
+            val oldPlan: Map<Uuid, Set<Lesson>> = studentProfilesForSchool
+                .associateWith { profile -> oldLessons.filter { it.isRelevantForProfile(profile) }.toSet() }
+                .mapKeys { it.key.id }
 
             val substitutionPlanResponse = indiwareRepository.getSubstitutionPlan(
                 sp24Id = indiwareSchool.sp24Id,
@@ -103,6 +104,8 @@ class UpdateSubstitutionPlanUseCase(
             if (substitutionPlanResponse !is Response.Success) throw IllegalStateException("substitutionPlanResponse is not successful: $substitutionPlanResponse")
 
             val substitutionPlan = substitutionPlanResponse.data
+
+            val lessonsForDay = mutableListOf<Lesson.SubstitutionPlanLesson>()
 
             val day = Day(
                 id = Day.buildId(indiwareSchool, date),
@@ -161,28 +164,32 @@ class UpdateSubstitutionPlanUseCase(
                             Logger.e { "No lesson time found for lesson number ${substitutionPlanLesson.lessonNumber} in group ${group.name} at $date" }
                             return@mapNotNull null
                         },
-                        version = "",
                         info = substitutionPlanLesson.info
                     )
                 }
-            }.let { lessons.addAll(it) }
+            }.also {
+                Logger.d { "Lessons: ${it.filter { it.groupIds.contains(165) }}" }
+            }.let { lessonsForDay.addAll(it) }
 
-            val newVersion = keyValueRepository.get(Keys.substitutionPlanVersion(indiwareSchool.id)).first()
-            val newPlan = profileRepository.getAll().first()
-                .filterIsInstance<Profile.StudentProfile>()
-                .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
+            substitutionPlanRepository.upsertLessons(
+                schoolId = indiwareSchool.id,
+                date = date,
+                lessons = lessonsForDay,
+                profiles = studentProfilesForSchool
+            )
+
+            val newPlan = studentProfilesForSchool
                 .associateWith {
-                    substitutionPlanRepository.getSubstitutionPlanBySchool(indiwareSchool.id, date, "${indiwareSchool.id}_$newVersion")
-                        .mapNotNull { App.substitutionPlanSource.getById(it).getFirstValue() }
-                        .filter { lesson -> lesson.isRelevantForProfile(it) }
+                    lessonsForDay.filter { lesson -> lesson.isRelevantForProfile(it) }
                 }
+                .mapKeys { it.key.id }
 
             if (allowNotification) profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
                 .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
                 .forEach forEachProfile@{ profile ->
-                    val old = oldPlan[profile] ?: return@forEachProfile
-                    val new = newPlan[profile] ?: return@forEachProfile
+                    val old = oldPlan[profile.id] ?: return@forEachProfile
+                    val new = newPlan[profile.id] ?: return@forEachProfile
 
                     if ((old + new).mapNotNull { it.lessonTime.getFirstValue()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachProfile
 
@@ -238,13 +245,6 @@ class UpdateSubstitutionPlanUseCase(
                         )
                     }
                 }
-        }
-
-        substitutionPlanRepository.insertNewSubstitutionPlan(indiwareSchool.id, lessons) { newVersion ->
-            LOGGER.i { "Substitution plan updated for indiware school ${indiwareSchool.id}, building caches" }
-            profileRepository.getAll().first().forEach { profile ->
-                updateProfileLessonIndexUseCase(profile, newVersion)
-            }
         }
 
         return error

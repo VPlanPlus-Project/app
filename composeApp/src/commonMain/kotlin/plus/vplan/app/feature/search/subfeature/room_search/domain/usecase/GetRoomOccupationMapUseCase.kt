@@ -7,8 +7,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -21,8 +23,6 @@ import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.Room
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
@@ -34,38 +34,37 @@ class GetRoomOccupationMapUseCase(
     private val roomRepository: RoomRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val timetableRepository: TimetableRepository,
-    private val weekRepository: WeekRepository,
-    private val keyValueRepository: KeyValueRepository
+    private val weekRepository: WeekRepository
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> = channelFlow {
         val schoolId = profile.getSchool().first().entityId.toInt()
-        combine(
-            keyValueRepository.get(Keys.substitutionPlanVersion(schoolId)),
-            keyValueRepository.get(Keys.timetableVersion(schoolId)),
-            weekRepository.getBySchool(schoolId),
-            roomRepository.getBySchool(schoolId)
-        ) { versionFlow, timetableVersionFlow, weeks, rooms ->
-            val currentWeek = weeks.firstOrNull { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date in it.start..it.end }
-            val substitutionPlanVersionString = "${schoolId}_${versionFlow?.toIntOrNull() ?: -1}"
-            val timetableVersionString = "${schoolId}_${timetableVersionFlow?.toIntOrNull() ?: -1}"
+        weekRepository.getBySchool(schoolId).map { weeks ->
+            weeks.firstOrNull { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date in it.start..it.end }
+        }.collectLatest { currentWeek ->
+            combine(
+                substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),
+                timetableRepository.getTimetableForSchool(schoolId).map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } },
+                weekRepository.getBySchool(schoolId),
+                roomRepository.getBySchool(schoolId)
+            ) { substitutionPlanLessonIds, timetableLessons, weeks, rooms ->
+                val substitution = substitutionPlanLessonIds
+                    .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
+                    .fastFilterNotNull()
+                    .filter { lesson -> lesson.subject != null }
 
-            val substitution = substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date, substitutionPlanVersionString)
-                .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
-                .fastFilterNotNull()
-                .filter { lesson -> lesson.subject != null }
+                val lessons = substitution.ifEmpty { timetableLessons }
 
-            val lessons = substitution.ifEmpty { timetableRepository.getTimetableForSchool(schoolId, timetableVersionString).filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } }
-
-            rooms.associateWith { room ->
-                lessons.filter { room.id in it.roomIds.orEmpty() }.map {
-                    when (it) {
-                        is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson.fromLesson(it, date)
-                        is Lesson.TimetableLesson -> Occupancy.Lesson.fromLesson(it, date)
-                    }
-                }.toSet()
-            }.let { map -> send(map.map { OccupancyMapRecord(it.key, it.value) }) }
-        }.collect()
+                rooms.associateWith { room ->
+                    lessons.filter { room.id in it.roomIds.orEmpty() }.map {
+                        when (it) {
+                            is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson.fromLesson(it, date)
+                            is Lesson.TimetableLesson -> Occupancy.Lesson.fromLesson(it, date)
+                        }
+                    }.toSet()
+                }.let { map -> send(map.map { OccupancyMapRecord(it.key, it.value) }) }
+            }.collect()
+        }
     }
 }
 
