@@ -1,6 +1,7 @@
 package plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase
 
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.capture
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.SubjectInstance
@@ -48,6 +49,7 @@ class SelectProfileUseCase(
                 profileRepository.upsert(room)
             }
         }
+        capture("CreateProfile", mapOf("school_id" to profile.getSchool().getFirstValue()!!.id, "profile_type" to profile.profileType.name, "entity_id" to onboardingProfile.id))
         keyValueRepository.set(Keys.CURRENT_PROFILE, profile.id.toHexString())
 
         (profile.getSchool().getFirstValue() as? School.IndiwareSchool)?.let {
