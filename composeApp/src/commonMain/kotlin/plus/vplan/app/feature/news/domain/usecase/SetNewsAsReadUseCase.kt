@@ -1,6 +1,7 @@
 package plus.vplan.app.feature.news.domain.usecase
 
 import plus.vplan.app.App
+import plus.vplan.app.capture
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.repository.NewsRepository
 
@@ -9,6 +10,7 @@ class SetNewsAsReadUseCase(
 ) {
     suspend operator fun invoke(newsId: Int) {
         val news = App.newsSource.getById(newsId, false).getFirstValue() ?: return
+        if (!news.isRead) capture("News.Read", mapOf("news_id" to newsId))
         newsRepository.upsert(news.copy(isRead = true))
     }
 }

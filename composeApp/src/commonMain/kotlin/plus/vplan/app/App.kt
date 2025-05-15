@@ -263,3 +263,4 @@ enum class Platform {
 }
 
 expect fun getPlatform(): Platform
+expect fun capture(event: String, properties: Map<String, Any>?)
