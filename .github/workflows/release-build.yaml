@@ -98,13 +98,11 @@ jobs:
                     make_latest: true
                     name: VPlanPlus ${{ env.TAG_NAME }}
                     fail_on_unmatched_files: true
-            -   name: Create Google Service file
-                run: echo ${{ secrets.GOOGLE_SERVICE_ACCOUNT }} | base64 -d > ${GITHUB_WORKSPACE}/google-service-account.json
             -   name: Deploy on Google Play
                 uses: r0adkll/upload-google-play@v1
                 with:
-                    serviceAccountJson: ${GITHUB_WORKSPACE}/google-service-account.json
+                    serviceAccountJsonPlainText: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
                     packageName: plus.vplan.app
                     releaseFiles: ${{ env.TAG_NAME }}.aab
-                    track: ${{ endsWith(env.TAG_NAME, '-internal') && 'qa' || endsWith(env.TAG_NAME, '-closed') && 'alpha' || endsWith(env.TAG_NAME, '-open') && 'beta' || 'production' }}
+                    track: ${{ endsWith(env.TAG_NAME, '-internal') && 'internal' || endsWith(env.TAG_NAME, '-closed') && 'alpha' || endsWith(env.TAG_NAME, '-open') && 'beta' || 'production' }}
                     releaseName: ${{ env.TAG_NAME }}
