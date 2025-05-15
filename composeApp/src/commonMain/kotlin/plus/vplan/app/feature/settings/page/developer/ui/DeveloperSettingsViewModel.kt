@@ -15,6 +15,7 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.sync.domain.usecase.FullSyncCause
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
@@ -47,7 +48,7 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.StartFullSync -> {
                     if (state.isFullSyncRunning) return@launch
                     state = state.copy(isFullSyncRunning = true)
-                    launch { fullSyncUseCase().join() }.invokeOnCompletion {
+                    launch { fullSyncUseCase(FullSyncCause.Manual).join() }.invokeOnCompletion {
                         state = state.copy(isFullSyncRunning = false)
                     }
                 }
