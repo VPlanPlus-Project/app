@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
@@ -126,23 +127,30 @@ class DaySource(
                 }
 
                 launch {
+                    (if (contextProfile == null) substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
+                    else substitutionPlanRepository.getForProfile(contextProfile, date)).collectLatest { substitutionPlanLessonIds ->
+                        day.update {
+                            it.copy(
+                                substitutionPlan = substitutionPlanLessonIds,
+                                tags = it.tags + Day.DayTags.HAS_LESSONS
+                            )
+                        }
+                    }
+                }
+
+                launch {
                     combine(
-                        keyValueRepository.get(Keys.substitutionPlanVersion(schoolId)),
                         keyValueRepository.get(Keys.timetableVersion(schoolId)),
                         if (contextProfile == null) assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged()
                         else assessmentRepository.getByProfile(contextProfile.id, date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged(),
                         if (contextProfile == null) homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
                         else homeworkRepository.getByProfile(contextProfile.id, date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged(),
-                    ) { substitutionPlanVersion, timetableVersion, assessments, homework ->
-                        val substitutionPlanVersionString = "${schoolId}_$substitutionPlanVersion"
+                    ) { timetableVersion, assessments, homework ->
                         val timetableVersionString = "${schoolId}_$timetableVersion"
                         val week = day.value.week?.getFirstValue()
                         val weekIndex = week?.weekIndex ?: -1
                         val timetable = if (contextProfile == null) timetableRepository.getForSchool(schoolId, weekIndex, dayOfWeek = date.dayOfWeek, version = timetableVersionString)
                         else timetableRepository.getForProfile(contextProfile, weekIndex, dayOfWeek = date.dayOfWeek, version = timetableVersionString)
-
-                        val substitutionPlan = if (contextProfile == null) substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date, substitutionPlanVersionString)
-                        else substitutionPlanRepository.getForProfile(contextProfile, date, substitutionPlanVersionString)
 
                         val holidays = dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } }.first()
 
@@ -151,11 +159,10 @@ class DaySource(
                         day.update {
                             it.copy(
                                 timetable = timetable,
-                                substitutionPlan = substitutionPlan,
                                 assessmentIds = assessments,
                                 homeworkIds = homework,
                                 nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },
-                                dayType = if (timetable.isNotEmpty() || substitutionPlan.isNotEmpty()) Day.DayType.REGULAR else it.dayType,
+                                dayType = if (timetable.isNotEmpty()) Day.DayType.REGULAR else it.dayType,
                                 tags = it.tags + Day.DayTags.HAS_LESSONS
                             )
                         }

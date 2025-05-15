@@ -20,7 +20,6 @@ sealed interface Lesson : Item<DataTag> {
     val groupIds: List<Int>
     val subjectInstanceId: Int?
     val lessonTimeId: String
-    val version: String
 
     fun getLessonSignature(): String
 
@@ -45,8 +44,8 @@ sealed interface Lesson : Item<DataTag> {
         override val roomIds: List<Int>?,
         override val groupIds: List<Int>,
         override val lessonTimeId: String,
-        override val version: String,
-        val weekType: String?
+        val weekType: String?,
+        val version: String
     ) : Lesson {
         override val lessonTime by lazy { App.lessonTimeSource.getById(lessonTimeId) }
         override val subjectInstance = null
@@ -87,7 +86,6 @@ sealed interface Lesson : Item<DataTag> {
 
     data class SubstitutionPlanLesson(
         override val id: Uuid,
-        override val version: String,
         val date: LocalDate,
         override val week: String,
         override val subject: String?,

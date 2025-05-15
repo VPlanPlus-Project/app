@@ -70,7 +70,7 @@ class DeveloperSettingsViewModel(
 data class DeveloperSettingsState(
     val isFullSyncRunning: Boolean = false,
     val isSubstitutionPlanUpdateRunning: Boolean = false,
-    val profile: Profile? = null,
+    val profile: Profile? = null
 )
 
 sealed class DeveloperSettingsEvent {

@@ -41,16 +41,15 @@ class GetRoomOccupationMapUseCase(
     operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> = channelFlow {
         val schoolId = profile.getSchool().first().entityId.toInt()
         combine(
-            keyValueRepository.get(Keys.substitutionPlanVersion(schoolId)),
+            substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),
             keyValueRepository.get(Keys.timetableVersion(schoolId)),
             weekRepository.getBySchool(schoolId),
             roomRepository.getBySchool(schoolId)
-        ) { versionFlow, timetableVersionFlow, weeks, rooms ->
+        ) { substitutionPlanLessonIds, timetableVersionFlow, weeks, rooms ->
             val currentWeek = weeks.firstOrNull { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date in it.start..it.end }
-            val substitutionPlanVersionString = "${schoolId}_${versionFlow?.toIntOrNull() ?: -1}"
             val timetableVersionString = "${schoolId}_${timetableVersionFlow?.toIntOrNull() ?: -1}"
 
-            val substitution = substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date, substitutionPlanVersionString)
+            val substitution = substitutionPlanLessonIds
                 .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
                 .fastFilterNotNull()
                 .filter { lesson -> lesson.subject != null }
