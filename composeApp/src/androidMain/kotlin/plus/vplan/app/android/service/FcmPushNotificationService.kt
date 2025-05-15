@@ -4,17 +4,20 @@ import co.touchlab.kermit.Logger
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.usecase.UpdateFirebaseTokenUseCase
 import plus.vplan.app.feature.system.usecase.HandlePushNotificationUseCase
-import plus.vplan.app.isDeveloperMode
 
 class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
 
     val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase by inject()
     val handlePushNotificationService: HandlePushNotificationUseCase by inject()
+    val keyValueRepository: KeyValueRepository by inject()
 
     private val logger = Logger.withTag("FcmPushNotificationService")
 
@@ -28,21 +31,20 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
-        val type = (message.data["type"] ?: run {
-            Logger.w { "No type found in FCM message, ignoring" }
-            return
-        }).let {
-            @Suppress("KotlinConstantConditions")
-            if (it.startsWith("DEV_") && !isDeveloperMode) {
-                Logger.w { "DEV_ message received, but developer mode is not enabled, ignoring" }
-                return
-            }
-            it.substringAfter("DEV_")
-        }.also {
-            Logger.i { "FCM Message type: $it" }
-        }
-
         MainScope().launch {
+            val type = (message.data["type"] ?: run {
+                Logger.w { "No type found in FCM message, ignoring" }
+                return@launch
+            }).let {
+                if (it.startsWith("DEV_") && keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).first() == "true") {
+                    Logger.w { "DEV_ message received, but developer mode is not enabled, ignoring" }
+                    return@launch
+                }
+                it.substringAfter("DEV_")
+            }.also {
+                Logger.i { "FCM Message type: $it" }
+            }
+
             handlePushNotificationService(type, message.data["data"].orEmpty())
         }
     }

@@ -56,7 +56,6 @@ import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGr
 import plus.vplan.app.feature.homework.ui.components.detail.components.TaskRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.tableNameStyle
 import plus.vplan.app.feature.homework.ui.components.detail.components.tableValueStyle
-import plus.vplan.app.isDeveloperMode
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
@@ -231,7 +230,7 @@ fun DetailPage(
 
             CreatedAtRow(createdAt = homework.createdAt)
 
-            if (isDeveloperMode) MetadataRow(
+            if (state.isDeveloperMode) MetadataRow(
                 key = { Text(text = "ID", style = tableNameStyle()) },
                 value = { Text(text = state.homework.id.toString(), style = tableValueStyle()) }
             )
