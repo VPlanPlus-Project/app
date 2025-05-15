@@ -44,8 +44,7 @@ sealed interface Lesson : Item<DataTag> {
         override val roomIds: List<Int>?,
         override val groupIds: List<Int>,
         override val lessonTimeId: String,
-        val weekType: String?,
-        val version: String
+        val weekType: String?
     ) : Lesson {
         override val lessonTime by lazy { App.lessonTimeSource.getById(lessonTimeId) }
         override val subjectInstance = null
@@ -68,7 +67,6 @@ sealed interface Lesson : Item<DataTag> {
             rooms: List<Int>?,
             groups: List<Int>,
             lessonTime: String,
-            version: String,
             weekType: String?
         ) : this(
             id = Uuid.random(),
@@ -80,7 +78,6 @@ sealed interface Lesson : Item<DataTag> {
             groupIds = groups,
             lessonTimeId = lessonTime,
             weekType = weekType,
-            version = version
         )
     }
 

@@ -190,7 +190,8 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = VppDatabase.Migration3::class),
         AutoMigration(from = 3, to = 4),
-        AutoMigration(from = 4, to = 5, spec = VppDatabase.Migration5::class) // Delete version column of substitution plan lesson
+        AutoMigration(from = 4, to = 5, spec = VppDatabase.Migration5::class), // Delete version column of substitution plan lesson
+        AutoMigration(from = 5, to = 6, spec = VppDatabase.Migration6::class), // Delete version column of timetable lesson
     ],
     exportSchema = true
 )
@@ -237,7 +238,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 5
+        const val DATABASE_VERSION = 6
     }
 
     @RenameColumn(tableName = "assessments", fromColumnName = "subject_instance_ids", toColumnName = "subject_instance_id")
@@ -245,6 +246,9 @@ abstract class VppDatabase : RoomDatabase() {
 
     @DeleteColumn(tableName = "substitution_plan_lesson", columnName = "version")
     class Migration5 : AutoMigrationSpec
+
+    @DeleteColumn(tableName = "timetable_lessons", columnName = "version")
+    class Migration6 : AutoMigrationSpec
 }
 
 // Room compiler generates the `actual` implementations
