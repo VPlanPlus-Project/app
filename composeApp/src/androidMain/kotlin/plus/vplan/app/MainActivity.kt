@@ -13,6 +13,7 @@ import co.touchlab.kermit.Logger
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.crashlytics
+import com.posthog.PostHog
 import io.github.vinceglb.filekit.core.FileKit
 import io.ktor.http.URLBuilder
 import plus.vplan.app.feature.onboarding.stage.migrate.a_read.ui.ImportScreenViewModel
@@ -30,6 +31,8 @@ class MainActivity : FragmentActivity() {
         activity = this
         FileKit.init(this)
         enableEdgeToEdge()
+
+        PostHog.capture("App.Start")
 
         FirebaseApp.initializeApp(this)
         Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
