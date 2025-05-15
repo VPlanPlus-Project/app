@@ -55,7 +55,7 @@ jobs:
                     path: |
                         ~/.gradle/caches
                         ~/.gradle/wrapper
-                    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                    key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/libs.versions.toml', '**/gradle-wrapper.properties') }}
                     restore-keys: |
                         ${{ runner.os }}-gradle-
 
@@ -76,7 +76,7 @@ jobs:
                     name: build-artifacts
                     path: |
                         ${{ env.TAG_NAME }}.apk
-                        ${ env.TAG_NAME }}.aab
+                        ${{ env.TAG_NAME }}.aab
 
     release:
         needs: build
@@ -101,9 +101,8 @@ jobs:
             -   name: Deploy on Google Play
                 uses: r0adkll/upload-google-play@v1
                 with:
-                    serviceAccountJson: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+                    serviceAccountJsonPlainText: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
                     packageName: plus.vplan.app
                     releaseFiles: ${{ env.TAG_NAME }}.aab
-                    track: ${{ endsWith(env.TAG_NAME, '-internal') && 'qa' || endsWith(env.TAG_NAME, '-closed') && 'alpha' || endsWith(env.TAG_NAME, '-open') && 'beta' || 'production' }}
+                    track: ${{ endsWith(env.TAG_NAME, '-internal') && 'internal' || endsWith(env.TAG_NAME, '-closed') && 'alpha' || endsWith(env.TAG_NAME, '-open') && 'beta' || 'production' }}
                     releaseName: ${{ env.TAG_NAME }}
-                    userFraction: 1
