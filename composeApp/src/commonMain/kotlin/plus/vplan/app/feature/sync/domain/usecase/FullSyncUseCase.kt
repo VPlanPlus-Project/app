@@ -257,7 +257,7 @@ class FullSyncUseCase(
                             }
 
                             updateTimetableUseCase(school, forceUpdate = false)
-                            updateSubstitutionPlanUseCase(school, listOf(today, nextDay), true)
+                            updateSubstitutionPlanUseCase(indiwareSchool = school, dates = listOf(today, nextDay), allowNotification = true)
                         }
                 }
 

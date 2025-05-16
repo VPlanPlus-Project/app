@@ -24,7 +24,7 @@ class SyncWorker(
     override suspend fun getForegroundInfo(): ForegroundInfo {
         return ForegroundInfo(
             1,
-            NotificationCompat.Builder(applicationContext, PlatformNotificationImpl.channelId)
+            NotificationCompat.Builder(applicationContext, PlatformNotificationImpl.VPLANPLUS)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setContentTitle("Synchronisiere...")
                 .setContentText("VPlanPlus aktualisiert die Daten auf deinem Gerät")
