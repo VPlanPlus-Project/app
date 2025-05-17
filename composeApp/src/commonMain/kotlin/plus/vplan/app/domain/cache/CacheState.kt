@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onEmpty
 import plus.vplan.app.domain.data.Response
 
 sealed class CacheState<out T: Item<*>>(val entityId: String) {
@@ -47,6 +48,7 @@ suspend inline fun <reified T : Item<*>> Flow<CacheState<T>>.getFirstValue(varar
             if (it is CacheState.Done && it.data.tags.all { it in requiredTags }) it.data
             else null
         }
+        .onEmpty { throw RuntimeException("Failed to load entity ${T::class.simpleName}, required tags: $requiredTags, Cause: Flow was empty") }
         .catch {
             throw RuntimeException("Failed to load entity ${T::class.simpleName}, required tags: $requiredTags", it)
         }
