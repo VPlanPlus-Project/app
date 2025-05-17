@@ -3,6 +3,11 @@ import java.util.Properties
 import java.util.Base64
 import kotlin.text.Charsets
 
+object ApplicationConfig {
+    const val APP_VERSION_NAME = "0.0.1-alpha"
+    const val APP_VERSION_CODE = 1
+    var isDebug = false
+}
 
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
@@ -21,6 +26,7 @@ plugins {
     alias(libs.plugins.serialization)
     alias(libs.plugins.google.gms)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.buildconfig)
 }
 
 kotlin {
@@ -133,8 +139,8 @@ android {
         applicationId = "plus.vplan.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.0.1-alpha" // remember to update App.kt
+        versionCode = ApplicationConfig.APP_VERSION_CODE
+        versionName = ApplicationConfig.APP_VERSION_NAME
     }
     packaging {
         resources {
@@ -144,6 +150,7 @@ android {
     buildTypes {
         getByName("debug") {
             signingConfig = signingConfigs.findByName("default")
+            ApplicationConfig.isDebug = true
         }
         getByName("release") {
             isMinifyEnabled = false
@@ -167,4 +174,10 @@ dependencies {
     add("kspIosSimulatorArm64", libs.androidx.room.compiler)
     add("kspIosX64", libs.androidx.room.compiler)
     add("kspIosArm64", libs.androidx.room.compiler)
+}
+
+buildConfig {
+    buildConfigField("APP_VERSION_CODE", ApplicationConfig.APP_VERSION_CODE)
+    buildConfigField("APP_VERSION", ApplicationConfig.APP_VERSION_NAME)
+    buildConfigField("APP_DEBUG", ApplicationConfig.isDebug)
 }

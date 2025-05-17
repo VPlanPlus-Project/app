@@ -1,5 +1,6 @@
 package plus.vplan.app.di
 
+import VPlanPlus.composeApp.BuildConfig
 import androidx.room.RoomDatabase
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
@@ -135,7 +136,7 @@ val appModule = module(createdAtStart = true) {
 
             install(DefaultRequest) {
                 header("X-App", "VPlanPlus")
-                header("X-App-Version", App.VERSION_CODE)
+                header("X-App-Version", BuildConfig.APP_VERSION_CODE)
             }
         }
     }

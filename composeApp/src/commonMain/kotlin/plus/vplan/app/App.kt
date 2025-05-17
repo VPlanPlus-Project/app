@@ -123,9 +123,6 @@ object App {
     lateinit var schulverwalterTeacherSource: plus.vplan.app.domain.source.schulverwalter.TeacherSource
     lateinit var gradeSource: GradeSource
     lateinit var finalGradeSource: FinalGradeSource
-
-    const val VERSION_CODE: Int = 1
-    const val VERSION_NAME: String = "0.0.1-alpha" // remember to update build.gradle.kts
 }
 
 @Composable
@@ -264,3 +261,4 @@ enum class Platform {
 
 expect fun getPlatform(): Platform
 expect fun capture(event: String, properties: Map<String, Any>?)
+expect fun isDebug(): Boolean

@@ -1,8 +1,8 @@
 package plus.vplan.app.feature.main.domain.usecase
 
+import VPlanPlus.composeApp.BuildConfig
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.App
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
@@ -15,7 +15,7 @@ class SetupApplicationUseCase(
     private val logger = Logger.withTag("SetupApplicationUseCase")
     suspend operator fun invoke() {
         updateFirebaseTokenUseCase()
-        if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != App.VERSION_CODE.toString()) {
+        if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != BuildConfig.APP_VERSION_CODE.toString()) {
             logger.i { "First run of VPlanPlus" }
             logger.d { "Saving migration flags" }
 
@@ -27,6 +27,6 @@ class SetupApplicationUseCase(
             doAssessmentsAndHomeworkIndexMigrationUseCase()
         }
 
-        keyValueRepository.set(Keys.PREVIOUS_APP_VERSION, App.VERSION_CODE.toString())
+        keyValueRepository.set(Keys.PREVIOUS_APP_VERSION, BuildConfig.APP_VERSION_CODE.toString())
     }
 }

@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.settings.page.info.ui
 
+import VPlanPlus.composeApp.BuildConfig
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,7 +43,6 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.App
 import plus.vplan.app.Platform
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
@@ -141,7 +141,7 @@ private fun InfoContent(
                         clickCounter = 0
                     }
                     Text(
-                        text = "${App.VERSION_NAME} (${App.VERSION_CODE})",
+                        text = "${BuildConfig.APP_VERSION} (${BuildConfig.APP_VERSION_CODE})",
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier
                             .noRippleClickable { clickCounter++ }
