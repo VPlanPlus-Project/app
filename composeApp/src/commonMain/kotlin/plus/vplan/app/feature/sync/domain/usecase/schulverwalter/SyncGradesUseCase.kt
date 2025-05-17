@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
@@ -24,7 +23,6 @@ import plus.vplan.app.domain.repository.schulverwalter.IntervalRepository
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.domain.repository.schulverwalter.YearRepository
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
-import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.utils.now
 
 class SyncGradesUseCase(
@@ -36,8 +34,7 @@ class SyncGradesUseCase(
     private val platformNotificationRepository: PlatformNotificationRepository,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val schulverwalterRepository: SchulverwalterRepository,
-    private val vppIdRepository: VppIdRepository,
-    private val initializeSchulverwalterReauthUseCase: InitializeSchulverwalterReauthUseCase
+    private val vppIdRepository: VppIdRepository
 ) {
     suspend operator fun invoke(allowNotifications: Boolean) {
         run schulverwalterConnectionRefresh@{
@@ -52,7 +49,6 @@ class SyncGradesUseCase(
             invalidVppIdsAfterTokenReload.forEach { stillInvalidVppId ->
                 val vppId = App.vppIdSource.getById(stillInvalidVppId).getFirstValue() as? VppId.Active ?: return@forEach
                 if (vppId.schulverwalterConnection!!.isValid == false) return@forEach
-                val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@forEach
                 schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection.accessToken, false)
                 platformNotificationRepository.sendNotification(
                     title = "beste.schule-Zugang ungültig",
@@ -61,8 +57,17 @@ class SyncGradesUseCase(
                     category = vppId.name,
                     onClickData = Json.encodeToString(
                         StartTaskJson(
-                            type = "url",
-                            value = url
+                            type = "open",
+                            value = Json.encodeToString(
+                                StartTaskJson.StartTaskOpen(
+                                    type = "schulverwalter-reauth",
+                                    value = Json.encodeToString(
+                                        StartTaskJson.StartTaskOpen.SchulverwalterReauth(
+                                            userId = vppId.id
+                                        )
+                                    )
+                                )
+                            )
                         )
                     )
                 )

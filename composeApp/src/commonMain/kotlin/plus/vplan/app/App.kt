@@ -66,12 +66,6 @@ val sp24Service = Host(
     port = 443
 )
 
-val schulverwalterReauthService = Host(
-    protocol = URLProtocol.HTTPS,
-    host = "schulverwalter-reauth.microservices.vplan.plus/",
-    port = 443
-)
-
 val auth = Host(
     protocol = URLProtocol.HTTPS,
     host = "auth.vplan.plus",
@@ -146,7 +140,8 @@ fun App(task: StartTask?) {
 
 sealed class StartTask(val profileId: Uuid? = null) {
     data class VppIdLogin(val token: String) : StartTask()
-    data class SchulverwalterReconnect(val schulverwalterAccessToken: String, val vppId: Int) : StartTask()
+    data class StartSchulverwalterReconnect(val userId: Int): StartTask()
+    data class SchulverwalterReconnectDone(val schulverwalterAccessToken: String, val vppId: Int) : StartTask()
     data class OpenUrl(val url: String): StartTask()
     sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
         class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
@@ -175,6 +170,11 @@ data class StartTaskJson(
         @Serializable
         data class Homework(
             @SerialName("homework_id") val homeworkId: Int
+        )
+
+        @Serializable
+        data class SchulverwalterReauth(
+            @SerialName("user_id") val userId: Int,
         )
 
         @Serializable
@@ -245,6 +245,10 @@ fun getTaskFromNotificationString(data: String): StartTask? {
                 "grade" -> {
                     val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.Grade>(openJson.value)
                     return StartTask.Open.Grade(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.gradeId)
+                }
+                "schulverwalter-reauth" -> {
+                    val payload = json.decodeFromString<StartTaskJson.StartTaskOpen.SchulverwalterReauth>(openJson.value)
+                    return StartTask.StartSchulverwalterReconnect(payload.userId)
                 }
             }
         }

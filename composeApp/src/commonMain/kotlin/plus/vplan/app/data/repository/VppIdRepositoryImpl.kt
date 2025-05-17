@@ -50,7 +50,6 @@ import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.VppIdDevice
 import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.schulverwalterReauthService
 import plus.vplan.app.utils.sendAll
 
 private val logger = Logger.withTag("VppIdRepositoryImpl")
@@ -247,10 +246,10 @@ class VppIdRepositoryImpl(
 
     override suspend fun getSchulverwalterReauthUrl(vppId: VppId.Active): Response<String> {
         safeRequest(onError = { return it }) {
-            val response = httpClient.post(
-                URLBuilder(schulverwalterReauthService.url)
+            val response = httpClient.get(
+                URLBuilder(api.url)
                     .apply {
-                        this.pathSegments = listOf("reauth")
+                        this.pathSegments = listOf("api", "app", "schulverwalter-reauth")
                     }
                     .buildString()
             ) {
