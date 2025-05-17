@@ -18,6 +18,7 @@ ksp = "2.1.20-2.0.1"
 androidx-room = "2.7.1"
 androidx-sqlite = "2.5.0"
 navigationCompose = "2.9.0-alpha16"
+posthogAndroid = "3.14.1"
 skiko = "0.9.4"
 sqlite = "2.5.0"
 
@@ -54,6 +55,7 @@ cmp-easy-permission = { module = "network.chaintech:cmp-easy-permission", versio
 filekit-compose = { module = "io.github.vinceglb:filekit-compose", version.ref = "filekitCompose" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+posthog-android = { module = "com.posthog:posthog-android", version.ref = "posthogAndroid" }
 skiko = { module = "org.jetbrains.skiko:skiko", version.ref = "skiko" }
 sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
 

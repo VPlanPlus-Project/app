@@ -15,6 +15,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.capture
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
@@ -73,13 +74,14 @@ class FullSyncUseCase(
     private val maxCacheAge = 24.hours
     private var isRunning = false
 
-    operator fun invoke(): Job {
+    operator fun invoke(cause: FullSyncCause): Job {
         if (isRunning) {
             logger.i { "FullSync already running, this request will be ignored" }
             return Job()
         }
         return CoroutineScope(Dispatchers.IO).launch {
             isRunning = true
+            capture("FullSync.Start", mapOf("cause" to cause.name))
             try {
                 logger.i { "Performing FullSync" }
 
@@ -269,4 +271,8 @@ class FullSyncUseCase(
             }
         }
     }
+}
+
+enum class FullSyncCause {
+    Job, Manual
 }

@@ -67,6 +67,8 @@ kotlin {
             implementation(libs.firebase.messaging)
             implementation(libs.firebase.analytics)
             implementation(libs.firebase.crashlytics)
+
+            implementation(libs.posthog.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
