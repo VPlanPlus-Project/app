@@ -31,6 +31,7 @@ class SchulverwalterRepositoryImpl(
                 if (response.status == HttpStatusCode.Unauthorized) {
                     Logger.e { "Failed to authenticate ${access.schulverwalterUserId}" }
                     invalidVppIds.add(access.vppId)
+                    setSchulverwalterAccessValidity(access.schulverwalterAccessToken, false)
                 } else Logger.i { "User ${access.schulverwalterUserId} is still valid" }
             }
         }

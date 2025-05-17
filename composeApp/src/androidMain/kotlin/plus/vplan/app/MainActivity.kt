@@ -54,7 +54,7 @@ class MainActivity : FragmentActivity() {
                 } else if (data.toString().startsWith("vpp://app/schulverwalter-reconnect")) {
                     val token = url.pathSegments.last()
                     val vppId = url.parameters["user_id"]!!.toInt()
-                    task = StartTask.SchulverwalterReconnect(token, vppId)
+                    task = StartTask.SchulverwalterReconnectDone(token, vppId)
                 }
             }
 

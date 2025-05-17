@@ -21,12 +21,16 @@ import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.App
 import plus.vplan.app.StartTask
+import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.main.domain.usecase.SetupApplicationUseCase
 import plus.vplan.app.feature.main.ui.MainScreenHost
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
+import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.feature.schulverwalter.domain.usecase.UpdateSchulverwalterAccessUseCase
 import plus.vplan.app.feature.vpp_id.ui.VppIdSetupScreen
 import plus.vplan.app.utils.BrowserIntent
@@ -54,6 +58,7 @@ fun NavigationHost(task: StartTask?) {
     val lockGradesUseCase = koinInject<LockGradesUseCase>()
     val setupApplicationUseCase = koinInject<SetupApplicationUseCase>()
     val updateSchulverwalterAccessUseCase = koinInject<UpdateSchulverwalterAccessUseCase>()
+    val initializeSchulverwalterReauthUseCase = koinInject<InitializeSchulverwalterReauthUseCase>()
 
     LaunchedEffect(Unit) {
         lockGradesUseCase()
@@ -64,7 +69,12 @@ fun NavigationHost(task: StartTask?) {
         if (task?.profileId != null) setCurrentProfileUseCase(task.profileId)
         when (task) {
             is StartTask.VppIdLogin -> navigationHostController.navigate(AppScreen.VppIdLogin(task.token))
-            is StartTask.SchulverwalterReconnect -> navigationHostController.navigate(AppScreen.SchulverwalterReconnect(task.schulverwalterAccessToken, task.vppId))
+            is StartTask.SchulverwalterReconnectDone -> navigationHostController.navigate(AppScreen.SchulverwalterReconnect(task.schulverwalterAccessToken, task.vppId))
+            is StartTask.StartSchulverwalterReconnect -> {
+                val vppId = (App.vppIdSource.getById(task.userId).getFirstValue() as? VppId.Active) ?: return@LaunchedEffect
+                val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@LaunchedEffect
+                BrowserIntent.openUrl(url)
+            }
             is StartTask.OpenUrl -> BrowserIntent.openUrl(task.url)
             else -> Unit
         }
