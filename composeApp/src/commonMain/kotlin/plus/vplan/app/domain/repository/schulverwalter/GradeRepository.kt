@@ -7,4 +7,5 @@ import plus.vplan.app.domain.repository.WebEntityRepository
 interface GradeRepository: WebEntityRepository<Grade> {
     suspend fun download(): Response<Set<Int>>
     suspend fun setConsiderForFinalGrade(gradeId: Int, useForFinalGrade: Boolean)
+    suspend fun deleteByVppId(vppId: Int)
 }

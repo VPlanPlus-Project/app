@@ -43,4 +43,7 @@ interface GradeDao {
 
     @Query("UPDATE schulverwalter_grade SET is_selected_for_final_grade = :useForFinalGrade WHERE id = :gradeId")
     suspend fun setConsiderForFinalGrade(gradeId: Int, useForFinalGrade: Boolean)
+
+    @Query("DELETE FROM schulverwalter_grade WHERE vpp_id = :vppId")
+    suspend fun deleteByVppId(vppId: Int)
 }
