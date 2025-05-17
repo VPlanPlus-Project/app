@@ -23,8 +23,6 @@ import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -41,8 +39,7 @@ class SearchUseCase(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val homeworkRepository: HomeworkRepository,
-    private val assessmentRepository: AssessmentRepository,
-    private val keyValueRepository: KeyValueRepository
+    private val assessmentRepository: AssessmentRepository
 ) {
     operator fun invoke(searchRequest: SearchRequest) = channelFlow {
         if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
@@ -51,10 +48,8 @@ class SearchUseCase(
         val school = profile.getSchool().getFirstValue() ?: return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
 
         launch {
-            keyValueRepository.get(Keys.substitutionPlanVersion(school.id)).collectLatest { versionFlow ->
-                val currentVersion = versionFlow?.toIntOrNull() ?: -1
-                val versionString = "${school.id}_$currentVersion"
-                val lessons = substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, searchRequest.date, versionString)
+            substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, searchRequest.date).collectLatest { substitutionPlanLessonIds ->
+                val lessons = substitutionPlanLessonIds
                     .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
                     .fastFilterNotNull()
                     .filter { lesson -> lesson.subject != null }

@@ -10,8 +10,6 @@ interface KeyValueRepository {
 
 object Keys {
     const val CURRENT_PROFILE = "current_profile"
-    fun timetableVersion(schoolId: Int) = "timetable_version::$schoolId"
-    fun substitutionPlanVersion(schoolId: Int) = "substitution_plan_version::$schoolId"
 
     const val GRADE_PROTECTION_LEVEL = "grade_protection_level"
     const val GRADES_LOCKED = "grades_locked"
