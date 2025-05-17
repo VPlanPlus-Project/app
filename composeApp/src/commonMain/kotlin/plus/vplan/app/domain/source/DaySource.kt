@@ -99,10 +99,10 @@ class DaySource(
                         dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } }.distinctUntilChanged(),
                         dayRepository.getBySchool(date, schoolId).distinctUntilChanged()
                     ) { weeks, holidays, dayInfo ->
-                        val dayWeek = weeks.firstOrNull { date in it.start..it.end } ?: weeks.last { it.start < date }
+                        val dayWeek = weeks.firstOrNull { date in it.start..it.end } ?: weeks.lastOrNull { it.start < date }
                         day.update {
                             it.copy(
-                                weekId = dayWeek.id,
+                                weekId = dayWeek?.id,
                                 info = dayInfo?.info,
                                 dayType =
                                     if (date in holidays) Day.DayType.HOLIDAY
