@@ -44,7 +44,7 @@ class SchulverwalterRepositoryImpl(
 
     override suspend fun setSchulverwalterAccessTokenForUser(vppIdId: Int, token: String) {
         val oldAccess = vppDatabase.vppIdDao.getSchulverwalterAccess().first().first { it.vppId == vppIdId }
-        vppDatabase.vppIdDao.deleteAccessToken(vppIdId)
+        vppDatabase.vppIdDao.deleteSchulverwalterAccessToken(vppIdId)
         vppDatabase.vppIdDao.upsert(DbVppIdSchulverwalter(
             vppId = vppIdId,
             schulverwalterUserId = oldAccess.schulverwalterUserId,
