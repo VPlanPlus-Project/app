@@ -5,9 +5,11 @@ import org.koin.dsl.module
 import plus.vplan.app.feature.main.domain.usecase.SetupApplicationUseCase
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
 import plus.vplan.app.feature.main.domain.usecase.UpdateFirebaseTokenUseCase
+import plus.vplan.app.feature.main.domain.usecase.setup.RemoveDisconnectedVppIdsFromProfilesUseCase
 
 val mainModule = module {
     singleOf(::DoAssessmentsAndHomeworkIndexMigrationUseCase)
     singleOf(::UpdateFirebaseTokenUseCase)
     singleOf(::SetupApplicationUseCase)
+    singleOf(::RemoveDisconnectedVppIdsFromProfilesUseCase)
 }

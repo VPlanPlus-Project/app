@@ -6,14 +6,17 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
+import plus.vplan.app.feature.main.domain.usecase.setup.RemoveDisconnectedVppIdsFromProfilesUseCase
 
 class SetupApplicationUseCase(
     private val keyValueRepository: KeyValueRepository,
     private val doAssessmentsAndHomeworkIndexMigrationUseCase: DoAssessmentsAndHomeworkIndexMigrationUseCase,
-    private val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase
+    private val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase,
+    private val removeDisconnectedVppIdsFromProfilesUseCase: RemoveDisconnectedVppIdsFromProfilesUseCase
 ) {
     private val logger = Logger.withTag("SetupApplicationUseCase")
     suspend operator fun invoke() {
+        removeDisconnectedVppIdsFromProfilesUseCase()
         updateFirebaseTokenUseCase()
         if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != BuildConfig.APP_VERSION_CODE.toString()) {
             logger.i { "First run of VPlanPlus" }
