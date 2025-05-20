@@ -166,7 +166,7 @@ private fun ProfileContent(
                             .collectAsState(emptyList()).value
 
                         val grades = vppId.grades.collectAsSingleFlow().value
-                        if (vppId.gradeIds.isNotEmpty()) {
+                        if (vppId.schulverwalterConnection != null) {
                             Box(
                                 modifier = Modifier
                                     .padding(horizontal = 16.dp)
@@ -323,7 +323,7 @@ private fun ProfileContent(
                                                 horizontalAlignment = Alignment.CenterHorizontally
                                             ) {
                                                 AnimatedContent(
-                                                    targetState = grades.maxByOrNull { it.givenAt },
+                                                    targetState = grades.filter { it.value != null }.maxByOrNull { it.givenAt },
                                                 ) { latestGrade ->
                                                     if (latestGrade == null || state.areGradesLocked) {
                                                         ShimmerLoader(
