@@ -12,10 +12,12 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 
 class HandlePushNotificationUseCase(
     private val schoolRepository: SchoolRepository,
-    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase
+    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val updateTimetableUseCase: UpdateTimetableUseCase
 ) {
     private val json = Json { ignoreUnknownKeys = true }
     private val logger = Logger.withTag("HandlePushNotificationUseCase")
@@ -59,6 +61,13 @@ class HandlePushNotificationUseCase(
                     dates = dates,
                     allowNotification = true
                 )
+
+                if (data.timetable) {
+                    updateTimetableUseCase(
+                        indiwareSchool = school,
+                        forceUpdate = true,
+                    )
+                }
             }
         }
     }
@@ -77,5 +86,6 @@ private data class AssessmentUpdate(
 @Serializable
 private data class IndiwareUpdate(
     @SerialName("indiware_school_id") val indiwareSchoolId: String,
-    @SerialName("dates") val dates: List<String>
+    @SerialName("dates") val dates: List<String>,
+    @SerialName("timetable") val timetable: Boolean
 )
