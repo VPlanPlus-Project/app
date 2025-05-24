@@ -36,7 +36,7 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
                 Logger.w { "No type found in FCM message, ignoring" }
                 return@launch
             }).let {
-                if (it.startsWith("DEV_") && keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).first() == "true") {
+                if (it.startsWith("DEV_") && keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).first() != "true") {
                     Logger.w { "DEV_ message received, but developer mode is not enabled, ignoring" }
                     return@launch
                 }
