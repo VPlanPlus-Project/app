@@ -56,24 +56,24 @@ data class Host(
 
 val api = Host(
     protocol = URLProtocol.HTTPS,
-    host = "vplan.plus",
+    host = "development.vplan.plus",
     port = 443
 )
 
 val sp24Service = Host(
     protocol = URLProtocol.HTTPS,
-    host = "sp24.microservices.vplan.plus",
+    host = "sp24.microservices.development.vplan.plus",
     port = 443
 )
 
 val auth = Host(
     protocol = URLProtocol.HTTPS,
-    host = "auth.vplan.plus",
+    host = "auth.development.vplan.plus",
     port = 443
 )
 
 const val APP_ID = "4"
-const val APP_SECRET = "crawling-mom-yesterday-jazz-populace-napkin"
+const val APP_SECRET = "secret"
 const val APP_REDIRECT_URI = "vpp://app/auth/"
 val VPP_ID_AUTH_URL = URLBuilder(
     protocol = auth.protocol,
