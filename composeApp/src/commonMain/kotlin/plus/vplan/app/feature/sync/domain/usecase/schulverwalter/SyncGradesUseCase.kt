@@ -91,7 +91,7 @@ class SyncGradesUseCase(
                 .filter {  LocalDate.now().toEpochDays() - it.givenAt.toEpochDays() <= 2 }
 
             if (newGrades.isEmpty()) return
-            if (newGrades.size == 1) {
+            if (newGrades.size == 1 && newGrades.first().value != null) {
                 platformNotificationRepository.sendNotification(
                     title = "Neue Note",
                     category = newGrades.first().vppId.getFirstValue()?.name ?: "Unbekannter Nutzer",
@@ -131,7 +131,7 @@ class SyncGradesUseCase(
                     category = newGrades.first().vppId.getFirstValue()?.name ?: "Unbekannter Nutzer",
                     message = buildString {
                         append("Du hast ")
-                        append(newGrades.size)
+                        append(newGrades.filter { it.value != null }.size)
                         append(" neue Noten erhalten")
                     },
                     isLarge = false,
