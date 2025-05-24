@@ -1,15 +1,27 @@
 package plus.vplan.app.feature.system.usecase
 
+import co.touchlab.kermit.Logger
+import kotlinx.coroutines.flow.first
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
+import plus.vplan.app.capture
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 
-class HandlePushNotificationUseCase {
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+class HandlePushNotificationUseCase(
+    private val schoolRepository: SchoolRepository,
+    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val updateTimetableUseCase: UpdateTimetableUseCase
+) {
+    private val json = Json { ignoreUnknownKeys = true }
+    private val logger = Logger.withTag("HandlePushNotificationUseCase")
+
     suspend operator fun invoke(topic: String, payload: String) {
         when (topic) {
             "HOMEWORK_UPDATE" -> {
@@ -24,6 +36,39 @@ class HandlePushNotificationUseCase {
                     App.assessmentSource.getById(it, forceUpdate = true).getFirstValue()
                 }
             }
+            "INDIWARE_UPDATE" -> {
+                val data = json.decodeFromString<IndiwareUpdate>(payload)
+                val school = schoolRepository.getAll().first()
+                    .filterIsInstance<School.IndiwareSchool>()
+                    .firstOrNull { it.sp24Id == data.indiwareSchoolId }
+
+                if (school == null) {
+                    logger.w { "Indiware school ${data.indiwareSchoolId} not found" }
+                    capture("PushHandler.IndiwareSchoolNotFound", mapOf("indiware_id" to data.indiwareSchoolId))
+                    return
+                }
+
+                val dates = data.dates.mapNotNull {
+                    try {
+                        LocalDate.parse(it)
+                    } catch (_: IllegalArgumentException) {
+                        capture("PushHandler.DateParseError", mapOf("value" to it))
+                        null
+                    }
+                }
+                updateSubstitutionPlanUseCase(
+                    indiwareSchool = school,
+                    dates = dates,
+                    allowNotification = true
+                )
+
+                if (data.timetable) {
+                    updateTimetableUseCase(
+                        indiwareSchool = school,
+                        forceUpdate = true,
+                    )
+                }
+            }
         }
     }
 }
@@ -36,4 +81,11 @@ private data class HomeworkUpdate(
 @Serializable
 private data class AssessmentUpdate(
     @SerialName("assessment_ids") val assessmentIds: List<Int>
+)
+
+@Serializable
+private data class IndiwareUpdate(
+    @SerialName("indiware_school_id") val indiwareSchoolId: String,
+    @SerialName("dates") val dates: List<String>,
+    @SerialName("timetable") val timetable: Boolean
 )
