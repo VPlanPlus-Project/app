@@ -1,7 +1,5 @@
 package plus.vplan.app.feature.search.ui.main.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,58 +9,39 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.components.agenda.GradeCard
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
 import plus.vplan.app.feature.search.domain.model.SearchResult
-import plus.vplan.app.ui.components.ShimmerLoader
-import plus.vplan.app.utils.DOT
-import plus.vplan.app.utils.findCurrentLessons
-import plus.vplan.app.utils.getNextLessonStart
+import plus.vplan.app.feature.search.ui.main.components.result.SchoolEntityResults
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormat
-import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
 import plus.vplan.app.utils.untilRelativeText
@@ -241,131 +220,6 @@ private val typeTypeSortings = listOf(
     SearchResult.Type.Grade,
 )
 
-@Composable
-private fun SchoolEntityResults(
-    contextDate: LocalDate,
-    results: List<SearchResult.SchoolEntity>,
-    onClick: (result: SearchResult.SchoolEntity) -> Unit
-) {
-    val localDensity = LocalDensity.current
-    var schoolEntityNameWidth by remember { mutableStateOf(0.dp) }
-    results.forEachIndexed { i, result ->
-        key(result.id) {
-            val currentLessons = remember { mutableStateListOf<Lesson>() }
-            var nextLesson by remember { mutableStateOf<LocalTime?>(null) }
-            var hasLessonsLoaded by remember { mutableStateOf(false) }
-            LaunchedEffect(result.lessons) {
-                currentLessons.clear()
-                if (contextDate == LocalDate.now()) {
-                    currentLessons.addAll(result.lessons.map { it.lesson }.findCurrentLessons(LocalTime.now()).toMutableStateList())
-                    nextLesson = result.lessons.map { it.lesson }.getNextLessonStart(LocalTime.now())
-                }
-                hasLessonsLoaded = true
-            }
-            if (i > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            val isOnlyResult = results.size == 1
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable(enabled = !isOnlyResult) { onClick(result) }
-                    .padding(8.dp),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .sizeIn(minWidth = schoolEntityNameWidth, maxWidth = 72.dp)
-                        .onSizeChanged { with(localDensity) { it.width.toDp().let { width -> if (width > schoolEntityNameWidth) schoolEntityNameWidth = width } } }
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = result.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-                Column {
-                    if (currentLessons.isEmpty() && !hasLessonsLoaded) LineShimmer()
-                    else if (result.lessons.isNotEmpty() && hasLessonsLoaded && contextDate != LocalDate.now()) Text(
-                        text = when (result.lessons.size) {
-                            0 -> "Kein Unterricht"
-                            1 -> "Eine Stunde"
-                            else -> "${result.lessons.size} Stunden"
-                        },
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    else if (result.lessons.isEmpty() && hasLessonsLoaded && contextDate == LocalDate.now()) Text(
-                        text = "Heute kein Unterricht",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    else {
-                        when (result) {
-                            is SearchResult.SchoolEntity.Room -> {
-                                val groupIds = currentLessons.map { it.groupIds }.flatten().distinct()
-                                Text(
-                                    text = if (groupIds.isEmpty()) "Momentan nicht belegt (Keine Gruppen zugeteilt)"
-                                    else {
-                                        val groups = groupIds.map { App.groupSource.getById(it) }.collectAsResultingFlow().value
-                                        "Momentan belegt von ${groups.map { it.name }.sorted().joinToString()}"
-                                    },
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            is SearchResult.SchoolEntity.Teacher, is SearchResult.SchoolEntity.Group -> {
-                                val roomIds = currentLessons.mapNotNull { it.roomIds }.flatten().distinct()
-                                Text(
-                                    text = if (roomIds.isEmpty()) "Momentan nicht im Haus"
-                                    else {
-                                        val rooms = roomIds.map { App.roomSource.getById(it) }.collectAsResultingFlow().value
-                                        val until = currentLessons.map { it.lessonTime }.collectAsResultingFlow().value.maxOfOrNull { it.end }
-                                        buildString {
-                                            append("Momentan in ${rooms.map { it.name }.sorted().joinToString()}")
-                                            if (until != null) append(" (bis $until)")
-                                        }
-                                    },
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-                    }
-                    Row {
-                        Text(
-                            text = buildString {
-                                if (!isOnlyResult) append("Tippe für alle Stunden ")
-                                if (currentLessons.isEmpty() && hasLessonsLoaded && nextLesson != null) {
-                                    if (!isOnlyResult) append("$DOT ")
-                                    append("Nächster Unterricht ab ${nextLesson!!.format(regularTimeFormat)}")
-                                }
-                            },
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    if (isOnlyResult) {
-                        CalendarView(
-                            profile = null,
-                            dayType = Day.DayType.REGULAR,
-                            date = contextDate,
-                            lessons = result.lessons,
-                            assessments = emptyList(),
-                            homework = emptyList(),
-                            autoLimitTimeSpanToLessons = true,
-                            info = null,
-                            contentScrollState = null,
-                            onHomeworkClicked = {},
-                            onAssessmentClicked = {}
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LessonsDrawer(
@@ -435,22 +289,5 @@ private fun LessonsDrawer(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun LineShimmer() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(MaterialTheme.typography.bodyMedium.lineHeight.toDp()),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        ShimmerLoader(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(MaterialTheme.typography.bodyMedium.fontSize.toDp())
-                .clip(RoundedCornerShape(8.dp))
-        )
     }
 }

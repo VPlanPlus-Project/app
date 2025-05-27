@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -95,6 +96,7 @@ import kotlin.time.Duration.Companion.minutes
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CalendarView(
+    modifier: Modifier = Modifier,
     profile: Profile?,
     date: LocalDate,
     dayType: Day.DayType,
@@ -112,7 +114,10 @@ fun CalendarView(
     val localDensity = LocalDensity.current
     var availableWidth by remember { mutableStateOf(0.dp) }
     val minute = 1.25.dp
-    Column {
+    Column(
+        modifier = modifier
+            .clipToBounds()
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
