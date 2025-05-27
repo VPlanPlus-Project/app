@@ -28,4 +28,5 @@ object Keys {
     const val FIREBASE_TOKEN_UPLOAD_SUCCESS = "firebase_token_upload_success"
 
     const val DEVELOPER_SETTINGS_ACTIVE = "developer_settings_active"
+    const val DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC = "developer_settings_disable_auto_sync"
 }

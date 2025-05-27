@@ -24,6 +24,8 @@ import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -58,6 +60,7 @@ class FullSyncUseCase(
     private val roomRepository: RoomRepository,
     private val courseRepository: CourseRepository,
     private val vppIdRepository: VppIdRepository,
+    private val keyValueRepository: KeyValueRepository,
     private val profileRepository: ProfileRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
@@ -80,6 +83,11 @@ class FullSyncUseCase(
             return Job()
         }
         return CoroutineScope(Dispatchers.IO).launch {
+            if (cause == FullSyncCause.Job && keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).first().toBoolean() && keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).first().toBoolean()) {
+                logger.i { "AutoSync was triggered but is disabled in developer settings, aborting" }
+                return@launch
+            }
+
             isRunning = true
             capture("FullSync.Start", mapOf("cause" to cause.name))
             try {
