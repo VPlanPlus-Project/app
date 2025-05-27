@@ -35,25 +35,30 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
         MainScope().launch {
-            val type = (message.data["type"] ?: run {
-                Logger.w { "No type found in FCM message, ignoring" }
-                return@launch
-            }).let {
-                capture("FCM.Message", mapOf("Type" to it))
-                fcmRepository.log(
-                    topic = it,
-                    message = message.data["data"].orEmpty()
-                )
-                if (it.startsWith("DEV_") && keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).first() != "true") {
-                    Logger.w { "DEV_ message received, but developer mode is not enabled, ignoring" }
+            try {
+                val type = (message.data["type"] ?: run {
+                    Logger.w { "No type found in FCM message, ignoring" }
                     return@launch
+                }).let {
+                    capture("FCM.Message", mapOf("Type" to it))
+                    fcmRepository.log(
+                        topic = it,
+                        message = message.data["data"].orEmpty()
+                    )
+                    if (it.startsWith("DEV_") && keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).first() != "true") {
+                        Logger.w { "DEV_ message received, but developer mode is not enabled, ignoring" }
+                        return@launch
+                    }
+                    it.substringAfter("DEV_")
+                }.also {
+                    Logger.i { "FCM Message type: $it" }
                 }
-                it.substringAfter("DEV_")
-            }.also {
-                Logger.i { "FCM Message type: $it" }
-            }
 
-            handlePushNotificationService(type, message.data["data"].orEmpty())
+                handlePushNotificationService(type, message.data["data"].orEmpty())
+            } catch (e: Exception) {
+                logger.e(e) { "Error processing FCM message" }
+                capture("FCM.Error", mapOf("Error" to e.stackTraceToString()))
+            }
         }
     }
 }
