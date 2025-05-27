@@ -44,6 +44,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.YearDao
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbDay
+import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
@@ -145,6 +146,8 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         DbDay::class,
         DbHoliday::class,
 
+        DbFcmLog::class,
+
         DbVppId::class,
         DbVppIdAccess::class,
         DbVppIdSchulverwalter::class,
@@ -192,6 +195,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5, spec = VppDatabase.Migration5::class), // Delete version column of substitution plan lesson
         AutoMigration(from = 5, to = 6, spec = VppDatabase.Migration6::class), // Delete version column of timetable lesson
+        AutoMigration(from = 6, to = 7) // Add fcm log
     ],
     exportSchema = true
 )
@@ -238,7 +242,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 6
+        const val DATABASE_VERSION = 7
     }
 
     @RenameColumn(tableName = "assessments", fromColumnName = "subject_instance_ids", toColumnName = "subject_instance_id")
