@@ -17,6 +17,7 @@ import plus.vplan.app.data.source.database.converters.UuidTypeConverter
 import plus.vplan.app.data.source.database.dao.AssessmentDao
 import plus.vplan.app.data.source.database.dao.CourseDao
 import plus.vplan.app.data.source.database.dao.DayDao
+import plus.vplan.app.data.source.database.dao.FcmDao
 import plus.vplan.app.data.source.database.dao.FileDao
 import plus.vplan.app.data.source.database.dao.GroupDao
 import plus.vplan.app.data.source.database.dao.HolidayDao
@@ -231,6 +232,8 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val assessmentDao: AssessmentDao
     abstract val profileTimetableCacheDao: ProfileTimetableCacheDao
     abstract val newsDao: NewsDao
+
+    abstract val fcmDao: FcmDao
 
     // Schulverwalter
     abstract val yearDao: YearDao

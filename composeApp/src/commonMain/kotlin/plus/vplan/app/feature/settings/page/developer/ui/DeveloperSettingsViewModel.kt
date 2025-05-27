@@ -11,9 +11,11 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
+import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
@@ -29,10 +31,11 @@ class DeveloperSettingsViewModel(
     private val fullSyncUseCase: FullSyncUseCase,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val timetableRepository: TimetableRepository,
+    private val keyValueRepository: KeyValueRepository,
+    private val fcmRepository: FcmRepository,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
-    private val keyValueRepository: KeyValueRepository
 ) : ViewModel() {
 
     var state by mutableStateOf(DeveloperSettingsState())
@@ -49,6 +52,13 @@ class DeveloperSettingsViewModel(
             keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).collectLatest {
                 state = state.copy(
                     isAutoSyncDisabled = it.toBoolean()
+                )
+            }
+        }
+        viewModelScope.launch {
+            fcmRepository.getAll().collectLatest {
+                state = state.copy(
+                    fcmLogs = it.sortedByDescending { log -> log.timestamp }.take(100)
                 )
             }
         }
@@ -99,7 +109,8 @@ data class DeveloperSettingsState(
     val isSubstitutionPlanUpdateRunning: Boolean = false,
     val isTimetableUpdateRunning: Boolean = false,
     val profile: Profile? = null,
-    val isAutoSyncDisabled: Boolean = false
+    val isAutoSyncDisabled: Boolean = false,
+    val fcmLogs: List<DbFcmLog> = emptyList()
 )
 
 sealed class DeveloperSettingsEvent {

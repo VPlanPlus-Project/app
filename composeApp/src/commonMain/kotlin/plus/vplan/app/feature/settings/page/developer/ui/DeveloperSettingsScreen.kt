@@ -1,9 +1,11 @@
 package plus.vplan.app.feature.settings.page.developer.ui
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -120,6 +122,23 @@ private fun DeveloperSettingsContent(
             }
             Button(onClick = remember { { onEvent(DeveloperSettingsEvent.DeleteSubstitutionPlan) } }) {
                 Text("Drop substitution plan")
+            }
+            Text("FCM Logs", modifier = Modifier.padding(top = 8.dp))
+            if (state.fcmLogs.isEmpty()) {
+                Text("Keine FCM Logs vorhanden")
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                ) {
+                    state.fcmLogs.forEach { log ->
+                        Text(
+                            text = "${log.timestamp} - ${log.tag}: ${log.message}",
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+                }
             }
         }
     }

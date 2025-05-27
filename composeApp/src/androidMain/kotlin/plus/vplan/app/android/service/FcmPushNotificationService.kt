@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.usecase.UpdateFirebaseTokenUseCase
@@ -18,6 +19,7 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
     val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase by inject()
     val handlePushNotificationService: HandlePushNotificationUseCase by inject()
     val keyValueRepository: KeyValueRepository by inject()
+    val fcmRepository: FcmRepository by inject()
 
     private val logger = Logger.withTag("FcmPushNotificationService")
 
@@ -36,6 +38,10 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
                 Logger.w { "No type found in FCM message, ignoring" }
                 return@launch
             }).let {
+                fcmRepository.log(
+                    topic = it,
+                    message = message.data["data"].orEmpty()
+                )
                 if (it.startsWith("DEV_") && keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).first() != "true") {
                     Logger.w { "DEV_ message received, but developer mode is not enabled, ignoring" }
                     return@launch
