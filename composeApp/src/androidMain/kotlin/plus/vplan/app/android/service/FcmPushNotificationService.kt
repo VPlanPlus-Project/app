@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.capture
 import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -38,6 +39,7 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
                 Logger.w { "No type found in FCM message, ignoring" }
                 return@launch
             }).let {
+                capture("FCM.Message", mapOf("Type" to it))
                 fcmRepository.log(
                     topic = it,
                     message = message.data["data"].orEmpty()
