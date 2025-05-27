@@ -263,14 +263,15 @@ private fun SchoolEntityResults(
                 hasLessonsLoaded = true
             }
             if (i > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            val isOnlyResult = results.size == 1
             Row(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { onClick(result) }
+                    .clickable(enabled = !isOnlyResult) { onClick(result) }
                     .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Box(
@@ -335,10 +336,28 @@ private fun SchoolEntityResults(
                     Row {
                         Text(
                             text = buildString {
-                                append("Tippe für alle Stunden ")
-                                if (currentLessons.isEmpty() && hasLessonsLoaded && nextLesson != null) append("$DOT Nächster Unterricht ab ${nextLesson!!.format(regularTimeFormat)}")
+                                if (!isOnlyResult) append("Tippe für alle Stunden ")
+                                if (currentLessons.isEmpty() && hasLessonsLoaded && nextLesson != null) {
+                                    if (!isOnlyResult) append("$DOT ")
+                                    append("Nächster Unterricht ab ${nextLesson!!.format(regularTimeFormat)}")
+                                }
                             },
                             style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    if (isOnlyResult) {
+                        CalendarView(
+                            profile = null,
+                            dayType = Day.DayType.REGULAR,
+                            date = contextDate,
+                            lessons = result.lessons,
+                            assessments = emptyList(),
+                            homework = emptyList(),
+                            autoLimitTimeSpanToLessons = true,
+                            info = null,
+                            contentScrollState = null,
+                            onHomeworkClicked = {},
+                            onAssessmentClicked = {}
                         )
                     }
                 }
