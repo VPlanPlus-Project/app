@@ -1,6 +1,5 @@
 package plus.vplan.app.feature.home.domain.usecase
 
-import VPlanPlus.composeApp.BuildConfig
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -9,6 +8,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.BuildConfig
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.Profile

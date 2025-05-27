@@ -11,7 +11,9 @@ class FcmRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : FcmRepository {
     override suspend fun log(topic: String, message: String, timestamp: LocalDateTime) {
-        vppDatabase.fcmDao.log(vppDatabase.fcmDao.getMaxId().first()?.plus(1) ?: 0, topic, message, timestamp)
+        val currentMaxId = vppDatabase.fcmDao.getMaxId().first() ?: -1
+        val nextId = currentMaxId + 1
+        vppDatabase.fcmDao.log(nextId, topic, message, timestamp)
     }
 
     override fun getAll(): Flow<List<DbFcmLog>> {

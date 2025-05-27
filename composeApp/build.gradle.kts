@@ -177,7 +177,17 @@ dependencies {
 }
 
 buildConfig {
+    useKotlinOutput {
+        topLevelConstants = false
+        internalVisibility = false
+    }
+
+    className("BuildConfig")
+    packageName("plus.vplan.app")
+
     buildConfigField("APP_VERSION_CODE", ApplicationConfig.APP_VERSION_CODE)
     buildConfigField("APP_VERSION", ApplicationConfig.APP_VERSION_NAME)
     buildConfigField("APP_DEBUG", ApplicationConfig.isDebug)
+
+    generateAtSync = true
 }

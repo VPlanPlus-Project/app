@@ -1,6 +1,5 @@
 package plus.vplan.app.di
 
-import VPlanPlus.composeApp.BuildConfig
 import androidx.room.RoomDatabase
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
@@ -18,6 +17,7 @@ import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import plus.vplan.app.App
+import plus.vplan.app.BuildConfig
 import plus.vplan.app.ENABLE_KTOR_LOGGING
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl

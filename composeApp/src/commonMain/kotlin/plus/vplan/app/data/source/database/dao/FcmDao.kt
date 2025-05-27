@@ -20,6 +20,6 @@ interface FcmDao {
     @Query("SELECT * FROM fcm_logs ORDER BY timestamp DESC")
     fun getAll(): Flow<List<DbFcmLog>>
 
-    @Query("SELECT MAX(id) FROM fcm_logs")
+    @Query("SELECT MAX(CAST(id AS INTEGER)) FROM fcm_logs")
     fun getMaxId(): Flow<Int?>
 }

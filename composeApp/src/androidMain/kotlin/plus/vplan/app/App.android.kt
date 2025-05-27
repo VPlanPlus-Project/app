@@ -1,6 +1,5 @@
 package plus.vplan.app
 
-import VPlanPlus.composeApp.BuildConfig
 import com.posthog.PostHog
 
 actual fun getPlatform(): Platform = Platform.Android
