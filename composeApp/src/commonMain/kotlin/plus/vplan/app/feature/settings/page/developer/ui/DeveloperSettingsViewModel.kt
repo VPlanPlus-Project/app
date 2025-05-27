@@ -5,13 +5,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
+import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.repository.FcmRepository
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
@@ -25,9 +31,11 @@ class DeveloperSettingsViewModel(
     private val fullSyncUseCase: FullSyncUseCase,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val timetableRepository: TimetableRepository,
+    private val keyValueRepository: KeyValueRepository,
+    private val fcmRepository: FcmRepository,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
-    private val getCurrentProfileUseCase: GetCurrentProfileUseCase
+    private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
 ) : ViewModel() {
 
     var state by mutableStateOf(DeveloperSettingsState())
@@ -37,6 +45,20 @@ class DeveloperSettingsViewModel(
             getCurrentProfileUseCase().collect { profile ->
                 state = state.copy(
                     profile = profile,
+                )
+            }
+        }
+        viewModelScope.launch {
+            keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).collectLatest {
+                state = state.copy(
+                    isAutoSyncDisabled = it.toBoolean()
+                )
+            }
+        }
+        viewModelScope.launch {
+            fcmRepository.getAll().collectLatest {
+                state = state.copy(
+                    fcmLogs = it.sortedByDescending { log -> log.timestamp }.take(100)
                 )
             }
         }
@@ -56,6 +78,9 @@ class DeveloperSettingsViewModel(
                     substitutionPlanRepository.deleteAllSubstitutionPlans()
                     timetableRepository.deleteAllTimetables()
                 }
+                DeveloperSettingsEvent.DeleteSubstitutionPlan -> {
+                    substitutionPlanRepository.deleteAllSubstitutionPlans()
+                }
                 DeveloperSettingsEvent.UpdateSubstitutionPlan -> {
                     if (state.isSubstitutionPlanUpdateRunning) return@launch
                     state = state.copy(isSubstitutionPlanUpdateRunning = true)
@@ -71,6 +96,9 @@ class DeveloperSettingsViewModel(
                     updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!! as School.IndiwareSchool, true)
                     state = state.copy(isTimetableUpdateRunning = false)
                 }
+                DeveloperSettingsEvent.ToggleAutoSyncDisabled -> {
+                    keyValueRepository.set(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC, (!keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).first().toBoolean()).toString())
+                }
             }
         }
     }
@@ -80,7 +108,9 @@ data class DeveloperSettingsState(
     val isFullSyncRunning: Boolean = false,
     val isSubstitutionPlanUpdateRunning: Boolean = false,
     val isTimetableUpdateRunning: Boolean = false,
-    val profile: Profile? = null
+    val profile: Profile? = null,
+    val isAutoSyncDisabled: Boolean = false,
+    val fcmLogs: List<DbFcmLog> = emptyList()
 )
 
 sealed class DeveloperSettingsEvent {
@@ -88,4 +118,6 @@ sealed class DeveloperSettingsEvent {
     object ClearLessonCache : DeveloperSettingsEvent()
     object UpdateSubstitutionPlan : DeveloperSettingsEvent()
     object UpdateTimetable : DeveloperSettingsEvent()
+    data object ToggleAutoSyncDisabled : DeveloperSettingsEvent()
+    data object DeleteSubstitutionPlan : DeveloperSettingsEvent()
 }

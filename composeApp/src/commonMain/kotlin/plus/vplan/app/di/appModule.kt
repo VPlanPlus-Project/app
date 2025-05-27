@@ -1,6 +1,5 @@
 package plus.vplan.app.di
 
-import VPlanPlus.composeApp.BuildConfig
 import androidx.room.RoomDatabase
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
@@ -18,10 +17,12 @@ import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import plus.vplan.app.App
+import plus.vplan.app.BuildConfig
 import plus.vplan.app.ENABLE_KTOR_LOGGING
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DayRepositoryImpl
+import plus.vplan.app.data.repository.FcmRepositoryImpl
 import plus.vplan.app.data.repository.FileRepositoryImpl
 import plus.vplan.app.data.repository.GroupRepositoryImpl
 import plus.vplan.app.data.repository.HomeworkRepositoryImpl
@@ -43,6 +44,7 @@ import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
+import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -160,6 +162,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::FileRepositoryImpl).bind<FileRepository>()
     singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
     singleOf(::NewsRepositoryImpl).bind<NewsRepository>()
+    singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
 
     singleOf(::GetCurrentProfileUseCase)
 }

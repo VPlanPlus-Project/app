@@ -1,8 +1,8 @@
 package plus.vplan.app.feature.main.domain.usecase
 
-import VPlanPlus.composeApp.BuildConfig
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.BuildConfig
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase

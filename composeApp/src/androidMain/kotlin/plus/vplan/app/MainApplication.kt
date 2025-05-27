@@ -1,6 +1,5 @@
 package plus.vplan.app
 
-import VPlanPlus.composeApp.BuildConfig
 import android.app.Application
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -31,17 +30,24 @@ class MainApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        if (!isDebug()) {
-            val config = PostHogAndroidConfig(
-                apiKey = POSTHOG_API_KEY,
-                host = POSTHOG_HOST
-            )
-
-            // Setup PostHog with the given Context and Config
-            PostHogAndroid.setup(this, config)
-            PostHog.register("\$app_build", BuildConfig.APP_VERSION_CODE)
-            PostHog.register("\$os_name", "Android")
+        val config = PostHogAndroidConfig(
+            apiKey = POSTHOG_API_KEY,
+            host = POSTHOG_HOST
+        ).apply {
+            if (isDebug()) {
+                flushAt = 1 // Flush events immediately for debugging
+                flushIntervalSeconds = 1000 // Flush every second for debugging
+            } else {
+                flushAt = 10 // Flush events in batches of 100 in production
+                flushIntervalSeconds = 60 // Flush every minute in production
+            }
         }
+
+        // Setup PostHog with the given Context and Config
+        PostHogAndroid.setup(this, config)
+        PostHog.register("\$app_build", BuildConfig.APP_VERSION_CODE)
+        PostHog.register("\$os_name", "Android")
+        PostHog.register("debug_mode", isDebug().toString())
 
         FirebaseApp.initializeApp(this)
         Firebase.crashlytics.isCrashlyticsCollectionEnabled = !isDebug()

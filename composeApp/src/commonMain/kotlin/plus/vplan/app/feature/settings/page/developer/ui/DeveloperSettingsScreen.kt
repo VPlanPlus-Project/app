@@ -1,14 +1,17 @@
 package plus.vplan.app.feature.settings.page.developer.ui
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -19,6 +22,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
@@ -108,6 +112,33 @@ private fun DeveloperSettingsContent(
                     Text("Update timetable")
                 }
                 if (state.isTimetableUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = !state.isAutoSyncDisabled,
+                    onCheckedChange = remember { { onEvent(DeveloperSettingsEvent.ToggleAutoSyncDisabled) } }
+                )
+                Text("Auto-Sync aktivieren", modifier = Modifier.padding(start = 8.dp))
+            }
+            Button(onClick = remember { { onEvent(DeveloperSettingsEvent.DeleteSubstitutionPlan) } }) {
+                Text("Drop substitution plan")
+            }
+            Text("FCM Logs", modifier = Modifier.padding(top = 8.dp))
+            if (state.fcmLogs.isEmpty()) {
+                Text("Keine FCM Logs vorhanden")
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                ) {
+                    state.fcmLogs.forEach { log ->
+                        Text(
+                            text = "${log.timestamp} - ${log.tag}: ${log.message}",
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+                }
             }
         }
     }
