@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -90,11 +91,12 @@ import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.chevron_right
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.x
-import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CalendarView(
+    modifier: Modifier = Modifier,
     profile: Profile?,
     date: LocalDate,
     dayType: Day.DayType,
@@ -112,7 +114,10 @@ fun CalendarView(
     val localDensity = LocalDensity.current
     var availableWidth by remember { mutableStateOf(0.dp) }
     val minute = 1.25.dp
-    Column {
+    Column(
+        modifier = modifier
+            .clipToBounds()
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -132,8 +137,8 @@ fun CalendarView(
 
                         LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons, limitTimeSpanToLessonsLowerBound) {
                             if (!autoLimitTimeSpanToLessons || lessons.isEmpty()) return@LaunchedEffect
-                            start = limitTimeSpanToLessonsLowerBound ?: lessons.minOf { it.lessonTime.start }.minusWithCapAtMidnight(1.hours)
-                            end = lessons.maxOf { it.lessonTime.end }.plusWithCapAtMidnight(1.hours)
+                            start = limitTimeSpanToLessonsLowerBound ?: lessons.minOf { it.lessonTime.start }.minusWithCapAtMidnight(30.minutes)
+                            end = lessons.maxOf { it.lessonTime.end }.plusWithCapAtMidnight(30.minutes)
                         }
                         Box(
                             modifier = Modifier
