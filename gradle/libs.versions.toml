@@ -1,9 +1,9 @@
 [versions]
 agp = "8.10.1"
 androidx-activityCompose = "1.10.1"
-androidx-lifecycle = "2.8.4"
+androidx-lifecycle = "2.9.1"
 cmpEasyPermission = "1.0.2"
-compose-multiplatform = "1.7.0"
+compose-multiplatform = "1.8.2"
 filekitCompose = "0.8.8"
 kermit = "2.0.4"
 kotlin = "2.1.21"
@@ -16,26 +16,24 @@ androidx-room = "2.7.2"
 androidx-sqlite = "2.5.2"
 navigationCompose = "2.9.0-alpha16"
 posthogAndroid = "3.19.0"
-skiko = "0.9.17"
 sqlite = "2.5.2"
 
 androidx-material = "1.3.2"
 
 koin = "4.1.0"
 
-kotlinSerializationPlugin = "2.1.21"
 kotlinSerialization = "1.8.1"
 
 coroutines = "1.10.2"
 
 google-gms = "4.4.2"
-firebase-bom = "33.14.0"
+firebase-bom = "33.15.0"
 
-ktor = "3.2.0"
+ktor = "3.1.3"
 
 xmlutil = "0.91.1"
 androidBrowser = "1.8.0"
-workRuntimeKtx = "2.10.1"
+workRuntimeKtx = "2.10.2"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -53,7 +51,6 @@ filekit-compose = { module = "io.github.vinceglb:filekit-compose", version.ref =
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 posthog-android = { module = "com.posthog:posthog-android", version.ref = "posthogAndroid" }
-skiko = { module = "org.jetbrains.skiko:skiko", version.ref = "skiko" }
 sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
 
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
@@ -96,7 +93,7 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 
 room = { id = "androidx.room", version.ref = "androidx-room" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref="kotlinSerializationPlugin" }
-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.3" }
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref="kotlin" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.4" }
 google-gms = { id = "com.google.gms.google-services", version.ref = "google-gms" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "gradle-buildconfig-plugin" }
