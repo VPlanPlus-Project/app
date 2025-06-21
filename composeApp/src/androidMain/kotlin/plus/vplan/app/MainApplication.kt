@@ -34,11 +34,11 @@ class MainApplication : Application() {
             host = POSTHOG_HOST
         ).apply {
             if (isDebug()) {
-                flushAt = 1 // Flush events immediately for debugging
-                flushIntervalSeconds = 1000 // Flush every second for debugging
+                flushAt = 1
+                flushIntervalSeconds = 20
             } else {
-                flushAt = 10 // Flush events in batches of 100 in production
-                flushIntervalSeconds = 60 // Flush every minute in production
+                flushAt = 5
+                flushIntervalSeconds = 30
             }
         }
 
