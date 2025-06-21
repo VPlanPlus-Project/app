@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit
 class MainApplication : Application() {
 
     companion object {
-        const val POSTHOG_API_KEY = "phc_cS4RpGEmiGQJLvKLm5TFCZ4aEaqGRkWvWsOo7ko6pC6"
         const val POSTHOG_HOST = "https://eu.i.posthog.com"
     }
 
@@ -31,7 +30,7 @@ class MainApplication : Application() {
         super.onCreate()
 
         val config = PostHogAndroidConfig(
-            apiKey = POSTHOG_API_KEY,
+            apiKey = BuildConfig.POSTHOG_API_KEY,
             host = POSTHOG_HOST
         ).apply {
             if (isDebug()) {

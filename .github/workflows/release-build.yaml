@@ -50,6 +50,9 @@ jobs:
             -   name: Add keystore key password to local.properties
                 run: echo "signing.default.keypassword=${{secrets.KEYSTORE_PASSWORD}}" >> local.properties
 
+            -   name: Use PostHog API-Key
+                run: echo "posthog.api.key=${{ secrets.POSTHOG_API_KEY }}" >> local.properties
+
             -   uses: actions/cache@v4
                 with:
                     path: |
