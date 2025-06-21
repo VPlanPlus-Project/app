@@ -111,8 +111,6 @@ kotlin {
 
             implementation(libs.xmlutil.core)
             implementation(libs.xmlutil.serialization)
-
-            implementation(libs.skiko)
         }
 
         iosMain.dependencies {
