@@ -15,7 +15,7 @@ ksp = "2.1.21-2.0.1"
 androidx-room = "2.7.2"
 androidx-sqlite = "2.5.2"
 navigationCompose = "2.9.0-alpha16"
-posthogAndroid = "3.14.1"
+posthogAndroid = "3.19.0"
 skiko = "0.9.17"
 sqlite = "2.5.2"
 
