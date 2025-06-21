@@ -10,13 +10,17 @@ permissions:
 jobs:
   dependency-submission:
     runs-on: ubuntu-latest
+    name: Generate and submit dependency graph
     steps:
-    - name: Checkout sources
+    - name: 📥 Checkout sources
       uses: actions/checkout@v4
-    - name: Setup Java
+    - name: ☕ Setup Java
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: 17
-    - name: Generate and submit dependency graph
+    - name: ✏️ Prepare Environment
+      run: |
+        echo "posthog.api.key=placeholder >> local.properties
+    - name: 📊 Generate and submit dependency graph
       uses: gradle/actions/dependency-submission@v4
