@@ -21,6 +21,6 @@ jobs:
         java-version: 17
     - name: ✏️ Prepare Environment
       run: |
-        echo "posthog.api.key=placeholder >> local.properties
+        echo "posthog.api.key=placeholder >> local.properties"
     - name: 📊 Generate and submit dependency graph
       uses: gradle/actions/dependency-submission@v4
