@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit
 class MainApplication : Application() {
 
     companion object {
-        const val POSTHOG_API_KEY = "phc_cS4RpGEmiGQJLvKLm5TFCZ4aEaqGRkWvWsOo7ko6pC6"
         const val POSTHOG_HOST = "https://eu.i.posthog.com"
     }
 
@@ -31,15 +30,15 @@ class MainApplication : Application() {
         super.onCreate()
 
         val config = PostHogAndroidConfig(
-            apiKey = POSTHOG_API_KEY,
+            apiKey = BuildConfig.POSTHOG_API_KEY,
             host = POSTHOG_HOST
         ).apply {
             if (isDebug()) {
-                flushAt = 1 // Flush events immediately for debugging
-                flushIntervalSeconds = 1000 // Flush every second for debugging
+                flushAt = 1
+                flushIntervalSeconds = 20
             } else {
-                flushAt = 10 // Flush events in batches of 100 in production
-                flushIntervalSeconds = 60 // Flush every minute in production
+                flushAt = 5
+                flushIntervalSeconds = 30
             }
         }
 

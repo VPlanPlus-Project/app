@@ -1,3 +1,4 @@
+import groovy.lang.MissingFieldException
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 import java.util.Base64
@@ -188,6 +189,8 @@ buildConfig {
     buildConfigField("APP_VERSION_CODE", ApplicationConfig.APP_VERSION_CODE)
     buildConfigField("APP_VERSION", ApplicationConfig.APP_VERSION_NAME)
     buildConfigField("APP_DEBUG", ApplicationConfig.isDebug)
+
+    buildConfigField("POSTHOG_API_KEY", localProperties.getProperty("posthog.api.key") ?: throw MissingFieldException("posthog.api.key not found in local.properties", String::class.java))
 
     generateAtSync = true
 }
