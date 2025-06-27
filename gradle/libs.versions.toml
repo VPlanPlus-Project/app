@@ -16,6 +16,7 @@ androidx-room = "2.8.3"
 androidx-sqlite = "2.6.1"
 navigationCompose = "2.9.1"
 posthogAndroid = "3.26.0"
+sqlite = "2.5.2"
 
 androidx-material = "1.10.0-alpha04"
 androidx-icons = "1.7.8"
