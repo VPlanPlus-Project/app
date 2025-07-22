@@ -3,8 +3,11 @@ package plus.vplan.app.data.repository
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -51,13 +54,10 @@ class CourseRepositoryImpl(
                 safeRequest(onError = { trySend(emptyList()) }) {
                     val school = vppDatabase.schoolDao.findById(schoolId).first()?.toModel() ?: return@channelFlow
                     val response = httpClient.get {
-                        url {
-                            protocol = api.protocol
-                            host = api.host
-                            port = api.port
-                            pathSegments = listOf("api", "v2.2", "subject", "course")
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "subject", "course")
                             parameters.append("include_teacher", "true")
-                        }
+                        }.build())
                         school.getSchoolApiAccess()?.authentication(this) ?: return@channelFlow
                     }
                     if (!response.status.isSuccess()) return@channelFlow
@@ -109,7 +109,11 @@ class CourseRepositoryImpl(
                         .firstNotNullOfOrNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
                 }
                 if (schoolApiAccess == null) {
-                    val accessResponse = httpClient.get("${api.url}/api/v2.2/subject/course/$id")
+                    val accessResponse = httpClient.get({
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "subject", "course", id.toString())
+                        }.build())
+                    })
                     if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
                         vppDatabase.courseDao.deleteById(listOf(id))
                         return@channelFlow run { trySend(CacheState.NotExisting(id.toString())) }
@@ -133,9 +137,13 @@ class CourseRepositoryImpl(
                     return@channelFlow
                 }
 
-                val response = httpClient.get("${api.url}/api/v2.2/subject/course/$id?include_teacher=true") {
+                val response = httpClient.get({
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "subject", "course", id.toString())
+                        parameters.append("include_teacher", "true")
+                    }.build())
                     schoolApiAccess.authentication(this)
-                }
+                })
                 if (!response.status.isSuccess()) return@channelFlow run { trySend(CacheState.Error(id.toString(), response.toErrorResponse<Course>())) }
                 val data = ResponseDataWrapper.fromJson<CourseItemResponse>(response.bodyAsText())
                     ?: return@channelFlow run { trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText()))) }
@@ -181,13 +189,10 @@ class CourseRepositoryImpl(
                 val school = vppDatabase.schoolDao.getAll().first().firstOrNull { it.sp24SchoolDetails != null && it.sp24SchoolDetails.sp24SchoolId == indiwareId.split(".")[1] }?.toModel()
                 if (school?.getSchoolApiAccess() == null) return@channelFlow send(CacheState.Error(indiwareId, Response.Error.Other("no school for course $indiwareId")))
                 val response = httpClient.get {
-                    url {
-                        protocol = api.protocol
-                        host = api.host
-                        port = api.port
-                        pathSegments = listOf("api", "v2.2", "subject", "course", indiwareId)
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "subject", "course", indiwareId)
                         parameters.append("include_teacher", "true")
-                    }
+                    }.build())
                     school.getSchoolApiAccess()!!.authentication(this)
                 }
                 if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(indiwareId, response.toErrorResponse<Any>()))

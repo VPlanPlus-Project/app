@@ -6,15 +6,12 @@ import kotlinx.datetime.LocalTime
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
+import plus.vplan.lib.sp24.source.Authentication
 
 interface IndiwareRepository {
-    suspend fun checkCredentials(sp24Id: Int, username: String, password: String): Response<Boolean>
+    suspend fun checkCredentials(authentication: Authentication): Response<Boolean>
 
-    suspend fun getBaseData(
-        sp24Id: String,
-        username: String,
-        password: String
-    ): Response<IndiwareBaseData>
+    suspend fun getBaseData(authentication: Authentication): Response<IndiwareBaseData>
 
     suspend fun getTimetable(
         sp24Id: String,

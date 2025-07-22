@@ -84,26 +84,6 @@ class OnboardingRepositoryImpl(
         return Sp24Credentials(username, password)
     }
 
-    override suspend fun startSp24UpdateJob(): Response<String> {
-        val sp24Id = onboardingDatabase.keyValueDao.get("indiware.sp24_id").first() ?: return Response.Error.Other("schoolId is null")
-        val username = onboardingDatabase.keyValueDao.get("indiware.username").first() ?: return Response.Error.Other("username is null")
-        val password = onboardingDatabase.keyValueDao.get("indiware.password").first() ?: return Response.Error.Other("password is null")
-        safeRequest(onError = { return it }) {
-            val result = httpClient.get {
-                url("${sp24Service.url}/school/sp24/$sp24Id/initialize")
-                basicAuth("$username@$sp24Id", password)
-            }
-            if (result.status.isSuccess()) {
-                val jobId = ResponseDataWrapper.fromJson<String>(result.bodyAsText())
-                    ?: return Response.Error.ParsingError(result.bodyAsText())
-                onboardingDatabase.keyValueDao.insert("indiware.job_id", jobId)
-                return Response.Success(jobId)
-            }
-            return result.toResponse()
-        }
-        return Response.Error.Cancelled
-    }
-
     override suspend fun getSp24UpdateJobProgress(): Response<List<String>> {
         val jobId = onboardingDatabase.keyValueDao.get("indiware.job_id").first() ?: return Response.Error.Other("jobId is null")
         val username = onboardingDatabase.keyValueDao.get("indiware.username").first() ?: return Response.Error.Other("username is null")

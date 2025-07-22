@@ -1,12 +1,35 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.usecase
 
 import co.touchlab.kermit.Logger
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.request.url
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
+import io.ktor.http.contentType
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModuleBuilder
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
+import plus.vplan.app.appApi
+import plus.vplan.app.data.repository.ResponseDataWrapper
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
@@ -25,6 +48,8 @@ import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateLessonTimesUseCase
+import plus.vplan.lib.sp24.source.Authentication
+import kotlin.time.ExperimentalTime
 
 class SetUpSchoolDataUseCase(
     private val onboardingRepository: OnboardingRepository,
@@ -37,7 +62,8 @@ class SetUpSchoolDataUseCase(
     private val courseRepository: CourseRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val weekRepository: WeekRepository,
-    private val updateLessonTimesUseCase: UpdateLessonTimesUseCase
+    private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
+    private val httpClient: HttpClient
 ) {
     operator fun invoke(): Flow<SetUpSchoolDataResult> = channelFlow {
         val result = SetUpSchoolDataStep.entries.associateWith { SetUpSchoolDataState.NOT_STARTED }.toMutableMap()
@@ -61,12 +87,65 @@ class SetUpSchoolDataUseCase(
                     return@channelFlow
                 }
 
+            val sp24Authentication = Authentication(sp24Id, username, password)
+
             result[SetUpSchoolDataStep.DOWNLOAD_BASE_DATA] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
+
+            val response = httpClient.post {
+                url(URLBuilder(appApi).apply {
+                    appendPathSegments("onboarding", "v1", "sp24", "lookup")
+                }.build())
+
+                contentType(ContentType.Application.Json)
+                setBody(LookupSp24ConnectionRequest(
+                    sp24Id = sp24Id.toInt(),
+                    username = username,
+                    password = password
+                ))
+            }
+            require(response.status == HttpStatusCode.OK) { "Failed to lookup sp24 id on vpp server: ${response.status} - ${response.bodyAsText()}" }
+
+            val responseBody = response.body<ResponseDataWrapper<Sp24LookupResponse>>().data
+            val schoolId = if (responseBody !is Sp24LookupSchoolIdResponse) {
+                require(responseBody is Sp24LookupJobIdResponse)
+                while (true) {
+                    val response = httpClient.get {
+                        url(URLBuilder(appApi).apply {
+                            appendPathSegments("onboarding", "v1", "sp24", "job-status")
+                            parameters.append("job_id", responseBody.jobId.toString())
+                        }.build())
+                    }
+
+                    val jobStatus = response.body<ResponseDataWrapper<Sp24InitVppJobStatus>>().data
+                    if (jobStatus == Sp24InitVppJobStatus.Finished) break
+                    delay(5000)
+                    println("waiting 5000ms for next job check")
+                }
+                val response = httpClient.post {
+                    url(URLBuilder(appApi).apply {
+                        appendPathSegments("onboarding", "v1", "sp24", "lookup")
+                    }.build())
+
+                    contentType(ContentType.Application.Json)
+                    setBody(LookupSp24ConnectionRequest(
+                        sp24Id = sp24Id.toInt(),
+                        username = username,
+                        password = password
+                    ))
+                }
+
+                response.body<ResponseDataWrapper<Sp24LookupSchoolIdResponse>>().data.schoolId
+            } else {
+                responseBody.schoolId
+            }
+
             val baseData = indiwareRepository.getBaseData(
-                sp24Id = sp24Id,
-                username = username,
-                password = password
+                Authentication(
+                    indiwareSchoolId = sp24Id,
+                    username = username,
+                    password = password
+                )
             )
             if (baseData !is Response.Success) {
                 trySend(SetUpSchoolDataResult.Error("$prefix baseData is not successful: $baseData"))
@@ -76,9 +155,7 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
 
-            val schoolId = schoolRepository.getIdFromSp24Id(sp24Id.toInt())
-            if (schoolId !is Response.Success) throw IllegalStateException("$prefix school-Lookup by sp24 was not successful: $schoolId")
-            val schoolFlow = (schoolRepository.getById(schoolId.data, false))
+            val schoolFlow = (schoolRepository.getById(schoolId, false))
             schoolFlow.takeWhile { it is CacheState.Loading }.collect()
             val school = schoolFlow.first().let {
                 if (it !is CacheState.Done) {
@@ -210,4 +287,38 @@ enum class SetUpSchoolDataState {
     NOT_STARTED,
     IN_PROGRESS,
     DONE
+}
+
+@Serializable
+data class LookupSp24ConnectionRequest(
+    @SerialName("sp24_id") val sp24Id: Int,
+    @SerialName("username") val username: String,
+    @SerialName("password") val password: String
+)
+
+@Polymorphic
+@Serializable
+sealed interface Sp24LookupResponse
+
+@Serializable
+@SerialName("job_id")
+data class Sp24LookupJobIdResponse(
+    @SerialName("job_id") val jobId: Int
+) : Sp24LookupResponse
+
+@Serializable
+@SerialName("school_id")
+data class Sp24LookupSchoolIdResponse(
+    @SerialName("school_id") val schoolId: Int
+) : Sp24LookupResponse
+
+fun SerializersModuleBuilder.onboardingSp24VppLookupResponseModule() = polymorphic(Sp24LookupResponse::class) {
+    subclass(Sp24LookupJobIdResponse::class)
+    subclass(Sp24LookupSchoolIdResponse::class)
+}
+
+@Serializable
+enum class Sp24InitVppJobStatus {
+    @SerialName("running") Running,
+    @SerialName("finished") Finished
 }

@@ -2,7 +2,10 @@ package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -15,6 +18,7 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.api
+import plus.vplan.app.appApi
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
@@ -34,7 +38,9 @@ class SchoolRepositoryImpl(
 ) : SchoolRepository {
     override suspend fun fetchAllOnline(): Response<List<OnlineSchool>> {
         safeRequest(onError = { return it }) {
-            val response = httpClient.get("${api.url}/api/v2.2/school")
+            val response = httpClient.get(URLBuilder(appApi).apply {
+                appendPathSegments("onboarding", "v1", "start", "schools")
+            }.build())
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
             val data = ResponseDataWrapper.fromJson<List<OnlineSchoolResponse>>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
@@ -55,7 +61,11 @@ class SchoolRepositoryImpl(
             send(CacheState.Loading(id.toString()))
 
             safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
-                val response = httpClient.get("${api.url}/api/v2.2/school/$id")
+                val response = httpClient.get {
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "school", id.toString())
+                    }.build())
+                }
                 if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<School>()))
                 val data = ResponseDataWrapper.fromJson<SchoolItemResponse>(response.bodyAsText())
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
@@ -137,7 +147,7 @@ class SchoolRepositoryImpl(
 
 @Serializable
 private data class OnlineSchoolResponse(
-    @SerialName("school_id") val id: Int,
+    @SerialName("id") val id: Int,
     @SerialName("name") val name: String,
     @SerialName("sp24_id") val sp24Id: Int? = null
 ) {

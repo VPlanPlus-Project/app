@@ -4,8 +4,11 @@ import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -55,13 +58,10 @@ class SubjectInstanceRepositoryImpl(
             val school = vppDatabase.schoolDao.findById(schoolId).first()?.toModel() ?: return@channelFlow
             safeRequest(onError = { trySend(emptyList()) }) {
                 val response = httpClient.get {
-                    url {
-                        protocol = api.protocol
-                        host = api.host
-                        port = api.port
-                        pathSegments = listOf("api", "v2.2", "subject", "instance")
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "subject", "instance")
                         parameter("include_subject", "true")
-                    }
+                    }.build())
                     school.getSchoolApiAccess()?.authentication(this) ?: return@channelFlow
                 }
                 if (!response.status.isSuccess()) return@channelFlow
@@ -113,7 +113,12 @@ class SubjectInstanceRepositoryImpl(
                         .firstNotNullOfOrNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
                 }
                 if (schoolApiAccess == null) {
-                    val accessResponse = httpClient.get("${api.url}/api/v2.2/subject/instance/$id")
+                    val accessResponse = httpClient.get {
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "subject", "instance", id.toString())
+                            parameter("include_subject", "true")
+                        }.build())
+                    }
                     if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
                         vppDatabase.subjectInstanceDao.deleteById(listOf(id))
                         return@channelFlow send(CacheState.NotExisting(id.toString()))
@@ -137,7 +142,11 @@ class SubjectInstanceRepositoryImpl(
                     return@channelFlow
                 }
 
-                val response = httpClient.get("${api.url}/api/v2.2/subject/instance/$id?include_subject=true") {
+                val response = httpClient.get {
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "subject", "instance", id.toString())
+                        parameter("include_subject", "true")
+                    }.build())
                     schoolApiAccess.authentication(this)
                 }
                 if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<SubjectInstance>()))
@@ -181,13 +190,11 @@ class SubjectInstanceRepositoryImpl(
                 val school = vppDatabase.schoolDao.getAll().first().firstOrNull { it.sp24SchoolDetails != null && it.sp24SchoolDetails.sp24SchoolId == indiwareId.split(".")[1] }?.toModel()
                 if (school?.getSchoolApiAccess() == null) return@channelFlow send(CacheState.Error(indiwareId, Response.Error.Other("no school for subject instance $indiwareId")))
                 val schoolResponse = httpClient.get {
-                    url {
-                        protocol = api.protocol
-                        host = api.host
-                        port = api.port
-                        pathSegments = listOf("api", "v2.2", "subject", "instance", indiwareId)
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "subject", "instance", indiwareId)
                         parameter("include_subject", "true")
-                    }
+                    }.build())
+
                     school.getSchoolApiAccess()!!.authentication(this)
                 }
                 if (!schoolResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(indiwareId, schoolResponse.toErrorResponse<Any>()))
@@ -216,13 +223,10 @@ class SubjectInstanceRepositoryImpl(
         val school = vppDatabase.schoolDao.findById(schoolId).first()?.toModel()
         safeRequest(onError = { return it }) {
             val schoolResponse = httpClient.get {
-                url {
-                    protocol = api.protocol
-                    host = api.host
-                    port = api.port
-                    pathSegments = listOf("api", "v2.2", "subject", "instance")
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "subject", "instance")
                     parameter("include_subject", "true")
-                }
+                }.build())
                 schoolApiAccess.authentication(this)
             }
             if (!schoolResponse.status.isSuccess()) return schoolResponse.toErrorResponse<List<SubjectInstance>>()

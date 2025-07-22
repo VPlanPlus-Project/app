@@ -54,15 +54,13 @@ data class Host(
     val url = "${protocol.name}://$host:$port"
 }
 
-val api = Host(
-    protocol = URLProtocol.HTTPS,
-    host = "vplan.plus",
-    port = 443
-)
+val appApi = "http://192.168.30.181:8080/"
+
+val api = "http://192.168.30.181:8001/"
 
 val sp24Service = Host(
     protocol = URLProtocol.HTTPS,
-    host = "sp24.microservices.vplan.plus",
+    host = "sp24.microservices.development.vplan.plus",
     port = 443
 )
 
@@ -88,7 +86,7 @@ val VPP_ID_AUTH_URL = URLBuilder(
     }
 ).build().toString()
 
-const val ENABLE_KTOR_LOGGING = false
+const val ENABLE_KTOR_LOGGING = true
 
 object App {
     lateinit var vppIdSource: VppIdSource

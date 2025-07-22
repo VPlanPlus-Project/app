@@ -14,7 +14,6 @@ import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingScho
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.CheckCredentialsUseCase
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.GetCurrentOnboardingSchoolUseCase
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.GetSp24CredentialsStateUseCase
-import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.StartIndiwareInitJobUseCase
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.OnboardingIndiwareLoginViewModel
 import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.domain.usecase.TrackIndiwareProgressUseCase
 import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.ui.OnboardingIndiwareInitViewModel
@@ -41,7 +40,6 @@ val onboardingModule = module {
     singleOf(::UseUnknownSp24SchoolUseCase)
     singleOf(::CheckCredentialsUseCase)
     singleOf(::GetSp24CredentialsStateUseCase)
-    singleOf(::StartIndiwareInitJobUseCase)
     singleOf(::GetCurrentOnboardingSchoolUseCase)
     singleOf(::TrackIndiwareProgressUseCase)
     singleOf(::SetUpSchoolDataUseCase)

@@ -26,7 +26,6 @@ interface OnboardingRepository {
 
     suspend fun getSp24Credentials(): Sp24Credentials?
 
-    suspend fun startSp24UpdateJob(): Response<String>
     suspend fun getSp24UpdateJobProgress(): Response<List<String>>
 
     suspend fun setSelectedProfile(onboardingProfile: OnboardingProfile)

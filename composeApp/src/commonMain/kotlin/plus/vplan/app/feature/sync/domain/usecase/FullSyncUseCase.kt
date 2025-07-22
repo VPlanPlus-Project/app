@@ -46,6 +46,7 @@ import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.until
+import plus.vplan.lib.sp24.source.Authentication
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 
@@ -241,7 +242,7 @@ class FullSyncUseCase(
 
                             logger.i { "BaseData update" }
                             val baseData = run downloadBaseData@{
-                                val baseData = indiwareRepository.getBaseData(school.sp24Id, school.username, school.password)
+                                val baseData = indiwareRepository.getBaseData(Authentication(school.sp24Id, school.username, school.password))
                                 if (baseData is Response.Error) {
                                     logger.w { "Failed to download base data for school ${school.id} (${school.name}): $baseData" }
                                     return@downloadBaseData null

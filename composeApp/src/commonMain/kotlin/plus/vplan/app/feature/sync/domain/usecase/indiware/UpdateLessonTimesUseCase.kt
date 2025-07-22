@@ -14,6 +14,7 @@ import plus.vplan.app.utils.lastContinuousBy
 import plus.vplan.app.utils.latest
 import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.until
+import plus.vplan.lib.sp24.source.Authentication
 
 private val LOGGER = Logger.withTag("UpdateLessonTimesUseCase")
 
@@ -23,7 +24,7 @@ class UpdateLessonTimesUseCase(
     private val lessonTimeRepository: LessonTimeRepository
 ) {
     suspend operator fun invoke(school: School.IndiwareSchool): Response.Error? {
-        val baseData = indiwareRepository.getBaseData(school.sp24Id, school.username, school.password)
+        val baseData = indiwareRepository.getBaseData(Authentication(school.sp24Id, school.username, school.password))
         if (baseData is Response.Error) return baseData
         if (baseData !is Response.Success) throw IllegalStateException("baseData is not successful: $baseData")
 

@@ -112,6 +112,8 @@ kotlin {
 
             implementation(libs.xmlutil.core)
             implementation(libs.xmlutil.serialization)
+
+            implementation(libs.vpp.sp24)
         }
 
         iosMain.dependencies {
@@ -148,7 +150,7 @@ android {
     }
     buildTypes {
         getByName("debug") {
-            signingConfig = signingConfigs.findByName("default")
+            signingConfig = signingConfigs.getByName("debug")
             ApplicationConfig.isDebug = true
         }
         getByName("release") {

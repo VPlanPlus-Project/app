@@ -3,8 +3,11 @@ package plus.vplan.app.data.repository
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -42,7 +45,11 @@ class TeacherRepositoryImpl(
         val flow = getBySchool(school.id)
         if (flow.first().isNotEmpty() && !forceReload) return Response.Success(flow)
         safeRequest(onError = { return it }) {
-            val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/teacher") {
+            val response = httpClient.get {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "school", school.id.toString(), "teacher")
+                }.build())
+
                 school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
@@ -81,7 +88,11 @@ class TeacherRepositoryImpl(
                     schoolApiAccess = existing.schoolId.let { vppDatabase.schoolDao.findById(it).first()?.toModel()?.getSchoolApiAccess() }
                 }
                 if (schoolApiAccess == null) {
-                    val accessResponse = httpClient.get("${api.url}/api/v2.2/teacher/$id")
+                    val accessResponse = httpClient.get {
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "teacher", id.toString())
+                        }.build())
+                    }
                     if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
                         vppDatabase.teacherDao.deleteById(listOf(id))
                         return@channelFlow send(CacheState.NotExisting(id.toString()))
@@ -105,7 +116,10 @@ class TeacherRepositoryImpl(
                     return@channelFlow
                 }
 
-                val response = httpClient.get("${api.url}/api/v2.2/teacher/$id") {
+                val response = httpClient.get {
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "teacher", id.toString())
+                    }.build())
                     schoolApiAccess.authentication(this)
                 }
                 if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Teacher>()))

@@ -2,8 +2,11 @@ package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -35,13 +38,9 @@ class NewsRepositoryImpl(
     override suspend fun download(schoolApiAccess: SchoolApiAccess): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url {
-                    protocol = api.protocol
-                    host = api.host
-                    port = api.port
-                    pathSegments = listOf("api", "v2.2", "school", schoolApiAccess.schoolId.toString(), "news")
-                }
-
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "school", schoolApiAccess.schoolId.toString(), "news")
+                }.build())
                 schoolApiAccess.authentication(this)
             }
             if (response.status != HttpStatusCode.OK) return response.toErrorResponse<List<News>>()

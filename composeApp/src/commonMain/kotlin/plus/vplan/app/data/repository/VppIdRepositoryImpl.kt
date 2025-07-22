@@ -8,11 +8,13 @@ import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
@@ -84,7 +86,10 @@ class VppIdRepositoryImpl(
 
     override suspend fun getUserByToken(token: String, upsert: Boolean): Response<VppId.Active> {
         safeRequest(onError = { return it }) {
-            val response = httpClient.get("${api.url}/api/v2.2/user/me") {
+            val response = httpClient.get {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "user", "me")
+                }.buildString())
                 bearerAuth(token)
             }
             if (response.status != HttpStatusCode.OK) {
@@ -137,7 +142,11 @@ class VppIdRepositoryImpl(
             safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
                 val existing = vppDatabase.vppIdDao.getById(id).first()?.toModel() as? VppId.Active
                 val response = if (existing == null) {
-                    val accessResponse = httpClient.get("${api.url}/api/v2.2/user/$id")
+                    val accessResponse = httpClient.get {
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "user", id.toString())
+                        }.buildString())
+                    }
                     if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
                         vppDatabase.vppIdDao.deleteById(listOf(id))
                         return@channelFlow send(CacheState.NotExisting(id.toString()))
@@ -151,11 +160,19 @@ class VppIdRepositoryImpl(
                         .firstOrNull { it.id in accessData.schoolIds && it.getSchoolApiAccess() != null }
                         ?.getSchoolApiAccess() ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for vppId $id")))
 
-                    httpClient.get("${api.url}/api/v2.2/user/$id") {
+                    httpClient.get {
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "user", id.toString())
+                        }.buildString())
+
                         school.authentication(this)
                     }
                 } else {
-                    httpClient.get("${api.url}/api/v2.2/user/$id") {
+                    httpClient.get {
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "user", id.toString())
+                        }.buildString())
+
                         existing.buildSchoolApiAccess().authentication(this)
                     }
                 }
@@ -195,7 +212,11 @@ class VppIdRepositoryImpl(
 
     override suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>> {
         safeRequest(onError = { return it }) {
-            val response = httpClient.get("${api.url}/api/v2.2/user/me/session") {
+            val response = httpClient.get {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "user", "me", "session")
+                }.buildString())
+
                 bearerAuth(vppId.accessToken)
             }
             if (response.status != HttpStatusCode.OK) {
@@ -213,7 +234,11 @@ class VppIdRepositoryImpl(
 
     override suspend fun logoutDevice(vppId: VppId.Active, deviceId: Int): Response<Unit> {
         safeRequest(onError = { return it }) {
-            val response = httpClient.delete("${api.url}/api/v2.2/user/me/session/$deviceId") {
+            val response = httpClient.delete {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "user", "me", "session", deviceId.toString())
+                }.buildString())
+
                 bearerAuth(vppId.accessToken)
             }
             if (response.status != HttpStatusCode.OK) {
@@ -246,13 +271,10 @@ class VppIdRepositoryImpl(
 
     override suspend fun getSchulverwalterReauthUrl(vppId: VppId.Active): Response<String> {
         safeRequest(onError = { return it }) {
-            val response = httpClient.get(
-                URLBuilder(api.url)
-                    .apply {
-                        this.pathSegments = listOf("api", "app", "schulverwalter-reauth")
-                    }
-                    .buildString()
-            ) {
+            val response = httpClient.get {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "app", "schulverwalter-reauth")
+                }.buildString())
                 vppId.buildSchoolApiAccess().authentication(this)
             }
 
@@ -267,7 +289,11 @@ class VppIdRepositoryImpl(
 
     override suspend fun sendFeedback(access: SchoolApiAccess, content: String, email: String?): Response<Unit> {
         safeRequest(onError = { return it }) {
-            val response = httpClient.post("${api.url}/api/v2.2/app/feedback") {
+            val response = httpClient.post {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "app", "feedback")
+                }.buildString())
+
                 contentType(ContentType.Application.Json)
                 setBody(FeedbackRequest(content, email))
                 access.authentication(this)
@@ -281,12 +307,10 @@ class VppIdRepositoryImpl(
     override suspend fun updateFirebaseToken(vppId: VppId.Active, token: String): Response.Error? {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url {
-                    protocol = api.protocol
-                    host = api.host
-                    port = api.port
-                    pathSegments = listOf("api", "v2.2", "user", "firebase")
-                }
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "user", "firebase")
+                }.buildString())
+
                 bearerAuth(vppId.accessToken)
                 contentType(ContentType.Application.Json)
                 setBody(FirebaseTokenRequest(token))

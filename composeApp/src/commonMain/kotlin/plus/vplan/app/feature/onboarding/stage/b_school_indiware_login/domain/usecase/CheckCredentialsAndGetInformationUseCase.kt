@@ -4,6 +4,7 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
+import plus.vplan.lib.sp24.source.Authentication
 
 class CheckCredentialsUseCase(
     private val indiwareRepository: IndiwareRepository,
@@ -13,7 +14,7 @@ class CheckCredentialsUseCase(
     suspend operator fun invoke(sp24Id: Int, username: String, password: String): Response<Sp24LookupResponse> {
         onboardingRepository.clearSp24Credentials()
         onboardingRepository.setSp24CredentialsValid(Sp24CredentialsState.LOADING)
-        val result = indiwareRepository.checkCredentials(sp24Id, username, password)
+        val result = indiwareRepository.checkCredentials(Authentication(sp24Id.toString(), username, password))
         if (result is Response.Success) {
             onboardingRepository.setSp24Credentials(username, password)
             if (result.data) onboardingRepository.setSp24CredentialsValid(Sp24CredentialsState.VALID)

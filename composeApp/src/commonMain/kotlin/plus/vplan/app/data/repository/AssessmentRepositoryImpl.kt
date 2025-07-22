@@ -8,13 +8,14 @@ import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import io.ktor.http.parameters
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.onClosed
@@ -68,15 +69,10 @@ class AssessmentRepositoryImpl(
     override suspend fun download(schoolApiAccess: SchoolApiAccess, subjectInstanceIds: List<Int>): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url {
-                    protocol = api.protocol
-                    host = api.host
-                    port = api.port
-                    pathSegments = listOf("api", "v2.2", "assessment")
-                    parameters {
-                        append("filter_default_lessons", subjectInstanceIds.joinToString(","))
-                    }
-                }
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "assessment")
+                    parameters.append("filter_default_lessons", subjectInstanceIds.joinToString(","))
+                }.build())
                 schoolApiAccess.authentication(this)
             }
             if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
@@ -121,12 +117,9 @@ class AssessmentRepositoryImpl(
             val response = httpClient.post {
                 bearerAuth(vppId.accessToken)
                 contentType(ContentType.Application.Json)
-                url {
-                    protocol = api.protocol
-                    host = api.host
-                    port = api.port
-                    pathSegments = listOf("api", "v2.2", "assessment")
-                }
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "assessment")
+                }.build())
                 setBody(AssessmentPostRequest(
                     subjectInstance = subjectInstanceId,
                     date = date.toString(),
@@ -156,12 +149,9 @@ class AssessmentRepositoryImpl(
     ): Response.Error? {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url {
-                    protocol = api.protocol
-                    host = api.host
-                    port = api.port
-                    pathSegments = listOf("api", "v2.2", "assessment", assessmentId.toString(), "file")
-                }
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "assessment", assessmentId.toString(), "file")
+                }.build())
                 contentType(ContentType.Application.Json)
                 setBody(AssessmentFileLinkRequest(fileId))
                 vppId.buildSchoolApiAccess().authentication(this)
@@ -230,7 +220,11 @@ class AssessmentRepositoryImpl(
                     }
                 }
                 if (existing == null || (vppId == null && school == null)) {
-                    val metadataResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id")
+                    val metadataResponse = httpClient.get({
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "assessment", id.toString())
+                        }.build())
+                    })
                     if (metadataResponse.status == HttpStatusCode.NotFound && metadataResponse.isResponseFromBackend()) {
                         trySend(CacheState.NotExisting(id.toString()))
                         vppDatabase.assessmentDao.deleteById(listOf(id))
@@ -257,8 +251,12 @@ class AssessmentRepositoryImpl(
                 }
 
 
-                val assessmentResponse = httpClient.get("${api.url}/api/v2.2/assessment/$id") {
-                    vppId?.let { bearerAuth(it.accessToken) } ?: school?.authentication(this) ?: run {
+                val assessmentResponse = httpClient.get {
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "assessment", id.toString())
+                    }.build())
+                    vppId?.let { bearerAuth(it.accessToken) } ?: school?.authentication(this)
+                    ?: run {
                         vppDatabase.assessmentDao.deleteById(listOf(id))
                         trySend(CacheState.NotExisting(id.toString()))
                         return@channelFlow
@@ -305,12 +303,9 @@ class AssessmentRepositoryImpl(
         }
         safeRequest(onError = { return it }) {
             val response = httpClient.delete(
-                URLBuilder(
-                protocol = api.protocol,
-                host = api.host,
-                port = api.port,
-                pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
-            ).build()) {
+                URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "assessment", assessment.id.toString())
+                }.build()) {
                 profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
             }
             if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
@@ -367,12 +362,9 @@ class AssessmentRepositoryImpl(
             if (request !in onlineChangeRequests) return@launch
             onlineChangeRequests.remove(request)
             safeRequest(onError = { vppDatabase.assessmentDao.updateType(assessment.id, oldType.ordinal) }) {
-                val response = httpClient.patch(URLBuilder(
-                    protocol = api.protocol,
-                    host = api.host,
-                    port = api.port,
-                    pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
-                ).build()) {
+                val response = httpClient.patch(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "assessment", assessment.id.toString())
+                }.build()) {
                     profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateTypeRequest(type = type.name))
@@ -404,12 +396,9 @@ class AssessmentRepositoryImpl(
             onlineChangeRequests.remove(request)
 
             safeRequest(onError = { vppDatabase.assessmentDao.updateDate(assessment.id, oldDate) }) {
-                val response = httpClient.patch(URLBuilder(
-                    protocol = api.protocol,
-                    host = api.host,
-                    port = api.port,
-                    pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
-                ).build()) {
+                val response = httpClient.patch(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "assessment", assessment.id.toString())
+                }.build()) {
                     profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateDateRequest(date = date.toString()))
@@ -440,12 +429,9 @@ class AssessmentRepositoryImpl(
             onlineChangeRequests.remove(request)
 
             safeRequest(onError = { vppDatabase.assessmentDao.updateVisibility(assessment.id, oldIsPublic) }) {
-                val response = httpClient.patch(URLBuilder(
-                    protocol = api.protocol,
-                    host = api.host,
-                    port = api.port,
-                    pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
-                ).build()) {
+                val response = httpClient.patch(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "assessment", assessment.id.toString())
+                }.build()) {
                     profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateVisibilityRequest(isPublic = isPublic))
@@ -477,12 +463,9 @@ class AssessmentRepositoryImpl(
             onlineChangeRequests.remove(request)
 
             safeRequest(onError = { vppDatabase.assessmentDao.updateContent(assessment.id, oldContent) }) {
-                val response = httpClient.patch(URLBuilder(
-                    protocol = api.protocol,
-                    host = api.host,
-                    port = api.port,
-                    pathSegments = listOf("api", "v2.2", "assessment", assessment.id.toString())
-                ).build()) {
+                val response = httpClient.patch(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "assessment", assessment.id.toString())
+                }.build()) {
                     profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateContentRequest(content = content))

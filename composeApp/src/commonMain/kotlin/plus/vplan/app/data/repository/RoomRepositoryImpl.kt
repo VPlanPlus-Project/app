@@ -3,8 +3,11 @@ package plus.vplan.app.data.repository
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -43,7 +46,11 @@ class RoomRepositoryImpl(
         if (flow.first().isNotEmpty() && !forceReload) return Response.Success(flow)
 
         safeRequest(onError = { return it }) {
-            val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/room") {
+            val response = httpClient.get {
+                url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "school", school.id.toString(), "room")
+                    }.build(),
+                )
                 school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
@@ -83,7 +90,11 @@ class RoomRepositoryImpl(
                 }
 
                 if (schoolApiAccess == null) {
-                    val accessResponse = httpClient.get("${api.url}/api/v2.2/room/$id")
+                    val accessResponse = httpClient.get {
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "room", id.toString())
+                        }.build())
+                    }
                     if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
                         vppDatabase.roomDao.deleteById(listOf(id))
                         return@channelFlow send(CacheState.NotExisting(id.toString()))
@@ -105,7 +116,10 @@ class RoomRepositoryImpl(
                     return@channelFlow
                 }
 
-                val response = httpClient.get("${api.url}/api/v2.2/room/$id") {
+                val response = httpClient.get {
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "room", id.toString())
+                    }.build())
                     schoolApiAccess.authentication(this)
                 }
                 if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Room>()))

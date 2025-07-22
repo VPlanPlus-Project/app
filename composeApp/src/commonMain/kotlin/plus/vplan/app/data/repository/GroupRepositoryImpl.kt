@@ -5,9 +5,12 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
@@ -54,7 +57,10 @@ class GroupRepositoryImpl(
         if (flow.first().isNotEmpty() && !forceReload) return Response.Success(flow)
 
         safeRequest(onError = { return it }) {
-            val response = httpClient.get("${api.url}/api/v2.2/school/${school.id}/group") {
+            val response = httpClient.get {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "school", school.id.toString(), "group")
+                }.build())
                 school.getSchoolApiAccess()?.authentication(this) ?: Response.Error.Other("no auth")
             }
             if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
@@ -97,7 +103,11 @@ class GroupRepositoryImpl(
                 }
 
                 if (schoolApiAccess == null) {
-                    val accessResponse = httpClient.get("${api.url}/api/v2.2/group/$id")
+                    val accessResponse = httpClient.get {
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "group", id.toString())
+                        }.build())
+                    }
                     if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
                         vppDatabase.groupDao.deleteById(listOf(id))
                         return@channelFlow send(CacheState.NotExisting(id.toString()))
@@ -120,7 +130,10 @@ class GroupRepositoryImpl(
                     return@channelFlow
                 }
 
-                val response = httpClient.get("${api.url}/api/v2.2/group/$id") {
+                val response = httpClient.get {
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "group", id.toString())
+                    }.build())
                     schoolApiAccess.authentication(this)
                 }
                 if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Group>()))
@@ -146,12 +159,9 @@ class GroupRepositoryImpl(
     override suspend fun updateFirebaseToken(group: Group, token: String): Response.Error? {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url {
-                    protocol = api.protocol
-                    host = api.host
-                    port = api.port
-                    pathSegments = listOf("api", "v2.2", "group", group.id.toString(), "firebase")
-                }
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "group", group.id.toString(), "firebase")
+                }.build())
                 group.school.getFirstValue()?.getSchoolApiAccess()?.authentication(this) ?: return Response.Error.Other("No school api access to update firebase token")
                 contentType(ContentType.Application.Json)
                 setBody(FirebaseTokenRequest(token))

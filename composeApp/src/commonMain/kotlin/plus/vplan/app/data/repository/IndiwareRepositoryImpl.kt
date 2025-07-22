@@ -38,43 +38,39 @@ import plus.vplan.app.domain.repository.IndiwareTimeTable
 import plus.vplan.app.utils.parseOrNull
 import plus.vplan.app.utils.sha256
 import plus.vplan.app.utils.splitWithKnownValuesBySpace
+import plus.vplan.lib.sp24.source.Authentication
+import plus.vplan.lib.sp24.source.IndiwareClient
+import plus.vplan.lib.sp24.source.TestConnectionResult
 
 class IndiwareRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase
 ) : IndiwareRepository {
 
+    val clients = mutableMapOf<Authentication, IndiwareClient>()
+
     override suspend fun checkCredentials(
-        sp24Id: Int,
-        username: String,
-        password: String
+        authentication: Authentication
     ): Response<Boolean> {
-        safeRequest(onError = { return it }) {
-            val response = httpClient.get {
-                url("https://stundenplan24.de/$sp24Id/mobil/")
-                basicAuth(username, password)
-            }
-            if (response.status == HttpStatusCode.OK) return Response.Success(true)
-            if (response.status == HttpStatusCode.Unauthorized) return Response.Success(false)
-            return response.toResponse()
-        }
-        return Response.Error.Cancelled
+        val client = clients.getOrPut(authentication) { IndiwareClient(authentication, httpClient) }
+        val result = client.testConnection()
+        if (result is TestConnectionResult.NotFound) return Response.Error.OnlineError.NotFound
+        if (result is TestConnectionResult.Unauthorized) return Response.Success(false)
+        if (result is TestConnectionResult.Success) return Response.Success(true)
+        return Response.Error.Other(result.toString())
     }
 
     @OptIn(ExperimentalXmlUtilApi::class)
-    override suspend fun getBaseData(
-        sp24Id: String,
-        username: String,
-        password: String
-    ): Response<IndiwareBaseData> {
+    override suspend fun getBaseData(authentication: Authentication): Response<IndiwareBaseData> {
+        val client = clients.getOrPut(authentication) { IndiwareClient(authentication, httpClient) }
         safeRequest(onError = { return it }) {
             val mobileDataResponse = httpClient.get {
                 url(
                     scheme = "https",
                     host = "stundenplan24.de",
-                    path = "/$sp24Id/mobil/mobdaten/Klassen.xml"
+                    path = "/${authentication.indiwareSchoolId}/mobil/mobdaten/Klassen.xml"
                 )
-                basicAuth(username, password)
+                basicAuth(authentication.username, authentication.password)
             }
             if (mobileDataResponse.status != HttpStatusCode.OK) return mobileDataResponse.toResponse()
             val xml: XML by lazy {
@@ -99,9 +95,9 @@ class IndiwareRepositoryImpl(
                 url(
                     scheme = "https",
                     host = "stundenplan24.de",
-                    path = "/$sp24Id/wplan/wdatenk/SPlanKl_Basis.xml"
+                    path = "/${authentication.indiwareSchoolId}/wplan/wdatenk/SPlanKl_Basis.xml"
                 )
-                basicAuth(username, password)
+                basicAuth(authentication.username, authentication.password)
             }
 
             if (wplanBaseDataResponse.status == HttpStatusCode.OK) {
@@ -167,7 +163,7 @@ class IndiwareRepositoryImpl(
                                         IndiwareBaseData.Class.SubjectInstance(
                                             subject = baseDataClassSubjectInstance.subjectInstance.subjectName,
                                             teacher = baseDataClassSubjectInstance.subjectInstance.teacherName.ifBlank { null },
-                                            subjectInstanceNumber = "sp24.$sp24Id.${baseDataClassSubjectInstance.subjectInstance.subjectInstanceNumber}",
+                                            subjectInstanceNumber = "sp24.${authentication.indiwareSchoolId}.${baseDataClassSubjectInstance.subjectInstance.subjectInstanceNumber}",
                                             course = if (baseDataClassSubjectInstance.subjectInstance.courseName == null) null else baseDataClass.courses.first { it.course.courseName == baseDataClassSubjectInstance.subjectInstance.courseName }.let {
                                                 IndiwareBaseData.Class.Course(
                                                     name = it.course.courseName,
@@ -275,7 +271,7 @@ class IndiwareRepositoryImpl(
                 url(
                     scheme = "https",
                     host = "stundenplan24.de",
-                    path = "/$sp24Id/mobil/mobdaten/PlanKl${date.format(LocalDate.Format { 
+                    path = "/$sp24Id/mobil/mobdaten/PlanKl${date.format(LocalDate.Format {
                         year()
                         monthNumber(Padding.ZERO)
                         dayOfMonth(Padding.ZERO)

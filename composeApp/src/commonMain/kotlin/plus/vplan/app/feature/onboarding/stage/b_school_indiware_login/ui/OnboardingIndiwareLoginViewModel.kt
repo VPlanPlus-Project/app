@@ -14,14 +14,12 @@ import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.us
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.GetSp24CredentialsStateUseCase
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.Sp24CredentialsState
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.Sp24LookupResponse
-import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.StartIndiwareInitJobUseCase
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 
 class OnboardingIndiwareLoginViewModel(
     private val checkCredentialsUseCase: CheckCredentialsUseCase,
     private val getCurrentOnboardingSchoolUseCase: GetCurrentOnboardingSchoolUseCase,
-    private val getSp24CredentialsStateUseCase: GetSp24CredentialsStateUseCase,
-    private val startIndiwareInitJobUseCase: StartIndiwareInitJobUseCase
+    private val getSp24CredentialsStateUseCase: GetSp24CredentialsStateUseCase
 ) : ViewModel() {
     var state by mutableStateOf<OnboardingIndiwareLoginState?>(null)
         private set
@@ -61,11 +59,7 @@ class OnboardingIndiwareLoginViewModel(
                     val result = checkCredentialsUseCase(state!!.sp24Id, state!!.username, state!!.password)
                     if (result is Response.Success) {
                         when (result.data) {
-                            is Sp24LookupResponse.FirstSchool -> {
-                                startIndiwareInitJobUseCase()
-                                navController.navigate(OnboardingScreen.OnboardingIndiwareInit)
-                            }
-                            is Sp24LookupResponse.ExistingSchool -> {
+                            is Sp24LookupResponse.ExistingSchool, is Sp24LookupResponse.FirstSchool -> {
                                 navController.navigate(OnboardingScreen.OnboardingIndiwareDataDownload)
                             }
                             else -> {}
