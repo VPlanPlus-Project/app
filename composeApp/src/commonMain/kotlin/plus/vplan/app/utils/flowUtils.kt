@@ -17,7 +17,7 @@ import kotlinx.coroutines.isActive
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
 
-suspend fun <T> Flow<T>.latest(): T = this.first()
+suspend fun <T> Flow<T>.latest(): T = this.warnOnTimeoutAfter10Seconds().first()
 
 suspend fun <T> ProducerScope<T>.sendAll(flow: Flow<T>) {
     flow.takeWhile { this.isActive }.collectLatest { trySend(it) }

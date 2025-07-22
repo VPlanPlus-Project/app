@@ -15,7 +15,7 @@ data class WplanBaseData(
     @Serializable
     @SerialName("Kopf")
     data class Header(
-        @SerialName("schulname") val schoolName: SchoolName
+        @SerialName("schulname") val schoolName: SchoolName? = null
     ) {
         @SerialName("schulname")
         @Serializable

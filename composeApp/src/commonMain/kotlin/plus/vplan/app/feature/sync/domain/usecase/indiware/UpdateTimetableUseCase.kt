@@ -53,7 +53,7 @@ class UpdateTimetableUseCase(
 
         var downloadedTimetable: IndiwareTimeTable? = null
 
-        do {
+        while (weekIndex >= 0) {
             val timetable = indiwareRepository.getTimetable(
                 sp24Id = indiwareSchool.sp24Id,
                 username = indiwareSchool.username,
@@ -77,7 +77,7 @@ class UpdateTimetableUseCase(
                     break
                 }
             }
-        } while (weekIndex >= 0)
+        }
 
         val lessons = downloadedTimetable?.classes.orEmpty().flatMap { clazz ->
             val group = groups.firstOrNull { it.name == clazz.name } ?: return@flatMap emptyList()

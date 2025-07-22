@@ -3,7 +3,6 @@ package plus.vplan.app.data.repository
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
-import io.ktor.client.request.parameter
 import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
@@ -60,7 +59,7 @@ class SubjectInstanceRepositoryImpl(
                 val response = httpClient.get {
                     url(URLBuilder(api).apply {
                         appendPathSegments("api", "v2.2", "subject", "instance")
-                        parameter("include_subject", "true")
+                        parameters.append("include_subject", "true")
                     }.build())
                     school.getSchoolApiAccess()?.authentication(this) ?: return@channelFlow
                 }
@@ -116,7 +115,7 @@ class SubjectInstanceRepositoryImpl(
                     val accessResponse = httpClient.get {
                         url(URLBuilder(api).apply {
                             appendPathSegments("api", "v2.2", "subject", "instance", id.toString())
-                            parameter("include_subject", "true")
+                            parameters.append("include_subject", "true")
                         }.build())
                     }
                     if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
@@ -145,7 +144,7 @@ class SubjectInstanceRepositoryImpl(
                 val response = httpClient.get {
                     url(URLBuilder(api).apply {
                         appendPathSegments("api", "v2.2", "subject", "instance", id.toString())
-                        parameter("include_subject", "true")
+                        parameters.append("include_subject", "true")
                     }.build())
                     schoolApiAccess.authentication(this)
                 }
@@ -192,7 +191,7 @@ class SubjectInstanceRepositoryImpl(
                 val schoolResponse = httpClient.get {
                     url(URLBuilder(api).apply {
                         appendPathSegments("api", "v2.2", "subject", "instance", indiwareId)
-                        parameter("include_subject", "true")
+                        parameters.append("include_subject", "true")
                     }.build())
 
                     school.getSchoolApiAccess()!!.authentication(this)
@@ -225,7 +224,7 @@ class SubjectInstanceRepositoryImpl(
             val schoolResponse = httpClient.get {
                 url(URLBuilder(api).apply {
                     appendPathSegments("api", "v2.2", "subject", "instance")
-                    parameter("include_subject", "true")
+                    parameters.append("include_subject", "true")
                 }.build())
                 schoolApiAccess.authentication(this)
             }
