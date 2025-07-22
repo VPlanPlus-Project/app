@@ -17,7 +17,7 @@ import kotlinx.coroutines.isActive
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.Item
 
-suspend fun <T> Flow<T>.latest(): T = this.warnOnTimeoutAfter10Seconds().first()
+suspend fun <T> Flow<T>.latest(flowName: String? = null): T = this.warnOnTimeoutAfter10Seconds(flowName).first()
 
 suspend fun <T> ProducerScope<T>.sendAll(flow: Flow<T>) {
     flow.takeWhile { this.isActive }.collectLatest { trySend(it) }
@@ -29,13 +29,13 @@ fun <T: Item<*>> Flow<CacheState<T>>.getState(initialValue: T? = null) = this
     .map { it.data }
     .collectAsState(initialValue)
 
-fun <T: Any?> Flow<T>.warnOnTimeoutAfter10Seconds(): Flow<T> {
+fun <T: Any?> Flow<T>.warnOnTimeoutAfter10Seconds(flowName: String?): Flow<T> {
     var hasEmitted = false
     return this
         .onStart {
             delay(10 * 1000)
             if (hasEmitted) return@onStart
-            Logger.w { "Flow $this has been waiting for 10 seconds without emitting something" }
+            Logger.w { "Flow ${flowName?.let { "'$it'" } ?: this.toString()} has been waiting for 10 seconds without emitting something" }
         }
         .onEach { hasEmitted = false }
 }
