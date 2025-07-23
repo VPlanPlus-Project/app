@@ -13,7 +13,6 @@ import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.TeacherRepository
-import plus.vplan.app.utils.latest
 import plus.vplan.lib.sp24.source.Authentication
 
 private val LOGGER = Logger.withTag("UpdateSubjectInstanceUseCase")
@@ -39,13 +38,13 @@ class UpdateSubjectInstanceUseCase(
         updateCourses(
             school = school,
             baseData = baseData,
-            existingCourses = existingCourses.latest(),
+            existingCourses = existingCourses.first(),
             teachers = teachers
         )
 
         updateSubjectInstances(
             baseData = baseData,
-            existingSubjectInstances = existingSubjectInstances.latest(),
+            existingSubjectInstances = existingSubjectInstances.first(),
         )
 
         return null

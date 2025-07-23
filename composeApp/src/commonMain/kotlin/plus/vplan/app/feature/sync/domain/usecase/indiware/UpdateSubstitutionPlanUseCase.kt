@@ -33,7 +33,6 @@ import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.utils.latest
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.regularDateFormat
@@ -62,10 +61,10 @@ class UpdateSubstitutionPlanUseCase(
         dates: List<LocalDate>,
         allowNotification: Boolean
     ): Response.Error? {
-        val teachers = teacherRepository.getBySchool(indiwareSchool.id).latest()
-        val rooms = roomRepository.getBySchool(indiwareSchool.id).latest()
-        val groups = groupRepository.getBySchool(indiwareSchool.id).latest()
-        val subjectInstances = subjectInstanceRepository.getBySchool(indiwareSchool.id, false).latest()
+        val teachers = teacherRepository.getBySchool(indiwareSchool.id).first()
+        val rooms = roomRepository.getBySchool(indiwareSchool.id).first()
+        val groups = groupRepository.getBySchool(indiwareSchool.id).first()
+        val subjectInstances = subjectInstanceRepository.getBySchool(indiwareSchool.id, false).first()
         var error: Response.Error? = null
 
         val studentProfilesForSchool = profileRepository.getAll().first()
@@ -73,7 +72,7 @@ class UpdateSubstitutionPlanUseCase(
             .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
 
         dates.forEach forEachDate@{ date ->
-            val week = weekRepository.getBySchool(indiwareSchool.id).latest().firstOrNull { date in it.start..it.end } ?: run {
+            val week = weekRepository.getBySchool(indiwareSchool.id).first().firstOrNull { date in it.start..it.end } ?: run {
                 val errorMessage = "Week for $date not found"
                 Logger.d { errorMessage }
                 error = Response.Error.Other(errorMessage)
@@ -129,7 +128,7 @@ class UpdateSubstitutionPlanUseCase(
                     LOGGER.w { "Group ${substitutionPlanClass.name} not found" }
                     return@flatMap emptyList()
                 }
-                var lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
+                var lessonTimes = lessonTimeRepository.getByGroup(group.id).first()
                 if (lessonTimes.isEmpty()) {
                     Logger.e { "No lesson times found for group ${group.name}" }
                     return@flatMap emptyList()
@@ -145,7 +144,7 @@ class UpdateSubstitutionPlanUseCase(
                         interpolated = true
                     )
                     lessonTimeRepository.upsert(newLessonTime)
-                    lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
+                    lessonTimes = lessonTimeRepository.getByGroup(group.id).first()
                 }
                 substitutionPlanClass.lessons.mapNotNull { substitutionPlanLesson ->
                     Lesson.SubstitutionPlanLesson(

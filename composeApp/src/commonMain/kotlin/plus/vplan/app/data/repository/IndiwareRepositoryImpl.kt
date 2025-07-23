@@ -38,9 +38,11 @@ import plus.vplan.app.domain.repository.IndiwareTimeTable
 import plus.vplan.app.utils.parseOrNull
 import plus.vplan.app.utils.sha256
 import plus.vplan.app.utils.splitWithKnownValuesBySpace
+import plus.vplan.lib.sp24.model.splan.student.SPlanStudentData
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.IndiwareClient
 import plus.vplan.lib.sp24.source.TestConnectionResult
+import plus.vplan.lib.sp24.source.extension.LessonTime
 
 class IndiwareRepositoryImpl(
     private val httpClient: HttpClient,
@@ -58,6 +60,22 @@ class IndiwareRepositoryImpl(
         if (result is TestConnectionResult.Unauthorized) return Response.Success(false)
         if (result is TestConnectionResult.Success) return Response.Success(true)
         return Response.Error.Other(result.toString())
+    }
+
+    override suspend fun downloadLessonTimes(
+        authentication: Authentication,
+        contextWeekIndex: Int?
+    ): plus.vplan.lib.sp24.source.Response<List<LessonTime>> {
+        val client = clients.getOrPut(authentication) { IndiwareClient(authentication, httpClient) }
+        return client.lessonTime.getLessonTime(contextWeekIndex)
+    }
+
+    override suspend fun getWPlanSplan(
+        authentication: Authentication,
+        weekIndex: Int
+    ): plus.vplan.lib.sp24.source.Response<SPlanStudentData> {
+        val client = clients.getOrPut(authentication) { IndiwareClient(authentication, httpClient) }
+        return client.getSPlanDataStudent(authentication, schoolWeekIndex = weekIndex)
     }
 
     @OptIn(ExperimentalXmlUtilApi::class)

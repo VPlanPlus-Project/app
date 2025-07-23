@@ -6,6 +6,7 @@ import io.ktor.client.request.bearerAuth
 import kotlinx.datetime.Instant
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
+import plus.vplan.lib.sp24.source.Authentication
 
 sealed interface School: Item<DataTag> {
     val id: Int
@@ -45,6 +46,12 @@ sealed interface School: Item<DataTag> {
                 password = password
             )
         }
+
+        fun getSp24LibAuthentication() = Authentication(
+            indiwareSchoolId = sp24Id,
+            username = username,
+            password = password
+        )
     }
 
     data class DefaultSchool(

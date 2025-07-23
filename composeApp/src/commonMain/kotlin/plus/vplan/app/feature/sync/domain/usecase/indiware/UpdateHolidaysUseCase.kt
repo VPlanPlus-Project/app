@@ -1,12 +1,12 @@
 package plus.vplan.app.feature.sync.domain.usecase.indiware
 
+import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Holiday
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
-import plus.vplan.app.utils.latest
 import plus.vplan.lib.sp24.source.Authentication
 
 class UpdateHolidaysUseCase(
@@ -21,7 +21,7 @@ class UpdateHolidaysUseCase(
             baseData.data
         }
 
-        val existingHolidays = dayRepository.getHolidays(school.id).latest()
+        val existingHolidays = dayRepository.getHolidays(school.id).first()
         val downloadedHolidays = baseData.holidays.map { holiday ->
             Holiday(
                 date = holiday,

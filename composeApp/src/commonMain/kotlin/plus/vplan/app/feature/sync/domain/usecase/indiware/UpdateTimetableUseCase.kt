@@ -1,6 +1,7 @@
 package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -17,7 +18,6 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.utils.latest
 
 private val TAG = "UpdateTimetableUseCase"
 private val LOGGER = Logger.withTag(TAG)
@@ -38,10 +38,10 @@ class UpdateTimetableUseCase(
      */
     suspend operator fun invoke(indiwareSchool: School.IndiwareSchool, forceUpdate: Boolean): Response.Error? {
         LOGGER.i { "Updating timetable for indiware school ${indiwareSchool.id}" }
-        val rooms = roomRepository.getBySchool(indiwareSchool.id).latest("$TAG rooms")
-        val teachers = teacherRepository.getBySchool(indiwareSchool.id).latest("$TAG teachers")
-        val groups = groupRepository.getBySchool(indiwareSchool.id).latest("$TAG groups")
-        val weeks = weekRepository.getBySchool(indiwareSchool.id).latest("$TAG weeks")
+        val rooms = roomRepository.getBySchool(indiwareSchool.id).first()
+        val teachers = teacherRepository.getBySchool(indiwareSchool.id).first()
+        val groups = groupRepository.getBySchool(indiwareSchool.id).first()
+        val weeks = weekRepository.getBySchool(indiwareSchool.id).first()
 
         LOGGER.d { "Found ${rooms.size} rooms, ${teachers.size} teachers, ${groups.size} groups and ${weeks.size} weeks" }
 
@@ -89,28 +89,37 @@ class UpdateTimetableUseCase(
             }
         }
 
+        LOGGER.d { "Preparing lessons to insert/update" }
         val lessons = downloadedTimetable?.classes.orEmpty().flatMap { clazz ->
             val group = groups.firstOrNull { it.name == clazz.name } ?: return@flatMap emptyList()
-            val lessonTimes = lessonTimeRepository.getByGroup(group.id).latest()
+            val lessonTimes = lessonTimeRepository.getByGroup(group.id).first()
             clazz.lessons.map { lesson ->
+                val week = (currentWeek ?: weeks.firstOrNull { week ->  week.weekIndex == weekIndex })!!
+                val lessonTime = lessonTimes.firstOrNull { it.lessonNumber == lesson.lessonNumber } ?: run {
+                    LOGGER.w { "No lesson time found for lesson number ${lesson.lessonNumber} in group ${group.name}, skipping lesson" }
+                    null!!
+                }
+
                 Lesson.TimetableLesson(
                     dayOfWeek = lesson.dayOfWeek,
-                    week = (currentWeek ?: weeks.first()).id,
+                    week = week.id,
                     weekType = lesson.weekType,
                     subject = lesson.subject,
                     rooms = lesson.room.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
                     teachers = lesson.teacher.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
-                    lessonTime = lessonTimes.first { it.lessonNumber == lesson.lessonNumber }.id,
+                    lessonTime = lessonTime.id,
                     groups = listOf(group.id)
                 )
             }
         }
 
+        LOGGER.d { "Found ${lessons.size} lessons to insert/update" }
         timetableRepository.upsertLessons(
             schoolId = indiwareSchool.id,
             lessons = lessons,
-            profiles = profileRepository.getAll().latest().filterIsInstance<Profile.StudentProfile>()
+            profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
         )
+        LOGGER.d { "Finished inserting lessons" }
 
         return null
     }

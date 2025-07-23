@@ -3,15 +3,20 @@ package plus.vplan.app.domain.repository
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import plus.vplan.app.data.source.indiware.model.SPlan
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
+import plus.vplan.lib.sp24.model.splan.student.SPlanStudentData
 import plus.vplan.lib.sp24.source.Authentication
+import plus.vplan.lib.sp24.source.extension.LessonTime
 
 interface IndiwareRepository {
     suspend fun checkCredentials(authentication: Authentication): Response<Boolean>
+    suspend fun downloadLessonTimes(authentication: Authentication, contextWeekIndex: Int?): plus.vplan.lib.sp24.source.Response<List<LessonTime>>
 
     suspend fun getBaseData(authentication: Authentication): Response<IndiwareBaseData>
+    suspend fun getWPlanSplan(authentication: Authentication, weekIndex: Int): plus.vplan.lib.sp24.source.Response<SPlanStudentData>
 
     suspend fun getTimetable(
         sp24Id: String,

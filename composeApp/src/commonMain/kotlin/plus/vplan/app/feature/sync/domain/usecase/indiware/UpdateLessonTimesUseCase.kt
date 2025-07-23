@@ -3,56 +3,93 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.isContinuous
 import plus.vplan.app.utils.lastContinuousBy
-import plus.vplan.app.utils.latest
 import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.until
 import plus.vplan.lib.sp24.source.Authentication
 
-private val LOGGER = Logger.withTag("UpdateLessonTimesUseCase")
+private const val TAG = "UpdateLessonTimesUseCase"
+private val LOGGER = Logger.withTag(TAG)
 
 class UpdateLessonTimesUseCase(
     private val indiwareRepository: IndiwareRepository,
     private val groupRepository: GroupRepository,
+    private val weekRepository: WeekRepository,
     private val lessonTimeRepository: LessonTimeRepository
 ) {
     suspend operator fun invoke(school: School.IndiwareSchool): Response.Error? {
-        val baseData = indiwareRepository.getBaseData(Authentication(school.sp24Id, school.username, school.password))
-        if (baseData is Response.Error) return baseData
-        if (baseData !is Response.Success) throw IllegalStateException("baseData is not successful: $baseData")
+        val weeks = weekRepository.getBySchool(school.id).first()
+        val weeksInPastOrCurrent = weeks
+            .filter { it.start < Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
+            .sortedBy { it.weekIndex }
+
+        val currentWeek = weeks.firstOrNull { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date in it.start..it.end }
+
+        var weekIndex =
+            (if (weeksInPastOrCurrent.isEmpty()) weeks.maxOfOrNull { it.weekIndex }
+            else weeksInPastOrCurrent.lastOrNull()?.weekIndex)
+
+        while (weekIndex != null && weekIndex >= 0) {
+            weeks.firstOrNull { week -> week.weekIndex == weekIndex } ?: run {
+                weekIndex -= 1
+                continue
+            }
+
+            val sPlan = indiwareRepository.getWPlanSplan(school.getSp24LibAuthentication(), weekIndex)
+            if (sPlan is plus.vplan.lib.sp24.source.Response.Success) break
+
+            LOGGER.w { "Failed to download SPlan for week $weekIndex, trying next week" }
+            weekIndex -= 1
+        }
+        if (weekIndex == -1) weekIndex = null
 
         val groups = groupRepository.getBySchool(schoolId = school.id).first()
-        val existingLessonTimes = lessonTimeRepository.getBySchool(schoolId = school.id).map { it.filter { lessonTime -> !lessonTime.interpolated } }
-        val downloadedLessonTimes = baseData.data.classes.flatMap { baseDataClass ->
-            val group = groups.firstOrNull { it.name == baseDataClass.name } ?: throw NoSuchElementException("Group ${baseDataClass.name} not found")
-            baseDataClass.lessonTimes.map { baseDataLessonTime ->
+        val existingLessonTimes = lessonTimeRepository.getBySchool(schoolId = school.id)
+            .map { it.filter { lessonTime -> !lessonTime.interpolated } }
+
+        val downloadedLessonTimes = indiwareRepository
+            .downloadLessonTimes(school.getSp24LibAuthentication(), weekIndex)
+            .let { (it as? plus.vplan.lib.sp24.source.Response.Success) }
+            ?.data
+            ?.mapNotNull { lessonTime ->
+                val group = groups.firstOrNull { it.name == lessonTime.className } ?: return@mapNotNull null
                 LessonTime(
-                    id = "${school.id}/${group.id}/${baseDataLessonTime.lessonNumber}",
-                    start = baseDataLessonTime.start,
-                    end = baseDataLessonTime.end,
-                    lessonNumber = baseDataLessonTime.lessonNumber,
+                    id = "${school.id}/${group.id}/${lessonTime.lessonNumber}",
+                    start = lessonTime.start,
+                    end = lessonTime.end,
+                    lessonNumber = lessonTime.lessonNumber,
                     group = group.id,
                     interpolated = false
                 )
             }
+
+        if (downloadedLessonTimes == null) {
+            LOGGER.e { "Downloaded lesson times are null" }
+            return null
         }
 
-        existingLessonTimes.latest().let { existing ->
-            val downloadedLessonTimesToDelete = existing.filter { existingLessonTime -> downloadedLessonTimes.none { it.id == existingLessonTime.id } }
+        existingLessonTimes.first().let { existing ->
+            val downloadedLessonTimesToDelete =
+                existing.filter { existingLessonTime -> downloadedLessonTimes.none { it.id == existingLessonTime.id } }
             LOGGER.d { "Delete ${downloadedLessonTimesToDelete.size} lesson times" }
             lessonTimeRepository.deleteById(downloadedLessonTimesToDelete.map { it.id })
         }
 
         downloadedLessonTimes.let {
-            val existingLessonTimesIds = existingLessonTimes.latest()
-            val downloadedLessonTimesToUpsert = downloadedLessonTimes.filter { downloadedLessonTime -> existingLessonTimesIds.none { it.hashCode() == downloadedLessonTime.hashCode() } }
+            val existingLessonTimesIds = existingLessonTimes.first()
+            val downloadedLessonTimesToUpsert =
+                downloadedLessonTimes.filter { downloadedLessonTime -> existingLessonTimesIds.none { it.hashCode() == downloadedLessonTime.hashCode() } }
             LOGGER.d { "Upsert ${downloadedLessonTimesToUpsert.size} lesson times" }
             lessonTimeRepository.upsert(downloadedLessonTimesToUpsert)
         }
@@ -60,7 +97,7 @@ class UpdateLessonTimesUseCase(
         val lessonsToInterpolate = mutableListOf<LessonTime>()
         groups.forEach { group ->
             val lessonTimes = lessonTimeRepository
-                .getByGroup(group.id).latest()
+                .getByGroup(group.id).first()
                 .sortedBy { it.lessonNumber }
                 .toMutableList()
 

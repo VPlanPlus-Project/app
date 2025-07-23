@@ -5,6 +5,7 @@ import androidx.room.Query
 import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Upsert
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.DayOfWeek
@@ -53,10 +54,15 @@ interface TimetableDao {
         rooms: List<DbTimetableRoomCrossover>,
         profileIndex: List<DbProfileTimetableCache>
     ) {
+        Logger.d { "Start replacing" }
         val oldLessons = getBySchool(schoolId).first().map { it.timetableLesson.id }
+        Logger.d { "Old lessons: ${oldLessons.size}x" }
         deleteTimetableByIds(oldLessons)
+        Logger.d { "Deleted old lessons" }
         upsert(lessons, groups, teachers, rooms)
+        Logger.d { "Upserted new lessons" }
         upsert(profileIndex)
+        Logger.d { "Upserted profile index" }
     }
 
     @Transaction

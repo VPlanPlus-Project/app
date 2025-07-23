@@ -86,7 +86,7 @@ val VPP_ID_AUTH_URL = URLBuilder(
     }
 ).build().toString()
 
-const val ENABLE_KTOR_LOGGING = false
+const val ENABLE_KTOR_LOGGING = true
 
 object App {
     lateinit var vppIdSource: VppIdSource
