@@ -14,7 +14,7 @@ biometric = "1.1.0"
 ksp = "2.1.21-2.0.1"
 androidx-room = "2.7.2"
 androidx-sqlite = "2.5.2"
-navigationCompose = "2.9.0-alpha16"
+navigationCompose = "2.9.0-beta04"
 posthogAndroid = "3.19.0"
 sqlite = "2.5.2"
 
