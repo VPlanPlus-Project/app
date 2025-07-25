@@ -36,7 +36,6 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.Holiday
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
@@ -48,6 +47,7 @@ import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateLessonTimesUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
 import plus.vplan.lib.sp24.source.Authentication
 import kotlin.time.ExperimentalTime
 
@@ -62,6 +62,7 @@ class SetUpSchoolDataUseCase(
     private val courseRepository: CourseRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val weekRepository: WeekRepository,
+    private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val httpClient: HttpClient
 ) {
@@ -88,6 +89,7 @@ class SetUpSchoolDataUseCase(
                 }
 
             val sp24Authentication = Authentication(sp24Id, username, password)
+            val client = indiwareRepository.getSp24Client(authentication = sp24Authentication, true)
 
             result[SetUpSchoolDataStep.DOWNLOAD_BASE_DATA] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
@@ -216,23 +218,13 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
 
-            baseData.data.weeks?.map { baseDataWeek ->
-                Week(
-                    id = school.id.toString() + "/" + baseDataWeek.calendarWeek.toString(),
-                    calendarWeek = baseDataWeek.calendarWeek,
-                    start = baseDataWeek.start,
-                    end = baseDataWeek.end,
-                    weekType = baseDataWeek.weekType,
-                    weekIndex = baseDataWeek.weekIndex,
-                    school = school.id
-                )
-            }?.let { weekRepository.upsert(it) }
+            require(updateWeeksUseCase(school, client) == null) { "Couldn't update weeks" }
 
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
 
-            updateLessonTimesUseCase(school)
+            require(updateLessonTimesUseCase(school) == null) { "Couldn't update lesson times" }
 
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.IN_PROGRESS

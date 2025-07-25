@@ -5,10 +5,10 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
-import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.lib.sp24.source.Authentication
+import plus.vplan.lib.sp24.source.IndiwareClient
 
 private val LOGGER = Logger.withTag("UpdateWeeksUseCase")
 
@@ -16,21 +16,24 @@ class UpdateWeeksUseCase(
     private val indiwareRepository: IndiwareRepository,
     private val weekRepository: WeekRepository
 ) {
-    suspend operator fun invoke(school: School.IndiwareSchool, indiwareBaseData: IndiwareBaseData? = null): Response.Error? {
-        val baseData = indiwareBaseData ?: run {
-            val baseData = indiwareRepository.getBaseData(Authentication(school.sp24Id, school.username, school.password))
-            if (baseData is Response.Error) return baseData
-            if (baseData !is Response.Success) throw IllegalStateException("baseData is not successful: $baseData")
-            baseData.data
-        }
+    suspend operator fun invoke(school: School.IndiwareSchool, providedClient: IndiwareClient? = null): Response.Error? {
+        val client = providedClient ?: indiwareRepository.getSp24Client(
+            Authentication(school.sp24Id, school.username, school.password),
+            withCache = true
+        )
 
-        if (baseData.weeks.isNullOrEmpty()) {
-            LOGGER.w { "No weeks found" }
-            return null
+        val weeks = run {
+            val weeks = client.week.getWeeks()
+            if (weeks is plus.vplan.lib.sp24.source.Response.Error) {
+                LOGGER.e { "Failed to get weeks: ${weeks}" }
+                return Response.Error.fromSp24KtError(weeks)
+            }
+            require(weeks is plus.vplan.lib.sp24.source.Response.Success)
+            weeks.data
         }
 
         val existingWeeks = weekRepository.getBySchool(schoolId = school.id).first()
-        val downloadedWeeks = baseData.weeks.map { baseDataWeek ->
+        val downloadedWeeks = weeks.map { baseDataWeek ->
             Week(
                 id = school.id.toString() + "/" + baseDataWeek.calendarWeek.toString(),
                 calendarWeek = baseDataWeek.calendarWeek,
