@@ -208,6 +208,10 @@ class FullSyncUseCase(
                         .filterIsInstance<School.IndiwareSchool>()
                         .filter { it.credentialsValid }
                         .forEach { school ->
+                            val client = indiwareRepository.getSp24Client(
+                                Authentication(school.sp24Id, school.username, school.password),
+                                withCache = true
+                            )
                             logger.i { "Checking indiware credentials for ${school.id} (${school.name})" }
                             when (checkSp24CredentialsUseCase(school.sp24Id.toInt(), school.username, school.password)) {
                                 SchoolSettingsCredentialsState.Error -> return@forEach
@@ -252,7 +256,7 @@ class FullSyncUseCase(
                             }
                             if (baseData != null) {
                                 updateSubjectInstanceUseCase(school, baseData)
-                                updateHolidaysUseCase(school, baseData)
+                                updateHolidaysUseCase(school, client)
                                 updateWeeksUseCase(school, baseData)
                             }
                             val today = LocalDate.now()

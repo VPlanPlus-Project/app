@@ -346,4 +346,22 @@ class IndiwareRepositoryImpl(
         }
         return Response.Error.Cancelled
     }
+
+    override suspend fun getSp24Client(
+        authentication: Authentication,
+        withCache: Boolean
+    ): IndiwareClient {
+        if (withCache) return IndiwareClient(
+            authentication = authentication,
+            client = httpClient,
+            enableInternalCache = true
+        )
+        return clients.getOrPut(authentication) {
+            IndiwareClient(
+                authentication = authentication,
+                client = httpClient,
+                enableInternalCache = false
+            )
+        }
+    }
 }

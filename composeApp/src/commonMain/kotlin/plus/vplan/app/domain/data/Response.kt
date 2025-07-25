@@ -19,5 +19,18 @@ sealed class Response<out T> {
             data object Unauthorized : OnlineError()
             data object NotFound : OnlineError()
         }
+
+        companion object {
+            fun fromSp24KtError(response: plus.vplan.lib.sp24.source.Response.Error): Error {
+                return when(response) {
+                    is plus.vplan.lib.sp24.source.Response.Error.ParsingError -> ParsingError("")
+                    is plus.vplan.lib.sp24.source.Response.Error.Other -> Other(response.message)
+                    is plus.vplan.lib.sp24.source.Response.Error.Cancelled -> Cancelled
+                    is plus.vplan.lib.sp24.source.Response.Error.OnlineError.ConnectionError -> OnlineError.ConnectionError
+                    is plus.vplan.lib.sp24.source.Response.Error.OnlineError.Unauthorized -> OnlineError.Unauthorized
+                    is plus.vplan.lib.sp24.source.Response.Error.OnlineError.NotFound -> OnlineError.NotFound
+                }
+            }
+        }
     }
 }

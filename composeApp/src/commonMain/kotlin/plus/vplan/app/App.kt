@@ -54,9 +54,11 @@ data class Host(
     val url = "${protocol.name}://$host:$port"
 }
 
-val appApi = "http://192.168.30.181:8080/"
+//val appApi = "http://192.168.30.181:8080/"
+val appApi = "http://10.0.2.2:8080/"
 
-val api = "http://192.168.30.181:8001/"
+//val api = "http://192.168.30.181:8001/"
+val api = "http://10.0.2.2:8001/"
 
 val sp24Service = Host(
     protocol = URLProtocol.HTTPS,

@@ -3,12 +3,12 @@ package plus.vplan.app.domain.repository
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
-import plus.vplan.app.data.source.indiware.model.SPlan
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.lib.sp24.model.splan.student.SPlanStudentData
 import plus.vplan.lib.sp24.source.Authentication
+import plus.vplan.lib.sp24.source.IndiwareClient
 import plus.vplan.lib.sp24.source.extension.LessonTime
 
 interface IndiwareRepository {
@@ -34,6 +34,8 @@ interface IndiwareRepository {
         teacherNames: List<String>,
         roomNames: List<String>
     ): Response<IndiwareSubstitutionPlan>
+
+    suspend fun getSp24Client(authentication: Authentication, withCache: Boolean): IndiwareClient
 }
 
 data class IndiwareBaseData(
