@@ -9,10 +9,10 @@ import plus.vplan.app.domain.model.Week
 
 @Entity(
     tableName = "weeks",
-    primaryKeys = ["school_id", "calendar_week"],
+    primaryKeys = ["id"],
     indices = [
         Index(value = ["id"], unique = true),
-        Index(value = ["school_id", "calendar_week"], unique = true)
+        Index(value = ["school_id"], unique = false)
     ],
     foreignKeys = [
         ForeignKey(

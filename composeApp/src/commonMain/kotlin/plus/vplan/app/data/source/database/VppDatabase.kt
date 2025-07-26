@@ -9,6 +9,8 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
 import plus.vplan.app.data.source.database.converters.InstantConverter
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
 import plus.vplan.app.data.source.database.converters.LocalDateTimeConverter
@@ -194,9 +196,22 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = VppDatabase.Migration3::class),
         AutoMigration(from = 3, to = 4),
-        AutoMigration(from = 4, to = 5, spec = VppDatabase.Migration5::class), // Delete version column of substitution plan lesson
-        AutoMigration(from = 5, to = 6, spec = VppDatabase.Migration6::class), // Delete version column of timetable lesson
-        AutoMigration(from = 6, to = 7) // Add fcm log
+        AutoMigration(
+            from = 4,
+            to = 5,
+            spec = VppDatabase.Migration5::class
+        ), // Delete version column of substitution plan lesson
+        AutoMigration(
+            from = 5,
+            to = 6,
+            spec = VppDatabase.Migration6::class
+        ), // Delete version column of timetable lesson
+        AutoMigration(from = 6, to = 7), // Add fcm log
+        AutoMigration(
+            from = 7,
+            to = 8,
+            spec = VppDatabase.Migration7::class
+        ) // Remove unused indices
     ],
     exportSchema = true
 )
@@ -245,10 +260,14 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 7
+        const val DATABASE_VERSION = 8
     }
 
-    @RenameColumn(tableName = "assessments", fromColumnName = "subject_instance_ids", toColumnName = "subject_instance_id")
+    @RenameColumn(
+        tableName = "assessments",
+        fromColumnName = "subject_instance_ids",
+        toColumnName = "subject_instance_id"
+    )
     class Migration3 : AutoMigrationSpec
 
     @DeleteColumn(tableName = "substitution_plan_lesson", columnName = "version")
@@ -256,10 +275,46 @@ abstract class VppDatabase : RoomDatabase() {
 
     @DeleteColumn(tableName = "timetable_lessons", columnName = "version")
     class Migration6 : AutoMigrationSpec
+
+    class Migration7 : AutoMigrationSpec {
+        override fun onPostMigrate(connection: SQLiteConnection) {
+            connection.execSQL("""
+                CREATE TABLE weeks_dg_tmp
+                (
+                    id            TEXT    NOT NULL
+                        PRIMARY KEY,
+                    school_id     INTEGER NOT NULL
+                        REFERENCES schools
+                            ON DELETE CASCADE,
+                    calendar_week INTEGER NOT NULL,
+                    start         TEXT    NOT NULL,
+                    end           TEXT    NOT NULL,
+                    week_type     TEXT    NOT NULL,
+                    week_index    INTEGER NOT NULL
+                );
+
+                INSERT INTO weeks_dg_tmp(id, school_id, calendar_week, start, end, week_type, week_index)
+                SELECT id, school_id, calendar_week, start, end, week_type, week_index
+                FROM weeks;
+
+                DROP TABLE weeks;
+
+                ALTER TABLE weeks_dg_tmp
+                    RENAME TO weeks;
+
+                CREATE UNIQUE INDEX index_weeks_id
+                    ON weeks (id);
+            """.trimIndent())
+        }
+    }
 }
 
 // Room compiler generates the `actual` implementations
-@Suppress("NO_ACTUAL_FOR_EXPECT", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "KotlinNoActualForExpect")
+@Suppress(
+    "NO_ACTUAL_FOR_EXPECT",
+    "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING",
+    "KotlinNoActualForExpect"
+)
 expect object VppDatabaseConstructor : RoomDatabaseConstructor<VppDatabase> {
     override fun initialize(): VppDatabase
 }

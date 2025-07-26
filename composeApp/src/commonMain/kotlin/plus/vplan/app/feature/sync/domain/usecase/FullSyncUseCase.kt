@@ -256,9 +256,9 @@ class FullSyncUseCase(
                             }
                             if (baseData != null) {
                                 updateSubjectInstanceUseCase(school, baseData)
-                                updateHolidaysUseCase(school, client)
-                                updateWeeksUseCase(school, client)
                             }
+                            updateHolidaysUseCase(school, client)
+                            updateWeeksUseCase(school, client)
                             val today = LocalDate.now()
                             val nextDay = run {
                                 val holidayDates = dayRepository.getHolidays(school.id).first().map { it.date }

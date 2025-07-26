@@ -35,7 +35,6 @@ class UpdateWeeksUseCase(
         val existingWeeks = weekRepository.getBySchool(schoolId = school.id).first()
         val downloadedWeeks = weeks.map { baseDataWeek ->
             Week(
-                id = school.id.toString() + "/" + baseDataWeek.calendarWeek.toString(),
                 calendarWeek = baseDataWeek.calendarWeek,
                 start = baseDataWeek.start,
                 end = baseDataWeek.end,

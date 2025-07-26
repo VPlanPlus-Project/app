@@ -467,14 +467,14 @@ private fun HomeContent(
                                                 ) {
                                                     val headFont = MaterialTheme.typography.bodyLarge
                                                     lessons.forEach forEachLesson@{ lesson ->
-                                                        val lessonTime = remember(lesson) { lesson.lessonTime }.collectAsResultingFlow().value ?: return@forEachLesson
+                                                        val lessonTime = remember(lesson) { lesson.lessonTime }.collectAsResultingFlow().value
                                                         val rooms = remember(lesson.roomIds) { lesson.rooms }.collectAsSingleFlow().value
                                                         val groups = remember(lesson.groupIds) { lesson.groups }.collectAsSingleFlow().value
                                                         val teachers = remember(lesson.teacherIds) { lesson.teachers }.collectAsSingleFlow().value
                                                         val homeworkForLesson = homework.filter { it.subjectInstanceId == lesson.subjectInstanceId }
                                                         val assessmentsForLesson = assessments.filter { it.subjectInstanceId == lesson.subjectInstanceId }
                                                         val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
-                                                        Column(Modifier.fillMaxWidth()) {
+                                                        if (lessonTime != null) Column(Modifier.fillMaxWidth()) {
                                                             Row(
                                                                 modifier = Modifier
                                                                     .fillMaxWidth()
