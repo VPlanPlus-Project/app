@@ -1,7 +1,6 @@
 package plus.vplan.app.feature.onboarding.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.data.Response
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.Sp24CredentialsState
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 
@@ -25,8 +24,6 @@ interface OnboardingRepository {
     fun getSchoolId(): Flow<Int?>
 
     suspend fun getSp24Credentials(): Sp24Credentials?
-
-    suspend fun getSp24UpdateJobProgress(): Response<List<String>>
 
     suspend fun setSelectedProfile(onboardingProfile: OnboardingProfile)
 }

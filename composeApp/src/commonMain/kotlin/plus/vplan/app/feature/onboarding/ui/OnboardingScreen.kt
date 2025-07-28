@@ -19,7 +19,6 @@ import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingSchoolSearch
 import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.OnboardingIndiwareLoginScreen
-import plus.vplan.app.feature.onboarding.stage.c_indiware_setup.ui.OnboardingIndiwareInitScreen
 import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.ui.OnboardingIndiwareDataDownloadScreen
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileScreen
 import plus.vplan.app.feature.onboarding.stage.e_permissions.ui.OnboardingPermissionsScreen
@@ -93,10 +92,6 @@ fun OnboardingScreen(
                 OnboardingIndiwareLoginScreen(navController)
             }
 
-            composable<OnboardingScreen.OnboardingIndiwareInit> {
-                OnboardingIndiwareInitScreen(navController)
-            }
-
             composable<OnboardingScreen.OnboardingIndiwareDataDownload> {
                 OnboardingIndiwareDataDownloadScreen(navController)
             }
@@ -124,7 +119,6 @@ fun OnboardingScreen(
 sealed class OnboardingScreen(val name: String) {
     @Serializable data object OnboardingScreenHome : OnboardingScreen("OnboardingScreenHome")
     @Serializable data object OnboardingScreenIndiwareLogin : OnboardingScreen("OnboardingScreenIndiwareLogin")
-    @Serializable data object OnboardingIndiwareInit : OnboardingScreen("OnboardingScreenInit")
     @Serializable data object OnboardingIndiwareDataDownload : OnboardingScreen("OnboardingScreenDataDownload")
     @Serializable data object OnboardingChooseProfile : OnboardingScreen("OnboardingScreenChooseProfileType")
     @Serializable data object OnboardingPermission : OnboardingScreen("OnboardingScreenPermission")

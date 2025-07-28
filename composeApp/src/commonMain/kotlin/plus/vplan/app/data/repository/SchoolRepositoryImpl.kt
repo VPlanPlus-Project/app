@@ -10,7 +10,6 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
@@ -29,7 +28,6 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.OnlineSchool
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.sp24Service
 import plus.vplan.app.utils.sendAll
 
 class SchoolRepositoryImpl(
@@ -89,24 +87,6 @@ class SchoolRepositoryImpl(
 
     override suspend fun getAll(): Flow<List<School>> {
         return vppDatabase.schoolDao.getAll().map { results -> results.map { it.toModel() } }
-    }
-
-    override suspend fun getIdFromSp24Id(sp24Id: Int): Response<Int> {
-        val indiwareSchool = vppDatabase.schoolDao
-            .getAll().first()
-            .map { it.toModel() }
-            .filterIsInstance<School.IndiwareSchool>()
-            .firstOrNull { it.sp24Id == sp24Id.toString() }
-        if (indiwareSchool != null) return Response.Success(indiwareSchool.id)
-        safeRequest(onError = { return it }) {
-            val response = httpClient.get("${sp24Service.url}/school/sp24/$sp24Id")
-            if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
-            val data = ResponseDataWrapper.fromJson<Int>(response.bodyAsText())
-                ?: return Response.Error.ParsingError(response.bodyAsText())
-
-            return Response.Success(data)
-        }
-        return Response.Error.Cancelled
     }
 
     override suspend fun setSp24Info(

@@ -5,15 +5,15 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
-import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.CourseRepository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
-import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.lib.sp24.source.Authentication
+import plus.vplan.lib.sp24.source.IndiwareClient
 
 private val LOGGER = Logger.withTag("UpdateSubjectInstanceUseCase")
 
@@ -23,13 +23,11 @@ class UpdateSubjectInstanceUseCase(
     private val teacherRepository: TeacherRepository,
     private val courseRepository: CourseRepository
 ) {
-    suspend operator fun invoke(school: School.IndiwareSchool, indiwareBaseData: IndiwareBaseData? = null): Response.Error? {
-        val baseData = indiwareBaseData ?: run {
-            val baseData = indiwareRepository.getBaseData(Authentication(school.sp24Id, school.username, school.password))
-            if (baseData is Response.Error) return baseData
-            if (baseData !is Response.Success) throw IllegalStateException("baseData is not successful: $baseData")
-            baseData.data
-        }
+    suspend operator fun invoke(school: School.IndiwareSchool, providedClient: IndiwareClient?): Response.Error? {
+        val client = providedClient ?: indiwareRepository.getSp24Client(
+            Authentication(school.sp24Id, school.username, school.password),
+            withCache = true
+        )
 
         val teachers = teacherRepository.getBySchool(schoolId = school.id).first()
         val existingCourses = courseRepository.getBySchool(schoolId = school.id, false)
@@ -37,13 +35,13 @@ class UpdateSubjectInstanceUseCase(
 
         updateCourses(
             school = school,
-            baseData = baseData,
+            client = client,
             existingCourses = existingCourses.first(),
             teachers = teachers
         )
 
         updateSubjectInstances(
-            baseData = baseData,
+            client = client,
             existingSubjectInstances = existingSubjectInstances.first(),
         )
 
@@ -52,47 +50,50 @@ class UpdateSubjectInstanceUseCase(
 
     private suspend fun updateCourses(
         school: School.IndiwareSchool,
-        baseData: IndiwareBaseData,
+        client: IndiwareClient,
         existingCourses: List<Course>,
         teachers: List<Teacher>
-    ) {
-        val downloadedCourses = baseData.classes
-            .flatMap { baseDataClass -> baseDataClass.subjectInstances.mapNotNull { it.course }.map { Course.fromIndiware(school.sp24Id, it.name, teachers.firstOrNull { t -> t.name == it.teacher }) } }
-            .distinct()
+    ): Boolean {
+        val downloadedCourses =
+            (client.subjectInstances.getSubjectInstances() as? plus.vplan.lib.sp24.source.Response.Success)?.data?.courses ?: return false
+
+        val downloadedCourseEntities = downloadedCourses
+            .map { course -> Course.fromIndiware(school.sp24Id, course.name, teacher = teachers.firstOrNull { it.name == course.teacher }) }
             .mapNotNull { courseRepository.getByIndiwareId(it).getFirstValue() }
 
         downloadedCourses.let {
             val existingCourseIds = existingCourses.map { it.id }
-            val downloadedCoursesToDelete = existingCourseIds.filter { existingCourseId -> downloadedCourses.none { it.id == existingCourseId } }
+            val downloadedCoursesToDelete = existingCourseIds.filter { existingCourseId -> downloadedCourseEntities.none { it.id == existingCourseId } }
             LOGGER.d { "Delete ${downloadedCoursesToDelete.size} courses" }
             courseRepository.deleteById(downloadedCoursesToDelete)
         }
 
-        val updatedCourses = downloadedCourses.filter { downloadedCourse -> existingCourses.none { it.hashCode() == downloadedCourse.hashCode() } }
+        val updatedCourses = downloadedCourseEntities.filter { downloadedCourse -> existingCourses.none { it.hashCode() == downloadedCourse.hashCode() } }
         LOGGER.d { "Upsert ${updatedCourses.size} courses" }
         courseRepository.upsert(updatedCourses)
+        return true
     }
 
     private suspend fun updateSubjectInstances(
-        baseData: IndiwareBaseData,
+        client: IndiwareClient,
         existingSubjectInstances: List<SubjectInstance>,
-    ) {
-        val downloadedSubjectInstances = baseData.classes
-            .flatMap { baseDataClass ->
-                baseDataClass.subjectInstances.map { it.subjectInstanceNumber }
-                    .distinct()
-                    .mapNotNull { subjectInstanceRepository.getByIndiwareId(it).getFirstValue() }
-            }
+    ): Boolean {
+        val downloadedSubjectInstances =
+            (client.subjectInstances.getSubjectInstances() as? plus.vplan.lib.sp24.source.Response.Success) ?: return false
+
+        val downloadedSubjectEntities = downloadedSubjectInstances.data.subjectInstances
+            .mapNotNull { subjectInstanceRepository.getByIndiwareId(it.id.toString()).getFirstValue() }
 
         downloadedSubjectInstances.let {
             val existingSubjectInstanceIds = existingSubjectInstances.map { it.id }
-            val downloadedSubjectInstancesToDelete = existingSubjectInstanceIds.filter { existingSubjectInstanceId -> downloadedSubjectInstances.none { it.id == existingSubjectInstanceId } }
+            val downloadedSubjectInstancesToDelete = existingSubjectInstanceIds.filter { existingSubjectInstanceId -> downloadedSubjectEntities.none { it.id == existingSubjectInstanceId } }
             LOGGER.d { "Delete ${downloadedSubjectInstancesToDelete.size} default lessons" }
             subjectInstanceRepository.deleteById(downloadedSubjectInstancesToDelete)
         }
 
-        val updatedSubjectInstances = downloadedSubjectInstances.filter { downloadedSubjectInstance -> existingSubjectInstances.none { it.hashCode() == downloadedSubjectInstance.hashCode() } }
+        val updatedSubjectInstances = downloadedSubjectEntities.filter { downloadedSubjectInstance -> existingSubjectInstances.none { it.hashCode() == downloadedSubjectInstance.hashCode() } }
         LOGGER.d { "Upsert ${updatedSubjectInstances.size} default lessons" }
         subjectInstanceRepository.upsert(updatedSubjectInstances)
+        return true
     }
 }

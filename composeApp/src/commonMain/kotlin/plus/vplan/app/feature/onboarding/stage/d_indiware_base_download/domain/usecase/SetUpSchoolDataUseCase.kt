@@ -44,9 +44,9 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.TeacherRepository
-import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateLessonTimesUseCase
+import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
 import plus.vplan.lib.sp24.source.Authentication
 import kotlin.time.ExperimentalTime
@@ -61,9 +61,9 @@ class SetUpSchoolDataUseCase(
     private val dayRepository: DayRepository,
     private val courseRepository: CourseRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
-    private val weekRepository: WeekRepository,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
+    private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val httpClient: HttpClient
 ) {
     operator fun invoke(): Flow<SetUpSchoolDataResult> = channelFlow {
@@ -159,13 +159,13 @@ class SetUpSchoolDataUseCase(
 
             val schoolFlow = (schoolRepository.getById(schoolId, false))
             schoolFlow.takeWhile { it is CacheState.Loading }.collect()
-            val school = schoolFlow.first().let {
-                if (it !is CacheState.Done) {
-                    trySend(SetUpSchoolDataResult.Error("$prefix school-Lookup was not successful: $it"))
+            val school = schoolFlow.first().let { schoolFlowResult ->
+                if (schoolFlowResult !is CacheState.Done) {
+                    trySend(SetUpSchoolDataResult.Error("$prefix school-Lookup was not successful: $schoolFlowResult"))
                     return@channelFlow
                 }
                 schoolRepository.setSp24Info(
-                    school = it.data,
+                    school = schoolFlowResult.data,
                     sp24Id = sp24Id.toInt(),
                     username = username,
                     password = password,
@@ -173,8 +173,8 @@ class SetUpSchoolDataUseCase(
                     studentsHaveFullAccess = baseData.data.studentsHaveFullAccess,
                     downloadMode = baseData.data.downloadMode
                 )
-                onboardingRepository.setSchoolId(it.data.id)
-                schoolRepository.getById(it.data.id, false).onEach { Logger.d { it.toString() } }.getFirstValue()!!
+                onboardingRepository.setSchoolId(schoolFlowResult.data.id)
+                schoolRepository.getById(schoolFlowResult.data.id, false).onEach { Logger.d { it.toString() } }.getFirstValue()!!
             } as School.IndiwareSchool
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE
@@ -219,6 +219,7 @@ class SetUpSchoolDataUseCase(
             trySendResult()
 
             require(updateWeeksUseCase(school, client) == null) { "Couldn't update weeks" }
+            require(updateSubjectInstanceUseCase(school, client) == null) { "Couldn't update subject instances" }
 
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.IN_PROGRESS
@@ -311,6 +312,5 @@ fun SerializersModuleBuilder.onboardingSp24VppLookupResponseModule() = polymorph
 
 @Serializable
 enum class Sp24InitVppJobStatus {
-    @SerialName("running") Running,
     @SerialName("finished") Finished
 }

@@ -8,8 +8,6 @@ interface SchoolRepository: WebEntityRepository<School> {
     suspend fun fetchAllOnline(): Response<List<OnlineSchool>>
     suspend fun getAll(): Flow<List<School>>
 
-    suspend fun getIdFromSp24Id(sp24Id: Int): Response<Int>
-
     suspend fun setSp24Info(
         school: School,
         sp24Id: Int,

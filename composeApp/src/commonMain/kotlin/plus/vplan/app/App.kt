@@ -15,7 +15,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.koin.compose.KoinContext
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
@@ -55,16 +54,10 @@ data class Host(
 }
 
 //val appApi = "http://192.168.30.181:8080/"
-val appApi = "http://10.0.2.2:8080/"
+const val appApi = "https://development.vplan.plus/api/app"
 
 //val api = "http://192.168.30.181:8001/"
-val api = "http://10.0.2.2:8001/"
-
-val sp24Service = Host(
-    protocol = URLProtocol.HTTPS,
-    host = "sp24.microservices.development.vplan.plus",
-    port = 443
-)
+const val api = "https://development.vplan.plus"
 
 val auth = Host(
     protocol = URLProtocol.HTTPS,
@@ -123,16 +116,14 @@ object App {
 @Preview
 fun App(task: StartTask?) {
     AppTheme(dynamicColor = false) {
-        KoinContext {
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    NavigationHost(task)
-                }
+                NavigationHost(task)
             }
         }
     }

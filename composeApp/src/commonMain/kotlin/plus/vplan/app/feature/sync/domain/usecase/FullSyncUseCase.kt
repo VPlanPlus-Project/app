@@ -255,7 +255,7 @@ class FullSyncUseCase(
                                 baseData.data
                             }
                             if (baseData != null) {
-                                updateSubjectInstanceUseCase(school, baseData)
+                                updateSubjectInstanceUseCase(school, client)
                             }
                             updateHolidaysUseCase(school, client)
                             updateWeeksUseCase(school, client)
