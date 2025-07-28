@@ -243,7 +243,7 @@ class SetUpSchoolDataUseCase(
             baseData.data.classes
                 .flatMap { baseDataClass -> baseDataClass.subjectInstances.map { it.subjectInstanceNumber } }
                 .distinct()
-                .map { subjectInstanceRepository.getByIndiwareId(it).getFirstValue() }
+                .map { subjectInstanceRepository.lookupBySp24Id(it).getFirstValue() } // ich war hier
 
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.DONE
             return@channelFlow trySendResult()

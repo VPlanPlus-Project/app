@@ -78,11 +78,12 @@ class UpdateSubjectInstanceUseCase(
         client: IndiwareClient,
         existingSubjectInstances: List<SubjectInstance>,
     ): Boolean {
+        val sp24SchoolId = client.authentication.indiwareSchoolId
         val downloadedSubjectInstances =
             (client.subjectInstances.getSubjectInstances() as? plus.vplan.lib.sp24.source.Response.Success) ?: return false
 
         val downloadedSubjectEntities = downloadedSubjectInstances.data.subjectInstances
-            .mapNotNull { subjectInstanceRepository.getByIndiwareId(it.id.toString()).getFirstValue() }
+            .mapNotNull { subjectInstanceRepository.lookupBySp24Id("sp24.$sp24SchoolId.${it.id}").getFirstValue() }
 
         downloadedSubjectInstances.let {
             val existingSubjectInstanceIds = existingSubjectInstances.map { it.id }

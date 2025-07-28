@@ -11,7 +11,7 @@ interface SubjectInstanceRepository {
     fun getByGroup(groupId: Int): Flow<List<SubjectInstance>>
     fun getBySchool(schoolId: Int, forceReload: Boolean): Flow<List<SubjectInstance>>
     fun getById(id: Int, forceReload: Boolean): Flow<CacheState<SubjectInstance>>
-    fun getByIndiwareId(indiwareId: String): Flow<CacheState<SubjectInstance>>
+    fun lookupBySp24Id(indiwareId: String): Flow<CacheState<SubjectInstance>>
 
     suspend fun download(schoolId: Int, schoolApiAccess: SchoolApiAccess): Response<List<SubjectInstance>>
 

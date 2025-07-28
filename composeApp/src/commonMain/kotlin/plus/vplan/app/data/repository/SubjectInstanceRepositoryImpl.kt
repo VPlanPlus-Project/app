@@ -171,7 +171,10 @@ class SubjectInstanceRepositoryImpl(
         }
     }
 
-    override fun getByIndiwareId(indiwareId: String): Flow<CacheState<SubjectInstance>> {
+    override fun lookupBySp24Id(indiwareId: String): Flow<CacheState<SubjectInstance>> {
+        if (!Regex("""^sp24\.\d{8}\.\d+$""").matches(indiwareId)) {
+            throw IllegalArgumentException("Invalid Indiware ID format: $indiwareId")
+        }
         if (indiwareId in notExisting) return flowOf(CacheState.NotExisting(indiwareId))
         return channelFlow {
             var hadData = false
@@ -213,7 +216,7 @@ class SubjectInstanceRepositoryImpl(
                         FKSubjectInstanceGroup(data.subjectInstanceId, groupId.id)
                     }
                 )
-                sendAll(getByIndiwareId(indiwareId))
+                sendAll(lookupBySp24Id(indiwareId))
             }
         }
     }
