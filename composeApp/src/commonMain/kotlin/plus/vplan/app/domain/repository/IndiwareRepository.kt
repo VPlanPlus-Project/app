@@ -41,7 +41,6 @@ interface IndiwareRepository {
 data class IndiwareBaseData(
     val classes: List<Class>,
     val holidays: List<LocalDate>,
-    val teachers: List<String>,
     val rooms: List<String>,
     val weeks: List<Week>?,
     val daysPerWeek: Int,
@@ -50,28 +49,7 @@ data class IndiwareBaseData(
 ) {
     data class Class(
         val name: String,
-        val lessonTimes: List<LessonTime>,
-        val subjectInstances: List<SubjectInstance>
-    ) {
-        data class LessonTime(
-            val start: LocalTime,
-            val end: LocalTime,
-            val lessonNumber: Int
-        )
-
-        data class SubjectInstance(
-            val subject: String,
-            val teacher: String?,
-            val subjectInstanceNumber: String,
-            val course: Course?
-        )
-
-        data class Course(
-            val name: String,
-            val teacher: String?
-        )
-
-    }
+    )
 
     data class Week(
         val calendarWeek: Int,

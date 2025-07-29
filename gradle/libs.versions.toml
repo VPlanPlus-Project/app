@@ -34,7 +34,7 @@ xmlutil = "0.91.1"
 androidBrowser = "1.8.0"
 workRuntimeKtx = "2.10.2"
 
-sp24-kt = "v2025.07.11"
+sp24-kt = "v2025.07.12"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }

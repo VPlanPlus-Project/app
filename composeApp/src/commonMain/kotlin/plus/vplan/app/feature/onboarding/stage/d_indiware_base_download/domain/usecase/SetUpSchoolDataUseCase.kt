@@ -33,16 +33,13 @@ import plus.vplan.app.data.repository.ResponseDataWrapper
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.Holiday
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateLessonTimesUseCase
@@ -59,8 +56,6 @@ class SetUpSchoolDataUseCase(
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
     private val dayRepository: DayRepository,
-    private val courseRepository: CourseRepository,
-    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
@@ -196,7 +191,7 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_TEACHERS] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
 
-            val teachers = teacherRepository.getBySchoolWithCaching(school, forceReload = true).let {
+            teacherRepository.getBySchoolWithCaching(school, forceReload = true).let {
                 (it as? Response.Success)?.data?.first() ?: run {
                     trySend(SetUpSchoolDataResult.Error("$prefix teachers-Lookup was not successful: $it"))
                     return@channelFlow
@@ -218,9 +213,6 @@ class SetUpSchoolDataUseCase(
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
 
-            require(updateWeeksUseCase(school, client) == null) { "Couldn't update weeks" }
-            require(updateSubjectInstanceUseCase(school, client) == null) { "Couldn't update subject instances" }
-
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
@@ -228,24 +220,13 @@ class SetUpSchoolDataUseCase(
             require(updateLessonTimesUseCase(school) == null) { "Couldn't update lesson times" }
 
             result[SetUpSchoolDataStep.GET_LESSON_TIMES] = SetUpSchoolDataState.DONE
+
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
-
-            courseRepository.getBySchool(school.id, true).first()
-            baseData.data.classes
-                .flatMap { baseDataClass -> baseDataClass.subjectInstances.mapNotNull { it.course }.map { Course.fromIndiware(sp24Id, it.name, teachers.firstOrNull { t -> t.name == it.teacher }) } }
-                .distinct()
-                .onEach { courseRepository.getByIndiwareId(it).getFirstValue() }
-
-            subjectInstanceRepository.download(school.id, school.getSchoolApiAccess())
-
-            subjectInstanceRepository.getBySchool(school.id, true).first()
-            baseData.data.classes
-                .flatMap { baseDataClass -> baseDataClass.subjectInstances.map { it.subjectInstanceNumber } }
-                .distinct()
-                .map { subjectInstanceRepository.lookupBySp24Id(it).getFirstValue() } // ich war hier
-
+            require(updateWeeksUseCase(school, client) == null) { "Couldn't update weeks" }
+            require(updateSubjectInstanceUseCase(school, client) == null) { "Couldn't update subject instances" }
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.DONE
+
             return@channelFlow trySendResult()
         } catch (e: Exception) {
             e.printStackTrace()

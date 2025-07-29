@@ -80,7 +80,6 @@ class IndiwareRepositoryImpl(
 
     @OptIn(ExperimentalXmlUtilApi::class)
     override suspend fun getBaseData(authentication: Authentication): Response<IndiwareBaseData> {
-        val client = clients.getOrPut(authentication) { IndiwareClient(authentication, httpClient) }
         safeRequest(onError = { return it }) {
             val mobileDataResponse = httpClient.get {
                 url(
@@ -145,12 +144,6 @@ class IndiwareRepositoryImpl(
                 )
             }
 
-            val lessonTimeFormat = LocalTime.Format {
-                hour(Padding.NONE)
-                char(':')
-                minute()
-            }
-
             return Response.Success(
                 IndiwareBaseData(
                     holidays = mobileClassBaseData
@@ -167,36 +160,9 @@ class IndiwareRepositoryImpl(
                         .classes
                         .map { baseDataClass ->
                             IndiwareBaseData.Class(
-                                name = baseDataClass.name.name,
-                                lessonTimes = baseDataClass.lessonTimes
-                                    .map { baseDataClassLessonTime ->
-                                        IndiwareBaseData.Class.LessonTime(
-                                            start = LocalTime.parse(baseDataClassLessonTime.startTime.trim(), lessonTimeFormat),
-                                            end = LocalTime.parse(baseDataClassLessonTime.endTime.trim(), lessonTimeFormat),
-                                            lessonNumber = baseDataClassLessonTime.lessonNumber
-                                        )
-                                    },
-                                subjectInstances = baseDataClass.subjectInstances
-                                    .map { baseDataClassSubjectInstance ->
-                                        IndiwareBaseData.Class.SubjectInstance(
-                                            subject = baseDataClassSubjectInstance.subjectInstance.subjectName,
-                                            teacher = baseDataClassSubjectInstance.subjectInstance.teacherName.ifBlank { null },
-                                            subjectInstanceNumber = "sp24.${authentication.indiwareSchoolId}.${baseDataClassSubjectInstance.subjectInstance.subjectInstanceNumber}",
-                                            course = if (baseDataClassSubjectInstance.subjectInstance.courseName == null) null else baseDataClass.courses.first { it.course.courseName == baseDataClassSubjectInstance.subjectInstance.courseName }.let {
-                                                IndiwareBaseData.Class.Course(
-                                                    name = it.course.courseName,
-                                                    teacher = it.course.courseTeacherName.ifBlank { null }
-                                                )
-                                            }
-                                        )
-                                    }
+                                name = baseDataClass.name.name
                             )
                         },
-                    teachers = mobileClassBaseData
-                        .classes
-                        .flatMap { it.subjectInstances }
-                        .map { it.subjectInstance.teacherName }
-                        .distinct(),
                     rooms = emptyList(),
                     daysPerWeek = mobileClassBaseData.header.daysPerWeek.daysPerWeek,
                     studentsHaveFullAccess = false,
