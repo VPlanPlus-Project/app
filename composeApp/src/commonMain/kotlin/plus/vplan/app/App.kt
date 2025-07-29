@@ -53,11 +53,9 @@ data class Host(
     val url = "${protocol.name}://$host:$port"
 }
 
-//val appApi = "http://192.168.30.181:8080/"
-const val appApi = "https://development.vplan.plus/api/app"
+const val appApi = "https://vplan.plus/api/app"
 
-//val api = "http://192.168.30.181:8001/"
-const val api = "https://development.vplan.plus"
+const val api = "https://vplan.plus"
 
 val auth = Host(
     protocol = URLProtocol.HTTPS,
