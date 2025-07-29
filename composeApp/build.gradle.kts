@@ -155,7 +155,10 @@ android {
         }
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("default") ?: run {
+                println("No default signing config found, using debug signing config")
+                signingConfigs.getByName("debug")
+            }
         }
     }
     compileOptions {
