@@ -17,21 +17,19 @@ import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.capture
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.FileRepository
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
-import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
-import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
@@ -56,9 +54,6 @@ class FullSyncUseCase(
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val fileRepository: FileRepository,
-    private val groupRepository: GroupRepository,
-    private val teacherRepository: TeacherRepository,
-    private val roomRepository: RoomRepository,
     private val courseRepository: CourseRepository,
     private val vppIdRepository: VppIdRepository,
     private val keyValueRepository: KeyValueRepository,
@@ -95,46 +90,13 @@ class FullSyncUseCase(
                 logger.i { "Performing FullSync" }
 
                 val cloudDataUpdate = CoroutineScope(Dispatchers.IO).launch {
-                    logger.i { "Updating groups" }
-                    val groupStart = Clock.System.now()
-                    groupRepository.getAllIds().first()
-                        .mapNotNull { App.groupSource.getById(it).getFirstValue() }
-                        .forEach { group ->
-                            if (group.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                            groupRepository.getById(group.id, true).getFirstValue()
-                        }
-                    val groupEnd = Clock.System.now()
-                    logger.d { "Updating groups took ${(groupEnd - groupStart).inWholeMilliseconds}ms" }
-
-                    logger.i { "Updating rooms" }
-                    val roomStart = Clock.System.now()
-                    roomRepository.getAllIds().first()
-                        .mapNotNull { App.roomSource.getById(it).getFirstValue() }
-                        .forEach { room ->
-                            if (room.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                            roomRepository.getById(room.id, true).getFirstValue()
-                        }
-                    val roomEnd = Clock.System.now()
-                    logger.d { "Updating rooms took ${(roomEnd - roomStart).inWholeMilliseconds}ms" }
-
-                    logger.i { "Updating teachers" }
-                    val teacherStart = Clock.System.now()
-                    teacherRepository.getAllIds().first()
-                        .mapNotNull { App.teacherSource.getById(it).getFirstValue() }
-                        .forEach { teacher ->
-                            if (teacher.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                            teacherRepository.getById(teacher.id, true).getFirstValue()
-                        }
-                    val teacherEnd = Clock.System.now()
-                    logger.d { "Updating teachers took ${(teacherEnd - teacherStart).inWholeMilliseconds}ms" }
-
                     logger.i { "Updating schools" }
                     val schoolStart = Clock.System.now()
-                    schoolRepository.getAllIds().first()
+                    schoolRepository.getAllLocalIds().first()
                         .mapNotNull { App.schoolSource.getById(it).getFirstValue() }
                         .forEach { school ->
                             if (school.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                            schoolRepository.getById(school.id, true).getFirstValue()
+                            schoolRepository.getByLocalId(school.id).first()
                         }
                     val schoolEnd = Clock.System.now()
                     logger.d { "Updating schools took ${(schoolEnd - schoolStart).inWholeMilliseconds}ms" }
@@ -143,10 +105,10 @@ class FullSyncUseCase(
                     val fileStart = Clock.System.now()
                     fileRepository.getAllIds().first()
                         .filter { it > 0 }
-                        .mapNotNull { App.fileSource.getById(it).getFirstValue() }
+                        .mapNotNull { App.fileSource.getById(it).getFirstValueOld() }
                         .forEach { file ->
                             if (file.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                            fileRepository.getById(file.id, true).getFirstValue()
+                            fileRepository.getById(file.id, true).getFirstValueOld()
                         }
                     val fileEnd = Clock.System.now()
                     logger.d { "Updating files took ${(fileEnd - fileStart).inWholeMilliseconds}ms" }
@@ -154,10 +116,10 @@ class FullSyncUseCase(
                     logger.i { "Updating vppIds" }
                     val vppIdStart = Clock.System.now()
                     vppIdRepository.getAllIds().first()
-                        .mapNotNull { App.vppIdSource.getById(it).getFirstValue() }
+                        .mapNotNull { App.vppIdSource.getById(it).getFirstValueOld() }
                         .forEach { vppId ->
                             if (vppId.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                            vppIdRepository.getById(vppId.id, true).getFirstValue()
+                            vppIdRepository.getById(vppId.id, true).getFirstValueOld()
                         }
                     val vppIdEnd = Clock.System.now()
                     logger.d { "Updating vppIds took ${(vppIdEnd - vppIdStart).inWholeMilliseconds}ms" }
@@ -167,7 +129,7 @@ class FullSyncUseCase(
                     courseRepository.getAll().first()
                         .forEach { course ->
                             if (course.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                            courseRepository.getById(course.id, true).getFirstValue()
+                            courseRepository.getById(course.id, true).getFirstValueOld()
                         }
                     val courseEnd = Clock.System.now()
                     logger.d { "Updating courses took ${(courseEnd - courseStart).inWholeMilliseconds}ms" }
@@ -177,7 +139,7 @@ class FullSyncUseCase(
                     subjectInstanceRepository.getAll().first()
                         .forEach { subjectInstance ->
                             if (subjectInstance.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                            subjectInstanceRepository.getById(subjectInstance.id, true).getFirstValue()
+                            subjectInstanceRepository.getById(subjectInstance.id, true).getFirstValueOld()
                         }
                     val subjectInstanceEnd = Clock.System.now()
                     logger.d { "Updating subject instances took ${(subjectInstanceEnd - subjectInstanceStart).inWholeMilliseconds}ms" }
@@ -205,7 +167,7 @@ class FullSyncUseCase(
                     profileRepository.getAll().first()
                         .mapNotNull { it.getSchool().getFirstValue() }
                         .distinctBy { it.id }
-                        .filterIsInstance<School.IndiwareSchool>()
+                        .filterIsInstance<School.Sp24School>()
                         .filter { it.credentialsValid }
                         .forEach { school ->
                             val client = indiwareRepository.getSp24Client(
@@ -217,7 +179,7 @@ class FullSyncUseCase(
                                 SchoolSettingsCredentialsState.Error -> return@forEach
                                 SchoolSettingsCredentialsState.Invalid -> {
                                     logger.w { "Indiware access for school ${school.id} (${school.name}) expired, sending notification" }
-                                    schoolRepository.setIndiwareAccessValidState(school, false)
+                                    schoolRepository.setSp24CredentialValidity(school.id, false)
                                     platformNotificationRepository.sendNotification(
                                         title = "Schulzugangsdaten abgelaufen",
                                         message = "Die Schulzugangsdaten für ${school.name} sind abgelaufen. Tippe, um sie zu aktualisieren.",
@@ -270,7 +232,7 @@ class FullSyncUseCase(
                             }
 
                             updateTimetableUseCase(school, forceUpdate = false)
-                            updateSubstitutionPlanUseCase(indiwareSchool = school, dates = listOf(today, nextDay), allowNotification = true)
+                            updateSubstitutionPlanUseCase(sp24School = school, dates = listOf(today, nextDay), allowNotification = true)
                         }
                 }
 

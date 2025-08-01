@@ -4,7 +4,6 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.lib.sp24.model.splan.student.SPlanStudentData
 import plus.vplan.lib.sp24.source.Authentication
@@ -45,7 +44,6 @@ data class IndiwareBaseData(
     val weeks: List<Week>?,
     val daysPerWeek: Int,
     val studentsHaveFullAccess: Boolean,
-    val downloadMode: School.IndiwareSchool.SchoolDownloadMode
 ) {
     data class Class(
         val name: String,

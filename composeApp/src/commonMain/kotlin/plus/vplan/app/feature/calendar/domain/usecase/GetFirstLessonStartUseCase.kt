@@ -4,12 +4,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalTime
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.LessonTimeRepository
+import kotlin.uuid.Uuid
 
 class GetFirstLessonStartUseCase(
     private val lessonTimeRepository: LessonTimeRepository
 ) {
     suspend operator fun invoke(profile: Profile): LocalTime {
         return (if (profile is Profile.StudentProfile) lessonTimeRepository.getByGroup(profile.groupId).first()
-        else lessonTimeRepository.getBySchool(profile.getSchool().first().entityId.toInt()).first()).minOfOrNull { it.start } ?: LocalTime(0, 0)
+        else lessonTimeRepository.getBySchool(Uuid.parseHex(profile.getSchool().first().entityId)).first()).minOfOrNull { it.start } ?: LocalTime(0, 0)
     }
 }

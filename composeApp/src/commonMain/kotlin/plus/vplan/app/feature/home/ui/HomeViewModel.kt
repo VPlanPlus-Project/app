@@ -23,8 +23,9 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.News
@@ -83,14 +84,14 @@ class HomeViewModel(
                             if (state.day?.date == time.date) {
                                 val currentLessons = state.day?.lessons?.first().orEmpty()
                                     .filter { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                         time.time in lessonTimeItem.start..lessonTimeItem.end
                                     }.map { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                         CurrentLesson(
                                             lesson = lesson,
                                             continuing = state.day?.lessons?.first().orEmpty().firstOrNull {
-                                                val nextLessonTimeItem = it.lessonTime.getFirstValue()!!
+                                                val nextLessonTimeItem = it.lessonTime.getFirstValueOld()!!
                                                 it.subject != null && it.subject == lesson.subject && it.subjectInstanceId == lesson.subjectInstanceId && nextLessonTimeItem.lessonNumber == lessonTimeItem.lessonNumber + 1
                                             }
                                         )
@@ -98,13 +99,13 @@ class HomeViewModel(
 
                                 val nextLessons = state.day?.lessons?.first().orEmpty()
                                     .filter { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                         lessonTimeItem.start > time.time
                                     }
                                     .groupBy { it.lessonTimeId }
                                     .toList()
                                     .associate {
-                                        App.lessonTimeSource.getById(it.first).getFirstValue()!! to it.second
+                                        App.lessonTimeSource.getById(it.first).getFirstValueOld()!! to it.second
                                     }
                                     .minByOrNull { it.key.lessonNumber }
                                     ?.value
@@ -113,14 +114,14 @@ class HomeViewModel(
                                 val remainingLessons = state.day?.lessons?.first().orEmpty()
                                     .filter { lesson ->
                                         if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                         lessonTimeItem.start > time.time
                                     }
                                     .sortedBySuspending { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValue()!!
+                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                         lessonTimeItem.start
                                     }
-                                    .groupBy { it.lessonTime.getFirstValue()!!.lessonNumber }
+                                    .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }
 
                                 state = state.copy(
                                     currentLessons = currentLessons,
@@ -134,8 +135,8 @@ class HomeViewModel(
                                     currentLessons = emptyList(),
                                     nextLessons = emptyList(),
                                     remainingLessons = state.day?.lessons?.first().orEmpty()
-                                        .sortedBySuspending { it.lessonTime.getFirstValue()!!.lessonNumber }
-                                        .groupBy { it.lessonTime.getFirstValue()!!.lessonNumber }
+                                        .sortedBySuspending { it.lessonTime.getFirstValueOld()!!.lessonNumber }
+                                        .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }
                                 )
                             }
                         }
@@ -145,9 +146,9 @@ class HomeViewModel(
                     .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.name}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
                     .collectLatest { day ->
                         state = state.copy(initDone = true)
-                        if (day.lessons.first().any { it.lessonTime.getFirstValue()!!.end >= state.currentTime.time }) state = state.copy(
+                        if (day.lessons.first().any { it.lessonTime.getFirstValueOld()!!.end >= state.currentTime.time }) state = state.copy(
                             day = day
-                        ) else if (day.nextSchoolDayId != null) App.daySource.getById(day.nextSchoolDayId, profile).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { nextDay ->
+                        ) else if (day.nextSchoolDayId != null) App.daySource.getById(day.nextSchoolDayId, profile).filterIsInstance<CacheStateOld.Done<Day>>().map { it.data }.collectLatest { nextDay ->
                             state = state.copy(day = nextDay)
                         }
                     }
@@ -159,9 +160,9 @@ class HomeViewModel(
         state = state.copy(isUpdating = true)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool)
-                updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, forceUpdate = false)
-                updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.IndiwareSchool, listOfNotNull(state.day?.date, state.day?.nextSchoolDay?.getFirstValue()?.date), allowNotification = false)
+                updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.Sp24School)
+                updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.Sp24School, forceUpdate = false)
+                updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.Sp24School, listOfNotNull(state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date), allowNotification = false)
             }
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }

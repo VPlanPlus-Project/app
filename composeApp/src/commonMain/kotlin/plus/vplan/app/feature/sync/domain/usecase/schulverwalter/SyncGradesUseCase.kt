@@ -9,8 +9,9 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Grade
@@ -47,7 +48,7 @@ class SyncGradesUseCase(
 
             val invalidVppIdsAfterTokenReload = schulverwalterRepository.checkAccess()
             invalidVppIdsAfterTokenReload.forEach { stillInvalidVppId ->
-                val vppId = App.vppIdSource.getById(stillInvalidVppId).getFirstValue() as? VppId.Active ?: return@forEach
+                val vppId = App.vppIdSource.getById(stillInvalidVppId).getFirstValueOld() as? VppId.Active ?: return@forEach
                 if (vppId.schulverwalterConnection!!.isValid == false) return@forEach
                 schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection.accessToken, false)
                 platformNotificationRepository.sendNotification(
@@ -73,7 +74,7 @@ class SyncGradesUseCase(
                 )
             }
             (invalidVppIds - invalidVppIdsAfterTokenReload).forEach { nowValidVppId ->
-                val vppId = App.vppIdSource.getById(nowValidVppId).getFirstValue() as? VppId.Active ?: return@forEach
+                val vppId = App.vppIdSource.getById(nowValidVppId).getFirstValueOld() as? VppId.Active ?: return@forEach
                 schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection!!.accessToken, true)
             }
         }
@@ -87,24 +88,24 @@ class SyncGradesUseCase(
 
         if (allowNotifications && downloadedGrades is Response.Success && downloadedGrades.data.isNotEmpty()) {
             val newGradeIds = (downloadedGrades.data - existingGrades)
-            val newGrades = combine(newGradeIds.ifEmpty { return }.map { ids -> App.gradeSource.getById(ids).filterIsInstance<CacheState.Done<Grade>>().map { it.data } }) { it.toList() }.first()
+            val newGrades = combine(newGradeIds.ifEmpty { return }.map { ids -> App.gradeSource.getById(ids).filterIsInstance<CacheStateOld.Done<Grade>>().map { it.data } }) { it.toList() }.first()
                 .filter {  LocalDate.now().toEpochDays() - it.givenAt.toEpochDays() <= 2 }
 
             if (newGrades.isEmpty()) return
             if (newGrades.size == 1 && newGrades.first().value != null) {
                 platformNotificationRepository.sendNotification(
                     title = "Neue Note",
-                    category = newGrades.first().vppId.getFirstValue()?.name ?: "Unbekannter Nutzer",
+                    category = newGrades.first().vppId.getFirstValueOld()?.name ?: "Unbekannter Nutzer",
                     message = buildString {
                         append("Du hast eine ")
                         if (getGradeLockStateUseCase().first().canAccess) append(newGrades.first().value)
                         else append("neue Note")
                         append(" in ")
-                        append(newGrades.first().collection.getFirstValue()?.subject?.getFirstValue()?.name ?: "Unbekanntes Fach")
+                        append(newGrades.first().collection.getFirstValueOld()?.subject?.getFirstValueOld()?.name ?: "Unbekanntes Fach")
                         append(" für ")
-                        append(newGrades.first().collection.getFirstValue()?.name)
+                        append(newGrades.first().collection.getFirstValueOld()?.name)
                         append(" (")
-                        append(newGrades.first().collection.getFirstValue()?.type)
+                        append(newGrades.first().collection.getFirstValueOld()?.type)
                         append(") erhalten.")
                     },
                     isLarge = false,
@@ -128,7 +129,7 @@ class SyncGradesUseCase(
             if (newGrades.size > 1) {
                 platformNotificationRepository.sendNotification(
                     title = "Neue Noten",
-                    category = newGrades.first().vppId.getFirstValue()?.name ?: "Unbekannter Nutzer",
+                    category = newGrades.first().vppId.getFirstValueOld()?.name ?: "Unbekannter Nutzer",
                     message = buildString {
                         append("Du hast ")
                         append(newGrades.filter { it.value != null }.size)

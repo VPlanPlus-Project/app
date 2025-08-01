@@ -6,6 +6,7 @@ import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
+import kotlin.uuid.Uuid
 
 data class News(
     val id: Int,
@@ -16,7 +17,7 @@ data class News(
     val versionTo: Int?,
     val dateFrom: Instant,
     val dateTo: Instant,
-    val schoolIds: List<Int>,
+    val schoolIds: List<Uuid>,
     val author: String,
     val isRead: Boolean
 ) : Item<DataTag> {

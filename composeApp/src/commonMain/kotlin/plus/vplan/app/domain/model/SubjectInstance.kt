@@ -5,6 +5,8 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
+import kotlin.uuid.Uuid
 
 /**
  * @param id The id of the subject instance. If it originates from indiware, it will be prefixed with `sp24.` followed by the indiware school id and group name and the subject instance number separated with a dot, e.g. `sp24.10000000.6c.146`
@@ -14,8 +16,8 @@ data class SubjectInstance(
     val indiwareId: String?,
     val subject: String,
     val course: Int?,
-    val teacher: Int?,
-    val groups: List<Int>,
+    val teacher: Uuid?,
+    val groups: List<Uuid>,
     val cachedAt: Instant
 ) : Item<DataTag> {
     override fun getEntityId(): String = this.id.toString()
@@ -32,7 +34,7 @@ data class SubjectInstance(
 
     suspend fun getCourseItem(): Course? {
         if (course == null) return null
-        return courseItem ?: App.courseSource.getById(course).getFirstValue().also { courseItem = it }
+        return courseItem ?: App.courseSource.getById(course).getFirstValueOld().also { courseItem = it }
     }
 
     suspend fun getTeacherItem(): Teacher? {

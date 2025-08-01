@@ -12,8 +12,9 @@ import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
@@ -39,14 +40,15 @@ class UpdateHomeworkUseCase(
         val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
         profiles.forEach { studentProfile ->
             val existingHomework = homeworkRepository.getByGroup(studentProfile.groupId).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
+            val vppSchoolId = studentProfile.getSchool().getFirstValue()?.getVppSchoolId() ?: return@forEach
             ids.addAll(
                 (homeworkRepository.download(
-                    schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess(studentProfile.getSchoolItem().id) ?: studentProfile.getSchool().getFirstValue()!!.getSchoolApiAccess()!!,
+                    schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess(vppSchoolId) ?: studentProfile.getSchool().getFirstValue()!!.getSchoolApiAccess()!!,
                     groupId = studentProfile.groupId,
                     subjectInstanceIds = studentProfile.subjectInstanceConfiguration.map { it.key },
                 ) as? Response.Success)?.data.orEmpty().also {
                     if (allowNotifications) {
-                        val newHomework = combine((it - existingHomework).ifEmpty { return@also }.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
+                        val newHomework = combine((it - existingHomework).ifEmpty { return@also }.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheStateOld.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
                             .filterIsInstance<Homework.CloudHomework>()
                             .filter { homework -> homework.createdBy != studentProfile.vppIdId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days }
                             .filter { it.subjectInstanceId == null || it.subjectInstanceId in studentProfile.subjectInstanceConfiguration.filterValues { it }.keys }
@@ -60,7 +62,7 @@ class UpdateHomeworkUseCase(
                                         append(homework.getCreatedBy().name)
                                         append(" hat eine neue Hausaufgabe ")
                                         if (homework.subjectInstance == null) append("für Klasse ${homework.group?.getFirstValue()?.name}")
-                                        else append("für ${homework.subjectInstance?.getFirstValue()?.subject}")
+                                        else append("für ${homework.subjectInstance?.getFirstValueOld()?.subject}")
                                         append(" erstellt, welche bis ")
                                         append(homework.dueTo.let { date ->
                                             (LocalDate.now() untilRelativeText date) ?: date.format(LocalDate.Format {
@@ -112,7 +114,7 @@ class UpdateHomeworkUseCase(
                 .getAll()
                 .first()
                 .asSequence()
-                .filterIsInstance<CacheState.Done<Homework>>()
+                .filterIsInstance<CacheStateOld.Done<Homework>>()
                 .map { it.data }
                 .filterIsInstance<Homework.CloudHomework>()
                 .filter { it.id !in ids }

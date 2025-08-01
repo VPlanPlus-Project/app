@@ -15,9 +15,10 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import kotlin.uuid.Uuid
 
 sealed class Homework(
@@ -36,7 +37,7 @@ sealed class Homework(
     val subjectInstance by lazy { this.subjectInstanceId?.let { App.subjectInstanceSource.getById(it) } }
     val tasks by lazy {
         if (taskIds.isEmpty()) return@lazy flowOf(emptyList())
-        combine(taskIds.map { id -> App.homeworkTaskSource.getById(id).filterIsInstance<CacheState.Done<HomeworkTask>>().map { it.data } }) { it.toList() }
+        combine(taskIds.map { id -> App.homeworkTaskSource.getById(id).filterIsInstance<CacheStateOld.Done<HomeworkTask>>().map { it.data } }) { it.toList() }
     }
 
     abstract val group: Flow<CacheState<Group>>?
@@ -47,14 +48,14 @@ sealed class Homework(
     var fileItems: List<File>? = null
         private set
 
-    fun getTasksFlow() = if (taskIds.isEmpty()) flowOf(emptyList()) else combine(taskIds.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheState.Done<HomeworkTask>>() }) { it.toList().map { it.data }.also { taskItems = it } }
+    fun getTasksFlow() = if (taskIds.isEmpty()) flowOf(emptyList()) else combine(taskIds.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheStateOld.Done<HomeworkTask>>() }) { it.toList().map { it.data }.also { taskItems = it } }
     fun getStatusFlow(profile: Profile.StudentProfile) = getTasksFlow().map { tasks ->
         if (tasks.all { it.isDone(profile) }) HomeworkStatus.DONE
         else if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date > dueTo) HomeworkStatus.OVERDUE
         else HomeworkStatus.PENDING
     }
 
-    fun getFilesFlow() = if (files.isEmpty()) flowOf(emptyList()) else combine(files.map { App.fileSource.getById(it).filterIsInstance<CacheState.Done<File>>() }) { it.toList().map { it.data } }
+    fun getFilesFlow() = if (files.isEmpty()) flowOf(emptyList()) else combine(files.map { App.fileSource.getById(it).filterIsInstance<CacheStateOld.Done<File>>() }) { it.toList().map { it.data } }
 
     suspend fun getTaskItems(): List<HomeworkTask> {
         return taskItems ?: taskIds.mapNotNull { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
@@ -62,7 +63,7 @@ sealed class Homework(
 
     suspend fun getFileItems(): List<File> {
         if (files.isEmpty()) return emptyList()
-        return fileItems ?: combine(files.map { App.fileSource.getById(it) }) { it.toList().mapNotNull { (it as? CacheState.Done<File>)?.data } }.first().also { fileItems = it }
+        return fileItems ?: combine(files.map { App.fileSource.getById(it) }) { it.toList().mapNotNull { (it as? CacheStateOld.Done<File>)?.data } }.first().also { fileItems = it }
     }
 
     data class HomeworkTask(
@@ -80,7 +81,7 @@ sealed class Homework(
             private set
 
         suspend fun getHomeworkItem(): Homework? {
-            return homeworkItem ?: App.homeworkSource.getById(homework).getFirstValue().also { homeworkItem = it }
+            return homeworkItem ?: App.homeworkSource.getById(homework).getFirstValueOld().also { homeworkItem = it }
         }
 
         fun isDone(profile: Profile.StudentProfile) = (profile.id in doneByProfiles && profile.vppIdId == null) || profile.vppIdId in doneByVppIds
@@ -105,7 +106,7 @@ sealed class Homework(
         override val files: List<Int>,
         override val cachedAt: Instant,
         val isPublic: Boolean,
-        val groupId: Int?,
+        val groupId: Uuid?,
         val createdBy: Int,
     ) : Homework(
         creator = AppEntity.VppId(createdBy)
@@ -149,14 +150,14 @@ sealed class Homework(
 
         suspend fun getCreatedByProfile(): Profile.StudentProfile {
             return createdByProfileItem ?: createdByProfile.let { createdByProfileId ->
-                App.profileSource.getById(createdByProfileId).getFirstValue().let { it as Profile.StudentProfile }.also { createdByProfileItem = it }
+                App.profileSource.getById(createdByProfileId).getFirstValueOld().let { it as Profile.StudentProfile }.also { createdByProfileItem = it }
             }
         }
 
         @OptIn(ExperimentalCoroutinesApi::class)
         override val group: Flow<CacheState<Group>> by lazy {
             App.profileSource.getById(createdByProfile)
-                .filterIsInstance<CacheState.Done<Profile.StudentProfile>>()
+                .filterIsInstance<CacheStateOld.Done<Profile.StudentProfile>>()
                 .map { it.data }
                 .flatMapLatest { App.groupSource.getById(it.groupId) }
         }

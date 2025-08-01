@@ -7,13 +7,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.FileRepository
@@ -37,7 +37,7 @@ class CreateAssessmentUseCase(
         type: Assessment.Type,
         selectedFiles: List<AttachedFile>
     ): Boolean {
-        val profile = keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().first().let { App.profileSource.getById(Uuid.parseHex(it)).getFirstValue() as? Profile.StudentProfile } ?: return false
+        val profile = keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().first().let { App.profileSource.getById(Uuid.parseHex(it)).getFirstValueOld() as? Profile.StudentProfile } ?: return false
         val id: Int
 
         val assessment: Assessment

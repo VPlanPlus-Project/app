@@ -1,16 +1,11 @@
 package plus.vplan.app.data.source.database
 
-import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
-import androidx.room.DeleteColumn
-import androidx.room.RenameColumn
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
-import androidx.room.migration.AutoMigrationSpec
-import androidx.sqlite.SQLiteConnection
-import androidx.sqlite.execSQL
+import plus.vplan.app.data.source.database.converters.AliasPrefixConverter
 import plus.vplan.app.data.source.database.converters.InstantConverter
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
 import plus.vplan.app.data.source.database.converters.LocalDateTimeConverter
@@ -50,6 +45,7 @@ import plus.vplan.app.data.source.database.model.database.DbDay
 import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.database.model.database.DbGroup
+import plus.vplan.app.data.source.database.model.database.DbGroupAlias
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbHoliday
 import plus.vplan.app.data.source.database.model.database.DbHomework
@@ -66,8 +62,10 @@ import plus.vplan.app.data.source.database.model.database.DbProfileHomeworkIndex
 import plus.vplan.app.data.source.database.model.database.DbProfileSubstitutionPlanCache
 import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
 import plus.vplan.app.data.source.database.model.database.DbRoom
+import plus.vplan.app.data.source.database.model.database.DbRoomAlias
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbSchool
+import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
 import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterCollection
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterFinalGrade
@@ -79,6 +77,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.DbTeacher
+import plus.vplan.app.data.source.database.model.database.DbTeacherAlias
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.DbVppId
@@ -97,7 +96,6 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessme
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsSchool
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterCollection
@@ -111,12 +109,18 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
 @Database(
     entities = [
         DbSchool::class,
+        DbSchoolAlias::class,
         DbSchoolIndiwareAccess::class,
         DbIndiwareTimetableMetadata::class,
 
         DbGroup::class,
+        DbGroupAlias::class,
+
         DbTeacher::class,
+        DbTeacherAlias::class,
+
         DbRoom::class,
+        DbRoomAlias::class,
 
         DbProfile::class,
         DbGroupProfile::class,
@@ -164,8 +168,6 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
 
         DbFile::class,
 
-        FKSchoolGroup::class,
-
         DbAssessment::class,
         FKAssessmentFile::class,
 
@@ -192,27 +194,6 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         FKNewsSchool::class,
     ],
     version = VppDatabase.DATABASE_VERSION,
-    autoMigrations = [
-        AutoMigration(from = 1, to = 2),
-        AutoMigration(from = 2, to = 3, spec = VppDatabase.Migration3::class),
-        AutoMigration(from = 3, to = 4),
-        AutoMigration(
-            from = 4,
-            to = 5,
-            spec = VppDatabase.Migration5::class
-        ), // Delete version column of substitution plan lesson
-        AutoMigration(
-            from = 5,
-            to = 6,
-            spec = VppDatabase.Migration6::class
-        ), // Delete version column of timetable lesson
-        AutoMigration(from = 6, to = 7), // Add fcm log
-        AutoMigration(
-            from = 7,
-            to = 8,
-            spec = VppDatabase.Migration7::class
-        ) // Remove unused indices
-    ],
     exportSchema = true
 )
 @TypeConverters(
@@ -221,7 +202,8 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         LocalDateConverter::class,
         LocalTimeConverter::class,
         LocalDateTimeConverter::class,
-        InstantConverter::class
+        InstantConverter::class,
+        AliasPrefixConverter::class
     ]
 )
 @ConstructedBy(VppDatabaseConstructor::class)
@@ -260,52 +242,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 8
-    }
-
-    @RenameColumn(
-        tableName = "assessments",
-        fromColumnName = "subject_instance_ids",
-        toColumnName = "subject_instance_id"
-    )
-    class Migration3 : AutoMigrationSpec
-
-    @DeleteColumn(tableName = "substitution_plan_lesson", columnName = "version")
-    class Migration5 : AutoMigrationSpec
-
-    @DeleteColumn(tableName = "timetable_lessons", columnName = "version")
-    class Migration6 : AutoMigrationSpec
-
-    class Migration7 : AutoMigrationSpec {
-        override fun onPostMigrate(connection: SQLiteConnection) {
-            connection.execSQL("""
-                CREATE TABLE weeks_dg_tmp
-                (
-                    id            TEXT    NOT NULL
-                        PRIMARY KEY,
-                    school_id     INTEGER NOT NULL
-                        REFERENCES schools
-                            ON DELETE CASCADE,
-                    calendar_week INTEGER NOT NULL,
-                    start         TEXT    NOT NULL,
-                    end           TEXT    NOT NULL,
-                    week_type     TEXT    NOT NULL,
-                    week_index    INTEGER NOT NULL
-                );
-
-                INSERT INTO weeks_dg_tmp(id, school_id, calendar_week, start, end, week_type, week_index)
-                SELECT id, school_id, calendar_week, start, end, week_type, week_index
-                FROM weeks;
-
-                DROP TABLE weeks;
-
-                ALTER TABLE weeks_dg_tmp
-                    RENAME TO weeks;
-
-                CREATE UNIQUE INDEX index_weeks_id
-                    ON weeks (id);
-            """.trimIndent())
-        }
+        const val DATABASE_VERSION = 1
     }
 }
 

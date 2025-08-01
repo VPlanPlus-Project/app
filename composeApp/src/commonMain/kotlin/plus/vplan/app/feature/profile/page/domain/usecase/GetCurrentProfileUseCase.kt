@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.mapLatest
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -21,7 +21,7 @@ class GetCurrentProfileUseCase(
         keyValueRepository.get(Keys.CURRENT_PROFILE).collectLatest { currentProfileId ->
             if (currentProfileId == null) return@collectLatest
             App.profileSource.getById(Uuid.parseHex(currentProfileId))
-                .filterIsInstance<CacheState.Done<Profile>>()
+                .filterIsInstance<CacheStateOld.Done<Profile>>()
                 .mapLatest { it.data }
                 .collectLatest { send(it) }
         }

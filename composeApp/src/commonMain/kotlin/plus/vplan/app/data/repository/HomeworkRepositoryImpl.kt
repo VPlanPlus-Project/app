@@ -4,6 +4,7 @@ package plus.vplan.app.data.repository
 
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.observer.ResponseObserver
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -24,6 +25,7 @@ import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -43,8 +45,9 @@ import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
@@ -120,7 +123,7 @@ class HomeworkRepositoryImpl(
         )
     }
 
-    override fun getByGroup(groupId: Int): Flow<List<Homework>> {
+    override fun getByGroup(groupId: Uuid): Flow<List<Homework>> {
         return vppDatabase.homeworkDao.getAll().map { flowData ->
             val subjectInstances = vppDatabase.subjectInstanceDao.getByGroup(groupId).first()
             flowData.filter {
@@ -129,12 +132,12 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>> {
-        return vppDatabase.homeworkDao.getTaskById(id).map { it?.toModel() }.map { if (it == null) CacheState.NotExisting(id.toString()) else CacheState.Done(it) }
+    override fun getTaskById(id: Int): Flow<CacheStateOld<Homework.HomeworkTask>> {
+        return vppDatabase.homeworkDao.getTaskById(id).map { it?.toModel() }.map { if (it == null) CacheStateOld.NotExisting(id.toString()) else CacheStateOld.Done(it) }
     }
 
-    override fun getAll(): Flow<List<CacheState<Homework>>> {
-        return vppDatabase.homeworkDao.getAll().map { it.map { embeddedHomework -> CacheState.Done(embeddedHomework.toModel()) } }
+    override fun getAll(): Flow<List<CacheStateOld<Homework>>> {
+        return vppDatabase.homeworkDao.getAll().map { it.map { embeddedHomework -> CacheStateOld.Done(embeddedHomework.toModel()) } }
     }
 
     override fun getByDate(date: LocalDate): Flow<List<Homework>> {
@@ -150,20 +153,21 @@ class HomeworkRepositoryImpl(
         return vppDatabase.homeworkDao.getAll().map { it.map { homework -> homework.homework.id } }
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Homework>> {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<Homework>> {
+        return flowOf()
         if (id < 0) return vppDatabase.homeworkDao.getById(id).map {
-            if (it == null) CacheState.NotExisting(id.toString())
-            else CacheState.Done(it.toModel())
+            if (it == null) CacheStateOld.NotExisting(id.toString())
+            else CacheStateOld.Done(it.toModel())
         }
         return channelFlow {
             val databaseObject = vppDatabase.homeworkDao.getById(id)
             if (!forceReload && databaseObject.first() != null) return@channelFlow sendAll(databaseObject.map {
-                if (it == null) CacheState.NotExisting(id.toString())
-                else CacheState.Done(it.toModel())
+                if (it == null) CacheStateOld.NotExisting(id.toString())
+                else CacheStateOld.Done(it.toModel())
             })
 
             safeRequest(
-                onError = { return@channelFlow send(CacheState.Error(id.toString(), it)) }
+                onError = { return@channelFlow send(CacheStateOld.Error(id.toString(), it)) }
             ) {
                 val existing = vppDatabase.homeworkDao.getById(id).first()
                 var schoolApiAccess: SchoolApiAccess? = null
@@ -172,10 +176,10 @@ class HomeworkRepositoryImpl(
                     schoolApiAccess =
                         schoolApiAccess
                             ?: (if (existing.homework.subjectInstanceId != null) vppDatabase.subjectInstanceDao.getById(existing.homework.subjectInstanceId).first()?.groups
-                                ?.mapNotNull { vppDatabase.groupDao.getById(it.groupId).first() }
-                                ?.mapNotNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
+                                ?.mapNotNull { vppDatabase.groupDao.findById(it.groupId).first() }
+                                ?.mapNotNull { vppDatabase.schoolDao.findById(it.group.schoolId).first()?.toModel()?.getSchoolApiAccess() }
                             else existing.homework.groupId?.let {
-                                vppDatabase.groupDao.getById(existing.homework.groupId).first()?.school?.schoolId?.let {
+                                vppDatabase.groupDao.findById(existing.homework.groupId).first()?.group?.schoolId?.let {
                                     listOf(vppDatabase.schoolDao.findById(it).first()?.toModel()?.getSchoolApiAccess())
                                 }
                             })
@@ -190,20 +194,26 @@ class HomeworkRepositoryImpl(
                     }
                     if (metadataResponse.status == HttpStatusCode.NotFound && metadataResponse.isResponseFromBackend()) {
                         vppDatabase.homeworkDao.deleteById(listOf(id))
-                        return@channelFlow send(CacheState.NotExisting(id.toString()))
+                        return@channelFlow send(CacheStateOld.NotExisting(id.toString()))
                     }
-                    if (metadataResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
+                    if (metadataResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheStateOld.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
 
                     val metadataResponseData = ResponseDataWrapper.fromJson<HomeworkMetadataResponse>(metadataResponse.bodyAsText())
-                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
+                        ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
 
                     val schools = vppDatabase.schoolDao.getAll().first()
-                    schoolApiAccess = schools.filter { it.school.id in metadataResponseData.schoolIds }.map { it.toModel() }.firstNotNullOfOrNull { it.getSchoolApiAccess() }
+                    schoolApiAccess = schools
+                        .map { it.toModel() }
+                        .filter {
+                            val vppId = it.getVppSchoolId() ?: return@filter false
+                            vppId in metadataResponseData.schoolIds
+                        }
+                        .firstNotNullOfOrNull { it.getSchoolApiAccess() }
                 }
 
                 if (schoolApiAccess == null) {
                     logger.e { "No school api access found for homework $id" }
-                    return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("No school api access found for homework $id")))
+                    return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.Other("No school api access found for homework $id")))
                 }
 
                 val homeworkResponse = httpClient.get {
@@ -212,11 +222,11 @@ class HomeworkRepositoryImpl(
                         parameters.append("include_tasks", "true")
                         parameters.append("include_files", "true")
                     }.build())
-                    schoolApiAccess.authentication(this)
+                    schoolApiAccess!!.authentication(this)
                 }
-                if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), homeworkResponse.toErrorResponse<Homework>()))
+                if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheStateOld.Error(id.toString(), homeworkResponse.toErrorResponse<Homework>()))
                 val data = ResponseDataWrapper.fromJson<HomeworkGetResponse>(homeworkResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
+                    ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
 
                 vppDatabase.homeworkDao.deleteFileHomeworkConnections(listOf(id))
                 vppDatabase.homeworkDao.upsertMany(
@@ -224,7 +234,7 @@ class HomeworkRepositoryImpl(
                         DbHomework(
                             id = id,
                             subjectInstanceId = data.subjectInstance?.id,
-                            groupId = if (data.subjectInstance == null) data.group.id else null,
+                            groupId = Uuid.NIL,
                             createdAt = Instant.fromEpochSeconds(data.createdAt),
                             dueTo = LocalDate.parse(data.dueTo),
                             createdBy = data.createdBy.id,
@@ -243,7 +253,7 @@ class HomeworkRepositoryImpl(
                     homeworkTaskDoneAccount = if (schoolApiAccess !is SchoolApiAccess.VppIdAccess) emptyList() else data.tasks.map { it.value }.mapNotNull {
                         DbHomeworkTaskDoneAccount(
                             taskId = it.id,
-                            vppId = schoolApiAccess.id,
+                            vppId = schoolApiAccess.vppIdId,
                             isDone = it.done ?: return@mapNotNull null
                         )
                     },
@@ -297,8 +307,9 @@ class HomeworkRepositoryImpl(
     }
 
     override suspend fun editHomeworkSubjectInstance(homework: Homework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile) {
+        TODO()
         require((subjectInstance == null) xor (group == null)) { "Either subjectInstance or group must not be null" }
-        val oldSubjectInstance = homework.subjectInstance?.getFirstValue()
+        val oldSubjectInstance = homework.subjectInstance?.getFirstValueOld()
         val oldGroup = homework.group?.getFirstValue()
         vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, subjectInstance?.id, group?.id)
 
@@ -309,7 +320,7 @@ class HomeworkRepositoryImpl(
             }.build()) {
                 profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
                 contentType(ContentType.Application.Json)
-                setBody(HomeworkUpdateSubjectInstanceRequest(subjectInstanceId = subjectInstance?.id, groupId = group?.id))
+                setBody(HomeworkUpdateSubjectInstanceRequest(subjectInstanceId = subjectInstance?.id, groupId = -1))
             }
             if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, oldSubjectInstance?.id, oldGroup?.id)
         }
@@ -435,7 +446,8 @@ class HomeworkRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Int, subjectInstanceIds: List<Int>): Response<List<Int>> {
+    override suspend fun download(schoolApiAccess: SchoolApiAccess, groupId: Uuid, subjectInstanceIds: List<Int>): Response<List<Int>> {
+        return Response.Error.Cancelled
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url(URLBuilder(api).apply {
@@ -457,7 +469,7 @@ class HomeworkRepositoryImpl(
                     DbHomework(
                         id = homework.id,
                         subjectInstanceId = homework.subjectInstance?.id,
-                        groupId = if (homework.subjectInstance == null) homework.group.id else null,
+                        groupId = Uuid.NIL,
                         createdAt = Instant.fromEpochSeconds(homework.createdAt),
                         dueTo = LocalDate.parse(homework.dueTo),
                         createdBy = homework.createdBy.id,
@@ -480,7 +492,7 @@ class HomeworkRepositoryImpl(
                     homework.tasks.map { it.value }.mapNotNull {
                         DbHomeworkTaskDoneAccount(
                             taskId = it.id,
-                            vppId = schoolApiAccess.id,
+                            vppId = schoolApiAccess.vppIdId,
                             isDone = it.done ?: return@mapNotNull null
                         )
                     }
@@ -513,6 +525,7 @@ class HomeworkRepositoryImpl(
         isPublic: Boolean,
         tasks: List<String>
     ): Response<CreateHomeworkResponse> {
+        TODO()
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
                 url(URLBuilder(api).apply {
@@ -523,7 +536,7 @@ class HomeworkRepositoryImpl(
                 setBody(
                     HomeworkPostRequest(
                         subjectInstance = subjectInstance?.id,
-                        groupId = group.id,
+                        groupId = -1,
                         dueTo = until.toString(),
                         isPublic = isPublic,
                         tasks = tasks

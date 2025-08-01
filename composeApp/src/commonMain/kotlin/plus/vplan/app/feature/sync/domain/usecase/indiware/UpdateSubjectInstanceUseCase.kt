@@ -3,6 +3,7 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.School
@@ -23,7 +24,7 @@ class UpdateSubjectInstanceUseCase(
     private val teacherRepository: TeacherRepository,
     private val courseRepository: CourseRepository
 ) {
-    suspend operator fun invoke(school: School.IndiwareSchool, providedClient: IndiwareClient?): Response.Error? {
+    suspend operator fun invoke(school: School.Sp24School, providedClient: IndiwareClient?): Response.Error? {
         val client = providedClient ?: indiwareRepository.getSp24Client(
             Authentication(school.sp24Id, school.username, school.password),
             withCache = true
@@ -49,7 +50,7 @@ class UpdateSubjectInstanceUseCase(
     }
 
     private suspend fun updateCourses(
-        school: School.IndiwareSchool,
+        school: School.Sp24School,
         client: IndiwareClient,
         existingCourses: List<Course>,
         teachers: List<Teacher>
@@ -59,7 +60,7 @@ class UpdateSubjectInstanceUseCase(
 
         val downloadedCourseEntities = downloadedCourses
             .map { course -> Course.fromIndiware(school.sp24Id, course.name, teacher = teachers.firstOrNull { it.name == course.teacher }) }
-            .mapNotNull { courseRepository.getByIndiwareId(it).getFirstValue() }
+            .mapNotNull { courseRepository.getByIndiwareId(it).getFirstValueOld() }
 
         downloadedCourses.let {
             val existingCourseIds = existingCourses.map { it.id }
@@ -83,7 +84,7 @@ class UpdateSubjectInstanceUseCase(
             (client.subjectInstances.getSubjectInstances() as? plus.vplan.lib.sp24.source.Response.Success) ?: return false
 
         val downloadedSubjectEntities = downloadedSubjectInstances.data.subjectInstances
-            .mapNotNull { subjectInstanceRepository.lookupBySp24Id("sp24.$sp24SchoolId.${it.id}").getFirstValue() }
+            .mapNotNull { subjectInstanceRepository.lookupBySp24Id("sp24.$sp24SchoolId.${it.id}").getFirstValueOld() }
 
         downloadedSubjectInstances.let {
             val existingSubjectInstanceIds = existingSubjectInstances.map { it.id }

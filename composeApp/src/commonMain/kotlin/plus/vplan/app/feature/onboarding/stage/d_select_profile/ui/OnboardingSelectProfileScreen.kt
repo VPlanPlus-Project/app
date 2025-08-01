@@ -41,8 +41,10 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.collectAsLoadingState
-import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsLoadingStateOld
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
@@ -109,9 +111,9 @@ private fun OnboardingSelectProfileScreen(
                                 .padding(bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) listHost@{
-                            @Suppress("ConvertCallChainIntoSequence") // collectAsResultingFlow is a @Composable that cannot be invoked in a sequence
+                            @Suppress("ConvertCallChainIntoSequence") // collectAsResultingFlowOld is a @Composable that cannot be invoked in a sequence
                             val courses = state.subjectInstances.keys.mapNotNull { it.course }.toSet()
-                                .map { App.courseSource.getById(it).collectAsResultingFlow() }
+                                .map { App.courseSource.getById(it).collectAsResultingFlowOld() }
                                 .mapNotNull { it.value }
                                 .sortedBy { it.name }
 
@@ -210,9 +212,9 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                     if (subjectInstance.course == null) return@subjectAndCourse
-                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.course).collectAsLoadingState(subjectInstance.course.toString())
-                                                    if (subjectInstanceState is CacheState.Done) Text(
-                                                        text = (subjectInstanceState as CacheState.Done).data.name,
+                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.course).collectAsLoadingStateOld(subjectInstance.course.toString())
+                                                    if (subjectInstanceState is CacheStateOld.Done) Text(
+                                                        text = (subjectInstanceState as CacheStateOld.Done).data.name,
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )

@@ -13,8 +13,9 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
@@ -55,17 +56,17 @@ class UpdateAssessmentUseCase(
             (apiResponse.data - existing)
                 .also { ids ->
                     if (ids.isEmpty() || !allowNotifications) return@forEachProfile
-                    combine(ids.map { assessmentId -> App.assessmentSource.getById(assessmentId).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }.first()
+                    combine(ids.map { assessmentId -> App.assessmentSource.getById(assessmentId).filterIsInstance<CacheStateOld.Done<Assessment>>().map { it.data } }) { it.toList() }.first()
                         .filter { it.creator is AppEntity.VppId && it.creator.id != profile.vppIdId && (it.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
-                        .filter { it.subjectInstance.getFirstValue()!!.id in profile.subjectInstanceConfiguration.filterValues { it }.keys }
+                        .filter { it.subjectInstance.getFirstValueOld()!!.id in profile.subjectInstanceConfiguration.filterValues { it }.keys }
                         .let { newAssessments ->
                             if (newAssessments.isEmpty()) return@forEachProfile
                             if (newAssessments.size == 1) {
                                 val message =  buildString {
                                     newAssessments.first().let { assessment ->
-                                        append((assessment.creator as AppEntity.VppId).vppId.getFirstValue()?.name ?: "Unbekannter Nutzer")
+                                        append((assessment.creator as AppEntity.VppId).vppId.getFirstValueOld()?.name ?: "Unbekannter Nutzer")
                                         append(" hat eine neue Leistungserhebung in ")
-                                        append(assessment.subjectInstance.getFirstValue()?.subject ?: "einem Fach")
+                                        append(assessment.subjectInstance.getFirstValueOld()?.subject ?: "einem Fach")
                                         append(" für ")
                                         (assessment.date untilRelativeText LocalDate.now())?.let { append(it) } ?: append(assessment.date.format(LocalDate.Format {
                                             dayOfWeek(shortDayOfWeekNames)

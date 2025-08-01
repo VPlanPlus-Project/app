@@ -24,7 +24,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.schulverwalter.Year
 import plus.vplan.app.domain.repository.schulverwalter.YearRepository
@@ -34,16 +34,16 @@ class YearRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase
 ) : YearRepository {
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Year>> = channelFlow {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<Year>> = channelFlow {
         val yearFlow = vppDatabase.yearDao.getById(id).map { it?.toModel() }
         if (!forceReload) {
             var hadData = false
-            sendAll(yearFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
+            sendAll(yearFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheStateOld.Done(it) })
             if (hadData) return@channelFlow
         }
-        send(CacheState.Loading(id.toString()))
+        send(CacheStateOld.Loading(id.toString()))
 
-        safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+        safeRequest(onError = { trySend(CacheStateOld.Error(id, it)) }) {
             val existing = vppDatabase.yearDao.getById(id).first()
             val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.year.userForRequest).first()) }
                 ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
@@ -58,9 +58,9 @@ class YearRepositoryImpl(
                     }
                     bearerAuth(accessToken.schulverwalterAccessToken)
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Year>()))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheStateOld.Error(id.toString(), response.toErrorResponse<Year>()))
                 val data = ResponseDataWrapper.fromJson<List<YearItemResponse>>(response.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                    ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
                 vppDatabase.yearDao.upsert(
                     years = data.map {
@@ -101,7 +101,7 @@ class YearRepositoryImpl(
                 }
             }
 
-            if (yearFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
+            if (yearFlow.first() == null) return@channelFlow send(CacheStateOld.NotExisting(id.toString()))
             return@channelFlow sendAll(getById(id, false))
         }
     }

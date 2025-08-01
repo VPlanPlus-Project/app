@@ -12,25 +12,26 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.repository.GroupRepository
+import kotlin.uuid.Uuid
 
 class GroupSource(
     private val groupRepository: GroupRepository
 ) {
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Group>>>()
-    private val cacheItems = hashMapOf<Int, CacheState<Group>>()
+    private val flows = hashMapOf<Uuid, MutableSharedFlow<CacheState<Group>>>()
+    private val cacheItems = hashMapOf<Uuid, CacheState<Group>>()
 
-    fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<Group>> {
+    fun getById(id: Uuid, forceReload: Boolean = false): Flow<CacheState<Group>> {
         if (forceReload) flows.remove(id)
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Group>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
-                groupRepository.getById(id, forceReload).collectLatest { flow.tryEmit(it) }
+                groupRepository.getByLocalId(id).collectLatest { flow.tryEmit(it?.let { CacheState.Done(it) } ?: CacheState.NotExisting(id.toHexString())) }
             }
             flow
         }
     }
 
-    suspend fun getSingleById(id: Int): Group? {
+    suspend fun getSingleById(id: Uuid): Group? {
         return (cacheItems[id] as? CacheState.Done<Group>)?.data ?: getById(id).getFirstValue()
     }
 }

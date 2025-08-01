@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
@@ -27,19 +28,20 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGro
 import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.utils.sendAll
+import kotlin.uuid.Uuid
 
 class CourseRepositoryImpl(
     private val vppDatabase: VppDatabase,
     private val httpClient: HttpClient
 ) : CourseRepository {
-    override fun getByGroup(groupId: Int): Flow<List<Course>> {
+    override fun getByGroup(groupId: Uuid): Flow<List<Course>> {
         return vppDatabase.courseDao.getByGroup(groupId)
             .map { it.map { course -> course.toModel() } }
     }
@@ -48,11 +50,12 @@ class CourseRepositoryImpl(
         return vppDatabase.courseDao.getAll().map { it.map { course -> course.toModel() } }
     }
 
-    override fun getBySchool(schoolId: Int, forceReload: Boolean): Flow<List<Course>> {
+    override fun getBySchool(schoolId: Uuid, forceReload: Boolean): Flow<List<Course>> {
+        return flowOf()
         if (forceReload) {
             return channelFlow {
                 safeRequest(onError = { trySend(emptyList()) }) {
-                    val school = vppDatabase.schoolDao.findById(schoolId).first()?.toModel() ?: return@channelFlow
+                    val school = vppDatabase.schoolDao.findById(TODO("was $schoolId")).first()?.toModel() ?: return@channelFlow
                     val response = httpClient.get {
                         url(URLBuilder(api).apply {
                             appendPathSegments("api", "v2.2", "subject", "course")
@@ -66,16 +69,16 @@ class CourseRepositoryImpl(
                         courses = data.map {
                             DbCourse(
                                 id = it.courseId,
-                                indiwareId = if (school is School.IndiwareSchool) "sp24.${school.sp24Id}.${it.name}+${it.teacher?.value?.name ?: ""}" else null,
+                                indiwareId = if (school is School.Sp24School) "sp24.${school.sp24Id}.${it.name}+${it.teacher?.value?.name ?: ""}" else null,
                                 name = it.name,
-                                teacherId = it.teacher?.teacher,
+                                teacherId = Uuid.NIL,
                                 cachedAt = Clock.System.now()
                             )
                         },
                         courseGroupCrossovers = data.flatMap {
                             it.groups.map { groupId ->
                                 DbCourseGroupCrossover(
-                                    groupId = groupId.group,
+                                    groupId = Uuid.NIL,
                                     courseId = it.courseId
                                 )
                             }
@@ -89,24 +92,25 @@ class CourseRepositoryImpl(
             .map { it.map { course -> course.toModel() } }
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Course>> {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<Course>> {
+        return flowOf()
         val courseFlow = vppDatabase.courseDao.getById(id).map { it?.toModel() }
         return channelFlow {
             if (!forceReload) {
                 var hadData = false
-                sendAll(courseFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
+                sendAll(courseFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheStateOld.Done(it) })
                 if (hadData) return@channelFlow
             }
 
-            trySend(CacheState.Loading(id.toString()))
+            trySend(CacheStateOld.Loading(id.toString()))
 
-            safeRequest(onError = { trySend(CacheState.Error(id.toString(), it)) }) {
+            safeRequest(onError = { trySend(CacheStateOld.Error(id.toString(), it)) }) {
                 val existing = vppDatabase.courseDao.getById(id).first()
                 var schoolApiAccess: SchoolApiAccess? = null
                 if (existing != null) {
                     schoolApiAccess = existing.groups
-                        .mapNotNull { vppDatabase.groupDao.getById(it.groupId).first() }
-                        .firstNotNullOfOrNull { vppDatabase.schoolDao.findById(it.school.schoolId).first()?.toModel()?.getSchoolApiAccess() }
+                        .mapNotNull { vppDatabase.groupDao.findById(it.groupId).first() }
+                        .firstNotNullOfOrNull { vppDatabase.schoolDao.findById(it.group.schoolId).first()?.toModel()?.getSchoolApiAccess() }
                 }
                 if (schoolApiAccess == null) {
                     val accessResponse = httpClient.get({
@@ -116,16 +120,16 @@ class CourseRepositoryImpl(
                     })
                     if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
                         vppDatabase.courseDao.deleteById(listOf(id))
-                        return@channelFlow run { trySend(CacheState.NotExisting(id.toString())) }
+                        return@channelFlow run { trySend(CacheStateOld.NotExisting(id.toString())) }
                     }
 
-                    if (!accessResponse.status.isSuccess()) return@channelFlow run { trySend(CacheState.Error(id.toString(), accessResponse.toErrorResponse<Course>())) }
+                    if (!accessResponse.status.isSuccess()) return@channelFlow run { trySend(CacheStateOld.Error(id.toString(), accessResponse.toErrorResponse<Course>())) }
                     val accessData = ResponseDataWrapper.fromJson<CourseUnauthenticatedResponse>(accessResponse.bodyAsText())
-                        ?: return@channelFlow run { trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText()))) }
+                        ?: return@channelFlow run { trySend(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText()))) }
 
                     schoolApiAccess = accessData.schoolIds.mapNotNull {
-                        val school = vppDatabase.schoolDao.findById(it).first()?.toModel() ?: return@mapNotNull null
-                        if (school is School.IndiwareSchool && !school.credentialsValid) return@mapNotNull null
+                        val school = vppDatabase.schoolDao.findById(TODO("Was $id")).first()?.toModel() ?: return@mapNotNull null
+                        if (school is School.Sp24School && !school.credentialsValid) return@mapNotNull null
                         return@mapNotNull school.getSchoolApiAccess()
                     }.firstOrNull()
                 }
@@ -133,7 +137,7 @@ class CourseRepositoryImpl(
                 if (schoolApiAccess == null) {
                     Logger.i { "No school to update course $id" }
                     vppDatabase.courseDao.deleteById(id)
-                    trySend(CacheState.NotExisting(id.toString()))
+                    trySend(CacheStateOld.NotExisting(id.toString()))
                     return@channelFlow
                 }
 
@@ -142,28 +146,24 @@ class CourseRepositoryImpl(
                         appendPathSegments("api", "v2.2", "subject", "course", id.toString())
                         parameters.append("include_teacher", "true")
                     }.build())
-                    schoolApiAccess.authentication(this)
+                    schoolApiAccess!!.authentication(this)
                 })
-                if (!response.status.isSuccess()) return@channelFlow run { trySend(CacheState.Error(id.toString(), response.toErrorResponse<Course>())) }
+                if (!response.status.isSuccess()) return@channelFlow run { trySend(CacheStateOld.Error(id.toString(), response.toErrorResponse<Course>())) }
                 val data = ResponseDataWrapper.fromJson<CourseItemResponse>(response.bodyAsText())
-                    ?: return@channelFlow run { trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText()))) }
+                    ?: return@channelFlow run { trySend(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText()))) }
 
                 vppDatabase.courseDao.upsert(
                     courses = listOf(DbCourse(
                         id = data.courseId,
-                        indiwareId = (schoolApiAccess as? SchoolApiAccess.IndiwareAccess)?.let {
-                            val group = data.groups.firstOrNull()?.group?.let { groupId -> vppDatabase.groupDao.getById(groupId).first()?.group?.name }
-                            val teacher = data.teacher?.value?.name
-                            "sp24.${it.sp24id}.${group}+$teacher"
-                        },
+                        indiwareId = "undefined, TODO",
                         name = data.name,
-                        teacherId = data.teacher?.teacher,
+                        teacherId = Uuid.NIL,
                         cachedAt = Clock.System.now()
                     )),
                     courseGroupCrossovers = data.groups.map {
                         DbCourseGroupCrossover(
                             courseId = data.courseId,
-                            groupId = it.group
+                            groupId = Uuid.NIL
                         )
                     }
                 )
@@ -173,7 +173,7 @@ class CourseRepositoryImpl(
         }
     }
 
-    override fun getByIndiwareId(indiwareId: String): Flow<CacheState<Course>> {
+    override fun getByIndiwareId(indiwareId: String): Flow<CacheStateOld<Course>> {
         return channelFlow {
             var hadData = false
             vppDatabase.courseDao
@@ -181,13 +181,13 @@ class CourseRepositoryImpl(
                 .takeWhile { it != null }
                 .filterNotNull()
                 .onEach { hadData = true }
-                .map { CacheState.Done(it.toModel()) }
+                .map { CacheStateOld.Done(it.toModel()) }
                 .let { sendAll(it) }
 
             if (hadData) return@channelFlow
-            safeRequest(onError = { send(CacheState.Error(indiwareId, it)) }) {
+            safeRequest(onError = { send(CacheStateOld.Error(indiwareId, it)) }) {
                 val school = vppDatabase.schoolDao.getAll().first().firstOrNull { it.sp24SchoolDetails != null && it.sp24SchoolDetails.sp24SchoolId == indiwareId.split(".")[1] }?.toModel()
-                if (school?.getSchoolApiAccess() == null) return@channelFlow send(CacheState.Error(indiwareId, Response.Error.Other("no school for course $indiwareId")))
+                if (school?.getSchoolApiAccess() == null) return@channelFlow send(CacheStateOld.Error(indiwareId, Response.Error.Other("no school for course $indiwareId")))
                 val response = httpClient.get {
                     url(URLBuilder(api).apply {
                         appendPathSegments("api", "v2.2", "subject", "course", indiwareId)
@@ -195,20 +195,20 @@ class CourseRepositoryImpl(
                     }.build())
                     school.getSchoolApiAccess()!!.authentication(this)
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(indiwareId, response.toErrorResponse<Any>()))
-                val data = ResponseDataWrapper.fromJson<CourseItemResponse>(response.bodyAsText()) ?: return@channelFlow send(CacheState.Error(indiwareId, Response.Error.ParsingError(response.bodyAsText())))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheStateOld.Error(indiwareId, response.toErrorResponse<Any>()))
+                val data = ResponseDataWrapper.fromJson<CourseItemResponse>(response.bodyAsText()) ?: return@channelFlow send(CacheStateOld.Error(indiwareId, Response.Error.ParsingError(response.bodyAsText())))
                 vppDatabase.courseDao.upsert(
                     courses = listOf(DbCourse(
                         id = data.courseId,
                         indiwareId = indiwareId,
                         name = data.name,
-                        teacherId = data.teacher?.teacher,
+                        teacherId = Uuid.NIL,
                         cachedAt = Clock.System.now()
                     )),
                     courseGroupCrossovers = data.groups.map {
                         DbCourseGroupCrossover(
                             courseId = data.courseId,
-                            groupId = it.group
+                            groupId = Uuid.NIL
                         )
                     }
                 )
@@ -219,7 +219,7 @@ class CourseRepositoryImpl(
 
     override suspend fun upsert(course: Course): Course {
         upsert(listOf(course))
-        return getById(course.id, false).filterIsInstance<CacheState.Done<Course>>().first().data
+        return getById(course.id, false).filterIsInstance<CacheStateOld.Done<Course>>().first().data
     }
 
     override suspend fun upsert(courses: List<Course>) {

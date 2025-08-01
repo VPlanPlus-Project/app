@@ -2,7 +2,7 @@ package plus.vplan.app.feature.assessment.domain.usecase
 
 import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.datetime.Clock
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
@@ -20,7 +20,7 @@ class AddAssessmentFileUseCase(
 ) {
     suspend operator fun invoke(assessment: Assessment, file: PlatformFile, profile: Profile.StudentProfile): Boolean {
         val id: Int
-        val vppId = profile.vppId?.getFirstValue() as? VppId.Active
+        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
         if (assessment.id > 0 && vppId != null) {
             val response = fileRepository.uploadFile(vppId, AttachedFile.Other(
                 platformFile = file,
@@ -46,7 +46,7 @@ class AddAssessmentFileUseCase(
             )
         )
 
-        val fileItem = fileRepository.getById(id, forceReload = false).getFirstValue()!!
+        val fileItem = fileRepository.getById(id, forceReload = false).getFirstValueOld()!!
         if (id > 0 && vppId != null) assessmentRepository.linkFileToAssessmentOnline(vppId, assessment.id, fileItem.id)
         assessmentRepository.linkFileToAssessment(assessment.id, fileItem.id)
         return true

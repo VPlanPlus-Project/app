@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 
@@ -21,5 +21,5 @@ data class Year(
     override fun getEntityId(): String = this.id.toString()
     override val tags: Set<DataTag> = emptySet()
 
-    val intervals: Flow<List<CacheState<Interval>>> = if (intervalIds.isEmpty()) flowOf(emptyList()) else combine(intervalIds.map { App.intervalSource.getById(it) }) { it.toList() }
+    val intervals: Flow<List<CacheStateOld<Interval>>> = if (intervalIds.isEmpty()) flowOf(emptyList()) else combine(intervalIds.map { App.intervalSource.getById(it) }) { it.toList() }
 }

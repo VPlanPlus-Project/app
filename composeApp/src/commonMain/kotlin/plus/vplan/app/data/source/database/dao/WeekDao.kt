@@ -6,6 +6,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbWeek
+import kotlin.uuid.Uuid
 
 @Dao
 interface WeekDao {
@@ -16,7 +17,7 @@ interface WeekDao {
 
     @Transaction
     @Query("SELECT * FROM weeks WHERE school_id = :schoolId")
-    fun getBySchool(schoolId: Int): Flow<List<DbWeek>>
+    fun getBySchool(schoolId: Uuid): Flow<List<DbWeek>>
 
     @Transaction
     @Query("SELECT * FROM weeks WHERE id = :id")
@@ -24,7 +25,7 @@ interface WeekDao {
 
     @Transaction
     @Query("DELETE FROM weeks WHERE school_id = :schoolId")
-    suspend fun deleteBySchool(schoolId: Int)
+    suspend fun deleteBySchool(schoolId: Uuid)
 
     @Transaction
     @Query("DELETE FROM weeks WHERE id = :id")

@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.ProfileRepository
 import kotlin.uuid.Uuid
@@ -20,13 +20,13 @@ import kotlin.uuid.Uuid
 class ProfileSource(
     private val profileRepository: ProfileRepository
 ) {
-    private val flows = hashMapOf<Uuid, MutableSharedFlow<CacheState<Profile>>>()
-    private val cacheItems = hashMapOf<Uuid, CacheState<Profile>>()
-    private var allProfilesFlow: Flow<List<CacheState<Profile>>>? = null
+    private val flows = hashMapOf<Uuid, MutableSharedFlow<CacheStateOld<Profile>>>()
+    private val cacheItems = hashMapOf<Uuid, CacheStateOld<Profile>>()
+    private var allProfilesFlow: Flow<List<CacheStateOld<Profile>>>? = null
 
-    fun getAll(): Flow<List<CacheState<Profile>>> {
+    fun getAll(): Flow<List<CacheStateOld<Profile>>> {
         return allProfilesFlow ?: run {
-            return@run channelFlow<List<CacheState<Profile>>> {
+            return@run channelFlow<List<CacheStateOld<Profile>>> {
                 profileRepository.getAll().map { it.map { it.id } }
                     .collectLatest {
                         if (it.isEmpty()) send(emptyList())
@@ -36,11 +36,11 @@ class ProfileSource(
         }
     }
 
-    fun getById(id: Uuid): Flow<CacheState<Profile>> {
+    fun getById(id: Uuid): Flow<CacheStateOld<Profile>> {
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<Profile>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            val flow = MutableSharedFlow<CacheStateOld<Profile>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
-                profileRepository.getById(id).map { profile -> profile?.let { CacheState.Done(it).also { cacheItems[id] = it } } ?: CacheState.NotExisting(id.toHexString()) }
+                profileRepository.getById(id).map { profile -> profile?.let { CacheStateOld.Done(it).also { cacheItems[id] = it } } ?: CacheStateOld.NotExisting(id.toHexString()) }
                     .collectLatest { flow.tryEmit(it) }
             }
             flow
@@ -48,6 +48,6 @@ class ProfileSource(
     }
 
     suspend fun getSingleById(id: Uuid): Profile? {
-        return (cacheItems[id] as? CacheState.Done<Profile>)?.data ?: getById(id).getFirstValue()
+        return (cacheItems[id] as? CacheStateOld.Done<Profile>)?.data ?: getById(id).getFirstValueOld()
     }
 }

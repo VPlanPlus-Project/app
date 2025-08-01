@@ -29,7 +29,6 @@ import plus.vplan.app.data.source.indiware.model.WplanBaseData
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.IndiwareBaseData
 import plus.vplan.app.domain.repository.IndiwareRepository
@@ -166,7 +165,6 @@ class IndiwareRepositoryImpl(
                     rooms = emptyList(),
                     daysPerWeek = mobileClassBaseData.header.daysPerWeek.daysPerWeek,
                     studentsHaveFullAccess = false,
-                    downloadMode = School.IndiwareSchool.SchoolDownloadMode.INDIWARE_MOBIL,
                     weeks = weeks.ifEmpty { null }
                 )
             )

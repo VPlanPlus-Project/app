@@ -42,7 +42,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
@@ -162,7 +162,7 @@ fun HomeworkCard(
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(8.dp)
     ) {
-        val subject = homework.subjectInstance?.collectAsResultingFlow()?.value
+        val subject = homework.subjectInstance?.collectAsResultingFlowOld()?.value
         val tasks by homework.getTasksFlow().collectAsState(emptyList())
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
             Row(
@@ -229,7 +229,7 @@ fun AssessmentCard(
     assessment: Assessment,
     onClick: () -> Unit,
 ) {
-    val subject by assessment.subjectInstance.collectAsResultingFlow()
+    val subject by assessment.subjectInstance.collectAsResultingFlowOld()
     Column(
         modifier = Modifier
             .width(300.dp)

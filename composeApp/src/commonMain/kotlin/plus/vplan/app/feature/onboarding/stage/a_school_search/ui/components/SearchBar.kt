@@ -79,7 +79,7 @@ fun SearchBar(
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
-                    onNext = { onEvent(OnboardingSchoolSearchEvent.OnUseIndiwareClicked) }
+                    onNext = { onEvent(OnboardingSchoolSearchEvent.OnUseSp24SchoolClicked) }
                 ),
                 isError = textFieldError != null,
             )
@@ -102,7 +102,7 @@ fun SearchBar(
             }
         }
         FilledIconButton(
-            onClick = { onEvent(OnboardingSchoolSearchEvent.OnUseIndiwareClicked) },
+            onClick = { onEvent(OnboardingSchoolSearchEvent.OnUseSp24SchoolClicked) },
             modifier = Modifier.size(56.dp),
             shape = RoundedCornerShape(8.dp)
         ) {

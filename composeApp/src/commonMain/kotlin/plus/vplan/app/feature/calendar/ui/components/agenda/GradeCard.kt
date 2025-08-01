@@ -32,9 +32,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.collectAsLoadingState
-import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.collectAsLoadingStateOld
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.ui.components.SubjectIcon
@@ -52,10 +52,10 @@ fun GradeCard(
 ) {
     val localDensity = LocalDensity.current
 
-    val subject = grade.subject.collectAsResultingFlow().value
-    val collection = grade.collection.collectAsResultingFlow().value
-    val interval = collection?.interval?.collectAsResultingFlow()?.value
-    val createdBy = grade.teacher.collectAsLoadingState("").value
+    val subject = grade.subject.collectAsResultingFlowOld().value
+    val collection = grade.collection.collectAsResultingFlowOld().value
+    val interval = collection?.interval?.collectAsResultingFlowOld()?.value
+    val createdBy = grade.teacher.collectAsLoadingStateOld("").value
     if (subject == null || collection == null || interval == null) return
     var boxHeight by remember { mutableStateOf(0.dp) }
     Box(
@@ -148,10 +148,10 @@ fun GradeCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                if (createdBy is CacheState.Loading) CircularProgressIndicator(Modifier.size(MaterialTheme.typography.labelMedium.lineHeight.toDp()))
+                if (createdBy is CacheStateOld.Loading) CircularProgressIndicator(Modifier.size(MaterialTheme.typography.labelMedium.lineHeight.toDp()))
                 else Text(
                     text = buildString {
-                        val creator = (createdBy as? CacheState.Done)?.data ?: return@buildString
+                        val creator = (createdBy as? CacheStateOld.Done)?.data ?: return@buildString
                         append("${creator.forename} ${creator.name}")
                     },
                     style = MaterialTheme.typography.labelMedium,

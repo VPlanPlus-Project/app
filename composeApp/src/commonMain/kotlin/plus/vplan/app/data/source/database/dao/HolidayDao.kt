@@ -6,6 +6,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbHoliday
+import kotlin.uuid.Uuid
 
 @Dao
 interface HolidayDao {
@@ -20,7 +21,7 @@ interface HolidayDao {
 
     @Transaction
     @Query("SELECT * FROM holidays WHERE school_id = :schoolId")
-    fun getBySchoolId(schoolId: Int): Flow<List<DbHoliday>>
+    fun getBySchoolId(schoolId: Uuid): Flow<List<DbHoliday>>
 
     @Query("DELETE FROM holidays WHERE id IN (:ids)")
     suspend fun deleteByIds(ids: List<String>)

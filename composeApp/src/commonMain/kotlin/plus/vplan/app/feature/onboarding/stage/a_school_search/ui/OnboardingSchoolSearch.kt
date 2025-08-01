@@ -10,17 +10,12 @@ import androidx.navigation.NavHostController
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.components.SearchBar
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.components.search_results.SearchResults
-import plus.vplan.app.feature.onboarding.stage.migrate.a_read.ui.ImportScreenViewModel
-import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 
 @Composable
 fun OnboardingSchoolSearch(
     navController: NavHostController,
 ) {
     val viewModel = koinViewModel<OnboardingSchoolSearchViewModel>()
-    LaunchedEffect(ImportScreenViewModel.migrationText) {
-        if (ImportScreenViewModel.migrationText != null) navController.navigate(OnboardingScreen.OnboardingImportStart) { popUpTo(0) }
-    }
     LaunchedEffect(Unit) {
         viewModel.init(navController)
     }

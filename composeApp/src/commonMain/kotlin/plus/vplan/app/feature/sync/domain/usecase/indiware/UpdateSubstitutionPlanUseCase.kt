@@ -13,6 +13,7 @@ import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
@@ -57,39 +58,39 @@ class UpdateSubstitutionPlanUseCase(
     private val platformNotificationRepository: PlatformNotificationRepository
 ) {
     suspend operator fun invoke(
-        indiwareSchool: School.IndiwareSchool,
+        sp24School: School.Sp24School,
         dates: List<LocalDate>,
         allowNotification: Boolean
     ): Response.Error? {
-        val teachers = teacherRepository.getBySchool(indiwareSchool.id).first()
-        val rooms = roomRepository.getBySchool(indiwareSchool.id).first()
-        val groups = groupRepository.getBySchool(indiwareSchool.id).first()
-        val subjectInstances = subjectInstanceRepository.getBySchool(indiwareSchool.id, false).first()
+        val teachers = teacherRepository.getBySchool(sp24School.id).first()
+        val rooms = roomRepository.getBySchool(sp24School.id).first()
+        val groups = groupRepository.getBySchool(sp24School.id).first()
+        val subjectInstances = subjectInstanceRepository.getBySchool(sp24School.id, false).first()
         var error: Response.Error? = null
 
         val studentProfilesForSchool = profileRepository.getAll().first()
         .filterIsInstance<Profile.StudentProfile>()
-            .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
+            .filter { it.getSchool().getFirstValue()?.id == sp24School.id }
 
         dates.forEach forEachDate@{ date ->
-            val week = weekRepository.getBySchool(indiwareSchool.id).first().firstOrNull { date in it.start..it.end } ?: run {
+            val week = weekRepository.getBySchool(sp24School.id).first().firstOrNull { date in it.start..it.end } ?: run {
                 val errorMessage = "Week for $date not found"
                 Logger.d { errorMessage }
                 error = Response.Error.Other(errorMessage)
                 return@forEachDate
             }
 
-            val oldLessons = substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId = indiwareSchool.id, date = date).first()
-                .map { App.substitutionPlanSource.getById(it).getFirstValue()!! }
+            val oldLessons = substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId = sp24School.id, date = date).first()
+                .map { App.substitutionPlanSource.getById(it).getFirstValueOld()!! }
 
             val oldPlan: Map<Uuid, Set<Lesson>> = studentProfilesForSchool
                 .associateWith { profile -> oldLessons.filter { it.isRelevantForProfile(profile) }.toSet() }
                 .mapKeys { it.key.id }
 
             val substitutionPlanResponse = indiwareRepository.getSubstitutionPlan(
-                sp24Id = indiwareSchool.sp24Id,
-                username = indiwareSchool.username,
-                password = indiwareSchool.password,
+                sp24Id = sp24School.sp24Id,
+                username = sp24School.username,
+                password = sp24School.password,
                 date = date,
                 teacherNames = teachers.map { it.name },
                 roomNames = rooms.map { it.name }
@@ -107,9 +108,9 @@ class UpdateSubstitutionPlanUseCase(
             val lessonsForDay = mutableListOf<Lesson.SubstitutionPlanLesson>()
 
             val day = Day(
-                id = Day.buildId(indiwareSchool, date),
+                id = Day.buildId(sp24School, date),
                 date = date,
-                schoolId = indiwareSchool.id,
+                schoolId = sp24School.id,
                 weekId = week.id,
                 info = substitutionPlan.info,
                 dayType = Day.DayType.REGULAR,
@@ -166,12 +167,10 @@ class UpdateSubstitutionPlanUseCase(
                         info = substitutionPlanLesson.info
                     )
                 }
-            }.also {
-                Logger.d { "Lessons: ${it.filter { it.groupIds.contains(165) }}" }
             }.let { lessonsForDay.addAll(it) }
 
             substitutionPlanRepository.upsertLessons(
-                schoolId = indiwareSchool.id,
+                schoolId = sp24School.id,
                 date = date,
                 lessons = lessonsForDay,
                 profiles = studentProfilesForSchool
@@ -185,12 +184,12 @@ class UpdateSubstitutionPlanUseCase(
 
             if (allowNotification) profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
-                .filter { it.getSchool().getFirstValue()?.id == indiwareSchool.id }
+                .filter { it.getSchool().getFirstValue()?.id == sp24School.id }
                 .forEach forEachProfile@{ profile ->
                     val old = oldPlan[profile.id] ?: return@forEachProfile
                     val new = newPlan[profile.id] ?: return@forEachProfile
 
-                    if ((old + new).mapNotNull { it.lessonTime.getFirstValue()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachProfile
+                    if ((old + new).mapNotNull { it.lessonTime.getFirstValueOld()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachProfile
 
                     val oldLessons = old.map { it.getLessonSignature() }
                     val changedOrNewLessons = new.filter { it.getLessonSignature() !in oldLessons }
@@ -198,7 +197,7 @@ class UpdateSubstitutionPlanUseCase(
 
                     Logger.d { "Sending notification for ${profile.name}" }
 
-                    val newDay = App.daySource.getById("${indiwareSchool.id}/$date", profile).getFirstValue()
+                    val newDay = App.daySource.getById("${sp24School.id}/$date", profile).getFirstValueOld()
 
                     val changedLessons = changedOrNewLessons.filter { it.isRelevantForProfile(profile) }
                     if (changedLessons.isNotEmpty()) {
@@ -209,7 +208,7 @@ class UpdateSubstitutionPlanUseCase(
                             largeText = buildString {
                                 changedLessons.forEachIndexed { i, lesson ->
                                     if (i > 0) append("\n")
-                                    append(lesson.lessonTime.getFirstValue()?.lessonNumber)
+                                    append(lesson.lessonTime.getFirstValueOld()?.lessonNumber)
                                     append(". ")
                                     append(lesson.subject ?: "Entfall")
                                     if (lesson.teacherIds.isNotEmpty()) {

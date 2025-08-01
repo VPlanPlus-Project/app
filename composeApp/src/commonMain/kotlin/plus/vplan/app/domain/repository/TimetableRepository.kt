@@ -13,14 +13,14 @@ interface TimetableRepository {
     suspend fun deleteAllTimetables()
 
     suspend fun upsertLessons(
-        schoolId: Int,
+        schoolId: Uuid,
         lessons: List<Lesson.TimetableLesson>,
         profiles: List<Profile.StudentProfile>
     )
 
-    suspend fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>>
+    suspend fun getTimetableForSchool(schoolId: Uuid): Flow<List<Lesson.TimetableLesson>>
     fun getById(id: Uuid): Flow<Lesson.TimetableLesson?>
-    fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
+    fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
     fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
 
     suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>)

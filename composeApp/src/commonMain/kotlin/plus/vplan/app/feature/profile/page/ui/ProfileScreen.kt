@@ -57,8 +57,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.cache.collectAsSingleFlow
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
+import plus.vplan.app.domain.cache.collectAsSingleFlowOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.feature.main.ui.MainScreen
@@ -158,14 +158,14 @@ private fun ProfileContent(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    val vppId = state.currentProfile.vppId?.collectAsResultingFlow()?.value
+                    val vppId = state.currentProfile.vppId?.collectAsResultingFlowOld()?.value
                     if (vppId is VppId.Active) {
                         val subjectInstances = state.currentProfile.subjectInstances
                             .map { it.map { subjectInstance -> subjectInstance.subject }.distinct() }
                             .distinctUntilChanged()
                             .collectAsState(emptyList()).value
 
-                        val grades = vppId.grades.collectAsSingleFlow().value
+                        val grades = vppId.grades.collectAsSingleFlowOld().value
                         if (vppId.schulverwalterConnection != null) {
                             Box(
                                 modifier = Modifier

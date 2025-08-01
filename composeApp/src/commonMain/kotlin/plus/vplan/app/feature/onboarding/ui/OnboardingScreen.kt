@@ -18,12 +18,12 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingSchoolSearch
-import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.OnboardingIndiwareLoginScreen
-import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.ui.OnboardingIndiwareDataDownloadScreen
+import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.OnboardingIndiwareLoginScreen
+import plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.ui.OnboardingIndiwareDataDownloadScreen
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileScreen
 import plus.vplan.app.feature.onboarding.stage.e_permissions.ui.OnboardingPermissionsScreen
 import plus.vplan.app.feature.onboarding.stage.f_finished.ui.OnboardingFinishedScreen
-import plus.vplan.app.feature.onboarding.stage.migrate.a_read.ui.ImportScreen
+import kotlin.uuid.Uuid
 
 val enterSlideTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) =
     {
@@ -59,7 +59,7 @@ val exitSlideTransitionRight: (AnimatedContentTransitionScope<NavBackStackEntry>
 
 @Composable
 fun OnboardingScreen(
-    schoolId: Int?,
+    schoolId: Uuid?,
     onFinish: () -> Unit,
 ) {
     val viewModel = koinViewModel<OnboardingHostViewModel>()
@@ -88,7 +88,7 @@ fun OnboardingScreen(
                 OnboardingSchoolSearch(navController)
             }
 
-            composable<OnboardingScreen.OnboardingScreenIndiwareLogin> {
+            composable<OnboardingScreen.OnboardingScreenSp24Login> {
                 OnboardingIndiwareLoginScreen(navController)
             }
 
@@ -107,10 +107,6 @@ fun OnboardingScreen(
             composable<OnboardingScreen.OnboardingFinished> {
                 OnboardingFinishedScreen(onFinish)
             }
-
-            composable<OnboardingScreen.OnboardingImportStart> {
-                ImportScreen(navController)
-            }
         }
     }
 }
@@ -118,11 +114,9 @@ fun OnboardingScreen(
 @Serializable
 sealed class OnboardingScreen(val name: String) {
     @Serializable data object OnboardingScreenHome : OnboardingScreen("OnboardingScreenHome")
-    @Serializable data object OnboardingScreenIndiwareLogin : OnboardingScreen("OnboardingScreenIndiwareLogin")
+    @Serializable data object OnboardingScreenSp24Login : OnboardingScreen("OnboardingScreenIndiwareLogin")
     @Serializable data object OnboardingIndiwareDataDownload : OnboardingScreen("OnboardingScreenDataDownload")
     @Serializable data object OnboardingChooseProfile : OnboardingScreen("OnboardingScreenChooseProfileType")
     @Serializable data object OnboardingPermission : OnboardingScreen("OnboardingScreenPermission")
     @Serializable data object OnboardingFinished : OnboardingScreen("OnboardingScreenFinished")
-
-   @Serializable data object OnboardingImportStart : OnboardingScreen("OnboardingImportStart")
 }

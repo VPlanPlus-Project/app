@@ -10,7 +10,6 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -96,7 +95,6 @@ import plus.vplan.app.feature.host.di.hostModule
 import plus.vplan.app.feature.main.di.mainModule
 import plus.vplan.app.feature.news.di.newsModule
 import plus.vplan.app.feature.onboarding.di.onboardingModule
-import plus.vplan.app.feature.onboarding.stage.d_indiware_base_download.domain.usecase.onboardingSp24VppLookupResponseModule
 import plus.vplan.app.feature.profile.di.profileModule
 import plus.vplan.app.feature.profile.page.di.profilePageModule
 import plus.vplan.app.feature.profile.settings.di.profileSettingsModule
@@ -121,10 +119,6 @@ val appModule = module(createdAtStart = true) {
                     ignoreUnknownKeys = true
                     classDiscriminator = "type"
                     encodeDefaults = true
-
-                    serializersModule = SerializersModule {
-                        onboardingSp24VppLookupResponseModule()
-                    }
                 })
             }
 

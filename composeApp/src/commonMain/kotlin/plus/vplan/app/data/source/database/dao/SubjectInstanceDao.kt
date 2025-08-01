@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectInstanceGroup
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSubjectInstance
+import kotlin.uuid.Uuid
 
 @Dao
 interface SubjectInstanceDao {
@@ -16,7 +17,7 @@ interface SubjectInstanceDao {
     @Transaction
     @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM fk_subject_instance_group LEFT JOIN subject_instance ON subject_instance.id = fk_subject_instance_group.subject_instance_id WHERE group_id = :groupId")
-    fun getByGroup(groupId: Int): Flow<List<EmbeddedSubjectInstance>>
+    fun getByGroup(groupId: Uuid): Flow<List<EmbeddedSubjectInstance>>
 
     @Transaction
     @Query("SELECT * FROM subject_instance")
@@ -24,8 +25,8 @@ interface SubjectInstanceDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM fk_subject_instance_group LEFT JOIN subject_instance ON subject_instance.id = fk_subject_instance_group.subject_instance_id LEFT JOIN school_groups ON fk_subject_instance_group.group_id = school_groups.id LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId")
-    fun getBySchool(schoolId: Int): Flow<List<EmbeddedSubjectInstance>>
+    @Query("SELECT * FROM fk_subject_instance_group LEFT JOIN subject_instance ON subject_instance.id = fk_subject_instance_group.subject_instance_id LEFT JOIN school_groups ON fk_subject_instance_group.group_id = school_groups.id WHERE school_groups.school_id = :schoolId")
+    fun getBySchool(schoolId: Uuid): Flow<List<EmbeddedSubjectInstance>>
 
     @Transaction
     @Query("SELECT * FROM subject_instance WHERE id = :id")

@@ -6,6 +6,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.DbGroup
+import kotlin.uuid.Uuid
 
 @Entity(
     tableName = "fk_subject_instance_group",
@@ -33,5 +34,5 @@ import plus.vplan.app.data.source.database.model.database.DbGroup
 )
 data class FKSubjectInstanceGroup(
     @ColumnInfo(name = "subject_instance_id") val subjectInstanceId: Int,
-    @ColumnInfo(name = "group_id") val groupId: Int
+    @ColumnInfo(name = "group_id") val groupId: Uuid
 )

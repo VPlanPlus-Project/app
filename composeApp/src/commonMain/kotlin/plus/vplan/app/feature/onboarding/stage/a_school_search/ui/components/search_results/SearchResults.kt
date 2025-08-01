@@ -36,13 +36,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.repository.OnlineSchool
+import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.OnboardingSchoolOption
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingSchoolSearchEvent
 
 @Composable
 fun ColumnScope.SearchResults(
     query: String,
-    results: Response<List<OnlineSchool>>,
+    results: Response<List<OnboardingSchoolOption>>,
     onEvent: (OnboardingSchoolSearchEvent) -> Unit
 ) {
     var showAnimation by rememberSaveable { mutableStateOf(true) }

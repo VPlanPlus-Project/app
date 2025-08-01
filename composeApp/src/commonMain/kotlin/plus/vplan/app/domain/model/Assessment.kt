@@ -9,6 +9,7 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 
 data class Assessment(
     val id: Int,
@@ -44,7 +45,7 @@ data class Assessment(
 
     suspend fun getCreatedByProfileItem(): Profile.StudentProfile? {
         if (this.creator !is AppEntity.Profile) return null
-        return this.createdByProfile ?: (App.profileSource.getById(this.creator.id).getFirstValue() as? Profile.StudentProfile)?.also { createdByProfile = it }
+        return this.createdByProfile ?: (App.profileSource.getById(this.creator.id).getFirstValueOld() as? Profile.StudentProfile)?.also { createdByProfile = it }
     }
 
     val files by lazy {

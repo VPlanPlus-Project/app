@@ -33,6 +33,6 @@ import kotlin.uuid.Uuid
     ]
 )
 data class DbTimetableRoomCrossover(
-    @ColumnInfo(name = "room_id") val roomId: Int,
+    @ColumnInfo(name = "room_id") val roomId: Uuid,
     @ColumnInfo(name = "timetable_lesson_id") val timetableLessonId: Uuid,
 )

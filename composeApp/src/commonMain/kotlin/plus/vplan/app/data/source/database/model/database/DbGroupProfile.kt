@@ -40,6 +40,6 @@ import kotlin.uuid.Uuid
 )
 data class DbGroupProfile(
     @ColumnInfo(name = "profile_id") val profileId: Uuid,
-    @ColumnInfo(name = "group_id") val groupId: Int,
+    @ColumnInfo(name = "group_id") val groupId: Uuid,
     @ColumnInfo(name = "vpp_id") val vppId: Int?
 )

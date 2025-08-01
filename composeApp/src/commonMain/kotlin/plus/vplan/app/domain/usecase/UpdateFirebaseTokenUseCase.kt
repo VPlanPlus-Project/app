@@ -2,6 +2,7 @@ package plus.vplan.app.domain.usecase
 
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.GroupRepository
@@ -23,7 +24,7 @@ class UpdateFirebaseTokenUseCase(
         profiles.forEach { profile ->
             if (profile is Profile.StudentProfile) {
                 if (profile.vppIdId != null) {
-                    val vppId = profile.vppId!!.getFirstValue() as? VppId.Active ?: return@forEach
+                    val vppId = profile.vppId!!.getFirstValueOld() as? VppId.Active ?: return@forEach
                     vppIdRepository.updateFirebaseToken(vppId, token).let {
                         if (it != null) success = false
                     }

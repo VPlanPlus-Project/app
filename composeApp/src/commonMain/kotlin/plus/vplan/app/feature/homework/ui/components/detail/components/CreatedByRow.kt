@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.utils.toDp
@@ -19,7 +20,7 @@ import plus.vplan.app.utils.toDp
 fun CreatedByRow(
     createdBy: AppEntity.VppId
 ) {
-    val vppId = createdBy.vppId.collectAsState(CacheState.Loading(createdBy.id.toString(), source = null)).value
+    val vppId = createdBy.vppId.collectAsState(CacheStateOld.Loading(createdBy.id.toString(), source = null)).value
     MetadataRow(
         key = {
             Text(
@@ -29,16 +30,16 @@ fun CreatedByRow(
         },
         value = {
             when (vppId) {
-                is CacheState.Loading -> if (vppId.source == CacheState.Loading.Source.Network) ShimmerLoader(modifier = Modifier
+                is CacheStateOld.Loading -> if (vppId.source == CacheState.Loading.Source.Network) ShimmerLoader(modifier = Modifier
                     .fillMaxWidth(.5f)
                     .height(tableValueStyle().lineHeight.toDp())
                     .clip(RoundedCornerShape(8.dp))
                 )
-                is CacheState.Done -> Text(
+                is CacheStateOld.Done -> Text(
                     text = vppId.data.name,
                     style = tableValueStyle()
                 )
-                is CacheState.Error -> Text(
+                is CacheStateOld.Error -> Text(
                     text = "Fehler",
                     color = MaterialTheme.colorScheme.error,
                     style = tableValueStyle()

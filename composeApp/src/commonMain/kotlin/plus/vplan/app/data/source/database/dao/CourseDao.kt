@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedCourse
+import kotlin.uuid.Uuid
 
 @Dao
 interface CourseDao {
@@ -16,7 +17,7 @@ interface CourseDao {
     @Transaction
     @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM course_group_crossover LEFT JOIN courses ON courses.id = course_group_crossover.course_id WHERE group_id = :groupId")
-    fun getByGroup(groupId: Int): Flow<List<EmbeddedCourse>>
+    fun getByGroup(groupId: Uuid): Flow<List<EmbeddedCourse>>
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
@@ -25,8 +26,8 @@ interface CourseDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM course_group_crossover LEFT JOIN courses ON courses.id = course_group_crossover.course_id LEFT JOIN school_groups ON course_group_crossover.group_id = school_groups.id LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId")
-    fun getBySchool(schoolId: Int): Flow<List<EmbeddedCourse>>
+    @Query("SELECT * FROM course_group_crossover LEFT JOIN courses ON courses.id = course_group_crossover.course_id LEFT JOIN school_groups ON course_group_crossover.group_id = school_groups.id WHERE school_groups.school_id = :schoolId")
+    fun getBySchool(schoolId: Uuid): Flow<List<EmbeddedCourse>>
 
     @Transaction
     @Query("SELECT * FROM courses WHERE id = :id")

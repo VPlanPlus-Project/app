@@ -41,8 +41,8 @@ import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.cache.collectAsSingleFlow
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
+import plus.vplan.app.domain.cache.collectAsSingleFlowOld
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
@@ -189,7 +189,7 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = false,
                 allowGroup = false,
-                subject = assessment.subjectInstance.collectAsResultingFlow().value?.subject,
+                subject = assessment.subjectInstance.collectAsResultingFlowOld().value?.subject,
                 onClick = {}
             )
             TypeRow(
@@ -247,7 +247,7 @@ fun DetailPage(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                remember(assessment.fileIds) { assessment.files }.collectAsSingleFlow().value.forEach { file ->
+                remember(assessment.fileIds) { assessment.files }.collectAsSingleFlowOld().value.forEach { file ->
                     FileRow(
                         file = file,
                         canEdit = state.canEdit,

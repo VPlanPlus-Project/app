@@ -43,6 +43,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.search.ui.main.NewItem
@@ -148,7 +149,7 @@ fun SearchStart(
                                 val subject = when (item) {
                                     is NewItem.Assessment -> item.assessment.subjectInstance
                                     is NewItem.Homework -> item.homework.subjectInstance
-                                }?.collectAsResultingFlow()?.value?.subject
+                                }?.collectAsResultingFlowOld()?.value?.subject
                                 SubjectIcon(
                                     modifier = Modifier
                                         .size(24.dp)
@@ -211,14 +212,14 @@ fun SearchStart(
                                 is AppEntity.Profile -> {
                                     if (creator.id == profile.id) "Du"
                                     else {
-                                        val creatorProfile = creator.profile.collectAsResultingFlow().value
+                                        val creatorProfile = creator.profile.collectAsResultingFlowOld().value
                                         if (creatorProfile == null) null
                                         else "Profil ${creatorProfile.name}"
                                     }
                                 }
                                 is AppEntity.VppId -> {
                                     val currentVppId = (profile as? Profile.StudentProfile)?.vppIdId
-                                    val vppId = creator.vppId.collectAsResultingFlow().value
+                                    val vppId = creator.vppId.collectAsResultingFlowOld().value
                                     if (vppId == null) null
                                     else if (currentVppId == vppId.id) "Du"
                                     else vppId.name

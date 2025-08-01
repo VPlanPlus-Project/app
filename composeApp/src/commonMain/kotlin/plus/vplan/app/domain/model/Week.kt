@@ -6,6 +6,7 @@ import kotlinx.datetime.plus
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.utils.atStartOfWeek
+import kotlin.uuid.Uuid
 
 /**
  * @param getEntityId The school id and the week number concatenated with a "/", e.g. "67/13" (13th week of current school year)
@@ -17,7 +18,7 @@ data class Week(
     val end: LocalDate,
     val weekType: String,
     val weekIndex: Int,
-    val school: Int
+    val school: Uuid
 ): Item<DataTag> {
     constructor(
         calendarWeek: Int,
@@ -25,7 +26,7 @@ data class Week(
         end: LocalDate,
         weekType: String,
         weekIndex: Int,
-        school: Int
+        school: Uuid
     ) : this(
         id = "$school/${if (end.atStartOfWeek().plus(DatePeriod(days = 3)).year != end.year) start.year else end.year}:KW$calendarWeek",
         calendarWeek = calendarWeek,

@@ -10,9 +10,11 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import kotlin.uuid.Uuid
 
 abstract class Profile : Item<DataTag> {
@@ -36,7 +38,7 @@ abstract class Profile : Item<DataTag> {
     data class StudentProfile(
         override val id: Uuid,
         override val name: String,
-        val groupId: Int,
+        val groupId: Uuid,
         val subjectInstanceConfiguration: Map<Int, Boolean>,
         val vppIdId: Int?
     ) : Profile() {
@@ -50,15 +52,15 @@ abstract class Profile : Item<DataTag> {
 
         val vppId by lazy { vppIdId?.let { App.vppIdSource.getById(it) } }
         val subjectInstances by lazy {
-            if (subjectInstanceConfiguration.isEmpty()) return@lazy flowOf(emptyList())
-            combine(subjectInstanceConfiguration.keys.map { App.subjectInstanceSource.getById(it).filterIsInstance<CacheState.Done<SubjectInstance>>().map { cacheState -> cacheState.data } }) { it.toList() }
+            if (subjectInstanceConfiguration.isEmpty()) flowOf(emptyList())
+            else combine(subjectInstanceConfiguration.keys.map { App.subjectInstanceSource.getById(it).filterIsInstance<CacheStateOld.Done<SubjectInstance>>().map { cacheState -> cacheState.data } }) { it.toList() }
         }
 
         private val subjectInstanceCache = hashMapOf<Int, SubjectInstance>()
         val subjectInstanceItems: List<SubjectInstance>
             get() = this.subjectInstanceCache.values.toList()
         suspend fun getSubjectInstance(id: Int): SubjectInstance {
-            return subjectInstanceCache.getOrPut(id) { App.subjectInstanceSource.getById(id).filterIsInstance<CacheState.Done<SubjectInstance>>().first().data }
+            return subjectInstanceCache.getOrPut(id) { App.subjectInstanceSource.getById(id).filterIsInstance<CacheStateOld.Done<SubjectInstance>>().first().data }
         }
 
         suspend fun getGroupItem(): Group {
@@ -67,7 +69,7 @@ abstract class Profile : Item<DataTag> {
 
         suspend fun getVppIdItem(): VppId.Active? {
             if (this.vppIdId == null) return null
-            return vppIdItem ?: App.vppIdSource.getById(vppIdId).getFirstValue().let { it as? VppId.Active }.also { this.vppIdItem = it }
+            return vppIdItem ?: App.vppIdSource.getById(vppIdId).getFirstValueOld().let { it as? VppId.Active }.also { this.vppIdItem = it }
         }
 
         suspend fun getSubjectInstances(): List<SubjectInstance> {
@@ -93,7 +95,7 @@ abstract class Profile : Item<DataTag> {
     data class TeacherProfile(
         override val id: Uuid,
         override val name: String,
-        val teacher: Int
+        val teacher: Uuid
     ) : Profile() {
         override val profileType = ProfileType.TEACHER
 
@@ -114,7 +116,7 @@ abstract class Profile : Item<DataTag> {
     data class RoomProfile(
         override val id: Uuid,
         override val name: String,
-        val room: Int
+        val room: Uuid
     ) : Profile() {
         override val profileType = ProfileType.ROOM
 

@@ -1,150 +1,127 @@
 package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.url
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
-import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.api
 import plus.vplan.app.appApi
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
+import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
 import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.repository.OnlineSchool
+import plus.vplan.app.domain.repository.SchoolDbDto
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.utils.sendAll
+import plus.vplan.app.domain.repository.VppSchoolDto
+import kotlin.uuid.Uuid
 
 class SchoolRepositoryImpl(
-    private val httpClient: HttpClient,
-    private val vppDatabase: VppDatabase
+    private val vppDatabase: VppDatabase,
+    private val httpClient: HttpClient
 ) : SchoolRepository {
-    override suspend fun fetchAllOnline(): Response<List<OnlineSchool>> {
-        safeRequest(onError = { return it }) {
-            val response = httpClient.get(URLBuilder(appApi).apply {
-                appendPathSegments("onboarding", "v1", "start", "schools")
-            }.build())
-            if (!response.status.isSuccess()) return Response.Error.Other(response.status.toString())
-            val data = ResponseDataWrapper.fromJson<List<OnlineSchoolResponse>>(response.bodyAsText())
-                ?: return Response.Error.ParsingError(response.bodyAsText())
+    override suspend fun upsert(item: SchoolDbDto): Uuid {
+        val schoolId = resolveAliasesToLocalId(item.aliases) ?: Uuid.random()
+        vppDatabase.schoolDao.upsertSchool(
+            school = DbSchool(
+                id = schoolId,
+                name = item.name,
+                cachedAt = Clock.System.now()
+            ),
+            aliases = item.aliases.map {
+                DbSchoolAlias.fromAlias(it, schoolId)
+            }
+        )
+        return schoolId
+    }
 
-            return Response.Success(data.map { it.toModel() })
+    override suspend fun resolveAliasToLocalId(alias: Alias): Uuid? {
+        return vppDatabase.schoolDao.getIdByAlias(alias.value, alias.provider, alias.version)
+    }
+
+    override fun getByLocalId(id: Uuid): Flow<School?> {
+        return vppDatabase.schoolDao.findById(id).map { embeddedSchool ->
+            embeddedSchool?.toModel()
+        }
+    }
+
+    override fun getAllLocalIds(): Flow<List<Uuid>> {
+        return vppDatabase.schoolDao.getAll().map { it.map { school -> school.school.id } }
+    }
+
+    override suspend fun downloadSchools(): Response<List<VppSchoolDto>> {
+        safeRequest(onError = { return it }) {
+            val response = httpClient.get {
+                url(URLBuilder(appApi).apply {
+                    appendPathSegments("school", "v1", "list")
+                }.build())
+            }
+
+            val items = response.body<ResponseDataWrapper<List<SchoolItemResponse>>>()
+
+            return Response.Success(items.data.map { schoolItemResponse ->
+                VppSchoolDto(
+                    id = schoolItemResponse.id,
+                    name = schoolItemResponse.name,
+                    aliases = schoolItemResponse.buildAliases()
+                )
+            })
         }
         return Response.Error.Cancelled
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<School>> {
-        val schoolFlow = vppDatabase.schoolDao.findById(id).map { it?.toModel() }
-        return channelFlow {
-            if (!forceReload) {
-                var hadData = false
-                sendAll(schoolFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
-                if (hadData) return@channelFlow
-            }
-            send(CacheState.Loading(id.toString()))
-
-            safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
-                val response = httpClient.get {
-                    url(URLBuilder(api).apply {
-                        appendPathSegments("api", "v2.2", "school", id.toString())
-                    }.build())
-                }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<School>()))
-                val data = ResponseDataWrapper.fromJson<SchoolItemResponse>(response.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
-
-                vppDatabase.schoolDao.upsertSchool(
-                    DbSchool(
-                        id = data.id,
-                        name = data.name,
-                        cachedAt = Clock.System.now()
-                    )
-                )
-
-                return@channelFlow sendAll(getById(id, false))
-            }
-        }
-    }
-
-    override fun getAllIds(): Flow<List<Int>> {
-        return vppDatabase.schoolDao.getAll().map { it.map { school -> school.school.id } }
-    }
-
-    override suspend fun getAll(): Flow<List<School>> {
-        return vppDatabase.schoolDao.getAll().map { results -> results.map { it.toModel() } }
-    }
-
-    override suspend fun setSp24Info(
-        school: School,
+    override suspend fun setSp24Access(
+        schoolId: Uuid,
         sp24Id: Int,
         username: String,
         password: String,
         daysPerWeek: Int,
-        studentsHaveFullAccess: Boolean,
-        downloadMode: School.IndiwareSchool.SchoolDownloadMode
     ) {
         vppDatabase.schoolDao.upsertSp24SchoolDetails(
             DbSchoolIndiwareAccess(
-                schoolId = school.id,
+                schoolId = schoolId,
                 sp24SchoolId = sp24Id.toString(),
                 username = username,
                 password = password,
                 daysPerWeek = daysPerWeek,
-                studentsHaveFullAccess = studentsHaveFullAccess,
-                downloadMode = downloadMode,
                 credentialsValid = true
             )
         )
     }
 
-    override suspend fun updateSp24Access(school: School, username: String, password: String) {
-        vppDatabase.schoolDao.updateIndiwareSchoolDetails(school.id, username, password)
+    override suspend fun setSp24CredentialValidity(schoolId: Uuid, valid: Boolean) {
+        vppDatabase.schoolDao.setIndiwareAccessValidState(schoolId, valid)
     }
 
-    override suspend fun setIndiwareAccessValidState(school: School, valid: Boolean) {
-        vppDatabase.schoolDao.setIndiwareAccessValidState(school.id, valid)
-    }
-
-    override suspend fun deleteSchool(schoolId: Int) {
+    override suspend fun deleteSchool(schoolId: Uuid) {
         vppDatabase.schoolDao.deleteById(schoolId)
     }
 }
 
 @Serializable
-private data class OnlineSchoolResponse(
-    @SerialName("id") val id: Int,
-    @SerialName("name") val name: String,
-    @SerialName("sp24_id") val sp24Id: Int? = null
-) {
-    fun toModel(): OnlineSchool {
-        return OnlineSchool(
-            id = id,
-            name = name,
-            sp24Id = sp24Id
-        )
-    }
-}
-
-@Serializable
-private data class SchoolItemResponse(
-    @SerialName("school_id") val id: Int,
+data class SchoolItemResponse(
     @SerialName("name") val name: String,
     @SerialName("address") val address: String?,
     @SerialName("coordinates") val coordinates: String?,
-    @SerialName("sp24_id") val sp24Id: String?
-)
+    @SerialName("sp24_id") val sp24Id: Int?,
+    @SerialName("school_id") val id: Int,
+    @SerialName("schulverwalter_id") val schulverwalterId: Int?
+) {
+    fun buildAliases(): List<Alias> {
+        return listOfNotNull(
+            Alias(AliasProvider.Vpp, id.toString(), 1),
+            sp24Id?.let { Alias(AliasProvider.Sp24, it.toString(), 1) },
+            schulverwalterId?.let { Alias(AliasProvider.Schulverwalter, it.toString(), 1) }
+        )
+    }
+}

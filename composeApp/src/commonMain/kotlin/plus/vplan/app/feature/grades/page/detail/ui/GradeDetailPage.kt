@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.model.schulverwalter.Interval
@@ -62,12 +62,12 @@ fun GradeDetailPage(
 ) {
     val grade = state.grade ?: return
 
-    val subject = grade.subject.filterIsInstance<CacheState.Done<Subject>>().map { it.data }.collectAsState(null).value
-    val collection = grade.collection.filterIsInstance<CacheState.Done<Collection>>().map { it.data }.collectAsState(null).value
-    val interval = collection?.interval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
-    val year = interval?.year?.filterIsInstance<CacheState.Done<Year>>()?.map { it.data }?.collectAsState(null)?.value
-    val vppId = grade.vppId.filterIsInstance<CacheState.Done<VppId>>().map { it.data }.collectAsState(null).value
-    val teacher = grade.teacher.filterIsInstance<CacheState.Done<Teacher>>().map { it.data }.collectAsState(null).value
+    val subject = grade.subject.filterIsInstance<CacheStateOld.Done<Subject>>().map { it.data }.collectAsState(null).value
+    val collection = grade.collection.filterIsInstance<CacheStateOld.Done<Collection>>().map { it.data }.collectAsState(null).value
+    val interval = collection?.interval?.filterIsInstance<CacheStateOld.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
+    val year = interval?.year?.filterIsInstance<CacheStateOld.Done<Year>>()?.map { it.data }?.collectAsState(null)?.value
+    val vppId = grade.vppId.filterIsInstance<CacheStateOld.Done<VppId>>().map { it.data }.collectAsState(null).value
+    val teacher = grade.teacher.filterIsInstance<CacheStateOld.Done<Teacher>>().map { it.data }.collectAsState(null).value
 
     AnimatedContent(
         targetState = state.lockState!!.canAccess

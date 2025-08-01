@@ -61,10 +61,12 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.collectAsLoadingState
+import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.cache.collectAsSingleFlow
+import plus.vplan.app.domain.cache.collectAsSingleFlowOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
@@ -108,6 +110,7 @@ import vplanplus.composeapp.generated.resources.minus
 import vplanplus.composeapp.generated.resources.notebook_text
 import vplanplus.composeapp.generated.resources.triangle_alert
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp
 private val LESSON_NUMBER_SIZE = 32.dp
@@ -133,7 +136,7 @@ private fun HomeContent(
     state: HomeState,
     contentPadding: PaddingValues,
     onOpenRoomSearch: () -> Unit,
-    onOpenSchoolSettings: (schoolId: Int) -> Unit,
+    onOpenSchoolSettings: (schoolId: Uuid) -> Unit,
     onEvent: (event: HomeEvent) -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -147,7 +150,7 @@ private fun HomeContent(
 
     var visibleNews by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    val vppId = remember(state.currentProfile) { (state.currentProfile as? Profile.StudentProfile)?.vppId }?.collectAsResultingFlow()?.value as? VppId.Active
+    val vppId = remember(state.currentProfile) { (state.currentProfile as? Profile.StudentProfile)?.vppId }?.collectAsResultingFlowOld()?.value as? VppId.Active
 
     PullToRefreshBox(
         state = pullToRefreshState,
@@ -206,14 +209,14 @@ private fun HomeContent(
                     }
                     item schoolAccessInvalid@{
                         androidx.compose.animation.AnimatedVisibility(
-                            visible = school is School.IndiwareSchool && !school.credentialsValid,
+                            visible = school is School.Sp24School && !school.credentialsValid,
                             enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
                             exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             var displaySchool by remember { mutableStateOf<School?>(null) }
                             LaunchedEffect(school) {
-                                if (school is School.IndiwareSchool && !school.credentialsValid) displaySchool = school
+                                if (school is School.Sp24School && !school.credentialsValid) displaySchool = school
                             }
                             if (displaySchool != null) InfoCard(
                                 modifier = Modifier
@@ -300,9 +303,9 @@ private fun HomeContent(
                     }
                     item yourDay@{
                         val isYourDayToday = state.day?.date == state.currentTime.date
-                        val weekState = remember(state.day) { state.day?.week }?.collectAsLoadingState("")?.value
-                        if (state.day == null || weekState is CacheState.Loading) return@yourDay
-                        val week = (weekState as? CacheState.Done)?.data
+                        val weekState = remember(state.day) { state.day?.week }?.collectAsLoadingStateOld("")?.value
+                        if (state.day == null || weekState is CacheStateOld.Loading) return@yourDay
+                        val week = (weekState as? CacheStateOld.Done)?.data
 
                         Column {
                             FeedTitle(
@@ -467,13 +470,13 @@ private fun HomeContent(
                                                 ) {
                                                     val headFont = MaterialTheme.typography.bodyLarge
                                                     lessons.forEach forEachLesson@{ lesson ->
-                                                        val lessonTime = remember(lesson) { lesson.lessonTime }.collectAsResultingFlow().value
+                                                        val lessonTime = remember(lesson) { lesson.lessonTime }.collectAsResultingFlowOld().value
                                                         val rooms = remember(lesson.roomIds) { lesson.rooms }.collectAsSingleFlow().value
                                                         val groups = remember(lesson.groupIds) { lesson.groups }.collectAsSingleFlow().value
                                                         val teachers = remember(lesson.teacherIds) { lesson.teachers }.collectAsSingleFlow().value
                                                         val homeworkForLesson = homework.filter { it.subjectInstanceId == lesson.subjectInstanceId }
                                                         val assessmentsForLesson = assessments.filter { it.subjectInstanceId == lesson.subjectInstanceId }
-                                                        val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
+                                                        val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlowOld()?.value
                                                         if (lessonTime != null) Column(Modifier.fillMaxWidth()) {
                                                             Row(
                                                                 modifier = Modifier
@@ -682,11 +685,11 @@ private fun CurrentOrNextLesson(
     progressType: ProgressType
 ) {
     val iconSize = 32.dp
-    val subject = remember(currentLesson.subjectInstanceId) { currentLesson.subjectInstance }?.collectAsResultingFlow()?.value
+    val subject = remember(currentLesson.subjectInstanceId) { currentLesson.subjectInstance }?.collectAsResultingFlowOld()?.value
     val rooms by remember(currentLesson.roomIds) { currentLesson.rooms }.collectAsSingleFlow()
     val groups by remember(currentLesson.groupIds) { currentLesson.groups }.collectAsSingleFlow()
     val teachers by remember(currentLesson.teacherIds) { currentLesson.teachers }.collectAsSingleFlow()
-    val lessonTime = remember(currentLesson) { currentLesson.lessonTime }.collectAsResultingFlow().value
+    val lessonTime = remember(currentLesson) { currentLesson.lessonTime }.collectAsResultingFlowOld().value
     if (
         (subject == null && currentLesson.subjectInstanceId != null) ||
         (rooms.isEmpty() && currentLesson.roomIds.orEmpty().isNotEmpty()) ||

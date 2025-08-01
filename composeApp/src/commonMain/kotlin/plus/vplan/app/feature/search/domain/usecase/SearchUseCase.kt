@@ -13,8 +13,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
@@ -50,7 +51,7 @@ class SearchUseCase(
         launch {
             substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, searchRequest.date).collectLatest { substitutionPlanLessonIds ->
                 val lessons = substitutionPlanLessonIds
-                    .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
+                    .map { id -> App.substitutionPlanSource.getById(id).getFirstValueOld() }
                     .fastFilterNotNull()
                     .filter { lesson -> lesson.subject != null }
 
@@ -90,13 +91,13 @@ class SearchUseCase(
                 }
 
                 if (searchRequest.assessmentType == null) launch {
-                    homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
+                    homeworkRepository.getAll().map { it.filterIsInstance<CacheStateOld.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
                         val homework = homeworkList.onEach { it.getTaskItems() }
                         results.value = results.value.plus(
                             SearchResult.Type.Homework to homework
-                                .filter { (query.isEmpty() || it.taskItems!!.any { task -> query in task.content.lowercase() }) && (searchRequest.subject == null || it.subjectInstance?.getFirstValue()?.subject == searchRequest.subject) }
+                                .filter { (query.isEmpty() || it.taskItems!!.any { task -> query in task.content.lowercase() }) && (searchRequest.subject == null || it.subjectInstance?.getFirstValueOld()?.subject == searchRequest.subject) }
                                 .onEach {
-                                    it.subjectInstance?.getFirstValue() ?: it.group?.getFirstValue()
+                                    it.subjectInstance?.getFirstValueOld() ?: it.group?.getFirstValue()
                                     when (it) {
                                         is Homework.CloudHomework -> it.getCreatedBy()
                                         is Homework.LocalHomework -> it.getCreatedByProfile()
@@ -109,7 +110,7 @@ class SearchUseCase(
                 launch {
                     assessmentRepository.getAll().collectLatest { assessmentList ->
                         val assessments = assessmentList
-                            .filter { (query.isEmpty() || query in it.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.getFirstValue()?.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.type == searchRequest.assessmentType) }
+                            .filter { (query.isEmpty() || query in it.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.getFirstValueOld()?.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.type == searchRequest.assessmentType) }
                             .onEach { assessment ->
                                 when (assessment.creator) {
                                     is AppEntity.VppId -> assessment.getCreatedByVppIdItem()
@@ -122,7 +123,7 @@ class SearchUseCase(
                 }
 
                 if (searchRequest.assessmentType == null) launch {
-                    App.collectionSource.getAll().map { it.filterIsInstance<CacheState.Done<Collection>>().map { it.data } }.collectLatest { collections ->
+                    App.collectionSource.getAll().map { it.filterIsInstance<CacheStateOld.Done<Collection>>().map { it.data } }.collectLatest { collections ->
                         val filteredGrades = collections
                             .filter { query in it.name.lowercase() }
                             .flatMap { collection ->

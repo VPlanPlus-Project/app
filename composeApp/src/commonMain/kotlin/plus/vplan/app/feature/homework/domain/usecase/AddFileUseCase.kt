@@ -4,7 +4,7 @@ import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
@@ -42,7 +42,7 @@ class AddFileUseCase(
         }
 
         localFileRepository.writeFile("./homework_files/$id", file.readBytes())
-        val fileItem = fileRepository.getById(id, false).filterIsInstance<CacheState.Done<plus.vplan.app.domain.model.File>>().first().data
+        val fileItem = fileRepository.getById(id, false).filterIsInstance<CacheStateOld.Done<plus.vplan.app.domain.model.File>>().first().data
         fileRepository.setOfflineReady(fileItem, true)
         homeworkRepository.linkHomeworkFileLocally(homework, fileItem)
         return true

@@ -12,18 +12,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.model.schulverwalter.Subject
 import plus.vplan.app.domain.repository.schulverwalter.SubjectRepository
 
 class SubjectSource(
     private val subjectRepository: SubjectRepository
 ) {
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Subject>>>()
+    private val flows = hashMapOf<Int, MutableSharedFlow<CacheStateOld<Subject>>>()
 
-    fun getById(id: Int): Flow<CacheState<Subject>> {
+    fun getById(id: Int): Flow<CacheStateOld<Subject>> {
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<Subject>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            val flow = MutableSharedFlow<CacheStateOld<Subject>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
                 subjectRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
             }
@@ -32,7 +32,7 @@ class SubjectSource(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getAll(): Flow<List<CacheState<Subject>>> {
+    fun getAll(): Flow<List<CacheStateOld<Subject>>> {
         return subjectRepository.getAllIds().flatMapLatest { ids ->
             if (ids.isEmpty()) return@flatMapLatest flowOf(emptyList())
             combine(ids.map { getById(it) }) { it.toList() }

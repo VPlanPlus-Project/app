@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
@@ -47,7 +47,7 @@ class GradeDetailViewModel(
                 getGradeLockStateUseCase(),
                 App.gradeSource.getById(gradeId)
             ) { profile, gradeLockState, gradeData ->
-                if (gradeData !is CacheState.Done || profile !is Profile.StudentProfile) return@combine null
+                if (gradeData !is CacheStateOld.Done || profile !is Profile.StudentProfile) return@combine null
                 val grade = gradeData.data
 
                 profile.prefetch()

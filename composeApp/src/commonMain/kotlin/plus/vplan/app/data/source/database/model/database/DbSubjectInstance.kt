@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import kotlinx.datetime.Instant
+import kotlin.uuid.Uuid
 
 @Entity(
     tableName = "subject_instance",
@@ -17,7 +18,7 @@ data class DbSubjectInstance(
     @ColumnInfo(name = "id") val id: Int,
     @ColumnInfo("indiware_id") val indiwareId: String?,
     @ColumnInfo(name = "subject") val subject: String,
-    @ColumnInfo(name = "teacher_id") val teacherId: Int?,
+    @ColumnInfo(name = "teacher_id") val teacherId: Uuid?,
     @ColumnInfo(name = "course_id") val courseId: Int?,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )

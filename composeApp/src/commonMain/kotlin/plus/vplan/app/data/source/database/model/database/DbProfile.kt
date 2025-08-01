@@ -25,6 +25,6 @@ import kotlin.uuid.Uuid
 )
 data class DbProfile(
     @ColumnInfo(name = "id") val id: Uuid,
-    @ColumnInfo(name = "school_id") val schoolId: Int,
+    @ColumnInfo(name = "school_id") val schoolId: Uuid,
     @ColumnInfo(name = "display_name") val displayName: String?
 )

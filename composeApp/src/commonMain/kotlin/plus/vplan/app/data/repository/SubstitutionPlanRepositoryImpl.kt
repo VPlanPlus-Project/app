@@ -27,7 +27,7 @@ class SubstitutionPlanRepositoryImpl(
         vppDatabase.substitutionPlanDao.deleteAll()
     }
 
-    override suspend fun upsertLessons(schoolId: Int, date: LocalDate, lessons: List<Lesson.SubstitutionPlanLesson>, profiles: List<Profile.StudentProfile>) {
+    override suspend fun upsertLessons(schoolId: Uuid, date: LocalDate, lessons: List<Lesson.SubstitutionPlanLesson>, profiles: List<Profile.StudentProfile>) {
         vppDatabase.substitutionPlanDao.replaceForDay(
             schoolId = schoolId,
             date = date,
@@ -81,7 +81,7 @@ class SubstitutionPlanRepositoryImpl(
         })
     }
 
-    override suspend fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate): Flow<Set<Uuid>> {
+    override suspend fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): Flow<Set<Uuid>> {
         return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date).map { it.toSet() }.distinctUntilChanged()
     }
 
@@ -94,7 +94,7 @@ class SubstitutionPlanRepositoryImpl(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getSubstitutionPlanBySchool(schoolId: Int): Flow<Set<Lesson.SubstitutionPlanLesson>> {
+    override fun getSubstitutionPlanBySchool(schoolId: Uuid): Flow<Set<Lesson.SubstitutionPlanLesson>> {
         return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId).map { items -> items.map { it.toModel() }.toSet() }.distinctUntilChanged()
     }
 

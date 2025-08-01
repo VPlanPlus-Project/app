@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.grades.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Subject
@@ -12,7 +12,7 @@ class CalculateAverageUseCase {
     suspend operator fun invoke(grades: List<CalculatorGrade>, interval: Interval): Double {
         val gradesForInterval = grades.filter {
             val intervalForGrade = when (it) {
-                is CalculatorGrade.ActualGrade -> it.grade.collection.getFirstValue()!!.interval.getFirstValue()!!
+                is CalculatorGrade.ActualGrade -> it.grade.collection.getFirstValueOld()!!.interval.getFirstValueOld()!!
                 else -> interval
             }
             intervalForGrade.id == interval.id || intervalForGrade.includedIntervalId == interval.id
@@ -74,8 +74,8 @@ sealed class CalculatorGrade {
     abstract fun getValue(): Int?
 
     data class ActualGrade(val grade: Grade): CalculatorGrade() {
-        override suspend fun getSubject(): Subject = grade.subject.getFirstValue()!!
-        override suspend fun getType(): String = grade.collection.getFirstValue()!!.type
+        override suspend fun getSubject(): Subject = grade.subject.getFirstValueOld()!!
+        override suspend fun getType(): String = grade.collection.getFirstValueOld()!!.type
         override fun getValue(): Int? = grade.numericValue
     }
     data class CustomGrade(val grade: Int, val subject: Subject, val type: String): CalculatorGrade() {

@@ -11,18 +11,19 @@ import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.SchoolRepository
+import kotlin.uuid.Uuid
 
 class SchoolSource(
     private val schoolRepository: SchoolRepository
 ) {
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<School>>>()
+    private val flows = hashMapOf<Uuid, MutableSharedFlow<CacheState<School>>>()
     fun getById(
-        id: Int,
+        id: Uuid,
     ): Flow<CacheState<School>> {
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<School>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
-                schoolRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+                schoolRepository.getByLocalId(id).collectLatest { flow.tryEmit(it?.let { CacheState.Done(it) } ?: CacheState.NotExisting(id.toHexString())) }
             }
             flow
         }

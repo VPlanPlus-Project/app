@@ -41,14 +41,14 @@ class UpdateTimetableUseCase(
      * @param forceUpdate: Whether the app should replace its data store regardless of the hash difference
      */
     suspend operator fun invoke(
-        indiwareSchool: School.IndiwareSchool,
+        sp24School: School.Sp24School,
         forceUpdate: Boolean
     ): Response.Error? {
-        LOGGER.i { "Updating timetable for indiware school ${indiwareSchool.id}" }
-        val rooms = roomRepository.getBySchool(indiwareSchool.id).first()
-        val teachers = teacherRepository.getBySchool(indiwareSchool.id).first()
-        val groups = groupRepository.getBySchool(indiwareSchool.id).first()
-        val weeks = weekRepository.getBySchool(indiwareSchool.id).first().sortedBy { it.start }
+        LOGGER.i { "Updating timetable for indiware school ${sp24School.id}" }
+        val rooms = roomRepository.getBySchool(sp24School.id).first()
+        val teachers = teacherRepository.getBySchool(sp24School.id).first()
+        val groups = groupRepository.getBySchool(sp24School.id).first()
+        val weeks = weekRepository.getBySchool(sp24School.id).first().sortedBy { it.start }
             .let { weeks ->
                 val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
@@ -103,21 +103,21 @@ class UpdateTimetableUseCase(
         var downloadedTimetable: IndiwareTimeTable? = null
         while (week != null) {
             val timetable = indiwareRepository.getTimetable(
-                sp24Id = indiwareSchool.sp24Id,
-                username = indiwareSchool.username,
-                password = indiwareSchool.password,
+                sp24Id = sp24School.sp24Id,
+                username = sp24School.username,
+                password = sp24School.password,
                 week = week,
                 roomNames = rooms.map { it.name }
             )
             when {
                 timetable is Response.Error.OnlineError.NotFound -> {
-                    LOGGER.i { "Timetable not found for indiware school ${indiwareSchool.id} and week CW${week.calendarWeek} (${week.weekIndex} week of school year) (retrying ${week.weekIndex} times)" }
+                    LOGGER.i { "Timetable not found for indiware school ${sp24School.id} and week CW${week.calendarWeek} (${week.weekIndex} week of school year) (retrying ${week.weekIndex} times)" }
                     week = weeks.lastOrNull { it.start < week.start && it.weekIndex == week.weekIndex - 1 }
                 }
 
                 timetable !is Response.Success && timetable is Response.Error -> return timetable
                 timetable is Response.Success -> {
-                    LOGGER.i { "Timetable found for indiware school ${indiwareSchool.id} in week CW${week.calendarWeek} (${week.weekIndex} week of school year)" }
+                    LOGGER.i { "Timetable found for indiware school ${sp24School.id} in week CW${week.calendarWeek} (${week.weekIndex} week of school year)" }
                     if (!timetable.data.hasChangedToPrevious) {
                         Logger.i { "No changes in timetable" + (if (!forceUpdate) ", aborting" else " but update was forced") }
                         if (!forceUpdate) return null
@@ -158,7 +158,7 @@ class UpdateTimetableUseCase(
 
             LOGGER.d { "Found ${lessons.size} lessons to insert/update" }
             timetableRepository.upsertLessons(
-                schoolId = indiwareSchool.id,
+                schoolId = sp24School.id,
                 lessons = lessons,
                 profiles = profileRepository.getAll().first()
                     .filterIsInstance<Profile.StudentProfile>()

@@ -13,7 +13,7 @@ interface SubstitutionPlanRepository {
     suspend fun deleteAllSubstitutionPlans()
 
     suspend fun upsertLessons(
-        schoolId: Int,
+        schoolId: Uuid,
         date: LocalDate,
         lessons: List<Lesson.SubstitutionPlanLesson>,
         profiles: List<Profile.StudentProfile>
@@ -21,9 +21,9 @@ interface SubstitutionPlanRepository {
 
     suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>)
 
-    suspend fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate): Flow<Set<Uuid>>
+    suspend fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): Flow<Set<Uuid>>
     suspend fun getForProfile(profile: Profile, date: LocalDate): Flow<Set<Uuid>>
     suspend fun getAll(): Set<Uuid>
-    fun getSubstitutionPlanBySchool(schoolId: Int): Flow<Set<Lesson.SubstitutionPlanLesson>>
+    fun getSubstitutionPlanBySchool(schoolId: Uuid): Flow<Set<Lesson.SubstitutionPlanLesson>>
     fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?>
 }

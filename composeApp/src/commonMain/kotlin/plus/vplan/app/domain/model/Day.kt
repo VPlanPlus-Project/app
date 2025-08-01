@@ -12,10 +12,11 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -23,7 +24,7 @@ import kotlin.uuid.Uuid
 data class Day(
     val id: String,
     val date: LocalDate,
-    val schoolId: Int,
+    val schoolId: Uuid,
     val weekId: String?,
     val info: String?,
     val dayType: DayType,
@@ -40,7 +41,7 @@ data class Day(
 
     companion object {
         fun buildId(school: School, date: LocalDate) = "${school.id}/$date"
-        fun buildId(schoolId: Int, date: LocalDate) = "$schoolId/$date"
+        fun buildId(schoolId: Uuid, date: LocalDate) = "$schoolId/$date"
     }
 
     override fun getEntityId(): String = this.id
@@ -49,7 +50,7 @@ data class Day(
         if (this.assessmentIds.isEmpty()) return@lazy flowOf(emptySet())
         combine(this.assessmentIds.map { assessmentId ->
             App.assessmentSource.getById(assessmentId)
-                .filterIsInstance<CacheState.Done<Assessment>>().map { it.data }
+                .filterIsInstance<CacheStateOld.Done<Assessment>>().map { it.data }
         }) { it.toSet() }
     }
 
@@ -57,20 +58,20 @@ data class Day(
     val homework by lazy {
         if (this.homeworkIds.isEmpty()) return@lazy flowOf(emptySet())
         combine(this.homeworkIds.map { homeworkId -> App.homeworkSource.getById(homeworkId) }) {
-            it.filterIsInstance<CacheState.Done<Homework>>().map { it.data }.toSet()
+            it.filterIsInstance<CacheStateOld.Done<Homework>>().map { it.data }.toSet()
         }.debounce(50)
     }
 
-    val school by lazy { App.schoolSource.getById(schoolId) }
+    val school by lazy { App.schoolSource.getById(TODO()) }
     val week by lazy { if (this.weekId == null) return@lazy null else App.weekSource.getById(weekId) }
     val nextSchoolDay by lazy { if (this.nextSchoolDayId == null) return@lazy null else App.daySource.getById(nextSchoolDayId) }
 
     val lessons: Flow<Set<Lesson>> by lazy {
         if (timetable.isEmpty() && substitutionPlan.isEmpty()) return@lazy flowOf(emptySet())
-        (if (substitutionPlan.isEmpty()) combine(timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { it.data } }) { it.toSet() }
-        else combine(substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { it.data } }) { it.toSet() })
+        (if (substitutionPlan.isEmpty()) combine(timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheStateOld.Done<Lesson.TimetableLesson>>().map { it.data } }) { it.toSet() }
+        else combine(substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheStateOld.Done<Lesson.SubstitutionPlanLesson>>().map { it.data } }) { it.toSet() })
             .map { lessons ->
-                val week = this.week?.getFirstValue()
+                val week = this.week?.getFirstValueOld()
                 lessons.filter { lesson ->
                     lesson is Lesson.SubstitutionPlanLesson || (lesson is Lesson.TimetableLesson && (lesson.weekType == null || week?.weekType == lesson.weekType))
             }.toSet() }

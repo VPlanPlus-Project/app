@@ -25,6 +25,7 @@ actual val platformModule: Module = module(createdAtStart = true) {
             name = get<Context>().getDatabasePath("data.db").absolutePath
         )
             .setDriver(AndroidSQLiteDriver())
+            .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
             .fallbackToDestructiveMigration(true)
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()

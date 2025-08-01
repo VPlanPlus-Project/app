@@ -36,7 +36,7 @@ import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.SchoolApiAccess
@@ -63,16 +63,16 @@ class FileRepositoryImpl(
         )
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<File>> {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<File>> {
         val fileFlow = vppDatabase.fileDao.getById(id).map { it?.toModel() }
         return channelFlow {
             if (!forceReload) {
                 var hadData = false
-                sendAll(fileFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
+                sendAll(fileFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheStateOld.Done(it) })
                 if (hadData || id < 0) return@channelFlow
             }
-            send(CacheState.Loading(id.toString()))
-            safeRequest(onError = { trySend(CacheState.Error(id.toString(), it)) }) {
+            send(CacheStateOld.Loading(id.toString()))
+            safeRequest(onError = { trySend(CacheStateOld.Error(id.toString(), it)) }) {
                 val response = httpClient.get {
                     url(URLBuilder(api).apply {
                         appendPathSegments("api", "v2.2", "file", id.toString())
@@ -80,11 +80,11 @@ class FileRepositoryImpl(
                 }
                 if (response.status == HttpStatusCode.NotFound && response.isResponseFromBackend()) {
                     vppDatabase.fileDao.deleteById(listOf(id))
-                    return@channelFlow send(CacheState.NotExisting(id.toString()))
+                    return@channelFlow send(CacheStateOld.NotExisting(id.toString()))
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<File>()))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheStateOld.Error(id.toString(), response.toErrorResponse<File>()))
                 val data = ResponseDataWrapper.fromJson<FileItemSimpleGetRequest>(response.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                    ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
                 val creator = vppDatabase.vppIdDao.getById(data.createdBy).first()?.toModel() as? VppId.Active
                 if (creator != null) {
@@ -94,9 +94,9 @@ class FileRepositoryImpl(
                         }.build())
                         creator.buildSchoolApiAccess().authentication(this)
                     }
-                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
+                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheStateOld.Error(id.toString(), fileResponse.toErrorResponse<File>()))
                     val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
-                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
+                        ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
                     val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
                     vppDatabase.fileDao.upsert(
                         DbFile(
@@ -111,7 +111,12 @@ class FileRepositoryImpl(
                     )
                     return@channelFlow sendAll(getById(id, false))
                 }
-                val schools = vppDatabase.schoolDao.getAll().first().distinctBy { it.school.id }.filter { it.school.id in data.schoolIds }.mapNotNull { try { it.toModel().getSchoolApiAccess() } catch (_: Exception) { null } }
+                val schools = vppDatabase.schoolDao.getAll().first()
+                    .map { it.toModel() }
+                    .filter { it.getVppSchoolId() != null }
+                    .filter { it.getVppSchoolId() in data.schoolIds }
+                    .mapNotNull { try { it.getSchoolApiAccess() } catch (_: Exception) { null } }
+
                 schools.forEach { school ->
                     val fileResponse = httpClient.get {
                         url(URLBuilder(api).apply {
@@ -120,9 +125,9 @@ class FileRepositoryImpl(
                         school.authentication(this)
                     }
                     if (fileResponse.status == HttpStatusCode.Forbidden) return@forEach
-                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
+                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheStateOld.Error(id.toString(), fileResponse.toErrorResponse<File>()))
                     val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
-                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
+                        ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
                     val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
                     vppDatabase.fileDao.upsert(
                         DbFile(
@@ -137,7 +142,7 @@ class FileRepositoryImpl(
                     )
                     return@channelFlow sendAll(getById(id, false))
                 }
-                return@channelFlow send(CacheState.NotExisting(id.toString()))
+                return@channelFlow send(CacheStateOld.NotExisting(id.toString()))
             }
         }
     }

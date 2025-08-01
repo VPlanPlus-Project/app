@@ -24,7 +24,9 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
@@ -40,6 +42,7 @@ import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class DaySource(
     private val dayRepository: DayRepository,
@@ -49,7 +52,7 @@ class DaySource(
     private val assessmentRepository: AssessmentRepository,
     private val homeworkRepository: HomeworkRepository,
 ) {
-    val flows = hashMapOf<String, MutableSharedFlow<CacheState<Day>>>()
+    val flows = hashMapOf<String, MutableSharedFlow<CacheStateOld<Day>>>()
     fun findNextRegularSchoolDayAfter(
         holidays: List<LocalDate>,
         weeks: List<Week>,
@@ -69,11 +72,11 @@ class DaySource(
         return nextSchoolDay
     }
 
-    fun getById(id: String, contextProfile: Profile? = null): Flow<CacheState<Day>> {
+    fun getById(id: String, contextProfile: Profile? = null): Flow<CacheStateOld<Day>> {
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<Day>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            val flow = MutableSharedFlow<CacheStateOld<Day>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
-                val schoolId = id.substringBefore("/").toInt()
+                val schoolId = Uuid.parseHex(id.substringBefore("/"))
                 val date = LocalDate.parse(id.substringAfter("/"))
                 val school = App.schoolSource.getById(schoolId).filterIsInstance<CacheState.Done<School>>().firstOrNull()?.data ?: return@launch
                 val weeks = weekRepository.getBySchool(schoolId).first()
@@ -96,7 +99,7 @@ class DaySource(
 
                 launch {
                     day.collect {
-                        flow.tryEmit(CacheState.Done(it))
+                        flow.tryEmit(CacheStateOld.Done(it))
                     }
                 }
 
@@ -144,7 +147,7 @@ class DaySource(
                 }
 
                 launch {
-                    val week = day.value.week?.getFirstValue()
+                    val week = day.value.week?.getFirstValueOld()
                     val weekIndex = week?.weekIndex ?: -1
 
                     (if (contextProfile == null) timetableRepository.getForSchool(schoolId, weekIndex, dayOfWeek = date.dayOfWeek)
@@ -185,7 +188,7 @@ class DaySource(
                         dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } },
                         weekRepository.getBySchool(schoolId)
                     ) { holidays, weeks ->
-                        val nextSchoolDay = findNextRegularSchoolDayAfter(holidays, weeks, date, (school as? School.IndiwareSchool)?.daysPerWeek)
+                        val nextSchoolDay = findNextRegularSchoolDayAfter(holidays, weeks, date, (school as? School.Sp24School)?.daysPerWeek)
                         day.update {
                             it.copy(
                                 nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },

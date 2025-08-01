@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.schulverwalter.Interval
@@ -56,7 +56,7 @@ class ProfileViewModel(
                 if (!it.areGradesLocked && profile is Profile.StudentProfile) {
                     if (profile.getVppIdItem()?.gradeIds.orEmpty().isNotEmpty()) {
                         state = state.copy(currentInterval = getCurrentIntervalUseCase())
-                        val grades = profile.getVppIdItem()?.gradeIds?.map { gradeId -> App.gradeSource.getById(gradeId).getFirstValue()!! } ?: emptyList()
+                        val grades = profile.getVppIdItem()?.gradeIds?.map { gradeId -> App.gradeSource.getById(gradeId).getFirstValueOld()!! } ?: emptyList()
                         state = state.copy(averageGrade = calculateAverageUseCase(grades, state.currentInterval!!))
                     }
                 }

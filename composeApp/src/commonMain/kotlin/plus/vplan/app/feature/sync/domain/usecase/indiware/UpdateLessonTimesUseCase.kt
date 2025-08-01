@@ -3,65 +3,37 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
-import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.isContinuous
 import plus.vplan.app.utils.lastContinuousBy
 import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.until
 import plus.vplan.lib.sp24.source.Authentication
+import plus.vplan.lib.sp24.source.IndiwareClient
 
 private const val TAG = "UpdateLessonTimesUseCase"
 private val LOGGER = Logger.withTag(TAG)
 
 class UpdateLessonTimesUseCase(
-    private val indiwareRepository: IndiwareRepository,
     private val groupRepository: GroupRepository,
-    private val weekRepository: WeekRepository,
     private val lessonTimeRepository: LessonTimeRepository
 ) {
-    suspend operator fun invoke(school: School.IndiwareSchool): Response.Error? {
-        val weeks = weekRepository.getBySchool(school.id).first()
-        val weeksInPastOrCurrent = weeks
-            .filter { it.start < Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
-            .sortedBy { it.weekIndex }
-
-        val currentWeek = weeks.firstOrNull { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date in it.start..it.end }
-
-        var weekIndex =
-            (if (weeksInPastOrCurrent.isEmpty()) weeks.maxOfOrNull { it.weekIndex }
-            else weeksInPastOrCurrent.lastOrNull()?.weekIndex)
-
-        while (weekIndex != null && weekIndex >= 0) {
-            weeks.firstOrNull { week -> week.weekIndex == weekIndex } ?: run {
-                weekIndex -= 1
-                continue
-            }
-
-            val sPlan = indiwareRepository.getWPlanSplan(school.getSp24LibAuthentication(), weekIndex)
-            if (sPlan is plus.vplan.lib.sp24.source.Response.Success) break
-
-            LOGGER.w { "Failed to download SPlan for week $weekIndex, trying next week" }
-            weekIndex -= 1
-        }
-        if (weekIndex == -1) weekIndex = null
+    suspend operator fun invoke(school: School.Sp24School, providedClient: IndiwareClient? = null) {
+        val client = providedClient ?: IndiwareClient(authentication = Authentication(
+            indiwareSchoolId = school.sp24Id,
+            username = school.username,
+            password = school.password
+        ))
+        val lessonTimes = (client.lessonTime.getLessonTime(contextSchoolWeek = null) as? plus.vplan.lib.sp24.source.Response.Success)?.data
 
         val groups = groupRepository.getBySchool(schoolId = school.id).first()
         val existingLessonTimes = lessonTimeRepository.getBySchool(schoolId = school.id)
             .map { it.filter { lessonTime -> !lessonTime.interpolated } }
 
-        val downloadedLessonTimes = indiwareRepository
-            .downloadLessonTimes(school.getSp24LibAuthentication(), weekIndex)
-            .let { (it as? plus.vplan.lib.sp24.source.Response.Success) }
-            ?.data
+        val downloadedLessonTimes = lessonTimes
             ?.mapNotNull { lessonTime ->
                 val group = groups.firstOrNull { it.name == lessonTime.className } ?: return@mapNotNull null
                 LessonTime(
@@ -76,7 +48,7 @@ class UpdateLessonTimesUseCase(
 
         if (downloadedLessonTimes == null) {
             LOGGER.e { "Downloaded lesson times are null" }
-            return null
+            return
         }
 
         existingLessonTimes.first().let { existing ->
@@ -121,7 +93,5 @@ class UpdateLessonTimesUseCase(
         lessonTimeRepository.upsert(lessonsToInterpolate)
 
         LOGGER.i { "Lesson times updated" }
-
-        return null
     }
 }

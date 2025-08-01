@@ -394,7 +394,7 @@ sealed class MainScreen(val name: String) {
     @Serializable data object RoomSearch : MainScreen("RoomSearch")
 
     @Serializable data object Settings : MainScreen("Settings")
-    @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: Int? = null) : MainScreen("SchoolSettings")
+    @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: Uuid? = null) : MainScreen("SchoolSettings")
     @Serializable data object SecuritySettings : MainScreen("SecuritySettings")
     @Serializable data object DeveloperSettings : MainScreen("DeveloperSettings")
     @Serializable data object InfoFeedbackSettings : MainScreen("InfoFeedbackSettings")

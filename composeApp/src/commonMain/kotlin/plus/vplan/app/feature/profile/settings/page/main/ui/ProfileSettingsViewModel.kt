@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
@@ -43,7 +44,7 @@ class ProfileSettingsViewModel(
                 logger.d { "Got profile $profile" }
                 state = state.copy(profile = profile)
                 if (profile is Profile.StudentProfile && profile.vppIdId != null) {
-                    checkIfVppIdIsStillConnectedUseCase(App.vppIdSource.getById(profile.vppIdId).getFirstValue() as VppId.Active).let {
+                    checkIfVppIdIsStillConnectedUseCase(App.vppIdSource.getById(profile.vppIdId).getFirstValueOld() as VppId.Active).let {
                         state = state.copy(isVppIdStillConnected = it)
                     }
                 }

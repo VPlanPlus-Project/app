@@ -12,25 +12,26 @@ import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.TeacherRepository
+import kotlin.uuid.Uuid
 
 class TeacherSource(
     private val teacherRepository: TeacherRepository
 ) {
 
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Teacher>>>()
-    private val cacheItems = hashMapOf<Int, CacheState<Teacher>>()
-    fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<Teacher>> {
+    private val flows = hashMapOf<Uuid, MutableSharedFlow<CacheState<Teacher>>>()
+    private val cacheItems = hashMapOf<Uuid, CacheState<Teacher>>()
+    fun getById(id: Uuid, forceReload: Boolean = false): Flow<CacheState<Teacher>> {
         if (forceReload) flows.remove(id)
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Teacher>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
-                teacherRepository.getById(id, forceReload = forceReload).collectLatest { flow.tryEmit(it) }
+                teacherRepository.getByLocalId(id).collectLatest { flow.tryEmit(it?.let { CacheState.Done(it) } ?: CacheState.NotExisting(id.toHexString())) }
             }
             flow
         }
     }
 
-    suspend fun getSingleById(id: Int): Teacher? {
+    suspend fun getSingleById(id: Uuid): Teacher? {
         return (cacheItems[id] as? CacheState.Done<Teacher>)?.data ?: getById(id).getFirstValue()
     }
 }

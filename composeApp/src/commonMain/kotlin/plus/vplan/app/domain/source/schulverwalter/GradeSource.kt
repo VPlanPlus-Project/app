@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.repository.schulverwalter.GradeRepository
 
@@ -20,11 +20,11 @@ class GradeSource(
     private val gradeRepository: GradeRepository
 ) {
 
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Grade>>>()
+    private val flows = hashMapOf<Int, MutableSharedFlow<CacheStateOld<Grade>>>()
 
-    fun getById(id: Int): Flow<CacheState<Grade>> {
+    fun getById(id: Int): Flow<CacheStateOld<Grade>> {
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<Grade>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            val flow = MutableSharedFlow<CacheStateOld<Grade>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
                 gradeRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
             }
@@ -33,7 +33,7 @@ class GradeSource(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getAll(): Flow<List<CacheState<Grade>>> {
+    fun getAll(): Flow<List<CacheStateOld<Grade>>> {
         return gradeRepository.getAllIds().flatMapLatest { ids ->
             if (ids.isEmpty()) return@flatMapLatest flowOf(emptyList())
             combine(ids.map { getById(it) }) { it.toList() }

@@ -6,11 +6,12 @@ import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
+import kotlin.uuid.Uuid
 
 sealed class VppId : Item<DataTag> {
     abstract val id: Int
     abstract val name: String
-    abstract val groups: List<Int>
+    abstract val groups: List<Uuid>
     abstract val cachedAt: Instant
 
     override fun getEntityId(): String = this.id.toString()
@@ -19,14 +20,14 @@ sealed class VppId : Item<DataTag> {
     data class Cached(
         override val id: Int,
         override val name: String,
-        override val groups: List<Int>,
+        override val groups: List<Uuid>,
         override val cachedAt: Instant
     ) : VppId()
 
     data class Active(
         override val id: Int,
         override val name: String,
-        override val groups: List<Int>,
+        override val groups: List<Uuid>,
         override val cachedAt: Instant,
         val accessToken: String,
         val schulverwalterConnection: SchulverwalterConnection?,
@@ -37,8 +38,8 @@ sealed class VppId : Item<DataTag> {
         }
 
         val grades by lazy {
-            if (gradeIds.isEmpty()) return@lazy flowOf(emptyList())
-            combine(gradeIds.map { App.gradeSource.getById(it) }) { it.toList() }
+            if (gradeIds.isEmpty()) flowOf(emptyList())
+            else combine(gradeIds.map { App.gradeSource.getById(it) }) { it.toList() }
         }
 
         data class SchulverwalterConnection(

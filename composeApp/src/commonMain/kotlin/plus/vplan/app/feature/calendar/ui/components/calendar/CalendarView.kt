@@ -62,7 +62,7 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Group
@@ -227,7 +227,7 @@ fun CalendarView(
                                                         verticalArrangement = Arrangement.spacedBy(4.dp),
                                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                                     ) {
-                                                        val subjectInstance = remember { lesson.lesson.subjectInstance }?.collectAsResultingFlow()?.value
+                                                        val subjectInstance = remember { lesson.lesson.subjectInstance }?.collectAsResultingFlowOld()?.value
                                                         val itemHeight = max(MaterialTheme.typography.bodyMedium.lineHeight.toDp(), MaterialTheme.typography.bodySmall.lineHeight.toDp())
                                                         Box(
                                                             modifier = Modifier.height(itemHeight),

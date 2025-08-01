@@ -9,22 +9,27 @@ import kotlinx.coroutines.launch
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.ProfileType
+import plus.vplan.app.feature.onboarding.domain.usecase.GetOnboardingStateUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
-import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.GetProfileOptionsUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.SelectProfileUseCase
 import plus.vplan.app.ui.components.ButtonState
 
 class OnboardingSelectProfileViewModel(
-    private val getProfileOptionsUseCase: GetProfileOptionsUseCase,
-    private val selectProfileUseCase: SelectProfileUseCase
+    private val selectProfileUseCase: SelectProfileUseCase,
+    private val getOnboardingStateUseCase: GetOnboardingStateUseCase
 ) : ViewModel() {
     var state by mutableStateOf(OnboardingSelectProfileUiState())
         private set
 
     init {
         viewModelScope.launch {
-            getProfileOptionsUseCase().collect {
-                state = state.copy(options = it)
+            getOnboardingStateUseCase().collect { onboardingSp24State ->
+                state = state.copy(options = onboardingSp24State.groupOptions.map {
+                    OnboardingProfile.StudentProfile(
+                        name = it,
+                        subjectInstances = emptyList()
+                    )
+                })
             }
         }
     }

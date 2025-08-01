@@ -28,7 +28,7 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulver
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.repository.schulverwalter.CollectionRepository
@@ -65,16 +65,16 @@ class CollectionRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Collection>> = channelFlow {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<Collection>> = channelFlow {
         val collectionFlow = vppDatabase.collectionDao.getById(id).map { it?.toModel() }
         if (!forceReload) {
             var hadData = false
-            sendAll(collectionFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
+            sendAll(collectionFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheStateOld.Done(it) })
             if (hadData) return@channelFlow
         }
-        send(CacheState.Loading(id.toString()))
+        send(CacheStateOld.Loading(id.toString()))
 
-        safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+        safeRequest(onError = { trySend(CacheStateOld.Error(id, it)) }) {
             val existing = vppDatabase.collectionDao.getById(id).first()
             val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.collection.userForRequest).first()) }
                 ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
@@ -89,14 +89,14 @@ class CollectionRepositoryImpl(
                     }
                     bearerAuth(accessToken.schulverwalterAccessToken)
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Collection>()))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheStateOld.Error(id.toString(), response.toErrorResponse<Collection>()))
                 val data = ResponseDataWrapper.fromJson<CollectionItemResponse>(response.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                    ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
                 handleResponse(listOf(data), accessToken.schulverwalterUserId)
             }
 
-            if (collectionFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
+            if (collectionFlow.first() == null) return@channelFlow send(CacheStateOld.NotExisting(id.toString()))
             return@channelFlow sendAll(getById(id, false))
         }
     }

@@ -16,7 +16,7 @@ class GetFeedbackMetadataUseCase(
             return@map FeedbackMetadata(
                 systemInfo,
                 profileInfo = FeedbackProfileInfo(
-                    schoolId = school.id,
+                    schoolId = school.getVppSchoolId(),
                     school = school.name,
                     profileName = currentProfile.name,
                     profileType = currentProfile.profileType
@@ -54,7 +54,7 @@ data class FeedbackDeviceInfo(
 )
 
 data class FeedbackProfileInfo(
-    val schoolId: Int,
+    val schoolId: Int?,
     val school: String,
     val profileType: ProfileType,
     val profileName: String

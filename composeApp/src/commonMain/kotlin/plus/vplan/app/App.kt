@@ -53,7 +53,7 @@ data class Host(
     val url = "${protocol.name}://$host:$port"
 }
 
-const val appApi = "https://vplan.plus/api/app"
+const val appApi = "http://10.0.2.2:8002/api/app"
 
 const val api = "https://vplan.plus"
 
@@ -134,7 +134,7 @@ sealed class StartTask(val profileId: Uuid? = null) {
     data class OpenUrl(val url: String): StartTask()
     sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
         class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
-        class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Int? = null): NavigateTo(profileId)
+        class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Uuid? = null): NavigateTo(profileId)
         class Grades(profileId: Uuid?, val vppId: Int): NavigateTo(profileId)
     }
 
@@ -189,7 +189,7 @@ data class StartTaskJson(
 
         @Serializable
         data class SchoolSettings(
-            @SerialName("open_indiware_settings_school_id") val openIndiwareSettingsSchoolId: Int? = null,
+            @SerialName("open_indiware_settings_school_id") val openIndiwareSettingsSchoolId: Uuid? = null,
         )
 
         @Serializable

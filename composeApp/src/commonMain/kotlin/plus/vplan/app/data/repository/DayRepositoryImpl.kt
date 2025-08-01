@@ -9,6 +9,7 @@ import plus.vplan.app.data.source.database.model.database.DbHoliday
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Holiday
 import plus.vplan.app.domain.repository.DayRepository
+import kotlin.uuid.Uuid
 
 class DayRepositoryImpl(
     private val vppDatabase: VppDatabase
@@ -37,7 +38,7 @@ class DayRepositoryImpl(
         })
     }
 
-    override suspend fun getHolidays(schoolId: Int): Flow<List<Holiday>> {
+    override suspend fun getHolidays(schoolId: Uuid): Flow<List<Holiday>> {
         return vppDatabase.holidayDao.getBySchoolId(schoolId).map { holidays ->
             holidays.map { it.toModel() }
         }
@@ -51,15 +52,15 @@ class DayRepositoryImpl(
         vppDatabase.holidayDao.deleteByIds(ids)
     }
 
-    override fun getBySchool(date: LocalDate, schoolId: Int): Flow<Day?> {
+    override fun getBySchool(date: LocalDate, schoolId: Uuid): Flow<Day?> {
         return vppDatabase.dayDao.getBySchool(date, schoolId).map { it?.toModel() }
     }
 
-    override fun getBySchool(schoolId: Int): Flow<Set<Day>> {
+    override fun getBySchool(schoolId: Uuid): Flow<Set<Day>> {
         return vppDatabase.dayDao.getBySchool(schoolId).map { it.map { day -> day.toModel() }.toSet() }
     }
 
     override fun getById(id: String): Flow<Day?> {
-        return getBySchool(LocalDate.parse(id.substringAfter("/")), id.substringBefore("/").toInt())
+        return getBySchool(LocalDate.parse(id.substringAfter("/")), Uuid.parseHex(id.substringBefore("/")))
     }
 }

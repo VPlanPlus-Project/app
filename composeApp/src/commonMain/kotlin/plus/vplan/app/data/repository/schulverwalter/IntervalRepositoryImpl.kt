@@ -23,7 +23,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterv
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.repository.schulverwalter.IntervalRepository
@@ -80,16 +80,16 @@ class IntervalRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Interval>> = channelFlow {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<Interval>> = channelFlow {
         val intervalFlow = vppDatabase.intervalDao.getById(id).map { it?.toModel() }
         if (!forceReload) {
             var hadData = false
-            sendAll(intervalFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
+            sendAll(intervalFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheStateOld.Done(it) })
             if (hadData) return@channelFlow
         }
-        send(CacheState.Loading(id.toString()))
+        send(CacheStateOld.Loading(id.toString()))
 
-        safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
+        safeRequest(onError = { trySend(CacheStateOld.Error(id, it)) }) {
             val existing = vppDatabase.intervalDao.getById(id).first()
             val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.interval.userForRequest).first()) }
                 ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
@@ -104,9 +104,9 @@ class IntervalRepositoryImpl(
                     }
                     bearerAuth(accessToken.schulverwalterAccessToken)
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Interval>()))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheStateOld.Error(id.toString(), response.toErrorResponse<Interval>()))
                 val data = ResponseDataWrapper.fromJson<List<IntervalItemResponse>>(response.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                    ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
                 vppDatabase.intervalDao.upsert(
                     intervals = data.map {
@@ -133,7 +133,7 @@ class IntervalRepositoryImpl(
                 }
             }
 
-            if (intervalFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
+            if (intervalFlow.first() == null) return@channelFlow send(CacheStateOld.NotExisting(id.toString()))
             return@channelFlow sendAll(getById(id, false))
         }
     }

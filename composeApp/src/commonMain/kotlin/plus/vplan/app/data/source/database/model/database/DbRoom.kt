@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import kotlinx.datetime.Instant
-import plus.vplan.app.domain.model.Room
+import kotlin.uuid.Uuid
 
 @Entity(
     tableName = "school_rooms",
@@ -25,17 +25,8 @@ import plus.vplan.app.domain.model.Room
     ]
 )
 data class DbRoom(
-    @ColumnInfo(name = "id") val id: Int,
-    @ColumnInfo(name = "school_id") val schoolId: Int,
+    @ColumnInfo(name = "id") val id: Uuid,
+    @ColumnInfo(name = "school_id") val schoolId: Uuid,
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
-) {
-    fun toModel(): Room {
-        return Room(
-            id = id,
-            schoolId = schoolId,
-            name = name,
-            cachedAt = cachedAt
-        )
-    }
-}
+)
