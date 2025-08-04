@@ -61,7 +61,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
@@ -303,8 +303,8 @@ private fun HomeContent(
                     item yourDay@{
                         val isYourDayToday = state.day?.date == state.currentTime.date
                         val weekState = remember(state.day) { state.day?.week }?.collectAsLoadingStateOld("")?.value
-                        if (state.day == null || weekState is CacheStateOld.Loading) return@yourDay
-                        val week = (weekState as? CacheStateOld.Done)?.data
+                        if (state.day == null || weekState is CacheState.Loading) return@yourDay
+                        val week = (weekState as? CacheState.Done)?.data
 
                         Column {
                             FeedTitle(

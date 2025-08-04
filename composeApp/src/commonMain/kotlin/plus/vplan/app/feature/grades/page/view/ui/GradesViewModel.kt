@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Grade
@@ -94,7 +94,7 @@ class GradesViewModel(
             getGradeLockStateUseCase().collectLatest { areGradesLocked ->
                 state = state.copy(gradeLockState = areGradesLocked)
                 if (!areGradesLocked.canAccess) return@collectLatest
-                App.vppIdSource.getById(vppIdId).filterIsInstance<CacheStateOld.Done<VppId>>().map { it.data }.collectLatest collectLatestGrades@{ vppId ->
+                App.vppIdSource.getById(vppIdId).filterIsInstance<CacheState.Done<VppId>>().map { it.data }.collectLatest collectLatestGrades@{ vppId ->
                     val interval = getCurrentIntervalUseCase()
                     state = state.copy(vppId = vppId, currentInterval = interval)
                     if (interval == null || vppId !is VppId.Active) return@collectLatestGrades
@@ -103,7 +103,7 @@ class GradesViewModel(
                         selectedInterval = interval
                     )
 
-                    grades = App.gradeSource.getAll().map { it.filterIsInstance<CacheStateOld.Done<Grade>>().map { gradeState -> gradeState.data } }.first()
+                    grades = App.gradeSource.getAll().map { it.filterIsInstance<CacheState.Done<Grade>>().map { gradeState -> gradeState.data } }.first()
 
                     setGrades()
                 }

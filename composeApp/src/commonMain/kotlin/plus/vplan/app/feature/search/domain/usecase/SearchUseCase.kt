@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.AppEntity
@@ -91,7 +91,7 @@ class SearchUseCase(
                 }
 
                 if (searchRequest.assessmentType == null) launch {
-                    homeworkRepository.getAll().map { it.filterIsInstance<CacheStateOld.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
+                    homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
                         val homework = homeworkList.onEach { it.getTaskItems() }
                         results.value = results.value.plus(
                             SearchResult.Type.Homework to homework
@@ -123,7 +123,7 @@ class SearchUseCase(
                 }
 
                 if (searchRequest.assessmentType == null) launch {
-                    App.collectionSource.getAll().map { it.filterIsInstance<CacheStateOld.Done<Collection>>().map { it.data } }.collectLatest { collections ->
+                    App.collectionSource.getAll().map { it.filterIsInstance<CacheState.Done<Collection>>().map { it.data } }.collectLatest { collections ->
                         val filteredGrades = collections
                             .filter { query in it.name.lowercase() }
                             .flatMap { collection ->

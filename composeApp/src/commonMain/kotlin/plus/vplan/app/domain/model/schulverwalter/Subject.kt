@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 
@@ -22,6 +22,6 @@ data class Subject(
     override fun getEntityId(): String = this.id.toString()
     override val tags: Set<DataTag> = emptySet()
 
-    val collections: Flow<List<CacheStateOld<Collection>>> = if (collectionIds.isEmpty()) flowOf(emptyList()) else combine(collectionIds.map { App.collectionSource.getById(it) }) { it.toList() }
-    val finalGrade: Flow<FinalGrade>? by lazy { finalGradeId?.let { App.finalGradeSource.getById(finalGradeId).filterIsInstance<CacheStateOld.Done<FinalGrade>>().map { finalGrade -> finalGrade.data } } }
+    val collections: Flow<List<CacheState<Collection>>> = if (collectionIds.isEmpty()) flowOf(emptyList()) else combine(collectionIds.map { App.collectionSource.getById(it) }) { it.toList() }
+    val finalGrade: Flow<FinalGrade>? by lazy { finalGradeId?.let { App.finalGradeSource.getById(finalGradeId).filterIsInstance<CacheState.Done<FinalGrade>>().map { finalGrade -> finalGrade.data } } }
 }

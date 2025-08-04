@@ -23,8 +23,8 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
@@ -51,7 +51,7 @@ class DaySource(
     private val assessmentRepository: AssessmentRepository,
     private val homeworkRepository: HomeworkRepository,
 ) {
-    val flows = hashMapOf<String, MutableSharedFlow<CacheStateOld<Day>>>()
+    val flows = hashMapOf<String, MutableSharedFlow<CacheState<Day>>>()
     fun findNextRegularSchoolDayAfter(
         holidays: List<LocalDate>,
         weeks: List<Week>,
@@ -71,13 +71,13 @@ class DaySource(
         return nextSchoolDay
     }
 
-    fun getById(id: String, contextProfile: Profile? = null): Flow<CacheStateOld<Day>> {
+    fun getById(id: String, contextProfile: Profile? = null): Flow<CacheState<Day>> {
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheStateOld<Day>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            val flow = MutableSharedFlow<CacheState<Day>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
                 val schoolId = Uuid.parse(id.substringBefore("/"))
                 val date = LocalDate.parse(id.substringAfter("/"))
-                val school = App.schoolSource.getById(schoolId).filterIsInstance<CacheState.Done<School>>().firstOrNull()?.data ?: return@launch
+                val school = App.schoolSource.getById(schoolId).filterIsInstance<AliasState.Done<School>>().firstOrNull()?.data ?: return@launch
                 val weeks = weekRepository.getBySchool(schoolId).first()
                 val day = MutableStateFlow(
                     Day(
@@ -98,7 +98,7 @@ class DaySource(
 
                 launch {
                     day.collect {
-                        flow.tryEmit(CacheStateOld.Done(it))
+                        flow.tryEmit(CacheState.Done(it))
                     }
                 }
 

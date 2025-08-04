@@ -73,7 +73,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Teacher
@@ -298,7 +298,7 @@ private fun GradesContent(
                                         append("Keine Noten ")
                                         if (state.currentInterval != null) {
                                             if (state.currentInterval.includedIntervalId == null) append("für das Interval ${state.currentInterval.name} ")
-                                            else state.currentInterval.includedInterval?.filterIsInstance<CacheStateOld.Done<Interval>>()?.map { it.data.name }?.collectAsState(null)?.let {
+                                            else state.currentInterval.includedInterval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data.name }?.collectAsState(null)?.let {
                                                 append("für die Intervalle $it und ${state.currentInterval.name}")
                                             }
                                         }
@@ -360,7 +360,7 @@ private fun GradesContent(
                                                 }
                                                 val interval = state.currentInterval
                                                 val hasIncludedInterval = interval?.includedIntervalId != null
-                                                val includeInterval = state.currentInterval?.includedInterval?.filterIsInstance<CacheStateOld.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
+                                                val includeInterval = state.currentInterval?.includedInterval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
 
                                                 Text(
                                                     text = "Durchschnitt",
@@ -528,9 +528,9 @@ private fun GradesContent(
                                             }
 
                                             category.grades.forEach forEachGrade@{ (grade, isSelectedForFinalGrade) ->
-                                                val collection = grade.collection.filterIsInstance<CacheStateOld.Done<Collection>>().map { it.data }.collectAsState(null).value
-                                                val interval = collection?.interval?.filterIsInstance<CacheStateOld.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
-                                                val teacher = grade.teacher.filterIsInstance<CacheStateOld.Done<Teacher>>().map { it.data }.collectAsState(null).value
+                                                val collection = grade.collection.filterIsInstance<CacheState.Done<Collection>>().map { it.data }.collectAsState(null).value
+                                                val interval = collection?.interval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
+                                                val teacher = grade.teacher.filterIsInstance<CacheState.Done<Teacher>>().map { it.data }.collectAsState(null).value
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()

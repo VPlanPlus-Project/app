@@ -16,14 +16,11 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
@@ -63,7 +60,7 @@ class CalendarViewModel(
 
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
-            App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheStateOld.Done<Day>>().map { it.data }.collectLatest { day ->
+            App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
                 var selectorDay = DateSelectorDay(
                     date = date,
                     homework = day.homeworkIds.map { DateSelectorDay.HomeworkItem(subject = "", isDone = false) },

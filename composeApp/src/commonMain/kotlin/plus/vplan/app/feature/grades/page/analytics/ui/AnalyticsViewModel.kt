@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Grade
@@ -32,12 +32,12 @@ class AnalyticsViewModel(
         viewModelScope.launch { getIntervalsUseCase().collectLatest { state = state.copy(intervals = it) } }
         viewModelScope.launch {
             getCurrentIntervalUseCase().let { state = state.copy(interval = it) }
-            App.vppIdSource.getById(vppIdId).filterIsInstance<CacheStateOld.Done<VppId.Active>>().map { it.data }.collectLatest { vppId ->
+            App.vppIdSource.getById(vppIdId).filterIsInstance<CacheState.Done<VppId.Active>>().map { it.data }.collectLatest { vppId ->
                 state = state.copy(vppId = vppId)
                 App.gradeSource.getAll()
                     .map {
                         it
-                            .filterIsInstance<CacheStateOld.Done<Grade>>()
+                            .filterIsInstance<CacheState.Done<Grade>>()
                             .map { gradeState -> gradeState.data }
                             .filter { grade -> grade.vppIdId == vppIdId }
                     }.collectLatest { grades ->

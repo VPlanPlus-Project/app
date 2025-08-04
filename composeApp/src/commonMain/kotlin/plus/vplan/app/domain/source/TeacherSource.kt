@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -18,20 +18,20 @@ class TeacherSource(
     private val teacherRepository: TeacherRepository
 ) {
 
-    private val flows = hashMapOf<Uuid, MutableSharedFlow<CacheState<Teacher>>>()
-    private val cacheItems = hashMapOf<Uuid, CacheState<Teacher>>()
-    fun getById(id: Uuid, forceReload: Boolean = false): Flow<CacheState<Teacher>> {
+    private val flows = hashMapOf<Uuid, MutableSharedFlow<AliasState<Teacher>>>()
+    private val cacheItems = hashMapOf<Uuid, AliasState<Teacher>>()
+    fun getById(id: Uuid, forceReload: Boolean = false): Flow<AliasState<Teacher>> {
         if (forceReload) flows.remove(id)
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<Teacher>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            val flow = MutableSharedFlow<AliasState<Teacher>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
-                teacherRepository.getByLocalId(id).collectLatest { flow.tryEmit(it?.let { CacheState.Done(it) } ?: CacheState.NotExisting(id.toHexString())) }
+                teacherRepository.getByLocalId(id).collectLatest { flow.tryEmit(it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString())) }
             }
             flow
         }
     }
 
     suspend fun getSingleById(id: Uuid): Teacher? {
-        return (cacheItems[id] as? CacheState.Done<Teacher>)?.data ?: getById(id).getFirstValue()
+        return (cacheItems[id] as? AliasState.Done<Teacher>)?.data ?: getById(id).getFirstValue()
     }
 }

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.repository.TimetableRepository
 import kotlin.uuid.ExperimentalUuidApi
@@ -20,13 +20,13 @@ import kotlin.uuid.Uuid
 class TimetableSource(
     private val timetableRepository: TimetableRepository
 ) {
-    private val flows = hashMapOf<Uuid, MutableSharedFlow<CacheStateOld<Lesson.TimetableLesson>>>()
+    private val flows = hashMapOf<Uuid, MutableSharedFlow<CacheState<Lesson.TimetableLesson>>>()
 
-    fun getById(id: Uuid): Flow<CacheStateOld<Lesson.TimetableLesson>> {
+    fun getById(id: Uuid): Flow<CacheState<Lesson.TimetableLesson>> {
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheStateOld<Lesson.TimetableLesson>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            val flow = MutableSharedFlow<CacheState<Lesson.TimetableLesson>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
-                timetableRepository.getById(id).map { if (it == null) CacheStateOld.NotExisting(id.toHexString()) else CacheStateOld.Done(it) }
+                timetableRepository.getById(id).map { if (it == null) CacheState.NotExisting(id.toHexString()) else CacheState.Done(it) }
                     .collectLatest { flow.tryEmit(it) }
             }
             flow

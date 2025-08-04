@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
@@ -17,7 +17,7 @@ class GetDayUseCase {
     suspend operator fun invoke(profile: Profile, date: LocalDate): Flow<Day> {
         val schoolId = profile.getSchool().getFirstValue()!!.id
         return App.daySource.getById("${schoolId}/$date", contextProfile = profile)
-            .filterIsInstance<CacheStateOld.Done<Day>>()
+            .filterIsInstance<CacheState.Done<Day>>()
             .filter { Day.DayTags.HAS_LESSONS in it.data.tags }
             .map { it.data }
             .onEach { Logger.d { "Day: $it" } }

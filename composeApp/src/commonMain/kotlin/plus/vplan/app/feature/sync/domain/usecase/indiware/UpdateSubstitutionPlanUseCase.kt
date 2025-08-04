@@ -11,7 +11,7 @@ import kotlinx.datetime.format
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.AliasProvider
@@ -199,11 +199,11 @@ class UpdateSubstitutionPlanUseCase(
                                     append(lesson.subject ?: "Entfall")
                                     if (lesson.teacherIds.isNotEmpty()) {
                                         append(" mit ")
-                                        append(lesson.teachers.first().filterIsInstance<CacheState.Done<Teacher>>().joinToString(", ") { it.data.name })
+                                        append(lesson.teachers.first().filterIsInstance<AliasState.Done<Teacher>>().joinToString(", ") { it.data.name })
                                     }
                                     if (lesson.roomIds.isNotEmpty()) {
                                         append(" in ")
-                                        append(lesson.rooms.first().filterIsInstance<CacheState.Done<Room>>().joinToString(", ") { it.data.name })
+                                        append(lesson.rooms.first().filterIsInstance<AliasState.Done<Room>>().joinToString(", ") { it.data.name })
                                     }
                                 }
                                 if (newDay?.info != null) append("\n\nℹ\uFE0F ${newDay.info}")

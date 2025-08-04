@@ -12,18 +12,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.schulverwalter.Teacher
 import plus.vplan.app.domain.repository.schulverwalter.TeacherRepository
 
 class TeacherSource(
     private val teacherRepository: TeacherRepository
 ) {
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheStateOld<Teacher>>>()
+    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Teacher>>>()
 
-    fun getById(id: Int): Flow<CacheStateOld<Teacher>> {
+    fun getById(id: Int): Flow<CacheState<Teacher>> {
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheStateOld<Teacher>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            val flow = MutableSharedFlow<CacheState<Teacher>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
                 teacherRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
             }
@@ -32,10 +32,10 @@ class TeacherSource(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getAll(): Flow<List<CacheStateOld<Teacher>>> {
+    fun getAll(): Flow<List<CacheState<Teacher>>> {
         return teacherRepository.getAllIds().flatMapLatest { ids ->
-            if (ids.isEmpty()) return@flatMapLatest flowOf(emptyList())
-            combine(ids.map { getById(it) }) { it.toList() }
+            if (ids.isEmpty()) flowOf(emptyList())
+            else combine(ids.map { getById(it) }) { it.toList() }
         }
     }
 }

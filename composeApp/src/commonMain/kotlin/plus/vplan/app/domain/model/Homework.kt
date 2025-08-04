@@ -14,8 +14,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValueOld
@@ -37,10 +37,10 @@ sealed class Homework(
     val subjectInstance by lazy { this.subjectInstanceId?.let { App.subjectInstanceSource.getById(it) } }
     val tasks by lazy {
         if (taskIds.isEmpty()) flowOf(emptyList())
-        else combine(taskIds.map { id -> App.homeworkTaskSource.getById(id).filterIsInstance<CacheStateOld.Done<HomeworkTask>>().map { it.data } }) { it.toList() }
+        else combine(taskIds.map { id -> App.homeworkTaskSource.getById(id).filterIsInstance<CacheState.Done<HomeworkTask>>().map { it.data } }) { it.toList() }
     }
 
-    abstract val group: Flow<CacheState<Group>>?
+    abstract val group: Flow<AliasState<Group>>?
 
     var taskItems: List<HomeworkTask>? = null
         private set
@@ -48,14 +48,14 @@ sealed class Homework(
     var fileItems: List<File>? = null
         private set
 
-    fun getTasksFlow() = if (taskIds.isEmpty()) flowOf(emptyList()) else combine(taskIds.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheStateOld.Done<HomeworkTask>>() }) { it.toList().map { it.data }.also { taskItems = it } }
+    fun getTasksFlow() = if (taskIds.isEmpty()) flowOf(emptyList()) else combine(taskIds.map { App.homeworkTaskSource.getById(it).filterIsInstance<CacheState.Done<HomeworkTask>>() }) { it.toList().map { it.data }.also { taskItems = it } }
     fun getStatusFlow(profile: Profile.StudentProfile) = getTasksFlow().map { tasks ->
         if (tasks.all { it.isDone(profile) }) HomeworkStatus.DONE
         else if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date > dueTo) HomeworkStatus.OVERDUE
         else HomeworkStatus.PENDING
     }
 
-    fun getFilesFlow() = if (files.isEmpty()) flowOf(emptyList()) else combine(files.map { App.fileSource.getById(it).filterIsInstance<CacheStateOld.Done<File>>() }) { it.toList().map { it.data } }
+    fun getFilesFlow() = if (files.isEmpty()) flowOf(emptyList()) else combine(files.map { App.fileSource.getById(it).filterIsInstance<CacheState.Done<File>>() }) { it.toList().map { it.data } }
 
     suspend fun getTaskItems(): List<HomeworkTask> {
         return taskItems ?: taskIds.mapNotNull { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
@@ -63,7 +63,7 @@ sealed class Homework(
 
     suspend fun getFileItems(): List<File> {
         if (files.isEmpty()) return emptyList()
-        return fileItems ?: combine(files.map { App.fileSource.getById(it) }) { it.toList().mapNotNull { (it as? CacheStateOld.Done<File>)?.data } }.first().also { fileItems = it }
+        return fileItems ?: combine(files.map { App.fileSource.getById(it) }) { it.toList().mapNotNull { (it as? CacheState.Done<File>)?.data } }.first().also { fileItems = it }
     }
 
     data class HomeworkTask(
@@ -121,7 +121,7 @@ sealed class Homework(
             )
         }
 
-        override val group: Flow<CacheState<Group>>? = groupId?.let { App.groupSource.getById(groupId) }
+        override val group: Flow<AliasState<Group>>? = groupId?.let { App.groupSource.getById(groupId) }
 
         var createdByItem: VppId? = null
             private set
@@ -155,9 +155,9 @@ sealed class Homework(
         }
 
         @OptIn(ExperimentalCoroutinesApi::class)
-        override val group: Flow<CacheState<Group>> by lazy {
+        override val group: Flow<AliasState<Group>> by lazy {
             App.profileSource.getById(createdByProfile)
-                .filterIsInstance<CacheStateOld.Done<Profile.StudentProfile>>()
+                .filterIsInstance<CacheState.Done<Profile.StudentProfile>>()
                 .map { it.data }
                 .flatMapLatest { App.groupSource.getById(it.groupId) }
         }

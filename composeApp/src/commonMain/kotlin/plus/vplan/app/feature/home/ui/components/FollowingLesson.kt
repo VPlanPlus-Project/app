@@ -30,7 +30,7 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Lesson
@@ -93,7 +93,7 @@ fun FollowingLesson(
                     Text(
                         text = buildString {
                             if (lesson.subject != null) append(lesson.subject)
-                            else if (subjectInstanceState?.value is CacheState.Done) append((subjectInstanceState.value as CacheState.Done).data.subject + " entfällt")
+                            else if (subjectInstanceState?.value is AliasState.Done) append((subjectInstanceState.value as AliasState.Done).data.subject + " entfällt")
                             else append("Entfall")
                         },
                         style = headerFont(),
@@ -106,7 +106,7 @@ fun FollowingLesson(
                         Text(
                             text = buildString {
                                 if (rooms == null) return@buildString
-                                append(rooms!!.filterIsInstance<CacheState.Done<Room>>().joinToString { it.data.name })
+                                append(rooms!!.filterIsInstance<AliasState.Done<Room>>().joinToString { it.data.name })
                                 if (rooms!!.isEmpty()) append("Kein Raum")
                             },
                             style = headerFont(),
@@ -119,7 +119,7 @@ fun FollowingLesson(
                     if (!lesson.isCancelled) Text(
                         text = buildString {
                             if (teachers == null) return@buildString
-                            append(teachers!!.filterIsInstance<CacheState.Done<Teacher>>().joinToString { it.data.name })
+                            append(teachers!!.filterIsInstance<AliasState.Done<Teacher>>().joinToString { it.data.name })
                             if (teachers!!.isEmpty()) append("Keine Lehrkraft")
                         },
                         style = headerFont(),

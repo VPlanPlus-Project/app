@@ -44,7 +44,7 @@ import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
@@ -130,12 +130,12 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override fun getTaskById(id: Int): Flow<CacheStateOld<Homework.HomeworkTask>> {
-        return vppDatabase.homeworkDao.getTaskById(id).map { it?.toModel() }.map { if (it == null) CacheStateOld.NotExisting(id.toString()) else CacheStateOld.Done(it) }
+    override fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>> {
+        return vppDatabase.homeworkDao.getTaskById(id).map { it?.toModel() }.map { if (it == null) CacheState.NotExisting(id.toString()) else CacheState.Done(it) }
     }
 
-    override fun getAll(): Flow<List<CacheStateOld<Homework>>> {
-        return vppDatabase.homeworkDao.getAll().map { it.map { embeddedHomework -> CacheStateOld.Done(embeddedHomework.toModel()) } }
+    override fun getAll(): Flow<List<CacheState<Homework>>> {
+        return vppDatabase.homeworkDao.getAll().map { it.map { embeddedHomework -> CacheState.Done(embeddedHomework.toModel()) } }
     }
 
     override fun getByDate(date: LocalDate): Flow<List<Homework>> {
@@ -151,21 +151,21 @@ class HomeworkRepositoryImpl(
         return vppDatabase.homeworkDao.getAll().map { it.map { homework -> homework.homework.id } }
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<Homework>> {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Homework>> {
         return flowOf()
         if (id < 0) return vppDatabase.homeworkDao.getById(id).map {
-            if (it == null) CacheStateOld.NotExisting(id.toString())
-            else CacheStateOld.Done(it.toModel())
+            if (it == null) CacheState.NotExisting(id.toString())
+            else CacheState.Done(it.toModel())
         }
         return channelFlow {
             val databaseObject = vppDatabase.homeworkDao.getById(id)
             if (!forceReload && databaseObject.first() != null) return@channelFlow sendAll(databaseObject.map {
-                if (it == null) CacheStateOld.NotExisting(id.toString())
-                else CacheStateOld.Done(it.toModel())
+                if (it == null) CacheState.NotExisting(id.toString())
+                else CacheState.Done(it.toModel())
             })
 
             safeRequest(
-                onError = { return@channelFlow send(CacheStateOld.Error(id.toString(), it)) }
+                onError = { return@channelFlow send(CacheState.Error(id.toString(), it)) }
             ) {
                 val existing = vppDatabase.homeworkDao.getById(id).first()
                 var schoolApiAccess: SchoolApiAccess? = null
@@ -192,12 +192,12 @@ class HomeworkRepositoryImpl(
                     }
                     if (metadataResponse.status == HttpStatusCode.NotFound && metadataResponse.isResponseFromBackend()) {
                         vppDatabase.homeworkDao.deleteById(listOf(id))
-                        return@channelFlow send(CacheStateOld.NotExisting(id.toString()))
+                        return@channelFlow send(CacheState.NotExisting(id.toString()))
                     }
-                    if (metadataResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheStateOld.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
+                    if (metadataResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Homework>()))
 
                     val metadataResponseData = ResponseDataWrapper.fromJson<HomeworkMetadataResponse>(metadataResponse.bodyAsText())
-                        ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
+                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
 
                     val schools = vppDatabase.schoolDao.getAll().first()
                     schoolApiAccess = schools
@@ -211,7 +211,7 @@ class HomeworkRepositoryImpl(
 
                 if (schoolApiAccess == null) {
                     logger.e { "No school api access found for homework $id" }
-                    return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.Other("No school api access found for homework $id")))
+                    return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("No school api access found for homework $id")))
                 }
 
                 val homeworkResponse = httpClient.get {
@@ -222,9 +222,9 @@ class HomeworkRepositoryImpl(
                     }.build())
                     schoolApiAccess!!.authentication(this)
                 }
-                if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheStateOld.Error(id.toString(), homeworkResponse.toErrorResponse<Homework>()))
+                if (homeworkResponse.status != HttpStatusCode.OK) return@channelFlow send(CacheState.Error(id.toString(), homeworkResponse.toErrorResponse<Homework>()))
                 val data = ResponseDataWrapper.fromJson<HomeworkGetResponse>(homeworkResponse.bodyAsText())
-                    ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(homeworkResponse.bodyAsText())))
 
                 vppDatabase.homeworkDao.deleteFileHomeworkConnections(listOf(id))
                 vppDatabase.homeworkDao.upsertMany(

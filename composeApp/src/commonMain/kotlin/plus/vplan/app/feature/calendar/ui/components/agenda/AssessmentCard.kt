@@ -29,7 +29,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
@@ -110,7 +110,7 @@ fun AssessmentCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 val font = MaterialTheme.typography.labelMedium
-                if (createdBy is CacheStateOld.Loading) ShimmerLoader(
+                if (createdBy is CacheState.Loading) ShimmerLoader(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .fillMaxWidth(.3f)
@@ -118,7 +118,7 @@ fun AssessmentCard(
                 )
                 Text(
                     text = buildString {
-                        val creator = (createdBy as? CacheStateOld.Done)?.data
+                        val creator = (createdBy as? CacheState.Done)?.data
                         append(when (creator) {
                             is VppId -> creator.name
                             is Profile -> creator.name

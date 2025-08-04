@@ -24,7 +24,7 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsScho
 import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.SchoolApiAccess
@@ -73,18 +73,18 @@ class NewsRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<News>> {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<News>> {
         val newsFlow = vppDatabase.newsDao.getById(id).map { it?.toModel() }
         return channelFlow {
             if (!forceReload) {
                 var hadData = false
-                sendAll(newsFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheStateOld.Done(it) })
+                sendAll(newsFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
                 if (hadData) return@channelFlow
             }
-            send(CacheStateOld.Loading(id.toString()))
-            send(CacheStateOld.NotExisting(id.toString()))
+            send(CacheState.Loading(id.toString()))
+            send(CacheState.NotExisting(id.toString()))
 
-            safeRequest(onError = { send(CacheStateOld.Error(id.toString(), it)) }) {
+            safeRequest(onError = { send(CacheState.Error(id.toString(), it)) }) {
                 TODO("Add API call")
 //                val accessResponse = httpClient.get("${api.url}/api/v2.2/room/$id")
 //                if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {

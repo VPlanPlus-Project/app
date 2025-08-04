@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
@@ -59,7 +59,7 @@ class AssessmentDetailViewModel(
                 getCurrentProfileUseCase(),
                 App.assessmentSource.getById(assessmentId)
             ) { profile, assessmentData ->
-                if (assessmentData !is CacheStateOld.Done || profile !is Profile.StudentProfile) return@combine null
+                if (assessmentData !is CacheState.Done || profile !is Profile.StudentProfile) return@combine null
                 val assessment = assessmentData.data
 
                 val isOtherAssessment = state.assessment?.id != assessmentId

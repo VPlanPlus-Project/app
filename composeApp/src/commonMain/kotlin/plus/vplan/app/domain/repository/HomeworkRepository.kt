@@ -2,7 +2,7 @@ package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Group
@@ -17,9 +17,9 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
     fun getByGroup(groupId: Uuid): Flow<List<Homework>>
 
-    fun getTaskById(id: Int): Flow<CacheStateOld<Homework.HomeworkTask>>
+    fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
 
-    fun getAll(): Flow<List<CacheStateOld<Homework>>>
+    fun getAll(): Flow<List<CacheState<Homework>>>
     fun getByDate(date: LocalDate): Flow<List<Homework>>
     fun getByProfile(profileId: Uuid, date: LocalDate? = null): Flow<List<Homework>>
 

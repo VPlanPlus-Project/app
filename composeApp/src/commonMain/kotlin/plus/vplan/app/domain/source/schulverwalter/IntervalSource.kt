@@ -12,18 +12,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.repository.schulverwalter.IntervalRepository
 
 class IntervalSource(
     private val intervalRepository: IntervalRepository
 ) {
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheStateOld<Interval>>>()
+    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Interval>>>()
 
-    fun getById(id: Int): Flow<CacheStateOld<Interval>> {
+    fun getById(id: Int): Flow<CacheState<Interval>> {
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheStateOld<Interval>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            val flow = MutableSharedFlow<CacheState<Interval>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
                 intervalRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
             }
@@ -32,10 +32,10 @@ class IntervalSource(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getAll(): Flow<List<CacheStateOld<Interval>>> {
+    fun getAll(): Flow<List<CacheState<Interval>>> {
         return intervalRepository.getAllIds().flatMapLatest { ids ->
-            if (ids.isEmpty()) return@flatMapLatest flowOf(emptyList())
-            combine(ids.map { getById(it) }) { it.toList() }
+            if (ids.isEmpty()) flowOf(emptyList())
+            else combine(ids.map { getById(it) }) { it.toList() }
         }
     }
 }

@@ -9,8 +9,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
-import plus.vplan.app.domain.cache.CacheStateOld
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.VppId
@@ -88,7 +87,7 @@ class SyncGradesUseCase(
 
         if (allowNotifications && downloadedGrades is Response.Success && downloadedGrades.data.isNotEmpty()) {
             val newGradeIds = (downloadedGrades.data - existingGrades)
-            val newGrades = combine(newGradeIds.ifEmpty { return }.map { ids -> App.gradeSource.getById(ids).filterIsInstance<CacheStateOld.Done<Grade>>().map { it.data } }) { it.toList() }.first()
+            val newGrades = combine(newGradeIds.ifEmpty { return }.map { ids -> App.gradeSource.getById(ids).filterIsInstance<CacheState.Done<Grade>>().map { it.data } }) { it.toList() }.first()
                 .filter {  LocalDate.now().toEpochDays() - it.givenAt.toEpochDays() <= 2 }
 
             if (newGrades.isEmpty()) return

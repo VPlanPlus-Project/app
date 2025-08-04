@@ -61,7 +61,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
@@ -188,9 +188,9 @@ fun CalendarView(
                             } 
                             lessons.forEachIndexed { i, lesson ->
                                 val y = (lesson.lessonTime.start.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
-                                val groups = remember(lesson.lesson.groupIds) { lesson.lesson.groups }.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Group>>().map { it.data }
-                                val rooms = remember(lesson.lesson.roomIds) { lesson.lesson.rooms }.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Room>>().map { it.data }
-                                val teachers = remember(lesson.lesson.teacherIds) { lesson.lesson.teachers }.collectAsState(emptyList()).value.filterIsInstance<CacheState.Done<Teacher>>().map { it.data }
+                                val groups = remember(lesson.lesson.groupIds) { lesson.lesson.groups }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Group>>().map { it.data }
+                                val rooms = remember(lesson.lesson.roomIds) { lesson.lesson.rooms }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Room>>().map { it.data }
+                                val teachers = remember(lesson.lesson.teacherIds) { lesson.lesson.teachers }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Teacher>>().map { it.data }
                                 Box(
                                     modifier = Modifier
                                         .width(availableWidth / lesson.of)

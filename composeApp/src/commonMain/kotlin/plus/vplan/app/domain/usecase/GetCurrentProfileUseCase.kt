@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -18,7 +18,7 @@ class GetCurrentProfileUseCase(
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke() = keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().flatMapLatest { profileId ->
             App.profileSource.getById(Uuid.parseHex(profileId))
-                .filterIsInstance<CacheStateOld.Done<Profile>>()
+                .filterIsInstance<CacheState.Done<Profile>>()
                 .mapNotNull { it.data }
     }
 }

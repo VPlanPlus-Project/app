@@ -1,33 +1,14 @@
 package plus.vplan.app.feature.sync.domain.usecase.vpp
 
-import co.touchlab.kermit.Logger
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format
-import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.json.Json
-import plus.vplan.app.StartTaskJson
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileHomeworkIndexUseCase
-import plus.vplan.app.utils.now
-import plus.vplan.app.utils.shortDayOfWeekNames
-import plus.vplan.app.utils.shortMonthNames
-import plus.vplan.app.utils.until
-import plus.vplan.app.utils.untilRelativeText
-import kotlin.time.Duration.Companion.days
 
 class UpdateHomeworkUseCase(
     private val profileRepository: ProfileRepository,
@@ -115,7 +96,7 @@ class UpdateHomeworkUseCase(
                 .getAll()
                 .first()
                 .asSequence()
-                .filterIsInstance<CacheStateOld.Done<Homework>>()
+                .filterIsInstance<CacheState.Done<Homework>>()
                 .map { it.data }
                 .filterIsInstance<Homework.CloudHomework>()
                 .filter { it.id !in ids }

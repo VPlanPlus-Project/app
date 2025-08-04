@@ -45,7 +45,7 @@ import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.SchoolApiAccess
@@ -129,17 +129,17 @@ class VppIdRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<VppId>> {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<VppId>> {
         val vppIdFlow = vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
         return channelFlow {
             if (!forceReload) {
                 var hadData = false
-                sendAll(vppIdFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheStateOld.Done(it) })
+                sendAll(vppIdFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
                 if (hadData) return@channelFlow
             }
-            send(CacheStateOld.Loading(id.toString()))
+            send(CacheState.Loading(id.toString()))
 
-            safeRequest(onError = { trySend(CacheStateOld.Error(id, it)) }) {
+            safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
                 val existing = vppDatabase.vppIdDao.getById(id).first()?.toModel() as? VppId.Active
                 val response = if (existing == null) {
                     val accessResponse = httpClient.get {
@@ -149,16 +149,16 @@ class VppIdRepositoryImpl(
                     }
                     if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
                         vppDatabase.vppIdDao.deleteById(listOf(id))
-                        return@channelFlow send(CacheStateOld.NotExisting(id.toString()))
+                        return@channelFlow send(CacheState.NotExisting(id.toString()))
                     }
-                    if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheStateOld.Error(id.toString(), accessResponse.toErrorResponse<VppId>()))
+                    if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<VppId>()))
                     val accessData = ResponseDataWrapper.fromJson<UserSchoolResponse>(accessResponse.bodyAsText())
-                        ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
+                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
 
                     val school = vppDatabase.schoolDao.getAll().first()
                         .map { it.toModel() }
                         .firstOrNull { it.getVppSchoolId() in accessData.schoolIds && it.getSchoolApiAccess() != null }
-                        ?.getSchoolApiAccess() ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.Other("no school for vppId $id")))
+                        ?.getSchoolApiAccess() ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for vppId $id")))
 
                     httpClient.get {
                         url(URLBuilder(api).apply {
@@ -177,9 +177,9 @@ class VppIdRepositoryImpl(
                     }
                 }
 
-                if (!response.status.isSuccess()) return@channelFlow send(CacheStateOld.Error(id.toString(), response.toErrorResponse<VppId>()))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<VppId>()))
                 val data = ResponseDataWrapper.fromJson<UserItemResponse>(response.bodyAsText())
-                    ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
                 vppDatabase.vppIdDao.upsert(
                     vppId = DbVppId(

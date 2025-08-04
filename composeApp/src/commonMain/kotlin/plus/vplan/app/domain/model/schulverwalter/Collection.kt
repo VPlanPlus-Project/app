@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 
@@ -27,5 +27,5 @@ data class Collection(
     val interval by lazy { App.intervalSource.getById(intervalId) }
     val subject by lazy { App.subjectSource.getById(subjectId) }
 
-    val grades by lazy { if (this.gradeIds.isEmpty()) flowOf(emptyList()) else combine(this.gradeIds.map { App.gradeSource.getById(it).filterIsInstance<CacheStateOld.Done<Grade>>().map { gradeState -> gradeState.data } }) { it.toList() } }
+    val grades by lazy { if (this.gradeIds.isEmpty()) flowOf(emptyList()) else combine(this.gradeIds.map { App.gradeSource.getById(it).filterIsInstance<CacheState.Done<Grade>>().map { gradeState -> gradeState.data } }) { it.toList() } }
 }

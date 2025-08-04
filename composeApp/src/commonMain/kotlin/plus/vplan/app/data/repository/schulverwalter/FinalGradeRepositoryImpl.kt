@@ -23,7 +23,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubjec
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterSubjectSchulverwalterFinalGrade
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.schulverwalter.FinalGrade
 import plus.vplan.app.domain.model.schulverwalter.Grade
@@ -60,16 +60,16 @@ class FinalGradeRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<FinalGrade>> = channelFlow {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<FinalGrade>> = channelFlow {
         val finalGradeFlow = vppDatabase.finalGradeDao.getById(id).map { it?.toModel() }
         if (!forceReload) {
             var hadData = false
-            sendAll(finalGradeFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheStateOld.Done(it) })
+            sendAll(finalGradeFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
             if (hadData) return@channelFlow
         }
-        send(CacheStateOld.Loading(id.toString()))
+        send(CacheState.Loading(id.toString()))
 
-        safeRequest(onError = { trySend(CacheStateOld.Error(id, it)) }) {
+        safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
             val existing = vppDatabase.gradeDao.getById(id).first()
             val accessTokens = existing?.let { listOfNotNull(vppDatabase.vppIdDao.getSchulverwalterAccessBySchulverwalterUserId(it.grade.userForRequest).first()) }
                 ?: vppDatabase.vppIdDao.getSchulverwalterAccess().first()
@@ -84,14 +84,14 @@ class FinalGradeRepositoryImpl(
                     }
                     bearerAuth(accessToken.schulverwalterAccessToken)
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheStateOld.Error(id.toString(), response.toErrorResponse<Grade>()))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Grade>()))
                 val data = ResponseDataWrapper.fromJson<List<FinalGradeResponse>>(response.bodyAsText())
-                    ?: return@channelFlow send(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
+                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
                 handleResponse(data, accessToken.schulverwalterUserId)
             }
 
-            if (finalGradeFlow.first() == null) return@channelFlow send(CacheStateOld.NotExisting(id.toString()))
+            if (finalGradeFlow.first() == null) return@channelFlow send(CacheState.NotExisting(id.toString()))
             return@channelFlow sendAll(getById(id, false))
         }
     }

@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import kotlin.uuid.Uuid
@@ -28,11 +28,11 @@ sealed interface Lesson : Item<DataTag> {
     override val tags: Set<DataTag>
         get() = emptySet()
 
-    val lessonTime: Flow<CacheStateOld<LessonTime>>
-    val subjectInstance: Flow<CacheState<SubjectInstance>>?
-    val rooms: Flow<List<CacheState<Room>>>
-    val groups: Flow<List<CacheState<Group>>>
-    val teachers: Flow<List<CacheState<Teacher>>>
+    val lessonTime: Flow<CacheState<LessonTime>>
+    val subjectInstance: Flow<AliasState<SubjectInstance>>?
+    val rooms: Flow<List<AliasState<Room>>>
+    val groups: Flow<List<AliasState<Group>>>
+    val teachers: Flow<List<AliasState<Teacher>>>
 
     val isCancelled: Boolean
 

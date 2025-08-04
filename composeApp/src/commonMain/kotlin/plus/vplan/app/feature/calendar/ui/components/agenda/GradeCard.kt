@@ -32,7 +32,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.schulverwalter.Grade
@@ -148,10 +148,10 @@ fun GradeCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                if (createdBy is CacheStateOld.Loading) CircularProgressIndicator(Modifier.size(MaterialTheme.typography.labelMedium.lineHeight.toDp()))
+                if (createdBy is CacheState.Loading) CircularProgressIndicator(Modifier.size(MaterialTheme.typography.labelMedium.lineHeight.toDp()))
                 else Text(
                     text = buildString {
-                        val creator = (createdBy as? CacheStateOld.Done)?.data ?: return@buildString
+                        val creator = (createdBy as? CacheState.Done)?.data ?: return@buildString
                         append("${creator.forename} ${creator.name}")
                     },
                     style = MaterialTheme.typography.labelMedium,

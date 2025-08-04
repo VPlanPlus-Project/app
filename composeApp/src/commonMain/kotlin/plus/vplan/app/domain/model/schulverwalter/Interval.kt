@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 
@@ -36,6 +36,6 @@ data class Interval(
         }
     }
 
-    val year: Flow<CacheStateOld<Year>> = App.yearSource.getById(yearId)
-    val includedInterval: Flow<CacheStateOld<Interval>>? = includedIntervalId?.let { App.intervalSource.getById(it) }
+    val year: Flow<CacheState<Year>> = App.yearSource.getById(yearId)
+    val includedInterval: Flow<CacheState<Interval>>? = includedIntervalId?.let { App.intervalSource.getById(it) }
 }

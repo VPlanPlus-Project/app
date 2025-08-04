@@ -46,7 +46,7 @@ import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
@@ -189,12 +189,12 @@ class AssessmentRepositoryImpl(
         return vppDatabase.assessmentDao.getAll().map { it.map { it.assessment.id } }
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<Assessment>> {
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Assessment>> {
         TODO()
         if (id < 0) {
             return vppDatabase.assessmentDao.getById(id).map {
-                if (it == null) CacheStateOld.NotExisting(id.toString())
-                else CacheStateOld.Done(it.toModel())
+                if (it == null) CacheState.NotExisting(id.toString())
+                else CacheState.Done(it.toModel())
             }
         }
 
@@ -205,14 +205,14 @@ class AssessmentRepositoryImpl(
                 vppDatabase.assessmentDao.getById(id)
                     .takeWhile { it != null && canSend }
                     .filterNotNull()
-                    .onEach { hadData = true; trySend(CacheStateOld.Done(it.toModel())).onClosed { canSend = false } }
+                    .onEach { hadData = true; trySend(CacheState.Done(it.toModel())).onClosed { canSend = false } }
                     .collect()
                 if (hadData || !canSend) return@channelFlow
             }
             safeRequest(
-                onError = { trySend(CacheStateOld.Error(id.toString(), it)); return@channelFlow }
+                onError = { trySend(CacheState.Error(id.toString(), it)); return@channelFlow }
             ) {
-                trySend(CacheStateOld.Loading(id.toString())).onFailure { return@channelFlow }
+                trySend(CacheState.Loading(id.toString())).onFailure { return@channelFlow }
                 val existing = vppDatabase.assessmentDao.getById(id).first()
                 var vppId: VppId.Active? = null
                 var school: SchoolApiAccess? = null
@@ -229,19 +229,19 @@ class AssessmentRepositoryImpl(
                         }.build())
                     })
                     if (metadataResponse.status == HttpStatusCode.NotFound && metadataResponse.isResponseFromBackend()) {
-                        trySend(CacheStateOld.NotExisting(id.toString()))
+                        trySend(CacheState.NotExisting(id.toString()))
                         vppDatabase.assessmentDao.deleteById(listOf(id))
                         return@channelFlow
                     }
 
                     if (metadataResponse.status != HttpStatusCode.OK) {
-                        trySend(CacheStateOld.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
+                        trySend(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
                         return@channelFlow
                     }
 
                     val metadataResponseData = ResponseDataWrapper.fromJson<AssessmentMetadataResponse>(metadataResponse.bodyAsText())
                         ?: run {
-                            trySend(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
+                            trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(metadataResponse.bodyAsText())))
                             return@channelFlow
                         }
 
@@ -251,7 +251,7 @@ class AssessmentRepositoryImpl(
                         vppSchoolId in metadataResponseData.schoolIds
                     }?.getSchoolApiAccess()
                         ?: run {
-                            trySend(CacheStateOld.NotExisting(id.toString()))
+                            trySend(CacheState.NotExisting(id.toString()))
                             return@channelFlow
                         }
                 }
@@ -264,17 +264,17 @@ class AssessmentRepositoryImpl(
                     vppId?.let { bearerAuth(it.accessToken) } ?: school?.authentication(this)
                     ?: run {
                         vppDatabase.assessmentDao.deleteById(listOf(id))
-                        trySend(CacheStateOld.NotExisting(id.toString()))
+                        trySend(CacheState.NotExisting(id.toString()))
                         return@channelFlow
                     }
                 }
                 if (assessmentResponse.status != HttpStatusCode.OK) {
-                    trySend(CacheStateOld.Error(id.toString(), assessmentResponse.toErrorResponse<Any>()))
+                    trySend(CacheState.Error(id.toString(), assessmentResponse.toErrorResponse<Any>()))
                     return@channelFlow
                 }
                 val data = ResponseDataWrapper.fromJson<AssessmentGetResponse>(assessmentResponse.bodyAsText())
                     ?: run {
-                        trySend(CacheStateOld.Error(id.toString(), Response.Error.ParsingError(assessmentResponse.bodyAsText())))
+                        trySend(CacheState.Error(id.toString(), Response.Error.ParsingError(assessmentResponse.bodyAsText())))
                         return@channelFlow
                     }
 

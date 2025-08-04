@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.feature.news.domain.usecase.SetNewsAsReadUseCase
 
@@ -27,7 +27,7 @@ class NewsViewModel(
         uiSyncContext?.cancel()
         uiSyncContext = viewModelScope.launch {
             setNewsAsReadUseCase(newsId)
-            App.newsSource.getById(newsId).filterIsInstance<CacheStateOld.Done<News>>().map { it.data }.collectLatest {
+            App.newsSource.getById(newsId).filterIsInstance<CacheState.Done<News>>().map { it.data }.collectLatest {
                 state = state.copy(news = it)
             }
         }

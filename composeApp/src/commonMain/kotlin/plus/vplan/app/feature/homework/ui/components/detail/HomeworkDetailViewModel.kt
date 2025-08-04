@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheStateOld
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
@@ -79,7 +79,7 @@ class HomeworkDetailViewModel(
                 getCurrentProfileUseCase(),
                 App.homeworkSource.getById(homeworkId)
             ) { profile, homeworkData ->
-                if (homeworkData !is CacheStateOld.Done || profile !is Profile.StudentProfile) return@combine null
+                if (homeworkData !is CacheState.Done || profile !is Profile.StudentProfile) return@combine null
                 val homework = homeworkData.data
 
                 homework.prefetch()
