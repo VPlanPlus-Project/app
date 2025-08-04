@@ -39,6 +39,7 @@ infix fun LocalDate.progressIn(range: ClosedRange<LocalDate>): Double {
 }
 
 fun LocalDate.Companion.now(): LocalDate {
+    //return LocalDate(2025, 5, 27)
     return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 }
 

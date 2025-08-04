@@ -3,6 +3,7 @@ package plus.vplan.app.data.source.database.model.embedded
 import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbCourse
+import plus.vplan.app.data.source.database.model.database.DbCourseAlias
 import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
 import plus.vplan.app.domain.model.Course
 
@@ -12,16 +13,21 @@ data class EmbeddedCourse(
         parentColumn = "id",
         entityColumn = "course_id",
         entity = DbCourseGroupCrossover::class
-    ) val groups: List<DbCourseGroupCrossover>
+    ) val groups: List<DbCourseGroupCrossover>,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "course_id",
+        entity = DbCourseAlias::class
+    ) val aliases: List<DbCourseAlias>
 ) {
     fun toModel(): Course {
         return Course(
             id = course.id,
-            indiwareId = course.indiwareId,
             name = course.name,
             teacherId = course.teacherId,
             groups = groups.map { it.groupId },
-            cachedAt = course.cachedAt
+            cachedAt = course.cachedAt,
+            aliases = aliases.map { it.toModel() }.toSet()
         )
     }
 }

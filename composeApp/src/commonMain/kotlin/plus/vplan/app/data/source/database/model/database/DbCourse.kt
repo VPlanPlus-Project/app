@@ -25,8 +25,7 @@ import kotlin.uuid.Uuid
     ]
 )
 data class DbCourse(
-    @ColumnInfo(name = "id") val id: Int,
-    @ColumnInfo(name = "indiware_id") val indiwareId: String?,
+    @ColumnInfo(name = "id") val id: Uuid,
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "teacher_id") val teacherId: Uuid?,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant

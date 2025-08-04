@@ -67,6 +67,7 @@ class AssessmentRepositoryImpl(
     private val onlineChangeRequests = mutableListOf<OnlineChangeRequest>()
 
     override suspend fun download(schoolApiAccess: SchoolApiAccess, subjectInstanceIds: List<Int>): Response<List<Int>> {
+        TODO()
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url(URLBuilder(api).apply {
@@ -88,7 +89,7 @@ class AssessmentRepositoryImpl(
                     createdAt = Instant.fromEpochSeconds(assessment.createdAt),
                     date = LocalDate.parse(assessment.date),
                     isPublic = assessment.isPublic,
-                    subjectInstanceId = assessment.subject,
+                    subjectInstanceId = Uuid.NIL,
                     description = assessment.description,
                     type = (Assessment.Type.entries.firstOrNull { it.name == assessment.type } ?: Assessment.Type.OTHER).ordinal,
                     cachedAt = Clock.System.now()
@@ -109,10 +110,11 @@ class AssessmentRepositoryImpl(
         vppId: VppId.Active,
         date: LocalDate,
         type: Assessment.Type,
-        subjectInstanceId: Int,
+        subjectInstanceId: Uuid,
         isPublic: Boolean,
         content: String
     ): Response<Int> {
+        TODO()
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
                 bearerAuth(vppId.accessToken)
@@ -121,7 +123,7 @@ class AssessmentRepositoryImpl(
                     appendPathSegments("api", "v2.2", "assessment")
                 }.build())
                 setBody(AssessmentPostRequest(
-                    subjectInstance = subjectInstanceId,
+                    subjectInstance = -1,
                     date = date.toString(),
                     isPublic = isPublic,
                     content = content,
@@ -188,6 +190,7 @@ class AssessmentRepositoryImpl(
     }
 
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheStateOld<Assessment>> {
+        TODO()
         if (id < 0) {
             return vppDatabase.assessmentDao.getById(id).map {
                 if (it == null) CacheStateOld.NotExisting(id.toString())
@@ -284,7 +287,7 @@ class AssessmentRepositoryImpl(
                         createdAt = Instant.fromEpochSeconds(data.createdAt),
                         date = LocalDate.parse(data.date),
                         isPublic = data.isPublic,
-                        subjectInstanceId = data.subject,
+                        subjectInstanceId = Uuid.NIL,
                         description = data.description,
                         type = (Assessment.Type.entries.firstOrNull { it.name == data.type } ?: Assessment.Type.OTHER).ordinal,
                         cachedAt = Clock.System.now()
@@ -331,7 +334,7 @@ class AssessmentRepositoryImpl(
                 createdAt = it.createdAt.toInstant(TimeZone.UTC),
                 date = it.date,
                 isPublic = it.isPublic,
-                subjectInstanceId = it.subjectInstanceId,
+                subjectInstanceId = Uuid.NIL,
                 description = it.description,
                 type = it.type.ordinal,
                 cachedAt = it.cachedAt

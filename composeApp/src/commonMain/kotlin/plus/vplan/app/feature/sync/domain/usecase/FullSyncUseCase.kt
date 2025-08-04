@@ -9,8 +9,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
@@ -20,7 +22,6 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
@@ -29,7 +30,6 @@ import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
@@ -54,11 +54,9 @@ class FullSyncUseCase(
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val fileRepository: FileRepository,
-    private val courseRepository: CourseRepository,
     private val vppIdRepository: VppIdRepository,
     private val keyValueRepository: KeyValueRepository,
     private val profileRepository: ProfileRepository,
-    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
@@ -124,26 +122,6 @@ class FullSyncUseCase(
                     val vppIdEnd = Clock.System.now()
                     logger.d { "Updating vppIds took ${(vppIdEnd - vppIdStart).inWholeMilliseconds}ms" }
 
-                    logger.i { "Updating courses" }
-                    val courseStart = Clock.System.now()
-                    courseRepository.getAll().first()
-                        .forEach { course ->
-                            if (course.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                            courseRepository.getById(course.id, true).getFirstValueOld()
-                        }
-                    val courseEnd = Clock.System.now()
-                    logger.d { "Updating courses took ${(courseEnd - courseStart).inWholeMilliseconds}ms" }
-
-                    logger.i { "Updating subject instances" }
-                    val subjectInstanceStart = Clock.System.now()
-                    subjectInstanceRepository.getAll().first()
-                        .forEach { subjectInstance ->
-                            if (subjectInstance.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                            subjectInstanceRepository.getById(subjectInstance.id, true).getFirstValueOld()
-                        }
-                    val subjectInstanceEnd = Clock.System.now()
-                    logger.d { "Updating subject instances took ${(subjectInstanceEnd - subjectInstanceStart).inWholeMilliseconds}ms" }
-
                     logger.i { "Updating homework" }
                     val homeworkStart = Clock.System.now()
                     updateHomeworkUseCase(true)
@@ -206,19 +184,7 @@ class FullSyncUseCase(
                                 else -> Unit
                             }
 
-                            logger.i { "BaseData update" }
-                            val baseData = run downloadBaseData@{
-                                val baseData = indiwareRepository.getBaseData(Authentication(school.sp24Id, school.username, school.password))
-                                if (baseData is Response.Error) {
-                                    logger.w { "Failed to download base data for school ${school.id} (${school.name}): $baseData" }
-                                    return@downloadBaseData null
-                                }
-                                if (baseData !is Response.Success) throw IllegalStateException("baseData is not successful: $baseData")
-                                baseData.data
-                            }
-                            if (baseData != null) {
-                                updateSubjectInstanceUseCase(school, client)
-                            }
+                            updateSubjectInstanceUseCase(school, client)
                             updateHolidaysUseCase(school, client)
                             updateWeeksUseCase(school, client)
                             val today = LocalDate.now()

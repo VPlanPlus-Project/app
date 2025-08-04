@@ -215,7 +215,6 @@ private fun ProfileSettingsContent(
                     when (state.profile) {
                         is Profile.StudentProfile -> append("Klasse ")
                         is Profile.TeacherProfile -> append("Lehrer ")
-                        is Profile.RoomProfile -> append("Raum ")
                     }
                     append(state.profile.name)
                     append(" $DOT ")

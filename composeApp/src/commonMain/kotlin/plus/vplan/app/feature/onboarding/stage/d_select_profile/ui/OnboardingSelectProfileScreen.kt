@@ -41,10 +41,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.collectAsLoadingState
-import plus.vplan.app.domain.cache.collectAsLoadingStateOld
-import plus.vplan.app.domain.cache.collectAsResultingFlowOld
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
@@ -113,7 +111,7 @@ private fun OnboardingSelectProfileScreen(
                         ) listHost@{
                             @Suppress("ConvertCallChainIntoSequence") // collectAsResultingFlowOld is a @Composable that cannot be invoked in a sequence
                             val courses = state.subjectInstances.keys.mapNotNull { it.course }.toSet()
-                                .map { App.courseSource.getById(it).collectAsResultingFlowOld() }
+                                .map { App.courseSource.getById(it).collectAsResultingFlow() }
                                 .mapNotNull { it.value }
                                 .sortedBy { it.name }
 
@@ -212,9 +210,9 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                     if (subjectInstance.course == null) return@subjectAndCourse
-                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.course).collectAsLoadingStateOld(subjectInstance.course.toString())
-                                                    if (subjectInstanceState is CacheStateOld.Done) Text(
-                                                        text = (subjectInstanceState as CacheStateOld.Done).data.name,
+                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.course).collectAsLoadingState(subjectInstance.course.toString())
+                                                    if (subjectInstanceState is CacheState.Done) Text(
+                                                        text = (subjectInstanceState as CacheState.Done).data.name,
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
@@ -325,42 +323,6 @@ private fun OnboardingSelectProfileScreen(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     state.options.filterIsInstance<OnboardingProfile.TeacherProfile>().forEach {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .defaultMinSize(minHeight = 48.dp)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(MaterialTheme.colorScheme.surfaceContainer)
-                                                .clickable { onEvent(OnboardingProfileSelectionEvent.SelectProfile(it)) }
-                                                .padding(vertical = 8.dp, horizontal = 16.dp),
-                                            verticalArrangement = Arrangement.Center
-                                        ) {
-                                            Text(
-                                                text = it.name,
-                                                style = MaterialTheme.typography.titleSmall,
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = (state.filterProfileType ?: ProfileType.ROOM) == ProfileType.ROOM,
-                            enter = expandVertically(),
-                            exit = shrinkVertically()
-                        ) rooms@{
-                            Column {
-                                Text(
-                                    text = "Räume",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    state.options.filterIsInstance<OnboardingProfile.RoomProfile>().forEach {
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()

@@ -7,8 +7,10 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
+import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectInstanceGroup
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSubjectInstance
+import plus.vplan.app.domain.data.AliasProvider
 import kotlin.uuid.Uuid
 
 @Dao
@@ -30,30 +32,19 @@ interface SubjectInstanceDao {
 
     @Transaction
     @Query("SELECT * FROM subject_instance WHERE id = :id")
-    fun getById(id: Int): Flow<EmbeddedSubjectInstance?>
+    fun findById(id: Uuid): Flow<EmbeddedSubjectInstance?>
 
     @Upsert
-    suspend fun upsert(entity: DbSubjectInstance)
-
-    @Upsert
-    suspend fun upsert(entity: FKSubjectInstanceGroup)
-
-    @Transaction
-    suspend fun upsert(subjectInstances: List<DbSubjectInstance>, subjectInstanceGroupCrossovers: List<FKSubjectInstanceGroup>) {
-        subjectInstances.forEach { upsert(it) }
-        subjectInstanceGroupCrossovers.forEach { upsert(it) }
-    }
+    suspend fun upsertSubjectInstance(entity: DbSubjectInstance, groups: List<FKSubjectInstanceGroup>, aliases: List<DbSubjectInstanceAlias>)
 
     @Query("DELETE FROM subject_instance WHERE id = :id")
-    suspend fun deleteById(id: Int)
+    suspend fun deleteById(id: Uuid)
 
     @Transaction
-    @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM subject_instance WHERE indiware_id = :indiwareId")
-    fun getByIndiwareId(indiwareId: String): Flow<EmbeddedSubjectInstance?>
-
-    @Transaction
-    suspend fun deleteById(ids: List<Int>) {
+    suspend fun deleteById(ids: List<Uuid>) {
         ids.forEach { deleteById(it) }
     }
+
+    @Query("SELECT subject_instance_id FROM subject_instances_aliases WHERE alias = :value AND alias_type = :provider AND version = :version")
+    suspend fun getIdByAlias(value: String, provider: AliasProvider, version: Int): Uuid?
 }

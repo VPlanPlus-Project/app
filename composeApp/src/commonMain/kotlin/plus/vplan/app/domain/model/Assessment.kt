@@ -8,8 +8,8 @@ import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
+import kotlin.uuid.Uuid
 
 data class Assessment(
     val id: Int,
@@ -17,7 +17,7 @@ data class Assessment(
     val createdAt: LocalDateTime,
     val date: LocalDate,
     val isPublic: Boolean,
-    val subjectInstanceId: Int,
+    val subjectInstanceId: Uuid,
     val description: String,
     val type: Type,
     val fileIds: List<Int>,
@@ -49,8 +49,8 @@ data class Assessment(
     }
 
     val files by lazy {
-        if (fileIds.isEmpty()) return@lazy flowOf(emptyList())
-        return@lazy combine(fileIds.map { App.fileSource.getById(it) }) { it.toList() }
+        if (fileIds.isEmpty()) flowOf(emptyList())
+        else combine(fileIds.map { App.fileSource.getById(it) }) { it.toList() }
     }
 
     data class AssessmentFile(

@@ -149,7 +149,7 @@ fun SearchStart(
                                 val subject = when (item) {
                                     is NewItem.Assessment -> item.assessment.subjectInstance
                                     is NewItem.Homework -> item.homework.subjectInstance
-                                }?.collectAsResultingFlowOld()?.value?.subject
+                                }?.collectAsResultingFlow()?.value?.subject
                                 SubjectIcon(
                                     modifier = Modifier
                                         .size(24.dp)

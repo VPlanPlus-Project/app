@@ -5,9 +5,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 
-/**
- * @param rawHash the lowercase sha256 hash of the raw response
- */
 @Entity(
     tableName = "indiware_timetable_metadata",
     primaryKeys = ["week_id"],
@@ -27,6 +24,5 @@ import androidx.room.Index
 data class DbIndiwareTimetableMetadata(
     @ColumnInfo(name = "indiware_school_id") val indiwareSchoolId: String,
     @ColumnInfo(name = "week_id") val weekId: String,
-    @ColumnInfo(name = "has_data") val hasData: Boolean,
-    @ColumnInfo(name = "raw_hash") val rawHash: String?
+    @ColumnInfo(name = "has_data") val hasData: Boolean
 )

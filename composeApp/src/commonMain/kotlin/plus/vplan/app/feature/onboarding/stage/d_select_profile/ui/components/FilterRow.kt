@@ -15,7 +15,6 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.ProfileType
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.door_closed
 import vplanplus.composeapp.generated.resources.square_user_round
 import vplanplus.composeapp.generated.resources.users
 
@@ -69,33 +68,6 @@ fun FilterRow(
                     if (!selected) {
                         Icon(
                             painter = painterResource(Res.drawable.square_user_round),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(Res.drawable.check),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-        )
-        FilterChip(
-            selected = currentSelection == ProfileType.ROOM,
-            label = { Text("Raum") },
-            onClick = {
-                if (currentSelection == ProfileType.ROOM) onClick(null)
-                else onClick(ProfileType.ROOM)
-            },
-            leadingIcon = {
-                AnimatedContent(
-                    targetState = currentSelection == ProfileType.ROOM
-                ) { selected ->
-                    if (!selected) {
-                        Icon(
-                            painter = painterResource(Res.drawable.door_closed),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )

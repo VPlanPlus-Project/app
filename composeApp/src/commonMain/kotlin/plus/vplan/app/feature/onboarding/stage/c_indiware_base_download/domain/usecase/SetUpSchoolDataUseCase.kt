@@ -6,12 +6,6 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.serialization.Polymorphic
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.modules.SerializersModuleBuilder
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.model.Holiday
@@ -24,9 +18,11 @@ import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolDbDto
 import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.TeacherDbDto
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
+import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateLessonTimesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
@@ -41,6 +37,7 @@ class SetUpSchoolDataUseCase(
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
     private val dayRepository: DayRepository,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
@@ -108,13 +105,13 @@ class SetUpSchoolDataUseCase(
             trySendResult()
 
             val classes = (client.getAllClassesIntelligent() as? plus.vplan.lib.sp24.source.Response.Success)?.data
-            classes.orEmpty().associateWith { group ->
+            val classIds = classes.orEmpty().associateWith { group ->
                 Alias(
                     provider = AliasProvider.Sp24,
-                    value = group.name,
+                    value = "${school.sp24Id}/${group.name}",
                     version = 1
                 )
-            }.forEach { (group, aliases) ->
+            }.map { (group, aliases) ->
                 groupRepository.upsert(GroupDbDto(
                     schoolId = schoolId,
                     name = group.name,
@@ -130,15 +127,19 @@ class SetUpSchoolDataUseCase(
             teachers.orEmpty().associateWith { teacher ->
                 Alias(
                     provider = AliasProvider.Sp24,
-                    value = teacher.name,
+                    value = "${school.sp24Id}/${teacher.name}",
                     version = 1
                 )
-            }.forEach { (teacher, aliases) ->
+            }.onEach { (teacher, aliases) ->
                 teacherRepository.upsert(TeacherDbDto(
                     schoolId = schoolId,
                     name = teacher.name,
                     aliases = listOf(aliases)
                 ))
+            }.also {
+                onboardingRepository.addProfileOptions(it.map { (teacher, alias) ->
+                    OnboardingProfile.TeacherProfile(teacher.name, alias)
+                })
             }
 
             result[SetUpSchoolDataStep.GET_TEACHERS] = SetUpSchoolDataState.DONE
@@ -149,7 +150,7 @@ class SetUpSchoolDataUseCase(
             rooms.orEmpty().associateWith { room ->
                 Alias(
                     provider = AliasProvider.Sp24,
-                    value = room.name,
+                    value = "${school.sp24Id}/${room.name}",
                     version = 1
                 )
             }.forEach { (room, aliases) ->
@@ -176,6 +177,18 @@ class SetUpSchoolDataUseCase(
             trySendResult()
             require(updateWeeksUseCase(school, client) == null) { "Couldn't update weeks" }
             require(updateSubjectInstanceUseCase(school, client) == null) { "Couldn't update subject instances" }
+
+            onboardingRepository.addProfileOptions(classIds.map { classId ->
+                val group = groupRepository.getByLocalId(classId).first()!!
+                val subjectInstances = subjectInstanceRepository.getByGroup(classId).first()
+
+                OnboardingProfile.StudentProfile(
+                    name = group.name,
+                    alias = group.aliases.first { it.provider == AliasProvider.Sp24 },
+                    subjectInstances = subjectInstances
+                )
+            })
+
             result[SetUpSchoolDataStep.SET_UP_DATA] = SetUpSchoolDataState.DONE
 
             return@channelFlow trySendResult()

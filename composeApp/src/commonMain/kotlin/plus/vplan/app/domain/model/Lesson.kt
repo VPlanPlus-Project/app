@@ -19,7 +19,7 @@ sealed interface Lesson : Item<DataTag> {
     val teacherIds: List<Uuid>
     val roomIds: List<Uuid>?
     val groupIds: List<Uuid>
-    val subjectInstanceId: Int?
+    val subjectInstanceId: Uuid?
     val lessonTimeId: String
 
     fun getLessonSignature(): String
@@ -29,7 +29,7 @@ sealed interface Lesson : Item<DataTag> {
         get() = emptySet()
 
     val lessonTime: Flow<CacheStateOld<LessonTime>>
-    val subjectInstance: Flow<CacheStateOld<SubjectInstance>>?
+    val subjectInstance: Flow<CacheState<SubjectInstance>>?
     val rooms: Flow<List<CacheState<Room>>>
     val groups: Flow<List<CacheState<Group>>>
     val teachers: Flow<List<CacheState<Teacher>>>
@@ -93,7 +93,7 @@ sealed interface Lesson : Item<DataTag> {
         override val roomIds: List<Uuid>,
         val isRoomChanged: Boolean,
         override val groupIds: List<Uuid>,
-        override val subjectInstanceId: Int?,
+        override val subjectInstanceId: Uuid?,
         override val lessonTimeId: String,
         val info: String?
     ) : Lesson {
@@ -127,9 +127,6 @@ sealed interface Lesson : Item<DataTag> {
             }
             is Profile.TeacherProfile -> {
                 if (profile.teacher !in this.teacherIds) return false
-            }
-            is Profile.RoomProfile -> {
-                if (profile.room !in this.roomIds.orEmpty()) return false
             }
         }
         return true

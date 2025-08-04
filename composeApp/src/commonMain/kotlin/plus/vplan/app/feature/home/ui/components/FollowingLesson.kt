@@ -31,8 +31,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.CacheStateOld
-import plus.vplan.app.domain.cache.collectAsLoadingStateOld
+import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Room
@@ -89,12 +88,12 @@ fun FollowingLesson(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val subjectInstanceState = lesson.subjectInstanceId?.let {
-                        App.subjectInstanceSource.getById(it).collectAsLoadingStateOld(it.toString())
+                        App.subjectInstanceSource.getById(it).collectAsLoadingState()
                     }
                     Text(
                         text = buildString {
                             if (lesson.subject != null) append(lesson.subject)
-                            else if (subjectInstanceState?.value is CacheStateOld.Done) append((subjectInstanceState.value as CacheStateOld.Done).data.subject + " entfällt")
+                            else if (subjectInstanceState?.value is CacheState.Done) append((subjectInstanceState.value as CacheState.Done).data.subject + " entfällt")
                             else append("Entfall")
                         },
                         style = headerFont(),

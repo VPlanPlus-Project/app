@@ -66,7 +66,6 @@ import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.cache.collectAsSingleFlow
-import plus.vplan.app.domain.cache.collectAsSingleFlowOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
@@ -125,7 +124,7 @@ fun HomeScreen(
         state = homeViewModel.state,
         contentPadding = contentPadding,
         onOpenRoomSearch = remember { { navHostController.navigate(MainScreen.RoomSearch) } },
-        onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings(openIndiwareSettingsSchoolId = it)) } },
+        onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings(openIndiwareSettingsSchoolId = it.toHexString())) } },
         onEvent = homeViewModel::onEvent
     )
 }
@@ -476,7 +475,7 @@ private fun HomeContent(
                                                         val teachers = remember(lesson.teacherIds) { lesson.teachers }.collectAsSingleFlow().value
                                                         val homeworkForLesson = homework.filter { it.subjectInstanceId == lesson.subjectInstanceId }
                                                         val assessmentsForLesson = assessments.filter { it.subjectInstanceId == lesson.subjectInstanceId }
-                                                        val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlowOld()?.value
+                                                        val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
                                                         if (lessonTime != null) Column(Modifier.fillMaxWidth()) {
                                                             Row(
                                                                 modifier = Modifier
@@ -685,7 +684,7 @@ private fun CurrentOrNextLesson(
     progressType: ProgressType
 ) {
     val iconSize = 32.dp
-    val subject = remember(currentLesson.subjectInstanceId) { currentLesson.subjectInstance }?.collectAsResultingFlowOld()?.value
+    val subject = remember(currentLesson.subjectInstanceId) { currentLesson.subjectInstance }?.collectAsResultingFlow()?.value
     val rooms by remember(currentLesson.roomIds) { currentLesson.rooms }.collectAsSingleFlow()
     val groups by remember(currentLesson.groupIds) { currentLesson.groups }.collectAsSingleFlow()
     val teachers by remember(currentLesson.teacherIds) { currentLesson.teachers }.collectAsSingleFlow()

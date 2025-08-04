@@ -41,6 +41,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.SubjectDao
 import plus.vplan.app.data.source.database.dao.schulverwalter.YearDao
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.DbCourse
+import plus.vplan.app.data.source.database.model.database.DbCourseAlias
 import plus.vplan.app.data.source.database.model.database.DbDay
 import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.data.source.database.model.database.DbFile
@@ -75,6 +76,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubjec
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
+import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherAlias
@@ -132,8 +134,12 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         DbProfileHomeworkIndex::class,
 
         DbSubjectInstance::class,
+        DbSubjectInstanceAlias::class,
         FKSubjectInstanceGroup::class,
+
         DbCourse::class,
+        DbCourseAlias::class,
+
         DbCourseGroupCrossover::class,
 
         DbKeyValue::class,

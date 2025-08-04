@@ -2,15 +2,19 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Course
+import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Teacher
+import plus.vplan.app.domain.repository.CourseDbDto
 import plus.vplan.app.domain.repository.CourseRepository
+import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.SubjectInstanceDbDto
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.lib.sp24.source.Authentication
@@ -21,6 +25,7 @@ private val LOGGER = Logger.withTag("UpdateSubjectInstanceUseCase")
 class UpdateSubjectInstanceUseCase(
     private val indiwareRepository: IndiwareRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
+    private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val courseRepository: CourseRepository
 ) {
@@ -31,19 +36,26 @@ class UpdateSubjectInstanceUseCase(
         )
 
         val teachers = teacherRepository.getBySchool(schoolId = school.id).first()
-        val existingCourses = courseRepository.getBySchool(schoolId = school.id, false)
-        val existingSubjectInstances = subjectInstanceRepository.getBySchool(schoolId = school.id, false)
+        val groups = groupRepository.getBySchool(school.id).first()
+        val existingCourses = courseRepository.getBySchool(school.id)
+        val existingSubjectInstances = subjectInstanceRepository.getBySchool(schoolId = school.id)
 
         updateCourses(
             school = school,
             client = client,
             existingCourses = existingCourses.first(),
-            teachers = teachers
+            teachers = teachers,
+            groups = groups
         )
+
+        val courses = courseRepository.getBySchool(school.id).first()
 
         updateSubjectInstances(
             client = client,
             existingSubjectInstances = existingSubjectInstances.first(),
+            courses = courses,
+            teachers = teachers,
+            groups = groups
         )
 
         return null
@@ -53,49 +65,81 @@ class UpdateSubjectInstanceUseCase(
         school: School.Sp24School,
         client: IndiwareClient,
         existingCourses: List<Course>,
-        teachers: List<Teacher>
+        teachers: List<Teacher>,
+        groups: List<Group>
     ): Boolean {
         val downloadedCourses =
             (client.subjectInstances.getSubjectInstances() as? plus.vplan.lib.sp24.source.Response.Success)?.data?.courses ?: return false
 
         val downloadedCourseEntities = downloadedCourses
-            .map { course -> Course.fromIndiware(school.sp24Id, course.name, teacher = teachers.firstOrNull { it.name == course.teacher }) }
-            .mapNotNull { courseRepository.getByIndiwareId(it).getFirstValueOld() }
+            .associateWith { downloadedCourse ->
+                val teacher = downloadedCourse.teacher.ifBlank { null }?.let { teachers.firstOrNull { it.name == downloadedCourse.teacher } }
+                Course.buildSp24Alias(school.sp24Id, downloadedCourse.name, teacher = teacher)
+            }
+            .filterValues {
+                courseRepository.resolveAliasToLocalId(Alias(provider = AliasProvider.Sp24, it, 1)) == null
+            }
 
         downloadedCourses.let {
-            val existingCourseIds = existingCourses.map { it.id }
-            val downloadedCoursesToDelete = existingCourseIds.filter { existingCourseId -> downloadedCourseEntities.none { it.id == existingCourseId } }
+            val downloadedCoursesToDelete = existingCourses
+                .filter { existingCourse -> downloadedCourseEntities.values.none { it == existingCourse.aliases.firstOrNull { alias -> alias.provider == AliasProvider.Sp24 }?.value } }
             LOGGER.d { "Delete ${downloadedCoursesToDelete.size} courses" }
-            courseRepository.deleteById(downloadedCoursesToDelete)
+            courseRepository.deleteById(downloadedCoursesToDelete.map { it.id })
         }
 
         val updatedCourses = downloadedCourseEntities.filter { downloadedCourse -> existingCourses.none { it.hashCode() == downloadedCourse.hashCode() } }
         LOGGER.d { "Upsert ${updatedCourses.size} courses" }
-        courseRepository.upsert(updatedCourses)
+        updatedCourses
+            .map { (course, sp24Alias) ->
+                val teacher = course.teacher.ifBlank { null }?.let { teachers.firstOrNull { it.name == course.teacher } }
+                CourseDbDto(
+                    name = course.name,
+                    groups = course.classes.mapNotNull { groups.firstOrNull { group -> group.name == it } }.map { it.id },
+                    teacher = teacher?.id,
+                    aliases = listOf(Alias(AliasProvider.Sp24, sp24Alias, 1))
+                )
+            }
+            .forEach { courseRepository.upsert(it) }
         return true
     }
 
     private suspend fun updateSubjectInstances(
         client: IndiwareClient,
         existingSubjectInstances: List<SubjectInstance>,
+        courses: List<Course>,
+        teachers: List<Teacher>,
+        groups: List<Group>
     ): Boolean {
         val sp24SchoolId = client.authentication.indiwareSchoolId
         val downloadedSubjectInstances =
             (client.subjectInstances.getSubjectInstances() as? plus.vplan.lib.sp24.source.Response.Success) ?: return false
 
         val downloadedSubjectEntities = downloadedSubjectInstances.data.subjectInstances
-            .mapNotNull { subjectInstanceRepository.lookupBySp24Id("sp24.$sp24SchoolId.${it.id}").getFirstValueOld() }
+            .associateWith { downloadedSubjectInstance ->
+                SubjectInstance.buildSp24Alias(sp24SchoolId.toInt(), downloadedSubjectInstance.id)
+            }
+            .filterValues {
+                subjectInstanceRepository.resolveAliasToLocalId(Alias(AliasProvider.Sp24, it, 1)) == null
+            }
 
         downloadedSubjectInstances.let {
-            val existingSubjectInstanceIds = existingSubjectInstances.map { it.id }
-            val downloadedSubjectInstancesToDelete = existingSubjectInstanceIds.filter { existingSubjectInstanceId -> downloadedSubjectEntities.none { it.id == existingSubjectInstanceId } }
+            val downloadedSubjectInstancesToDelete = existingSubjectInstances
+                .filter { existingSubjectInstance -> downloadedSubjectEntities.values.none { it == existingSubjectInstance.aliases.firstOrNull { alias -> alias.provider == AliasProvider.Sp24 }?.value } }
             LOGGER.d { "Delete ${downloadedSubjectInstancesToDelete.size} default lessons" }
-            subjectInstanceRepository.deleteById(downloadedSubjectInstancesToDelete)
+            subjectInstanceRepository.deleteById(downloadedSubjectInstancesToDelete.map { it.id })
         }
 
         val updatedSubjectInstances = downloadedSubjectEntities.filter { downloadedSubjectInstance -> existingSubjectInstances.none { it.hashCode() == downloadedSubjectInstance.hashCode() } }
         LOGGER.d { "Upsert ${updatedSubjectInstances.size} default lessons" }
-        subjectInstanceRepository.upsert(updatedSubjectInstances)
+        updatedSubjectInstances.map { (subjectInstance, sp24Alias) ->
+            SubjectInstanceDbDto(
+                subject = subjectInstance.subject,
+                course = subjectInstance.course?.let { courses.firstOrNull { course -> course.name == subjectInstance.course } }?.id,
+                teacher = subjectInstance.teacher?.let { teachers.firstOrNull { teacher -> teacher.name == subjectInstance.teacher }?.id },
+                groups = groups.filter { group -> group.name in subjectInstance.classes }.map { it.id },
+                aliases = listOf(Alias(AliasProvider.Sp24, sp24Alias, 1))
+            )
+        }.forEach { subjectInstanceRepository.upsert(it) }
         return true
     }
 }

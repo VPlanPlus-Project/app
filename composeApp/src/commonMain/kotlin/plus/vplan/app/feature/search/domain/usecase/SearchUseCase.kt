@@ -95,9 +95,9 @@ class SearchUseCase(
                         val homework = homeworkList.onEach { it.getTaskItems() }
                         results.value = results.value.plus(
                             SearchResult.Type.Homework to homework
-                                .filter { (query.isEmpty() || it.taskItems!!.any { task -> query in task.content.lowercase() }) && (searchRequest.subject == null || it.subjectInstance?.getFirstValueOld()?.subject == searchRequest.subject) }
+                                .filter { (query.isEmpty() || it.taskItems!!.any { task -> query in task.content.lowercase() }) && (searchRequest.subject == null || it.subjectInstance?.getFirstValue()?.subject == searchRequest.subject) }
                                 .onEach {
-                                    it.subjectInstance?.getFirstValueOld() ?: it.group?.getFirstValue()
+                                    it.subjectInstance?.getFirstValue() ?: it.group?.getFirstValue()
                                     when (it) {
                                         is Homework.CloudHomework -> it.getCreatedBy()
                                         is Homework.LocalHomework -> it.getCreatedByProfile()
@@ -110,7 +110,7 @@ class SearchUseCase(
                 launch {
                     assessmentRepository.getAll().collectLatest { assessmentList ->
                         val assessments = assessmentList
-                            .filter { (query.isEmpty() || query in it.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.getFirstValueOld()?.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.type == searchRequest.assessmentType) }
+                            .filter { (query.isEmpty() || query in it.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.getFirstValue()?.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.type == searchRequest.assessmentType) }
                             .onEach { assessment ->
                                 when (assessment.creator) {
                                     is AppEntity.VppId -> assessment.getCreatedByVppIdItem()

@@ -41,72 +41,73 @@ class UpdateHomeworkUseCase(
         profiles.forEach { studentProfile ->
             val existingHomework = homeworkRepository.getByGroup(studentProfile.groupId).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
             val vppSchoolId = studentProfile.getSchool().getFirstValue()?.getVppSchoolId() ?: return@forEach
-            ids.addAll(
-                (homeworkRepository.download(
-                    schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess(vppSchoolId) ?: studentProfile.getSchool().getFirstValue()!!.getSchoolApiAccess()!!,
-                    groupId = studentProfile.groupId,
-                    subjectInstanceIds = studentProfile.subjectInstanceConfiguration.map { it.key },
-                ) as? Response.Success)?.data.orEmpty().also {
-                    if (allowNotifications) {
-                        val newHomework = combine((it - existingHomework).ifEmpty { return@also }.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheStateOld.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
-                            .filterIsInstance<Homework.CloudHomework>()
-                            .filter { homework -> homework.createdBy != studentProfile.vppIdId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days }
-                            .filter { it.subjectInstanceId == null || it.subjectInstanceId in studentProfile.subjectInstanceConfiguration.filterValues { it }.keys }
-
-                        if (newHomework.size == 1) {
-                            platformNotificationRepository.sendNotification(
-                                title = "Neue Hausaufgabe",
-                                category = studentProfile.name,
-                                message = buildString {
-                                    newHomework.first().let { homework ->
-                                        append(homework.getCreatedBy().name)
-                                        append(" hat eine neue Hausaufgabe ")
-                                        if (homework.subjectInstance == null) append("für Klasse ${homework.group?.getFirstValue()?.name}")
-                                        else append("für ${homework.subjectInstance?.getFirstValueOld()?.subject}")
-                                        append(" erstellt, welche bis ")
-                                        append(homework.dueTo.let { date ->
-                                            (LocalDate.now() untilRelativeText date) ?: date.format(LocalDate.Format {
-                                                dayOfWeek(shortDayOfWeekNames)
-                                                chars(", ")
-                                                dayOfMonth()
-                                                chars(". ")
-                                                monthName(shortMonthNames)
-                                            })
-                                        })
-                                        append(" fällig ist.")
-                                    }
-                                },
-                                onClickData = Json.encodeToString(
-                                    StartTaskJson(
-                                        type = "open",
-                                        profileId = studentProfile.id.toString(),
-                                        value = Json.encodeToString(
-                                            StartTaskJson.StartTaskOpen(
-                                                type = "homework",
-                                                value = Json.encodeToString(
-                                                    StartTaskJson.StartTaskOpen.Homework(
-                                                        homeworkId = newHomework.first().id
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    ).also { Logger.d { "Task: $it" } }
-                                )
-                            )
-                        }
-                        if (newHomework.size > 1) {
-                            platformNotificationRepository.sendNotification(
-                                title = "Neue Hausaufgaben",
-                                category = studentProfile.name,
-                                message = buildString {
-                                    append("Es gibt ${newHomework.size} neue Hausaufgaben für dich")
-                                },
-                                isLarge = false,
-                            )
-                        }
-                    }
-                }
-            )
+            TODO()
+//            ids.addAll(
+//                (homeworkRepository.download(
+//                    schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess(vppSchoolId) ?: studentProfile.getSchool().getFirstValue()!!.getSchoolApiAccess()!!,
+//                    groupId = studentProfile.groupId,
+//                    subjectInstanceIds = studentProfile.subjectInstanceConfiguration.map { it.key },
+//                ) as? Response.Success)?.data.orEmpty().also {
+//                    if (allowNotifications) {
+//                        val newHomework = combine((it - existingHomework).ifEmpty { return@also }.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheStateOld.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
+//                            .filterIsInstance<Homework.CloudHomework>()
+//                            .filter { homework -> homework.createdBy != studentProfile.vppIdId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days }
+//                            .filter { it.subjectInstanceId == null || it.subjectInstanceId in studentProfile.subjectInstanceConfiguration.filterValues { it }.keys }
+//
+//                        if (newHomework.size == 1) {
+//                            platformNotificationRepository.sendNotification(
+//                                title = "Neue Hausaufgabe",
+//                                category = studentProfile.name,
+//                                message = buildString {
+//                                    newHomework.first().let { homework ->
+//                                        append(homework.getCreatedBy().name)
+//                                        append(" hat eine neue Hausaufgabe ")
+//                                        if (homework.subjectInstance == null) append("für Klasse ${homework.group?.getFirstValue()?.name}")
+//                                        else append("für ${homework.subjectInstance?.getFirstValueOld()?.subject}")
+//                                        append(" erstellt, welche bis ")
+//                                        append(homework.dueTo.let { date ->
+//                                            (LocalDate.now() untilRelativeText date) ?: date.format(LocalDate.Format {
+//                                                dayOfWeek(shortDayOfWeekNames)
+//                                                chars(", ")
+//                                                dayOfMonth()
+//                                                chars(". ")
+//                                                monthName(shortMonthNames)
+//                                            })
+//                                        })
+//                                        append(" fällig ist.")
+//                                    }
+//                                },
+//                                onClickData = Json.encodeToString(
+//                                    StartTaskJson(
+//                                        type = "open",
+//                                        profileId = studentProfile.id.toString(),
+//                                        value = Json.encodeToString(
+//                                            StartTaskJson.StartTaskOpen(
+//                                                type = "homework",
+//                                                value = Json.encodeToString(
+//                                                    StartTaskJson.StartTaskOpen.Homework(
+//                                                        homeworkId = newHomework.first().id
+//                                                    )
+//                                                )
+//                                            )
+//                                        )
+//                                    ).also { Logger.d { "Task: $it" } }
+//                                )
+//                            )
+//                        }
+//                        if (newHomework.size > 1) {
+//                            platformNotificationRepository.sendNotification(
+//                                title = "Neue Hausaufgaben",
+//                                category = studentProfile.name,
+//                                message = buildString {
+//                                    append("Es gibt ${newHomework.size} neue Hausaufgaben für dich")
+//                                },
+//                                isLarge = false,
+//                            )
+//                        }
+//                    }
+//                }
+//            )
         }
 
         homeworkRepository.deleteById(

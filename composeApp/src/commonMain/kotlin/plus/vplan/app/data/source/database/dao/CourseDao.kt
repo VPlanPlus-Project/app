@@ -7,8 +7,10 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbCourse
+import plus.vplan.app.data.source.database.model.database.DbCourseAlias
 import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedCourse
+import plus.vplan.app.domain.data.AliasProvider
 import kotlin.uuid.Uuid
 
 @Dao
@@ -31,29 +33,19 @@ interface CourseDao {
 
     @Transaction
     @Query("SELECT * FROM courses WHERE id = :id")
-    fun getById(id: Int): Flow<EmbeddedCourse?>
-
-    @Transaction
-    @Query("SELECT * FROM courses WHERE indiware_id = :indiwareId")
-    fun getByIndiwareId(indiwareId: String): Flow<EmbeddedCourse?>
+    fun findById(id: Uuid): Flow<EmbeddedCourse?>
 
     @Upsert
-    suspend fun upsert(course: DbCourse)
-
-    @Upsert
-    suspend fun upsert(course: DbCourseGroupCrossover)
-
-    @Transaction
-    suspend fun upsert(courses: List<DbCourse>, courseGroupCrossovers: List<DbCourseGroupCrossover>) {
-        courses.forEach { upsert(it) }
-        courseGroupCrossovers.forEach { upsert(it) }
-    }
+    suspend fun upsertCourse(course: DbCourse, courseGroupCrossover: List<DbCourseGroupCrossover>, aliases: List<DbCourseAlias>)
 
     @Query("DELETE FROM courses WHERE id = :id")
-    suspend fun deleteById(id: Int)
+    suspend fun deleteById(id: Uuid)
 
     @Transaction
-    suspend fun deleteById(ids: List<Int>) {
+    suspend fun deleteById(ids: List<Uuid>) {
         ids.forEach { deleteById(it) }
     }
+
+    @Query("SELECT course_id FROM courses_aliases WHERE alias = :value AND alias_type = :provider AND version = :version")
+    suspend fun getIdByAlias(value: String, provider: AliasProvider, version: Int): Uuid?
 }

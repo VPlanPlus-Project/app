@@ -14,15 +14,14 @@ import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Teacher
-import plus.vplan.app.domain.model.findByIndiwareId
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
@@ -35,10 +34,10 @@ import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.now
-import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.untilRelativeText
-import kotlin.time.Duration.Companion.minutes
+import plus.vplan.lib.sp24.source.Authentication
+import plus.vplan.lib.sp24.source.IndiwareClient
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -60,12 +59,21 @@ class UpdateSubstitutionPlanUseCase(
     suspend operator fun invoke(
         sp24School: School.Sp24School,
         dates: List<LocalDate>,
+        providedClient: IndiwareClient? = null,
         allowNotification: Boolean
     ): Response.Error? {
+        val client = providedClient ?: indiwareRepository.getSp24Client(
+            Authentication(
+                sp24School.sp24Id,
+                sp24School.username,
+                sp24School.password,
+            ),
+            withCache = true
+        )
         val teachers = teacherRepository.getBySchool(sp24School.id).first()
         val rooms = roomRepository.getBySchool(sp24School.id).first()
         val groups = groupRepository.getBySchool(sp24School.id).first()
-        val subjectInstances = subjectInstanceRepository.getBySchool(sp24School.id, false).first()
+        val subjectInstances = subjectInstanceRepository.getBySchool(sp24School.id).first()
         var error: Response.Error? = null
 
         val studentProfilesForSchool = profileRepository.getAll().first()
@@ -87,21 +95,14 @@ class UpdateSubstitutionPlanUseCase(
                 .associateWith { profile -> oldLessons.filter { it.isRelevantForProfile(profile) }.toSet() }
                 .mapKeys { it.key.id }
 
-            val substitutionPlanResponse = indiwareRepository.getSubstitutionPlan(
-                sp24Id = sp24School.sp24Id,
-                username = sp24School.username,
-                password = sp24School.password,
-                date = date,
-                teacherNames = teachers.map { it.name },
-                roomNames = rooms.map { it.name }
-            )
-            if (substitutionPlanResponse is Response.Error.OnlineError.NotFound) return@forEachDate
+            val substitutionPlanResponse = client.substitutionPlan.getSubstitutionPlan(date)
+            if (substitutionPlanResponse is plus.vplan.lib.sp24.source.Response.Error.OnlineError.NotFound) return@forEachDate
 
-            if (substitutionPlanResponse is Response.Error) run {
-                error = substitutionPlanResponse
+            if (substitutionPlanResponse is plus.vplan.lib.sp24.source.Response.Error) run {
+                error = Response.Error.fromSp24KtError(substitutionPlanResponse)
                 return@forEachDate
             }
-            if (substitutionPlanResponse !is Response.Success) throw IllegalStateException("substitutionPlanResponse is not successful: $substitutionPlanResponse")
+            if (substitutionPlanResponse !is plus.vplan.lib.sp24.source.Response.Success) throw IllegalStateException("substitutionPlanResponse is not successful: $substitutionPlanResponse")
 
             val substitutionPlan = substitutionPlanResponse.data
 
@@ -112,7 +113,7 @@ class UpdateSubstitutionPlanUseCase(
                 date = date,
                 schoolId = sp24School.id,
                 weekId = week.id,
-                info = substitutionPlan.info,
+                info = substitutionPlan.info.joinToString("\n").ifBlank { null },
                 dayType = Day.DayType.REGULAR,
                 substitutionPlan = emptySet(),
                 timetable = emptySet(),
@@ -124,49 +125,34 @@ class UpdateSubstitutionPlanUseCase(
 
             dayRepository.insert(day)
 
-            substitutionPlan.classes.flatMap { substitutionPlanClass ->
-                val group = groups.firstOrNull { it.name == substitutionPlanClass.name } ?: run {
-                    LOGGER.w { "Group ${substitutionPlanClass.name} not found" }
-                    return@flatMap emptyList()
-                }
-                var lessonTimes = lessonTimeRepository.getByGroup(group.id).first()
+            substitutionPlan.lessons.mapNotNull { lesson ->
+                val lessonTimes = lessonTimeRepository.getByGroup(groups.firstOrNull { it.name == lesson.classes.first() }?.id ?: run {
+                    LOGGER.w { "Group ${lesson.classes.joinToString()} (specific: ${lesson.classes.first()}) not found" }
+                    return@mapNotNull null
+                }).first()
                 if (lessonTimes.isEmpty()) {
-                    Logger.e { "No lesson times found for group ${group.name}" }
-                    return@flatMap emptyList()
+                    Logger.e { "No lesson times found for groups ${lesson.classes.joinToString()}" }
+                    return@mapNotNull null
                 }
-                while (substitutionPlanClass.lessons.any { it.lessonNumber > lessonTimes.maxOf { it.lessonNumber } }) {
-                    val nextLessonTime = lessonTimes.maxBy { it.lessonNumber }
-                    val newLessonTime = LessonTime(
-                        id = "${group.schoolId}/${group.id}/${nextLessonTime.lessonNumber + 1}",
-                        start = nextLessonTime.end,
-                        end = nextLessonTime.end + 45.minutes,
-                        lessonNumber = nextLessonTime.lessonNumber + 1,
-                        group = group.id,
-                        interpolated = true
-                    )
-                    lessonTimeRepository.upsert(newLessonTime)
-                    lessonTimes = lessonTimeRepository.getByGroup(group.id).first()
-                }
-                substitutionPlanClass.lessons.mapNotNull { substitutionPlanLesson ->
-                    Lesson.SubstitutionPlanLesson(
-                        id = Uuid.random(),
-                        date = date,
-                        week = week.id,
-                        subject = substitutionPlanLesson.subject,
-                        isSubjectChanged = substitutionPlanLesson.subjectChanged,
-                        teacherIds = teachers.filter { it.name in substitutionPlanLesson.teacher }.map { it.id },
-                        isTeacherChanged = substitutionPlanLesson.teacherChanged,
-                        roomIds = rooms.filter { it.name in substitutionPlanLesson.room }.map { it.id },
-                        isRoomChanged = substitutionPlanLesson.roomChanged,
-                        groupIds = listOf(group.id),
-                        subjectInstanceId = substitutionPlanLesson.subjectInstanceNumber?.let { subjectInstances.findByIndiwareId(it.toString()) }?.id,
-                        lessonTimeId = lessonTimes.firstOrNull { it.lessonNumber == substitutionPlanLesson.lessonNumber }?.id ?: run {
-                            Logger.e { "No lesson time found for lesson number ${substitutionPlanLesson.lessonNumber} in group ${group.name} at $date" }
-                            return@mapNotNull null
-                        },
-                        info = substitutionPlanLesson.info
-                    )
-                }
+
+                Lesson.SubstitutionPlanLesson(
+                    id = Uuid.random(),
+                    date = date,
+                    week = week.id,
+                    subject = lesson.subject,
+                    isSubjectChanged = lesson.subjectChanged,
+                    teacherIds = teachers.filter { it.name in lesson.teachers }.map { it.id },
+                    isTeacherChanged = lesson.teachersChanged,
+                    roomIds = rooms.filter { it.name in lesson.rooms }.map { it.id },
+                    isRoomChanged = lesson.roomsChanged,
+                    groupIds = groups.filter { it.name in lesson.classes }.map { it.id },
+                    subjectInstanceId = lesson.subjectInstanceId?.let { subjectInstances.firstOrNull { it.aliases.any { alias -> alias.provider == AliasProvider.Sp24 && alias.version == 1 && alias.value.split("/").last() == lesson.subjectInstanceId.toString() } } }?.id,
+                    lessonTimeId = lessonTimes.firstOrNull { it.lessonNumber == lesson.lessonNumber }?.id ?: run {
+                        Logger.e { "No lesson time found for lesson number ${lesson.lessonNumber} in group ${lesson.classes.first()} at $date" }
+                        return@mapNotNull null
+                    },
+                    info = lesson.info
+                )
             }.let { lessonsForDay.addAll(it) }
 
             substitutionPlanRepository.upsertLessons(

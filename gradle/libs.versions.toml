@@ -30,11 +30,10 @@ firebase-bom = "34.0.0"
 
 ktor = "3.2.2"
 
-xmlutil = "0.91.1"
 androidBrowser = "1.8.0"
 workRuntimeKtx = "2.10.2"
 
-sp24-kt = "v2025.07.12"
+sp24-kt = "v2025.08.10"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -78,9 +77,6 @@ ktor-client-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-
 
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
-
-xmlutil-core = { module = "io.github.pdvrieze.xmlutil:core", version.ref = "xmlutil" }
-xmlutil-serialization = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "xmlutil" }
 
 androidx-browser = { module = "androidx.browser:browser", version.ref = "androidBrowser" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }

@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -178,7 +179,7 @@ class HomeViewModel(
 
 data class HomeState(
     val currentProfile: Profile? = null,
-    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+    val currentTime: LocalDateTime = LocalDateTime.now(),
     val initDone: Boolean = false,
     val day: Day? = null,
     val isUpdating: Boolean = false,

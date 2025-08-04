@@ -272,7 +272,7 @@ fun MainScreenHost(
                 val args = it.toRoute<MainScreen.SchoolSettings>()
                 SchoolSettingsScreen(
                     navHostController = navController,
-                    openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchoolId
+                    openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchoolId?.let { hexString -> Uuid.parseHex(hexString) }
                 )
             }
             composable<MainScreen.SecuritySettings>(
@@ -351,7 +351,7 @@ fun MainScreenHost(
                 navController.navigate(MainScreen.MainCalendar)
             }
             is StartTask.NavigateTo.SchoolSettings -> {
-                navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId))
+                navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId?.toHexString()))
             }
             is StartTask.NavigateTo.Grades -> navController.navigate(MainScreen.Grades(navigationTask.vppId))
             is StartTask.Open.Homework -> homeworkSheetHomeworkId = navigationTask.homeworkId
@@ -394,7 +394,7 @@ sealed class MainScreen(val name: String) {
     @Serializable data object RoomSearch : MainScreen("RoomSearch")
 
     @Serializable data object Settings : MainScreen("Settings")
-    @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: Uuid? = null) : MainScreen("SchoolSettings")
+    @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: String? = null) : MainScreen("SchoolSettings")
     @Serializable data object SecuritySettings : MainScreen("SecuritySettings")
     @Serializable data object DeveloperSettings : MainScreen("DeveloperSettings")
     @Serializable data object InfoFeedbackSettings : MainScreen("InfoFeedbackSettings")

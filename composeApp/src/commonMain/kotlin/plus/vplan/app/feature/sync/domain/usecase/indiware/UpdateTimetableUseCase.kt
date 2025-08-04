@@ -2,16 +2,14 @@ package plus.vplan.app.feature.sync.domain.usecase.indiware
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
-import plus.vplan.app.domain.repository.IndiwareTimeTable
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -19,11 +17,14 @@ import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.takeContinuousBy
+import plus.vplan.lib.sp24.source.Authentication
+import plus.vplan.lib.sp24.source.extension.Timetable
 import kotlin.time.Duration.Companion.days
 
-private val TAG = "UpdateTimetableUseCase"
+private const val TAG = "UpdateTimetableUseCase"
 private val LOGGER = Logger.withTag(TAG)
 
 class UpdateTimetableUseCase(
@@ -50,7 +51,7 @@ class UpdateTimetableUseCase(
         val groups = groupRepository.getBySchool(sp24School.id).first()
         val weeks = weekRepository.getBySchool(sp24School.id).first().sortedBy { it.start }
             .let { weeks ->
-                val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+                val today = LocalDate.now()
 
                 val firstSchoolWeekOfCurrentYear =
                     weeks.firstOrNull { it.start.year == today.year && it.weekIndex == 1 }
@@ -77,11 +78,10 @@ class UpdateTimetableUseCase(
                 return@let emptyList()
             }
 
-
         LOGGER.d { "Found ${rooms.size} rooms, ${teachers.size} teachers, ${groups.size} groups and ${weeks.size} weeks" }
 
         var week = run {
-            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            val today = LocalDate.now()
             val currentWeek =
                 weeks.firstOrNull { today in it.start..it.end.atStartOfWeek().plus(7.days) }
 
@@ -100,28 +100,41 @@ class UpdateTimetableUseCase(
             return@run null
         }
 
-        var downloadedTimetable: IndiwareTimeTable? = null
+        val sp24Client = indiwareRepository.getSp24Client(authentication = Authentication(sp24School.sp24Id, sp24School.username, sp24School.password), withCache = true)
+
+        var downloadedTimetable: Timetable? = null
         while (week != null) {
-            val timetable = indiwareRepository.getTimetable(
-                sp24Id = sp24School.sp24Id,
-                username = sp24School.username,
-                password = sp24School.password,
-                week = week,
-                roomNames = rooms.map { it.name }
-            )
+            fun getNextWeekToTry(): Week? {
+                return weeks.lastOrNull { it.start < week!!.start && it.weekIndex == week!!.weekIndex - 1 }
+            }
+
+            val isWeekInPast = (LocalDate.now() > week.end).also {
+                if (it) {
+                    LOGGER.d { "Week CW${week.calendarWeek} (${week.weekIndex} week of school year) is in the past" }
+                } else {
+                    LOGGER.d { "Week CW${week.calendarWeek} (${week.weekIndex} week of school year) is not in the past" }
+                }
+            }
+            val hasDataForThisWeek = indiwareRepository.hasTimetableForWeek(sp24School.sp24Id.toInt(), week.id)
+
+            if (isWeekInPast && hasDataForThisWeek == false) {
+                LOGGER.i { "Skipping past week CW${week.calendarWeek} (${week.weekIndex} week of school year) for sp24 school ${sp24School.id} since it doesn't have data on stundenplan24.de" }
+                week = getNextWeekToTry()
+                continue
+            }
+            val timetable = sp24Client.timetable.getTimetable(week.weekIndex)
             when {
-                timetable is Response.Error.OnlineError.NotFound -> {
-                    LOGGER.i { "Timetable not found for indiware school ${sp24School.id} and week CW${week.calendarWeek} (${week.weekIndex} week of school year) (retrying ${week.weekIndex} times)" }
-                    week = weeks.lastOrNull { it.start < week.start && it.weekIndex == week.weekIndex - 1 }
+                timetable is plus.vplan.lib.sp24.source.Response.Error.OnlineError.NotFound -> {
+                    LOGGER.i { "Timetable not found for sp24 school ${sp24School.id} and week CW${week.calendarWeek} (${week.weekIndex} week of school year) (retrying ${week.weekIndex} times)" }
+                    indiwareRepository.setHasTimetableForWeek(sp24School.sp24Id.toInt(), week.id, false)
+                    week = getNextWeekToTry()
+                    continue
                 }
 
-                timetable !is Response.Success && timetable is Response.Error -> return timetable
-                timetable is Response.Success -> {
+                timetable !is plus.vplan.lib.sp24.source.Response.Success && timetable is Response.Error -> return timetable
+                timetable is plus.vplan.lib.sp24.source.Response.Success -> {
+                    indiwareRepository.setHasTimetableForWeek(sp24School.sp24Id.toInt(), week.id, true)
                     LOGGER.i { "Timetable found for indiware school ${sp24School.id} in week CW${week.calendarWeek} (${week.weekIndex} week of school year)" }
-                    if (!timetable.data.hasChangedToPrevious) {
-                        Logger.i { "No changes in timetable" + (if (!forceUpdate) ", aborting" else " but update was forced") }
-                        if (!forceUpdate) return null
-                    }
                     downloadedTimetable = timetable.data
                     break
                 }
@@ -129,31 +142,25 @@ class UpdateTimetableUseCase(
         }
 
         LOGGER.d { "Preparing lessons to insert/update" }
+        val lessonTimes = lessonTimeRepository.getBySchool(sp24School.id).first()
         if (week != null) {
-            val lessons = downloadedTimetable?.classes.orEmpty().flatMap { clazz ->
-                val group =
-                    groups.firstOrNull { it.name == clazz.name } ?: return@flatMap emptyList()
-                val lessonTimes = lessonTimeRepository.getByGroup(group.id).first()
-                clazz.lessons.map { lesson ->
-                    val lessonTime =
-                        lessonTimes.firstOrNull { it.lessonNumber == lesson.lessonNumber } ?: run {
-                            LOGGER.w { "No lesson time found for lesson number ${lesson.lessonNumber} in group ${group.name}, skipping lesson" }
-                            null!!
-                        }
-
-                    Lesson.TimetableLesson(
-                        dayOfWeek = lesson.dayOfWeek,
-                        week = week.id,
-                        weekType = lesson.weekType,
-                        subject = lesson.subject,
-                        rooms = lesson.room.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }
-                            .map { it.id },
-                        teachers = lesson.teacher.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }
-                            .map { it.id },
-                        lessonTime = lessonTime.id,
-                        groups = listOf(group.id)
-                    )
+            val lessons = downloadedTimetable?.lessons.orEmpty().map { lesson ->
+                val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }.map { it.id }
+                LOGGER.d { lessonGroups.toString() }
+                if (lessonGroups.isEmpty()) {
+                    LOGGER.d { "Hallo" }
                 }
+                Lesson.TimetableLesson(
+                    dayOfWeek = lesson.dayOfWeek,
+                    week = week.id,
+                    weekType = lesson.weekType,
+                    subject = lesson.subject,
+                    rooms = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
+                    teachers = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
+                    groups = lessonGroups,
+                    lessonTime = lessonTimes.firstOrNull { it.lessonNumber == lesson.lessonNumber && it.group in lessonGroups }?.id
+                        ?: throw NullPointerException("No lesson time found for lesson ${lesson.lessonNumber} in group ${lessonGroups.joinToString(", ")}")
+                )
             }
 
             LOGGER.d { "Found ${lessons.size} lessons to insert/update" }

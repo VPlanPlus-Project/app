@@ -9,7 +9,7 @@ interface LessonTimeRepository {
     fun getBySchool(schoolId: Uuid): Flow<List<LessonTime>>
     fun getById(id: String): Flow<LessonTime?>
 
-    suspend fun upsert(lessonTime: LessonTime): Flow<LessonTime>
+    suspend fun upsert(lessonTime: LessonTime)
     suspend fun upsert(lessonTimes: List<LessonTime>)
     suspend fun deleteById(id: String)
     suspend fun deleteById(ids: List<String>)

@@ -24,12 +24,7 @@ class OnboardingSelectProfileViewModel(
     init {
         viewModelScope.launch {
             getOnboardingStateUseCase().collect { onboardingSp24State ->
-                state = state.copy(options = onboardingSp24State.groupOptions.map {
-                    OnboardingProfile.StudentProfile(
-                        name = it,
-                        subjectInstances = emptyList()
-                    )
-                })
+                state = state.copy(options = onboardingSp24State.profileOptions)
             }
         }
     }

@@ -32,6 +32,7 @@ import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetSubjectsUseCase
 import plus.vplan.app.feature.search.domain.usecase.SearchRequest
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
+import plus.vplan.app.utils.now
 
 class SearchViewModel(
     private val searchUseCase: SearchUseCase,
@@ -125,7 +126,7 @@ data class SearchState(
     val homework: List<Homework> = emptyList(),
     val assessments: List<Assessment> = emptyList(),
     val currentProfile: Profile? = null,
-    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+    val currentTime: LocalDateTime = LocalDateTime.now(),
     val gradeLockState: GradeLockState = GradeLockState.NotConfigured,
     val subjects: List<String> = emptyList()
 ) {

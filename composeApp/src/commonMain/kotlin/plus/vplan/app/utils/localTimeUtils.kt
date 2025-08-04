@@ -65,6 +65,7 @@ val regularTimeFormat = LocalTime.Format {
 }
 
 fun LocalTime.Companion.now(): LocalTime {
+    //return LocalTime(7, 0)
     return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
 }
 

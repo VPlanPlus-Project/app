@@ -1,8 +1,8 @@
 package plus.vplan.app.feature.onboarding.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingSp24State
+import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.ui.components.ButtonState
 
 interface OnboardingRepository {
@@ -16,14 +16,13 @@ interface OnboardingRepository {
         password: String
     )
 
+    suspend fun addProfileOptions(options: List<OnboardingProfile>)
+
     suspend fun setSp24CredentialsValid(state: Sp24CredentialsState?)
 
     suspend fun setSchoolName(name: String?)
 
-    suspend fun setSelectedProfile(
-        type: ProfileType,
-        name: String
-    )
+    suspend fun setSelectedProfile(option: OnboardingProfile)
 
     fun getState(): Flow<OnboardingSp24State>
 }

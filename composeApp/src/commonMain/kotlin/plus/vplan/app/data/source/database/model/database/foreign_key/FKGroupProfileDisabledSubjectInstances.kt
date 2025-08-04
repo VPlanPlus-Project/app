@@ -34,5 +34,5 @@ import kotlin.uuid.Uuid
 )
 data class FKGroupProfileDisabledSubjectInstances(
     @ColumnInfo(name = "profile_id") val profileId: Uuid,
-    @ColumnInfo(name = "subject_instance_id") val subjectInstanceId: Int,
+    @ColumnInfo(name = "subject_instance_id") val subjectInstanceId: Uuid,
 )

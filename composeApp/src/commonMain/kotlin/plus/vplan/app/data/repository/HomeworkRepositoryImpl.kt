@@ -4,7 +4,6 @@ package plus.vplan.app.data.repository
 
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.observer.ResponseObserver
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -47,7 +46,6 @@ import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
@@ -175,7 +173,7 @@ class HomeworkRepositoryImpl(
                     if (existing.homework.createdBy != null) schoolApiAccess = (vppDatabase.vppIdDao.getById(existing.homework.createdBy).first()?.toModel() as? VppId.Active)?.buildSchoolApiAccess()
                     schoolApiAccess =
                         schoolApiAccess
-                            ?: (if (existing.homework.subjectInstanceId != null) vppDatabase.subjectInstanceDao.getById(existing.homework.subjectInstanceId).first()?.groups
+                            ?: (if (existing.homework.subjectInstanceId != null) vppDatabase.subjectInstanceDao.findById(TODO()).first()?.groups
                                 ?.mapNotNull { vppDatabase.groupDao.findById(it.groupId).first() }
                                 ?.mapNotNull { vppDatabase.schoolDao.findById(it.group.schoolId).first()?.toModel()?.getSchoolApiAccess() }
                             else existing.homework.groupId?.let {
@@ -233,7 +231,7 @@ class HomeworkRepositoryImpl(
                     homework = listOf(
                         DbHomework(
                             id = id,
-                            subjectInstanceId = data.subjectInstance?.id,
+                            subjectInstanceId = Uuid.NIL,
                             groupId = Uuid.NIL,
                             createdAt = Instant.fromEpochSeconds(data.createdAt),
                             dueTo = LocalDate.parse(data.dueTo),
@@ -309,20 +307,20 @@ class HomeworkRepositoryImpl(
     override suspend fun editHomeworkSubjectInstance(homework: Homework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile) {
         TODO()
         require((subjectInstance == null) xor (group == null)) { "Either subjectInstance or group must not be null" }
-        val oldSubjectInstance = homework.subjectInstance?.getFirstValueOld()
+        val oldSubjectInstance = homework.subjectInstance?.getFirstValue()
         val oldGroup = homework.group?.getFirstValue()
-        vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, subjectInstance?.id, group?.id)
+        vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, TODO(), group?.id)
 
         if (homework.id < 0 || profile.getVppIdItem() == null) return
-        safeRequest(onError = { vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, oldSubjectInstance?.id, oldGroup?.id) }) {
+        safeRequest(onError = { vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, TODO(), oldGroup?.id) }) {
             val response = httpClient.patch(URLBuilder(api).apply {
                 appendPathSegments("api", "v2.2", "homework", homework.id.toString())
             }.build()) {
                 profile.getVppIdItem()!!.buildSchoolApiAccess().authentication(this)
                 contentType(ContentType.Application.Json)
-                setBody(HomeworkUpdateSubjectInstanceRequest(subjectInstanceId = subjectInstance?.id, groupId = -1))
+                setBody(HomeworkUpdateSubjectInstanceRequest(subjectInstanceId = TODO(), groupId = -1))
             }
-            if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, oldSubjectInstance?.id, oldGroup?.id)
+            if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, TODO(), oldGroup?.id)
         }
     }
 
@@ -363,7 +361,16 @@ class HomeworkRepositoryImpl(
     override suspend fun addTask(homework: Homework, task: String, profile: Profile.StudentProfile): Response.Error? {
         if (homework.id < 0 || profile.getVppIdItem() == null) {
             val id = getIdForNewLocalHomeworkTask() - 1
-            vppDatabase.homeworkDao.upsertTaskMany(listOf(DbHomeworkTask(content = task, homeworkId = homework.id, id = id, cachedAt = Clock.System.now())))
+            vppDatabase.homeworkDao.upsertTaskMany(
+                listOf(
+                    DbHomeworkTask(
+                        content = task,
+                        homeworkId = homework.id,
+                        id = id,
+                        cachedAt = Clock.System.now()
+                    )
+                )
+            )
             return null
         }
         safeRequest(onError = { return it }) {
@@ -377,7 +384,16 @@ class HomeworkRepositoryImpl(
             }
             if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
             val id = ResponseDataWrapper.fromJson<Int>(response.bodyAsText()) ?: return Response.Error.ParsingError(response.bodyAsText())
-            vppDatabase.homeworkDao.upsertTaskMany(listOf(DbHomeworkTask(content = task, homeworkId = homework.id, id = id, cachedAt = Clock.System.now())))
+            vppDatabase.homeworkDao.upsertTaskMany(
+                listOf(
+                    DbHomeworkTask(
+                        content = task,
+                        homeworkId = homework.id,
+                        id = id,
+                        cachedAt = Clock.System.now()
+                    )
+                )
+            )
             return null
         }
         return Response.Error.Cancelled
@@ -468,7 +484,7 @@ class HomeworkRepositoryImpl(
                 homework = data.map { homework ->
                     DbHomework(
                         id = homework.id,
-                        subjectInstanceId = homework.subjectInstance?.id,
+                        subjectInstanceId = Uuid.NIL,
                         groupId = Uuid.NIL,
                         createdAt = Instant.fromEpochSeconds(homework.createdAt),
                         dueTo = LocalDate.parse(homework.dueTo),
@@ -535,7 +551,7 @@ class HomeworkRepositoryImpl(
                 contentType(ContentType.Application.Json)
                 setBody(
                     HomeworkPostRequest(
-                        subjectInstance = subjectInstance?.id,
+                        subjectInstance = -1,
                         groupId = -1,
                         dueTo = until.toString(),
                         isPublic = isPublic,

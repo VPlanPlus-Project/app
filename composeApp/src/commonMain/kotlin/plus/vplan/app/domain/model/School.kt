@@ -40,7 +40,7 @@ sealed interface School: AliasedItem<DataTag> {
     ) : School {
         override fun getSchoolApiAccess(): SchoolApiAccess {
             return SchoolApiAccess.IndiwareAccess(
-                vppSchoolId = aliases.first { it.provider == AliasProvider.Vpp }.value.toInt(),
+                vppSchoolId = aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt(),
                 sp24id = sp24Id,
                 username = username,
                 password = password
@@ -66,11 +66,11 @@ sealed interface School: AliasedItem<DataTag> {
 }
 
 sealed class SchoolApiAccess(
-    val vppSchoolId: Int
+    val vppSchoolId: Int?
 ) {
     abstract fun authentication(builder: HttpRequestBuilder)
     class IndiwareAccess(
-        vppSchoolId: Int,
+        vppSchoolId: Int?,
         val sp24id: String,
         val username: String,
         val password: String

@@ -23,7 +23,7 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
         vppId: VppId.Active,
         date: LocalDate,
         type: Assessment.Type,
-        subjectInstanceId: Int,
+        subjectInstanceId: Uuid,
         isPublic: Boolean,
         content: String
     ): Response<Int>

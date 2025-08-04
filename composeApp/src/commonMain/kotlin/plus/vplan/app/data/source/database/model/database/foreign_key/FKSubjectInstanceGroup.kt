@@ -33,6 +33,6 @@ import kotlin.uuid.Uuid
     ]
 )
 data class FKSubjectInstanceGroup(
-    @ColumnInfo(name = "subject_instance_id") val subjectInstanceId: Int,
+    @ColumnInfo(name = "subject_instance_id") val subjectInstanceId: Uuid,
     @ColumnInfo(name = "group_id") val groupId: Uuid
 )

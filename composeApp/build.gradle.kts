@@ -110,9 +110,6 @@ kotlin {
             implementation(libs.ktor.client.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
 
-            implementation(libs.xmlutil.core)
-            implementation(libs.xmlutil.serialization)
-
             implementation(libs.vpp.sp24)
         }
 

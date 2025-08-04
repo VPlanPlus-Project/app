@@ -27,6 +27,7 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.utils.now
 import plus.vplan.app.utils.overlaps
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -41,7 +42,7 @@ class GetRoomOccupationMapUseCase(
     operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> = channelFlow {
         val schoolId = Uuid.parseHex(profile.getSchool().first().entityId)
         weekRepository.getBySchool(schoolId).map { weeks ->
-            weeks.firstOrNull { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date in it.start..it.end }
+            weeks.firstOrNull { LocalDate.now() in it.start..it.end }
         }.collectLatest { currentWeek ->
             combine(
                 substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),

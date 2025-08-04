@@ -15,10 +15,9 @@ import kotlin.uuid.Uuid
     ]
 )
 data class DbSubjectInstance(
-    @ColumnInfo(name = "id") val id: Int,
-    @ColumnInfo("indiware_id") val indiwareId: String?,
+    @ColumnInfo(name = "id") val id: Uuid,
     @ColumnInfo(name = "subject") val subject: String,
     @ColumnInfo(name = "teacher_id") val teacherId: Uuid?,
-    @ColumnInfo(name = "course_id") val courseId: Int?,
+    @ColumnInfo(name = "course_id") val courseId: Uuid?,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
 )

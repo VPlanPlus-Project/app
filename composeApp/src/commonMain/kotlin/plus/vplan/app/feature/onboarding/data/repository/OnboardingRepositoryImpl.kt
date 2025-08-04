@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingSp24State
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.domain.repository.Sp24CredentialsState
+import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 
 class OnboardingRepositoryImpl: OnboardingRepository {
 
@@ -61,11 +61,16 @@ class OnboardingRepositoryImpl: OnboardingRepository {
         }
     }
 
-    override suspend fun setSelectedProfile(type: ProfileType, name: String) {
+    override suspend fun addProfileOptions(options: List<OnboardingProfile>) {
+        onboardingSp24State.update {
+            it!!.copy(profileOptions = it.profileOptions + options)
+        }
+    }
+
+    override suspend fun setSelectedProfile(option: OnboardingProfile) {
         onboardingSp24State.update {
             it!!.copy(
-                selectedItemType = type,
-                selectedItem = name
+                selectedItem = option
             )
         }
     }

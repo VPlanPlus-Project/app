@@ -10,6 +10,6 @@ class GetSubjectsUseCase(
 ) {
     suspend operator fun invoke(profile: Profile): List<String> {
         return (if (profile is Profile.StudentProfile) profile.subjectInstances.first()
-        else subjectInstanceRepository.getBySchool(profile.getSchool().getFirstValue()?.id ?: return emptyList(), false).first()).map { it.subject }.sorted().distinct()
+        else subjectInstanceRepository.getBySchool(profile.getSchool().getFirstValue()?.id ?: return emptyList()).first()).map { it.subject }.sorted().distinct()
     }
 }

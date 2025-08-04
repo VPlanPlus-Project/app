@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
 import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
-import plus.vplan.app.domain.cache.collectAsResultingFlowOld
+import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
@@ -50,7 +50,7 @@ fun AssessmentCard(
 ) {
     val localDensity = LocalDensity.current
 
-    val subject = assessment.subjectInstance.collectAsResultingFlowOld().value
+    val subject = assessment.subjectInstance.collectAsResultingFlow().value
     val createdBy by when (assessment.creator) {
         is AppEntity.VppId -> assessment.creator.vppId.collectAsLoadingStateOld("")
         is AppEntity.Profile -> assessment.creator.profile.collectAsLoadingStateOld("")

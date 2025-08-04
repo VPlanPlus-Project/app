@@ -33,6 +33,6 @@ import kotlin.uuid.Uuid
     ]
 )
 data class DbCourseGroupCrossover(
-    @ColumnInfo(name = "course_id") val courseId: Int,
+    @ColumnInfo(name = "course_id") val courseId: Uuid,
     @ColumnInfo(name = "group_id") val groupId: Uuid
 )

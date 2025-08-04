@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.CacheStateOld
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
@@ -39,7 +38,7 @@ abstract class Profile : Item<DataTag> {
         override val id: Uuid,
         override val name: String,
         val groupId: Uuid,
-        val subjectInstanceConfiguration: Map<Int, Boolean>,
+        val subjectInstanceConfiguration: Map<Uuid, Boolean>,
         val vppIdId: Int?
     ) : Profile() {
         override val profileType = ProfileType.STUDENT
@@ -53,14 +52,14 @@ abstract class Profile : Item<DataTag> {
         val vppId by lazy { vppIdId?.let { App.vppIdSource.getById(it) } }
         val subjectInstances by lazy {
             if (subjectInstanceConfiguration.isEmpty()) flowOf(emptyList())
-            else combine(subjectInstanceConfiguration.keys.map { App.subjectInstanceSource.getById(it).filterIsInstance<CacheStateOld.Done<SubjectInstance>>().map { cacheState -> cacheState.data } }) { it.toList() }
+            else combine(subjectInstanceConfiguration.keys.map { App.subjectInstanceSource.getById(it).filterIsInstance<CacheState.Done<SubjectInstance>>().map { cacheState -> cacheState.data } }) { it.toList() }
         }
 
-        private val subjectInstanceCache = hashMapOf<Int, SubjectInstance>()
+        private val subjectInstanceCache = hashMapOf<Uuid, SubjectInstance>()
         val subjectInstanceItems: List<SubjectInstance>
             get() = this.subjectInstanceCache.values.toList()
-        suspend fun getSubjectInstance(id: Int): SubjectInstance {
-            return subjectInstanceCache.getOrPut(id) { App.subjectInstanceSource.getById(id).filterIsInstance<CacheStateOld.Done<SubjectInstance>>().first().data }
+        suspend fun getSubjectInstance(id: Uuid): SubjectInstance {
+            return subjectInstanceCache.getOrPut(id) { App.subjectInstanceSource.getById(id).filterIsInstance<CacheState.Done<SubjectInstance>>().first().data }
         }
 
         suspend fun getGroupItem(): Group {
@@ -113,27 +112,6 @@ abstract class Profile : Item<DataTag> {
         }
     }
 
-    data class RoomProfile(
-        override val id: Uuid,
-        override val name: String,
-        val room: Uuid
-    ) : Profile() {
-        override val profileType = ProfileType.ROOM
-
-        @OptIn(ExperimentalCoroutinesApi::class)
-        override fun getSchool(): Flow<CacheState<School>> {
-            return App.roomSource.getById(room).filterIsInstance<CacheState.Done<Room>>().flatMapLatest { App.schoolSource.getById(it.data.schoolId) }
-        }
-
-        override fun copyBase(id: Uuid, name: String, profileType: ProfileType): Profile {
-            if (profileType != ProfileType.ROOM) throw IllegalArgumentException("Cannot change type of profile")
-            return this.copy(
-                id = id,
-                name = name
-            )
-        }
-    }
-
     abstract fun copyBase(
         id: Uuid = this.id,
         name: String = this.name,
@@ -142,5 +120,5 @@ abstract class Profile : Item<DataTag> {
 }
 
 enum class ProfileType {
-    STUDENT, TEACHER, ROOM
+    STUDENT, TEACHER
 }

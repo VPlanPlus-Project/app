@@ -42,6 +42,7 @@ import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.inWholeMinutes
+import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
@@ -101,7 +102,7 @@ class CalendarViewModel(
                     launch {
                         day.assessments.collectLatest {
                             calendarDay = calendarDay.copy(assessments = it.toList())
-                            it.map { it.subjectInstance.getFirstValueOld()?.subject ?: "?" }.sorted().let { selectorDay = selectorDay.copy(assessments = it) }
+                            it.map { it.subjectInstance.getFirstValue()?.subject ?: "?" }.sorted().let { selectorDay = selectorDay.copy(assessments = it) }
                             updateState()
                         }
                     }
@@ -109,7 +110,7 @@ class CalendarViewModel(
                         day.homework.collectLatest {
                             calendarDay = calendarDay.copy(homework = it.toList())
                             it
-                                .map { DateSelectorDay.HomeworkItem(subject = it.subjectInstance?.getFirstValueOld()?.subject ?: it.group?.getFirstValue()?.name ?: "?", isDone = state.currentProfile is Profile.StudentProfile && it.tasks.first().all { it.isDone(state.currentProfile as Profile.StudentProfile) }) }
+                                .map { DateSelectorDay.HomeworkItem(subject = it.subjectInstance?.getFirstValue()?.subject ?: it.group?.getFirstValue()?.name ?: "?", isDone = state.currentProfile is Profile.StudentProfile && it.tasks.first().all { it.isDone(state.currentProfile as Profile.StudentProfile) }) }
                                 .sortedBy { it.subject }
                                 .let { selectorDay = selectorDay.copy(homework = it) }
                             updateState()
@@ -188,9 +189,9 @@ class CalendarViewModel(
 }
 
 data class CalendarState(
-    val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+    val selectedDate: LocalDate = LocalDate.now(),
     val currentProfile: Profile? = null,
-    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+    val currentTime: LocalDateTime = LocalDateTime.now(),
     val uiUpdateVersion: Int = 0,
     val displayType: DisplayType = DisplayType.Calendar,
     val start: LocalTime = LocalTime(0, 0),

@@ -23,9 +23,8 @@ class LessonTimeRepositoryImpl(
         return vppDatabase.lessonTimeDao.getById(id).map { it?.toModel() }
     }
 
-    override suspend fun upsert(lessonTime: LessonTime): Flow<LessonTime> {
+    override suspend fun upsert(lessonTime: LessonTime) {
         upsert(listOf(lessonTime))
-        return getById(lessonTime.id).map { it ?: throw IllegalStateException("upsert: lessonTime not found") }
     }
 
     override suspend fun upsert(lessonTimes: List<LessonTime>) {

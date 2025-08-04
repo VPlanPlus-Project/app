@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheStateOld
-import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
@@ -195,7 +195,7 @@ private suspend fun Profile.StudentProfile.prefetch() {
 }
 
 private suspend fun Homework.prefetch() {
-    this.subjectInstance?.getFirstValueOld()
+    this.subjectInstance?.getFirstValue()
     this.getFileItems()
     if (this is Homework.CloudHomework) this.getCreatedBy()
 }
