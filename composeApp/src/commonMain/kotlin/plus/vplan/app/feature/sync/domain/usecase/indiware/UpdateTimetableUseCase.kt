@@ -146,10 +146,6 @@ class UpdateTimetableUseCase(
         if (week != null) {
             val lessons = downloadedTimetable?.lessons.orEmpty().map { lesson ->
                 val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }.map { it.id }
-                LOGGER.d { lessonGroups.toString() }
-                if (lessonGroups.isEmpty()) {
-                    LOGGER.d { "Hallo" }
-                }
                 Lesson.TimetableLesson(
                     dayOfWeek = lesson.dayOfWeek,
                     week = week.id,

@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +31,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +60,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.cache.collectAsSingleFlowOld
 import plus.vplan.app.domain.model.Profile
@@ -65,10 +69,13 @@ import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
+import plus.vplan.app.utils.BrowserIntent
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.lock
+import vplanplus.composeapp.generated.resources.log_in
 import vplanplus.composeapp.generated.resources.settings
+import vplanplus.composeapp.generated.resources.undraw_profile
 import kotlin.math.roundToInt
 
 @Composable
@@ -145,6 +152,43 @@ private fun ProfileContent(
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
+            }
+        }
+        if (state.currentProfile is Profile.StudentProfile && state.currentProfile.vppId == null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.undraw_profile),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = "Hier landen deine Noten",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "wenn du eine vpp.ID mit beste.schule hinzufügst."
+                )
+                Spacer(Modifier.height(8.dp))
+                TextButton(
+                    onClick = { BrowserIntent.openUrl(VPP_ID_AUTH_URL) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.log_in),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Anmelden/Registrieren")
+                }
             }
         }
         Column(
