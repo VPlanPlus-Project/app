@@ -42,7 +42,7 @@ class UpdateTimetableUseCase(
      * @param forceUpdate: Whether the app should replace its data store regardless of the hash difference
      */
     suspend operator fun invoke(
-        sp24School: School.Sp24School,
+        sp24School: School.AppSchool,
         forceUpdate: Boolean
     ): Response.Error? {
         LOGGER.i { "Updating timetable for indiware school ${sp24School.id}" }

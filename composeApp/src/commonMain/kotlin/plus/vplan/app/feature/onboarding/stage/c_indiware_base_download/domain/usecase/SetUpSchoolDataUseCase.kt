@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.model.Holiday
@@ -80,7 +81,8 @@ class SetUpSchoolDataUseCase(
 
             val schoolId = schoolRepository.upsert(SchoolDbDto(
                 name = schoolName?.data ?: "Unbekannte Schule",
-                aliases = listOf(sp24Alias)
+                aliases = listOf(sp24Alias),
+                creationReason = CreationReason.Persisted
             ))
 
             schoolRepository.setSp24Access(
@@ -91,7 +93,7 @@ class SetUpSchoolDataUseCase(
                 daysPerWeek = 5,
             )
 
-            val school = schoolRepository.getByLocalId(schoolId).first() as School.Sp24School
+            val school = schoolRepository.getByLocalId(schoolId).first() as School.AppSchool
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_HOLIDAYS] = SetUpSchoolDataState.IN_PROGRESS

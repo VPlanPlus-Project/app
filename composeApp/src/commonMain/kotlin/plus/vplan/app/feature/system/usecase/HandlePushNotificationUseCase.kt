@@ -8,7 +8,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.capture
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.SchoolRepository
@@ -41,7 +40,7 @@ class HandlePushNotificationUseCase(
                 val data = json.decodeFromString<IndiwareUpdate>(payload)
                 val school = schoolRepository.getAllLocalIds().first()
                     .map { schoolRepository.getByLocalId(it).first() }
-                    .filterIsInstance<School.Sp24School>()
+                    .filterIsInstance<School.AppSchool>()
                     .firstOrNull { it.sp24Id == data.indiwareSchoolId }
 
                 if (school == null) {

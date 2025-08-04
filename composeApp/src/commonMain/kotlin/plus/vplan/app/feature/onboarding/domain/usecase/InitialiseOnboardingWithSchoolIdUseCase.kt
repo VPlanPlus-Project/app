@@ -11,7 +11,7 @@ class InitialiseOnboardingWithSchoolIdUseCase(
     private val schoolRepository: SchoolRepository
 ) {
     suspend operator fun invoke(schoolId: Uuid?) {
-        val school = schoolId?.let { schoolRepository.getByLocalId(it).first() as? School.Sp24School }
+        val school = schoolId?.let { schoolRepository.getByLocalId(it).first() as? School.AppSchool }
         onboardingRepository.reset()
         if (school != null) {
             onboardingRepository.startSp24Onboarding(school.sp24Id.toInt())

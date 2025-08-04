@@ -14,7 +14,7 @@ class UpdateHolidaysUseCase(
     private val dayRepository: DayRepository
 ) {
     suspend operator fun invoke(
-        school: School.Sp24School,
+        school: School.AppSchool,
         providedClient: IndiwareClient? = null,
     ): Response.Error? {
         val client = providedClient ?: indiwareRepository.getSp24Client(

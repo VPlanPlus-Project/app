@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import kotlinx.datetime.Instant
+import plus.vplan.app.domain.cache.CreationReason
 import kotlin.uuid.Uuid
 
 @Entity(
@@ -16,5 +17,6 @@ import kotlin.uuid.Uuid
 data class DbSchool(
     @ColumnInfo(name = "id") val id: Uuid,
     @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "cached_at") val cachedAt: Instant
+    @ColumnInfo(name = "cached_at") val cachedAt: Instant,
+    @ColumnInfo(name = "creation_reason") val creationReason: CreationReason
 )

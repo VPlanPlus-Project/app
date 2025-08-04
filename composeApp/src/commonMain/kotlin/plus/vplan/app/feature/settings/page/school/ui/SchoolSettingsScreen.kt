@@ -140,7 +140,7 @@ private fun SchoolSettingsContent(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        if (school.school is School.Sp24School) {
+                        if (school.school is School.AppSchool) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,

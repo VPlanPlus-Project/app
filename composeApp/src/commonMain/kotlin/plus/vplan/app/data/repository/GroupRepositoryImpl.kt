@@ -22,6 +22,7 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.GroupDbDto
 import plus.vplan.app.domain.repository.GroupRepository
 import kotlin.uuid.Uuid
@@ -71,7 +72,9 @@ class GroupRepositoryImpl(
                 url(URLBuilder(api).apply {
                     appendPathSegments("api", "v2.2", "group", group.id.toString(), "firebase")
                 }.build())
-                group.school.getFirstValue()?.getSchoolApiAccess()?.authentication(this) ?: return Response.Error.Other("No school api access to update firebase token")
+
+                val school = group.school.getFirstValue() as? School.AppSchool
+                school?.buildSp24AppAuthentication()?.authentication(this) ?: return Response.Error.Other("No school api access to update firebase token")
                 contentType(ContentType.Application.Json)
                 setBody(FirebaseTokenRequest(token))
             }

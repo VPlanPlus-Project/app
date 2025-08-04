@@ -23,7 +23,7 @@ abstract class Profile : Item<DataTag> {
 
     override fun getEntityId(): String = this.id.toHexString()
     override val tags: Set<DataTag> = emptySet()
-    abstract fun getSchool(): Flow<AliasState<School>>
+    abstract fun getSchool(): Flow<AliasState<School.AppSchool>>
 
     data class StudentProfile(
         override val id: Uuid,
@@ -67,8 +67,8 @@ abstract class Profile : Item<DataTag> {
         }
 
         @OptIn(ExperimentalCoroutinesApi::class)
-        override fun getSchool(): Flow<AliasState<School>> {
-            return App.groupSource.getById(groupId).filterIsInstance<AliasState.Done<Group>>().flatMapLatest { App.schoolSource.getById(it.data.schoolId) }
+        override fun getSchool(): Flow<AliasState<School.AppSchool>> {
+            return App.groupSource.getById(groupId).filterIsInstance<AliasState.Done<Group>>().flatMapLatest { App.schoolSource.getAppSchoolById(it.data.schoolId) }
         }
 
         val group by lazy { App.groupSource.getById(groupId) }
@@ -90,8 +90,8 @@ abstract class Profile : Item<DataTag> {
         override val profileType = ProfileType.TEACHER
 
         @OptIn(ExperimentalCoroutinesApi::class)
-        override fun getSchool(): Flow<AliasState<School>> {
-            return App.teacherSource.getById(teacher).filterIsInstance<AliasState.Done<Teacher>>().flatMapLatest { App.schoolSource.getById(it.data.schoolId) }
+        override fun getSchool(): Flow<AliasState<School.AppSchool>> {
+            return App.teacherSource.getById(teacher).filterIsInstance<AliasState.Done<Teacher>>().flatMapLatest { App.schoolSource.getAppSchoolById(it.data.schoolId) }
         }
 
         override fun copyBase(id: Uuid, name: String, profileType: ProfileType): Profile {

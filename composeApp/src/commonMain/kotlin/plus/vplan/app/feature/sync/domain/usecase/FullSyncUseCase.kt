@@ -20,7 +20,6 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.IndiwareRepository
@@ -152,7 +151,6 @@ class FullSyncUseCase(
                     profileRepository.getAll().first()
                         .mapNotNull { it.getSchool().getFirstValue() }
                         .distinctBy { it.id }
-                        .filterIsInstance<School.Sp24School>()
                         .filter { it.credentialsValid }
                         .forEach { school ->
                             val client = indiwareRepository.getSp24Client(

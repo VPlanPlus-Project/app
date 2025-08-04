@@ -57,7 +57,7 @@ class UpdateSubstitutionPlanUseCase(
     private val platformNotificationRepository: PlatformNotificationRepository
 ) {
     suspend operator fun invoke(
-        sp24School: School.Sp24School,
+        sp24School: School.AppSchool,
         dates: List<LocalDate>,
         providedClient: IndiwareClient? = null,
         allowNotification: Boolean

@@ -37,10 +37,13 @@ import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.data.getByProvider
 import plus.vplan.app.domain.model.File
-import plus.vplan.app.domain.model.SchoolApiAccess
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.utils.sendAll
@@ -92,7 +95,7 @@ class FileRepositoryImpl(
                         url(URLBuilder(api).apply {
                             appendPathSegments("api", "v2.2", "file", id.toString())
                         }.build())
-                        creator.buildSchoolApiAccess().authentication(this)
+                        creator.buildVppSchoolAuthentication().authentication(this)
                     }
                     if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
                     val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
@@ -113,9 +116,15 @@ class FileRepositoryImpl(
                 }
                 val schools = vppDatabase.schoolDao.getAll().first()
                     .map { it.toModel() }
-                    .filter { it.getVppSchoolId() != null }
-                    .filter { it.getVppSchoolId() in data.schoolIds }
-                    .mapNotNull { try { it.getSchoolApiAccess() } catch (_: Exception) { null } }
+                    .filterIsInstance<School.AppSchool>()
+                    .filter { it.aliases.getByProvider(AliasProvider.Vpp)?.value?.toInt() in data.schoolIds }
+                    .map {
+                        VppSchoolAuthentication.Sp24(
+                            sp24SchoolId = it.sp24Id,
+                            username = it.username,
+                            password = it.password,
+                        )
+                    }
 
                 schools.forEach { school ->
                     val fileResponse = httpClient.get {
@@ -151,7 +160,7 @@ class FileRepositoryImpl(
         return vppDatabase.fileDao.getAll().map { it.map { file -> file.id } }
     }
 
-    override fun cacheFile(file: File, schoolApiAccess: SchoolApiAccess): Flow<FileDownloadProgress> = channelFlow {
+    override fun cacheFile(file: File, schoolApiAccess: VppSchoolAuthentication): Flow<FileDownloadProgress> = channelFlow {
         safeRequest(onError = { trySend(FileDownloadProgress.Error(it)) }) {
             val response = httpClient.get {
                 url(URLBuilder(api).apply {
@@ -180,7 +189,7 @@ class FileRepositoryImpl(
                 url(URLBuilder(api).apply {
                     appendPathSegments("api", "v2.2", "file")
                 }.build())
-                vppId.buildSchoolApiAccess().authentication(this)
+                vppId.buildVppSchoolAuthentication().authentication(this)
                 header("File-Name", document.name)
                 header(HttpHeaders.ContentType, ContentType.Application.OctetStream.toString())
                 header(HttpHeaders.ContentLength, document.size.toString())

@@ -33,8 +33,8 @@ sealed class VppId : Item<DataTag> {
         val schulverwalterConnection: SchulverwalterConnection?,
         val gradeIds: List<Int>
     ) : VppId() {
-        fun buildSchoolApiAccess(schoolId: Int = -1): SchoolApiAccess.VppIdAccess {
-            return SchoolApiAccess.VppIdAccess(schoolId, accessToken, id)
+        fun buildVppSchoolAuthentication(schoolId: Int = -1): VppSchoolAuthentication.Vpp {
+            return VppSchoolAuthentication.Vpp(schoolId, id, accessToken)
         }
 
         val grades by lazy {

@@ -47,8 +47,11 @@ import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.SchoolApiAccess
+import plus.vplan.app.domain.data.getByProvider
+import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.VppIdDevice
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -157,8 +160,9 @@ class VppIdRepositoryImpl(
 
                     val school = vppDatabase.schoolDao.getAll().first()
                         .map { it.toModel() }
-                        .firstOrNull { it.getVppSchoolId() in accessData.schoolIds && it.getSchoolApiAccess() != null }
-                        ?.getSchoolApiAccess() ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for vppId $id")))
+                        .filterIsInstance<School.AppSchool>()
+                        .firstOrNull { it.aliases.getByProvider(AliasProvider.Vpp)?.value?.toInt() in accessData.schoolIds }
+                        ?.buildSp24AppAuthentication() ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for vppId $id")))
 
                     httpClient.get {
                         url(URLBuilder(api).apply {
@@ -173,7 +177,7 @@ class VppIdRepositoryImpl(
                             appendPathSegments("api", "v2.2", "user", id.toString())
                         }.buildString())
 
-                        existing.buildSchoolApiAccess().authentication(this)
+                        existing.buildVppSchoolAuthentication().authentication(this)
                     }
                 }
 
@@ -275,7 +279,7 @@ class VppIdRepositoryImpl(
                 url(URLBuilder(api).apply {
                     appendPathSegments("api", "v2.2", "app", "schulverwalter-reauth")
                 }.buildString())
-                vppId.buildSchoolApiAccess().authentication(this)
+                vppId.buildVppSchoolAuthentication().authentication(this)
             }
 
             if (!response.status.isSuccess()) return response.toErrorResponse<String>()
@@ -287,7 +291,7 @@ class VppIdRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override suspend fun sendFeedback(access: SchoolApiAccess, content: String, email: String?): Response<Unit> {
+    override suspend fun sendFeedback(access: VppSchoolAuthentication, content: String, email: String?): Response<Unit> {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
                 url(URLBuilder(api).apply {

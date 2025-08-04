@@ -33,6 +33,10 @@ interface AliasedItem<DT: DataTag> : Item<Uuid, DT> {
     val aliases: Set<Alias>
 }
 
+fun Set<Alias>.getByProvider(provider: AliasProvider): Alias? {
+    return this.firstOrNull { it.provider == provider }
+}
+
 data class Alias(
     val provider: AliasProvider,
     val value: String,

@@ -3,7 +3,7 @@ package plus.vplan.app.domain.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.SchoolApiAccess
+import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.domain.model.VppId
 
 interface VppIdRepository: WebEntityRepository<VppId> {
@@ -19,7 +19,7 @@ interface VppIdRepository: WebEntityRepository<VppId> {
 
     fun getVppIds(): Flow<List<VppId>>
 
-    suspend fun sendFeedback(access: SchoolApiAccess, content: String, email: String?): Response<Unit>
+    suspend fun sendFeedback(access: VppSchoolAuthentication, content: String, email: String?): Response<Unit>
     suspend fun updateFirebaseToken(vppId: VppId.Active, token: String): Response.Error?
 }
 

@@ -157,9 +157,9 @@ class HomeViewModel(
         state = state.copy(isUpdating = true)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.Sp24School)
-                updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.Sp24School, forceUpdate = false)
-                updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.Sp24School, listOfNotNull(state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date), allowNotification = false)
+                updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool)
+                updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, forceUpdate = false)
+                updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, listOfNotNull(state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date), allowNotification = false)
             }
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }

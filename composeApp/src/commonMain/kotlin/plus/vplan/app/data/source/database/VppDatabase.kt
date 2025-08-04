@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import plus.vplan.app.data.source.database.converters.AliasPrefixConverter
+import plus.vplan.app.data.source.database.converters.CreationReasonConverter
 import plus.vplan.app.data.source.database.converters.InstantConverter
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
 import plus.vplan.app.data.source.database.converters.LocalDateTimeConverter
@@ -209,7 +210,8 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         LocalTimeConverter::class,
         LocalDateTimeConverter::class,
         InstantConverter::class,
-        AliasPrefixConverter::class
+        AliasPrefixConverter::class,
+        CreationReasonConverter::class
     ]
 )
 @ConstructedBy(VppDatabaseConstructor::class)

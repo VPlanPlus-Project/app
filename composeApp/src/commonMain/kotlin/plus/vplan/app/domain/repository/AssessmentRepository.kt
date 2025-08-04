@@ -5,8 +5,8 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.model.VppSchoolAuthentication
 import kotlin.uuid.Uuid
 
 interface AssessmentRepository: WebEntityRepository<Assessment> {
@@ -15,7 +15,7 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
      * @return List of ids of the created assessments
      */
     suspend fun download(
-        schoolApiAccess: SchoolApiAccess,
+        schoolApiAccess: VppSchoolAuthentication,
         subjectInstanceIds: List<Int>
     ): Response<List<Int>>
 

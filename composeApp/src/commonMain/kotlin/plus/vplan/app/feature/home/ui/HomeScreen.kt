@@ -208,14 +208,14 @@ private fun HomeContent(
                     }
                     item schoolAccessInvalid@{
                         androidx.compose.animation.AnimatedVisibility(
-                            visible = school is School.Sp24School && !school.credentialsValid,
+                            visible = school is School.AppSchool && !school.credentialsValid,
                             enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
                             exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             var displaySchool by remember { mutableStateOf<School?>(null) }
                             LaunchedEffect(school) {
-                                if (school is School.Sp24School && !school.credentialsValid) displaySchool = school
+                                if (school is School.AppSchool && !school.credentialsValid) displaySchool = school
                             }
                             if (displaySchool != null) InfoCard(
                                 modifier = Modifier

@@ -6,6 +6,7 @@ import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
 import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
+import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.model.School
 
 data class EmbeddedSchool(
@@ -27,27 +28,26 @@ data class EmbeddedSchool(
     ) val aliases: List<DbSchoolAlias>
 ) {
     fun toModel(): School {
-        if (sp24SchoolDetails != null) {
-            return School.Sp24School(
+        val aliases = aliases.map { it.toModel() }.toSet()
+        return when (school.creationReason) {
+            CreationReason.Cached -> School.CachedSchool(
                 id = school.id,
                 name = school.name,
-                groups = groups.map { it.id },
-                sp24Id = sp24SchoolDetails.sp24SchoolId,
+                aliases = aliases,
+                cachedAt = school.cachedAt
+            )
+            CreationReason.Persisted -> School.AppSchool(
+                id = school.id,
+                name = school.name,
+                groupIds = groups.map { it.id },
+                sp24Id = sp24SchoolDetails!!.sp24SchoolId,
                 username = sp24SchoolDetails.username,
                 password = sp24SchoolDetails.password,
                 daysPerWeek = sp24SchoolDetails.daysPerWeek,
                 credentialsValid = sp24SchoolDetails.credentialsValid,
                 cachedAt = school.cachedAt,
-                aliases = aliases.map { it.toModel() }.toSet()
+                aliases = aliases
             )
         }
-
-        return School.DefaultSchool(
-            id = school.id,
-            name = school.name,
-            groups = groups.map { it.id },
-            cachedAt = school.cachedAt,
-            aliases = aliases.map { it.toModel() }.toSet()
-        )
     }
 }

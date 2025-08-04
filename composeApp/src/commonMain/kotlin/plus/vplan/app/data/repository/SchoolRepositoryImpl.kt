@@ -7,6 +7,7 @@ import io.ktor.client.request.url
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
@@ -17,6 +18,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
 import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
 import plus.vplan.app.data.source.network.safeRequest
+import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
@@ -32,11 +34,13 @@ class SchoolRepositoryImpl(
 ) : SchoolRepository {
     override suspend fun upsert(item: SchoolDbDto): Uuid {
         val schoolId = resolveAliasesToLocalId(item.aliases) ?: Uuid.random()
+        val existing = vppDatabase.schoolDao.findById(schoolId).first()
         vppDatabase.schoolDao.upsertSchool(
             school = DbSchool(
                 id = schoolId,
                 name = item.name,
-                cachedAt = Clock.System.now()
+                cachedAt = Clock.System.now(),
+                creationReason = if (existing?.school?.creationReason == CreationReason.Persisted) CreationReason.Persisted else item.creationReason
             ),
             aliases = item.aliases.map {
                 DbSchoolAlias.fromAlias(it, schoolId)
@@ -70,6 +74,27 @@ class SchoolRepositoryImpl(
             val items = response.body<ResponseDataWrapper<List<SchoolItemResponse>>>()
 
             return Response.Success(items.data.map { schoolItemResponse ->
+                VppSchoolDto(
+                    id = schoolItemResponse.id,
+                    name = schoolItemResponse.name,
+                    aliases = schoolItemResponse.buildAliases()
+                )
+            })
+        }
+        return Response.Error.Cancelled
+    }
+
+    override suspend fun downloadById(identifier: String): Response<VppSchoolDto> {
+        safeRequest(onError = { return  it }) {
+            val response = httpClient.get {
+                url(URLBuilder(appApi).apply {
+                    appendPathSegments("school", "v1", "by-id", identifier)
+                }.build())
+            }
+
+            val items = response.body<ResponseDataWrapper<SchoolItemResponse>>()
+
+            return Response.Success(items.data.let { schoolItemResponse ->
                 VppSchoolDto(
                     id = schoolItemResponse.id,
                     name = schoolItemResponse.name,

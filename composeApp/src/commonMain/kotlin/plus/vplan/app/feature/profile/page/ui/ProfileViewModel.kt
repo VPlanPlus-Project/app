@@ -77,7 +77,7 @@ class ProfileViewModel(
 
 data class ProfileState(
     val currentProfile: Profile? = null,
-    val profiles: Map<School, List<Profile>> = emptyMap(),
+    val profiles: Map<School.AppSchool, List<Profile>> = emptyMap(),
     val showVppIdBanner: Boolean = false,
 
     val isSheetVisible: Boolean = false,

@@ -4,12 +4,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.SchoolApiAccess
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.uuid.Uuid
 
@@ -48,7 +48,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
      * @return List of ids of the created homework
      */
     suspend fun download(
-        schoolApiAccess: SchoolApiAccess,
+        schoolApiAccess: VppSchoolAuthentication,
         groupId: Uuid,
         subjectInstanceIds: List<Int>
     ): Response<List<Int>>

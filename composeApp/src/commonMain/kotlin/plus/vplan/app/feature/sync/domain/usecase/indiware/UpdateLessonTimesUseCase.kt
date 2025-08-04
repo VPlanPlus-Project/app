@@ -21,7 +21,7 @@ class UpdateLessonTimesUseCase(
     private val groupRepository: GroupRepository,
     private val lessonTimeRepository: LessonTimeRepository
 ) {
-    suspend operator fun invoke(school: School.Sp24School, providedClient: IndiwareClient? = null) {
+    suspend operator fun invoke(school: School.AppSchool, providedClient: IndiwareClient? = null) {
         val client = providedClient ?: IndiwareClient(authentication = Authentication(
             indiwareSchoolId = school.sp24Id,
             username = school.username,

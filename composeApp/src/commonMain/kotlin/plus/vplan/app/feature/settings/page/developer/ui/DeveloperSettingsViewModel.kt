@@ -85,7 +85,7 @@ class DeveloperSettingsViewModel(
                     if (state.isSubstitutionPlanUpdateRunning) return@launch
                     state = state.copy(isSubstitutionPlanUpdateRunning = true)
                     updateSubstitutionPlanUseCase(
-                        state.profile!!.getSchool().getFirstValue()!! as School.Sp24School, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
+                        state.profile!!.getSchool().getFirstValue()!!, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
                         allowNotification = true
                     )
                     state = state.copy(isSubstitutionPlanUpdateRunning = false)
@@ -93,7 +93,7 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.UpdateTimetable -> {
                     if (state.isTimetableUpdateRunning) return@launch
                     state = state.copy(isTimetableUpdateRunning = true)
-                    updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!! as School.Sp24School, true)
+                    updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!!, true)
                     state = state.copy(isTimetableUpdateRunning = false)
                 }
                 DeveloperSettingsEvent.ToggleAutoSyncDisabled -> {

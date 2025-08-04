@@ -47,7 +47,7 @@ class SelectProfileUseCase(
         capture("CreateProfile", mapOf("school_id" to profile.getSchool().getFirstValue()!!.id, "profile_type" to profile.profileType.name, "entity_id" to onboardingProfile.alias))
         keyValueRepository.set(Keys.CURRENT_PROFILE, profile.id.toHexString())
 
-        (profile.getSchool().getFirstValue() as? School.Sp24School)?.let {
+        (profile.getSchool().getFirstValue() as? School.AppSchool)?.let {
             updateTimetableUseCase(it, false)
             updateSubstitutionPlanUseCase(it, listOf(LocalDate.now()), allowNotification = false)
         }

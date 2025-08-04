@@ -187,7 +187,7 @@ class DaySource(
                         dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } },
                         weekRepository.getBySchool(schoolId)
                     ) { holidays, weeks ->
-                        val nextSchoolDay = findNextRegularSchoolDayAfter(holidays, weeks, date, (school as? School.Sp24School)?.daysPerWeek)
+                        val nextSchoolDay = findNextRegularSchoolDayAfter(holidays, weeks, date, (school as? School.AppSchool)?.daysPerWeek)
                         day.update {
                             it.copy(
                                 nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },

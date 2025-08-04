@@ -29,7 +29,7 @@ class UpdateSubjectInstanceUseCase(
     private val teacherRepository: TeacherRepository,
     private val courseRepository: CourseRepository
 ) {
-    suspend operator fun invoke(school: School.Sp24School, providedClient: IndiwareClient?): Response.Error? {
+    suspend operator fun invoke(school: School.AppSchool, providedClient: IndiwareClient?): Response.Error? {
         val client = providedClient ?: indiwareRepository.getSp24Client(
             Authentication(school.sp24Id, school.username, school.password),
             withCache = true
@@ -62,7 +62,7 @@ class UpdateSubjectInstanceUseCase(
     }
 
     private suspend fun updateCourses(
-        school: School.Sp24School,
+        school: School.AppSchool,
         client: IndiwareClient,
         existingCourses: List<Course>,
         teachers: List<Teacher>,

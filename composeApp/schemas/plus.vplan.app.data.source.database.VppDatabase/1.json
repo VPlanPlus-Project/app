@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "4b6c51954a06f05a8549b482f1902aa0",
+    "identityHash": "e765e1ca04399d049d668f6a17c4452e",
     "entities": [
       {
         "tableName": "schools",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `cached_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `cached_at` INTEGER NOT NULL, `creation_reason` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -24,6 +24,12 @@
             "fieldPath": "cachedAt",
             "columnName": "cached_at",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creationReason",
+            "columnName": "creation_reason",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -4415,7 +4421,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4b6c51954a06f05a8549b482f1902aa0')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e765e1ca04399d049d668f6a17c4452e')"
     ]
   }
 }

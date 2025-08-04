@@ -3,6 +3,8 @@ package plus.vplan.app.feature.sync.domain.usecase.vpp
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.domain.data.getByProvider
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -21,11 +23,11 @@ class UpdateHomeworkUseCase(
         val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
         profiles.forEach { studentProfile ->
             val existingHomework = homeworkRepository.getByGroup(studentProfile.groupId).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
-            val vppSchoolId = studentProfile.getSchool().getFirstValue()?.getVppSchoolId() ?: return@forEach
+            val vppSchoolId = studentProfile.getSchool().getFirstValue()?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toInt() ?: return@forEach
             TODO()
 //            ids.addAll(
 //                (homeworkRepository.download(
-//                    schoolApiAccess = studentProfile.getVppIdItem()?.buildSchoolApiAccess(vppSchoolId) ?: studentProfile.getSchool().getFirstValue()!!.getSchoolApiAccess()!!,
+//                    schoolApiAccess = studentProfile.getVppIdItem()?.buildVppSchoolAuthentication(vppSchoolId) ?: studentProfile.getSchool().getFirstValue()!!.getVppSchoolAuthentication()!!,
 //                    groupId = studentProfile.groupId,
 //                    subjectInstanceIds = studentProfile.subjectInstanceConfiguration.map { it.key },
 //                ) as? Response.Success)?.data.orEmpty().also {

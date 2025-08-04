@@ -30,7 +30,7 @@ class SchoolSettingsViewModel(
                     }
                 )
 
-                state.schools.orEmpty().map { it.school }.filterIsInstance<School.Sp24School>().forEach { school ->
+                state.schools.orEmpty().map { it.school }.filterIsInstance<School.AppSchool>().forEach { school ->
                     viewModelScope.launch {
                         checkSp24CredentialsUseCase(school.sp24Id.toInt(), school.username, school.password).let { credentialsState ->
                             state = state.copy(

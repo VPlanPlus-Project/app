@@ -16,7 +16,7 @@ class UpdateWeeksUseCase(
     private val indiwareRepository: IndiwareRepository,
     private val weekRepository: WeekRepository
 ) {
-    suspend operator fun invoke(school: School.Sp24School, providedClient: IndiwareClient? = null): Response.Error? {
+    suspend operator fun invoke(school: School.AppSchool, providedClient: IndiwareClient? = null): Response.Error? {
         val client = providedClient ?: indiwareRepository.getSp24Client(
             Authentication(school.sp24Id, school.username, school.password),
             withCache = true

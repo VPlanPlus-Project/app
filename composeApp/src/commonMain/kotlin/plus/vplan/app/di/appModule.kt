@@ -39,6 +39,7 @@ import plus.vplan.app.data.repository.TeacherRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
+import plus.vplan.app.data.service.SchoolServiceImpl
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.AssessmentRepository
@@ -61,6 +62,7 @@ import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
@@ -165,6 +167,8 @@ val appModule = module(createdAtStart = true) {
     singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
     singleOf(::NewsRepositoryImpl).bind<NewsRepository>()
     singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
+
+    singleOf(::SchoolServiceImpl).bind<SchoolService>()
 
     singleOf(::GetCurrentProfileUseCase)
 }

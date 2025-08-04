@@ -21,7 +21,7 @@ class UpdateAssessmentUseCase(
         val existing = assessmentRepository.getAll().first().map { it.id }.toSet()
         val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
         profiles.forEach forEachProfile@{ profile ->
-            val apiAuthentication = profile.getVppIdItem()?.buildSchoolApiAccess() ?: profile.getSchool().getFirstValue()?.getSchoolApiAccess()
+            val apiAuthentication = profile.getVppIdItem()?.buildVppSchoolAuthentication() ?: profile.getSchool().getFirstValue()?.buildSp24AppAuthentication()
             if (apiAuthentication == null) {
                 logger.e { "No api authentication found for profile ${profile.id} (${profile.name})" }
                 return@forEachProfile
