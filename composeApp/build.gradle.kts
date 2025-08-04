@@ -131,12 +131,12 @@ android {
         }
     }
     namespace = "plus.vplan.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "plus.vplan.app"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = ApplicationConfig.APP_VERSION_CODE
         versionName = ApplicationConfig.APP_VERSION_NAME
     }
