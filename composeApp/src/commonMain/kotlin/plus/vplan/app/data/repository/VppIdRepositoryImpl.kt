@@ -194,8 +194,8 @@ class VppIdRepositoryImpl(
     override suspend fun sendFeedback(access: VppSchoolAuthentication, content: String, email: String?): Response<Unit> {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(api).apply {
-                    appendPathSegments("api", "v2.2", "app", "feedback")
+                url(URLBuilder(appApi).apply {
+                    appendPathSegments("app", "feedback", "v1")
                 }.buildString())
 
                 contentType(ContentType.Application.Json)
