@@ -22,7 +22,7 @@ class VppIdSource(
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<VppId>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
-                vppIdRepository.getById(id, false).collectLatest { flow.tryEmit(it) }
+                vppIdRepository.getByLocalId(id).collectLatest { flow.tryEmit(it?.let { CacheState.Done(it) } ?: CacheState.NotExisting(id.toString())) }
             }
             flow
         }

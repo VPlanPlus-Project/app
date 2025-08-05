@@ -9,17 +9,16 @@ import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.data.Item
 
 data class Subject(
-    val id: Int,
+    override val id: Int,
     val name: String,
     val localId: String,
     val collectionIds: List<Int>,
     val finalGradeId: Int?,
     val cachedAt: Instant
-): Item<DataTag> {
-    override fun getEntityId(): String = this.id.toString()
+): Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
 
     val collections: Flow<List<CacheState<Collection>>> = if (collectionIds.isEmpty()) flowOf(emptyList()) else combine(collectionIds.map { App.collectionSource.getById(it) }) { it.toList() }

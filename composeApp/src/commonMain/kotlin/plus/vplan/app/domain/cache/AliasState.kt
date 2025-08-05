@@ -16,15 +16,16 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onEmpty
 import plus.vplan.app.domain.data.AliasedItem
+import plus.vplan.app.domain.data.Item
 import plus.vplan.app.domain.data.Response
 
-sealed class CacheState<out T: Item<*>>(val entityId: String) {
+sealed class CacheState<out T: Item<*, *>>(val entityId: String) {
     data class Loading(val id: String): CacheState<Nothing>(id)
     data class NotExisting(val id: String): CacheState<Nothing>(id)
     data class Error(val id: String, val error: Response.Error): CacheState<Nothing>(id) {
         constructor(id: Int, error: Response.Error): this(id.toString(), error)
     }
-    data class Done<T: Item<*>>(val data: T): CacheState<T>(data.getEntityId())
+    data class Done<T: Item<*, *>>(val data: T): CacheState<T>(data.id.toString())
 }
 
 sealed class AliasState<out T: AliasedItem<*>>(val entityId: String) {
@@ -36,17 +37,12 @@ sealed class AliasState<out T: AliasedItem<*>>(val entityId: String) {
     data class Done<T: AliasedItem<*>>(val data: T): AliasState<T>(data.id.toHexString())
 }
 
-interface Item<T: DataTag> {
-    fun getEntityId(): String
-    val tags: Set<T>
-}
-
 /**
  * Tags that can be used to indicate how much data is already loaded for an entity.
  */
 interface DataTag
 
-suspend inline fun <reified T : Item<*>> Flow<CacheState<T>>.getFirstValueOld(vararg requiredTags: DataTag): T? {
+suspend inline fun <reified T : Item<*, *>> Flow<CacheState<T>>.getFirstValueOld(vararg requiredTags: DataTag): T? {
     return this
         .onEach { if (it is CacheState.Error) Logger.e { "Failed to load entity ${it.entityId}: ${it.error}" } }
         .filter { it is CacheState.NotExisting || it is CacheState.Done || it is CacheState.Error }
@@ -77,16 +73,16 @@ suspend inline fun <reified T : AliasedItem<*>> Flow<AliasState<T>>.getFirstValu
 }
 
 @Composable
-fun <T: Item<*>> Flow<CacheState<T>>.collectAsLoadingStateOld(id: String = "Unbekannt") = this.collectAsState(CacheState.Loading(id))
+fun <T: Item<*, *>> Flow<CacheState<T>>.collectAsLoadingStateOld(id: String = "Unbekannt") = this.collectAsState(CacheState.Loading(id))
 
 @Composable
-fun <T: Item<*>> Flow<CacheState<T>>.collectAsResultingFlowOld() = this.filterIsInstance<CacheState.Done<T>>().map { it.data }.collectAsState(null)
+fun <T: Item<*, *>> Flow<CacheState<T>>.collectAsResultingFlowOld() = this.filterIsInstance<CacheState.Done<T>>().map { it.data }.collectAsState(null)
 
 @Composable
-inline fun <reified T: Item<*>> List<Flow<CacheState<T>>>.collectAsResultingFlowOld(): State<List<T>> = if (this.isEmpty()) produceState(emptyList()) {} else (combine(this.map { it.filterIsInstance<CacheState.Done<T>>().map { it.data } }) { it.toList() }.collectAsState(emptyList()))
+inline fun <reified T: Item<*, *>> List<Flow<CacheState<T>>>.collectAsResultingFlowOld(): State<List<T>> = if (this.isEmpty()) produceState(emptyList()) {} else (combine(this.map { it.filterIsInstance<CacheState.Done<T>>().map { it.data } }) { it.toList() }.collectAsState(emptyList()))
 
 @Composable
-inline fun <reified T: Item<*>> Flow<List<CacheState<T>>>.collectAsSingleFlowOld(): State<List<T>> = this.map { it.filterIsInstance<CacheState.Done<T>>().map { it.data } }.distinctUntilChanged().collectAsState(emptyList())
+inline fun <reified T: Item<*, *>> Flow<List<CacheState<T>>>.collectAsSingleFlowOld(): State<List<T>> = this.map { it.filterIsInstance<CacheState.Done<T>>().map { it.data } }.distinctUntilChanged().collectAsState(emptyList())
 
 @Composable
 fun <T: AliasedItem<*>> Flow<AliasState<T>>.collectAsLoadingState(id: String = "Unbekannt") = this.collectAsState(AliasState.Loading(id))

@@ -14,14 +14,14 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.domain.data.Item
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @Stable
 data class Day(
-    val id: String,
+    override val id: String,
     val date: LocalDate,
     val schoolId: Uuid,
     val weekId: String?,
@@ -33,7 +33,7 @@ data class Day(
     val homeworkIds: Set<Int>,
     val nextSchoolDayId: String?,
     override val tags: Set<DayTags>
-): Item<Day.DayTags> {
+): Item<String, Day.DayTags> {
     enum class DayType {
         REGULAR, WEEKEND, HOLIDAY, UNKNOWN
     }
@@ -42,8 +42,6 @@ data class Day(
         fun buildId(school: School, date: LocalDate) = "${school.id}/$date"
         fun buildId(schoolId: Uuid, date: LocalDate) = "$schoolId/$date"
     }
-
-    override fun getEntityId(): String = this.id
 
     val assessments by lazy {
         if (this.assessmentIds.isEmpty()) flowOf(emptySet())

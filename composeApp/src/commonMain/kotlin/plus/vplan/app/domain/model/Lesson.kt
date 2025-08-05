@@ -9,11 +9,10 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.data.Item
 import kotlin.uuid.Uuid
 
-sealed interface Lesson : Item<DataTag> {
-    val id: Uuid
+sealed interface Lesson : Item<Uuid, DataTag> {
     val week: String
     val subject: String?
     val teacherIds: List<Uuid>
@@ -24,7 +23,6 @@ sealed interface Lesson : Item<DataTag> {
 
     fun getLessonSignature(): String
 
-    override fun getEntityId(): String = this.id.toHexString()
     override val tags: Set<DataTag>
         get() = emptySet()
 

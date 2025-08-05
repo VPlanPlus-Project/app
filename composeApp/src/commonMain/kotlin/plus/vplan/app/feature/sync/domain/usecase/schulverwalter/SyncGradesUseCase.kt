@@ -42,7 +42,8 @@ class SyncGradesUseCase(
             vppIdRepository
                 .getVppIds().first().filterIsInstance<VppId.Active>()
                 .filter { it.id in invalidVppIds }.forEach { vppId ->
-                    vppIdRepository.getUserByToken(vppId.accessToken, true)
+                    vppIdRepository.getUserByToken(vppId.accessToken)
+                    // fixme actually reload the user
                 }
 
             val invalidVppIdsAfterTokenReload = schulverwalterRepository.checkAccess()

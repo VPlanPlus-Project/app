@@ -9,10 +9,10 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.data.Item
 
 data class Collection(
-    val id: Int,
+    override val id: Int,
     val type: String,
     val name: String,
     val subjectId: Int,
@@ -20,8 +20,7 @@ data class Collection(
     val gradeIds: List<Int>,
     val givenAt: LocalDate,
     val cachedAt: Instant
-): Item<DataTag> {
-    override fun getEntityId(): String = this.id.toString()
+): Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
 
     val interval by lazy { App.intervalSource.getById(intervalId) }

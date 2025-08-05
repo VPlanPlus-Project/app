@@ -10,14 +10,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.isActive
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.data.Item
 
 suspend fun <T> ProducerScope<T>.sendAll(flow: Flow<T>) {
     flow.takeWhile { this.isActive }.collectLatest { trySend(it) }
 }
 
 @Composable
-fun <T: Item<*>> Flow<CacheState<T>>.getState(initialValue: T? = null) = this
+fun <T: Item<*, *>> Flow<CacheState<T>>.getState(initialValue: T? = null) = this
     .filterIsInstance<CacheState.Done<T>>()
     .map { it.data }
     .collectAsState(initialValue)

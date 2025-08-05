@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.url
 import io.ktor.http.URLBuilder
+import io.ktor.http.appendEncodedPathSegments
 import io.ktor.http.appendPathSegments
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -17,10 +18,10 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
 import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
+import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.SchoolDbDto
@@ -33,8 +34,9 @@ class SchoolRepositoryImpl(
     private val httpClient: HttpClient
 ) : SchoolRepository {
     override suspend fun upsert(item: SchoolDbDto): Uuid {
-        val schoolId = resolveAliasesToLocalId(item.aliases) ?: Uuid.random()
-        val existing = vppDatabase.schoolDao.findById(schoolId).first()
+        val resolvedId = resolveAliasesToLocalId(item.aliases)
+        val schoolId = resolvedId ?: Uuid.random()
+        val existing = resolvedId?.let { vppDatabase.schoolDao.findById(it) }?.first()
         vppDatabase.schoolDao.upsertSchool(
             school = DbSchool(
                 id = schoolId,
@@ -88,7 +90,8 @@ class SchoolRepositoryImpl(
         safeRequest(onError = { return  it }) {
             val response = httpClient.get {
                 url(URLBuilder(appApi).apply {
-                    appendPathSegments("school", "v1", "by-id", identifier)
+                    appendPathSegments("school", "v1", "by-id")
+                    appendEncodedPathSegments(identifier)
                 }.build())
             }
 
@@ -135,18 +138,11 @@ class SchoolRepositoryImpl(
 
 @Serializable
 data class SchoolItemResponse(
+    @SerialName("school_id") val id: Int,
     @SerialName("name") val name: String,
     @SerialName("address") val address: String?,
+    @SerialName("aliases") val aliases: List<ApiAlias>,
     @SerialName("coordinates") val coordinates: String?,
-    @SerialName("sp24_id") val sp24Id: Int?,
-    @SerialName("school_id") val id: Int,
-    @SerialName("schulverwalter_id") val schulverwalterId: Int?
 ) {
-    fun buildAliases(): List<Alias> {
-        return listOfNotNull(
-            Alias(AliasProvider.Vpp, id.toString(), 1),
-            sp24Id?.let { Alias(AliasProvider.Sp24, it.toString(), 1) },
-            schulverwalterId?.let { Alias(AliasProvider.Schulverwalter, it.toString(), 1) }
-        )
-    }
+    fun buildAliases(): List<Alias> = aliases.map { it.toModel() }
 }

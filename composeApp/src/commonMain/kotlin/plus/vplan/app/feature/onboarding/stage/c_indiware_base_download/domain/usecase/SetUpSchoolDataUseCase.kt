@@ -117,7 +117,8 @@ class SetUpSchoolDataUseCase(
                 groupRepository.upsert(GroupDbDto(
                     schoolId = schoolId,
                     name = group.name,
-                    aliases = listOf(aliases)
+                    aliases = listOf(aliases),
+                    creationReason = CreationReason.Persisted
                 ))
             }
 

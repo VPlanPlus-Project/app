@@ -17,21 +17,19 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.domain.data.Item
 import kotlin.uuid.Uuid
 
 sealed class Homework(
     val creator: AppEntity
-) : Item<DataTag> {
+) : Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
-    abstract val id: Int
     abstract val createdAt: Instant
     abstract val dueTo: LocalDate
     abstract val taskIds: List<Int>
     abstract val subjectInstanceId: Uuid?
     abstract val files: List<Int>
-    override fun getEntityId(): String = this.id.toString()
     abstract val cachedAt: Instant
 
     val subjectInstance by lazy { this.subjectInstanceId?.let { App.subjectInstanceSource.getById(it) } }
@@ -67,14 +65,13 @@ sealed class Homework(
     }
 
     data class HomeworkTask(
-        val id: Int,
+        override val id: Int,
         val content: String,
         val doneByProfiles: List<Uuid>,
         val doneByVppIds: List<Int>,
         val homework: Int,
         val cachedAt: Instant
-    ) : Item<DataTag> {
-        override fun getEntityId(): String = this.id.toString()
+    ) : Item<Int, DataTag> {
         override val tags: Set<DataTag> = emptySet()
 
         var homeworkItem: Homework? = null
@@ -88,12 +85,11 @@ sealed class Homework(
     }
 
     data class HomeworkFile(
-        val id: Int,
+        override val id: Int,
         val name: String,
         val homework: Int,
         val size: Long,
-    ) : Item<DataTag> {
-        override fun getEntityId(): String = this.id.toString()
+    ) : Item<Int, DataTag> {
         override val tags: Set<DataTag> = emptySet()
     }
 

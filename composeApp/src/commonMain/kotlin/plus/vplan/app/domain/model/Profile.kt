@@ -11,17 +11,15 @@ import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.domain.data.Item
 import kotlin.uuid.Uuid
 
-abstract class Profile : Item<DataTag> {
-    abstract val id: Uuid
+abstract class Profile : Item<Uuid, DataTag> {
     abstract val profileType: ProfileType
     abstract val name: String
 
-    override fun getEntityId(): String = this.id.toHexString()
     override val tags: Set<DataTag> = emptySet()
     abstract fun getSchool(): Flow<AliasState<School.AppSchool>>
 

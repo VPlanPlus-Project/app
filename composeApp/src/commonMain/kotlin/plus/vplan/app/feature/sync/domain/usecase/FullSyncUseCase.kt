@@ -30,7 +30,6 @@ import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
@@ -54,7 +53,6 @@ class FullSyncUseCase(
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val fileRepository: FileRepository,
-    private val vppIdRepository: VppIdRepository,
     private val keyValueRepository: KeyValueRepository,
     private val profileRepository: ProfileRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
@@ -113,17 +111,6 @@ class FullSyncUseCase(
                             }
                         val fileEnd = Clock.System.now()
                         logger.d { "Updating files took ${(fileEnd - fileStart).inWholeMilliseconds}ms" }
-
-                        logger.i { "Updating vppIds" }
-                        val vppIdStart = Clock.System.now()
-                        vppIdRepository.getAllIds().first()
-                            .mapNotNull { App.vppIdSource.getById(it).getFirstValueOld() }
-                            .forEach { vppId ->
-                                if (vppId.cachedAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()) < maxCacheAge) return@forEach
-                                vppIdRepository.getById(vppId.id, true).getFirstValueOld()
-                            }
-                        val vppIdEnd = Clock.System.now()
-                        logger.d { "Updating vppIds took ${(vppIdEnd - vppIdStart).inWholeMilliseconds}ms" }
 
                         logger.i { "Updating homework" }
                         val homeworkStart = Clock.System.now()

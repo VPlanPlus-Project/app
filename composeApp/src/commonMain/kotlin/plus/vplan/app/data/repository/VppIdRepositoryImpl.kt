@@ -18,12 +18,8 @@ import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -35,27 +31,25 @@ import plus.vplan.app.APP_ID
 import plus.vplan.app.APP_REDIRECT_URI
 import plus.vplan.app.APP_SECRET
 import plus.vplan.app.api
+import plus.vplan.app.appApi
 import plus.vplan.app.auth
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
-import plus.vplan.app.data.source.network.isResponseFromBackend
+import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.data.getByProvider
-import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.domain.repository.VppDbDto
 import plus.vplan.app.domain.repository.VppIdDevice
 import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.utils.sendAll
+import plus.vplan.app.domain.repository.VppVppIdDto
 
 private val logger = Logger.withTag("VppIdRepositoryImpl")
 
@@ -87,11 +81,11 @@ class VppIdRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override suspend fun getUserByToken(token: String, upsert: Boolean): Response<VppId.Active> {
+    override suspend fun getUserByToken(token: String): Response<VppVppIdDto> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(api).apply {
-                    appendPathSegments("api", "v2.2", "user", "me")
+                url(URLBuilder(appApi).apply {
+                    appendPathSegments("user", "v1", "me")
                 }.buildString())
                 bearerAuth(token)
             }
@@ -102,116 +96,22 @@ class VppIdRepositoryImpl(
             val data = ResponseDataWrapper.fromJson<UserMeResponse>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
 
-            if (upsert) vppDatabase.vppIdDao.upsert(
-                vppId = DbVppId(
-                    id = data.id,
-                    name = data.name,
-                    cachedAt = Clock.System.now()
-                ),
-                vppIdAccess = DbVppIdAccess(
-                    vppId = data.id,
-                    accessToken = token
-                ),
-                vppIdSchulverwalter = data.schulverwalterAccessToken?.let {
-                    DbVppIdSchulverwalter(
-                        vppId = data.id,
-                        schulverwalterAccessToken = it,
-                        schulverwalterUserId = data.schulverwalterUserId!!,
-                        isValid = null
-                    )
-                },
-                groupCrossovers = listOf(
-                    DbVppIdGroupCrossover(
-                        vppId = data.id,
-                        groupId = TODO()
-                    )
-                )
-            )
-            return Response.Success(getById(data.id, false).getFirstValueOld()!! as VppId.Active)
+            return Response.Success(VppVppIdDto(
+                id = data.id,
+                username = data.name,
+                groupId = data.group.id,
+                schoolId = data.school.id,
+                schulverwalterId = data.schulverwalterUserId,
+                schulverwalterAccessToken = data.schulverwalterAccessToken
+            ))
         }
         return Response.Error.Cancelled
-    }
-
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<VppId>> {
-        val vppIdFlow = vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
-        return channelFlow {
-            if (!forceReload) {
-                var hadData = false
-                sendAll(vppIdFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
-                if (hadData) return@channelFlow
-            }
-            send(CacheState.Loading(id.toString()))
-
-            safeRequest(onError = { trySend(CacheState.Error(id, it)) }) {
-                val existing = vppDatabase.vppIdDao.getById(id).first()?.toModel() as? VppId.Active
-                val response = if (existing == null) {
-                    val accessResponse = httpClient.get {
-                        url(URLBuilder(api).apply {
-                            appendPathSegments("api", "v2.2", "user", id.toString())
-                        }.buildString())
-                    }
-                    if (accessResponse.status == HttpStatusCode.NotFound && accessResponse.isResponseFromBackend()) {
-                        vppDatabase.vppIdDao.deleteById(listOf(id))
-                        return@channelFlow send(CacheState.NotExisting(id.toString()))
-                    }
-                    if (!accessResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), accessResponse.toErrorResponse<VppId>()))
-                    val accessData = ResponseDataWrapper.fromJson<UserSchoolResponse>(accessResponse.bodyAsText())
-                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(accessResponse.bodyAsText())))
-
-                    val school = vppDatabase.schoolDao.getAll().first()
-                        .map { it.toModel() }
-                        .filterIsInstance<School.AppSchool>()
-                        .firstOrNull { it.aliases.getByProvider(AliasProvider.Vpp)?.value?.toInt() in accessData.schoolIds }
-                        ?.buildSp24AppAuthentication() ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for vppId $id")))
-
-                    httpClient.get {
-                        url(URLBuilder(api).apply {
-                            appendPathSegments("api", "v2.2", "user", id.toString())
-                        }.buildString())
-
-                        school.authentication(this)
-                    }
-                } else {
-                    httpClient.get {
-                        url(URLBuilder(api).apply {
-                            appendPathSegments("api", "v2.2", "user", id.toString())
-                        }.buildString())
-
-                        existing.buildVppSchoolAuthentication().authentication(this)
-                    }
-                }
-
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<VppId>()))
-                val data = ResponseDataWrapper.fromJson<UserItemResponse>(response.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
-
-                vppDatabase.vppIdDao.upsert(
-                    vppId = DbVppId(
-                        id = data.id,
-                        name = data.username,
-                        cachedAt = Clock.System.now()
-                    ),
-                    groupCrossovers = data.groups.map {
-                        DbVppIdGroupCrossover(
-                            vppId = data.id,
-                            groupId = TODO()
-                        )
-                    }
-                )
-
-                return@channelFlow sendAll(getById(data.id, false))
-            }
-        }
     }
 
     override fun getVppIds(): Flow<List<VppId>> {
         return vppDatabase.vppIdDao.getAll().map { flowData ->
             flowData.map { it.toModel() }
         }
-    }
-
-    override fun getAllIds(): Flow<List<Int>> {
-        return vppDatabase.vppIdDao.getAll().map { it.map { vppId -> vppId.vppId.id } }
     }
 
     override suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>> {
@@ -324,6 +224,39 @@ class VppIdRepositoryImpl(
         }
         return Response.Error.Cancelled
     }
+
+    override suspend fun upsert(entity: VppDbDto) {
+        when (entity) {
+            is VppDbDto.CachedVppDbDto -> vppDatabase.vppIdDao.upsert(
+                vppId = DbVppId(
+                    id = entity.id,
+                    name = entity.username,
+                    cachedAt = Clock.System.now(),
+                    creationReason = if (vppDatabase.vppIdDao.getById(entity.id).first()?.vppId?.creationReason == CreationReason.Persisted) CreationReason.Persisted else CreationReason.Cached
+                ),
+                groupCrossovers = entity.groups.map { DbVppIdGroupCrossover(entity.id, it) }
+            )
+            is VppDbDto.AppVppDbDto -> vppDatabase.vppIdDao.upsert(
+                vppId = DbVppId(
+                    id = entity.id,
+                    name = entity.username,
+                    cachedAt = Clock.System.now(),
+                    CreationReason.Persisted
+                ),
+                vppIdAccess = DbVppIdAccess(entity.id, entity.accessToken),
+                vppIdSchulverwalter = entity.schulverwalterAccessToken?.let { DbVppIdSchulverwalter(entity.id, entity.schulverwalterUserId!!, entity.schulverwalterAccessToken, true) },
+                groupCrossovers = entity.groups.map { DbVppIdGroupCrossover(entity.id, it) }
+            )
+        }
+    }
+
+    override fun getAllLocalIds(): Flow<List<Int>> {
+        return vppDatabase.vppIdDao.getAll().map { it.map { vppId -> vppId.vppId.id } }
+    }
+
+    override fun getByLocalId(id: Int): Flow<VppId?> {
+        return vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
+    }
 }
 
 @Serializable
@@ -340,16 +273,10 @@ private data class TokenResponse(
 private data class UserMeResponse(
     @SerialName("id") val id: Int,
     @SerialName("username") val name: String,
-    @SerialName("group_id") val groupId: Int,
+    @SerialName("group") val group: IncludedModel,
+    @SerialName("school") val school: IncludedModel,
     @SerialName("schulverwalter_access_token") val schulverwalterAccessToken: String?,
     @SerialName("schulverwalter_user_id") val schulverwalterUserId: Int?,
-)
-
-@Serializable
-data class UserItemResponse(
-    @SerialName("id") val id: Int,
-    @SerialName("name") val username: String,
-    @SerialName("groups") val groups: List<Int>
 )
 
 @Serializable
@@ -369,11 +296,6 @@ private data class MeSession(
         )
     }
 }
-
-@Serializable
-data class UserSchoolResponse(
-    @SerialName("school_ids") val schoolIds: List<Int>
-)
 
 @Serializable
 data class FeedbackRequest(
