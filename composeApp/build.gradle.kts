@@ -5,8 +5,8 @@ import java.util.Base64
 import kotlin.text.Charsets
 
 object ApplicationConfig {
-    const val APP_VERSION_NAME = "0.1.49-production"
-    const val APP_VERSION_CODE = 92
+    const val APP_VERSION_NAME = "0.1.53-internal"
+    const val APP_VERSION_CODE = 93
     var isDebug = false
 }
 
