@@ -54,13 +54,14 @@ data class Host(
 }
 
 //const val appApi = "http://10.0.2.2:8002/api/app"
-const val appApi = "https://development.vplan.plus/api/app"
+//const val appApi = "https://development.vplan.plus/api/app"
+const val appApi = "https://vplan.plus/api/app"
 
 const val api = "https://vplan.plus"
 
 val auth = Host(
     protocol = URLProtocol.HTTPS,
-    host = "auth.development.vplan.plus",
+    host = "auth.vplan.plus",
     port = 443
 )
 
