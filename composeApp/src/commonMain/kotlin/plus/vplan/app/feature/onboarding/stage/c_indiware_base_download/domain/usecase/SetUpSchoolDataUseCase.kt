@@ -14,7 +14,6 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupDbDto
 import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.IndiwareRepository
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolDbDto
@@ -32,7 +31,6 @@ import kotlin.time.ExperimentalTime
 
 class SetUpSchoolDataUseCase(
     private val onboardingRepository: OnboardingRepository,
-    private val indiwareRepository: IndiwareRepository,
     private val schoolRepository: SchoolRepository,
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
@@ -56,7 +54,7 @@ class SetUpSchoolDataUseCase(
 
         try {
             val sp24Authentication = Authentication(state.sp24Id.toString(), state.username, state.password)
-            val client = indiwareRepository.getSp24Client(authentication = sp24Authentication, true)
+            val client = onboardingRepository.getSp24Client()!!
 
             result[SetUpSchoolDataStep.DOWNLOAD_BASE_DATA] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()

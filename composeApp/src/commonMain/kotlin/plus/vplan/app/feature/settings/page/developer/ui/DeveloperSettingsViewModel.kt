@@ -14,7 +14,6 @@ import kotlinx.datetime.plus
 import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -93,7 +92,7 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.UpdateTimetable -> {
                     if (state.isTimetableUpdateRunning) return@launch
                     state = state.copy(isTimetableUpdateRunning = true)
-                    updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!!, true)
+                    updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!!, forceUpdate = true)
                     state = state.copy(isTimetableUpdateRunning = false)
                 }
                 DeveloperSettingsEvent.ToggleAutoSyncDisabled -> {

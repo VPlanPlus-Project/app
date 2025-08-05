@@ -12,8 +12,10 @@ class CheckCredentialsUseCase(
 ) {
     suspend operator fun invoke(sp24Id: Int, username: String, password: String): Response<Sp24LookupResponse> {
         onboardingRepository.setSp24CredentialsValid(Sp24CredentialsState.LOADING)
-        val result = indiwareRepository.checkCredentials(Authentication(sp24Id.toString(), username, password))
+        val authentication = Authentication(sp24Id.toString(), username, password)
+        val result = indiwareRepository.checkCredentials(authentication)
         if (result is Response.Success) {
+            onboardingRepository.setSp24Client(indiwareRepository.getSp24Client(authentication, withCache = true))
             onboardingRepository.setSp24Credentials(username, password)
             if (result.data) onboardingRepository.setSp24CredentialsValid(Sp24CredentialsState.VALID)
             else {

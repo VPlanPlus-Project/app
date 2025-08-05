@@ -13,6 +13,7 @@ import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
+import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 import plus.vplan.app.utils.now
@@ -48,8 +49,11 @@ class SelectProfileUseCase(
         keyValueRepository.set(Keys.CURRENT_PROFILE, profile.id.toHexString())
 
         (profile.getSchool().getFirstValue() as? School.AppSchool)?.let {
-            updateTimetableUseCase(it, false)
-            updateSubstitutionPlanUseCase(it, listOf(LocalDate.now()), allowNotification = false)
+            val client = onboardingRepository.getSp24Client()!!
+            updateTimetableUseCase(it, client, false)
+            updateSubstitutionPlanUseCase(it, listOf(LocalDate.now()), client, allowNotification = false)
         }
+
+        FullSyncUseCase.isOnboardingRunning = false
     }
 }

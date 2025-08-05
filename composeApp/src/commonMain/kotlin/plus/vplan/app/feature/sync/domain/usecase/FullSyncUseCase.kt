@@ -70,7 +70,15 @@ class FullSyncUseCase(
     private val maxCacheAge = 24.hours
     private var isRunning = false
 
+    companion object {
+        var isOnboardingRunning = false
+    }
+
     operator fun invoke(cause: FullSyncCause): Job {
+        if (isOnboardingRunning) {
+            logger.i { "FullSync requested while onboarding is running, this request will be ignored" }
+            return Job()
+        }
         if (isRunning) {
             logger.i { "FullSync already running, this request will be ignored" }
             return Job()

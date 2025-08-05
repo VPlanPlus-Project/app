@@ -21,6 +21,7 @@ import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.takeContinuousBy
 import plus.vplan.lib.sp24.source.Authentication
+import plus.vplan.lib.sp24.source.IndiwareClient
 import plus.vplan.lib.sp24.source.extension.Timetable
 import kotlin.time.Duration.Companion.days
 
@@ -43,8 +44,13 @@ class UpdateTimetableUseCase(
      */
     suspend operator fun invoke(
         sp24School: School.AppSchool,
+        client: IndiwareClient? = null,
         forceUpdate: Boolean
     ): Response.Error? {
+        val sp24Client = client ?: indiwareRepository.getSp24Client(
+            authentication = Authentication(sp24School.sp24Id, sp24School.username, sp24School.password),
+            withCache = true
+        )
         LOGGER.i { "Updating timetable for indiware school ${sp24School.id}" }
         val rooms = roomRepository.getBySchool(sp24School.id).first()
         val teachers = teacherRepository.getBySchool(sp24School.id).first()
@@ -99,8 +105,6 @@ class UpdateTimetableUseCase(
             LOGGER.w { "No current week found, using first week of school year CW${weeks.first().calendarWeek} (${weeks.first().weekIndex} week of school year)" }
             return@run null
         }
-
-        val sp24Client = indiwareRepository.getSp24Client(authentication = Authentication(sp24School.sp24Id, sp24School.username, sp24School.password), withCache = true)
 
         var downloadedTimetable: Timetable? = null
         while (week != null) {

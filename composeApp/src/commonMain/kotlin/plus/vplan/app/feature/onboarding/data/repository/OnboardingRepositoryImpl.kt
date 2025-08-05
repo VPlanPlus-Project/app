@@ -11,10 +11,13 @@ import plus.vplan.app.feature.onboarding.domain.model.OnboardingSp24State
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.domain.repository.Sp24CredentialsState
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
+import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
+import plus.vplan.lib.sp24.source.IndiwareClient
 
 class OnboardingRepositoryImpl: OnboardingRepository {
 
     private var onboardingSp24State: MutableStateFlow<OnboardingSp24State?> = MutableStateFlow(null)
+    private var indiwareClient: IndiwareClient? = null
 
     init {
         GlobalScope.launch {
@@ -28,7 +31,16 @@ class OnboardingRepositoryImpl: OnboardingRepository {
         onboardingSp24State.value = null
     }
 
+    override fun setSp24Client(indiwareClient: IndiwareClient) {
+        this.indiwareClient = indiwareClient
+    }
+
+    override fun getSp24Client(): IndiwareClient? {
+        return indiwareClient
+    }
+
     override suspend fun startSp24Onboarding(sp24Id: Int) {
+        FullSyncUseCase.isOnboardingRunning = true
         onboardingSp24State.update { OnboardingSp24State(sp24Id = sp24Id) }
     }
 
