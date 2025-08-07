@@ -2,7 +2,7 @@ package plus.vplan.app.feature.sync.di
 
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
-import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
+import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase

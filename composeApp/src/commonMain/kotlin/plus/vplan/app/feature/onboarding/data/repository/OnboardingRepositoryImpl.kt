@@ -1,31 +1,20 @@
 package plus.vplan.app.feature.onboarding.data.repository
 
-import co.touchlab.kermit.Logger
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingSp24State
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.domain.repository.Sp24CredentialsState
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
-import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
+import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 import plus.vplan.lib.sp24.source.IndiwareClient
 
 class OnboardingRepositoryImpl: OnboardingRepository {
 
     private var onboardingSp24State: MutableStateFlow<OnboardingSp24State?> = MutableStateFlow(null)
     private var indiwareClient: IndiwareClient? = null
-
-    init {
-        GlobalScope.launch {
-            onboardingSp24State.collect {
-                Logger.d { "Onboarding state: $it" }
-            }
-        }
-    }
 
     override suspend fun reset() {
         onboardingSp24State.value = null

@@ -20,8 +20,8 @@ import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.feature.sync.domain.usecase.FullSyncCause
-import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
+import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause
+import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
 import plus.vplan.app.utils.now

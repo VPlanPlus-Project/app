@@ -26,7 +26,15 @@ class SchoolDbDto(
     val name: String,
     val aliases: List<Alias>,
     val creationReason: CreationReason
-)
+) {
+    companion object {
+        fun fromModel(school: School, creationReason: CreationReason) = SchoolDbDto(
+            name = school.name,
+            aliases = school.aliases.toList(),
+            creationReason = creationReason
+        )
+    }
+}
 
 class VppSchoolDto(
     val id: Int,
