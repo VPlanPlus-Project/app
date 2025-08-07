@@ -26,6 +26,8 @@ interface VppIdRepository : ItemRepository<Int, VppId> {
     suspend fun updateFirebaseToken(vppId: VppId.Active, token: String): Response.Error?
 
     suspend fun upsert(entity: VppDbDto)
+
+    suspend fun logSp24Credentials(authentication: VppSchoolAuthentication.Sp24)
 }
 
 data class VppIdDevice(

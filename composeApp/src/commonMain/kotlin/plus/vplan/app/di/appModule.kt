@@ -18,7 +18,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import plus.vplan.app.App
 import plus.vplan.app.BuildConfig
-import plus.vplan.app.ENABLE_KTOR_LOGGING
+import plus.vplan.app.LOG_HTTP_REQUESTS
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DayRepositoryImpl
@@ -134,7 +134,7 @@ val appModule = module(createdAtStart = true) {
                 }
             }
 
-            if (ENABLE_KTOR_LOGGING) install(Logging) {
+            if (LOG_HTTP_REQUESTS) install(Logging) {
                 logger = object : Logger {
                     override fun log(message: String) {
                         appLogger.i { message }

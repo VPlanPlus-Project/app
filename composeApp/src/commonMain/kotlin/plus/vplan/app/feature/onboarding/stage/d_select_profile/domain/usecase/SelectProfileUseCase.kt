@@ -16,6 +16,7 @@ import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.Onb
 import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
+import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
 import plus.vplan.app.utils.now
 
 class SelectProfileUseCase(
@@ -25,7 +26,8 @@ class SelectProfileUseCase(
     private val teacherRepository: TeacherRepository,
     private val keyValueRepository: KeyValueRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
-    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase
+    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val sendSp24CredentialsToServerUseCase: SendSp24CredentialsToServerUseCase
 ) {
     suspend operator fun invoke(
         onboardingProfile: OnboardingProfile,
@@ -47,6 +49,8 @@ class SelectProfileUseCase(
         }
         capture("CreateProfile", mapOf("school_id" to profile.getSchool().getFirstValue()!!.id, "profile_type" to profile.profileType.name, "entity_id" to onboardingProfile.alias))
         keyValueRepository.set(Keys.CURRENT_PROFILE, profile.id.toHexString())
+
+        sendSp24CredentialsToServerUseCase()
 
         (profile.getSchool().getFirstValue() as? School.AppSchool)?.let {
             val client = onboardingRepository.getSp24Client()!!

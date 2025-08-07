@@ -12,11 +12,13 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
+import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
 import kotlin.uuid.Uuid
 
 class IndiwareCredentialViewModel(
     private val schoolRepository: SchoolRepository,
-    private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase
+    private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
+    private val sendSp24CredentialsToServerUseCase: SendSp24CredentialsToServerUseCase
 ): ViewModel() {
     var state by mutableStateOf<IndiwareCredentialState?>(null)
         private set
@@ -53,6 +55,7 @@ class IndiwareCredentialViewModel(
                             daysPerWeek = state!!.school.daysPerWeek,
                         )
                         schoolRepository.setSp24CredentialValidity(state!!.school.id, true)
+                        sendSp24CredentialsToServerUseCase()
                     }
                     state = state?.copy(state = result)
                 }

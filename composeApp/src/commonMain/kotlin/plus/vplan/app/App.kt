@@ -54,8 +54,8 @@ data class Host(
 }
 
 //const val appApi = "http://10.0.2.2:8002/api/app"
-//const val appApi = "https://development.vplan.plus/api/app"
-const val appApi = "https://vplan.plus/api/app"
+const val appApi = "https://development.vplan.plus/api/app"
+//const val appApi = "https://vplan.plus/api/app"
 
 const val api = "https://vplan.plus"
 
@@ -80,8 +80,6 @@ val VPP_ID_AUTH_URL = URLBuilder(
         append("device_name", getSystemInfo().let { "${it.manufacturer} ${it.deviceName} (${it.device})" })
     }
 ).build().toString()
-
-const val ENABLE_KTOR_LOGGING = true
 
 object App {
     lateinit var vppIdSource: VppIdSource

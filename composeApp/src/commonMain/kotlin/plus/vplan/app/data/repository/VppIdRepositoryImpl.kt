@@ -257,6 +257,25 @@ class VppIdRepositoryImpl(
     override fun getByLocalId(id: Int): Flow<VppId?> {
         return vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
     }
+
+    override suspend fun logSp24Credentials(authentication: VppSchoolAuthentication.Sp24) {
+        val logger = Logger.withTag("VppIdRepositoryImpl.logSp24Credentials")
+        val response = httpClient.post {
+            url(URLBuilder(appApi).apply {
+                appendPathSegments("sp24", "v1", "log")
+            }.buildString())
+
+            contentType(ContentType.Application.Json)
+            setBody(Sp24LogRequest(
+                sp24Id = authentication.sp24SchoolId.toInt(),
+                username = authentication.username,
+                password = authentication.password
+            ))
+            authentication.authentication(this)
+        }
+        if (response.status == HttpStatusCode.OK) logger.i { "Successfully logged sp24 credentials" }
+        else logger.e { "Error logging sp24 credentials: ${response.status} - ${response.bodyAsText()}" }
+    }
 }
 
 @Serializable
@@ -301,4 +320,11 @@ private data class MeSession(
 data class FeedbackRequest(
     @SerialName("content") val content: String,
     @SerialName("email") val email: String?
+)
+
+@Serializable
+private data class Sp24LogRequest(
+    @SerialName("sp24_id") val sp24Id: Int,
+    @SerialName("username") val username: String,
+    @SerialName("password") val password: String
 )
