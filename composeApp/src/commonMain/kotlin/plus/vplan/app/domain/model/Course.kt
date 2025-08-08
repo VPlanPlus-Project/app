@@ -21,8 +21,9 @@ data class Course(
         fun buildSp24Alias(
             sp24SchoolId: String,
             name: String,
+            classNames: Set<String>,
             teacher: Teacher?
-        ) = "sp24.$sp24SchoolId.$name+${teacher?.name ?: ""}"
+        ) = "sp24.$sp24SchoolId.$name+${teacher?.name ?: ""}+${classNames.sorted().joinToString("|")}"
     }
 
     val teacher by lazy { teacherId?.let { App.teacherSource.getById(it) } }

@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.ui
+package plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
@@ -25,8 +25,8 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.domain.usecase.SetUpSchoolDataState
-import plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.domain.usecase.SetUpSchoolDataStep
+import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase.SetUpSchoolDataState
+import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase.SetUpSchoolDataStep
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check

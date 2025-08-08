@@ -1,23 +1,23 @@
-package plus.vplan.app.feature.sync.domain.usecase.indiware
+package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
-import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.lib.sp24.source.Authentication
-import plus.vplan.lib.sp24.source.IndiwareClient
+import plus.vplan.lib.sp24.source.Stundenplan24Client
 
 private val LOGGER = Logger.withTag("UpdateWeeksUseCase")
 
 class UpdateWeeksUseCase(
-    private val indiwareRepository: IndiwareRepository,
+    private val stundenplan24Repository: Stundenplan24Repository,
     private val weekRepository: WeekRepository
 ) {
-    suspend operator fun invoke(school: School.AppSchool, providedClient: IndiwareClient? = null): Response.Error? {
-        val client = providedClient ?: indiwareRepository.getSp24Client(
+    suspend operator fun invoke(school: School.AppSchool, providedClient: Stundenplan24Client? = null): Response.Error? {
+        val client = providedClient ?: stundenplan24Repository.getSp24Client(
             Authentication(school.sp24Id, school.username, school.password),
             withCache = true
         )

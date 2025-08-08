@@ -109,8 +109,7 @@ private fun OnboardingSelectProfileScreen(
                                 .padding(bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) listHost@{
-                            @Suppress("ConvertCallChainIntoSequence") // collectAsResultingFlowOld is a @Composable that cannot be invoked in a sequence
-                            val courses = state.subjectInstances.keys.mapNotNull { it.course }.toSet()
+                            val courses = (state.selectedProfile as? OnboardingProfile.StudentProfile)?.subjectInstances.orEmpty().mapNotNull { it.course }.toSet()
                                 .map { App.courseSource.getById(it).collectAsResultingFlow() }
                                 .mapNotNull { it.value }
                                 .sortedBy { it.name }

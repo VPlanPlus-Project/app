@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.sync.domain.usecase.indiware
+package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
@@ -9,7 +9,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -21,7 +21,7 @@ import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.takeContinuousBy
 import plus.vplan.lib.sp24.source.Authentication
-import plus.vplan.lib.sp24.source.IndiwareClient
+import plus.vplan.lib.sp24.source.Stundenplan24Client
 import plus.vplan.lib.sp24.source.extension.Timetable
 import kotlin.time.Duration.Companion.days
 
@@ -29,7 +29,7 @@ private const val TAG = "UpdateTimetableUseCase"
 private val LOGGER = Logger.withTag(TAG)
 
 class UpdateTimetableUseCase(
-    private val indiwareRepository: IndiwareRepository,
+    private val stundenplan24Repository: Stundenplan24Repository,
     private val roomRepository: RoomRepository,
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
@@ -44,10 +44,10 @@ class UpdateTimetableUseCase(
      */
     suspend operator fun invoke(
         sp24School: School.AppSchool,
-        client: IndiwareClient? = null,
+        client: Stundenplan24Client? = null,
         forceUpdate: Boolean
     ): Response.Error? {
-        val sp24Client = client ?: indiwareRepository.getSp24Client(
+        val sp24Client = client ?: stundenplan24Repository.getSp24Client(
             authentication = Authentication(sp24School.sp24Id, sp24School.username, sp24School.password),
             withCache = true
         )
@@ -119,7 +119,7 @@ class UpdateTimetableUseCase(
                     LOGGER.d { "Week CW${week.calendarWeek} (${week.weekIndex} week of school year) is not in the past" }
                 }
             }
-            val hasDataForThisWeek = indiwareRepository.hasTimetableForWeek(sp24School.sp24Id.toInt(), week.id)
+            val hasDataForThisWeek = stundenplan24Repository.hasTimetableForWeek(sp24School.sp24Id.toInt(), week.id)
 
             if (isWeekInPast && hasDataForThisWeek == false) {
                 LOGGER.i { "Skipping past week CW${week.calendarWeek} (${week.weekIndex} week of school year) for sp24 school ${sp24School.id} since it doesn't have data on stundenplan24.de" }
@@ -130,14 +130,14 @@ class UpdateTimetableUseCase(
             when {
                 timetable is plus.vplan.lib.sp24.source.Response.Error.OnlineError.NotFound -> {
                     LOGGER.i { "Timetable not found for sp24 school ${sp24School.id} and week CW${week.calendarWeek} (${week.weekIndex} week of school year) (retrying ${week.weekIndex} times)" }
-                    indiwareRepository.setHasTimetableForWeek(sp24School.sp24Id.toInt(), week.id, false)
+                    stundenplan24Repository.setHasTimetableForWeek(sp24School.sp24Id.toInt(), week.id, false)
                     week = getNextWeekToTry()
                     continue
                 }
 
                 timetable !is plus.vplan.lib.sp24.source.Response.Success && timetable is Response.Error -> return timetable
                 timetable is plus.vplan.lib.sp24.source.Response.Success -> {
-                    indiwareRepository.setHasTimetableForWeek(sp24School.sp24Id.toInt(), week.id, true)
+                    stundenplan24Repository.setHasTimetableForWeek(sp24School.sp24Id.toInt(), week.id, true)
                     LOGGER.i { "Timetable found for indiware school ${sp24School.id} in week CW${week.calendarWeek} (${week.weekIndex} week of school year)" }
                     downloadedTimetable = timetable.data
                     break

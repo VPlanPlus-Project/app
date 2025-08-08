@@ -16,7 +16,7 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -26,11 +26,11 @@ import plus.vplan.app.domain.repository.SchoolDbDto
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.TeacherDbDto
 import plus.vplan.app.domain.repository.TeacherRepository
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubjectInstanceUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.SendInvalidSp24CredentialsNotification
@@ -53,7 +53,7 @@ class FullSyncUseCase(
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
     private val syncGradesUseCase: SyncGradesUseCase,
-    private val indiwareRepository: IndiwareRepository,
+    private val stundenplan24Repository: Stundenplan24Repository,
     private val roomRepository: RoomRepository,
     private val teacherRepository: TeacherRepository,
     private val sendInvalidSp24CredentialsNotification: SendInvalidSp24CredentialsNotification,
@@ -104,7 +104,7 @@ class FullSyncUseCase(
                         .distinctBy { it.id }
                         .filter { it.credentialsValid }
                         .forEach forEachSchool@{ school ->
-                            val client = indiwareRepository.getSp24Client(
+                            val client = stundenplan24Repository.getSp24Client(
                                 Authentication(school.sp24Id, school.username, school.password),
                                 withCache = true
                             )

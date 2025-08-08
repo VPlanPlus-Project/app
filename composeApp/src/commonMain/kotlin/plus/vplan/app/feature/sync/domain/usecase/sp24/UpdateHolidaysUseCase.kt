@@ -1,23 +1,23 @@
-package plus.vplan.app.feature.sync.domain.usecase.indiware
+package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Holiday
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.lib.sp24.source.Authentication
-import plus.vplan.lib.sp24.source.IndiwareClient
+import plus.vplan.lib.sp24.source.Stundenplan24Client
 
 class UpdateHolidaysUseCase(
-    private val indiwareRepository: IndiwareRepository,
+    private val stundenplan24Repository: Stundenplan24Repository,
     private val dayRepository: DayRepository
 ) {
     suspend operator fun invoke(
         school: School.AppSchool,
-        providedClient: IndiwareClient? = null,
+        providedClient: Stundenplan24Client? = null,
     ): Response.Error? {
-        val client = providedClient ?: indiwareRepository.getSp24Client(
+        val client = providedClient ?: stundenplan24Repository.getSp24Client(
             Authentication(school.sp24Id, school.username, school.password),
             withCache = true
         )

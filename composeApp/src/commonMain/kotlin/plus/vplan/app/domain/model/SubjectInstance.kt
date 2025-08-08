@@ -8,9 +8,6 @@ import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasedItem
 import kotlin.uuid.Uuid
 
-/**
- * @param id The id of the subject instance. If it originates from indiware, it will be prefixed with `sp24.` followed by the indiware school id and group name and the subject instance number separated with a dot, e.g. `sp24.10000000.6c.146`
- */
 data class SubjectInstance(
     override val id: Uuid,
     val subject: String,
@@ -47,7 +44,7 @@ data class SubjectInstance(
 
     companion object {
         fun buildSp24Alias(sp24SchoolId: Int, sp24VpId: Int): String {
-            return ("sp24.$sp24SchoolId/${sp24VpId}")
+            return ("$sp24SchoolId/${sp24VpId}")
         }
     }
 }

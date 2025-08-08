@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.ui
+package plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -6,10 +6,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.domain.usecase.SetUpSchoolDataResult
-import plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.domain.usecase.SetUpSchoolDataState
-import plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.domain.usecase.SetUpSchoolDataStep
-import plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.domain.usecase.SetUpSchoolDataUseCase
+import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase.SetUpSchoolDataResult
+import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase.SetUpSchoolDataState
+import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase.SetUpSchoolDataStep
+import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase.SetUpSchoolDataUseCase
 
 class OnboardingIndiwareDataDownloadViewModel(
     private val setUpSchoolDataUseCase: SetUpSchoolDataUseCase

@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.domain.usecase
+package plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Holiday
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.DayRepository
@@ -23,9 +24,9 @@ import plus.vplan.app.domain.repository.TeacherDbDto
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateLessonTimesUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubjectInstanceUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateWeeksUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.lib.sp24.source.Authentication
 import kotlin.time.ExperimentalTime
 
@@ -108,7 +109,7 @@ class SetUpSchoolDataUseCase(
             val classIds = classes.orEmpty().associateWith { group ->
                 Alias(
                     provider = AliasProvider.Sp24,
-                    value = "${school.sp24Id}/${group.name}",
+                    value = Group.buildSp24Alias(school.sp24Id.toInt(), group.name),
                     version = 1
                 )
             }.map { (group, aliases) ->
@@ -182,6 +183,8 @@ class SetUpSchoolDataUseCase(
             onboardingRepository.addProfileOptions(classIds.map { classId ->
                 val group = groupRepository.getByLocalId(classId).first()!!
                 val subjectInstances = subjectInstanceRepository.getByGroup(classId).first()
+
+                Logger.d { "${group.name}: ${subjectInstances.joinToString { "${it.subject} ${it.course}" }}" }
 
                 OnboardingProfile.StudentProfile(
                     name = group.name,

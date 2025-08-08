@@ -18,7 +18,7 @@ interface SubjectInstanceDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM fk_subject_instance_group LEFT JOIN subject_instance ON subject_instance.id = fk_subject_instance_group.subject_instance_id WHERE group_id = :groupId")
+    @Query("SELECT * FROM subject_instance LEFT JOIN fk_subject_instance_group ON subject_instance.id = fk_subject_instance_group.subject_instance_id WHERE group_id = :groupId")
     fun getByGroup(groupId: Uuid): Flow<List<EmbeddedSubjectInstance>>
 
     @Transaction

@@ -8,7 +8,7 @@ import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
-import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
+import plus.vplan.app.data.source.database.model.database.DbSchoolSp24Acess
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSchool
 import plus.vplan.app.domain.data.AliasProvider
 import kotlin.uuid.Uuid
@@ -29,9 +29,9 @@ interface SchoolDao {
     suspend fun upsertSchool(school: DbSchool, aliases: List<DbSchoolAlias>)
 
     @Upsert
-    suspend fun upsertSp24SchoolDetails(details: DbSchoolIndiwareAccess)
+    suspend fun upsertSp24SchoolDetails(details: DbSchoolSp24Acess)
 
-    @Query("UPDATE school_indiware_access SET credentials_valid = :valid WHERE school_id = :schoolId")
+    @Query("UPDATE school_sp24_access SET credentials_valid = :valid WHERE school_id = :schoolId")
     suspend fun setIndiwareAccessValidState(schoolId: Uuid, valid: Boolean)
 
     @Query("DELETE FROM schools WHERE id = :schoolId")

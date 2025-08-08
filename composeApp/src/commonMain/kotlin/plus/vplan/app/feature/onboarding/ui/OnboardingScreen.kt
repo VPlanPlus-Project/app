@@ -19,7 +19,7 @@ import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingSchoolSearch
 import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.OnboardingIndiwareLoginScreen
-import plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.ui.OnboardingIndiwareDataDownloadScreen
+import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.ui.OnboardingIndiwareDataDownloadScreen
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileScreen
 import plus.vplan.app.feature.onboarding.stage.e_permissions.ui.OnboardingPermissionsScreen
 import plus.vplan.app.feature.onboarding.stage.f_finished.ui.OnboardingFinishedScreen

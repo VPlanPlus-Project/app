@@ -2,26 +2,26 @@ package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
 import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbIndiwareTimetableMetadata
+import plus.vplan.app.data.source.database.model.database.DbStundenplan24TimetableMetadata
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.lib.sp24.model.splan.student.SPlanStudentData
 import plus.vplan.lib.sp24.source.Authentication
-import plus.vplan.lib.sp24.source.IndiwareClient
+import plus.vplan.lib.sp24.source.Stundenplan24Client
 import plus.vplan.lib.sp24.source.TestConnectionResult
 import plus.vplan.lib.sp24.source.extension.LessonTime
 
-class IndiwareRepositoryImpl(
+class Stundenplan24RepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase
-) : IndiwareRepository {
+) : Stundenplan24Repository {
 
-    val clients = mutableMapOf<Authentication, IndiwareClient>()
+    val clients = mutableMapOf<Authentication, Stundenplan24Client>()
 
     override suspend fun checkCredentials(
         authentication: Authentication
     ): Response<Boolean> {
-        val client = clients.getOrPut(authentication) { IndiwareClient(authentication, httpClient) }
+        val client = clients.getOrPut(authentication) { Stundenplan24Client(authentication, httpClient) }
         val result = client.testConnection()
         if (result is TestConnectionResult.NotFound) return Response.Error.OnlineError.NotFound
         if (result is TestConnectionResult.Unauthorized) return Response.Success(false)
@@ -33,7 +33,7 @@ class IndiwareRepositoryImpl(
         authentication: Authentication,
         contextWeekIndex: Int?
     ): plus.vplan.lib.sp24.source.Response<List<LessonTime>> {
-        val client = clients.getOrPut(authentication) { IndiwareClient(authentication, httpClient) }
+        val client = clients.getOrPut(authentication) { Stundenplan24Client(authentication, httpClient) }
         return client.lessonTime.getLessonTime(contextWeekIndex)
     }
 
@@ -41,21 +41,21 @@ class IndiwareRepositoryImpl(
         authentication: Authentication,
         weekIndex: Int
     ): plus.vplan.lib.sp24.source.Response<SPlanStudentData> {
-        val client = clients.getOrPut(authentication) { IndiwareClient(authentication, httpClient) }
+        val client = clients.getOrPut(authentication) { Stundenplan24Client(authentication, httpClient) }
         return client.getSPlanDataStudent(authentication, schoolWeekIndex = weekIndex)
     }
 
     override suspend fun getSp24Client(
         authentication: Authentication,
         withCache: Boolean
-    ): IndiwareClient {
-        if (withCache) return IndiwareClient(
+    ): Stundenplan24Client {
+        if (withCache) return Stundenplan24Client(
             authentication = authentication,
             client = httpClient,
             enableInternalCache = true
         )
         return clients.getOrPut(authentication) {
-            IndiwareClient(
+            Stundenplan24Client(
                 authentication = authentication,
                 client = httpClient,
                 enableInternalCache = false
@@ -64,7 +64,7 @@ class IndiwareRepositoryImpl(
     }
 
     override suspend fun hasTimetableForWeek(sp24SchoolId: Int, weekId: String): Boolean? {
-        return vppDatabase.indiwareDao.getHasTimetableInWeek(weekId, sp24SchoolId.toString())?.hasData
+        return vppDatabase.stundenplan24Dao.getHasTimetableInWeek(weekId, sp24SchoolId.toString())?.hasData
     }
 
     override suspend fun setHasTimetableForWeek(
@@ -72,6 +72,6 @@ class IndiwareRepositoryImpl(
         weekId: String,
         hasTimetable: Boolean,
     ) {
-        vppDatabase.indiwareDao.upsert(DbIndiwareTimetableMetadata(sp24SchoolId.toString(), weekId, hasTimetable))
+        vppDatabase.stundenplan24Dao.upsert(DbStundenplan24TimetableMetadata(sp24SchoolId.toString(), weekId, hasTimetable))
     }
 }

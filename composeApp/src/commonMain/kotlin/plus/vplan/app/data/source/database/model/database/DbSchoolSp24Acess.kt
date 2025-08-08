@@ -4,11 +4,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import plus.vplan.app.domain.model.School
 import kotlin.uuid.Uuid
 
 @Entity(
-    tableName = "school_indiware_access",
+    tableName = "school_sp24_access",
     primaryKeys = ["sp24_school_id"],
     indices = [
         Index(value = ["sp24_school_id"], unique = true),
@@ -24,7 +23,7 @@ import kotlin.uuid.Uuid
         )
     ]
 )
-data class DbSchoolIndiwareAccess(
+data class DbSchoolSp24Acess(
     @ColumnInfo("school_id") val schoolId: Uuid,
     @ColumnInfo("sp24_school_id") val sp24SchoolId: String,
     @ColumnInfo("username") val username: String,

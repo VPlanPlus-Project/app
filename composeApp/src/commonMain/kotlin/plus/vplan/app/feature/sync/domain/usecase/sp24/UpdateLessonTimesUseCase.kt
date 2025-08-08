@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.sync.domain.usecase.indiware
+package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
@@ -12,7 +12,7 @@ import plus.vplan.app.utils.lastContinuousBy
 import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.until
 import plus.vplan.lib.sp24.source.Authentication
-import plus.vplan.lib.sp24.source.IndiwareClient
+import plus.vplan.lib.sp24.source.Stundenplan24Client
 
 private const val TAG = "UpdateLessonTimesUseCase"
 private val LOGGER = Logger.withTag(TAG)
@@ -21,9 +21,9 @@ class UpdateLessonTimesUseCase(
     private val groupRepository: GroupRepository,
     private val lessonTimeRepository: LessonTimeRepository
 ) {
-    suspend operator fun invoke(school: School.AppSchool, providedClient: IndiwareClient? = null) {
-        val client = providedClient ?: IndiwareClient(authentication = Authentication(
-            indiwareSchoolId = school.sp24Id,
+    suspend operator fun invoke(school: School.AppSchool, providedClient: Stundenplan24Client? = null) {
+        val client = providedClient ?: Stundenplan24Client(authentication = Authentication(
+            sp24SchoolId = school.sp24Id,
             username = school.username,
             password = school.password
         ))

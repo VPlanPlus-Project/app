@@ -13,8 +13,8 @@ import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.Se
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingSchoolSearchViewModel
 import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.domain.usecase.CheckCredentialsUseCase
 import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.OnboardingIndiwareLoginViewModel
-import plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.domain.usecase.SetUpSchoolDataUseCase
-import plus.vplan.app.feature.onboarding.stage.c_indiware_base_download.ui.OnboardingIndiwareDataDownloadViewModel
+import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase.SetUpSchoolDataUseCase
+import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.ui.OnboardingIndiwareDataDownloadViewModel
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase.SelectProfileUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileViewModel
 import plus.vplan.app.feature.onboarding.stage.e_permissions.ui.OnboardingPermissionViewModel

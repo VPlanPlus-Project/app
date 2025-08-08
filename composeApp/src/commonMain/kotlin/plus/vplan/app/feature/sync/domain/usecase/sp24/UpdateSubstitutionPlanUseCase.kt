@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalUuidApi::class)
 
-package plus.vplan.app.feature.sync.domain.usecase.indiware
+package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
@@ -24,7 +24,7 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -37,14 +37,14 @@ import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.untilRelativeText
 import plus.vplan.lib.sp24.source.Authentication
-import plus.vplan.lib.sp24.source.IndiwareClient
+import plus.vplan.lib.sp24.source.Stundenplan24Client
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 private val LOGGER = Logger.withTag("UpdateSubstitutionPlanUseCase")
 
 class UpdateSubstitutionPlanUseCase(
-    private val indiwareRepository: IndiwareRepository,
+    private val stundenplan24Repository: Stundenplan24Repository,
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
@@ -59,10 +59,10 @@ class UpdateSubstitutionPlanUseCase(
     suspend operator fun invoke(
         sp24School: School.AppSchool,
         dates: List<LocalDate>,
-        providedClient: IndiwareClient? = null,
+        providedClient: Stundenplan24Client? = null,
         allowNotification: Boolean
     ): Response.Error? {
-        val client = providedClient ?: indiwareRepository.getSp24Client(
+        val client = providedClient ?: stundenplan24Repository.getSp24Client(
             Authentication(
                 sp24School.sp24Id,
                 sp24School.username,

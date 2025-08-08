@@ -26,7 +26,7 @@ import plus.vplan.app.data.repository.FcmRepositoryImpl
 import plus.vplan.app.data.repository.FileRepositoryImpl
 import plus.vplan.app.data.repository.GroupRepositoryImpl
 import plus.vplan.app.data.repository.HomeworkRepositoryImpl
-import plus.vplan.app.data.repository.IndiwareRepositoryImpl
+import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
 import plus.vplan.app.data.repository.LessonTimeRepositoryImpl
 import plus.vplan.app.data.repository.NewsRepositoryImpl
@@ -50,7 +50,7 @@ import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.NewsRepository
@@ -153,7 +153,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
     singleOf(::TeacherRepositoryImpl).bind<TeacherRepository>()
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
-    singleOf(::IndiwareRepositoryImpl).bind<IndiwareRepository>()
+    singleOf(::Stundenplan24RepositoryImpl).bind<Stundenplan24Repository>()
     singleOf(::CourseRepositoryImpl).bind<CourseRepository>()
     singleOf(::SubjectInstanceRepositoryImpl).bind<SubjectInstanceRepository>()
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()

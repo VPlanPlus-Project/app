@@ -25,4 +25,8 @@ data class Group(
     suspend fun getSchoolItem(): School {
         return schoolItem ?: App.schoolSource.getById(schoolId).getFirstValue()!!.also { schoolItem = it }
     }
+
+    companion object {
+        fun buildSp24Alias(sp24SchoolId: Int, groupName: String) = "$sp24SchoolId/$groupName"
+    }
 }

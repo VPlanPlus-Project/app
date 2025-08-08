@@ -17,7 +17,7 @@ import plus.vplan.app.appApi
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
-import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
+import plus.vplan.app.data.source.database.model.database.DbSchoolSp24Acess
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.domain.cache.CreationReason
@@ -116,7 +116,7 @@ class SchoolRepositoryImpl(
         daysPerWeek: Int,
     ) {
         vppDatabase.schoolDao.upsertSp24SchoolDetails(
-            DbSchoolIndiwareAccess(
+            DbSchoolSp24Acess(
                 schoolId = schoolId,
                 sp24SchoolId = sp24Id.toString(),
                 username = username,

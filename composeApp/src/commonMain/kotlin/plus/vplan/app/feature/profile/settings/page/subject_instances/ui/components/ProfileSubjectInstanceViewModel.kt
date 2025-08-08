@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -51,10 +50,6 @@ class ProfileSubjectInstanceViewModel(
                         .sortedBy { runBlocking { it.first.subject + (it.first.getCourseItem()?.name ?: "") + (it.first.getTeacherItem()?.name ?: "") } }
                         .toMap()
                 )
-
-                Logger.d { state.subjectInstance.keys.first().getTeacherItem().let {
-                    it?.name + " " + it.hashCode()
-                } }
             }
         }
     }

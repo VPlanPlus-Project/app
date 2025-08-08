@@ -2,13 +2,9 @@ package plus.vplan.app.data.source.database.model.embedded
 
 import androidx.room.Embedded
 import androidx.room.Relation
-import plus.vplan.app.data.source.database.model.database.DbGroup
-import plus.vplan.app.data.source.database.model.database.DbGroupAlias
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherAlias
-import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Teacher
-import plus.vplan.app.domain.repository.IndiwareBaseData
 
 data class EmbeddedTeacher(
     @Embedded val teacher: DbTeacher,

@@ -9,23 +9,23 @@ import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.domain.repository.Sp24CredentialsState
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
-import plus.vplan.lib.sp24.source.IndiwareClient
+import plus.vplan.lib.sp24.source.Stundenplan24Client
 
 class OnboardingRepositoryImpl: OnboardingRepository {
 
     private var onboardingSp24State: MutableStateFlow<OnboardingSp24State?> = MutableStateFlow(null)
-    private var indiwareClient: IndiwareClient? = null
+    private var stundenplan24Client: Stundenplan24Client? = null
 
     override suspend fun reset() {
         onboardingSp24State.value = null
     }
 
-    override fun setSp24Client(indiwareClient: IndiwareClient) {
-        this.indiwareClient = indiwareClient
+    override fun setSp24Client(stundenplan24Client: Stundenplan24Client) {
+        this.stundenplan24Client = stundenplan24Client
     }
 
-    override fun getSp24Client(): IndiwareClient? {
-        return indiwareClient
+    override fun getSp24Client(): Stundenplan24Client? {
+        return stundenplan24Client
     }
 
     override suspend fun startSp24Onboarding(sp24Id: Int) {

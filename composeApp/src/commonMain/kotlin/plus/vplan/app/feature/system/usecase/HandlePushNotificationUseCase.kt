@@ -11,8 +11,8 @@ import plus.vplan.app.capture
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 
 class HandlePushNotificationUseCase(
     private val schoolRepository: SchoolRepository,

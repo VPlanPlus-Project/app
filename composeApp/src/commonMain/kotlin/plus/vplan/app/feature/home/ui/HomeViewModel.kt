@@ -32,9 +32,9 @@ import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetNewsUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateHolidaysUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.sortedBySuspending

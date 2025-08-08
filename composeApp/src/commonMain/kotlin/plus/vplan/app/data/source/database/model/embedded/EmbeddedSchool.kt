@@ -5,7 +5,7 @@ import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
-import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
+import plus.vplan.app.data.source.database.model.database.DbSchoolSp24Acess
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.model.School
 
@@ -14,8 +14,8 @@ data class EmbeddedSchool(
     @Relation(
         parentColumn = "id",
         entityColumn = "school_id",
-        entity = DbSchoolIndiwareAccess::class
-    ) val sp24SchoolDetails: DbSchoolIndiwareAccess?,
+        entity = DbSchoolSp24Acess::class
+    ) val sp24SchoolDetails: DbSchoolSp24Acess?,
     @Relation(
         parentColumn = "id",
         entityColumn = "school_id",
