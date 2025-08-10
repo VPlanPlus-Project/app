@@ -94,7 +94,7 @@ fun ColumnScope.SearchResults(
                                             textAlign = TextAlign.Center
                                         )
                                         Text(
-                                            text = "Du kannst dennoch die Stundenplan24.de-Schulnummer verwende, um eine neue Schule hinzuzufügen.",
+                                            text = "Du kannst dennoch die Stundenplan24.de-Schulnummer verwenden, um eine neue Schule hinzuzufügen.",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurface,
                                             textAlign = TextAlign.Center
