@@ -15,6 +15,7 @@ import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
 import plus.vplan.app.feature.profile.domain.usecase.UpdateIndicesUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.GetCourseConfigurationUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileSubjectInstanceEnabledUseCase
+import plus.vplan.app.utils.filterKeysNotNull
 import kotlin.uuid.Uuid
 
 class ProfileSubjectInstanceViewModel(
@@ -45,7 +46,8 @@ class ProfileSubjectInstanceViewModel(
                     profile = profile,
                     courses = getCourseConfigurationUseCase(profile),
                     subjectInstance = profile.subjectInstanceConfiguration
-                        .mapKeys { (key, _) -> profile.subjectInstanceItems.first { it.id == key } }
+                        .mapKeys { (key, _) -> profile.subjectInstanceItems.firstOrNull { it.id == key } }
+                        .filterKeysNotNull()
                         .toList()
                         .sortedBy { runBlocking { it.first.subject + (it.first.getCourseItem()?.name ?: "") + (it.first.getTeacherItem()?.name ?: "") } }
                         .toMap()

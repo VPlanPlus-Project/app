@@ -9,6 +9,8 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
 import plus.vplan.app.data.source.database.converters.AliasPrefixConverter
 import plus.vplan.app.data.source.database.converters.CreationReasonConverter
 import plus.vplan.app.data.source.database.converters.InstantConverter
@@ -211,6 +213,11 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
             from = 1,
             to = 2,
             spec = VppDatabase.Migration1to2::class
+        ),
+        AutoMigration(
+            from = 2,
+            to = 3,
+            spec = VppDatabase.Migration2to3::class
         )
     ]
 )
@@ -261,7 +268,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 2
+        const val DATABASE_VERSION = 3
     }
 
     @RenameColumn(
@@ -272,6 +279,44 @@ abstract class VppDatabase : RoomDatabase() {
     @RenameTable(fromTableName = "school_indiware_access", toTableName = "school_sp24_access")
     @RenameTable(fromTableName = "indiware_timetable_metadata", toTableName = "stundenplan24_timetable_metadata")
     class Migration1to2 : AutoMigrationSpec
+
+    /**
+     * Remove not-null constraint for [DbDay]
+     */
+    class Migration2to3 : AutoMigrationSpec {
+        override fun onPostMigrate(connection: SQLiteConnection) {
+            connection.execSQL("""
+                CREATE TABLE day_dg_tmp
+                (
+                    id        TEXT NOT NULL
+                        PRIMARY KEY,
+                    date      TEXT NOT NULL,
+                    week_id   TEXT
+                        REFERENCES weeks
+                            ON UPDATE CASCADE ON DELETE CASCADE,
+                    school_id TEXT NOT NULL
+                        REFERENCES schools
+                            ON UPDATE CASCADE ON DELETE CASCADE,
+                    info      TEXT
+                );
+
+                INSERT INTO day_dg_tmp(id, date, week_id, school_id, info)
+                SELECT id, date, week_id, school_id, info
+                FROM day;
+
+                DROP TABLE day;
+
+                ALTER TABLE day_dg_tmp
+                    RENAME TO day;
+
+                CREATE INDEX index_day_school_id
+                    ON day (school_id);
+
+                CREATE INDEX index_day_week_id
+                    ON day (week_id);
+            """.trimIndent())
+        }
+    }
 }
 
 // Room compiler generates the `actual` implementations
