@@ -79,6 +79,10 @@ class HomeViewModel(
                         .onEach { time -> state = state.copy(currentTime = time) }
                         .collect { time ->
                             if (lastSpecialLessonUpdate until time < 5.seconds) return@collect
+
+                            val hasInterpolatedLessonTimes = state.day?.lessons?.first().orEmpty()
+                                .any { lesson -> lesson.lessonTime.getFirstValueOld()?.interpolated == true }
+
                             if (state.day?.date == time.date) {
                                 val currentLessons = state.day?.lessons?.first().orEmpty()
                                     .filter { lesson ->
@@ -127,7 +131,8 @@ class HomeViewModel(
                                 state = state.copy(
                                     currentLessons = currentLessons,
                                     nextLessons = nextLessons,
-                                    remainingLessons = remainingLessons
+                                    remainingLessons = remainingLessons,
+                                    hasInterpolatedLessonTimes = hasInterpolatedLessonTimes
                                 )
                                 lastSpecialLessonUpdate = time
                             } else {
@@ -141,7 +146,8 @@ class HomeViewModel(
                                             val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
                                             lessonTimeItem.start.toSecondOfDay().toString().padStart(6, '0') + "${subject}_${courseName}"
                                         }
-                                        .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }
+                                        .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber },
+                                    hasInterpolatedLessonTimes = hasInterpolatedLessonTimes
                                 )
                             }
                         }
@@ -190,6 +196,7 @@ data class HomeState(
 
     val news: List<News> = emptyList(),
 
+    val hasInterpolatedLessonTimes: Boolean = false,
     val currentLessons: List<CurrentLesson> = emptyList(),
     val nextLessons: List<Lesson> = emptyList(),
     val remainingLessons: Map<Int, List<Lesson>> = emptyMap()
