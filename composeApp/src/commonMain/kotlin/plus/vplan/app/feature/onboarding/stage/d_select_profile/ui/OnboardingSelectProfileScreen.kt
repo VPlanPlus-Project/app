@@ -109,7 +109,7 @@ private fun OnboardingSelectProfileScreen(
                                 .padding(bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) listHost@{
-                            val courses = (state.selectedProfile as? OnboardingProfile.StudentProfile)?.subjectInstances.orEmpty().mapNotNull { it.course }.toSet()
+                            val courses = (state.selectedProfile as? OnboardingProfile.StudentProfile)?.subjectInstances.orEmpty().mapNotNull { it.courseId }.toSet()
                                 .map { App.courseSource.getById(it).collectAsResultingFlow() }
                                 .mapNotNull { it.value }
                                 .sortedBy { it.name }
@@ -125,8 +125,8 @@ private fun OnboardingSelectProfileScreen(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         courses.forEach { course ->
-                                            val isCourseFullySelected = state.subjectInstances.filterKeys { it.course == course.id }.values.all { it }
-                                            val isCoursePartiallySelected = state.subjectInstances.filterKeys { it.course == course.id }.values.any { it }
+                                            val isCourseFullySelected = state.subjectInstances.filterKeys { it.courseId == course.id }.values.all { it }
+                                            val isCoursePartiallySelected = state.subjectInstances.filterKeys { it.courseId == course.id }.values.any { it }
                                             Row (
                                                 modifier = Modifier
                                                     .fillMaxWidth()
@@ -179,7 +179,7 @@ private fun OnboardingSelectProfileScreen(
                                 ) {
                                     state.subjectInstances
                                         .entries
-                                        .sortedBy { "${it.key.subject}_${it.key.course ?: ""}" }
+                                        .sortedBy { "${it.key.subject}_${it.key.courseId ?: ""}" }
                                         .forEach { (subjectInstance, enabled) ->
                                         Row (
                                             modifier = Modifier
@@ -208,8 +208,8 @@ private fun OnboardingSelectProfileScreen(
                                                         style = MaterialTheme.typography.titleSmall,
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
-                                                    if (subjectInstance.course == null) return@subjectAndCourse
-                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.course).collectAsLoadingState(subjectInstance.course.toString())
+                                                    if (subjectInstance.courseId == null) return@subjectAndCourse
+                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.courseId).collectAsLoadingState(subjectInstance.courseId.toString())
                                                     if (subjectInstanceState is AliasState.Done) Text(
                                                         text = (subjectInstanceState as AliasState.Done).data.name,
                                                         style = MaterialTheme.typography.bodySmall,

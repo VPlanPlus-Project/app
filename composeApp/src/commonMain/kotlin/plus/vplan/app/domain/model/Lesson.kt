@@ -117,7 +117,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
                 if (this is TimetableLesson) {
                     val subjectInstances = profile.subjectInstanceConfiguration.mapKeys { profile.getSubjectInstance(it.key) }
                     if (subjectInstances.filterValues { !it }.any { it.key.getCourseItem()?.name == this.subject }) return false
-                    if (subjectInstances.filterValues { !it }.any { it.key.course == null && it.key.subject == this.subject }) return false
+                    if (subjectInstances.filterValues { !it }.any { it.key.courseId == null && it.key.subject == this.subject }) return false
                     subjectInstances.isEmpty()
                 } else if (this is SubstitutionPlanLesson) {
                     if (this.subjectInstanceId != null && this.subjectInstanceId in profile.subjectInstanceConfiguration.filterValues { !it }) return false
