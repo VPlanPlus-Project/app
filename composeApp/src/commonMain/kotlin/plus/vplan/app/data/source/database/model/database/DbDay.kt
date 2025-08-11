@@ -35,7 +35,7 @@ import kotlin.uuid.Uuid
 data class DbDay(
     @ColumnInfo("id") val id: String,
     @ColumnInfo("date") val date: LocalDate,
-    @ColumnInfo("week_id") val weekId: String,
+    @ColumnInfo("week_id") val weekId: String?,
     @ColumnInfo("school_id") val schoolId: Uuid,
     @ColumnInfo("info") val info: String?,
 ) {

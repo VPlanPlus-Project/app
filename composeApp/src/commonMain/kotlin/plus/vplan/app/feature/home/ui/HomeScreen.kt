@@ -310,15 +310,26 @@ private fun HomeContent(
                             FeedTitle(
                                 icon = Res.drawable.chart_no_axes_gantt,
                                 title = if (isYourDayToday) "Dein Tag" else "Nächster Schultag",
-                                endText = state.day.date.format(LocalDate.Format {
-                                    dayOfWeek(longDayOfWeekNames)
-                                    chars(", ")
-                                    dayOfMonth()
-                                    chars(". ")
-                                    monthName(longMonthNames)
-                                    char(' ')
-                                    year()
-                                }) + "\n${week?.weekType ?: "Unbekannte"}-Woche (KW ${week?.calendarWeek}, SW ${week?.weekIndex})"
+                                endText = buildString {
+                                    append(state.day.date.format(LocalDate.Format {
+                                        dayOfWeek(longDayOfWeekNames)
+                                        chars(", ")
+                                        dayOfMonth()
+                                        chars(". ")
+                                        monthName(longMonthNames)
+                                        char(' ')
+                                        year()
+                                    }))
+                                    if (week != null) {
+                                        append("\n")
+                                        append(week.weekType)
+                                        append("-Woche (KW ")
+                                        append(week.calendarWeek)
+                                        append(", SW ")
+                                        append(week.weekIndex)
+                                        append(")")
+                                    }
+                                }
                             )
                             if (state.day.info != null) DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = state.day.info)
                             if (state.day.substitutionPlan.isEmpty()) InfoCard(
