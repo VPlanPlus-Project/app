@@ -23,10 +23,10 @@ data class Course(
             sp24SchoolId: String,
             name: String,
             classNames: Set<String>,
-            teacher: Teacher?
+            teacherName: String?
         ) = Alias(
             provider = AliasProvider.Sp24,
-            value = "$sp24SchoolId.$name+${teacher?.name ?: ""}+${classNames.sorted().joinToString("|")}",
+            value = "$sp24SchoolId.$name+${teacherName ?: ""}+${classNames.sorted().joinToString("|")}",
             version = 1
         )
     }
