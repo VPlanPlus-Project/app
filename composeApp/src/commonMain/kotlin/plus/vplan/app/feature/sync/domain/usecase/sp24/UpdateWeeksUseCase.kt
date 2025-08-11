@@ -25,7 +25,7 @@ class UpdateWeeksUseCase(
         val weeks = run {
             val weeks = client.week.getWeeks()
             if (weeks is plus.vplan.lib.sp24.source.Response.Error) {
-                LOGGER.e { "Failed to get weeks: ${weeks}" }
+                LOGGER.e { "Failed to get weeks: $weeks" }
                 return Response.Error.fromSp24KtError(weeks)
             }
             require(weeks is plus.vplan.lib.sp24.source.Response.Success)

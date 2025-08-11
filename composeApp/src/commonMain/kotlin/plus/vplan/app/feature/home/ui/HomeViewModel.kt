@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
@@ -159,7 +160,7 @@ class HomeViewModel(
             withContext(Dispatchers.IO) {
                 updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool)
                 updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, forceUpdate = false)
-                updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, listOfNotNull(state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date), allowNotification = false)
+                updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, setOfNotNull(LocalDate.now(), state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date).sorted(), allowNotification = false)
             }
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }

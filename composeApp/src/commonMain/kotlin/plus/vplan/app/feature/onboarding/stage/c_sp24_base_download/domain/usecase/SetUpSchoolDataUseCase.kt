@@ -107,11 +107,7 @@ class SetUpSchoolDataUseCase(
 
             val classes = (client.getAllClassesIntelligent() as? plus.vplan.lib.sp24.source.Response.Success)?.data
             val classIds = classes.orEmpty().associateWith { group ->
-                Alias(
-                    provider = AliasProvider.Sp24,
-                    value = Group.buildSp24Alias(school.sp24Id.toInt(), group.name),
-                    version = 1
-                )
+                Group.buildSp24Alias(school.sp24Id.toInt(), group.name)
             }.map { (group, aliases) ->
                 groupRepository.upsert(GroupDbDto(
                     schoolId = schoolId,

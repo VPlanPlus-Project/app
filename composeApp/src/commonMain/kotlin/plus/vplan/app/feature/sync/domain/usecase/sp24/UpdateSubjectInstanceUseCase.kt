@@ -86,19 +86,11 @@ class UpdateSubjectInstanceUseCase(
                     teacher = teacher
                 )
             }
-            .filterValues {
-                courseRepository.resolveAliasToLocalId(
-                    Alias(
-                        provider = AliasProvider.Sp24,
-                        it,
-                        1
-                    )
-                ) == null
-            }
+            .filterValues { aliasValue -> courseRepository.resolveAliasToLocalId(aliasValue) == null }
 
         downloadedCourses.let {
             val downloadedCoursesToDelete = existingCourses
-                .filter { existingCourse -> downloadedCourseEntities.values.none { it == existingCourse.aliases.firstOrNull { alias -> alias.provider == AliasProvider.Sp24 }?.value } }
+                .filter { existingCourse -> downloadedCourseEntities.values.none { it == existingCourse.aliases.firstOrNull { alias -> alias.provider == AliasProvider.Sp24 } } }
             LOGGER.d { "Delete ${downloadedCoursesToDelete.size} courses" }
             courseRepository.deleteById(downloadedCoursesToDelete.map { it.id })
         }
@@ -115,7 +107,7 @@ class UpdateSubjectInstanceUseCase(
                     groups = course.classes.mapNotNull { groups.firstOrNull { group -> group.name == it } }
                         .map { it.id },
                     teacher = teacher?.id,
-                    aliases = listOf(Alias(AliasProvider.Sp24, sp24Alias, 1))
+                    aliases = listOf(sp24Alias)
                 )
             }
             .forEach { courseRepository.upsert(it) }
@@ -129,17 +121,20 @@ class UpdateSubjectInstanceUseCase(
         groups: List<Group>
     ): Boolean {
         val sp24SchoolId = client.authentication.sp24SchoolId
-        val downloadedSubjectInstances =
-            (client.subjectInstances.getSubjectInstances() as? plus.vplan.lib.sp24.source.Response.Success)
-                ?: return false
+        val downloadedSubjectInstances = ((client.subjectInstances.getSubjectInstances() as? plus.vplan.lib.sp24.source.Response.Success) ?: return false).let {
+            it.data.subjectInstances.map { si -> DownloadedSubjectInstance(si, SubjectInstance.buildSp24Alias(sp24SchoolId.toInt(), si.id)) }
+        }
 
-        val downloadedSubjectEntities = downloadedSubjectInstances.data.subjectInstances
-            .map { DownloadedSubjectInstance(it, SubjectInstance.buildSp24Alias(sp24SchoolId.toInt(), it.id)) }
-            .filter { subjectInstanceRepository.resolveAliasToLocalId(Alias(AliasProvider.Sp24, it.sp24Alias, 1)) == null }
+        val downloadedSubjectEntities = downloadedSubjectInstances.filter { subjectInstanceRepository.resolveAliasToLocalId(it.sp24Alias) == null }
 
         downloadedSubjectInstances.let {
             val downloadedSubjectInstancesToDelete = existingSubjectInstances
-                .filter { existingSubjectInstance -> downloadedSubjectEntities.none { it.sp24Alias == existingSubjectInstance.aliases.firstOrNull { alias -> alias.provider == AliasProvider.Sp24 }?.value } }
+                .filter { existingSubjectInstance ->
+                    val existingAlias = existingSubjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Sp24 } ?: return@filter false
+                    val downloadedAlias = downloadedSubjectEntities.firstOrNull { it.sp24Alias.hashCode() == existingAlias.hashCode() } ?: return@filter false
+                    Logger.d { "Checking $existingAlias, $downloadedAlias" }
+                    return@filter true
+                }
             LOGGER.d { "Delete ${downloadedSubjectInstancesToDelete.size} default lessons" }
             subjectInstanceRepository.deleteById(downloadedSubjectInstancesToDelete.map { it.id })
         }
@@ -150,9 +145,7 @@ class UpdateSubjectInstanceUseCase(
         updatedSubjectInstances
             .mapNotNull { (subjectInstance, sp24Alias) ->
                 val firstGroup = subjectInstance.classes.firstNotNullOfOrNull { groupName ->
-                    val id = groupRepository.resolveAliasToLocalId(
-                        Alias(AliasProvider.Sp24, Group.buildSp24Alias(sp24SchoolId.toInt(), groupName), 1)
-                    ) ?: return@firstNotNullOfOrNull null
+                    val id = groupRepository.resolveAliasToLocalId(Group.buildSp24Alias(sp24SchoolId.toInt(), groupName)) ?: return@firstNotNullOfOrNull null
                     groupRepository.getByLocalId(id).first()
                 } ?: return@mapNotNull null
 
@@ -163,7 +156,7 @@ class UpdateSubjectInstanceUseCase(
                     teacher = subjectInstance.teacher?.let { teachers.firstOrNull { teacher -> teacher.name == subjectInstance.teacher }?.id },
                     groups = groups.filter { group -> group.name in subjectInstance.classes }
                         .map { it.id },
-                    aliases = listOf(Alias(AliasProvider.Sp24, sp24Alias, 1))
+                    aliases = listOf(sp24Alias)
                 )
             }.forEach { subjectInstanceRepository.upsert(it) }
         return true
@@ -172,5 +165,5 @@ class UpdateSubjectInstanceUseCase(
 
 private data class DownloadedSubjectInstance(
     val subjectInstance: SubjectInstanceResponse.SubjectInstance,
-    val sp24Alias: String
+    val sp24Alias: Alias
 )
