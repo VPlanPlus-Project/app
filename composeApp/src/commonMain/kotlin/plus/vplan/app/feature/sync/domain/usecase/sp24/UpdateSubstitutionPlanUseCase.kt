@@ -185,7 +185,13 @@ class UpdateSubstitutionPlanUseCase(
 
                     val newDay = App.daySource.getById("${sp24School.id}/$date", profile).getFirstValueOld()
 
-                    val changedLessons = changedOrNewLessons.filter { it.isRelevantForProfile(profile) }
+                    val changedLessons = changedOrNewLessons
+                        .filter { it.isRelevantForProfile(profile) }
+                        .associateWith { it.lessonTime.getFirstValueOld()?.lessonNumber }
+                        .toList()
+                        .sortedBy { it.second }
+                        .map { it.first }
+
                     if (changedLessons.isNotEmpty()) {
                         Logger.d { "Sending notification for ${profile.name} with changed lessons: $changedLessons" }
                         platformNotificationRepository.sendNotification(
