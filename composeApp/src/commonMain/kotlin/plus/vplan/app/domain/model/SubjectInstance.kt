@@ -11,7 +11,7 @@ import kotlin.uuid.Uuid
 data class SubjectInstance(
     override val id: Uuid,
     val subject: String,
-    val course: Uuid?,
+    val courseId: Uuid?,
     val teacher: Uuid?,
     val groups: List<Uuid>,
     val cachedAt: Instant,
@@ -29,8 +29,13 @@ data class SubjectInstance(
         private set
 
     suspend fun getCourseItem(): Course? {
-        if (course == null) return null
-        return courseItem ?: App.courseSource.getById(course).getFirstValue().also { courseItem = it }
+        if (courseId == null) return null
+        return courseItem ?: App.courseSource.getById(courseId).getFirstValue().also { courseItem = it }
+    }
+
+    val course by lazy {
+        if (courseId == null) null
+        else App.courseSource.getById(courseId)
     }
 
     suspend fun getTeacherItem(): Teacher? {

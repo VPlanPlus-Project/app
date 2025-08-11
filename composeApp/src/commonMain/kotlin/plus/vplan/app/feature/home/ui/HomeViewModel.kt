@@ -93,6 +93,7 @@ class HomeViewModel(
                                             }
                                         )
                                     }
+                                    .sortedBySuspending { it.lesson.subject + it.lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name }
 
                                 val nextLessons = state.day?.lessons?.first().orEmpty()
                                     .filter { lesson ->
@@ -116,7 +117,9 @@ class HomeViewModel(
                                     }
                                     .sortedBySuspending { lesson ->
                                         val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
-                                        lessonTimeItem.start
+                                        val subject = lesson.subject ?: ""
+                                        val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
+                                        lessonTimeItem.start.toSecondOfDay().toString().padStart(6, '0') + "${subject}_${courseName}"
                                     }
                                     .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }
 
@@ -126,13 +129,17 @@ class HomeViewModel(
                                     remainingLessons = remainingLessons
                                 )
                                 lastSpecialLessonUpdate = time
-                            }
-                            else {
+                            } else {
                                 state = state.copy(
                                     currentLessons = emptyList(),
                                     nextLessons = emptyList(),
                                     remainingLessons = state.day?.lessons?.first().orEmpty()
-                                        .sortedBySuspending { it.lessonTime.getFirstValueOld()!!.lessonNumber }
+                                        .sortedBySuspending { lesson ->
+                                            val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
+                                            val subject = lesson.subject ?: ""
+                                            val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
+                                            lessonTimeItem.start.toSecondOfDay().toString().padStart(6, '0') + "${subject}_${courseName}"
+                                        }
                                         .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }
                                 )
                             }

@@ -184,7 +184,7 @@ class SetUpSchoolDataUseCase(
                 val group = groupRepository.getByLocalId(classId).first()!!
                 val subjectInstances = subjectInstanceRepository.getByGroup(classId).first()
 
-                Logger.d { "${group.name}: ${subjectInstances.joinToString { "${it.subject} ${it.course}" }}" }
+                Logger.d { "${group.name}: ${subjectInstances.joinToString { "${it.subject} ${it.courseId}" }}" }
 
                 OnboardingProfile.StudentProfile(
                     name = group.name,
