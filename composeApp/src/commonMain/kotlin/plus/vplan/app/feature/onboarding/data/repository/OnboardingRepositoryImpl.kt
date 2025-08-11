@@ -15,9 +15,12 @@ class OnboardingRepositoryImpl: OnboardingRepository {
 
     private var onboardingSp24State: MutableStateFlow<OnboardingSp24State?> = MutableStateFlow(null)
     private var stundenplan24Client: Stundenplan24Client? = null
+    private var needToDownloadLessonData: Boolean = false
 
     override suspend fun reset() {
         onboardingSp24State.value = null
+        stundenplan24Client = null
+        needToDownloadLessonData = false
     }
 
     override fun setSp24Client(stundenplan24Client: Stundenplan24Client) {
@@ -74,5 +77,13 @@ class OnboardingRepositoryImpl: OnboardingRepository {
                 selectedItem = option
             )
         }
+    }
+
+    override suspend fun getNeedToDownloadLessonData(): Boolean {
+        return needToDownloadLessonData
+    }
+
+    override suspend fun setNeedToDownloadLessonData(needToDownload: Boolean) {
+        needToDownloadLessonData = needToDownload
     }
 }

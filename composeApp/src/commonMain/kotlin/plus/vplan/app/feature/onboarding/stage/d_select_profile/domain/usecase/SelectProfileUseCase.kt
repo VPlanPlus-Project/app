@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.usecase
 
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.capture
@@ -13,6 +14,7 @@ import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
+import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
@@ -27,7 +29,8 @@ class SelectProfileUseCase(
     private val keyValueRepository: KeyValueRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
-    private val sendSp24CredentialsToServerUseCase: SendSp24CredentialsToServerUseCase
+    private val sendSp24CredentialsToServerUseCase: SendSp24CredentialsToServerUseCase,
+    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase
 ) {
     suspend operator fun invoke(
         onboardingProfile: OnboardingProfile,
@@ -52,11 +55,17 @@ class SelectProfileUseCase(
 
         sendSp24CredentialsToServerUseCase()
 
-        (profile.getSchool().getFirstValue() as? School.AppSchool)?.let {
-            val client = onboardingRepository.getSp24Client()!!
-            updateTimetableUseCase(it, client, false)
-            updateSubstitutionPlanUseCase(it, listOf(LocalDate.now()), client, allowNotification = false)
+        if (onboardingRepository.getNeedToDownloadLessonData()) {
+            (profile.getSchool().getFirstValue() as? School.AppSchool)?.let {
+                val client = onboardingRepository.getSp24Client()!!
+                updateTimetableUseCase(it, client, false)
+                updateSubstitutionPlanUseCase(it, listOf(LocalDate.now()), client, allowNotification = false)
+            }
+        } else {
+            Logger.i { "Skipping lesson data download as it is not needed." }
         }
+
+        updateProfileLessonIndexUseCase(profile)
 
         FullSyncUseCase.isOnboardingRunning = false
     }

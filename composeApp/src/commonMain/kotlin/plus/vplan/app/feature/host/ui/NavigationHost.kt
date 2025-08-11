@@ -83,7 +83,7 @@ fun NavigationHost(task: StartTask?) {
 
     NavHost(
         navController = navigationHostController,
-        startDestination = if (state.hasProfileAtAppStartup == true) AppScreen.MainScreen else AppScreen.Onboarding(null)
+        startDestination = if (state.hasProfileAtAppStartup) AppScreen.MainScreen else AppScreen.Onboarding(null)
     ) {
         composable<AppScreen.Onboarding> { route ->
             val args = route.toRoute<AppScreen.Onboarding>()
