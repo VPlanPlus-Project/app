@@ -131,6 +131,15 @@ private fun DeveloperSettingsContent(
                 }
                 if (state.isSubjectInstanceUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
             }
+            Row {
+                Button(
+                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateLessonTimes) } },
+                    enabled = !state.isLessonTimesUpdateRunning
+                ) {
+                    Text("Update lesson times")
+                }
+                if (state.isLessonTimesUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = !state.isAutoSyncDisabled,

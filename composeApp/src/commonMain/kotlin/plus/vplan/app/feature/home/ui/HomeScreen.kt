@@ -102,6 +102,7 @@ import vplanplus.composeapp.generated.resources.arrow_right
 import vplanplus.composeapp.generated.resources.book_open
 import vplanplus.composeapp.generated.resources.chart_no_axes_gantt
 import vplanplus.composeapp.generated.resources.check
+import vplanplus.composeapp.generated.resources.clock_fading
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.key_round
 import vplanplus.composeapp.generated.resources.megaphone
@@ -555,7 +556,7 @@ private fun HomeContent(
                                                                         horizontalArrangement = Arrangement.spacedBy(3.dp)
                                                                     ) info@{
                                                                         Icon(
-                                                                            painter = painterResource(Res.drawable.triangle_alert),
+                                                                            painter = painterResource(Res.drawable.clock_fading),
                                                                             modifier = Modifier
                                                                                 .padding(end = 2.dp)
                                                                                 .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp()),
@@ -563,7 +564,7 @@ private fun HomeContent(
                                                                             tint = MaterialTheme.colorScheme.primary
                                                                         )
                                                                         Text(
-                                                                            text = "Diese Stundenzeit wurde automatisch anhand der vorherigen Stundenzeit generiert. Sie stimmt möglicherweise nicht mit der tatsächlichen Planung überein.",
+                                                                            text = "Stundenzeit fehlt und wurde automatisch berechnet. Kann von den tatsächlichen Zeiten abweichen.",
                                                                             style = MaterialTheme.typography.bodyMedium,
                                                                             color = MaterialTheme.colorScheme.primary
                                                                         )
@@ -792,6 +793,19 @@ private fun CurrentOrNextLesson(
                 )
                 Text(
                     text = currentLesson.info,
+                    style = bodyFont
+                )
+            }
+            if (lessonTime.interpolated) Row {
+                Icon(
+                    painter = painterResource(Res.drawable.clock_fading),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .size(bodyFont.lineHeight.toDp())
+                )
+                Text(
+                    text = "Stundenzeit fehlt und wurde automatisch berechnet. Kann von den tatsächlichen Zeiten abweichen.",
                     style = bodyFont
                 )
             }
