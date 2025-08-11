@@ -2,6 +2,7 @@ package plus.vplan.app.feature.settings.page.info.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import plus.vplan.app.BuildConfig
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.getByProvider
@@ -17,6 +18,11 @@ class GetFeedbackMetadataUseCase(
             val school = currentProfile.getSchool().getFirstValue()!!
             return@map FeedbackMetadata(
                 systemInfo,
+                appInfo = AppInfo(
+                    versionCode = BuildConfig.APP_VERSION_CODE,
+                    versionName = BuildConfig.APP_VERSION,
+                    buildType = if (BuildConfig.APP_DEBUG) "Debug" else "Release"
+                ),
                 profileInfo = FeedbackProfileInfo(
                     schoolId = school.aliases.getByProvider(AliasProvider.Vpp)?.value?.toIntOrNull(),
                     school = school.name,
@@ -31,10 +37,16 @@ class GetFeedbackMetadataUseCase(
 
 data class FeedbackMetadata(
     val deviceInfo: FeedbackDeviceInfo,
-    val profileInfo: FeedbackProfileInfo
+    val profileInfo: FeedbackProfileInfo,
+    val appInfo: AppInfo
 ) {
     override fun toString(): String {
         return """
+            ## App
+            VPlanPlus for ${deviceInfo.os}
+            Version: ${appInfo.versionName} (${appInfo.versionCode})
+            Build Type: ${appInfo.buildType}
+            
             ## Device
             OS: ${deviceInfo.os} ${deviceInfo.osVersion}
             Manufacturer: ${deviceInfo.manufacturer}
@@ -53,6 +65,12 @@ data class FeedbackDeviceInfo(
     val manufacturer: String,
     val device: String,
     val deviceName: String = device
+)
+
+data class AppInfo(
+    val versionCode: Int,
+    val versionName: String,
+    val buildType: String
 )
 
 data class FeedbackProfileInfo(
