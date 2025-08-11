@@ -5,6 +5,7 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.AliasedItem
 import kotlin.uuid.Uuid
 
@@ -27,6 +28,6 @@ data class Group(
     }
 
     companion object {
-        fun buildSp24Alias(sp24SchoolId: Int, groupName: String) = "$sp24SchoolId/$groupName"
+        fun buildSp24Alias(sp24SchoolId: Int, groupName: String) = Alias(AliasProvider.Sp24, "$sp24SchoolId/$groupName", 1)
     }
 }

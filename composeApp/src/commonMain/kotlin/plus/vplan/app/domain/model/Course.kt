@@ -4,6 +4,7 @@ import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.AliasedItem
 import kotlin.uuid.Uuid
 
@@ -22,8 +23,12 @@ data class Course(
             sp24SchoolId: String,
             name: String,
             classNames: Set<String>,
-            teacher: Teacher?
-        ) = "sp24.$sp24SchoolId.$name+${teacher?.name ?: ""}+${classNames.sorted().joinToString("|")}"
+            teacherName: String?
+        ) = Alias(
+            provider = AliasProvider.Sp24,
+            value = "$sp24SchoolId.$name+${teacherName ?: ""}+${classNames.sorted().joinToString("|")}",
+            version = 1
+        )
     }
 
     val teacher by lazy { teacherId?.let { App.teacherSource.getById(it) } }

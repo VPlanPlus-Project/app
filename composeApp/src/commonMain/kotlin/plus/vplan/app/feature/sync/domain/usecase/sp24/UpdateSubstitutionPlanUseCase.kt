@@ -24,11 +24,11 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -168,7 +168,7 @@ class UpdateSubstitutionPlanUseCase(
                 }
                 .mapKeys { it.key.id }
 
-            if (allowNotification) profileRepository.getAll().first()
+            if (allowNotification ||true) profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
                 .filter { it.getSchool().getFirstValue()?.id == sp24School.id }
                 .forEach forEachProfile@{ profile ->
@@ -178,14 +178,21 @@ class UpdateSubstitutionPlanUseCase(
                     if ((old + new).mapNotNull { it.lessonTime.getFirstValueOld()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachProfile
 
                     val oldLessons = old.map { it.getLessonSignature() }
-                    val changedOrNewLessons = new.filter { it.getLessonSignature() !in oldLessons }
+                    val newLessons = new.associateWith { it.getLessonSignature() }
+                    val changedOrNewLessons = newLessons.filter { (_, signature) -> signature !in oldLessons }.keys
                     if (changedOrNewLessons.isEmpty()) return@forEachProfile
 
                     Logger.d { "Sending notification for ${profile.name}" }
 
                     val newDay = App.daySource.getById("${sp24School.id}/$date", profile).getFirstValueOld()
 
-                    val changedLessons = changedOrNewLessons.filter { it.isRelevantForProfile(profile) }
+                    val changedLessons = changedOrNewLessons
+                        .filter { it.isRelevantForProfile(profile) }
+                        .associateWith { it.lessonTime.getFirstValueOld()?.lessonNumber }
+                        .toList()
+                        .sortedBy { it.second }
+                        .map { it.first }
+
                     if (changedLessons.isNotEmpty()) {
                         Logger.d { "Sending notification for ${profile.name} with changed lessons: $changedLessons" }
                         platformNotificationRepository.sendNotification(

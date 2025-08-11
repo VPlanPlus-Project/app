@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
@@ -93,6 +94,7 @@ class HomeViewModel(
                                             }
                                         )
                                     }
+                                    .sortedBySuspending { it.lesson.subject + it.lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name }
 
                                 val nextLessons = state.day?.lessons?.first().orEmpty()
                                     .filter { lesson ->
@@ -116,7 +118,9 @@ class HomeViewModel(
                                     }
                                     .sortedBySuspending { lesson ->
                                         val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
-                                        lessonTimeItem.start
+                                        val subject = lesson.subject ?: ""
+                                        val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
+                                        lessonTimeItem.start.toSecondOfDay().toString().padStart(6, '0') + "${subject}_${courseName}"
                                     }
                                     .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }
 
@@ -126,13 +130,17 @@ class HomeViewModel(
                                     remainingLessons = remainingLessons
                                 )
                                 lastSpecialLessonUpdate = time
-                            }
-                            else {
+                            } else {
                                 state = state.copy(
                                     currentLessons = emptyList(),
                                     nextLessons = emptyList(),
                                     remainingLessons = state.day?.lessons?.first().orEmpty()
-                                        .sortedBySuspending { it.lessonTime.getFirstValueOld()!!.lessonNumber }
+                                        .sortedBySuspending { lesson ->
+                                            val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
+                                            val subject = lesson.subject ?: ""
+                                            val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
+                                            lessonTimeItem.start.toSecondOfDay().toString().padStart(6, '0') + "${subject}_${courseName}"
+                                        }
                                         .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }
                                 )
                             }
@@ -159,7 +167,7 @@ class HomeViewModel(
             withContext(Dispatchers.IO) {
                 updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool)
                 updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, forceUpdate = false)
-                updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, listOfNotNull(state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date), allowNotification = false)
+                updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, setOfNotNull(LocalDate.now(), state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date).sorted(), allowNotification = false)
             }
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }

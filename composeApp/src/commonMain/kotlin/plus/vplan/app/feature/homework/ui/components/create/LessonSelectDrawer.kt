@@ -150,7 +150,7 @@ private fun LessonSelectContent(
                         Text(
                             text = buildString {
                                 append(subjectInstance.subject)
-                                if (subjectInstance.course != null) append(" (${subjectInstance.courseItem!!.name})")
+                                if (subjectInstance.courseId != null) append(" (${subjectInstance.courseItem!!.name})")
                             },
                             style = MaterialTheme.typography.titleSmall,
                             color = if (selectedSubjectInstance == subjectInstance) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,

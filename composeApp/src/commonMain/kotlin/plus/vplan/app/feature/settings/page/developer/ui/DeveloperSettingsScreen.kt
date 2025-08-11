@@ -113,6 +113,24 @@ private fun DeveloperSettingsContent(
                 }
                 if (state.isTimetableUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
             }
+            Row {
+                Button(
+                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateWeeks) } },
+                    enabled = !state.isWeekUpdateRunning,
+                ) {
+                    Text("Update weeks")
+                }
+                if (state.isWeekUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
+            }
+            Row {
+                Button(
+                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateSubjectInstances) } },
+                    enabled = !state.isSubjectInstanceUpdateRunning,
+                ) {
+                    Text("Update subject instances + courses")
+                }
+                if (state.isSubjectInstanceUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = !state.isAutoSyncDisabled,

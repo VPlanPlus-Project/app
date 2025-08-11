@@ -22,8 +22,10 @@ import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.utils.now
 
 class DeveloperSettingsViewModel(
@@ -35,6 +37,8 @@ class DeveloperSettingsViewModel(
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
+    private val updateWeeksUseCase: UpdateWeeksUseCase,
+    private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase
 ) : ViewModel() {
 
     var state by mutableStateOf(DeveloperSettingsState())
@@ -95,6 +99,21 @@ class DeveloperSettingsViewModel(
                     updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!!, forceUpdate = true)
                     state = state.copy(isTimetableUpdateRunning = false)
                 }
+                DeveloperSettingsEvent.UpdateWeeks -> {
+                    if (state.isWeekUpdateRunning) return@launch
+                    state = state.copy(isWeekUpdateRunning = true)
+                    updateWeeksUseCase(state.profile!!.getSchool().getFirstValue()!!)
+                    state = state.copy(isWeekUpdateRunning = false)
+                }
+                DeveloperSettingsEvent.UpdateSubjectInstances -> {
+                    if (state.isSubjectInstanceUpdateRunning) return@launch
+                    state = state.copy(isSubjectInstanceUpdateRunning = true)
+                    updateSubjectInstanceUseCase(
+                        state.profile!!.getSchool().getFirstValue()!!,
+                        null
+                    )
+                    state = state.copy(isSubjectInstanceUpdateRunning = false)
+                }
                 DeveloperSettingsEvent.ToggleAutoSyncDisabled -> {
                     keyValueRepository.set(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC, (!keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).first().toBoolean()).toString())
                 }
@@ -105,6 +124,8 @@ class DeveloperSettingsViewModel(
 
 data class DeveloperSettingsState(
     val isFullSyncRunning: Boolean = false,
+    val isWeekUpdateRunning: Boolean = false,
+    val isSubjectInstanceUpdateRunning: Boolean = false,
     val isSubstitutionPlanUpdateRunning: Boolean = false,
     val isTimetableUpdateRunning: Boolean = false,
     val profile: Profile? = null,
@@ -113,10 +134,12 @@ data class DeveloperSettingsState(
 )
 
 sealed class DeveloperSettingsEvent {
-    object StartFullSync : DeveloperSettingsEvent()
-    object ClearLessonCache : DeveloperSettingsEvent()
-    object UpdateSubstitutionPlan : DeveloperSettingsEvent()
-    object UpdateTimetable : DeveloperSettingsEvent()
+    data object StartFullSync : DeveloperSettingsEvent()
+    data object ClearLessonCache : DeveloperSettingsEvent()
+    data object UpdateSubstitutionPlan : DeveloperSettingsEvent()
+    data object UpdateTimetable : DeveloperSettingsEvent()
+    data object UpdateWeeks : DeveloperSettingsEvent()
+    data object UpdateSubjectInstances : DeveloperSettingsEvent()
     data object ToggleAutoSyncDisabled : DeveloperSettingsEvent()
     data object DeleteSubstitutionPlan : DeveloperSettingsEvent()
 }

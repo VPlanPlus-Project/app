@@ -3,7 +3,6 @@ package plus.vplan.app.di
 import android.content.Context
 import android.util.Log
 import androidx.room.Room
-import androidx.sqlite.driver.AndroidSQLiteDriver
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -31,7 +30,7 @@ actual val platformModule: Module = module(createdAtStart = true) {
                 if (LOG_DATABASE_QUERIES) builder.setQueryCallback({ sqlQuery, bindArgs ->
                     Log.d("RoomDatabase", "SQL: $sqlQuery | args: $bindArgs")
                 }, Executors.newSingleThreadExecutor())
-                else builder.setDriver(AndroidSQLiteDriver())
+                else builder
             }
             .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
             .fallbackToDestructiveMigration(true)
