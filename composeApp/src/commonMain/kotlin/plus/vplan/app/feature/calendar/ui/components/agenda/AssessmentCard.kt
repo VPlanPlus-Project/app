@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.collectAsLoadingState
+import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
@@ -52,8 +52,8 @@ fun AssessmentCard(
 
     val subject = assessment.subjectInstance.collectAsResultingFlow().value
     val createdBy by when (assessment.creator) {
-        is AppEntity.VppId -> assessment.creator.vppId.collectAsLoadingState("")
-        is AppEntity.Profile -> assessment.creator.profile.collectAsLoadingState("")
+        is AppEntity.VppId -> assessment.creator.vppId.collectAsLoadingStateOld("")
+        is AppEntity.Profile -> assessment.creator.profile.collectAsLoadingStateOld("")
     }
     var boxHeight by remember { mutableStateOf(0.dp) }
     Box(

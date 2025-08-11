@@ -6,6 +6,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.Holiday
+import kotlin.uuid.Uuid
 
 @Entity(
     tableName = "holidays",
@@ -26,7 +27,7 @@ import plus.vplan.app.domain.model.Holiday
 data class DbHoliday(
     @ColumnInfo(name = "id") val id: String,
     @ColumnInfo(name = "date") val date: LocalDate,
-    @ColumnInfo(name = "school_id") val schoolId: Int,
+    @ColumnInfo(name = "school_id") val schoolId: Uuid,
 ) {
     fun toModel(): Holiday {
         return Holiday(

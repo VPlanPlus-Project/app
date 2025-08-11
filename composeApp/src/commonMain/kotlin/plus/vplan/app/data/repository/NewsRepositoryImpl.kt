@@ -2,8 +2,11 @@ package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -14,7 +17,7 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.api
+import plus.vplan.app.appApi
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbNews
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsSchool
@@ -22,32 +25,38 @@ import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.News
-import plus.vplan.app.domain.model.SchoolApiAccess
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.NewsRepository
+import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.utils.sendAll
 
 class NewsRepositoryImpl(
     private val vppDatabase: VppDatabase,
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
+    private val schoolService: SchoolService
 ) : NewsRepository {
-    override suspend fun download(schoolApiAccess: SchoolApiAccess): Response<List<Int>> {
+    override suspend fun download(school: School.AppSchool): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url {
-                    protocol = api.protocol
-                    host = api.host
-                    port = api.port
-                    pathSegments = listOf("api", "v2.2", "school", schoolApiAccess.schoolId.toString(), "news")
-                }
-
-                schoolApiAccess.authentication(this)
+                url(URLBuilder(appApi).apply {
+                    appendPathSegments("app", "v1", "news")
+                    parameters.append("school_id", "sp24.${school.buildSp24AppAuthentication().sp24SchoolId}.1")
+                }.build())
+                school.buildSp24AppAuthentication().authentication(this)
             }
             if (response.status != HttpStatusCode.OK) return response.toErrorResponse<List<News>>()
 
             val data = ResponseDataWrapper.fromJson<List<NewsResponse>>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
+
+            data.map { it.schoolIds.map { school ->
+                schoolService.getSchoolFromAlias(Alias(provider = AliasProvider.Vpp, school.id.toString(), 1))
+            } }
 
             vppDatabase.newsDao.upsert(
                 news = data.map { DbNews(
@@ -63,8 +72,10 @@ class NewsRepositoryImpl(
                     isRead = vppDatabase.newsDao.getById(it.id).first()?.news?.isRead ?: false
                 ) },
                 schools = data.flatMap { news ->
-                    news.schoolIds.map {
-                        FKNewsSchool(newsId = news.id, schoolId = it.id)
+                    news.schoolIds.mapNotNull {
+                        FKNewsSchool(newsId = news.id, schoolId = schoolService.getSchoolFromAlias(
+                            Alias(AliasProvider.Vpp, it.id.toString(), 1)
+                        ).getFirstValue()?.id ?: return@mapNotNull null)
                     }
                 }
             )
@@ -100,7 +111,7 @@ class NewsRepositoryImpl(
 //                val school = vppDatabase.schoolDao.findById(accessData.schoolId).first()?.toModel()
 //                    .let {
 //                        if (it is School.IndiwareSchool && !it.credentialsValid) return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for room $id")))
-//                        it?.getSchoolApiAccess() ?: run {
+//                        it?.getVppSchoolAuthentication() ?: run {
 //                            vppDatabase.roomDao.deleteById(listOf(id))
 //                            return@channelFlow send(CacheState.Error(id.toString(), Response.Error.Other("no school for room $id")))
 //                        }

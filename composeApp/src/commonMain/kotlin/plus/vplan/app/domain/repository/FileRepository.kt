@@ -4,13 +4,13 @@ import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.repository.FileDownloadProgress
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.File
-import plus.vplan.app.domain.model.SchoolApiAccess
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.ui.common.AttachedFile
 
 interface FileRepository: WebEntityRepository<File> {
     suspend fun upsert(file: File)
-    fun cacheFile(file: File, schoolApiAccess: SchoolApiAccess): Flow<FileDownloadProgress>
+    fun cacheFile(file: File, schoolApiAccess: VppSchoolAuthentication): Flow<FileDownloadProgress>
     suspend fun uploadFile(
         vppId: VppId.Active,
         document: AttachedFile

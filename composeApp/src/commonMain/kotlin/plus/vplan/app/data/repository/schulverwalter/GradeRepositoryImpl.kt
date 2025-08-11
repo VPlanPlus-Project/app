@@ -3,7 +3,6 @@ package plus.vplan.app.data.repository.schulverwalter
 import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
-import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.URLProtocol
 import io.ktor.http.isSuccess
@@ -52,7 +51,7 @@ class GradeRepositoryImpl(
                         host = "beste.schule"
                         port = 443
                         pathSegments = listOf("api", "grades")
-                        parameter("include", "collection")
+                        parameters.append("include", "collection")
                     }
                     bearerAuth(accessToken.schulverwalterAccessToken)
                 }
@@ -89,7 +88,7 @@ class GradeRepositoryImpl(
                         host = "beste.schule"
                         port = 443
                         pathSegments = listOf("api", "grades")
-                        parameter("include", "collection")
+                        parameters.append("include", "collection")
                     }
                     bearerAuth(accessToken.schulverwalterAccessToken)
                 }

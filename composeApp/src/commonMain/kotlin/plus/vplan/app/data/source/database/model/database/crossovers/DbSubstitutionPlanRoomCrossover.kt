@@ -33,6 +33,6 @@ import kotlin.uuid.Uuid
     ]
 )
 data class DbSubstitutionPlanRoomCrossover(
-    @ColumnInfo(name = "room_id") val roomId: Int,
+    @ColumnInfo(name = "room_id") val roomId: Uuid,
     @ColumnInfo(name = "substitution_plan_lesson_id") val substitutionPlanLessonId: Uuid
 )

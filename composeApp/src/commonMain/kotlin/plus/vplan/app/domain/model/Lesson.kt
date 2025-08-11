@@ -6,32 +6,31 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.data.Item
 import kotlin.uuid.Uuid
 
-sealed interface Lesson : Item<DataTag> {
-    val id: Uuid
+sealed interface Lesson : Item<Uuid, DataTag> {
     val week: String
     val subject: String?
-    val teacherIds: List<Int>
-    val roomIds: List<Int>?
-    val groupIds: List<Int>
-    val subjectInstanceId: Int?
+    val teacherIds: List<Uuid>
+    val roomIds: List<Uuid>?
+    val groupIds: List<Uuid>
+    val subjectInstanceId: Uuid?
     val lessonTimeId: String
 
     fun getLessonSignature(): String
 
-    override fun getEntityId(): String = this.id.toHexString()
     override val tags: Set<DataTag>
         get() = emptySet()
 
     val lessonTime: Flow<CacheState<LessonTime>>
-    val subjectInstance: Flow<CacheState<SubjectInstance>>?
-    val rooms: Flow<List<CacheState<Room>>>
-    val groups: Flow<List<CacheState<Group>>>
-    val teachers: Flow<List<CacheState<Teacher>>>
+    val subjectInstance: Flow<AliasState<SubjectInstance>>?
+    val rooms: Flow<List<AliasState<Room>>>
+    val groups: Flow<List<AliasState<Group>>>
+    val teachers: Flow<List<AliasState<Teacher>>>
 
     val isCancelled: Boolean
 
@@ -40,9 +39,9 @@ sealed interface Lesson : Item<DataTag> {
         val dayOfWeek: DayOfWeek,
         override val week: String,
         override val subject: String?,
-        override val teacherIds: List<Int>,
-        override val roomIds: List<Int>?,
-        override val groupIds: List<Int>,
+        override val teacherIds: List<Uuid>,
+        override val roomIds: List<Uuid>?,
+        override val groupIds: List<Uuid>,
         override val lessonTimeId: String,
         val weekType: String?
     ) : Lesson {
@@ -63,9 +62,9 @@ sealed interface Lesson : Item<DataTag> {
             dayOfWeek: DayOfWeek,
             week: String,
             subject: String?,
-            teachers: List<Int>,
-            rooms: List<Int>?,
-            groups: List<Int>,
+            teachers: List<Uuid>,
+            rooms: List<Uuid>?,
+            groups: List<Uuid>,
             lessonTime: String,
             weekType: String?
         ) : this(
@@ -87,12 +86,12 @@ sealed interface Lesson : Item<DataTag> {
         override val week: String,
         override val subject: String?,
         val isSubjectChanged: Boolean,
-        override val teacherIds: List<Int>,
+        override val teacherIds: List<Uuid>,
         val isTeacherChanged: Boolean,
-        override val roomIds: List<Int>,
+        override val roomIds: List<Uuid>,
         val isRoomChanged: Boolean,
-        override val groupIds: List<Int>,
-        override val subjectInstanceId: Int?,
+        override val groupIds: List<Uuid>,
+        override val subjectInstanceId: Uuid?,
         override val lessonTimeId: String,
         val info: String?
     ) : Lesson {
@@ -126,9 +125,6 @@ sealed interface Lesson : Item<DataTag> {
             }
             is Profile.TeacherProfile -> {
                 if (profile.teacher !in this.teacherIds) return false
-            }
-            is Profile.RoomProfile -> {
-                if (profile.room !in this.roomIds.orEmpty()) return false
             }
         }
         return true

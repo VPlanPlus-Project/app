@@ -30,6 +30,7 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
@@ -183,7 +184,7 @@ private fun getHeaderTextForTeacherOrGroupWithCurrentLessons(lessons: List<Lesso
     return if (roomIds.isEmpty()) "Aktuell keine Stunde"
     else {
         val rooms = roomIds.map { App.roomSource.getById(it) }.collectAsResultingFlow().value
-        val until = lessons.map { it.lessonTime }.collectAsResultingFlow().value.maxOfOrNull { it.end }
+        val until = lessons.map { it.lessonTime }.collectAsResultingFlowOld().value.maxOfOrNull { it.end }
         buildString {
             append("Momentan in ${rooms.map { it.name }.sorted().joinToString()}")
             if (until != null) append(" (bis $until)")

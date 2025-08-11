@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.collectAsLoadingState
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
@@ -150,7 +150,7 @@ private fun ProfileSubjectInstanceContent(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             val teacher = course.teacher?.collectAsLoadingState(course.teacherId.toString())?.value
-                            if (teacher is CacheState.Done) Text(
+                            if (teacher is AliasState.Done) Text(
                                 text = teacher.data.name,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,

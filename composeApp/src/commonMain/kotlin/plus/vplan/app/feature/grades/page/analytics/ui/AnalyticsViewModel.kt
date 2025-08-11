@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.model.schulverwalter.Interval
@@ -44,7 +44,7 @@ class AnalyticsViewModel(
                         state = state.copy(
                             grades = grades,
                             filteredGrades = emptyList(),
-                            availableSubjectFilters = grades.map { it.subject.getFirstValue()!! }.distinctBy { subject -> subject.id }.sortedBy { it.localId },
+                            availableSubjectFilters = grades.map { it.subject.getFirstValueOld()!! }.distinctBy { subject -> subject.id }.sortedBy { it.localId },
                             filteredSubjects = emptyList()
                         )
                         updateFiltered()
@@ -77,9 +77,9 @@ class AnalyticsViewModel(
     private suspend fun updateFiltered() {
         state = state.copy(filteredGrades = state.grades
             .filter { grade ->
-                state.filteredSubjects.any { grade.subject.getFirstValue()!!.id == it.id } || state.filteredSubjects.isEmpty()
+                state.filteredSubjects.any { grade.subject.getFirstValueOld()!!.id == it.id } || state.filteredSubjects.isEmpty()
             }
-            .filter { it.collection.getFirstValue()!!.intervalId in listOfNotNull(state.interval?.id, state.interval?.includedIntervalId) }
+            .filter { it.collection.getFirstValueOld()!!.intervalId in listOfNotNull(state.interval?.id, state.interval?.includedIntervalId) }
         )
         updateTimeDataPoints()
     }
@@ -91,7 +91,7 @@ class AnalyticsViewModel(
             AnalyticsTimeType.Average -> Unit
             AnalyticsTimeType.Value -> grades.forEach { grade ->
                 val value = grade.numericValue ?: return@forEach
-                dataPoints.add(AnalyticsTimeDataPoint(grade.givenAt, grade.subject.getFirstValue()!!.id, value.toDouble()))
+                dataPoints.add(AnalyticsTimeDataPoint(grade.givenAt, grade.subject.getFirstValueOld()!!.id, value.toDouble()))
             }
         }
         state = state.copy(timeDataPoints = dataPoints.sortedBy { it.date })

@@ -34,6 +34,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.cache.collectAsSingleFlow
+import plus.vplan.app.domain.cache.collectAsSingleFlowOld
 import plus.vplan.app.ui.components.FullscreenDrawer
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.utils.regularDateFormat

@@ -40,8 +40,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.collectAsLoadingState
+import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
@@ -65,14 +66,14 @@ fun HomeworkCard(
 ) {
     val localDensity = LocalDensity.current
 
-    val subject = homework.subjectInstance?.collectAsState(CacheState.Loading(""))?.value
+    val subject = homework.subjectInstance?.collectAsState(AliasState.Loading(""))?.value
     val createdBy by when (homework.creator) {
-        is AppEntity.VppId -> homework.creator.vppId.collectAsLoadingState("")
-        is AppEntity.Profile -> homework.creator.profile.collectAsLoadingState("")
+        is AppEntity.VppId -> homework.creator.vppId.collectAsLoadingStateOld("")
+        is AppEntity.Profile -> homework.creator.profile.collectAsLoadingStateOld("")
     }
     var boxHeight by remember { mutableStateOf(0.dp) }
     val tasks by homework.tasks.collectAsState(emptyList())
-    if (tasks.isEmpty() || subject is CacheState.Loading) return
+    if (tasks.isEmpty() || subject is AliasState.Loading) return
     Box(
         modifier = Modifier
             .padding(end = 8.dp)
@@ -87,7 +88,7 @@ fun HomeworkCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background((subject as? CacheState.Done<SubjectInstance>)?.data?.subject.subjectColor().getGroup().color)
+                .background((subject as? AliasState.Done<SubjectInstance>)?.data?.subject.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -117,7 +118,7 @@ fun HomeworkCard(
                         }
                     } else SubjectIcon(
                         modifier = Modifier.fillMaxSize(),
-                        subject = (subject as? CacheState.Done<SubjectInstance>)?.data?.subject
+                        subject = (subject as? AliasState.Done<SubjectInstance>)?.data?.subject
                     )
                 }
                 Spacer(Modifier.size(8.dp))
@@ -125,7 +126,7 @@ fun HomeworkCard(
                     Text(
                         text = buildString {
                             if (homework.subjectInstanceId != null) {
-                                append((subject as? CacheState.Done<SubjectInstance>)?.data?.subject ?: "Unbekanntes Fach")
+                                append((subject as? AliasState.Done<SubjectInstance>)?.data?.subject ?: "Unbekanntes Fach")
                                 append(": ")
                             }
                             append("Hausaufgabe")

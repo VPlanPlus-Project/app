@@ -1,8 +1,8 @@
 package plus.vplan.app.domain.source
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -35,7 +35,7 @@ class AssessmentSource(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getAll(): Flow<List<CacheState<Assessment>>> {
         return assessmentRepository.getAll().map { it.map { item -> item.id } }.flatMapLatest {
-            return@flatMapLatest if (it.isEmpty()) flowOf(emptyList())
+            if (it.isEmpty()) flowOf(emptyList())
             else combine(it.map { getById(it) }) { it.toList() }
         }
     }

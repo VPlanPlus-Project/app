@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.BuildConfig
@@ -13,6 +13,7 @@ import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.NewsRepository
+import plus.vplan.app.utils.now
 
 class GetNewsUseCase(
     private val newsRepository: NewsRepository
@@ -23,8 +24,8 @@ class GetNewsUseCase(
         return newsRepository.getAll().mapLatest {
             it.filter { news ->
                 (news.schoolIds.isEmpty() || school.id in news.schoolIds) &&
-                        news.dateFrom?.let { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date >= news.dateFrom.toLocalDateTime(TimeZone.currentSystemDefault()).date } ?: true &&
-                        news.dateTo?.let { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date <= news.dateTo.toLocalDateTime(TimeZone.currentSystemDefault()).date } ?: true &&
+                        LocalDate.now() >= news.dateFrom.toLocalDateTime(TimeZone.currentSystemDefault()).date &&
+                        LocalDate.now() <= news.dateTo.toLocalDateTime(TimeZone.currentSystemDefault()).date &&
                         news.versionFrom?.let { BuildConfig.APP_VERSION_CODE >= news.versionFrom } ?: true &&
                         news.versionTo?.let { BuildConfig.APP_VERSION_CODE <= news.versionTo } ?: true
             }

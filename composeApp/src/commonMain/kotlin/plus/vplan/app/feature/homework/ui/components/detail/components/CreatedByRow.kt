@@ -19,7 +19,7 @@ import plus.vplan.app.utils.toDp
 fun CreatedByRow(
     createdBy: AppEntity.VppId
 ) {
-    val vppId = createdBy.vppId.collectAsState(CacheState.Loading(createdBy.id.toString(), source = null)).value
+    val vppId = createdBy.vppId.collectAsState(CacheState.Loading(createdBy.id.toString())).value
     MetadataRow(
         key = {
             Text(
@@ -29,7 +29,7 @@ fun CreatedByRow(
         },
         value = {
             when (vppId) {
-                is CacheState.Loading -> if (vppId.source == CacheState.Loading.Source.Network) ShimmerLoader(modifier = Modifier
+                is CacheState.Loading -> ShimmerLoader(modifier = Modifier
                     .fillMaxWidth(.5f)
                     .height(tableValueStyle().lineHeight.toDp())
                     .clip(RoundedCornerShape(8.dp))

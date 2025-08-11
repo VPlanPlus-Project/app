@@ -19,7 +19,7 @@ class UpdateNewsUseCase(
             .mapNotNull { it.getSchool().getFirstValue() }
             .distinctBy { it.id }
             .forEach { school ->
-                val response = newsRepository.download(school.getSchoolApiAccess()!!)
+                val response = newsRepository.download(school)
                 if (response is Response.Success) {
                     downloadedNewsIds.addAll(response.data)
                 } else {

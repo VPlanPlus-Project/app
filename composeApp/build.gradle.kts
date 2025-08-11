@@ -5,8 +5,8 @@ import java.util.Base64
 import kotlin.text.Charsets
 
 object ApplicationConfig {
-    const val APP_VERSION_NAME = "0.1.49-production"
-    const val APP_VERSION_CODE = 92
+    const val APP_VERSION_NAME = "0.1.55-production"
+    const val APP_VERSION_CODE = 99
     var isDebug = false
 }
 
@@ -110,8 +110,7 @@ kotlin {
             implementation(libs.ktor.client.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
 
-            implementation(libs.xmlutil.core)
-            implementation(libs.xmlutil.serialization)
+            implementation(libs.vpp.sp24)
         }
 
         iosMain.dependencies {
@@ -132,12 +131,12 @@ android {
         }
     }
     namespace = "plus.vplan.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "plus.vplan.app"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = ApplicationConfig.APP_VERSION_CODE
         versionName = ApplicationConfig.APP_VERSION_NAME
     }
@@ -148,12 +147,15 @@ android {
     }
     buildTypes {
         getByName("debug") {
-            signingConfig = signingConfigs.findByName("default")
+            signingConfig = signingConfigs.getByName("debug")
             ApplicationConfig.isDebug = true
         }
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.findByName("default")
+            signingConfig = signingConfigs.findByName("default") ?: run {
+                println("No default signing config found, using debug signing config")
+                signingConfigs.getByName("debug")
+            }
         }
     }
     compileOptions {

@@ -18,7 +18,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import plus.vplan.app.App
 import plus.vplan.app.BuildConfig
-import plus.vplan.app.ENABLE_KTOR_LOGGING
+import plus.vplan.app.LOG_HTTP_REQUESTS
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DayRepositoryImpl
@@ -26,7 +26,7 @@ import plus.vplan.app.data.repository.FcmRepositoryImpl
 import plus.vplan.app.data.repository.FileRepositoryImpl
 import plus.vplan.app.data.repository.GroupRepositoryImpl
 import plus.vplan.app.data.repository.HomeworkRepositoryImpl
-import plus.vplan.app.data.repository.IndiwareRepositoryImpl
+import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
 import plus.vplan.app.data.repository.LessonTimeRepositoryImpl
 import plus.vplan.app.data.repository.NewsRepositoryImpl
@@ -39,6 +39,8 @@ import plus.vplan.app.data.repository.TeacherRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
+import plus.vplan.app.data.service.GroupServiceImpl
+import plus.vplan.app.data.service.SchoolServiceImpl
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.AssessmentRepository
@@ -48,7 +50,7 @@ import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.domain.repository.IndiwareRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.NewsRepository
@@ -61,6 +63,8 @@ import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.domain.service.GroupService
+import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
@@ -117,6 +121,8 @@ val appModule = module(createdAtStart = true) {
             install(ContentNegotiation) {
                 json(Json {
                     ignoreUnknownKeys = true
+                    classDiscriminator = "type"
+                    encodeDefaults = true
                 })
             }
 
@@ -128,7 +134,7 @@ val appModule = module(createdAtStart = true) {
                 }
             }
 
-            if (ENABLE_KTOR_LOGGING) install(Logging) {
+            if (LOG_HTTP_REQUESTS) install(Logging) {
                 logger = object : Logger {
                     override fun log(message: String) {
                         appLogger.i { message }
@@ -147,7 +153,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
     singleOf(::TeacherRepositoryImpl).bind<TeacherRepository>()
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
-    singleOf(::IndiwareRepositoryImpl).bind<IndiwareRepository>()
+    singleOf(::Stundenplan24RepositoryImpl).bind<Stundenplan24Repository>()
     singleOf(::CourseRepositoryImpl).bind<CourseRepository>()
     singleOf(::SubjectInstanceRepositoryImpl).bind<SubjectInstanceRepository>()
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
@@ -163,6 +169,9 @@ val appModule = module(createdAtStart = true) {
     singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
     singleOf(::NewsRepositoryImpl).bind<NewsRepository>()
     singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
+
+    singleOf(::SchoolServiceImpl).bind<SchoolService>()
+    singleOf(::GroupServiceImpl).bind<GroupService>()
 
     singleOf(::GetCurrentProfileUseCase)
 }

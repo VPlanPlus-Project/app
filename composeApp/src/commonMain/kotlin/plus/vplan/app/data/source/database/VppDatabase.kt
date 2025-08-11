@@ -3,12 +3,14 @@ package plus.vplan.app.data.source.database
 import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
-import androidx.room.DeleteColumn
 import androidx.room.RenameColumn
+import androidx.room.RenameTable
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
+import plus.vplan.app.data.source.database.converters.AliasPrefixConverter
+import plus.vplan.app.data.source.database.converters.CreationReasonConverter
 import plus.vplan.app.data.source.database.converters.InstantConverter
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
 import plus.vplan.app.data.source.database.converters.LocalDateTimeConverter
@@ -22,7 +24,6 @@ import plus.vplan.app.data.source.database.dao.FileDao
 import plus.vplan.app.data.source.database.dao.GroupDao
 import plus.vplan.app.data.source.database.dao.HolidayDao
 import plus.vplan.app.data.source.database.dao.HomeworkDao
-import plus.vplan.app.data.source.database.dao.IndiwareDao
 import plus.vplan.app.data.source.database.dao.KeyValueDao
 import plus.vplan.app.data.source.database.dao.LessonTimeDao
 import plus.vplan.app.data.source.database.dao.NewsDao
@@ -30,6 +31,7 @@ import plus.vplan.app.data.source.database.dao.ProfileDao
 import plus.vplan.app.data.source.database.dao.ProfileTimetableCacheDao
 import plus.vplan.app.data.source.database.dao.RoomDao
 import plus.vplan.app.data.source.database.dao.SchoolDao
+import plus.vplan.app.data.source.database.dao.Stundenplan24Dao
 import plus.vplan.app.data.source.database.dao.SubjectInstanceDao
 import plus.vplan.app.data.source.database.dao.SubstitutionPlanDao
 import plus.vplan.app.data.source.database.dao.TeacherDao
@@ -44,17 +46,18 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.SubjectDao
 import plus.vplan.app.data.source.database.dao.schulverwalter.YearDao
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.DbCourse
+import plus.vplan.app.data.source.database.model.database.DbCourseAlias
 import plus.vplan.app.data.source.database.model.database.DbDay
 import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.database.model.database.DbGroup
+import plus.vplan.app.data.source.database.model.database.DbGroupAlias
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbHoliday
 import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
-import plus.vplan.app.data.source.database.model.database.DbIndiwareTimetableMetadata
 import plus.vplan.app.data.source.database.model.database.DbKeyValue
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbNews
@@ -64,9 +67,11 @@ import plus.vplan.app.data.source.database.model.database.DbProfileHomeworkIndex
 import plus.vplan.app.data.source.database.model.database.DbProfileSubstitutionPlanCache
 import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
 import plus.vplan.app.data.source.database.model.database.DbRoom
+import plus.vplan.app.data.source.database.model.database.DbRoomAlias
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbSchool
-import plus.vplan.app.data.source.database.model.database.DbSchoolIndiwareAccess
+import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
+import plus.vplan.app.data.source.database.model.database.DbSchoolSp24Acess
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterCollection
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterFinalGrade
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterGrade
@@ -74,9 +79,12 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterv
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
+import plus.vplan.app.data.source.database.model.database.DbStundenplan24TimetableMetadata
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
+import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.DbTeacher
+import plus.vplan.app.data.source.database.model.database.DbTeacherAlias
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.DbVppId
@@ -95,7 +103,6 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessme
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsSchool
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchoolGroup
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterCollection
@@ -109,12 +116,18 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
 @Database(
     entities = [
         DbSchool::class,
-        DbSchoolIndiwareAccess::class,
-        DbIndiwareTimetableMetadata::class,
+        DbSchoolAlias::class,
+        DbSchoolSp24Acess::class,
+        DbStundenplan24TimetableMetadata::class,
 
         DbGroup::class,
+        DbGroupAlias::class,
+
         DbTeacher::class,
+        DbTeacherAlias::class,
+
         DbRoom::class,
+        DbRoomAlias::class,
 
         DbProfile::class,
         DbGroupProfile::class,
@@ -126,8 +139,12 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         DbProfileHomeworkIndex::class,
 
         DbSubjectInstance::class,
+        DbSubjectInstanceAlias::class,
         FKSubjectInstanceGroup::class,
+
         DbCourse::class,
+        DbCourseAlias::class,
+
         DbCourseGroupCrossover::class,
 
         DbKeyValue::class,
@@ -162,8 +179,6 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
 
         DbFile::class,
 
-        FKSchoolGroup::class,
-
         DbAssessment::class,
         FKAssessmentFile::class,
 
@@ -190,15 +205,14 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         FKNewsSchool::class,
     ],
     version = VppDatabase.DATABASE_VERSION,
+    exportSchema = true,
     autoMigrations = [
-        AutoMigration(from = 1, to = 2),
-        AutoMigration(from = 2, to = 3, spec = VppDatabase.Migration3::class),
-        AutoMigration(from = 3, to = 4),
-        AutoMigration(from = 4, to = 5, spec = VppDatabase.Migration5::class), // Delete version column of substitution plan lesson
-        AutoMigration(from = 5, to = 6, spec = VppDatabase.Migration6::class), // Delete version column of timetable lesson
-        AutoMigration(from = 6, to = 7) // Add fcm log
-    ],
-    exportSchema = true
+        AutoMigration(
+            from = 1,
+            to = 2,
+            spec = VppDatabase.Migration1to2::class
+        )
+    ]
 )
 @TypeConverters(
     value = [
@@ -206,7 +220,9 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         LocalDateConverter::class,
         LocalTimeConverter::class,
         LocalDateTimeConverter::class,
-        InstantConverter::class
+        InstantConverter::class,
+        AliasPrefixConverter::class,
+        CreationReasonConverter::class
     ]
 )
 @ConstructedBy(VppDatabaseConstructor::class)
@@ -222,7 +238,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val weekDao: WeekDao
     abstract val lessonTimeDao: LessonTimeDao
     abstract val timetableDao: TimetableDao
-    abstract val indiwareDao: IndiwareDao
+    abstract val stundenplan24Dao: Stundenplan24Dao
     abstract val dayDao: DayDao
     abstract val holidayDao: HolidayDao
     abstract val substitutionPlanDao: SubstitutionPlanDao
@@ -245,21 +261,25 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 7
+        const val DATABASE_VERSION = 2
     }
 
-    @RenameColumn(tableName = "assessments", fromColumnName = "subject_instance_ids", toColumnName = "subject_instance_id")
-    class Migration3 : AutoMigrationSpec
-
-    @DeleteColumn(tableName = "substitution_plan_lesson", columnName = "version")
-    class Migration5 : AutoMigrationSpec
-
-    @DeleteColumn(tableName = "timetable_lessons", columnName = "version")
-    class Migration6 : AutoMigrationSpec
+    @RenameColumn(
+        tableName = "indiware_timetable_metadata",
+        fromColumnName = "indiware_school_id",
+        toColumnName = "stundenplan24_school_id"
+    )
+    @RenameTable(fromTableName = "school_indiware_access", toTableName = "school_sp24_access")
+    @RenameTable(fromTableName = "indiware_timetable_metadata", toTableName = "stundenplan24_timetable_metadata")
+    class Migration1to2 : AutoMigrationSpec
 }
 
 // Room compiler generates the `actual` implementations
-@Suppress("NO_ACTUAL_FOR_EXPECT", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "KotlinNoActualForExpect")
+@Suppress(
+    "NO_ACTUAL_FOR_EXPECT",
+    "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING",
+    "KotlinNoActualForExpect"
+)
 expect object VppDatabaseConstructor : RoomDatabaseConstructor<VppDatabase> {
     override fun initialize(): VppDatabase
 }

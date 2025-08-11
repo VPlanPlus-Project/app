@@ -57,10 +57,14 @@ import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.FullscreenDrawerContext
+import plus.vplan.app.ui.components.InfoCard
+import plus.vplan.app.ui.theme.CustomColor
+import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.toName
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.shapes
+import vplanplus.composeapp.generated.resources.triangle_alert
 
 @Composable
 fun FullscreenDrawerContext.NewAssessmentDrawerContent(
@@ -272,13 +276,25 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent(
             }
         }
 
+        InfoCard(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 8.dp)
+                .fillMaxWidth(),
+            imageVector = Res.drawable.triangle_alert,
+            title = "Temporär deaktiviert",
+            text = "Aktuell ist diese Funktion deaktiviert, da sie nicht kompatibel mit dem neuen System ist. Kurzfristige Änderungen zu Stundenplan24.de haben die Fertigstellung dieser Funktion zum Beginn des Schuljahres nicht mehr ermöglicht. Um die App dennoch anbieten zu können, wurde diese Funktion vorerst deaktiviert. Aktualisiere die App regelmäßig, die Funktion wird bald wieder verfügbar sein.",
+            backgroundColor = colors[CustomColor.Yellow]!!.getGroup().container,
+            textColor = colors[CustomColor.Yellow]!!.getGroup().onContainer,
+        )
+
         Button(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp),
             text = "Speichern",
             icon = Res.drawable.check,
-            state = if (state.savingState == UnoptimisticTaskState.InProgress) ButtonState.Loading else ButtonState.Enabled,
+            state = ButtonState.Disabled, //if (state.savingState == UnoptimisticTaskState.InProgress) ButtonState.Loading else ButtonState.Enabled,
             size = ButtonSize.Normal,
             onlyEventOnActive = true,
             onClick = { viewModel.onEvent(NewAssessmentEvent.Save) }

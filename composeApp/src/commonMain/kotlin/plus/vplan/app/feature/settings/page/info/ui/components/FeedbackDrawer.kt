@@ -55,7 +55,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.ui.components.Button
@@ -253,7 +253,7 @@ private fun FeedbackDrawerContent(
                         )
                     }
                 } else {
-                    val vppId = state.currentProfile.vppId?.collectAsResultingFlow()?.value
+                    val vppId = state.currentProfile.vppId?.collectAsResultingFlowOld()?.value
                     if (vppId != null) {
                         Row(
                             modifier = Modifier

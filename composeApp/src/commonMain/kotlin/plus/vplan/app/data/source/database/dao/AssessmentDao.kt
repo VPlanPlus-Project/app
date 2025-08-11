@@ -66,10 +66,12 @@ interface AssessmentDao {
     suspend fun deleteFileLinks(assessmentIds: List<Int>)
 
     @Transaction
+    @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM profile_assessment_index LEFT JOIN assessments ON profile_assessment_index.assessment_id = assessments.id WHERE profile_id = :profileId")
     fun getByProfile(profileId: Uuid): Flow<List<EmbeddedAssessment>>
 
     @Transaction
+    @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM profile_assessment_index LEFT JOIN assessments ON profile_assessment_index.assessment_id = assessments.id WHERE profile_id = :profileId AND assessments.date = :date")
     fun getByProfileAndDate(profileId: Uuid, date: LocalDate): Flow<List<EmbeddedAssessment>>
 

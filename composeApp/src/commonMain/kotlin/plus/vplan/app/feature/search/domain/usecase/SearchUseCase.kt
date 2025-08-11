@@ -15,6 +15,7 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
@@ -50,7 +51,7 @@ class SearchUseCase(
         launch {
             substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, searchRequest.date).collectLatest { substitutionPlanLessonIds ->
                 val lessons = substitutionPlanLessonIds
-                    .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
+                    .map { id -> App.substitutionPlanSource.getById(id).getFirstValueOld() }
                     .fastFilterNotNull()
                     .filter { lesson -> lesson.subject != null }
 

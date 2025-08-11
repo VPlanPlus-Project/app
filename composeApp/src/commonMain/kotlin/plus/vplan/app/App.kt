@@ -15,7 +15,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.koin.compose.KoinContext
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
@@ -54,17 +53,11 @@ data class Host(
     val url = "${protocol.name}://$host:$port"
 }
 
-val api = Host(
-    protocol = URLProtocol.HTTPS,
-    host = "vplan.plus",
-    port = 443
-)
+//const val appApi = "http://10.0.2.2:8002/api/app"
+const val appApi = "https://vplan.plus/api/app"
+//const val appApi = "https://vplan.plus/api/app"
 
-val sp24Service = Host(
-    protocol = URLProtocol.HTTPS,
-    host = "sp24.microservices.vplan.plus",
-    port = 443
-)
+const val api = "https://vplan.plus"
 
 val auth = Host(
     protocol = URLProtocol.HTTPS,
@@ -87,8 +80,6 @@ val VPP_ID_AUTH_URL = URLBuilder(
         append("device_name", getSystemInfo().let { "${it.manufacturer} ${it.deviceName} (${it.device})" })
     }
 ).build().toString()
-
-const val ENABLE_KTOR_LOGGING = false
 
 object App {
     lateinit var vppIdSource: VppIdSource
@@ -123,16 +114,14 @@ object App {
 @Preview
 fun App(task: StartTask?) {
     AppTheme(dynamicColor = false) {
-        KoinContext {
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    NavigationHost(task)
-                }
+                NavigationHost(task)
             }
         }
     }
@@ -145,7 +134,7 @@ sealed class StartTask(val profileId: Uuid? = null) {
     data class OpenUrl(val url: String): StartTask()
     sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
         class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
-        class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Int? = null): NavigateTo(profileId)
+        class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Uuid? = null): NavigateTo(profileId)
         class Grades(profileId: Uuid?, val vppId: Int): NavigateTo(profileId)
     }
 
@@ -200,7 +189,7 @@ data class StartTaskJson(
 
         @Serializable
         data class SchoolSettings(
-            @SerialName("open_indiware_settings_school_id") val openIndiwareSettingsSchoolId: Int? = null,
+            @SerialName("open_indiware_settings_school_id") val openIndiwareSettingsSchoolId: Uuid? = null,
         )
 
         @Serializable

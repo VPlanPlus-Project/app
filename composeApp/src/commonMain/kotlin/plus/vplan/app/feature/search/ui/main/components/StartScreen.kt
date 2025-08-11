@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
@@ -49,6 +50,7 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT
+import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.times
 import plus.vplan.app.utils.toDp
@@ -184,7 +186,7 @@ fun HomeworkCard(
                 )
                 Column(Modifier.padding(start = 4.dp)) {
                     Text(
-                        text = "Bis " + (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.untilRelativeText(homework.dueTo) ?: homework.dueTo.format(regularDateFormat)),
+                        text = "Bis " + (LocalDate.now().untilRelativeText(homework.dueTo) ?: homework.dueTo.format(regularDateFormat)),
                         style = MaterialTheme.typography.labelMedium
                     )
                     Text(
@@ -252,7 +254,7 @@ fun AssessmentCard(
                 }
                 Column(Modifier.padding(start = 4.dp)) {
                     Text(
-                        text = (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.untilRelativeText(assessment.date) ?: assessment.date.format(regularDateFormat)),
+                        text = (LocalDate.now().untilRelativeText(assessment.date) ?: assessment.date.format(regularDateFormat)),
                         style = MaterialTheme.typography.labelMedium
                     )
                     Text(

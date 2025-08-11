@@ -13,7 +13,6 @@ import co.touchlab.kermit.Logger
 import com.posthog.PostHog
 import io.github.vinceglb.filekit.core.FileKit
 import io.ktor.http.URLBuilder
-import plus.vplan.app.feature.onboarding.stage.migrate.a_read.ui.ImportScreenViewModel
 
 class MainActivity : FragmentActivity() {
 
@@ -61,11 +60,6 @@ class MainActivity : FragmentActivity() {
             if (intent.hasExtra("onClickData")) {
                 Logger.d { "Intent Task: ${intent.getStringExtra("onClickData")}" }
                 task = getTaskFromNotificationString(intent.getStringExtra("onClickData").orEmpty())
-            }
-
-            if (intent.hasExtra("migration_data")) {
-                Logger.d { "Intent Task: ${intent.getStringExtra("migration_data")}" }
-                ImportScreenViewModel.migrationText = intent.getStringExtra("migration_data")
             }
         }
 

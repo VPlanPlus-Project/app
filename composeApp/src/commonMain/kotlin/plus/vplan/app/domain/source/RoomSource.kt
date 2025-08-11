@@ -8,28 +8,29 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.repository.RoomRepository
+import kotlin.uuid.Uuid
 
 class RoomSource(
     private val roomRepository: RoomRepository
 ) {
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Room>>>()
-    private val cacheItems = hashMapOf<Int, CacheState<Room>>()
-    fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<Room>> {
+    private val flows = hashMapOf<Uuid, MutableSharedFlow<AliasState<Room>>>()
+    private val cacheItems = hashMapOf<Uuid, AliasState<Room>>()
+    fun getById(id: Uuid, forceReload: Boolean = false): Flow<AliasState<Room>> {
         if (forceReload) flows.remove(id)
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<Room>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+            val flow = MutableSharedFlow<AliasState<Room>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
-                roomRepository.getById(id, forceReload).collectLatest { flow.tryEmit(it) }
+                roomRepository.getByLocalId(id).collectLatest { flow.tryEmit(it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString())) }
             }
             flow
         }
     }
 
-    suspend fun getSingleById(id: Int): Room? {
-        return (cacheItems[id] as? CacheState.Done<Room>)?.data ?: getById(id).getFirstValue()
+    suspend fun getSingleById(id: Uuid): Room? {
+        return (cacheItems[id] as? AliasState.Done<Room>)?.data ?: getById(id).getFirstValue()
     }
 }

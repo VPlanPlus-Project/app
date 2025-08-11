@@ -6,6 +6,7 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbWeek
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.WeekRepository
+import kotlin.uuid.Uuid
 
 class WeekRepositoryImpl(
     private val vppDatabase: VppDatabase
@@ -28,7 +29,7 @@ class WeekRepositoryImpl(
         })
     }
 
-    override fun getBySchool(schoolId: Int): Flow<List<Week>> {
+    override fun getBySchool(schoolId: Uuid): Flow<List<Week>> {
         return vppDatabase.weekDao
             .getBySchool(schoolId).map { it.map { embeddedWeek -> embeddedWeek.toModel() } }
     }
@@ -37,7 +38,7 @@ class WeekRepositoryImpl(
         return vppDatabase.weekDao.getById(id).map { it?.toModel() }
     }
 
-    override suspend fun deleteBySchool(schoolId: Int) {
+    override suspend fun deleteBySchool(schoolId: Uuid) {
         vppDatabase.weekDao.deleteBySchool(schoolId)
     }
 

@@ -2,6 +2,7 @@ package plus.vplan.app.data.source.database.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
@@ -72,10 +73,12 @@ interface HomeworkDao {
     fun getByDate(date: LocalDate): Flow<List<EmbeddedHomework>>
 
     @Transaction
+    @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM profile_homework_index LEFT JOIN homework on homework.id = homework_id WHERE profile_id = :profileId")
     fun getByProfile(profileId: Uuid): Flow<List<EmbeddedHomework>>
 
     @Transaction
+    @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM profile_homework_index LEFT JOIN homework on homework.id = homework_id WHERE profile_id = :profileId AND homework.due_to = :date")
     fun getByProfileAndDate(profileId: Uuid, date: LocalDate): Flow<List<EmbeddedHomework>>
 
@@ -119,7 +122,7 @@ interface HomeworkDao {
     suspend fun upsertTaskDoneProfile(taskDoneProfile: DbHomeworkTaskDoneProfile)
 
     @Query("UPDATE homework SET subject_instance_id = :subjectInstanceId, group_id = :groupId WHERE id = :homeworkId")
-    suspend fun updateSubjectInstanceAndGroup(homeworkId: Int, subjectInstanceId: Int?, groupId: Int?)
+    suspend fun updateSubjectInstanceAndGroup(homeworkId: Int, subjectInstanceId: Int?, groupId: Uuid?)
 
     @Query("UPDATE homework SET due_to = :dueTo WHERE id = :homeworkId")
     suspend fun updateDueTo(homeworkId: Int, dueTo: LocalDate)

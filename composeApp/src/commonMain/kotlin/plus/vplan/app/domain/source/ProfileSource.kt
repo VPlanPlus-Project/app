@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.ProfileRepository
 import kotlin.uuid.Uuid
@@ -26,7 +26,7 @@ class ProfileSource(
 
     fun getAll(): Flow<List<CacheState<Profile>>> {
         return allProfilesFlow ?: run {
-            return@run channelFlow<List<CacheState<Profile>>> {
+            channelFlow {
                 profileRepository.getAll().map { it.map { it.id } }
                     .collectLatest {
                         if (it.isEmpty()) send(emptyList())
@@ -48,6 +48,6 @@ class ProfileSource(
     }
 
     suspend fun getSingleById(id: Uuid): Profile? {
-        return (cacheItems[id] as? CacheState.Done<Profile>)?.data ?: getById(id).getFirstValue()
+        return (cacheItems[id] as? CacheState.Done<Profile>)?.data ?: getById(id).getFirstValueOld()
     }
 }

@@ -15,6 +15,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Homework
@@ -31,6 +32,7 @@ import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetSubjectsUseCase
 import plus.vplan.app.feature.search.domain.usecase.SearchRequest
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
+import plus.vplan.app.utils.now
 
 class SearchViewModel(
     private val searchUseCase: SearchUseCase,
@@ -106,7 +108,7 @@ class SearchViewModel(
             state = state.copy(results = emptyMap())
             return
         }
-        val day = App.daySource.getById(Day.buildId(schoolId, state.query.date)).getFirstValue()
+        val day = App.daySource.getById(Day.buildId(schoolId, state.query.date)).getFirstValueOld()
         searchJob = viewModelScope.launch {
             state = state.copy(isLoading = true)
             searchUseCase(state.query).collectLatest {
@@ -124,7 +126,7 @@ data class SearchState(
     val homework: List<Homework> = emptyList(),
     val assessments: List<Assessment> = emptyList(),
     val currentProfile: Profile? = null,
-    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+    val currentTime: LocalDateTime = LocalDateTime.now(),
     val gradeLockState: GradeLockState = GradeLockState.NotConfigured,
     val subjects: List<String> = emptyList()
 ) {

@@ -1,11 +1,17 @@
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.model.Room
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.repository.base.AliasedItemRepository
+import kotlin.uuid.Uuid
 
-interface RoomRepository: WebEntityRepository<Room> {
-    fun getBySchool(schoolId: Int): Flow<List<Room>>
-    suspend fun getBySchoolWithCaching(school: School, forceReload: Boolean): Response<Flow<List<Room>>>
+interface RoomRepository: AliasedItemRepository<RoomDbDto, Room> {
+    fun getBySchool(schoolId: Uuid): Flow<List<Room>>
 }
+
+data class RoomDbDto(
+    val name: String,
+    val schoolId: Uuid,
+    val aliases: List<Alias>
+)

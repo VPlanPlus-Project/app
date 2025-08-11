@@ -1,38 +1,43 @@
 package plus.vplan.app.domain.repository
 
-import kotlinx.coroutines.flow.Flow
+import plus.vplan.app.domain.cache.CreationReason
+import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.repository.base.AliasedItemRepository
+import kotlin.uuid.Uuid
 
-interface SchoolRepository: WebEntityRepository<School> {
-    suspend fun fetchAllOnline(): Response<List<OnlineSchool>>
-    suspend fun getAll(): Flow<List<School>>
-
-    suspend fun getIdFromSp24Id(sp24Id: Int): Response<Int>
-
-    suspend fun setSp24Info(
-        school: School,
+interface SchoolRepository : AliasedItemRepository<SchoolDbDto, School> {
+    suspend fun downloadSchools(): Response<List<VppSchoolDto>>
+    suspend fun downloadById(identifier: String): Response<VppSchoolDto>
+    suspend fun setSp24Access(
+        schoolId: Uuid,
         sp24Id: Int,
         username: String,
         password: String,
         daysPerWeek: Int,
-        studentsHaveFullAccess: Boolean,
-        downloadMode: School.IndiwareSchool.SchoolDownloadMode
     )
+    suspend fun setSp24CredentialValidity(schoolId: Uuid, valid: Boolean)
 
-    suspend fun updateSp24Access(
-        school: School,
-        username: String,
-        password: String
-    )
-
-    suspend fun setIndiwareAccessValidState(school: School, valid: Boolean)
-
-    suspend fun deleteSchool(schoolId: Int)
+    suspend fun deleteSchool(schoolId: Uuid)
 }
 
-data class OnlineSchool(
+class SchoolDbDto(
+    val name: String,
+    val aliases: List<Alias>,
+    val creationReason: CreationReason
+) {
+    companion object {
+        fun fromModel(school: School, creationReason: CreationReason) = SchoolDbDto(
+            name = school.name,
+            aliases = school.aliases.toList(),
+            creationReason = creationReason
+        )
+    }
+}
+
+class VppSchoolDto(
     val id: Int,
     val name: String,
-    val sp24Id: Int?
+    val aliases: List<Alias>
 )

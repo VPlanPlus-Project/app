@@ -14,32 +14,31 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.domain.data.Item
 import kotlin.uuid.Uuid
 
 sealed class Homework(
     val creator: AppEntity
-) : Item<DataTag> {
+) : Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
-    abstract val id: Int
     abstract val createdAt: Instant
     abstract val dueTo: LocalDate
     abstract val taskIds: List<Int>
-    abstract val subjectInstanceId: Int?
+    abstract val subjectInstanceId: Uuid?
     abstract val files: List<Int>
-    override fun getEntityId(): String = this.id.toString()
     abstract val cachedAt: Instant
 
     val subjectInstance by lazy { this.subjectInstanceId?.let { App.subjectInstanceSource.getById(it) } }
     val tasks by lazy {
-        if (taskIds.isEmpty()) return@lazy flowOf(emptyList())
-        combine(taskIds.map { id -> App.homeworkTaskSource.getById(id).filterIsInstance<CacheState.Done<HomeworkTask>>().map { it.data } }) { it.toList() }
+        if (taskIds.isEmpty()) flowOf(emptyList())
+        else combine(taskIds.map { id -> App.homeworkTaskSource.getById(id).filterIsInstance<CacheState.Done<HomeworkTask>>().map { it.data } }) { it.toList() }
     }
 
-    abstract val group: Flow<CacheState<Group>>?
+    abstract val group: Flow<AliasState<Group>>?
 
     var taskItems: List<HomeworkTask>? = null
         private set
@@ -66,33 +65,31 @@ sealed class Homework(
     }
 
     data class HomeworkTask(
-        val id: Int,
+        override val id: Int,
         val content: String,
         val doneByProfiles: List<Uuid>,
         val doneByVppIds: List<Int>,
         val homework: Int,
         val cachedAt: Instant
-    ) : Item<DataTag> {
-        override fun getEntityId(): String = this.id.toString()
+    ) : Item<Int, DataTag> {
         override val tags: Set<DataTag> = emptySet()
 
         var homeworkItem: Homework? = null
             private set
 
         suspend fun getHomeworkItem(): Homework? {
-            return homeworkItem ?: App.homeworkSource.getById(homework).getFirstValue().also { homeworkItem = it }
+            return homeworkItem ?: App.homeworkSource.getById(homework).getFirstValueOld().also { homeworkItem = it }
         }
 
         fun isDone(profile: Profile.StudentProfile) = (profile.id in doneByProfiles && profile.vppIdId == null) || profile.vppIdId in doneByVppIds
     }
 
     data class HomeworkFile(
-        val id: Int,
+        override val id: Int,
         val name: String,
         val homework: Int,
         val size: Long,
-    ) : Item<DataTag> {
-        override fun getEntityId(): String = this.id.toString()
+    ) : Item<Int, DataTag> {
         override val tags: Set<DataTag> = emptySet()
     }
 
@@ -101,16 +98,16 @@ sealed class Homework(
         override val createdAt: Instant,
         override val dueTo: LocalDate,
         override val taskIds: List<Int>,
-        override val subjectInstanceId: Int?,
+        override val subjectInstanceId: Uuid?,
         override val files: List<Int>,
         override val cachedAt: Instant,
         val isPublic: Boolean,
-        val groupId: Int?,
+        val groupId: Uuid?,
         val createdBy: Int,
     ) : Homework(
         creator = AppEntity.VppId(createdBy)
     ) {
-        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, subjectInstance: Int?): Homework {
+        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, subjectInstance: Uuid?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
@@ -120,7 +117,7 @@ sealed class Homework(
             )
         }
 
-        override val group: Flow<CacheState<Group>>? = groupId?.let { App.groupSource.getById(groupId) }
+        override val group: Flow<AliasState<Group>>? = groupId?.let { App.groupSource.getById(groupId) }
 
         var createdByItem: VppId? = null
             private set
@@ -137,7 +134,7 @@ sealed class Homework(
         override val createdAt: Instant,
         override val dueTo: LocalDate,
         override val taskIds: List<Int>,
-        override val subjectInstanceId: Int?,
+        override val subjectInstanceId: Uuid?,
         override val files: List<Int>,
         override val cachedAt: Instant,
         val createdByProfile: Uuid
@@ -149,19 +146,19 @@ sealed class Homework(
 
         suspend fun getCreatedByProfile(): Profile.StudentProfile {
             return createdByProfileItem ?: createdByProfile.let { createdByProfileId ->
-                App.profileSource.getById(createdByProfileId).getFirstValue().let { it as Profile.StudentProfile }.also { createdByProfileItem = it }
+                App.profileSource.getById(createdByProfileId).getFirstValueOld().let { it as Profile.StudentProfile }.also { createdByProfileItem = it }
             }
         }
 
         @OptIn(ExperimentalCoroutinesApi::class)
-        override val group: Flow<CacheState<Group>> by lazy {
+        override val group: Flow<AliasState<Group>> by lazy {
             App.profileSource.getById(createdByProfile)
                 .filterIsInstance<CacheState.Done<Profile.StudentProfile>>()
                 .map { it.data }
                 .flatMapLatest { App.groupSource.getById(it.groupId) }
         }
 
-        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, subjectInstance: Int?): Homework {
+        override fun copyBase(createdAt: Instant, dueTo: LocalDate, tasks: List<Int>, subjectInstance: Uuid?): Homework {
             return this.copy(
                 createdAt = createdAt,
                 dueTo = dueTo,
@@ -175,7 +172,7 @@ sealed class Homework(
         createdAt: Instant = this.createdAt,
         dueTo: LocalDate = this.dueTo,
         tasks: List<Int> = this.taskIds,
-        subjectInstance: Int? = this.subjectInstanceId
+        subjectInstance: Uuid? = this.subjectInstanceId
     ): Homework
 }
 

@@ -44,10 +44,10 @@ interface ProfileDao {
     suspend fun upsertGroupProfileDisabledSubjectInstances(config: List<FKGroupProfileDisabledSubjectInstances>)
 
     @Query("INSERT OR REPLACE INTO fk_group_profile_disabled_subject_instances (profile_id, subject_instance_id) VALUES (:profileId, :subjectInstanceId)")
-    suspend fun insertDisabledSubjectInstances(profileId: Uuid, subjectInstanceId: Int)
+    suspend fun insertDisabledSubjectInstances(profileId: Uuid, subjectInstanceId: Uuid)
 
     @Query("DELETE FROM fk_group_profile_disabled_subject_instances WHERE subject_instance_id IN (:subjectInstanceIds) AND profile_id = :profileId")
-    suspend fun deleteDisabledSubjectInstances(profileId: Uuid, subjectInstanceIds: List<Int>)
+    suspend fun deleteDisabledSubjectInstances(profileId: Uuid, subjectInstanceIds: List<Uuid>)
 
     @Query("UPDATE profiles SET display_name = :displayName WHERE id = :id")
     suspend fun updateDisplayName(id: Uuid, displayName: String?)

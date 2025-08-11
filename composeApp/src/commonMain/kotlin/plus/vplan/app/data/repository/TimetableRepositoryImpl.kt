@@ -25,7 +25,7 @@ class TimetableRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : TimetableRepository {
 
-    override suspend fun upsertLessons(schoolId: Int, lessons: List<Lesson.TimetableLesson>, profiles: List<Profile.StudentProfile>) {
+    override suspend fun upsertLessons(schoolId: Uuid, lessons: List<Lesson.TimetableLesson>, profiles: List<Profile.StudentProfile>) {
         vppDatabase.timetableDao.replaceForSchool(
             schoolId = schoolId,
             lessons = lessons.map { lesson ->
@@ -89,7 +89,7 @@ class TimetableRepositoryImpl(
         vppDatabase.timetableDao.deleteAll()
     }
 
-    override suspend fun getTimetableForSchool(schoolId: Int): Flow<List<Lesson.TimetableLesson>> {
+    override suspend fun getTimetableForSchool(schoolId: Uuid): Flow<List<Lesson.TimetableLesson>> {
         return vppDatabase.timetableDao.getBySchool(schoolId).map { it.map { l -> l.toModel() } }
     }
 
@@ -98,7 +98,7 @@ class TimetableRepositoryImpl(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getForSchool(schoolId: Int, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
+    override fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
         return vppDatabase.timetableDao.getWeekIds(weekIndex).flatMapLatest { weeks ->
             if (weeks.isEmpty()) flowOf(emptySet())
             else vppDatabase.timetableDao.getBySchool(schoolId, weeks.last(), dayOfWeek).map { it.toSet() }.distinctUntilChanged()

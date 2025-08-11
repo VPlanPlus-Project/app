@@ -5,80 +5,70 @@ import io.ktor.client.request.basicAuth
 import io.ktor.client.request.bearerAuth
 import kotlinx.datetime.Instant
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.domain.data.AliasedItem
+import kotlin.uuid.Uuid
 
-sealed interface School: Item<DataTag> {
-    val id: Int
-    override fun getEntityId(): String = id.toString()
-    override val tags: Set<DataTag>
-        get() = emptySet()
+sealed class School(): AliasedItem<DataTag> {
 
-    val groups: List<Int>
+    abstract val name: String
+    abstract val cachedAt: Instant
+    override val tags: Set<DataTag> = emptySet()
 
-    val name: String
-    val cachedAt: Instant
-
-    fun getSchoolApiAccess(): SchoolApiAccess?
-
-    data class IndiwareSchool(
-        override val id: Int,
+    data class CachedSchool(
+        override val id: Uuid,
         override val name: String,
-        override val groups: List<Int>,
+        override val aliases: Set<Alias>,
         override val cachedAt: Instant,
+    ) : School()
+
+    data class AppSchool(
+        override val id: Uuid,
+        override val name: String,
+        override val aliases: Set<Alias>,
+        override val cachedAt: Instant,
+        val groupIds: List<Uuid>,
         val sp24Id: String,
         val username: String,
         val password: String,
         val daysPerWeek: Int = 5,
-        val studentsHaveFullAccess: Boolean = false,
-        val schoolDownloadMode: SchoolDownloadMode = SchoolDownloadMode.INDIWARE_WOCHENPLAN_6,
-        val credentialsValid: Boolean
-    ) : School {
-        enum class SchoolDownloadMode {
-            INDIWARE_WOCHENPLAN_6, INDIWARE_MOBIL
-        }
-
-        override fun getSchoolApiAccess(): SchoolApiAccess {
-            return SchoolApiAccess.IndiwareAccess(
-                schoolId = id,
-                sp24id = sp24Id,
+        val credentialsValid: Boolean,
+    ) : School() {
+        fun buildSp24AppAuthentication(): VppSchoolAuthentication.Sp24 {
+            return VppSchoolAuthentication.Sp24(
+                sp24SchoolId = sp24Id,
                 username = username,
                 password = password
             )
         }
     }
-
-    data class DefaultSchool(
-        override val id: Int,
-        override val name: String,
-        override val groups: List<Int>,
-        override val cachedAt: Instant
-    ) : School {
-        override fun getSchoolApiAccess(): SchoolApiAccess? = null
-    }
 }
 
-sealed class SchoolApiAccess(
-    val schoolId: Int
-) {
+sealed class VppSchoolAuthentication() {
+
+    abstract val identifier: String
     abstract fun authentication(builder: HttpRequestBuilder)
-    class IndiwareAccess(
-        schoolId: Int,
-        val sp24id: String,
+    class Sp24(
+        val sp24SchoolId: String,
         val username: String,
-        val password: String
-    ) : SchoolApiAccess(schoolId) {
+        val password: String,
+    ) : VppSchoolAuthentication() {
         override fun authentication(builder: HttpRequestBuilder) {
-            builder.basicAuth("$username@$sp24id", password)
+            builder.basicAuth("$username@$sp24SchoolId", password)
         }
+
+        override val identifier: String = "sp24.$sp24SchoolId.1"
     }
 
-    class VppIdAccess(
-        schoolId: Int,
-        val accessToken: String,
-        val id: Int
-    ) : SchoolApiAccess(schoolId) {
+    class Vpp(
+        vppSchoolId: Int,
+        val vppIdId: Int,
+        val vppIdToken: String
+    ): VppSchoolAuthentication() {
         override fun authentication(builder: HttpRequestBuilder) {
-            builder.bearerAuth(accessToken)
+            builder.bearerAuth(vppIdToken)
         }
+
+        override val identifier: String = vppSchoolId.toString()
     }
 }

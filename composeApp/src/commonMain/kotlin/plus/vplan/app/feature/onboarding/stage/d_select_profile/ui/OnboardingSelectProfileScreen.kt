@@ -40,7 +40,7 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.ProfileType
@@ -109,8 +109,7 @@ private fun OnboardingSelectProfileScreen(
                                 .padding(bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) listHost@{
-                            @Suppress("ConvertCallChainIntoSequence") // collectAsResultingFlow is a @Composable that cannot be invoked in a sequence
-                            val courses = state.subjectInstances.keys.mapNotNull { it.course }.toSet()
+                            val courses = (state.selectedProfile as? OnboardingProfile.StudentProfile)?.subjectInstances.orEmpty().mapNotNull { it.course }.toSet()
                                 .map { App.courseSource.getById(it).collectAsResultingFlow() }
                                 .mapNotNull { it.value }
                                 .sortedBy { it.name }
@@ -156,9 +155,9 @@ private fun OnboardingSelectProfileScreen(
                                                     )
                                                     if (course.teacherId == null) return@detailsRow
                                                     val teacherState by App.teacherSource.getById(course.teacherId).collectAsLoadingState(course.teacherId.toString())
-                                                    if (teacherState !is CacheState.Done) return@detailsRow
+                                                    if (teacherState !is AliasState.Done) return@detailsRow
                                                     Text(
-                                                        text = (teacherState as? CacheState.Done)?.data?.name ?: "-",
+                                                        text = (teacherState as? AliasState.Done)?.data?.name ?: "-",
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
@@ -211,16 +210,16 @@ private fun OnboardingSelectProfileScreen(
                                                     )
                                                     if (subjectInstance.course == null) return@subjectAndCourse
                                                     val subjectInstanceState by App.courseSource.getById(subjectInstance.course).collectAsLoadingState(subjectInstance.course.toString())
-                                                    if (subjectInstanceState is CacheState.Done) Text(
-                                                        text = (subjectInstanceState as CacheState.Done).data.name,
+                                                    if (subjectInstanceState is AliasState.Done) Text(
+                                                        text = (subjectInstanceState as AliasState.Done).data.name,
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
                                                 }
                                                 if (subjectInstance.teacher == null) return@dataRow
                                                 val teacherState by App.teacherSource.getById(subjectInstance.teacher).collectAsLoadingState(subjectInstance.teacher.toString())
-                                                if (teacherState is CacheState.Done) Text(
-                                                    text = (teacherState as CacheState.Done).data.name,
+                                                if (teacherState is AliasState.Done) Text(
+                                                    text = (teacherState as AliasState.Done).data.name,
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )
@@ -323,42 +322,6 @@ private fun OnboardingSelectProfileScreen(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     state.options.filterIsInstance<OnboardingProfile.TeacherProfile>().forEach {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .defaultMinSize(minHeight = 48.dp)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(MaterialTheme.colorScheme.surfaceContainer)
-                                                .clickable { onEvent(OnboardingProfileSelectionEvent.SelectProfile(it)) }
-                                                .padding(vertical = 8.dp, horizontal = 16.dp),
-                                            verticalArrangement = Arrangement.Center
-                                        ) {
-                                            Text(
-                                                text = it.name,
-                                                style = MaterialTheme.typography.titleSmall,
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = (state.filterProfileType ?: ProfileType.ROOM) == ProfileType.ROOM,
-                            enter = expandVertically(),
-                            exit = shrinkVertically()
-                        ) rooms@{
-                            Column {
-                                Text(
-                                    text = "Räume",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    state.options.filterIsInstance<OnboardingProfile.RoomProfile>().forEach {
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()

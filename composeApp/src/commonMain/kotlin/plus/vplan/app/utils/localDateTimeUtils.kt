@@ -34,5 +34,6 @@ operator fun LocalDateTime.minus(duration: Duration): LocalDateTime {
 }
 
 fun LocalDateTime.Companion.now(): LocalDateTime {
+    //return LocalDateTime(2025, 5, 27, 7, 0, 0)
     return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 }

@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.component.PasswordField
-import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.ui.component.UsernameField
+import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.component.PasswordField
+import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.component.UsernameField
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
@@ -36,11 +36,12 @@ import plus.vplan.app.ui.components.ButtonType
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.school
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IndiwareCredentialSheet(
-    schoolId: Int,
+    schoolId: Uuid,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)

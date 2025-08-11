@@ -16,15 +16,13 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Homework
@@ -41,6 +39,7 @@ import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.inWholeMinutes
+import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
@@ -73,7 +72,7 @@ class CalendarViewModel(
                     date = date,
                     info = day.info,
                     dayType = day.dayType,
-                    week = day.week?.getFirstValue(),
+                    week = day.week?.getFirstValueOld(),
                     assessments = emptyList(),
                     homework = emptyList(),
                     lessons = emptyMap(),
@@ -91,7 +90,7 @@ class CalendarViewModel(
                 coroutineScope {
                     launch {
                         day.lessons.collectLatest {
-                            val lessons = it.groupBy { it.lessonTime.getFirstValue()!!.lessonNumber }.mapValues { it.value.sortedBy { it.subject } }
+                            val lessons = it.groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }.mapValues { it.value.sortedBy { it.subject } }
                             val layoutedLessons = it.calculateLayouting()
                             calendarDay = calendarDay.copy(layoutedLessons = layoutedLessons, lessons = lessons.toList().sortedBy { it.first }.toMap())
                             updateState()
@@ -187,9 +186,9 @@ class CalendarViewModel(
 }
 
 data class CalendarState(
-    val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+    val selectedDate: LocalDate = LocalDate.now(),
     val currentProfile: Profile? = null,
-    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+    val currentTime: LocalDateTime = LocalDateTime.now(),
     val uiUpdateVersion: Int = 0,
     val displayType: DisplayType = DisplayType.Calendar,
     val start: LocalTime = LocalTime(0, 0),
@@ -239,7 +238,7 @@ data class CalendarDay(
  * Creates a layout for a calendar view of the given lessons based on their overlap if some exists.
  */
 suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> {
-    val lessons = this.associateWith { it.lessonTime.getFirstValue()!! }.toList().sortedBy { it.second.start.inWholeMinutes().toString().padStart(4, '0') + " " + it.first.subject }
+    val lessons = this.associateWith { it.lessonTime.getFirstValueOld()!! }.toList().sortedBy { it.second.start.inWholeMinutes().toString().padStart(4, '0') + " " + it.first.subject }
     val layoutingInfo = mutableListOf<LessonLayoutingInfo>()
     lessons.forEach { (lesson, lessonTime) ->
         val overlapping = layoutingInfo.filter { it.lessonTime.start in lessonTime.start..lessonTime.end || it.lessonTime.end in lessonTime.start..lessonTime.end || lessonTime.start in it.lessonTime.start..it.lessonTime.end || lessonTime.end in it.lessonTime.start..it.lessonTime.end }

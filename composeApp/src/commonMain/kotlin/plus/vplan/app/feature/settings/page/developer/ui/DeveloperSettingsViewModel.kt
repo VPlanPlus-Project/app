@@ -14,17 +14,16 @@ import kotlinx.datetime.plus
 import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.feature.sync.domain.usecase.FullSyncCause
-import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
+import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause
+import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.utils.now
 
 class DeveloperSettingsViewModel(
@@ -85,7 +84,7 @@ class DeveloperSettingsViewModel(
                     if (state.isSubstitutionPlanUpdateRunning) return@launch
                     state = state.copy(isSubstitutionPlanUpdateRunning = true)
                     updateSubstitutionPlanUseCase(
-                        state.profile!!.getSchool().getFirstValue()!! as School.IndiwareSchool, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
+                        state.profile!!.getSchool().getFirstValue()!!, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
                         allowNotification = true
                     )
                     state = state.copy(isSubstitutionPlanUpdateRunning = false)
@@ -93,7 +92,7 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.UpdateTimetable -> {
                     if (state.isTimetableUpdateRunning) return@launch
                     state = state.copy(isTimetableUpdateRunning = true)
-                    updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!! as School.IndiwareSchool, true)
+                    updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!!, forceUpdate = true)
                     state = state.copy(isTimetableUpdateRunning = false)
                 }
                 DeveloperSettingsEvent.ToggleAutoSyncDisabled -> {

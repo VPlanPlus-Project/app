@@ -23,21 +23,25 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.App
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.utils.atStartOfWeek
 import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class DaySource(
     private val dayRepository: DayRepository,
@@ -45,16 +49,22 @@ class DaySource(
     private val timetableRepository: TimetableRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val assessmentRepository: AssessmentRepository,
-    private val homeworkRepository: HomeworkRepository
+    private val homeworkRepository: HomeworkRepository,
 ) {
     val flows = hashMapOf<String, MutableSharedFlow<CacheState<Day>>>()
     fun findNextRegularSchoolDayAfter(
         holidays: List<LocalDate>,
+        weeks: List<Week>,
         after: LocalDate,
         dayOfWeeks: Int?
     ): LocalDate? {
         if (holidays.isEmpty()) return null
         var nextSchoolDay = after + 1.days
+        val currentWeek = weeks.firstOrNull { nextSchoolDay in it.start..it.end.atStartOfWeek().plus(7.days) }
+        if (currentWeek == null && weeks.any { it.start > nextSchoolDay }) {
+            nextSchoolDay = weeks.first { it.start > nextSchoolDay }.start
+        }
+
         while (holidays.maxOf { it } > nextSchoolDay && !(holidays.none { it == nextSchoolDay } && nextSchoolDay.dayOfWeek.isoDayNumber <= (dayOfWeeks ?: 5))) {
             nextSchoolDay += 1.days
         }
@@ -65,9 +75,9 @@ class DaySource(
         return flows.getOrPut(id) {
             val flow = MutableSharedFlow<CacheState<Day>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
-                val schoolId = id.substringBefore("/").toInt()
+                val schoolId = Uuid.parse(id.substringBefore("/"))
                 val date = LocalDate.parse(id.substringAfter("/"))
-                val school = App.schoolSource.getById(schoolId).filterIsInstance<CacheState.Done<School>>().firstOrNull()?.data ?: return@launch
+                val school = App.schoolSource.getById(schoolId).filterIsInstance<AliasState.Done<School>>().firstOrNull()?.data ?: return@launch
                 val weeks = weekRepository.getBySchool(schoolId).first()
                 val day = MutableStateFlow(
                     Day(
@@ -136,7 +146,7 @@ class DaySource(
                 }
 
                 launch {
-                    val week = day.value.week?.getFirstValue()
+                    val week = day.value.week?.getFirstValueOld()
                     val weekIndex = week?.weekIndex ?: -1
 
                     (if (contextProfile == null) timetableRepository.getForSchool(schoolId, weekIndex, dayOfWeek = date.dayOfWeek)
@@ -173,14 +183,17 @@ class DaySource(
                 }
 
                 launch {
-                    dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } }.collectLatest { holidays ->
-                        val nextSchoolDay = findNextRegularSchoolDayAfter(holidays, date, (school as? School.IndiwareSchool)?.daysPerWeek)
+                    combine(
+                        dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } },
+                        weekRepository.getBySchool(schoolId)
+                    ) { holidays, weeks ->
+                        val nextSchoolDay = findNextRegularSchoolDayAfter(holidays, weeks, date, (school as? School.AppSchool)?.daysPerWeek)
                         day.update {
                             it.copy(
                                 nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },
                             )
                         }
-                    }
+                    }.collect()
                 }
             }
             flow

@@ -6,23 +6,26 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
+import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
+import kotlin.uuid.Uuid
 
 class IndiwareCredentialViewModel(
     private val schoolRepository: SchoolRepository,
-    private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase
+    private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
+    private val sendSp24CredentialsToServerUseCase: SendSp24CredentialsToServerUseCase
 ): ViewModel() {
     var state by mutableStateOf<IndiwareCredentialState?>(null)
         private set
 
-    fun init(schoolId: Int) {
+    fun init(schoolId: Uuid) {
         viewModelScope.launch {
-            val school = schoolRepository.getById(schoolId, false).getFirstValue() as? School.IndiwareSchool ?: return@launch
+            val school = schoolRepository.getByLocalId(schoolId).first() as? School.AppSchool ?: return@launch
             state = IndiwareCredentialState(
                 school = school,
                 schoolName = school.name,
@@ -44,8 +47,15 @@ class IndiwareCredentialViewModel(
                     delay(1000)
                     val result = checkSp24CredentialsUseCase(state!!.sp24Id.toInt(), state!!.username, state!!.password)
                     if (result == SchoolSettingsCredentialsState.Valid) {
-                        schoolRepository.updateSp24Access(state!!.school, state!!.username, state!!.password)
-                        schoolRepository.setIndiwareAccessValidState(state!!.school, true)
+                        schoolRepository.setSp24Access(
+                            schoolId = state!!.school.id,
+                            sp24Id = state!!.school.sp24Id.toInt(),
+                            username = state!!.username,
+                            password = state!!.password,
+                            daysPerWeek = state!!.school.daysPerWeek,
+                        )
+                        schoolRepository.setSp24CredentialValidity(state!!.school.id, true)
+                        sendSp24CredentialsToServerUseCase()
                     }
                     state = state?.copy(state = result)
                 }
@@ -55,7 +65,7 @@ class IndiwareCredentialViewModel(
 }
 
 data class IndiwareCredentialState(
-    val school: School.IndiwareSchool,
+    val school: School.AppSchool,
     val schoolName: String,
     val sp24Id: String,
     val username: String,

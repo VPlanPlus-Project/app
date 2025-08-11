@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.repository.HomeworkRepository
 
@@ -55,6 +55,6 @@ class HomeworkTaskSource(
     }
 
     suspend fun getSingleById(id: Int): Homework.HomeworkTask? {
-        return (cacheItems[id] as? CacheState.Done<Homework.HomeworkTask>)?.data ?: getById(id).getFirstValue()
+        return (cacheItems[id] as? CacheState.Done<Homework.HomeworkTask>)?.data ?: getById(id).getFirstValueOld()
     }
 }

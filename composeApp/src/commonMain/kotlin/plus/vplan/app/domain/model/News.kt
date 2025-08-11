@@ -5,10 +5,11 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.data.Item
+import kotlin.uuid.Uuid
 
 data class News(
-    val id: Int,
+    override val id: Int,
     val title: String,
     val content: String,
     val date: Instant,
@@ -16,11 +17,10 @@ data class News(
     val versionTo: Int?,
     val dateFrom: Instant,
     val dateTo: Instant,
-    val schoolIds: List<Int>,
+    val schoolIds: List<Uuid>,
     val author: String,
     val isRead: Boolean
-) : Item<DataTag> {
-    override fun getEntityId(): String = this.id.toString()
+) : Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
 
     val schools by lazy { if (schoolIds.isEmpty()) flowOf(emptyList()) else combine(schoolIds.map { App.schoolSource.getById(it) }) { it.toList() } }

@@ -10,8 +10,11 @@ import plus.vplan.app.utils.now
 
 class GetCurrentIntervalUseCase {
     suspend operator fun invoke(): Interval? {
-        return App.intervalSource.getAll().map { intervalIds -> intervalIds.filterIsInstance<CacheState.Done<Interval>>().map { it.data } }.first().filter {
-            LocalDate.now() in it.from..it.to
-        }.firstOrNull()
+        return App.intervalSource.getAll()
+            .map { intervalIds ->
+                intervalIds.filterIsInstance<CacheState.Done<Interval>>().map { it.data }
+            }
+            .first()
+            .firstOrNull { LocalDate.now() in it.from..it.to }
     }
 }

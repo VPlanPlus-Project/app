@@ -57,7 +57,7 @@ import vplanplus.composeapp.generated.resources.logo_dark
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileSwitcher(
-    profiles: Map<School, List<Profile>>,
+    profiles: Map<School.AppSchool, List<Profile>>,
     showVppIdBanner: Boolean,
     activeProfile: Profile,
     onDismiss: () -> Unit,

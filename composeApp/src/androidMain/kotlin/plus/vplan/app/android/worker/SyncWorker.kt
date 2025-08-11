@@ -8,8 +8,8 @@ import androidx.work.WorkerParameters
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.data.repository.PlatformNotificationImpl
-import plus.vplan.app.feature.sync.domain.usecase.FullSyncCause
-import plus.vplan.app.feature.sync.domain.usecase.FullSyncUseCase
+import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause
+import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 
 class SyncWorker(
     context: Context,

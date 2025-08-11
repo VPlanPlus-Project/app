@@ -50,6 +50,7 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.cache.collectAsResultingFlow
+import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
@@ -103,7 +104,7 @@ private fun ProfileSettingsContent(
         if (state.profileDeletionState == UnoptimisticTaskState.Success) onBack()
     }
 
-    val vppId = remember((state.profile as? Profile.StudentProfile)?.vppIdId) { (state.profile as? Profile.StudentProfile)?.vppId }?.collectAsResultingFlow()?.value as? VppId.Active
+    val vppId = remember((state.profile as? Profile.StudentProfile)?.vppIdId) { (state.profile as? Profile.StudentProfile)?.vppId }?.collectAsResultingFlowOld()?.value as? VppId.Active
     val school = remember(state.profile?.id) { state.profile?.getSchool() }?.collectAsResultingFlow()?.value
 
     Scaffold(
@@ -214,7 +215,6 @@ private fun ProfileSettingsContent(
                     when (state.profile) {
                         is Profile.StudentProfile -> append("Klasse ")
                         is Profile.TeacherProfile -> append("Lehrer ")
-                        is Profile.RoomProfile -> append("Raum ")
                     }
                     append(state.profile.name)
                     append(" $DOT ")

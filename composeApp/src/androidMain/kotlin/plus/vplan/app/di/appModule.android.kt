@@ -1,11 +1,13 @@
 package plus.vplan.app.di
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import plus.vplan.app.LOG_DATABASE_QUERIES
 import plus.vplan.app.data.repository.LocalFileRepositoryImpl
 import plus.vplan.app.data.repository.PlatformAuthenticationRepositoryImpl
 import plus.vplan.app.data.repository.PlatformNotificationImpl
@@ -17,6 +19,7 @@ import plus.vplan.app.ui.platform.OpenBiometricSettings
 import plus.vplan.app.ui.platform.OpenBiometricSettingsImpl
 import plus.vplan.app.ui.platform.RunBiometricAuthentication
 import plus.vplan.app.ui.platform.RunBiometricAuthenticationImpl
+import java.util.concurrent.Executors
 
 actual val platformModule: Module = module(createdAtStart = true) {
     single<VppDatabase>(createdAtStart = true) {
@@ -24,7 +27,13 @@ actual val platformModule: Module = module(createdAtStart = true) {
             context = get(),
             name = get<Context>().getDatabasePath("data.db").absolutePath
         )
-            .setDriver(AndroidSQLiteDriver())
+            .let { builder ->
+                if (LOG_DATABASE_QUERIES) builder.setQueryCallback({ sqlQuery, bindArgs ->
+                    Log.d("RoomDatabase", "SQL: $sqlQuery | args: $bindArgs")
+                }, Executors.newSingleThreadExecutor())
+                else builder.setDriver(AndroidSQLiteDriver())
+            }
+            .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
             .fallbackToDestructiveMigration(true)
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()

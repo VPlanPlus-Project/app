@@ -4,10 +4,10 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.Item
+import plus.vplan.app.domain.data.Item
 
 data class Grade(
-    val id: Int,
+    override val id: Int,
     val value: String?,
     val isOptional: Boolean,
     val isSelectedForFinalGrade: Boolean,
@@ -17,8 +17,7 @@ data class Grade(
     val collectionId: Int,
     val vppIdId: Int,
     val cachedAt: Instant
-): Item<DataTag> {
-    override fun getEntityId(): String = this.id.toString()
+): Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
 
     val collection by lazy { App.collectionSource.getById(collectionId) }

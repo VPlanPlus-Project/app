@@ -3,6 +3,8 @@ package plus.vplan.app.feature.settings.page.info.domain.usecase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.domain.data.getByProvider
 import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 
@@ -16,7 +18,7 @@ class GetFeedbackMetadataUseCase(
             return@map FeedbackMetadata(
                 systemInfo,
                 profileInfo = FeedbackProfileInfo(
-                    schoolId = school.id,
+                    schoolId = school.aliases.getByProvider(AliasProvider.Vpp)?.value?.toIntOrNull(),
                     school = school.name,
                     profileName = currentProfile.name,
                     profileType = currentProfile.profileType
@@ -54,7 +56,7 @@ data class FeedbackDeviceInfo(
 )
 
 data class FeedbackProfileInfo(
-    val schoolId: Int,
+    val schoolId: Int?,
     val school: String,
     val profileType: ProfileType,
     val profileName: String

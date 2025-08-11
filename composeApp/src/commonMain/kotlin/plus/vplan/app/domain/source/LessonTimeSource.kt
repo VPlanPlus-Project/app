@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.repository.LessonTimeRepository
 
@@ -31,6 +31,6 @@ class LessonTimeSource(
     }
 
     suspend fun getSingleById(id: String): LessonTime? {
-        return (cacheItems[id] as? CacheState.Done<LessonTime>)?.data ?: getById(id).getFirstValue()
+        return (cacheItems[id] as? CacheState.Done<LessonTime>)?.data ?: getById(id).getFirstValueOld()
     }
 }

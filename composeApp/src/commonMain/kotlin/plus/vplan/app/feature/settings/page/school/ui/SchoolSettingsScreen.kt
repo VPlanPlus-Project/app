@@ -53,11 +53,12 @@ import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.cloud_alert
 import vplanplus.composeapp.generated.resources.x
+import kotlin.uuid.Uuid
 
 @Composable
 fun SchoolSettingsScreen(
     navHostController: NavHostController,
-    openIndiwareSettingsSchoolId: Int? = null
+    openIndiwareSettingsSchoolId: Uuid? = null
 ) {
     val viewModel = koinViewModel<SchoolSettingsViewModel>()
     val state = viewModel.state
@@ -73,7 +74,7 @@ fun SchoolSettingsScreen(
 @Composable
 private fun SchoolSettingsContent(
     state: SchoolSettingsState,
-    openIndiwareSettingsSchoolId: Int?,
+    openIndiwareSettingsSchoolId: Uuid?,
     onBack: () -> Unit
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
@@ -139,7 +140,7 @@ private fun SchoolSettingsContent(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        if (school.school is School.IndiwareSchool) {
+                        if (school.school is School.AppSchool) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,

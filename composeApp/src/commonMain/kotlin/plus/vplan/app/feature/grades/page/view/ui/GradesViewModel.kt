@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.model.schulverwalter.Interval
@@ -47,15 +47,15 @@ class GradesViewModel(
 
     private suspend fun setGrades() {
         grades
-            .filter { it.collection.getFirstValue()!!.intervalId in listOfNotNull(state.selectedInterval?.id, state.selectedInterval?.includedIntervalId) }
+            .filter { it.collection.getFirstValueOld()!!.intervalId in listOfNotNull(state.selectedInterval?.id, state.selectedInterval?.includedIntervalId) }
             .groupBy { it.subjectId }.map { (subjectId, gradesForSubject) ->
-                val subject = App.subjectSource.getById(subjectId).getFirstValue()!!
+                val subject = App.subjectSource.getById(subjectId).getFirstValueOld()!!
                 val calculationRule = subject.finalGrade?.first()?.calculationRule
                 Subject(
                     id = subjectId,
                     average = null,
                     name = subject.name,
-                    categories = gradesForSubject.groupBy { it.collection.getFirstValue()!!.type }.map { (type, gradesForType) ->
+                    categories = gradesForSubject.groupBy { it.collection.getFirstValueOld()!!.type }.map { (type, gradesForType) ->
                         val weight = if (calculationRule != null) {
                             val regex = Regex("""([\d.]+)\s*\*\s*\(\(($type)_sum\)/\(($type)_count\)\)""")
                             regex.find(calculationRule)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
@@ -125,7 +125,7 @@ class GradesViewModel(
                         category.calculatorGrades.map { calculatorGradeValue ->
                             CalculatorGrade.CustomGrade(
                                 grade = calculatorGradeValue,
-                                subject = state.allGrades.first { grade -> grade.subjectId == subject.id }.subject.getFirstValue()!!,
+                                subject = state.allGrades.first { grade -> grade.subjectId == subject.id }.subject.getFirstValueOld()!!,
                                 type = category.name
                             )
                         }
@@ -154,7 +154,7 @@ class GradesViewModel(
                     category.calculatorGrades.map { calculatorGradeValue ->
                         CalculatorGrade.CustomGrade(
                             grade = calculatorGradeValue,
-                            subject = state.allGrades.first { grade -> grade.subjectId == subject.id }.subject.getFirstValue()!!,
+                            subject = state.allGrades.first { grade -> grade.subjectId == subject.id }.subject.getFirstValueOld()!!,
                             type = category.name
                         )
                     }
@@ -191,7 +191,7 @@ class GradesViewModel(
                     category.calculatorGrades.map { calculatorGradeValue ->
                         CalculatorGrade.CustomGrade(
                             grade = calculatorGradeValue,
-                            subject = state.allGrades.first { grade -> grade.subjectId == subject.id }.subject.getFirstValue()!!,
+                            subject = state.allGrades.first { grade -> grade.subjectId == subject.id }.subject.getFirstValueOld()!!,
                             type = category.name
                         )
                     }

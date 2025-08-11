@@ -47,13 +47,6 @@ data class EmbeddedProfile(
                 teacher = embeddedTeacherProfile.teacher.id
             )
         }
-        if (embeddedRoomProfile != null) {
-            return Profile.RoomProfile(
-                id = profile.id,
-                name = profile.displayName ?: embeddedRoomProfile.room.name,
-                room = embeddedRoomProfile.room.id
-            )
-        }
         return null
     }
 }

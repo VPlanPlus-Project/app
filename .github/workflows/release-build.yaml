@@ -53,6 +53,11 @@ jobs:
             -   name: Use PostHog API-Key
                 run: echo "posthog.api.key=${{ secrets.POSTHOG_API_KEY }}" >> local.properties
 
+            -   name: Add GitLab credentials to local.properties
+                run: |
+                  echo "GROUP_MAVEN_USERNAME=${{ secrets.GITLAB_USER }}" >> local.properties
+                  echo "GROUP_MAVEN_PASSWORD=${{ secrets.GITLAB_PASSWORD }}" >> local.properties
+
             -   uses: actions/cache@v4
                 with:
                     path: |

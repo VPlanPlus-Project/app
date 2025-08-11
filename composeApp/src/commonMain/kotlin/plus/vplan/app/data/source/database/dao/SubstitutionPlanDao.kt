@@ -49,7 +49,7 @@ interface SubstitutionPlanDao {
 
     @Transaction
     suspend fun replaceForDay(
-        schoolId: Int,
+        schoolId: Uuid,
         date: LocalDate,
         lessons: List<DbSubstitutionPlanLesson>,
         groups: List<DbSubstitutionPlanGroupCrossover>,
@@ -70,18 +70,18 @@ interface SubstitutionPlanDao {
     }
 
     @Query("SELECT substitution_plan_lesson.id FROM substitution_plan_lesson LEFT JOIN day ON day.id = substitution_plan_lesson.day_id WHERE school_id = :schoolId AND day.date = :date")
-    suspend fun getSubstitutionPlanBySchool(schoolId: Int, date: LocalDate): List<Uuid>
+    suspend fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): List<Uuid>
 
     @Query("DELETE FROM substitution_plan_lesson WHERE id IN (:ids)")
     suspend fun deleteSubstitutionPlanByIds(ids: List<Uuid>)
     
-    @Query("SELECT substitution_plan_lesson.id FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id LEFT JOIN day ON day.id = day_id LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId AND day.date = :date")
-    fun getTimetableLessons(schoolId: Int, date: LocalDate): Flow<List<Uuid>>
+    @Query("SELECT substitution_plan_lesson.id FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id LEFT JOIN day ON day.id = day_id WHERE school_groups.school_id = :schoolId AND day.date = :date")
+    fun getTimetableLessons(schoolId: Uuid, date: LocalDate): Flow<List<Uuid>>
 
-    @RewriteQueriesToDropUnusedColumns
     @Transaction
-    @Query("SELECT * FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id LEFT JOIN fk_school_group ON fk_school_group.group_id = school_groups.id WHERE fk_school_group.school_id = :schoolId")
-    fun getTimetableLessons(schoolId: Int): Flow<List<EmbeddedSubstitutionPlanLesson>>
+    @RewriteQueriesToDropUnusedColumns
+    @Query("SELECT * FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id WHERE school_groups.school_id = :schoolId")
+    fun getTimetableLessons(schoolId: Uuid): Flow<List<EmbeddedSubstitutionPlanLesson>>
 
     @Transaction
     @Query("SELECT * FROM substitution_plan_lesson WHERE id = :id")

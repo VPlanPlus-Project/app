@@ -8,14 +8,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.repository.OnlineSchool
+import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.OnboardingSchoolOption
 import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.SearchForSchoolUseCase
-import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.UseUnknownSp24SchoolUseCase
+import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.SelectSp24SchoolUseCase
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 
 class OnboardingSchoolSearchViewModel(
     private val searchForSchoolUseCase: SearchForSchoolUseCase,
-    private val useUnknownSp24SchoolUseCase: UseUnknownSp24SchoolUseCase
+    private val selectSp24SchoolUseCase: SelectSp24SchoolUseCase
 ) : ViewModel() {
     var state by mutableStateOf(OnboardingSchoolSearchState())
         private set
@@ -42,21 +42,21 @@ class OnboardingSchoolSearchViewModel(
                     )
                     state = state.copy(results = searchForSchoolUseCase(event.query))
                 }
-                is OnboardingSchoolSearchEvent.OnUseIndiwareClicked -> {
+                is OnboardingSchoolSearchEvent.OnUseSp24SchoolClicked -> {
                     if ((state.searchQuery.toIntOrNull() ?: 0) !in 10000000..99999999) {
                         state = state.copy(textFieldError = OnboardingSchoolSearchTextFieldError.BadSp24Id)
                         return@launch
                     }
-                    useUnknownSp24SchoolUseCase(state.searchQuery.toInt())
-                    navController.navigate(OnboardingScreen.OnboardingScreenIndiwareLogin)
+                    selectSp24SchoolUseCase(state.searchQuery.toInt())
+                    navController.navigate(OnboardingScreen.OnboardingScreenSp24Login)
                 }
                 is OnboardingSchoolSearchEvent.OnSchoolSelected -> {
                     if (event.school.sp24Id == null) {
                         state = state.copy(textFieldError = OnboardingSchoolSearchTextFieldError.SchoolNotFound)
                         return@launch
                     }
-                    useUnknownSp24SchoolUseCase(event.school.sp24Id)
-                    navController.navigate(OnboardingScreen.OnboardingScreenIndiwareLogin)
+                    selectSp24SchoolUseCase(event.school.sp24Id)
+                    navController.navigate(OnboardingScreen.OnboardingScreenSp24Login)
                 }
             }
         }
@@ -65,14 +65,14 @@ class OnboardingSchoolSearchViewModel(
 
 data class OnboardingSchoolSearchState(
     val searchQuery: String = "",
-    val results: Response<List<OnlineSchool>> = Response.Loading,
+    val results: Response<List<OnboardingSchoolOption>> = Response.Loading,
     val textFieldError: OnboardingSchoolSearchTextFieldError? = null
 )
 
 sealed class OnboardingSchoolSearchEvent {
     data class OnQueryChanged(val query: String) : OnboardingSchoolSearchEvent()
-    data object OnUseIndiwareClicked : OnboardingSchoolSearchEvent()
-    data class OnSchoolSelected(val school: OnlineSchool) : OnboardingSchoolSearchEvent()
+    data object OnUseSp24SchoolClicked : OnboardingSchoolSearchEvent()
+    data class OnSchoolSelected(val school: OnboardingSchoolOption) : OnboardingSchoolSearchEvent()
 }
 
 sealed class OnboardingSchoolSearchTextFieldError {

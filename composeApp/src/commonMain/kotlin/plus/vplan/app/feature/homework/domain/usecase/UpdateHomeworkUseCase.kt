@@ -14,7 +14,7 @@ class UpdateHomeworkUseCase(
         return when (homeworkRepository.getById(homeworkId, forceReload = true).first().also {
             if (it is CacheState.Done) {
                 it.data.files.forEach { fileId ->
-                    fileRepository.getById(fileId, forceReload = true)
+                    fileRepository.getById(fileId, forceReload = true).first()
                 }
             }
         }) {

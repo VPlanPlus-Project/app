@@ -2,11 +2,12 @@ package plus.vplan.app.feature.search.domain.model
 
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
+import kotlin.uuid.Uuid
 
 sealed class SearchResult(val type: Type) {
     sealed class SchoolEntity(
         type: Type,
-        val id: Int,
+        val id: Uuid,
         val name: String,
         val school: School
     ) : SearchResult(type) {

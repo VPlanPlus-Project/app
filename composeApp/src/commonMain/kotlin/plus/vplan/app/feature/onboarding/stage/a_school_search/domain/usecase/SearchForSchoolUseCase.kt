@@ -1,31 +1,37 @@
 package plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase
 
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.repository.OnlineSchool
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.utils.removeFollowingDuplicates
 
 class SearchForSchoolUseCase(
     private val schoolRepository: SchoolRepository
 ) {
-    private val onlineSchools = mutableListOf<SearchSchool>()
+    private val onlineSchools = mutableListOf<OnboardingSchoolOption>()
 
     suspend fun init(): Response.Error? {
-        val response = schoolRepository.fetchAllOnline()
+        val response = schoolRepository.downloadSchools()
         if (response is Response.Success) {
             onlineSchools.clear()
             onlineSchools.addAll(
                 response
                     .data
                     .sortedBy { it.name }
-                    .map { SearchSchool(it) }
+                    .map { school ->
+                        OnboardingSchoolOption(
+                            id = school.id,
+                            name = school.name,
+                            sp24Id = school.aliases.firstOrNull { it.provider == AliasProvider.Sp24 }?.value?.toInt()
+                        )
+                    }
             )
             return null
         }
         return response as Response.Error
     }
 
-    suspend operator fun invoke(query: String): Response<List<OnlineSchool>> {
+    suspend operator fun invoke(query: String): Response<List<OnboardingSchoolOption>> {
         if (onlineSchools.isEmpty()) {
             val response = init()
             if (response != null) return response
@@ -35,20 +41,12 @@ class SearchForSchoolUseCase(
         return Response.Success(
             onlineSchools
                 .filter {
-                    it.adjustedName.contains(adjustedQuery) ||
-                            it.adjustedName.split(" ").joinToString("") { wordPart -> wordPart.first().toString() }.contains(adjustedQuery) ||
-                            it.school.sp24Id?.toString()?.startsWith(adjustedQuery) == true
+                    it.searchOptimizedName.contains(adjustedQuery) ||
+                            it.searchOptimizedName.split(" ").joinToString("") { wordPart -> wordPart.first().toString() }.contains(adjustedQuery) ||
+                            it.sp24Id?.toString()?.startsWith(adjustedQuery) == true
                 }
-                .map { it.school }
         )
     }
-}
-
-private data class SearchSchool(
-    val school: OnlineSchool,
-    val adjustedName: String
-) {
-    constructor(school: OnlineSchool) : this(school, school.name.optimizeForSearch())
 }
 
 private fun String.optimizeForSearch(): String {
@@ -60,3 +58,10 @@ private fun String.optimizeForSearch(): String {
         .removeFollowingDuplicates(' ')
         .trim()
 }
+
+data class OnboardingSchoolOption(
+    val id: Int,
+    val name: String,
+    val sp24Id: Int?,
+    val searchOptimizedName: String = name.optimizeForSearch()
+)

@@ -34,8 +34,8 @@ class IntervalSource(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getAll(): Flow<List<CacheState<Interval>>> {
         return intervalRepository.getAllIds().flatMapLatest { ids ->
-            if (ids.isEmpty()) return@flatMapLatest flowOf(emptyList())
-            combine(ids.map { getById(it) }) { it.toList() }
+            if (ids.isEmpty()) flowOf(emptyList())
+            else combine(ids.map { getById(it) }) { it.toList() }
         }
     }
 }

@@ -6,14 +6,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroupProfile
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.data.source.database.model.database.DbProfile
-import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.Room
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.ProfileRepository
 import kotlin.uuid.Uuid
@@ -78,29 +76,9 @@ class ProfileRepositoryImpl(
         return getById(id).first { it != null } as Profile.TeacherProfile
     }
 
-    override suspend fun upsert(room: Room): Profile.RoomProfile {
-        val id = Uuid.random()
-        vppDatabase.profileDao.upsert(
-            DbProfile(
-                id = id,
-                schoolId = room.schoolId,
-                displayName = room.name
-            )
-        )
-
-        vppDatabase.profileDao.upsertRoomProfile(
-            DbRoomProfile(
-                profileId = id,
-                roomId = room.id
-            )
-        )
-
-        return getById(id).first { it != null } as Profile.RoomProfile
-    }
-
     override suspend fun setSubjectInstancesEnabled(
         profileId: Uuid,
-        subjectInstanceIds: List<Int>,
+        subjectInstanceIds: List<Uuid>,
         enable: Boolean
     ) {
         if (enable) vppDatabase.profileDao.deleteDisabledSubjectInstances(profileId, subjectInstanceIds)

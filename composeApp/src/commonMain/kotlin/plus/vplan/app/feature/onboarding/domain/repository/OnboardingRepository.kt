@@ -1,44 +1,47 @@
 package plus.vplan.app.feature.onboarding.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.feature.onboarding.stage.b_school_indiware_login.domain.usecase.Sp24CredentialsState
+import plus.vplan.app.feature.onboarding.domain.model.OnboardingSp24State
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
+import plus.vplan.app.ui.components.ButtonState
+import plus.vplan.lib.sp24.source.Stundenplan24Client
 
 interface OnboardingRepository {
-    suspend fun clear()
+    suspend fun reset()
     suspend fun startSp24Onboarding(
         sp24Id: Int,
     )
-    suspend fun getSp24OnboardingSchool(): Flow<CurrentOnboardingSchool?>
+
+    fun setSp24Client(stundenplan24Client: Stundenplan24Client)
+    fun getSp24Client(): Stundenplan24Client?
 
     suspend fun setSp24Credentials(
         username: String,
         password: String
     )
 
+    suspend fun addProfileOptions(options: List<OnboardingProfile>)
+
     suspend fun setSp24CredentialsValid(state: Sp24CredentialsState?)
-    fun getSp24CredentialsState(): Flow<Sp24CredentialsState>
-    suspend fun clearSp24Credentials()
 
-    suspend fun setSchoolId(id: Int)
-    fun getSchoolId(): Flow<Int?>
+    suspend fun setSchoolName(name: String?)
 
-    suspend fun getSp24Credentials(): Sp24Credentials?
+    suspend fun setSelectedProfile(option: OnboardingProfile)
 
-    suspend fun startSp24UpdateJob(): Response<String>
-    suspend fun getSp24UpdateJobProgress(): Response<List<String>>
-
-    suspend fun setSelectedProfile(onboardingProfile: OnboardingProfile)
+    fun getState(): Flow<OnboardingSp24State>
 }
 
-data class Sp24Credentials(
-    val username: String,
-    val password: String
-)
+enum class Sp24CredentialsState {
+    NOT_CHECKED,
+    LOADING,
+    VALID,
+    INVALID,
+    ERROR
+}
 
-data class CurrentOnboardingSchool(
-    val sp24Id: Int,
-    val schoolId: Int? = null,
-    val schoolName: String? = null
-)
+fun Sp24CredentialsState.toButtonState(): ButtonState {
+    return when (this) {
+        Sp24CredentialsState.LOADING -> ButtonState.Loading
+        else -> ButtonState.Enabled
+    }
+}

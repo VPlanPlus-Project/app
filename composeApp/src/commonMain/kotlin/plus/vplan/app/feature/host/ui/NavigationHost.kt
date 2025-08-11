@@ -23,7 +23,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
 import plus.vplan.app.StartTask
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
@@ -34,6 +34,7 @@ import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwa
 import plus.vplan.app.feature.schulverwalter.domain.usecase.UpdateSchulverwalterAccessUseCase
 import plus.vplan.app.feature.vpp_id.ui.VppIdSetupScreen
 import plus.vplan.app.utils.BrowserIntent
+import kotlin.uuid.Uuid
 
 @Composable
 fun NavigationHost(task: StartTask?) {
@@ -71,7 +72,7 @@ fun NavigationHost(task: StartTask?) {
             is StartTask.VppIdLogin -> navigationHostController.navigate(AppScreen.VppIdLogin(task.token))
             is StartTask.SchulverwalterReconnectDone -> navigationHostController.navigate(AppScreen.SchulverwalterReconnect(task.schulverwalterAccessToken, task.vppId))
             is StartTask.StartSchulverwalterReconnect -> {
-                val vppId = (App.vppIdSource.getById(task.userId).getFirstValue() as? VppId.Active) ?: return@LaunchedEffect
+                val vppId = (App.vppIdSource.getById(task.userId).getFirstValueOld() as? VppId.Active) ?: return@LaunchedEffect
                 val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@LaunchedEffect
                 BrowserIntent.openUrl(url)
             }
@@ -87,13 +88,13 @@ fun NavigationHost(task: StartTask?) {
         composable<AppScreen.Onboarding> { route ->
             val args = route.toRoute<AppScreen.Onboarding>()
             OnboardingScreen(
-                schoolId = args.schoolId,
+                schoolId = args.schoolId?.let { Uuid.parseHex(it) },
             ) { navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) } }
         }
 
         composable<AppScreen.MainScreen> {
             MainScreenHost(
-                onNavigateToOnboarding = { navigationHostController.navigate(AppScreen.Onboarding(it?.id)) },
+                onNavigateToOnboarding = { navigationHostController.navigate(AppScreen.Onboarding(it?.id?.toHexString())) },
                 contentPaddingDevice = contentPadding,
                 navigationTask = task
             )
@@ -127,7 +128,7 @@ fun NavigationHost(task: StartTask?) {
 @Serializable
 sealed class AppScreen(val name: String) {
     @Serializable data object MainScreen : AppScreen("MainScreen")
-    @Serializable data class Onboarding(val schoolId: Int?) : AppScreen("Onboarding")
+    @Serializable data class Onboarding(val schoolId: String?) : AppScreen("Onboarding")
 
     @Serializable data class VppIdLogin(val token: String) : AppScreen("VppIdLogin")
     @Serializable data class SchulverwalterReconnect(val schulverwalterAccessToken: String, val vppId: Int): AppScreen("SchulverwalterReconnect")

@@ -9,11 +9,14 @@ import io.ktor.client.request.header
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsBytes
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
@@ -34,10 +37,13 @@ import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.data.getByProvider
 import plus.vplan.app.domain.model.File
-import plus.vplan.app.domain.model.SchoolApiAccess
+import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.utils.sendAll
@@ -70,7 +76,11 @@ class FileRepositoryImpl(
             }
             send(CacheState.Loading(id.toString()))
             safeRequest(onError = { trySend(CacheState.Error(id.toString(), it)) }) {
-                val response = httpClient.get("${api.url}/api/v2.2/file/$id")
+                val response = httpClient.get {
+                    url(URLBuilder(api).apply {
+                        appendPathSegments("api", "v2.2", "file", id.toString())
+                    }.build())
+                }
                 if (response.status == HttpStatusCode.NotFound && response.isResponseFromBackend()) {
                     vppDatabase.fileDao.deleteById(listOf(id))
                     return@channelFlow send(CacheState.NotExisting(id.toString()))
@@ -81,8 +91,11 @@ class FileRepositoryImpl(
 
                 val creator = vppDatabase.vppIdDao.getById(data.createdBy).first()?.toModel() as? VppId.Active
                 if (creator != null) {
-                    val fileResponse = httpClient.get("${api.url}/api/v2.2/file/$id") {
-                        creator.buildSchoolApiAccess().authentication(this)
+                    val fileResponse = httpClient.get {
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "file", id.toString())
+                        }.build())
+                        creator.buildVppSchoolAuthentication().authentication(this)
                     }
                     if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
                     val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
@@ -101,9 +114,23 @@ class FileRepositoryImpl(
                     )
                     return@channelFlow sendAll(getById(id, false))
                 }
-                val schools = vppDatabase.schoolDao.getAll().first().distinctBy { it.school.id }.filter { it.school.id in data.schoolIds }.mapNotNull { try { it.toModel().getSchoolApiAccess() } catch (_: Exception) { null } }
+                val schools = vppDatabase.schoolDao.getAll().first()
+                    .map { it.toModel() }
+                    .filterIsInstance<School.AppSchool>()
+                    .filter { it.aliases.getByProvider(AliasProvider.Vpp)?.value?.toInt() in data.schoolIds }
+                    .map {
+                        VppSchoolAuthentication.Sp24(
+                            sp24SchoolId = it.sp24Id,
+                            username = it.username,
+                            password = it.password,
+                        )
+                    }
+
                 schools.forEach { school ->
-                    val fileResponse = httpClient.get("${api.url}/api/v2.2/file/$id") {
+                    val fileResponse = httpClient.get {
+                        url(URLBuilder(api).apply {
+                            appendPathSegments("api", "v2.2", "file", id.toString())
+                        }.build())
                         school.authentication(this)
                     }
                     if (fileResponse.status == HttpStatusCode.Forbidden) return@forEach
@@ -133,9 +160,12 @@ class FileRepositoryImpl(
         return vppDatabase.fileDao.getAll().map { it.map { file -> file.id } }
     }
 
-    override fun cacheFile(file: File, schoolApiAccess: SchoolApiAccess): Flow<FileDownloadProgress> = channelFlow {
+    override fun cacheFile(file: File, schoolApiAccess: VppSchoolAuthentication): Flow<FileDownloadProgress> = channelFlow {
         safeRequest(onError = { trySend(FileDownloadProgress.Error(it)) }) {
-            val response = httpClient.get("${api.url}/api/v2.2/file/${file.id}/download") {
+            val response = httpClient.get {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "file", file.id.toString(), "download")
+                }.build())
                 schoolApiAccess.authentication(this)
                 onDownload { bytesSentTotal, contentLength ->
                     if (contentLength == null) send(FileDownloadProgress.InProgress(0f))
@@ -155,8 +185,11 @@ class FileRepositoryImpl(
         document: AttachedFile
     ): Response<Int> {
         safeRequest(onError = { return it }) {
-            val response = httpClient.post("${api.url}/api/v2.2/file") {
-                vppId.buildSchoolApiAccess().authentication(this)
+            val response = httpClient.post {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "file")
+                }.build())
+                vppId.buildVppSchoolAuthentication().authentication(this)
                 header("File-Name", document.name)
                 header(HttpHeaders.ContentType, ContentType.Application.OctetStream.toString())
                 header(HttpHeaders.ContentLength, document.size.toString())
@@ -181,7 +214,11 @@ class FileRepositoryImpl(
         vppDatabase.fileDao.updateName(file.id, newName)
         if (file.id < 0 || vppId == null) return
         safeRequest(onError = { vppDatabase.fileDao.updateName(file.id, oldName) }) {
-            val response = httpClient.patch("${api.url}/api/v2.2/file/${file.id}") {
+            val response = httpClient.patch {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "file", file.id.toString())
+                }.build())
+
                 bearerAuth(vppId.accessToken)
                 contentType(ContentType.Application.Json)
                 setBody(FileUpdateNameRequest(newName))
@@ -200,7 +237,10 @@ class FileRepositoryImpl(
             return null
         }
         safeRequest(onError = { return it }) {
-            val response = httpClient.delete("${api.url}/api/v2.2/file/${file.id}") {
+            val response = httpClient.delete {
+                url(URLBuilder(api).apply {
+                    appendPathSegments("api", "v2.2", "file", file.id.toString())
+                }.build())
                 bearerAuth(vppId.accessToken)
             }
             if (!response.status.isSuccess()) return response.toErrorResponse<Any>()

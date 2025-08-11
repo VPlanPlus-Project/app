@@ -18,7 +18,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atDate
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
@@ -27,8 +27,10 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.utils.now
 import plus.vplan.app.utils.overlaps
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class GetRoomOccupationMapUseCase(
     private val roomRepository: RoomRepository,
@@ -38,9 +40,9 @@ class GetRoomOccupationMapUseCase(
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> = channelFlow {
-        val schoolId = profile.getSchool().first().entityId.toInt()
+        val schoolId = Uuid.parseHex(profile.getSchool().first().entityId)
         weekRepository.getBySchool(schoolId).map { weeks ->
-            weeks.firstOrNull { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date in it.start..it.end }
+            weeks.firstOrNull { LocalDate.now() in it.start..it.end }
         }.collectLatest { currentWeek ->
             combine(
                 substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),
@@ -49,7 +51,7 @@ class GetRoomOccupationMapUseCase(
                 roomRepository.getBySchool(schoolId)
             ) { substitutionPlanLessonIds, timetableLessons, weeks, rooms ->
                 val substitution = substitutionPlanLessonIds
-                    .map { id -> App.substitutionPlanSource.getById(id).getFirstValue() }
+                    .map { id -> App.substitutionPlanSource.getById(id).getFirstValueOld() }
                     .fastFilterNotNull()
                     .filter { lesson -> lesson.subject != null }
 
@@ -75,7 +77,7 @@ sealed class Occupancy(
     data class Lesson(val lesson: plus.vplan.app.domain.model.Lesson, val date: LocalDate, override val start: LocalDateTime, override val end: LocalDateTime) : Occupancy(start, end) {
         companion object {
             suspend fun fromLesson(lesson: plus.vplan.app.domain.model.Lesson, contextDate: LocalDate): Occupancy {
-                return Lesson(lesson, contextDate, lesson.lessonTime.getFirstValue()!!.start.atDate(contextDate), lesson.lessonTime.getFirstValue()!!.end.atDate(contextDate))
+                return Lesson(lesson, contextDate, lesson.lessonTime.getFirstValueOld()!!.start.atDate(contextDate), lesson.lessonTime.getFirstValueOld()!!.end.atDate(contextDate))
             }
         }
     }

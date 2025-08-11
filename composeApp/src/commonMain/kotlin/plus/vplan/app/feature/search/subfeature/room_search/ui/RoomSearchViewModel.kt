@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -20,6 +21,7 @@ import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.GetLessonTimesForProfileUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.GetRoomOccupationMapUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.OccupancyMapRecord
+import plus.vplan.app.utils.now
 
 class RoomSearchViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
@@ -36,7 +38,7 @@ class RoomSearchViewModel(
             getCurrentProfileUseCase().collectLatest { currentProfile ->
                 state = state.copy(currentProfile = currentProfile)
                 combine(
-                    getRoomOccupationMapUseCase(currentProfile, Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date),
+                    getRoomOccupationMapUseCase(currentProfile, LocalDate.now()),
                     getLessonTimesForProfileUseCase(currentProfile)
                 ) { map, lessonTimes ->
                     state = state.copy(rooms = map, lessonTimes = lessonTimes.associateWith { false }, initDone = true)
@@ -59,7 +61,7 @@ data class RoomSearchState(
     val initDone: Boolean = false,
     val currentProfile: Profile? = null,
     val lessonTimes: Map<LessonTime, Boolean> = emptyMap(),
-    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val currentTime: LocalDateTime = LocalDateTime.now()
 ) {
     val startTime = rooms.map { it.occupancies }.flatten().minOfOrNull { it.start }
     val endTime = rooms.map { it.occupancies }.flatten().maxOfOrNull { it.end }

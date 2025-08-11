@@ -8,11 +8,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.capture
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateSubstitutionPlanUseCase
-import plus.vplan.app.feature.sync.domain.usecase.indiware.UpdateTimetableUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 
 class HandlePushNotificationUseCase(
     private val schoolRepository: SchoolRepository,
@@ -27,19 +27,20 @@ class HandlePushNotificationUseCase(
             "HOMEWORK_UPDATE" -> {
                 val data = json.decodeFromString<HomeworkUpdate>(payload)
                 data.homeworkIds.forEach {
-                    App.homeworkSource.getById(it, forceUpdate = true).getFirstValue()
+                    App.homeworkSource.getById(it, forceUpdate = true).getFirstValueOld()
                 }
             }
             "ASSESSMENT_UPDATE" -> {
                 val data = json.decodeFromString<AssessmentUpdate>(payload)
                 data.assessmentIds.forEach {
-                    App.assessmentSource.getById(it, forceUpdate = true).getFirstValue()
+                    App.assessmentSource.getById(it, forceUpdate = true).getFirstValueOld()
                 }
             }
             "INDIWARE_UPDATE" -> {
                 val data = json.decodeFromString<IndiwareUpdate>(payload)
-                val school = schoolRepository.getAll().first()
-                    .filterIsInstance<School.IndiwareSchool>()
+                val school = schoolRepository.getAllLocalIds().first()
+                    .map { schoolRepository.getByLocalId(it).first() }
+                    .filterIsInstance<School.AppSchool>()
                     .firstOrNull { it.sp24Id == data.indiwareSchoolId }
 
                 if (school == null) {
@@ -57,14 +58,14 @@ class HandlePushNotificationUseCase(
                     }
                 }
                 updateSubstitutionPlanUseCase(
-                    indiwareSchool = school,
+                    sp24School = school,
                     dates = dates,
                     allowNotification = true
                 )
 
                 if (data.timetable) {
                     updateTimetableUseCase(
-                        indiwareSchool = school,
+                        sp24School = school,
                         forceUpdate = true,
                     )
                 }
