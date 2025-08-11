@@ -22,6 +22,7 @@ import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
@@ -38,6 +39,7 @@ class DeveloperSettingsViewModel(
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
+    private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase
 ) : ViewModel() {
 
@@ -114,6 +116,15 @@ class DeveloperSettingsViewModel(
                     )
                     state = state.copy(isSubjectInstanceUpdateRunning = false)
                 }
+                DeveloperSettingsEvent.UpdateLessonTimes -> {
+                    if (state.isLessonTimesUpdateRunning) return@launch
+                    state = state.copy(isLessonTimesUpdateRunning = true)
+                    updateLessonTimesUseCase(
+                        state.profile!!.getSchool().getFirstValue()!!,
+                        null
+                    )
+                    state = state.copy(isLessonTimesUpdateRunning = false)
+                }
                 DeveloperSettingsEvent.ToggleAutoSyncDisabled -> {
                     keyValueRepository.set(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC, (!keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).first().toBoolean()).toString())
                 }
@@ -128,6 +139,7 @@ data class DeveloperSettingsState(
     val isSubjectInstanceUpdateRunning: Boolean = false,
     val isSubstitutionPlanUpdateRunning: Boolean = false,
     val isTimetableUpdateRunning: Boolean = false,
+    val isLessonTimesUpdateRunning: Boolean = false,
     val profile: Profile? = null,
     val isAutoSyncDisabled: Boolean = false,
     val fcmLogs: List<DbFcmLog> = emptyList()
@@ -139,6 +151,7 @@ sealed class DeveloperSettingsEvent {
     data object UpdateSubstitutionPlan : DeveloperSettingsEvent()
     data object UpdateTimetable : DeveloperSettingsEvent()
     data object UpdateWeeks : DeveloperSettingsEvent()
+    data object UpdateLessonTimes : DeveloperSettingsEvent()
     data object UpdateSubjectInstances : DeveloperSettingsEvent()
     data object ToggleAutoSyncDisabled : DeveloperSettingsEvent()
     data object DeleteSubstitutionPlan : DeveloperSettingsEvent()

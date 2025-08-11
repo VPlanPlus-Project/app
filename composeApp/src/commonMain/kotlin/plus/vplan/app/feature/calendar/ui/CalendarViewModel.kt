@@ -241,7 +241,13 @@ suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> {
     val lessons = this.associateWith { it.lessonTime.getFirstValueOld()!! }.toList().sortedBy { it.second.start.inWholeMinutes().toString().padStart(4, '0') + " " + it.first.subject }
     val layoutingInfo = mutableListOf<LessonLayoutingInfo>()
     lessons.forEach { (lesson, lessonTime) ->
-        val overlapping = layoutingInfo.filter { it.lessonTime.start in lessonTime.start..lessonTime.end || it.lessonTime.end in lessonTime.start..lessonTime.end || lessonTime.start in it.lessonTime.start..it.lessonTime.end || lessonTime.end in it.lessonTime.start..it.lessonTime.end }
+        val overlapping = layoutingInfo.filter {
+            val lessonStartsDuringOtherLesson = it.lessonTime.start >= lessonTime.start && it.lessonTime.start < lessonTime.end
+            val lessonEndsDuringOtherLesson = it.lessonTime.end > lessonTime.start && it.lessonTime.end <= lessonTime.end
+            val otherLessonStartsDuringLesson = lessonTime.start >= it.lessonTime.start && lessonTime.start < it.lessonTime.end
+            val otherLessonEndsDuringLesson = lessonTime.end > it.lessonTime.start && lessonTime.end <= it.lessonTime.end
+            lessonStartsDuringOtherLesson || lessonEndsDuringOtherLesson || otherLessonStartsDuringLesson || otherLessonEndsDuringLesson
+        }
         overlapping.onEach { layoutingInfo[layoutingInfo.indexOf(it)] = it.copy(of = it.of + 1) }
         layoutingInfo.add(LessonLayoutingInfo(lesson, lessonTime, overlapping.maxOfOrNull { it.sideShift }?.plus(1) ?: 0, overlapping.size+1))
     }

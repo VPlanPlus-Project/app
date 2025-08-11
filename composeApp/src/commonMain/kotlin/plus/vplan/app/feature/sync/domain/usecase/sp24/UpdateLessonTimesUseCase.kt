@@ -42,7 +42,7 @@ class UpdateLessonTimesUseCase(
                     end = lessonTime.end,
                     lessonNumber = lessonTime.lessonNumber,
                     group = group.id,
-                    interpolated = false
+                    interpolated = lessonTime.interpolated
                 )
             }
 
