@@ -13,7 +13,7 @@ import plus.vplan.app.domain.data.Item
 import kotlin.uuid.Uuid
 
 sealed interface Lesson : Item<Uuid, DataTag> {
-    val week: String
+    val week: String?
     val subject: String?
     val teacherIds: List<Uuid>
     val roomIds: List<Uuid>?
@@ -83,7 +83,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
     data class SubstitutionPlanLesson(
         override val id: Uuid,
         val date: LocalDate,
-        override val week: String,
+        override val week: String?,
         override val subject: String?,
         val isSubjectChanged: Boolean,
         override val teacherIds: List<Uuid>,

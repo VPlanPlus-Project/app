@@ -39,9 +39,11 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.abs
@@ -54,6 +56,8 @@ import kotlin.math.abs
 import kotlin.math.sin
 import kotlin.math.tanh
 
+private val FLING_THRESHOLD = 1000.dp // Threshold for fling to trigger drawer movement
+
 @Composable
 fun FullscreenDrawer(
     contentScrollState: ScrollState,
@@ -61,38 +65,99 @@ fun FullscreenDrawer(
     topAppBar: @Composable (onCloseClicked: () -> Unit, modifier: Modifier, scrollProgress: Float) -> Unit = { _, _, _ -> },
     content: @Composable FullscreenDrawerContext.() -> Unit
 ) {
-    var maxHeight by remember { mutableStateOf(0.dp) }
     val localDensity = LocalDensity.current
     val scope = rememberCoroutineScope()
-    var firstAnimationDone by remember { mutableStateOf(false) }
     val localSoftwareKeyboardController = LocalSoftwareKeyboardController.current
 
-    val offset = remember { Animatable(0.dp, Dp.VectorConverter) }
+    /**
+     * Tracks the height of the drawer. This is used to calculate the offset of the drawer.
+     */
+    var maxHeight by remember { mutableStateOf(0.dp) }
+
+    /**
+     * Tracks whether the opening animation of the drawer has been completed.
+     */
+    var firstAnimationDone by remember { mutableStateOf(false) }
+
+    /**
+     * Tracks the current vertical offset of the drawer. 0.dp means the drawer is fully closed and
+     * has its bottom edge at the top of the screen, while 2 * maxHeight means the drawer is fully
+     * closed as well, but has its top edge at the bottom of the screen. maxHeight means the
+     * drawer is fully open and has its top edge at the top of the screen.
+     */
+    val drawerOffset = remember { Animatable(0.dp, Dp.VectorConverter) }
+
+    /**
+     * Tracks whether the user is currently scrolling the content inside the drawer.
+     */
     var isUserScrolling by remember { mutableStateOf(false) }
 
+    /**
+     * Disable the snapping behavior of the drawer temporarily. Always reset to false if the
+     * operation that disabled it is done.
+     */
+    var disableSnapping by remember { mutableStateOf(false) }
+
+    /**
+     * Function that snaps the drawer to the nearest position based on its current offset.
+     * Either on the top edge of the screen (0.dp), the center of the screen (maxHeight),
+     * or the bottom edge of the screen (2 * maxHeight).
+     * This function is called when the user stops scrolling the content inside the drawer.
+     */
     val snapOffset = remember {
         {
             val height = with(localDensity) { maxHeight.toPx() }
-            ((with(localDensity) { offset.value.toPx() }) roundToNearest listOf(
+            ((with(localDensity) { drawerOffset.value.toPx() }) roundToNearest listOf(
                 0f,
                 height,
                 2 * height
             )).let {
                 scope.launch {
-                    offset.animateTo(with(localDensity) { it.toDp() })
+                    Logger.d { "Snapping drawer to $it" }
+                    drawerOffset.animateTo(with(localDensity) { it.toDp() })
                 }
             }
         }
     }
 
-    LaunchedEffect(offset.value) {
+    // If the drawer is moved outside of the screen, close it unless the drawer is being opened.
+    LaunchedEffect(drawerOffset.value) {
         if (!firstAnimationDone) return@LaunchedEffect
-        if (offset.value < 10.dp || offset.value > (2 * maxHeight) - 10.dp) onDismissRequest()
+        if (drawerOffset.value < 10.dp || drawerOffset.value > (2 * maxHeight) - 10.dp) onDismissRequest()
     }
 
     LaunchedEffect(contentScrollState.isScrollInProgress) {
+        if (disableSnapping) return@LaunchedEffect
         if (!contentScrollState.isScrollInProgress && isUserScrolling) snapOffset()
         isUserScrolling = contentScrollState.isScrollInProgress
+    }
+
+    val setDrawerOffset = remember { { value: Dp ->
+        scope.launch {
+            drawerOffset.snapTo(value)
+        }
+    } }
+
+    val moveDrawerToLowerBound = remember {
+        { initialVelocity: Dp ->
+            scope.launch {
+                disableSnapping = true
+                drawerOffset.animateTo(maxHeight * 2, initialVelocity = initialVelocity)
+                localSoftwareKeyboardController?.hide()
+                disableSnapping = false
+            }
+        }
+    }
+
+    val moveDrawerToUpperBound = remember {
+        { initialVelocity: Dp ->
+            scope.launch {
+                disableSnapping = true
+                drawerOffset.animateTo(0.dp, initialVelocity = initialVelocity)
+                localSoftwareKeyboardController?.hide()
+                disableSnapping = false
+            }
+        }
     }
 
     val scrollConnection = remember {
@@ -100,72 +165,91 @@ fun FullscreenDrawer(
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val isContentAtTop = contentScrollState.value == 0
                 val isContentAtBottom = contentScrollState.value == contentScrollState.maxValue
-                if (isContentAtTop && available.y >= 0) { // Scroll down
-                    localSoftwareKeyboardController?.hide()
-                    scope.launch {
-                        offset.snapTo(offset.value - with(localDensity) { available.y.toDp() })
-                    }
+                val verticalScrollDirection = if (available.y > 0) VerticalScrollDirection.Down else VerticalScrollDirection.Up
+
+                val scrollDistance = with(localDensity) { available.y.toDp() }
+
+                if (verticalScrollDirection == VerticalScrollDirection.Up && isContentAtTop) {
+                    // move drawer up
+                    setDrawerOffset(drawerOffset.value - scrollDistance)
                     return Offset(0f, available.y)
                 }
-                if (available.y <= 0 && offset.value > 0.dp && isContentAtBottom) { // Scroll down
-                    localSoftwareKeyboardController?.hide()
-                    scope.launch {
-                        offset.snapTo(offset.value - with(localDensity) { available.y.toDp() })
-                    }
+
+                if (verticalScrollDirection == VerticalScrollDirection.Down && isContentAtBottom) {
+                    // move drawer down
+                    setDrawerOffset(drawerOffset.value - scrollDistance)
                     return Offset(0f, available.y)
                 }
-                if (!isContentAtBottom && offset.value != maxHeight) {
-                    scope.launch {
-                        offset.animateTo(offset.value - with(localDensity) { available.y.toDp() })
-                    }
-                    return Offset(0f, available.y)
+
+                // scroll content
+                return super.onPreScroll(available, source)
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                val isContentAtTop = contentScrollState.value == 0
+                val isContentAtBottom = contentScrollState.value == contentScrollState.maxValue
+                val verticalScrollDirection = if (available.y > 0) VerticalScrollDirection.Down else VerticalScrollDirection.Up
+                val verticalScrollDistancePerSecond = with(localDensity) { available.y.toDp() }
+
+                if (abs(verticalScrollDistancePerSecond) < FLING_THRESHOLD) return super.onPreFling(available)
+
+                if (verticalScrollDirection == VerticalScrollDirection.Up && isContentAtTop) {
+                    // fling drawer up
+                    moveDrawerToLowerBound(verticalScrollDistancePerSecond)
+                    return Velocity(0f, available.y)
                 }
-                return super.onPreScroll(Offset.Zero, source)
+
+                if (verticalScrollDirection == VerticalScrollDirection.Down && isContentAtBottom) {
+                    // fling drawer down
+                    moveDrawerToUpperBound(verticalScrollDistancePerSecond)
+                    return Velocity(0f, available.y)
+                }
+
+                // fling content
+                return super.onPreFling(available)
             }
         }
     }
 
-    val scrollProgress = (-abs(offset.value - maxHeight) + maxHeight) / maxHeight
+    val scrollProgress = (-abs(drawerOffset.value - maxHeight) + maxHeight) / maxHeight
     var horizontalOffset by remember { mutableStateOf(0.dp) }
     BackHandler(
         onProgress = { progress ->
             scope.launch {
-                offset.snapTo(maxHeight * (1 - abs(progress) / 12))
+                drawerOffset.snapTo(maxHeight * (1 - abs(progress) / 12))
             }
             horizontalOffset = progress * 16.dp
         },
         onStart = { isUserScrolling = true },
         onEnd = { isUserScrolling = false },
     ) {
-        scope.launch {
-            offset.animateTo(0.dp)
-        }
+        moveDrawerToLowerBound(0.dp)
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .thenIf(Modifier.background(Color.Black.transparent((tanh(6 * (1 - scrollProgress) - 4) / -8) + 0.125f))) { maxHeight != 0.dp }
-            .noRippleClickable { scope.launch { offset.animateTo(maxHeight) } }
+            .noRippleClickable { scope.launch { drawerOffset.animateTo(maxHeight) } }
             .onSizeChanged {
                 maxHeight = with(localDensity) { it.height.toDp() }
                 scope.launch {
-                    if (firstAnimationDone) offset.snapTo(maxHeight)
-                    else offset.animateTo(maxHeight)
+                    if (firstAnimationDone) drawerOffset.snapTo(maxHeight)
+                    else drawerOffset.animateTo(maxHeight)
                 }.invokeOnCompletion { firstAnimationDone = true }
             }
     ) {
         if (maxHeight == 0.dp) return@Box
         Column(
             modifier = Modifier
-                .offset { with (localDensity) { IntOffset(horizontalOffset.roundToPx(), (maxHeight - offset.value).roundToPx()) } }
+                .offset { with (localDensity) { IntOffset(horizontalOffset.roundToPx(), (maxHeight - drawerOffset.value).roundToPx()) } }
                 .fillMaxSize()
                 .scale(((1 - (((1.05 * sech(4.0 * scrollProgress).toFloat().ifNan { 0f }) - 0.05) / 6)).toFloat()).coerceIn(0f, 1f))
                 .clip(RoundedCornerShape((sin((1 - scrollProgress) * PI / 2).ifNan { 0.0 } * 32.dp).coerceAtLeast(0.dp)))
                 .nestedScroll(scrollConnection),
         ) {
             topAppBar(
-                { scope.launch { offset.animateTo(0.dp) } },
+                { scope.launch { drawerOffset.animateTo(0.dp) } },
                 Modifier
                     .pointerInput(Unit) {
                         detectVerticalDragGestures(
@@ -175,7 +259,7 @@ fun FullscreenDrawer(
                         ) { _, dragAmount ->
                             val y = (with(localDensity) { dragAmount.toDp() })
                             scope.launch {
-                                offset.snapTo(offset.value - y)
+                                drawerOffset.snapTo(drawerOffset.value - y)
                             }
                         }
                     },
@@ -194,7 +278,7 @@ fun FullscreenDrawer(
                 FullscreenDrawerContext(
                     scrollState = contentScrollState,
                     hideDrawer = onDismissRequest
-                ) { scope.launch { offset.animateTo(0.dp) } }.content()
+                ) { scope.launch { drawerOffset.animateTo(0.dp) } }.content()
             }
         }
     }
@@ -205,3 +289,11 @@ data class FullscreenDrawerContext(
     val hideDrawer: () -> Unit,
     val closeDrawerWithAnimation: () -> Unit
 )
+
+/**
+ * Follows natural scrolling behavior.
+ */
+private enum class VerticalScrollDirection {
+    Up,
+    Down
+}

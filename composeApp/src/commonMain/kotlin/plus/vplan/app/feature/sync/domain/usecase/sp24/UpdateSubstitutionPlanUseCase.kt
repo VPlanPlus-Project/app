@@ -85,7 +85,7 @@ class UpdateSubstitutionPlanUseCase(
                 val errorMessage = "Week for $date not found"
                 Logger.d { errorMessage }
                 error = Response.Error.Other(errorMessage)
-                return@forEachDate
+                null
             }
 
             val oldLessons = substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId = sp24School.id, date = date).first()
@@ -112,7 +112,7 @@ class UpdateSubstitutionPlanUseCase(
                 id = Day.buildId(sp24School, date),
                 date = date,
                 schoolId = sp24School.id,
-                weekId = week.id,
+                weekId = week?.id,
                 info = substitutionPlan.info.joinToString("\n").ifBlank { null },
                 dayType = Day.DayType.REGULAR,
                 substitutionPlan = emptySet(),
@@ -138,7 +138,7 @@ class UpdateSubstitutionPlanUseCase(
                 Lesson.SubstitutionPlanLesson(
                     id = Uuid.random(),
                     date = date,
-                    week = week.id,
+                    week = week?.id,
                     subject = lesson.subject,
                     isSubjectChanged = lesson.subjectChanged,
                     teacherIds = teachers.filter { it.name in lesson.teachers }.map { it.id },

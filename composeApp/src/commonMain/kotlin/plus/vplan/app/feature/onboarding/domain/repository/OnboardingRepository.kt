@@ -28,6 +28,9 @@ interface OnboardingRepository {
 
     suspend fun setSelectedProfile(option: OnboardingProfile)
 
+    suspend fun getNeedToDownloadLessonData(): Boolean
+    suspend fun setNeedToDownloadLessonData(needToDownload: Boolean)
+
     fun getState(): Flow<OnboardingSp24State>
 }
 
