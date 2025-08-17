@@ -18,8 +18,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.api
-import plus.vplan.app.appApi
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupAlias
@@ -84,7 +83,7 @@ class GroupRepositoryImpl(
     override suspend fun downloadSchoolIdById(identifier: String): Response<Int> {
         safeRequest(onError = { return  it }) {
             val response = httpClient.get {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("group", "v1", "by-id")
                     appendEncodedPathSegments(identifier)
                 }.build())
@@ -100,7 +99,7 @@ class GroupRepositoryImpl(
     override suspend fun downloadById(schoolAuthentication: VppSchoolAuthentication, identifier: String): Response<VppGroupDto> {
         safeRequest(onError = { return  it }) {
             val response = httpClient.get {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("group", "v1", "by-id", identifier)
                 }.build())
 
@@ -123,7 +122,7 @@ class GroupRepositoryImpl(
     override suspend fun updateFirebaseToken(group: Group, token: String): Response.Error? {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "group", group.id.toString(), "firebase")
                 }.build())
 

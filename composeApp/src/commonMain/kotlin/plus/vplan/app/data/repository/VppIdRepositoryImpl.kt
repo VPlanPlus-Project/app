@@ -30,9 +30,7 @@ import kotlinx.serialization.json.Json
 import plus.vplan.app.APP_ID
 import plus.vplan.app.APP_REDIRECT_URI
 import plus.vplan.app.APP_SECRET
-import plus.vplan.app.api
-import plus.vplan.app.appApi
-import plus.vplan.app.auth
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
@@ -60,7 +58,7 @@ class VppIdRepositoryImpl(
     override suspend fun getAccessToken(code: String): Response<String> {
         safeRequest(onError = { return it }) {
             val response = httpClient.submitForm(
-                url = "${auth.url}/oauth/token",
+                url = "${currentConfiguration.authUrl}/oauth/token",
                 formParameters = Parameters.build {
                     append("grant_type", "authorization_code")
                     append("code", code)
@@ -84,7 +82,7 @@ class VppIdRepositoryImpl(
     override suspend fun getUserByToken(token: String): Response<VppVppIdDto> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("user", "v1", "me")
                 }.buildString())
                 bearerAuth(token)
@@ -117,7 +115,7 @@ class VppIdRepositoryImpl(
     override suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "user", "me", "session")
                 }.buildString())
 
@@ -139,7 +137,7 @@ class VppIdRepositoryImpl(
     override suspend fun logoutDevice(vppId: VppId.Active, deviceId: Int): Response<Unit> {
         safeRequest(onError = { return it }) {
             val response = httpClient.delete {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "user", "me", "session", deviceId.toString())
                 }.buildString())
 
@@ -156,7 +154,7 @@ class VppIdRepositoryImpl(
 
     override suspend fun logout(token: String): Response<Unit> {
         safeRequest(onError = { return it }) {
-            val response = httpClient.get("${auth.url}/oauth/logout") {
+            val response = httpClient.get("${currentConfiguration.authUrl}/oauth/logout") {
                 bearerAuth(token)
             }
             if (response.status != HttpStatusCode.OK) {
@@ -176,7 +174,7 @@ class VppIdRepositoryImpl(
     override suspend fun getSchulverwalterReauthUrl(vppId: VppId.Active): Response<String> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "app", "schulverwalter-reauth")
                 }.buildString())
                 vppId.buildVppSchoolAuthentication().authentication(this)
@@ -194,7 +192,7 @@ class VppIdRepositoryImpl(
     override suspend fun sendFeedback(access: VppSchoolAuthentication, content: String, email: String?): Response<Unit> {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("app", "feedback", "v1")
                 }.buildString())
 
@@ -211,7 +209,7 @@ class VppIdRepositoryImpl(
     override suspend fun updateFirebaseToken(vppId: VppId.Active, token: String): Response.Error? {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "user", "firebase")
                 }.buildString())
 
@@ -262,7 +260,7 @@ class VppIdRepositoryImpl(
         safeRequest(onError = {}) {
             val logger = Logger.withTag("VppIdRepositoryImpl.logSp24Credentials")
             val response = httpClient.post {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("sp24", "v1", "log")
                 }.buildString())
 

@@ -8,7 +8,12 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -130,7 +135,15 @@ val appModule = module(createdAtStart = true) {
                 retryOnServerErrors(maxRetries = 5)
                 exponentialDelay()
                 retryIf { request, response ->
-                    response.headers["X-Backend-Family"] != "vpp.ID" && request.url.host.endsWith("vplan.plus")
+                    val isResponseFromVPPServer = response.headers["X-Backend-Family"] == "vpp.ID"
+                    val isResponseSuccess = response.status.isSuccess()
+                    if (isResponseFromVPPServer && response.status == HttpStatusCode.InternalServerError) {
+                        MainScope().launch {
+                            appLogger.e { "Something went wrong at ${request.method} ${request.url}: 500\n${response.bodyAsText()}" }
+                        }
+                        return@retryIf false
+                    }
+                    return@retryIf isResponseFromVPPServer && !isResponseSuccess
                 }
             }
 
@@ -146,6 +159,8 @@ val appModule = module(createdAtStart = true) {
                 header("X-App", "VPlanPlus")
                 header("X-App-Version", BuildConfig.APP_VERSION_CODE)
             }
+
+
         }
     }
 

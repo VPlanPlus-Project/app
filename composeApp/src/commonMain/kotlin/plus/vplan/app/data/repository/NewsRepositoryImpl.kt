@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.appApi
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbNews
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsSchool
@@ -43,7 +43,7 @@ class NewsRepositoryImpl(
     override suspend fun download(school: School.AppSchool): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("app", "v1", "news")
                     parameters.append("school_id", "sp24.${school.buildSp24AppAuthentication().sp24SchoolId}.1")
                 }.build())

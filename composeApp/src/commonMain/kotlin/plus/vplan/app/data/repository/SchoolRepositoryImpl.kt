@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.appApi
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
@@ -68,7 +68,7 @@ class SchoolRepositoryImpl(
     override suspend fun downloadSchools(): Response<List<VppSchoolDto>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("school", "v1", "list")
                 }.build())
             }
@@ -89,7 +89,7 @@ class SchoolRepositoryImpl(
     override suspend fun downloadById(identifier: String): Response<VppSchoolDto> {
         safeRequest(onError = { return  it }) {
             val response = httpClient.get {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("school", "v1", "by-id")
                     appendEncodedPathSegments(identifier)
                 }.build())

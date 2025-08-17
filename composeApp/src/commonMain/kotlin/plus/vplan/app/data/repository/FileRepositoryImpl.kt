@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.api
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.network.isResponseFromBackend
@@ -77,7 +77,7 @@ class FileRepositoryImpl(
             send(CacheState.Loading(id.toString()))
             safeRequest(onError = { trySend(CacheState.Error(id.toString(), it)) }) {
                 val response = httpClient.get {
-                    url(URLBuilder(api).apply {
+                    url(URLBuilder(currentConfiguration.apiUrl).apply {
                         appendPathSegments("api", "v2.2", "file", id.toString())
                     }.build())
                 }
@@ -92,7 +92,7 @@ class FileRepositoryImpl(
                 val creator = vppDatabase.vppIdDao.getById(data.createdBy).first()?.toModel() as? VppId.Active
                 if (creator != null) {
                     val fileResponse = httpClient.get {
-                        url(URLBuilder(api).apply {
+                        url(URLBuilder(currentConfiguration.apiUrl).apply {
                             appendPathSegments("api", "v2.2", "file", id.toString())
                         }.build())
                         creator.buildVppSchoolAuthentication().authentication(this)
@@ -128,7 +128,7 @@ class FileRepositoryImpl(
 
                 schools.forEach { school ->
                     val fileResponse = httpClient.get {
-                        url(URLBuilder(api).apply {
+                        url(URLBuilder(currentConfiguration.apiUrl).apply {
                             appendPathSegments("api", "v2.2", "file", id.toString())
                         }.build())
                         school.authentication(this)
@@ -163,7 +163,7 @@ class FileRepositoryImpl(
     override fun cacheFile(file: File, schoolApiAccess: VppSchoolAuthentication): Flow<FileDownloadProgress> = channelFlow {
         safeRequest(onError = { trySend(FileDownloadProgress.Error(it)) }) {
             val response = httpClient.get {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "file", file.id.toString(), "download")
                 }.build())
                 schoolApiAccess.authentication(this)
@@ -186,7 +186,7 @@ class FileRepositoryImpl(
     ): Response<Int> {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "file")
                 }.build())
                 vppId.buildVppSchoolAuthentication().authentication(this)
@@ -215,7 +215,7 @@ class FileRepositoryImpl(
         if (file.id < 0 || vppId == null) return
         safeRequest(onError = { vppDatabase.fileDao.updateName(file.id, oldName) }) {
             val response = httpClient.patch {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "file", file.id.toString())
                 }.build())
 
@@ -238,7 +238,7 @@ class FileRepositoryImpl(
         }
         safeRequest(onError = { return it }) {
             val response = httpClient.delete {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "file", file.id.toString())
                 }.build())
                 bearerAuth(vppId.accessToken)

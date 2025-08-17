@@ -1,8 +1,11 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
@@ -11,6 +14,8 @@ import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.ui.common.AttachedFile
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 interface HomeworkRepository: WebEntityRepository<Homework> {
@@ -44,14 +49,11 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error?
     suspend fun deleteHomeworkTask(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Response.Error?
 
-    /**
-     * @return List of ids of the created homework
-     */
     suspend fun download(
         schoolApiAccess: VppSchoolAuthentication,
         groupId: Uuid,
-        subjectInstanceIds: List<Int>
-    ): Response<List<Int>>
+        subjectInstanceAliases: List<Alias>
+    ): Response<List<DownloadHomeworkResponseItem>>
 
     suspend fun clearCache()
 
@@ -78,3 +80,24 @@ data class CreateHomeworkResponse(
     val id: Int,
     val taskIds: Map<String, Int>
 )
+
+data class DownloadHomeworkResponseItem(
+    val id: Int,
+    val subjectInstance: Int?,
+    val group: Int?,
+    val createdBy: Int,
+    val dueTo: LocalDate,
+    val createdAt: Instant,
+    val tasks: List<Task>,
+    val files: List<File>
+) {
+    data class Task(
+        val id: Int,
+        val done: Boolean?,
+        val content: String,
+    )
+
+    data class File(
+        val id: Int,
+    )
+}

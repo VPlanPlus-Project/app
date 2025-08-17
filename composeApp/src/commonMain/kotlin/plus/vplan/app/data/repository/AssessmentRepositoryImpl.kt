@@ -37,7 +37,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.api
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.DbProfileAssessmentIndex
@@ -70,7 +70,7 @@ class AssessmentRepositoryImpl(
         TODO()
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "assessment")
                     parameters.append("filter_default_lessons", subjectInstanceIds.joinToString(","))
                 }.build())
@@ -119,7 +119,7 @@ class AssessmentRepositoryImpl(
             val response = httpClient.post {
                 bearerAuth(vppId.accessToken)
                 contentType(ContentType.Application.Json)
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "assessment")
                 }.build())
                 setBody(AssessmentPostRequest(
@@ -151,7 +151,7 @@ class AssessmentRepositoryImpl(
     ): Response.Error? {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "assessment", assessmentId.toString(), "file")
                 }.build())
                 contentType(ContentType.Application.Json)
@@ -226,7 +226,7 @@ class AssessmentRepositoryImpl(
                 }
                 if (existing == null || (vppId == null && school == null)) {
                     val metadataResponse = httpClient.get({
-                        url(URLBuilder(api).apply {
+                        url(URLBuilder(currentConfiguration.apiUrl).apply {
                             appendPathSegments("api", "v2.2", "assessment", id.toString())
                         }.build())
                     })
@@ -252,7 +252,7 @@ class AssessmentRepositoryImpl(
 
 
                 val assessmentResponse = httpClient.get {
-                    url(URLBuilder(api).apply {
+                    url(URLBuilder(currentConfiguration.apiUrl).apply {
                         appendPathSegments("api", "v2.2", "assessment", id.toString())
                     }.build())
                     vppId?.let { bearerAuth(it.accessToken) } ?: school?.authentication(this)
@@ -303,7 +303,7 @@ class AssessmentRepositoryImpl(
         }
         safeRequest(onError = { return it }) {
             val response = httpClient.delete(
-                URLBuilder(api).apply {
+                URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "assessment", assessment.id.toString())
                 }.build()) {
                 profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
@@ -362,7 +362,7 @@ class AssessmentRepositoryImpl(
             if (request !in onlineChangeRequests) return@launch
             onlineChangeRequests.remove(request)
             safeRequest(onError = { vppDatabase.assessmentDao.updateType(assessment.id, oldType.ordinal) }) {
-                val response = httpClient.patch(URLBuilder(api).apply {
+                val response = httpClient.patch(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "assessment", assessment.id.toString())
                 }.build()) {
                     profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
@@ -396,7 +396,7 @@ class AssessmentRepositoryImpl(
             onlineChangeRequests.remove(request)
 
             safeRequest(onError = { vppDatabase.assessmentDao.updateDate(assessment.id, oldDate) }) {
-                val response = httpClient.patch(URLBuilder(api).apply {
+                val response = httpClient.patch(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "assessment", assessment.id.toString())
                 }.build()) {
                     profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
@@ -429,7 +429,7 @@ class AssessmentRepositoryImpl(
             onlineChangeRequests.remove(request)
 
             safeRequest(onError = { vppDatabase.assessmentDao.updateVisibility(assessment.id, oldIsPublic) }) {
-                val response = httpClient.patch(URLBuilder(api).apply {
+                val response = httpClient.patch(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "assessment", assessment.id.toString())
                 }.build()) {
                     profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
@@ -463,7 +463,7 @@ class AssessmentRepositoryImpl(
             onlineChangeRequests.remove(request)
 
             safeRequest(onError = { vppDatabase.assessmentDao.updateContent(assessment.id, oldContent) }) {
-                val response = httpClient.patch(URLBuilder(api).apply {
+                val response = httpClient.patch(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "assessment", assessment.id.toString())
                 }.build()) {
                     profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
