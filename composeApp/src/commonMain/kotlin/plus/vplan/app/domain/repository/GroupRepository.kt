@@ -12,6 +12,10 @@ import kotlin.uuid.Uuid
 interface GroupRepository: AliasedItemRepository<GroupDbDto, Group> {
     fun getBySchool(schoolId: Uuid): Flow<List<Group>>
 
+    /**
+     * Get the id of the school that this group belongs to. Used to supply the
+     * correct authentication for [downloadById].
+     */
     suspend fun downloadSchoolIdById(identifier: String): Response<Int>
     suspend fun downloadById(schoolAuthentication: VppSchoolAuthentication, identifier: String): Response<VppGroupDto>
 

@@ -107,7 +107,7 @@ class CreateAssessmentUseCase(
         }
 
         files.forEach { file ->
-            localFileRepository.writeFile("./homework_files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
+            localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
             fileRepository.upsert(File(
                 name = file.name,
                 id = file.id,

@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -14,6 +15,7 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkResult
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
 import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
@@ -91,7 +93,10 @@ class NewHomeworkViewModel(
                             subjectInstance = state.selectedSubjectInstance,
                             selectedFiles = state.files
                         )
-                    }.let { state = state.copy(savingState = if (it != null) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error) }
+                    }.let { state = state.copy(savingState = if (it !is CreateHomeworkResult.Success) {
+                        Logger.d { "Failed to save homework: $it" }
+                        UnoptimisticTaskState.Error
+                    } else UnoptimisticTaskState.Success) }
                 }
             }
         }

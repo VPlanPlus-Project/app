@@ -57,11 +57,15 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
 
     suspend fun clearCache()
 
+    /**
+     * @param groupId The vpp id of the group, null if bound to subject instance
+     * @param subjectInstanceId The vpp id of the subject instance, null if bound to group
+     */
     suspend fun createHomeworkOnline(
         vppId: VppId.Active,
         until: LocalDate,
-        group: Group,
-        subjectInstance: SubjectInstance?,
+        groupId: Int?,
+        subjectInstanceId: Int?,
         isPublic: Boolean,
         tasks: List<String>,
     ): Response<CreateHomeworkResponse>

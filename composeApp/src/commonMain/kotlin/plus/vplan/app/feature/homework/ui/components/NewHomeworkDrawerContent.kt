@@ -58,12 +58,9 @@ import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.FullscreenDrawerContext
 import plus.vplan.app.ui.components.InfoCard
-import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.colors
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.cloud_alert
-import vplanplus.composeapp.generated.resources.triangle_alert
 import vplanplus.composeapp.generated.resources.x
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -271,18 +268,6 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
-
-        InfoCard(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 8.dp)
-                .fillMaxWidth(),
-            imageVector = Res.drawable.triangle_alert,
-            title = "Temporär deaktiviert",
-            text = "Aktuell ist diese Funktion deaktiviert, da sie nicht kompatibel mit dem neuen System ist. Kurzfristige Änderungen zu Stundenplan24.de haben die Fertigstellung dieser Funktion zum Beginn des Schuljahres nicht mehr ermöglicht. Um die App dennoch anbieten zu können, wurde diese Funktion vorerst deaktiviert. Aktualisiere die App regelmäßig, die Funktion wird bald wieder verfügbar sein.",
-            backgroundColor = colors[CustomColor.Yellow]!!.getGroup().container,
-            textColor = colors[CustomColor.Yellow]!!.getGroup().onContainer,
-        )
 
         Button(
             modifier = Modifier

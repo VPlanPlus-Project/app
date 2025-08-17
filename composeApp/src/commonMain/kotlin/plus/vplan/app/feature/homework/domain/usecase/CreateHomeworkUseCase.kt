@@ -2,29 +2,31 @@
 
 package plus.vplan.app.feature.homework.domain.usecase
 
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.captureError
+import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.LocalFileRepository
+import plus.vplan.app.domain.service.GroupService
+import plus.vplan.app.domain.service.ProfileService
+import plus.vplan.app.domain.service.SubjectInstanceService
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class CreateHomeworkUseCase(
     private val homeworkRepository: HomeworkRepository,
-    private val keyValueRepository: KeyValueRepository,
-    private val localFileRepository: LocalFileRepository
+    private val localFileRepository: LocalFileRepository,
+    private val groupService: GroupService,
+    private val profileService: ProfileService,
+    private val subjectInstanceService: SubjectInstanceService,
 ) {
     suspend operator fun invoke(
         tasks: List<String>,
@@ -32,23 +34,44 @@ class CreateHomeworkUseCase(
         date: LocalDate,
         subjectInstance: SubjectInstance?,
         selectedFiles: List<AttachedFile>
-    ): Int? {
-        val profile = keyValueRepository.get(Keys.CURRENT_PROFILE).filterNotNull().first().let { App.profileSource.getById(Uuid.parseHex(it)).getFirstValueOld() as? Profile.StudentProfile } ?: return null
+    ): CreateHomeworkResult {
+        val profile = (profileService.getCurrentProfile().first() as? Profile.StudentProfile) ?: return CreateHomeworkResult.Error.UnknownError("No current profile found or profile is not a student profile")
+        val group = profile.group.getFirstValue() ?: return CreateHomeworkResult.Error.UnknownError("Group not found for profile ${profile.id} (${profile.vppIdId})")
         val id: Int
         val taskIds: Map<String, Int>
         var homework: Homework
         val homeworkTasks: List<Homework.HomeworkTask>
         val files: List<Homework.HomeworkFile>
         if (profile.getVppIdItem() is VppId.Active) {
+            val vppGroupId = if (subjectInstance == null) {
+                val groupId = groupService.findAliasForGroup(group, AliasProvider.Vpp)?.value?.toInt()
+                if (groupId == null) {
+                    return CreateHomeworkResult.Error.GroupNotFound
+                }
+                groupId
+            } else {
+                null
+            }
+
+            val vppSubjectInstanceId = if (subjectInstance != null) {
+                val subjectInstanceId = subjectInstanceService.findAliasForSubjectInstance(subjectInstance, AliasProvider.Vpp)?.value?.toInt()
+                if (subjectInstanceId == null) {
+                    return CreateHomeworkResult.Error.UnknownError("Subject instance ${subjectInstance.id} not found on VPP")
+                }
+                subjectInstanceId
+            } else {
+                null
+            }
+
             val result = homeworkRepository.createHomeworkOnline(
                 vppId = profile.getVppIdItem() as VppId.Active,
                 until = date,
-                group = profile.getGroupItem(),
-                subjectInstance = subjectInstance,
+                groupId = vppGroupId,
+                subjectInstanceId = vppSubjectInstanceId,
                 isPublic = isPublic == true,
                 tasks = tasks
             )
-            if (result !is Response.Success) return null
+            if (result !is Response.Success) return CreateHomeworkResult.Error.CreationError(result as Response.Error)
 
             val idMapping = result.data
             id = idMapping.id
@@ -67,23 +90,24 @@ class CreateHomeworkUseCase(
             )
             homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
 
-            files = selectedFiles.mapNotNull {
-                val documentId = homeworkRepository.uploadHomeworkDocument(
-                    vppId = profile.getVppIdItem() as VppId.Active,
-                    homeworkId = homework.id,
-                    document = it
-                )
-                if (documentId !is Response.Success) return@mapNotNull null
-                homework = (homework as Homework.CloudHomework).copy(
-                    files = homework.files + documentId.data
-                )
-                Homework.HomeworkFile(
-                    id = documentId.data,
-                    name = it.name,
-                    size = it.size,
-                    homework = homework.id
-                )
-            }
+            files = emptyList()
+//            selectedFiles.mapNotNull {
+//                val documentId = homeworkRepository.uploadHomeworkDocument(
+//                    vppId = profile.getVppIdItem() as VppId.Active,
+//                    homeworkId = homework.id,
+//                    document = it
+//                )
+//                if (documentId !is Response.Success) return@mapNotNull null
+//                homework = (homework as Homework.CloudHomework).copy(
+//                    files = homework.files + documentId.data
+//                )
+//                Homework.HomeworkFile(
+//                    id = documentId.data,
+//                    name = it.name,
+//                    size = it.size,
+//                    homework = homework.id
+//                )
+//            }
         } else {
             id = homeworkRepository.getIdForNewLocalHomework() - 1
             val taskIdStart = homeworkRepository.getIdForNewLocalHomeworkTask() - 1
@@ -106,9 +130,30 @@ class CreateHomeworkUseCase(
         homeworkRepository.upsert(listOf(homework), homeworkTasks, files)
         homeworkRepository.createCacheForProfile(profile.id, setOf(homework.id))
         files.forEach { file ->
-            localFileRepository.writeFile("./homework_files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
+            localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
         }
 
-        return id
+        return CreateHomeworkResult.Success(id)
+    }
+}
+
+sealed class CreateHomeworkResult {
+    data class Success(val homeworkId: Int) : CreateHomeworkResult()
+    sealed class Error : CreateHomeworkResult() {
+
+        /**
+         * A numeric vpp id for the group could not be found. This can be the case if the group is
+         * not linked to a VPP entity because it does not exist on the VPP server, or if the user
+         * has no internet connection whilst the group is not linked to a VPP entity.
+         */
+        data object GroupNotFound : Error()
+
+        data class UnknownError(val message: String): Error() {
+            init {
+                captureError("CreateHomeworkUseCase", "Unknown error: $message")
+            }
+        }
+
+        data class CreationError(val error: Response.Error) : Error()
     }
 }

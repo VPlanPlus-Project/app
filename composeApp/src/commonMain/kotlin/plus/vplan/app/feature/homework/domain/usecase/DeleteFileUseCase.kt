@@ -15,7 +15,7 @@ class DeleteFileUseCase(
     suspend operator fun invoke(file: File, homework: Homework, profile: Profile.StudentProfile): Boolean {
         if (fileRepository.deleteFile(file, profile.getVppIdItem()) != null) return false
         if (file.isOfflineReady) {
-            localFileRepository.deleteFile("./homework_files/" + file.id)
+            localFileRepository.deleteFile("./files/" + file.id)
         }
         homeworkRepository.unlinkHomeworkFileLocally(homework, file.id)
         return true

@@ -21,7 +21,7 @@ actual fun openFile(file: File) {
         error = null,
         appropriateForURL = null
     )!!
-    val fileURL = documentsDirectory.URLByAppendingPathComponent("homework_files/${file.id}")!!
+    val fileURL = documentsDirectory.URLByAppendingPathComponent("files/${file.id}")!!
 
     val tempDirectory = fileManager.temporaryDirectory()
     val tempFile = tempDirectory.URLByAppendingPathComponent(file.name)!!

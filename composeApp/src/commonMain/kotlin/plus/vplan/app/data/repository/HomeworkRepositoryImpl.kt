@@ -403,23 +403,23 @@ class HomeworkRepositoryImpl(
     override suspend fun createHomeworkOnline(
         vppId: VppId.Active,
         until: LocalDate,
-        group: Group,
-        subjectInstance: SubjectInstance?,
+        groupId: Int?,
+        subjectInstanceId: Int?,
         isPublic: Boolean,
         tasks: List<String>
     ): Response<CreateHomeworkResponse> {
-        TODO()
+        require(groupId != null || subjectInstanceId != null) { "Either groupId or subjectInstanceId must not be null" }
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(currentConfiguration.apiUrl).apply {
-                    appendPathSegments("api", "v2.2", "homework")
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("homework", "v1")
                 }.build())
                 bearerAuth(vppId.accessToken)
                 contentType(ContentType.Application.Json)
                 setBody(
                     HomeworkPostRequest(
-                        subjectInstance = -1,
-                        groupId = -1,
+                        subjectInstance = subjectInstanceId,
+                        groupId = groupId,
                         dueTo = until.toString(),
                         isPublic = isPublic,
                         tasks = tasks
@@ -491,12 +491,6 @@ private data class HomeworkPostResponse(
 private data class HomeworkPostResponseItem(
     @SerialName("id") val id: Int,
     @SerialName("description_hash") val descriptionHash: String,
-)
-
-@Serializable
-private data class HomeworkMetadataResponse(
-    @SerialName("school_ids") val schoolIds: List<Int>,
-    @SerialName("created_by") val createdBy: Int
 )
 
 @Serializable

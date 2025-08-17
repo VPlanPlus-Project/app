@@ -41,7 +41,7 @@ class AddFileUseCase(
             ))
         }
 
-        localFileRepository.writeFile("./homework_files/$id", file.readBytes())
+        localFileRepository.writeFile("./files/$id", file.readBytes())
         val fileItem = fileRepository.getById(id, false).filterIsInstance<CacheState.Done<plus.vplan.app.domain.model.File>>().first().data
         fileRepository.setOfflineReady(fileItem, true)
         homeworkRepository.linkHomeworkFileLocally(homework, fileItem)

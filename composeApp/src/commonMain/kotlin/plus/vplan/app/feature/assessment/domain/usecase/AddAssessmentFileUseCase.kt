@@ -34,7 +34,7 @@ class AddAssessmentFileUseCase(
             id = fileRepository.getMinIdForLocalFile() - 1
         }
 
-        localFileRepository.writeFile("./homework_files/$id", file.readBytes())
+        localFileRepository.writeFile("./files/$id", file.readBytes())
         fileRepository.upsert(
             File(
                 id = id,

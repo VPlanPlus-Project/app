@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CreationReason
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
@@ -23,10 +24,10 @@ class GroupServiceImpl(
     private val groupRepository: GroupRepository,
     private val schoolRepository: SchoolRepository
 ): GroupService {
-    override fun getGroupFromAlias(alias: Alias): Flow<AliasState<Group>> {
+    override fun getGroupFromAlias(alias: Alias, forceUpdate: Boolean): Flow<AliasState<Group>> {
         return channelFlow {
             var localId = groupRepository.resolveAliasToLocalId(alias)
-            if (localId == null) {
+            if (localId == null || forceUpdate) {
                 send(AliasState.Loading(alias.toString()))
                 val schoolId = groupRepository.downloadSchoolIdById(alias.toString())
 
@@ -72,5 +73,13 @@ class GroupServiceImpl(
                 else AliasState.Done(it)
             })
         }
+    }
+
+    override suspend fun findAliasForGroup(group: Group, aliasProvider: AliasProvider): Alias? {
+        val existing = group.aliases.firstOrNull { it.provider == aliasProvider }
+        if (existing != null) return existing
+        return getGroupFromAlias(group.aliases.first(), true).getFirstValue()
+            ?.aliases
+            ?.firstOrNull { it.provider == aliasProvider }
     }
 }
