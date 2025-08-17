@@ -53,9 +53,7 @@ data class Host(
     val url = "${protocol.name}://$host:$port"
 }
 
-//const val appApi = "http://10.0.2.2:8002/api/app"
-const val appApi = "https://vplan.plus/api/app"
-//const val appApi = "https://vplan.plus/api/app"
+val appApi = currentConfiguration.appApiUrl
 
 const val api = "https://vplan.plus"
 
