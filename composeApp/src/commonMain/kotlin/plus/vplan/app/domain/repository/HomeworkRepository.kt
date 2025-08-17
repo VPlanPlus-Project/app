@@ -51,7 +51,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
 
     suspend fun download(
         schoolApiAccess: VppSchoolAuthentication,
-        groupId: Uuid,
+        groups: List<Alias>,
         subjectInstanceAliases: List<Alias>
     ): Response<List<DownloadHomeworkResponseItem>>
 

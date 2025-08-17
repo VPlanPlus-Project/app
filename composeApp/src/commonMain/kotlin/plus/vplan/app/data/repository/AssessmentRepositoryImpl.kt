@@ -76,7 +76,7 @@ class AssessmentRepositoryImpl(
                 }.build())
                 schoolApiAccess.authentication(this)
             }
-            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            if (!response.status.isSuccess()) return response.toErrorResponse()
             val assessments = ResponseDataWrapper.fromJson<List<AssessmentGetResponse>>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
 
@@ -159,7 +159,7 @@ class AssessmentRepositoryImpl(
                 vppId.buildVppSchoolAuthentication().authentication(this)
             }
             if (response.status.isSuccess()) return null
-            return response.toErrorResponse<Any>()
+            return response.toErrorResponse()
         }
         return Response.Error.Cancelled
     }
@@ -237,7 +237,7 @@ class AssessmentRepositoryImpl(
                     }
 
                     if (metadataResponse.status != HttpStatusCode.OK) {
-                        trySend(CacheState.Error(id.toString(), metadataResponse.toErrorResponse<Any>()))
+                        trySend(CacheState.Error(id.toString(), metadataResponse.toErrorResponse()))
                         return@channelFlow
                     }
 
@@ -263,7 +263,7 @@ class AssessmentRepositoryImpl(
                     }
                 }
                 if (assessmentResponse.status != HttpStatusCode.OK) {
-                    trySend(CacheState.Error(id.toString(), assessmentResponse.toErrorResponse<Any>()))
+                    trySend(CacheState.Error(id.toString(), assessmentResponse.toErrorResponse()))
                     return@channelFlow
                 }
                 val data = ResponseDataWrapper.fromJson<AssessmentGetResponse>(assessmentResponse.bodyAsText())
@@ -308,7 +308,7 @@ class AssessmentRepositoryImpl(
                 }.build()) {
                 profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
             }
-            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            if (!response.status.isSuccess()) return response.toErrorResponse()
             vppDatabase.assessmentDao.deleteById(listOf(assessment.id))
             return null
         }

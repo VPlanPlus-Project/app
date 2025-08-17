@@ -132,7 +132,7 @@ class GroupRepositoryImpl(
                 setBody(FirebaseTokenRequest(token))
             }
             if (response.status.isSuccess()) return null
-            return response.toErrorResponse<Unit>()
+            return response.toErrorResponse()
         }
         return Response.Error.Cancelled
     }

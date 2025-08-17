@@ -85,7 +85,7 @@ class FileRepositoryImpl(
                     vppDatabase.fileDao.deleteById(listOf(id))
                     return@channelFlow send(CacheState.NotExisting(id.toString()))
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<File>()))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse()))
                 val data = ResponseDataWrapper.fromJson<FileItemSimpleGetRequest>(response.bodyAsText())
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
@@ -97,7 +97,7 @@ class FileRepositoryImpl(
                         }.build())
                         creator.buildVppSchoolAuthentication().authentication(this)
                     }
-                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
+                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse()))
                     val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
                         ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
                     val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
@@ -134,7 +134,7 @@ class FileRepositoryImpl(
                         school.authentication(this)
                     }
                     if (fileResponse.status == HttpStatusCode.Forbidden) return@forEach
-                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse<File>()))
+                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse()))
                     val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
                         ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
                     val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
@@ -172,7 +172,7 @@ class FileRepositoryImpl(
                     else send(FileDownloadProgress.InProgress((bytesSentTotal.toFloat() / contentLength.toFloat())))
                 }
             }
-            if (!response.status.isSuccess()) return@channelFlow send(FileDownloadProgress.Error(response.toErrorResponse<File>()))
+            if (!response.status.isSuccess()) return@channelFlow send(FileDownloadProgress.Error(response.toErrorResponse()))
             val data = response.bodyAsBytes()
             return@channelFlow send(FileDownloadProgress.Done(data) {
                 vppDatabase.fileDao.setOfflineReady(file.id, true)
@@ -195,7 +195,7 @@ class FileRepositoryImpl(
                 header(HttpHeaders.ContentLength, document.size.toString())
                 setBody(ByteReadChannel(document.platformFile.readBytes()))
             }
-            if (response.status != HttpStatusCode.OK) return response.toErrorResponse<Int>()
+            if (response.status != HttpStatusCode.OK) return response.toErrorResponse()
             return ResponseDataWrapper.fromJson<Int>(response.bodyAsText())?.let { Response.Success(it) } ?: Response.Error.ParsingError(response.bodyAsText())
         }
         return Response.Error.Cancelled
@@ -243,7 +243,7 @@ class FileRepositoryImpl(
                 }.build())
                 bearerAuth(vppId.accessToken)
             }
-            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            if (!response.status.isSuccess()) return response.toErrorResponse()
             delete()
             return null
         }

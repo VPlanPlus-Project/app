@@ -180,7 +180,7 @@ class VppIdRepositoryImpl(
                 vppId.buildVppSchoolAuthentication().authentication(this)
             }
 
-            if (!response.status.isSuccess()) return response.toErrorResponse<String>()
+            if (!response.status.isSuccess()) return response.toErrorResponse()
             val url = ResponseDataWrapper.fromJson<String>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
 
@@ -201,7 +201,7 @@ class VppIdRepositoryImpl(
                 access.authentication(this)
             }
             if (response.status.isSuccess()) return Response.Success(Unit)
-            return response.toErrorResponse<Unit>()
+            return response.toErrorResponse()
         }
         return Response.Error.Cancelled
     }
@@ -218,7 +218,7 @@ class VppIdRepositoryImpl(
                 setBody(FirebaseTokenRequest(token))
             }
             if (response.status.isSuccess()) return null
-            return response.toErrorResponse<Unit>()
+            return response.toErrorResponse()
         }
         return Response.Error.Cancelled
     }

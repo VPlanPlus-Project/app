@@ -26,7 +26,6 @@ import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.schulverwalter.FinalGrade
-import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.repository.schulverwalter.FinalGradeRepository
 import plus.vplan.app.utils.sendAll
 
@@ -84,7 +83,7 @@ class FinalGradeRepositoryImpl(
                     }
                     bearerAuth(accessToken.schulverwalterAccessToken)
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Grade>()))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse()))
                 val data = ResponseDataWrapper.fromJson<List<FinalGradeResponse>>(response.bodyAsText())
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 

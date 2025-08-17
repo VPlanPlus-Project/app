@@ -1,6 +1,8 @@
 package plus.vplan.app.feature.sync.domain.usecase.vpp
 
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.capture
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.AliasProvider
@@ -10,20 +12,48 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileHomeworkIndexUseCase
 
 class UpdateHomeworkUseCase(
     private val profileRepository: ProfileRepository,
     private val homeworkRepository: HomeworkRepository,
     private val platformNotificationRepository: PlatformNotificationRepository,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateProfileHomeworkIndexUseCase: UpdateProfileHomeworkIndexUseCase
 ) {
+    private val logger = Logger.withTag("UpdateHomeworkUseCase")
+
     suspend operator fun invoke(allowNotifications: Boolean) {
         val ids = mutableSetOf<Int>()
         val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
-        profiles.forEach { studentProfile ->
-            val existingHomework = homeworkRepository.getByGroup(studentProfile.groupId).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
-            val vppSchoolId = studentProfile.getSchool().getFirstValue()?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toInt() ?: return@forEach
+        val existingIds = mutableSetOf<Int>()
+        profiles.forEach forEachProfile@{ studentProfile ->
+            val existingHomeworkIds = homeworkRepository.getByGroup(studentProfile.groupId).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
+            existingIds.addAll(existingHomeworkIds)
+            val school = studentProfile.getSchool().getFirstValue()
+            val group = studentProfile.group.getFirstValue() ?: run {
+                val errorMessage = "Group not found for profile ${studentProfile.name} (${studentProfile.id})"
+                capture("error", mapOf(
+                    "location" to "UpdateHomeworkUseCase",
+                    "message" to errorMessage
+                ))
+                logger.e { errorMessage }
+                return@forEachProfile
+            }
+            val vppSchoolId = school?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toInt() ?: run {
+                logger.e { "No vpp provider for school $school" }
+                return@forEachProfile
+            }
+            val enabledSubjectInstanceIds = studentProfile.subjectInstanceConfiguration.filterValues { it }.keys
+            val subjectInstanceAliases = enabledSubjectInstanceIds
+                .mapNotNull { subjectInstanceRepository.getByLocalId(it).first() }
+                .flatMap { it.aliases }
+
+            val downloaded = homeworkRepository.download(school.buildSp24AppAuthentication(), group.aliases.toList(), subjectInstanceAliases)
+
+            downloaded.hashCode()
+
             TODO()
 //            ids.addAll(
 //                (homeworkRepository.download(

@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 
 package plus.vplan.app.data.repository
 
@@ -26,11 +26,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.api
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.database.model.database.DbHomework
@@ -44,6 +43,7 @@ import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
@@ -52,9 +52,11 @@ import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.CreateHomeworkResponse
+import plus.vplan.app.domain.repository.DownloadHomeworkResponseItem
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.utils.sha256
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -182,7 +184,7 @@ class HomeworkRepositoryImpl(
         }
         vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppIdId!!, newState))
         safeRequest(onError = { vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppIdId, oldState)) }) {
-            val response = httpClient.patch(URLBuilder(api).apply {
+            val response = httpClient.patch(URLBuilder(currentConfiguration.apiUrl).apply {
                 appendPathSegments("api", "v2.2", "homework", "task", task.id.toString())
             }.build()) {
                 profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
@@ -202,7 +204,7 @@ class HomeworkRepositoryImpl(
 
         if (homework.id < 0 || profile.getVppIdItem() == null) return
         safeRequest(onError = { vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, TODO(), oldGroup?.id) }) {
-            val response = httpClient.patch(URLBuilder(api).apply {
+            val response = httpClient.patch(URLBuilder(currentConfiguration.apiUrl).apply {
                 appendPathSegments("api", "v2.2", "homework", homework.id.toString())
             }.build()) {
                 profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
@@ -219,7 +221,7 @@ class HomeworkRepositoryImpl(
 
         if (homework.id < 0 || profile.getVppIdItem() == null) return
         safeRequest(onError = { vppDatabase.homeworkDao.updateDueTo(homework.id, oldDueTo) }) {
-            val response = httpClient.patch(URLBuilder(api).apply {
+            val response = httpClient.patch(URLBuilder(currentConfiguration.apiUrl).apply {
                 appendPathSegments("api", "v2.2", "homework", homework.id.toString())
             }.build()) {
                 profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
@@ -236,7 +238,7 @@ class HomeworkRepositoryImpl(
 
         if (homework.id < 0 || profile.getVppIdItem() == null) return
         safeRequest(onError = { vppDatabase.homeworkDao.updateVisibility(homework.id, oldVisibility) }) {
-            val response = httpClient.patch(URLBuilder(api).apply {
+            val response = httpClient.patch(URLBuilder(currentConfiguration.apiUrl).apply {
                 appendPathSegments("api", "v2.2", "homework", homework.id.toString())
             }.build()) {
                 profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
@@ -264,14 +266,14 @@ class HomeworkRepositoryImpl(
         }
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "homework", homework.id.toString(), "tasks")
                 }.build())
                 profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
                 contentType(ContentType.Application.Json)
                 setBody(HomeworkAddTaskRequest(task = task))
             }
-            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            if (!response.status.isSuccess()) return response.toErrorResponse()
             val id = ResponseDataWrapper.fromJson<Int>(response.bodyAsText()) ?: return Response.Error.ParsingError(response.bodyAsText())
             vppDatabase.homeworkDao.upsertTaskMany(
                 listOf(
@@ -295,7 +297,7 @@ class HomeworkRepositoryImpl(
         if (task.id < 0 || profile.getVppIdItem() == null) return
         safeRequest(onError = { vppDatabase.homeworkDao.updateTaskContent(task.id, oldContent) }) {
             val response = httpClient.patch {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "homework", "task", task.id.toString())
                 }.build())
                 profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
@@ -320,12 +322,12 @@ class HomeworkRepositoryImpl(
             return null
         }
         safeRequest(onError = { return it }) {
-            val response = httpClient.delete(URLBuilder(api).apply {
+            val response = httpClient.delete(URLBuilder(currentConfiguration.apiUrl).apply {
                 appendPathSegments("api", "v2.2", "homework", homework.id.toString())
             }.build()) {
                 profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
             }
-            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            if (!response.status.isSuccess()) return response.toErrorResponse()
             vppDatabase.homeworkDao.deleteById(listOf(homework.id))
             return null
         }
@@ -339,81 +341,57 @@ class HomeworkRepositoryImpl(
         }
         safeRequest(onError = { return it }) {
             val response = httpClient.delete {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "homework", "task", task.id.toString())
                 }.build())
                 profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
             }
-            if (!response.status.isSuccess()) return response.toErrorResponse<Any>()
+            if (!response.status.isSuccess()) return response.toErrorResponse()
             vppDatabase.homeworkDao.deleteTaskById(listOf(task.id))
             return null
         }
         return Response.Error.Cancelled
     }
 
-    override suspend fun download(schoolApiAccess: VppSchoolAuthentication, groupId: Uuid, subjectInstanceIds: List<Int>): Response<List<Int>> {
-        return Response.Error.Cancelled
+    override suspend fun download(schoolApiAccess: VppSchoolAuthentication, groups: List<Alias>, subjectInstanceAliases: List<Alias>): Response<List<DownloadHomeworkResponseItem>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(api).apply {
-                    appendPathSegments("api", "v2.2", "homework")
-                    parameters.append("filter_groups", groupId.toString())
-                    parameters.append("filter_default_lessons", subjectInstanceIds.joinToString(","))
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("homework", "v1")
+                    parameters.append("filter_groups", groups.joinToString(","))
+                    parameters.append("filter_subject_instances", subjectInstanceAliases.joinToString(","))
                     parameters.append("include_tasks", "true")
                     parameters.append("include_files", "true")
                 }.build())
                 schoolApiAccess.authentication(this)
             }
 
-            if (response.status != HttpStatusCode.OK) return response.toErrorResponse<Any>()
+            if (response.status != HttpStatusCode.OK) return response.toErrorResponse()
 
             val data = ResponseDataWrapper.fromJson<List<HomeworkGetResponse>>(response.bodyAsText()) ?: return Response.Error.ParsingError(response.bodyAsText())
 
-            vppDatabase.homeworkDao.upsertMany(
-                homework = data.map { homework ->
-                    DbHomework(
-                        id = homework.id,
-                        subjectInstanceId = Uuid.NIL,
-                        groupId = Uuid.NIL,
-                        createdAt = Instant.fromEpochSeconds(homework.createdAt),
-                        dueTo = LocalDate.parse(homework.dueTo),
-                        createdBy = homework.createdBy.id,
-                        createdByProfileId = null,
-                        isPublic = homework.isPublic,
-                        cachedAt = Clock.System.now()
-                    )
-                },
-                homeworkTask = data.map { homework ->
-                    homework.tasks.map { it.value }.map { homeworkTask ->
-                        DbHomeworkTask(
-                            id = homeworkTask.id,
-                            homeworkId = homework.id,
-                            content = homeworkTask.content,
-                            cachedAt = Clock.System.now()
+            return Response.Success(data.map { homework ->
+                DownloadHomeworkResponseItem(
+                    id = homework.id,
+                    subjectInstance = homework.subjectInstance?.id,
+                    group = homework.group?.id,
+                    createdBy = homework.createdBy.id,
+                    dueTo = LocalDate.parse(homework.dueTo),
+                    createdAt = kotlin.time.Instant.fromEpochSeconds(homework.createdAt),
+                    tasks = homework.tasks.map { task ->
+                        DownloadHomeworkResponseItem.Task(
+                            id = task.value.id,
+                            done = task.value.done,
+                            content = task.value.content
+                        )
+                    },
+                    files = homework.files.map { file ->
+                        DownloadHomeworkResponseItem.File(
+                            id = file.id
                         )
                     }
-                }.flatten(),
-                homeworkTaskDoneAccount = if (schoolApiAccess !is VppSchoolAuthentication.Vpp) emptyList() else data.flatMap { homework ->
-                    homework.tasks.map { it.value }.mapNotNull {
-                        DbHomeworkTaskDoneAccount(
-                            taskId = it.id,
-                            vppId = schoolApiAccess.vppIdId,
-                            isDone = it.done ?: return@mapNotNull null
-                        )
-                    }
-                },
-                files = emptyList(),
-                fileHomeworkConnections = data.flatMap { homework ->
-                    homework.files.map {
-                        FKHomeworkFile(
-                            homeworkId = homework.id,
-                            fileId = it.id
-                        )
-                    }
-                }
-            )
-
-            return Response.Success(data.map { it.id })
+                )
+            })
         }
         return Response.Error.Cancelled
     }
@@ -433,7 +411,7 @@ class HomeworkRepositoryImpl(
         TODO()
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "homework")
                 }.build())
                 bearerAuth(vppId.accessToken)
@@ -470,7 +448,7 @@ class HomeworkRepositoryImpl(
     override suspend fun uploadHomeworkDocument(vppId: VppId.Active, homeworkId: Int, document: AttachedFile): Response<Int> {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "homework", homeworkId.toString(), "documents")
                 }.build())
                 header("File-Name", document.name)
@@ -479,7 +457,7 @@ class HomeworkRepositoryImpl(
                 bearerAuth(vppId.accessToken)
                 setBody(ByteReadChannel(document.platformFile.readBytes()))
             }
-            if (response.status != HttpStatusCode.OK) return response.toErrorResponse<Int>()
+            if (response.status != HttpStatusCode.OK) return response.toErrorResponse()
             return ResponseDataWrapper.fromJson<Int>(response.bodyAsText())?.let { Response.Success(it) } ?: Response.Error.ParsingError(response.bodyAsText())
         }
         return Response.Error.Cancelled
@@ -528,7 +506,7 @@ private data class HomeworkGetResponse(
     @SerialName("created_at") val createdAt: Long,
     @SerialName("due_to") val dueTo: String,
     @SerialName("is_public") val isPublic: Boolean,
-    @SerialName("group") val group: EntityId,
+    @SerialName("group") val group: EntityId?,
     @SerialName("subject_instance") val subjectInstance: EntityId?,
     @SerialName("tasks") val tasks: List<HomeworkGetResponseTaskItem>,
     @SerialName("files") val files: List<EntityId>,

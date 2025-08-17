@@ -49,7 +49,7 @@ class NewsRepositoryImpl(
                 }.build())
                 school.buildSp24AppAuthentication().authentication(this)
             }
-            if (response.status != HttpStatusCode.OK) return response.toErrorResponse<List<News>>()
+            if (response.status != HttpStatusCode.OK) return response.toErrorResponse()
 
             val data = ResponseDataWrapper.fromJson<List<NewsResponse>>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
