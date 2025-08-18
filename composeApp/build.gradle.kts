@@ -6,7 +6,6 @@ import java.util.Properties
 object ApplicationConfig {
     const val APP_VERSION_NAME = "0.1.61-production"
     const val APP_VERSION_CODE = 116
-    var isDebug = false
 }
 
 val localProperties = Properties().apply {
@@ -147,7 +146,6 @@ android {
     buildTypes {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")
-            ApplicationConfig.isDebug = true
         }
         getByName("release") {
             isMinifyEnabled = false
@@ -187,7 +185,7 @@ buildConfig {
 
     buildConfigField("APP_VERSION_CODE", ApplicationConfig.APP_VERSION_CODE)
     buildConfigField("APP_VERSION", ApplicationConfig.APP_VERSION_NAME)
-    buildConfigField("APP_DEBUG", ApplicationConfig.isDebug)
+    buildConfigField("APP_DEBUG", localProperties.getProperty("app.debug")?.toBoolean()!!)
 
     buildConfigField("POSTHOG_API_KEY", localProperties.getProperty("posthog.api.key") ?: throw MissingFieldException("posthog.api.key not found in local.properties", String::class.java))
 
