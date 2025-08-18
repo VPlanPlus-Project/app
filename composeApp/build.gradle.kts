@@ -1,12 +1,11 @@
 import groovy.lang.MissingFieldException
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.Properties
 import java.util.Base64
-import kotlin.text.Charsets
+import java.util.Properties
 
 object ApplicationConfig {
-    const val APP_VERSION_NAME = "0.1.60-production"
-    const val APP_VERSION_CODE = 112
+    const val APP_VERSION_NAME = "0.1.61-production"
+    const val APP_VERSION_CODE = 116
     var isDebug = false
 }
 

@@ -9,6 +9,7 @@ import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
+import plus.vplan.lib.sp24.source.extension.SchoolDoesNotSupportWeeks
 
 private val LOGGER = Logger.withTag("UpdateWeeksUseCase")
 
@@ -23,7 +24,11 @@ class UpdateWeeksUseCase(
         )
 
         val weeks = run {
-            val weeks = client.week.getWeeks()
+            val weeks = try {
+                client.week.getWeeks()
+            } catch (_: SchoolDoesNotSupportWeeks) {
+                return null
+            }
             if (weeks is plus.vplan.lib.sp24.source.Response.Error) {
                 LOGGER.e { "Failed to get weeks: $weeks" }
                 return Response.Error.fromSp24KtError(weeks)

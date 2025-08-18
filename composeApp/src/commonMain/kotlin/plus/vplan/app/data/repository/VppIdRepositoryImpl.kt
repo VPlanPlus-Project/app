@@ -259,22 +259,24 @@ class VppIdRepositoryImpl(
     }
 
     override suspend fun logSp24Credentials(authentication: VppSchoolAuthentication.Sp24) {
-        val logger = Logger.withTag("VppIdRepositoryImpl.logSp24Credentials")
-        val response = httpClient.post {
-            url(URLBuilder(appApi).apply {
-                appendPathSegments("sp24", "v1", "log")
-            }.buildString())
+        safeRequest(onError = {}) {
+            val logger = Logger.withTag("VppIdRepositoryImpl.logSp24Credentials")
+            val response = httpClient.post {
+                url(URLBuilder(appApi).apply {
+                    appendPathSegments("sp24", "v1", "log")
+                }.buildString())
 
-            contentType(ContentType.Application.Json)
-            setBody(Sp24LogRequest(
-                sp24Id = authentication.sp24SchoolId.toInt(),
-                username = authentication.username,
-                password = authentication.password
-            ))
-            authentication.authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(Sp24LogRequest(
+                    sp24Id = authentication.sp24SchoolId.toInt(),
+                    username = authentication.username,
+                    password = authentication.password
+                ))
+                authentication.authentication(this)
+            }
+            if (response.status == HttpStatusCode.OK) logger.i { "Successfully logged sp24 credentials" }
+            else logger.e { "Error logging sp24 credentials: ${response.status} - ${response.bodyAsText()}" }
         }
-        if (response.status == HttpStatusCode.OK) logger.i { "Successfully logged sp24 credentials" }
-        else logger.e { "Error logging sp24 credentials: ${response.status} - ${response.bodyAsText()}" }
     }
 }
 
