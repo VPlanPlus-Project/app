@@ -57,7 +57,9 @@ class ProfileViewModel(
                     if (profile.getVppIdItem()?.gradeIds.orEmpty().isNotEmpty()) {
                         state = state.copy(currentInterval = getCurrentIntervalUseCase())
                         val grades = profile.getVppIdItem()?.gradeIds?.map { gradeId -> App.gradeSource.getById(gradeId).getFirstValueOld()!! } ?: emptyList()
-                        state = state.copy(averageGrade = calculateAverageUseCase(grades, state.currentInterval!!))
+                        state.currentInterval?.let { interval ->
+                            state = state.copy(averageGrade = calculateAverageUseCase(grades, interval))
+                        }
                     }
                 }
             }
