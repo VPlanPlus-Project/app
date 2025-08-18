@@ -58,6 +58,9 @@ jobs:
                   echo "GROUP_MAVEN_USERNAME=${{ secrets.GITLAB_USER }}" >> local.properties
                   echo "GROUP_MAVEN_PASSWORD=${{ secrets.GITLAB_PASSWORD }}" >> local.properties
 
+            -   name: Disable debug mode
+                run: echo "app.debug=false" >> local.properties
+
             -   uses: actions/cache@v4
                 with:
                     path: |
