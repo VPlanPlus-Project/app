@@ -9,10 +9,10 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
@@ -102,7 +102,7 @@ class UpdateTimetableUseCase(
                 return@run startOfNextSchoolYear
             }
 
-            LOGGER.w { "No current week found, using first week of school year CW${weeks.first().calendarWeek} (${weeks.first().weekIndex} week of school year)" }
+            LOGGER.w { "No current week found, using first week of school year CW${weeks.firstOrNull()?.calendarWeek} (${weeks.firstOrNull()?.weekIndex} week of school year)" }
             return@run null
         }
 
