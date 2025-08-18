@@ -36,8 +36,10 @@ import plus.vplan.app.feature.calendar.domain.usecase.GetFirstLessonStartUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetHolidaysUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
+import plus.vplan.app.utils.associateWithNotNull
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.utils.filterKeysNotNull
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
@@ -60,60 +62,66 @@ class CalendarViewModel(
 
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
-            App.daySource.getById(state.currentProfile!!.getSchool().getFirstValue()!!.id.toString() + "/$date", state.currentProfile!!).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { day ->
-                var selectorDay = DateSelectorDay(
-                    date = date,
-                    homework = day.homeworkIds.map { DateSelectorDay.HomeworkItem(subject = "", isDone = false) },
-                    assessments = day.assessmentIds.map { "" },
-                    isHoliday = date in holidays
-                )
-
-                var calendarDay = CalendarDay(
-                    date = date,
-                    info = day.info,
-                    dayType = day.dayType,
-                    week = day.week?.getFirstValueOld(),
-                    assessments = emptyList(),
-                    homework = emptyList(),
-                    lessons = emptyMap(),
-                    layoutedLessons = emptyList()
-                )
-
-                fun updateState() {
-                    state = state.copy(
-                        uiUpdateVersion = state.uiUpdateVersion + 1,
-                        calendarDays = state.calendarDays + (date to calendarDay),
-                        selecorDays = state.selecorDays + (date to selectorDay)
+            val currentProfile = state.currentProfile
+            if (currentProfile == null) return@launch
+            val school = currentProfile.getSchool().getFirstValue() ?: return@launch
+            App.daySource.getById(Day.buildId(school.id, date), currentProfile)
+                .filterIsInstance<CacheState.Done<Day>>()
+                .map { it.data }
+                .collectLatest { day ->
+                    var selectorDay = DateSelectorDay(
+                        date = date,
+                        homework = day.homeworkIds.map { DateSelectorDay.HomeworkItem(subject = "", isDone = false) },
+                        assessments = day.assessmentIds.map { "" },
+                        isHoliday = date in holidays
                     )
-                }
 
-                coroutineScope {
-                    launch {
-                        day.lessons.collectLatest {
-                            val lessons = it.groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }.mapValues { it.value.sortedBy { it.subject } }
-                            val layoutedLessons = it.calculateLayouting()
-                            calendarDay = calendarDay.copy(layoutedLessons = layoutedLessons, lessons = lessons.toList().sortedBy { it.first }.toMap())
-                            updateState()
+                    var calendarDay = CalendarDay(
+                        date = date,
+                        info = day.info,
+                        dayType = day.dayType,
+                        week = day.week?.getFirstValueOld(),
+                        assessments = emptyList(),
+                        homework = emptyList(),
+                        lessons = emptyMap(),
+                        layoutedLessons = emptyList()
+                    )
+
+                    fun updateState() {
+                        state = state.copy(
+                            uiUpdateVersion = state.uiUpdateVersion + 1,
+                            calendarDays = state.calendarDays + (date to calendarDay),
+                            selecorDays = state.selecorDays + (date to selectorDay)
+                        )
+                    }
+
+                    coroutineScope {
+                        launch {
+                            day.lessons.collectLatest {
+                                val lessons = it.groupBy { it.lessonTime.getFirstValueOld()?.lessonNumber }.mapValues { it.value.sortedBy { it.subject } }.filterKeysNotNull()
+                                val layoutedLessons = it.calculateLayouting()
+                                calendarDay = calendarDay.copy(layoutedLessons = layoutedLessons, lessons = lessons.toList().sortedBy { it.first }.toMap())
+                                updateState()
+                            }
+                        }
+                        launch {
+                            day.assessments.collectLatest {
+                                calendarDay = calendarDay.copy(assessments = it.toList())
+                                it.map { it.subjectInstance.getFirstValue()?.subject ?: "?" }.sorted().let { selectorDay = selectorDay.copy(assessments = it) }
+                                updateState()
+                            }
+                        }
+                        launch {
+                            day.homework.collectLatest {
+                                calendarDay = calendarDay.copy(homework = it.toList())
+                                it
+                                    .map { DateSelectorDay.HomeworkItem(subject = it.subjectInstance?.getFirstValue()?.subject ?: it.group?.getFirstValue()?.name ?: "?", isDone = state.currentProfile is Profile.StudentProfile && it.tasks.first().all { it.isDone(state.currentProfile as Profile.StudentProfile) }) }
+                                    .sortedBy { it.subject }
+                                    .let { selectorDay = selectorDay.copy(homework = it) }
+                                updateState()
+                            }
                         }
                     }
-                    launch {
-                        day.assessments.collectLatest {
-                            calendarDay = calendarDay.copy(assessments = it.toList())
-                            it.map { it.subjectInstance.getFirstValue()?.subject ?: "?" }.sorted().let { selectorDay = selectorDay.copy(assessments = it) }
-                            updateState()
-                        }
-                    }
-                    launch {
-                        day.homework.collectLatest {
-                            calendarDay = calendarDay.copy(homework = it.toList())
-                            it
-                                .map { DateSelectorDay.HomeworkItem(subject = it.subjectInstance?.getFirstValue()?.subject ?: it.group?.getFirstValue()?.name ?: "?", isDone = state.currentProfile is Profile.StudentProfile && it.tasks.first().all { it.isDone(state.currentProfile as Profile.StudentProfile) }) }
-                                .sortedBy { it.subject }
-                                .let { selectorDay = selectorDay.copy(homework = it) }
-                            updateState()
-                        }
-                    }
-                }
             }
         }.also {
             syncJobs.add(SyncJob(it, date))
@@ -238,7 +246,7 @@ data class CalendarDay(
  * Creates a layout for a calendar view of the given lessons based on their overlap if some exists.
  */
 suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> {
-    val lessons = this.associateWith { it.lessonTime.getFirstValueOld()!! }.toList().sortedBy { it.second.start.inWholeMinutes().toString().padStart(4, '0') + " " + it.first.subject }
+    val lessons = this.associateWithNotNull { it.lessonTime.getFirstValueOld() }.toList().sortedBy { it.second.start.inWholeMinutes().toString().padStart(4, '0') + " " + it.first.subject }
     val layoutingInfo = mutableListOf<LessonLayoutingInfo>()
     lessons.forEach { (lesson, lessonTime) ->
         val overlapping = layoutingInfo.filter {

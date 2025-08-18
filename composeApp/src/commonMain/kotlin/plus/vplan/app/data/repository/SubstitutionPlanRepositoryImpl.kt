@@ -14,6 +14,7 @@ import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLess
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
+import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
@@ -34,7 +35,7 @@ class SubstitutionPlanRepositoryImpl(
             lessons = lessons.map { lesson ->
                 DbSubstitutionPlanLesson(
                     id = lesson.id,
-                    dayId = "${schoolId}/${lesson.date}",
+                    dayId = Day.buildId(schoolId, lesson.date),
                     lessonTimeId = lesson.lessonTimeId,
                     subject = lesson.subject,
                     isSubjectChanged = lesson.isSubjectChanged,
