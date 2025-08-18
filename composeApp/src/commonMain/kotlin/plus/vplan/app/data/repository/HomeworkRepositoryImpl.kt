@@ -44,6 +44,7 @@ import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
@@ -66,14 +67,18 @@ class HomeworkRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase,
 ) : HomeworkRepository {
-    override suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>) {
+    override suspend fun upsertLocally(
+        homework: List<Homework>,
+        tasks: List<Homework.HomeworkTask>,
+        files: List<Homework.HomeworkFile>
+    ) {
         vppDatabase.homeworkDao.deleteFileHomeworkConnections(homework.map { it.id })
         vppDatabase.homeworkDao.upsertMany(
             homework = homework.map { homeworkItem ->
                 DbHomework(
                     id = homeworkItem.id,
                     subjectInstanceId = homeworkItem.subjectInstanceId,
-                    groupId = (homeworkItem as? Homework.LocalHomework)?.getCreatedByProfile()?.groupId ?: homeworkItem.group?.getFirstValue()?.id,
+                    groupId = homeworkItem.groupId,
                     createdAt = homeworkItem.createdAt,
                     createdByProfileId = when (homeworkItem) {
                         is Homework.CloudHomework -> null
@@ -120,11 +125,14 @@ class HomeworkRepositoryImpl(
         )
     }
 
-    override fun getByGroup(groupId: Uuid): Flow<List<Homework>> {
+    override fun getByGroup(group: Group): Flow<List<Homework>> {
+        val appGroupId = group.id
+        val vppGroupId = group.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
+        if (vppGroupId == null) return flowOf(emptyList())
         return vppDatabase.homeworkDao.getAll().map { flowData ->
-            val subjectInstances = vppDatabase.subjectInstanceDao.getByGroup(groupId).first()
+            val subjectInstances = vppDatabase.subjectInstanceDao.getByGroup(appGroupId).first()
             flowData.filter {
-                it.homework.groupId == groupId || subjectInstances.any { subjectInstance -> subjectInstance.groups.any { group -> group.groupId == groupId } }
+                it.homework.groupId == vppGroupId || subjectInstances.any { subjectInstance -> subjectInstance.groups.any { group -> group.groupId == appGroupId } }
             }.map { it.toModel() }
         }
     }

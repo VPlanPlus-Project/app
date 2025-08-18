@@ -1,5 +1,6 @@
 package plus.vplan.app.domain.model
 
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
@@ -14,7 +15,7 @@ data class SubjectInstance(
     val subject: String,
     val courseId: Uuid?,
     val teacher: Uuid?,
-    val groups: List<Uuid>,
+    val groupIds: List<Uuid>,
     val cachedAt: Instant,
     override val aliases: Set<Alias>
 ) : AliasedItem<DataTag> {
@@ -28,6 +29,11 @@ data class SubjectInstance(
 
     var groupItems: List<Group>? = null
         private set
+
+    val groups by lazy {
+        if (groupIds.isEmpty()) flowOf(emptyList())
+        else kotlinx.coroutines.flow.combine(groupIds.map { App.groupSource.getById(it) }) { it.toList() }
+    }
 
     suspend fun getCourseItem(): Course? {
         if (courseId == null) return null
@@ -45,7 +51,7 @@ data class SubjectInstance(
     }
 
     suspend fun getGroupItems(): List<Group> {
-        return groupItems ?: this.groups.mapNotNull { App.groupSource.getById(it).getFirstValue() }.also { groupItems = it }
+        return groupItems ?: this.groupIds.mapNotNull { App.groupSource.getById(it).getFirstValue() }.also { groupItems = it }
     }
 
     companion object {

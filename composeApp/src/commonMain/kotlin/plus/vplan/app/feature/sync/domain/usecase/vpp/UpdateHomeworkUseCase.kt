@@ -29,9 +29,6 @@ class UpdateHomeworkUseCase(
         val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
         val existingIds = mutableSetOf<Int>()
         profiles.forEach forEachProfile@{ studentProfile ->
-            val existingHomeworkIds = homeworkRepository.getByGroup(studentProfile.groupId).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
-            existingIds.addAll(existingHomeworkIds)
-            val school = studentProfile.getSchool().getFirstValue()
             val group = studentProfile.group.getFirstValue() ?: run {
                 val errorMessage = "Group not found for profile ${studentProfile.name} (${studentProfile.id})"
                 capture("error", mapOf(
@@ -41,6 +38,9 @@ class UpdateHomeworkUseCase(
                 logger.e { errorMessage }
                 return@forEachProfile
             }
+            val existingHomeworkIds = homeworkRepository.getByGroup(group).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
+            existingIds.addAll(existingHomeworkIds)
+            val school = studentProfile.getSchool().getFirstValue()
             val vppSchoolId = school?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toInt() ?: run {
                 logger.e { "No vpp provider for school $school" }
                 return@forEachProfile

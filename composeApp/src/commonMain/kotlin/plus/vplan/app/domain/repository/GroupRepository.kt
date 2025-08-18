@@ -20,7 +20,7 @@ interface GroupRepository: AliasedItemRepository<GroupDbDto, Group> {
      * the cached state while fetching the item from the network. If false, you will first get the cached state
      * (if it exists) and then the updated state.
      */
-    suspend fun findByAliases(aliases: Set<Alias>, forceUpdate: Boolean, preferCurrentState: Boolean): Flow<AliasState<Group>>
+    fun findByAliases(aliases: Set<Alias>, forceUpdate: Boolean, preferCurrentState: Boolean): Flow<AliasState<Group>>
 
     /**
      * Calls [findByAliases] with a single alias.
@@ -30,7 +30,7 @@ interface GroupRepository: AliasedItemRepository<GroupDbDto, Group> {
      * (if it exists) and then the updated state.
      * @see findByAliases
      */
-    suspend fun findByAlias(alias: Alias, forceUpdate: Boolean, preferCurrentState: Boolean): Flow<AliasState<Group>> {
+    fun findByAlias(alias: Alias, forceUpdate: Boolean, preferCurrentState: Boolean): Flow<AliasState<Group>> {
         return findByAliases(setOf(alias), forceUpdate, preferCurrentState)
     }
 }

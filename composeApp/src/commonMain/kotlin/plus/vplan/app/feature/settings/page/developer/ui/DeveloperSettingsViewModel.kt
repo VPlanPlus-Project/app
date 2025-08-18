@@ -16,10 +16,12 @@ import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
@@ -46,6 +48,7 @@ class DeveloperSettingsViewModel(
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val groupRepository: GroupRepository
 ) : ViewModel() {
 
@@ -60,8 +63,15 @@ class DeveloperSettingsViewModel(
 
                 val school = profile.getSchool().getFirstValue()
                 if (school != null) {
-                    groupRepository.getBySchool(school.id).collectLatest {
-                        state = state.copy(groups = it)
+                    launch {
+                        groupRepository.getBySchool(school.id).collectLatest {
+                            state = state.copy(groups = it)
+                        }
+                    }
+                    launch {
+                        subjectInstanceRepository.getBySchool(school.id).collectLatest {
+                            state = state.copy(subjectInstances = it)
+                        }
                     }
                 }
             }
@@ -141,6 +151,11 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.ToggleAutoSyncDisabled -> {
                     keyValueRepository.set(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC, (!keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).first().toBoolean()).toString())
                 }
+                is DeveloperSettingsEvent.UpdateSubjectInstance -> {
+                    subjectInstanceRepository.findByAliases(event.subjectInstance.aliases, forceUpdate = true, preferCurrentState = false).getFirstValue().also {
+                        Logger.i { "Updated subject instance.\nWas: ${event.subjectInstance}\nIs:  $it" }
+                    }
+                }
                 is DeveloperSettingsEvent.UpdateGroup -> {
                     groupRepository.findByAliases(event.group.aliases, forceUpdate = true, preferCurrentState = false).getFirstValue().also {
                         Logger.i { "Updated group.\nWas: ${event.group}\nIs:  $it" }
@@ -167,6 +182,7 @@ data class DeveloperSettingsState(
     val isLessonTimesUpdateRunning: Boolean = false,
     val isHomeworkUpdateRunning: Boolean = false,
     val profile: Profile? = null,
+    val subjectInstances: List<SubjectInstance> = emptyList(),
     val groups: List<Group> = emptyList(),
     val isAutoSyncDisabled: Boolean = false,
     val fcmLogs: List<DbFcmLog> = emptyList()
@@ -181,6 +197,7 @@ sealed class DeveloperSettingsEvent {
     data object UpdateLessonTimes : DeveloperSettingsEvent()
     data object UpdateSubjectInstances : DeveloperSettingsEvent()
     data class UpdateGroup(val group: Group) : DeveloperSettingsEvent()
+    data class UpdateSubjectInstance(val subjectInstance: SubjectInstance) : DeveloperSettingsEvent()
     data object UpdateHomework : DeveloperSettingsEvent()
     data object ToggleAutoSyncDisabled : DeveloperSettingsEvent()
     data object DeleteSubstitutionPlan : DeveloperSettingsEvent()

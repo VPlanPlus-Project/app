@@ -19,8 +19,8 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 interface HomeworkRepository: WebEntityRepository<Homework> {
-    suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
-    fun getByGroup(groupId: Uuid): Flow<List<Homework>>
+    suspend fun upsertLocally(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
+    fun getByGroup(group: Group): Flow<List<Homework>>
 
     fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
 

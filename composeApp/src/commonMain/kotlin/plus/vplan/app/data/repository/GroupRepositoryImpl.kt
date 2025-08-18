@@ -134,7 +134,7 @@ class GroupRepositoryImpl(
 
     private val aliasFlowCache = mutableMapOf<String, Flow<AliasState<Group>>>()
 
-    override suspend fun findByAliases(
+    override fun findByAliases(
         aliases: Set<Alias>,
         forceUpdate: Boolean,
         preferCurrentState: Boolean
@@ -173,17 +173,6 @@ class GroupRepositoryImpl(
         aliasFlowCache[cacheKey] = flow
         return flow
     }
-
-//    override suspend fun findByAlias(aliases: Set<Alias>, forceUpdate: Boolean, preferCurrentState: Boolean): Flow<AliasState<Group>> {
-//        val localId = resolveAliasesToLocalId(aliases.toList())
-//        if (localId != null) {
-//            return getByLocalId(localId).map { if (it == null) AliasState.NotExisting(localId.toHexString()) else AliasState.Done(it) }
-//        }
-//        val downloadError = downloadByAlias(aliases.first())
-//        if (downloadError != null) return flowOf(AliasState.Error(aliases.first().toString(), downloadError))
-//
-//        return findByAlias(aliases, forceUpdate = false, preferCurrentState = false)
-//    }
 
     private val runningDownloads = ConcurrentMutableMap<Alias, Deferred<Response.Error?>>()
     suspend fun downloadByAlias(alias: Alias): Response.Error? {

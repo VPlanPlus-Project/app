@@ -373,14 +373,14 @@ private fun HomeContent(
                                             ) {
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
                                                     highlightedLessons.currentLessons.forEach { (currentLesson, continuing) ->
-                                                        val homeworkForLesson = homework.filter { it.subjectInstanceId == currentLesson.subjectInstanceId }
+                                                        val homeworkForLesson = homework//.filter { it.subjectInstanceId == currentLesson.subjectInstanceId } fixme
                                                         val assessmentsForLesson = assessments.filter { it.subjectInstanceId == currentLesson.subjectInstanceId }
                                                         CurrentOrNextLesson(
                                                             currentTime = state.currentTime,
                                                             currentLesson = currentLesson,
                                                             currentProfileType = state.currentProfile?.profileType,
                                                             continuing = continuing,
-                                                            homework = homeworkForLesson,
+                                                            homework = homeworkForLesson.toList(),
                                                             assessments = assessmentsForLesson,
                                                             progressType = ProgressType.Regular
                                                         )
@@ -485,7 +485,7 @@ private fun HomeContent(
                                                         val rooms = remember(lesson.roomIds) { lesson.rooms }.collectAsSingleFlow().value
                                                         val groups = remember(lesson.groupIds) { lesson.groups }.collectAsSingleFlow().value
                                                         val teachers = remember(lesson.teacherIds) { lesson.teachers }.collectAsSingleFlow().value
-                                                        val homeworkForLesson = homework.filter { it.subjectInstanceId == lesson.subjectInstanceId }
+                                                        val homeworkForLesson = homework//.filter { it.subjectInstanceId == lesson.subjectInstanceId } fixme
                                                         val assessmentsForLesson = assessments.filter { it.subjectInstanceId == lesson.subjectInstanceId }
                                                         val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
                                                         if (lessonTime != null) Column(Modifier.fillMaxWidth()) {

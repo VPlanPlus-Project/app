@@ -218,6 +218,11 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
             from = 2,
             to = 3,
             spec = VppDatabase.Migration2to3::class
+        ),
+        AutoMigration(
+            from = 3,
+            to = 4,
+            spec = VppDatabase.Migration3to4::class
         )
     ]
 )
@@ -268,7 +273,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 3
+        const val DATABASE_VERSION = 4
     }
 
     @RenameColumn(
@@ -314,6 +319,44 @@ abstract class VppDatabase : RoomDatabase() {
 
                 CREATE INDEX index_day_week_id
                     ON day (week_id);
+            """.trimIndent())
+        }
+    }
+
+    class Migration3to4 : AutoMigrationSpec {
+        override fun onPostMigrate(connection: SQLiteConnection) {
+            connection.execSQL("""
+                create table homework_dg_tmp
+                (
+                    id                    INTEGER not null
+                        primary key,
+                    subject_instance_id   INTEGER,
+                    group_id              INTEGER,
+                    created_at            INTEGER not null,
+                    due_to                TEXT    not null,
+                    created_by_vpp_id     INTEGER,
+                    created_by_profile_id TEXT
+                        references profiles
+                            on update cascade on delete cascade,
+                    is_public             INTEGER not null,
+                    cached_at             INTEGER not null
+                );
+
+                drop table homework;
+
+                alter table homework_dg_tmp
+                    rename to homework;
+
+                create index index_homework_created_by_profile_id
+                    on homework (created_by_profile_id);
+
+                create index index_homework_created_by_vpp_id
+                    on homework (created_by_vpp_id);
+
+                create unique index index_homework_id
+                    on homework (id);
+
+
             """.trimIndent())
         }
     }

@@ -46,7 +46,6 @@ import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.data.service.SchoolServiceImpl
-import plus.vplan.app.data.service.SubjectInstanceServiceImpl
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
 import plus.vplan.app.domain.di.domainModule
@@ -72,7 +71,6 @@ import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.service.SchoolService
-import plus.vplan.app.domain.service.SubjectInstanceService
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
@@ -193,7 +191,6 @@ val appModule = module(createdAtStart = true) {
 
     singleOf(::SchoolServiceImpl).bind<SchoolService>()
     singleOf(::ProfileServiceImpl).bind<ProfileService>()
-    singleOf(::SubjectInstanceServiceImpl).bind<SubjectInstanceService>()
 
     singleOf(::GetCurrentProfileUseCase)
 }

@@ -2,7 +2,6 @@ package plus.vplan.app.domain.data
 
 import io.ktor.http.decodeURLQueryComponent
 import io.ktor.http.encodeURLPath
-import io.ktor.http.encodeURLQueryComponent
 import plus.vplan.app.data.source.database.converters.AliasPrefixConverter
 import plus.vplan.app.domain.cache.DataTag
 import kotlin.uuid.Uuid
@@ -46,14 +45,14 @@ data class Alias(
 
     /**
      * Returns a string representation of the alias in the format:
-     * `<provider>.<value>.<version>`. This can be used directly in URLs.
+     * `<provider>.<value>.<version>`.
      */
     override fun toString(): String {
-        return "${provider.prefix}.${value.encodeURLQueryComponent(spaceToPlus = false)}.$version"
+        return "${provider.prefix}.${value}.$version"
     }
 
     fun toUrlString(): String {
-        return toString().encodeURLPath(encodeSlash = true, encodeEncoded = true)
+        return "${provider.prefix}.${value.encodeURLPath(encodeSlash = true, encodeEncoded = true)}.$version"
     }
 
     companion object {

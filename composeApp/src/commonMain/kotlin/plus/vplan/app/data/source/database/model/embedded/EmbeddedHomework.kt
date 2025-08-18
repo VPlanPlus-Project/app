@@ -30,7 +30,8 @@ data class EmbeddedHomework(
                 subjectInstanceId = homework.subjectInstanceId,
                 files = files.map { it.fileId },
                 taskIds = tasks.map { it.id },
-                cachedAt = homework.cachedAt
+                cachedAt = homework.cachedAt,
+                groupId = homework.groupId
             )
         }
         return Homework.CloudHomework(

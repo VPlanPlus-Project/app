@@ -22,6 +22,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.domain.cache.collectAsSingleFlow
 import plus.vplan.app.domain.data.AliasProvider
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
@@ -149,6 +151,19 @@ private fun DeveloperSettingsContent(
                     Text("Update homework")
                 }
                 if (state.isHomeworkUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
+            }
+
+            Column {
+                state.subjectInstances.forEach { subjectInstance ->
+                    TextButton(
+                        onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateSubjectInstance(subjectInstance)) } },
+                        enabled = !state.isSubjectInstanceUpdateRunning
+                    ) {
+                        val groups by subjectInstance.groups.collectAsSingleFlow()
+                        val groupNames = remember(groups) { groups.joinToString { it.name } }
+                        Text("$groupNames ${subjectInstance.subject} ${subjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value}")
+                    }
+                }
             }
 
             Column {

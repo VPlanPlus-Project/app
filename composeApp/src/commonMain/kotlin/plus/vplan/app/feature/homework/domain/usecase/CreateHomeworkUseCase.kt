@@ -16,8 +16,8 @@ import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.service.ProfileService
-import plus.vplan.app.domain.service.SubjectInstanceService
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -26,7 +26,7 @@ class CreateHomeworkUseCase(
     private val localFileRepository: LocalFileRepository,
     private val groupRepository: GroupRepository,
     private val profileService: ProfileService,
-    private val subjectInstanceService: SubjectInstanceService,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
 ) {
     suspend operator fun invoke(
         tasks: List<String>,
@@ -42,32 +42,38 @@ class CreateHomeworkUseCase(
         var homework: Homework
         val homeworkTasks: List<Homework.HomeworkTask>
         val files: List<Homework.HomeworkFile>
+
+        val vppGroupId = if (subjectInstance == null) {
+            val groupId = group.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
+                val groupAlias = group.aliases.firstOrNull()
+                if (groupAlias == null) return CreateHomeworkResult.Error.UnknownError("Group $group has no aliases")
+                val downloadedGroup = groupRepository.findByAlias(groupAlias, forceUpdate = true, preferCurrentState = true).getFirstValue()
+                if (downloadedGroup == null) return CreateHomeworkResult.Error.GroupNotFound
+                val groupId = downloadedGroup.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
+                if (groupId == null) return CreateHomeworkResult.Error.UnknownError("Group $group not found on VPP")
+                return@run groupId
+            }
+            groupId
+        } else {
+            null
+        }
+
+        val vppSubjectInstanceId = if (subjectInstance != null) {
+            val subjectInstanceId = subjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
+                val subjectInstanceAlias = subjectInstance.aliases.firstOrNull()
+                if (subjectInstanceAlias == null) return CreateHomeworkResult.Error.UnknownError("Subject instance $subjectInstance has no aliases")
+                val downloadedSubjectInstance = subjectInstanceRepository.findByAlias(subjectInstanceAlias, forceUpdate = true, preferCurrentState = true).getFirstValue()
+                if (downloadedSubjectInstance == null) return CreateHomeworkResult.Error.UnknownError("Subject instance $subjectInstance not found on VPP")
+                val subjectInstanceId = downloadedSubjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
+                if (subjectInstanceId == null) return CreateHomeworkResult.Error.UnknownError("Subject instance $subjectInstance not found on VPP")
+                return@run subjectInstanceId
+            }
+            subjectInstanceId
+        } else {
+            null
+        }
+
         if (profile.getVppIdItem() is VppId.Active) {
-            val vppGroupId = if (subjectInstance == null) {
-                val groupId = group.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
-                    val groupAlias = group.aliases.firstOrNull()
-                    if (groupAlias == null) return CreateHomeworkResult.Error.UnknownError("Group $group has no aliases")
-                    val downloadedGroup = groupRepository.findByAlias(groupAlias, forceUpdate = true, preferCurrentState = true).getFirstValue()
-                    if (downloadedGroup == null) return CreateHomeworkResult.Error.GroupNotFound
-                    val groupId = downloadedGroup.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
-                    if (groupId == null) return CreateHomeworkResult.Error.UnknownError("Group $group not found on VPP")
-                    return@run groupId
-                }
-                groupId
-            } else {
-                null
-            }
-
-            val vppSubjectInstanceId = if (subjectInstance != null) {
-                val subjectInstanceId = subjectInstanceService.findAliasForSubjectInstance(subjectInstance, AliasProvider.Vpp)?.value?.toInt()
-                if (subjectInstanceId == null) {
-                    return CreateHomeworkResult.Error.UnknownError("Subject instance ${subjectInstance.id} not found on VPP")
-                }
-                subjectInstanceId
-            } else {
-                null
-            }
-
             val result = homeworkRepository.createHomeworkOnline(
                 vppId = profile.getVppIdItem() as VppId.Active,
                 until = date,
@@ -83,8 +89,8 @@ class CreateHomeworkUseCase(
             taskIds = idMapping.taskIds
             homework = Homework.CloudHomework(
                 id = id,
-                subjectInstanceId = subjectInstance?.id,
-                groupId = profile.groupId,
+                subjectInstanceId = vppSubjectInstanceId,
+                groupId = vppGroupId,
                 createdAt = Clock.System.now(),
                 createdBy = profile.vppIdId!!,
                 isPublic = isPublic == true,
@@ -121,7 +127,8 @@ class CreateHomeworkUseCase(
             files = selectedFiles.mapIndexed { index, file -> Homework.HomeworkFile(fileIdStart - index, file.name, id, file.size) }
             homework = Homework.LocalHomework(
                 id = id,
-                subjectInstanceId = subjectInstance?.id,
+                subjectInstanceId = vppSubjectInstanceId,
+                groupId = vppGroupId,
                 createdAt = Clock.System.now(),
                 createdByProfile = profile.id,
                 dueTo = date,
@@ -132,7 +139,7 @@ class CreateHomeworkUseCase(
             homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
         }
 
-        homeworkRepository.upsert(listOf(homework), homeworkTasks, files)
+        homeworkRepository.upsertLocally(listOf(homework), homeworkTasks, files)
         homeworkRepository.createCacheForProfile(profile.id, setOf(homework.id))
         files.forEach { file ->
             localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
