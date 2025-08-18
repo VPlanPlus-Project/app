@@ -47,6 +47,9 @@ fun LocalTime.plusWithCapAtMidnight(duration: Duration): LocalTime {
     return LocalTime.fromSecondOfDay(newSeconds.toInt())
 }
 
+/**
+ * Returns the total number of minutes represented by this LocalTime.
+ */
 fun LocalTime.inWholeMinutes(): Int {
     return this.toSecondOfDay() / 60
 }
