@@ -44,11 +44,11 @@ import plus.vplan.app.data.repository.TeacherRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
-import plus.vplan.app.data.service.GroupServiceImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.data.service.SchoolServiceImpl
 import plus.vplan.app.data.service.SubjectInstanceServiceImpl
 import plus.vplan.app.data.source.database.VppDatabase
+import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
 import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.CourseRepository
@@ -70,7 +70,6 @@ import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.domain.service.GroupService
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.domain.service.SubjectInstanceService
@@ -141,13 +140,14 @@ val appModule = module(createdAtStart = true) {
                 retryIf { request, response ->
                     val isResponseFromVPPServer = response.headers["X-Backend-Family"] == "vpp.ID"
                     val isResponseSuccess = response.status.isSuccess()
+                    val isResponseNotFound = response.status == HttpStatusCode.NotFound
                     if (isResponseFromVPPServer && response.status == HttpStatusCode.InternalServerError) {
                         MainScope().launch {
                             appLogger.e { "Something went wrong at ${request.method} ${request.url}: 500\n${response.bodyAsText()}" }
                         }
                         return@retryIf false
                     }
-                    return@retryIf isResponseFromVPPServer && !isResponseSuccess
+                    return@retryIf isResponseFromVPPServer && !isResponseSuccess && !isResponseNotFound
                 }
             }
 
@@ -167,6 +167,8 @@ val appModule = module(createdAtStart = true) {
 
         }
     }
+
+    singleOf(::SchoolAuthenticationProvider)
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
@@ -190,7 +192,6 @@ val appModule = module(createdAtStart = true) {
     singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
 
     singleOf(::SchoolServiceImpl).bind<SchoolService>()
-    singleOf(::GroupServiceImpl).bind<GroupService>()
     singleOf(::ProfileServiceImpl).bind<ProfileService>()
     singleOf(::SubjectInstanceServiceImpl).bind<SubjectInstanceService>()
 

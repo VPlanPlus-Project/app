@@ -3,18 +3,22 @@ package plus.vplan.app.data.repository
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
 import io.ktor.client.request.url
-import io.ktor.http.ContentType
 import io.ktor.http.URLBuilder
-import io.ktor.http.appendEncodedPathSegments
 import io.ktor.http.appendPathSegments
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -22,38 +26,59 @@ import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupAlias
+import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
+import plus.vplan.app.data.source.network.getSchoolIdForAuthentication
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.data.source.network.toErrorResponse
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.GroupDbDto
 import plus.vplan.app.domain.repository.GroupRepository
+import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.VppGroupDto
 import kotlin.uuid.Uuid
 
 class GroupRepositoryImpl(
     private val httpClient: HttpClient,
-    private val vppDatabase: VppDatabase
+    private val schoolAuthenticationProvider: SchoolAuthenticationProvider,
+    private val vppDatabase: VppDatabase,
+    private val schoolRepository: SchoolRepository
 ) : GroupRepository {
+
     override fun getBySchool(schoolId: Uuid): Flow<List<Group>> {
         return vppDatabase.groupDao.getBySchool(schoolId)
             .map { result -> result.map { it.toModel() } }
     }
 
+    private var allLocalIdsFlowCache: Flow<List<Uuid>>? = null
     override fun getAllLocalIds(): Flow<List<Uuid>> {
-        return vppDatabase.groupDao.getAll().map { it.map { group -> group.group.id } }
+        allLocalIdsFlowCache?.let { return it }
+
+        val sharedFlow = vppDatabase.groupDao.getAll()
+            .map { it.map { group -> group.group.id } }
+            .shareIn(
+                CoroutineScope(Dispatchers.IO),
+                replay = 1,
+                started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000)
+            )
+            .onCompletion { allLocalIdsFlowCache = null }
+        allLocalIdsFlowCache = sharedFlow
+        return sharedFlow
     }
 
+    private val localIdFlowCache = mutableMapOf<Uuid, Flow<Group?>>()
     override fun getByLocalId(id: Uuid): Flow<Group?> {
-        return vppDatabase.groupDao.findById(id).map { embeddedGroup ->
-            embeddedGroup?.toModel()
+        return localIdFlowCache.getOrPut(id) {
+            vppDatabase.groupDao.findById(id).map { embeddedGroup ->
+                embeddedGroup?.toModel()
+            }
         }
     }
 
@@ -80,27 +105,11 @@ class GroupRepositoryImpl(
         return vppDatabase.groupDao.getIdByAlias(alias.value, alias.provider, alias.version)
     }
 
-    override suspend fun downloadSchoolIdById(identifier: String): Response<Int> {
+    suspend fun downloadById(schoolAuthentication: VppSchoolAuthentication, identifier: String): Response<VppGroupDto> {
         safeRequest(onError = { return  it }) {
             val response = httpClient.get {
                 url(URLBuilder(currentConfiguration.appApiUrl).apply {
-                    appendPathSegments("group", "v1", "by-id")
-                    appendEncodedPathSegments(identifier)
-                }.build())
-            }
-
-            val items = response.body<ResponseDataWrapper<UnauthenticatedGroupItemResponse>>()
-
-            return Response.Success(items.data.schoolId)
-        }
-        return Response.Error.Cancelled
-    }
-
-    override suspend fun downloadById(schoolAuthentication: VppSchoolAuthentication, identifier: String): Response<VppGroupDto> {
-        safeRequest(onError = { return  it }) {
-            val response = httpClient.get {
-                url(URLBuilder(currentConfiguration.appApiUrl).apply {
-                    appendPathSegments("group", "v1", "by-id", identifier)
+                    appendPathSegments("group", "v1", identifier)
                 }.build())
 
                 schoolAuthentication.authentication(this)
@@ -120,21 +129,102 @@ class GroupRepositoryImpl(
     }
 
     override suspend fun updateFirebaseToken(group: Group, token: String): Response.Error? {
-        safeRequest(onError = { return it }) {
-            val response = httpClient.post {
-                url(URLBuilder(currentConfiguration.apiUrl).apply {
-                    appendPathSegments("api", "v2.2", "group", group.id.toString(), "firebase")
-                }.build())
+        return null // TODO
+    }
 
-                val school = group.school.getFirstValue() as? School.AppSchool
-                school?.buildSp24AppAuthentication()?.authentication(this) ?: return Response.Error.Other("No school api access to update firebase token")
-                contentType(ContentType.Application.Json)
-                setBody(FirebaseTokenRequest(token))
-            }
-            if (response.status.isSuccess()) return null
-            return response.toErrorResponse()
+    private val aliasFlowCache = mutableMapOf<String, Flow<AliasState<Group>>>()
+
+    override suspend fun findByAliases(
+        aliases: Set<Alias>,
+        forceUpdate: Boolean,
+        preferCurrentState: Boolean
+    ): Flow<AliasState<Group>> {
+        val cacheKey = buildString {
+            append(aliases.sortedBy { it.toString() }.joinToString(","))
+            append("|forceUpdate=$forceUpdate|preferCurrentState=$preferCurrentState")
         }
-        return Response.Error.Cancelled
+
+        if (!forceUpdate) {
+            aliasFlowCache[cacheKey]?.let { return it }
+        }
+
+        val flow = flow {
+            val localId = resolveAliasesToLocalId(aliases.toList())
+            if (localId != null) {
+                if (forceUpdate) {
+                    if (!preferCurrentState) {
+                        val currentCache = getByLocalId(localId).first()?.let { AliasState.Done(it) }
+                        if (currentCache != null) emit(currentCache)
+                    }
+                } else {
+                    emitAll(getByLocalId(localId).map { if (it == null) AliasState.NotExisting(localId.toHexString()) else AliasState.Done(it) })
+                    return@flow
+                }
+            }
+            val downloadError = downloadByAlias(aliases.first())
+            if (downloadError != null) {
+                emit(AliasState.Error(aliases.first().toString(), downloadError))
+                return@flow
+            }
+            emitAll(findByAliases(aliases, forceUpdate = false, preferCurrentState = false))
+        }.onCompletion { aliasFlowCache.remove(cacheKey) }
+            .shareIn(CoroutineScope(Dispatchers.IO), replay = 1, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000))
+
+        aliasFlowCache[cacheKey] = flow
+        return flow
+    }
+
+//    override suspend fun findByAlias(aliases: Set<Alias>, forceUpdate: Boolean, preferCurrentState: Boolean): Flow<AliasState<Group>> {
+//        val localId = resolveAliasesToLocalId(aliases.toList())
+//        if (localId != null) {
+//            return getByLocalId(localId).map { if (it == null) AliasState.NotExisting(localId.toHexString()) else AliasState.Done(it) }
+//        }
+//        val downloadError = downloadByAlias(aliases.first())
+//        if (downloadError != null) return flowOf(AliasState.Error(aliases.first().toString(), downloadError))
+//
+//        return findByAlias(aliases, forceUpdate = false, preferCurrentState = false)
+//    }
+
+    private val runningDownloads = ConcurrentMutableMap<Alias, Deferred<Response.Error?>>()
+    suspend fun downloadByAlias(alias: Alias): Response.Error? {
+        runningDownloads[alias]?.let { return it.await() }
+
+        val deferred = CoroutineScope(Dispatchers.IO).async download@{
+            try {
+                val vppSchoolIdResponse = getSchoolIdForAuthentication(httpClient, URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("group", "v1", alias.toUrlString())
+                }.buildString())
+                if (vppSchoolIdResponse !is Response.Success) return@download vppSchoolIdResponse as Response.Error
+
+                val vppSchoolAlias = Alias(AliasProvider.Vpp, vppSchoolIdResponse.data.toString(), 1)
+                val authentication = schoolAuthenticationProvider.getAuthenticationForSchool(setOf(vppSchoolAlias))
+
+                if (authentication == null) {
+                    return@download Response.Error.Other("No authentication found for school with id ${vppSchoolIdResponse.data}")
+                }
+
+                val localSchoolId = schoolRepository.resolveAliasToLocalId(vppSchoolAlias)
+                if (localSchoolId == null) {
+                    return@download Response.Error.Other("No school found for alias $vppSchoolAlias")
+                }
+
+                val item = downloadById(authentication, alias.toUrlString())
+                if (item !is Response.Success) return@download item as Response.Error
+
+                upsert(GroupDbDto(
+                    schoolId = localSchoolId,
+                    name = item.data.name,
+                    aliases = item.data.aliases,
+                    creationReason = CreationReason.Cached
+                ))
+
+                return@download null
+            } finally {
+                runningDownloads.remove(alias)
+            }
+        }
+        runningDownloads[alias] = deferred
+        return deferred.await()
     }
 }
 
@@ -147,8 +237,3 @@ data class GroupItemResponse(
 ) {
     fun buildAliases(): List<Alias> = aliases.map { it.toModel() }
 }
-
-@Serializable
-data class UnauthenticatedGroupItemResponse(
-    @SerialName("school_id") val schoolId: Int
-)

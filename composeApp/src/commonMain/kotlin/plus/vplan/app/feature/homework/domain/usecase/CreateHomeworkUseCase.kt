@@ -13,9 +13,9 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
-import plus.vplan.app.domain.service.GroupService
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.service.SubjectInstanceService
 import plus.vplan.app.ui.common.AttachedFile
@@ -24,7 +24,7 @@ import kotlin.uuid.ExperimentalUuidApi
 class CreateHomeworkUseCase(
     private val homeworkRepository: HomeworkRepository,
     private val localFileRepository: LocalFileRepository,
-    private val groupService: GroupService,
+    private val groupRepository: GroupRepository,
     private val profileService: ProfileService,
     private val subjectInstanceService: SubjectInstanceService,
 ) {
@@ -44,9 +44,14 @@ class CreateHomeworkUseCase(
         val files: List<Homework.HomeworkFile>
         if (profile.getVppIdItem() is VppId.Active) {
             val vppGroupId = if (subjectInstance == null) {
-                val groupId = groupService.findAliasForGroup(group, AliasProvider.Vpp)?.value?.toInt()
-                if (groupId == null) {
-                    return CreateHomeworkResult.Error.GroupNotFound
+                val groupId = group.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
+                    val groupAlias = group.aliases.firstOrNull()
+                    if (groupAlias == null) return CreateHomeworkResult.Error.UnknownError("Group $group has no aliases")
+                    val downloadedGroup = groupRepository.findByAlias(groupAlias, forceUpdate = true, preferCurrentState = true).getFirstValue()
+                    if (downloadedGroup == null) return CreateHomeworkResult.Error.GroupNotFound
+                    val groupId = downloadedGroup.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
+                    if (groupId == null) return CreateHomeworkResult.Error.UnknownError("Group $group not found on VPP")
+                    return@run groupId
                 }
                 groupId
             } else {

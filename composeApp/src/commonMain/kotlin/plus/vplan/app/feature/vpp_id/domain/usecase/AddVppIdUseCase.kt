@@ -2,18 +2,19 @@ package plus.vplan.app.feature.vpp_id.domain.usecase
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppDbDto
 import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.domain.service.GroupService
 import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import kotlin.uuid.Uuid
@@ -25,8 +26,8 @@ class AddVppIdUseCase(
     private val keyValueRepository: KeyValueRepository,
     private val profileRepository: ProfileRepository,
     private val syncGradesUseCase: SyncGradesUseCase,
+    private val groupRepository: GroupRepository,
     private val schoolService: SchoolService,
-    private val groupService: GroupService
 ) {
     suspend operator fun invoke(token: String): Response<VppId.Active> {
         val accessToken = vppIdRepository.getAccessToken(token)
@@ -44,7 +45,18 @@ class AddVppIdUseCase(
         schoolService.getSchoolFromAlias(Alias(AliasProvider.Vpp, vppId.data.schoolId.toString(), 1)).getFirstValue()
             ?: return Response.Error.Other("School not found for VPP ID: ${vppId.data.id}")
 
-        val group = groupService.getGroupFromAlias(Alias(AliasProvider.Vpp, vppId.data.groupId.toString(), 1)).getFirstValue()!!
+        val group = groupRepository.findByAlias(
+            alias = Alias(AliasProvider.Vpp, vppId.data.groupId.toString(), 1),
+            forceUpdate = false,
+            preferCurrentState = false
+        ).getFirstValue()
+
+        if (group == null) {
+            val errorMessage = "Group not found for VPP ID: ${vppId.data.id}, group alias: ${vppId.data.groupId}"
+            logger.e { errorMessage }
+            captureError("AddVppIdUseCase", errorMessage)
+            return Response.Error.Other("Group not found for VPP ID: ${vppId.data.id}")
+        }
 
         vppIdRepository.upsert(VppDbDto.AppVppDbDto(
             id = vppId.data.id,

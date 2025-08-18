@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -13,8 +14,10 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.FcmRepository
+import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
@@ -42,17 +45,25 @@ class DeveloperSettingsViewModel(
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
-    private val updateHomeworkUseCase: UpdateHomeworkUseCase
+    private val updateHomeworkUseCase: UpdateHomeworkUseCase,
+    private val groupRepository: GroupRepository
 ) : ViewModel() {
 
     var state by mutableStateOf(DeveloperSettingsState())
 
     init {
         viewModelScope.launch {
-            getCurrentProfileUseCase().collect { profile ->
+            getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(
                     profile = profile,
                 )
+
+                val school = profile.getSchool().getFirstValue()
+                if (school != null) {
+                    groupRepository.getBySchool(school.id).collectLatest {
+                        state = state.copy(groups = it)
+                    }
+                }
             }
         }
         viewModelScope.launch {
@@ -130,6 +141,11 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.ToggleAutoSyncDisabled -> {
                     keyValueRepository.set(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC, (!keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).first().toBoolean()).toString())
                 }
+                is DeveloperSettingsEvent.UpdateGroup -> {
+                    groupRepository.findByAliases(event.group.aliases, forceUpdate = true, preferCurrentState = false).getFirstValue().also {
+                        Logger.i { "Updated group.\nWas: ${event.group}\nIs:  $it" }
+                    }
+                }
                 DeveloperSettingsEvent.UpdateHomework -> {
                     if (state.profile == null) return@launch
                     if (state.isHomeworkUpdateRunning) return@launch
@@ -151,6 +167,7 @@ data class DeveloperSettingsState(
     val isLessonTimesUpdateRunning: Boolean = false,
     val isHomeworkUpdateRunning: Boolean = false,
     val profile: Profile? = null,
+    val groups: List<Group> = emptyList(),
     val isAutoSyncDisabled: Boolean = false,
     val fcmLogs: List<DbFcmLog> = emptyList()
 )
@@ -163,6 +180,7 @@ sealed class DeveloperSettingsEvent {
     data object UpdateWeeks : DeveloperSettingsEvent()
     data object UpdateLessonTimes : DeveloperSettingsEvent()
     data object UpdateSubjectInstances : DeveloperSettingsEvent()
+    data class UpdateGroup(val group: Group) : DeveloperSettingsEvent()
     data object UpdateHomework : DeveloperSettingsEvent()
     data object ToggleAutoSyncDisabled : DeveloperSettingsEvent()
     data object DeleteSubstitutionPlan : DeveloperSettingsEvent()

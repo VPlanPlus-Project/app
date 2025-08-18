@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.domain.data.AliasProvider
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 
@@ -148,6 +150,18 @@ private fun DeveloperSettingsContent(
                 }
                 if (state.isHomeworkUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
             }
+
+            Column {
+                state.groups.forEach { group ->
+                    TextButton(
+                        onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateGroup(group)) } },
+                        enabled = !state.isSubstitutionPlanUpdateRunning
+                    ) {
+                        Text("Update group ${group.name} ${group.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value}")
+                    }
+                }
+            }
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = !state.isAutoSyncDisabled,
