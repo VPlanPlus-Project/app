@@ -5,7 +5,7 @@ import java.util.Properties
 
 object ApplicationConfig {
     const val APP_VERSION_NAME = "0.1.61-production"
-    const val APP_VERSION_CODE = 113
+    const val APP_VERSION_CODE = 116
     var isDebug = false
 }
 
