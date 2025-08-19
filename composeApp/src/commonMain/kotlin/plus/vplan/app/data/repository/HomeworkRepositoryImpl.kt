@@ -186,7 +186,8 @@ class HomeworkRepositoryImpl(
                     emit(CacheState.Loading(id.toString()))
                     val downloadError = downloadById(id)
                     if (downloadError != null) {
-                        emit(CacheState.Error(id, downloadError))
+                        if (downloadError is Response.Error.OnlineError.NotFound) emit(CacheState.NotExisting(id.toString()))
+                        else emit(CacheState.Error(id, downloadError))
                         return@collect
                     }
                 }
