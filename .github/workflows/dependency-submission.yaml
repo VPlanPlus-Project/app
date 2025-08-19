@@ -24,5 +24,6 @@ jobs:
         echo "posthog.api.key=placeholder" >> local.properties
         echo "GROUP_MAVEN_USERNAME=${{ secrets.GITLAB_USER }}" >> local.properties
         echo "GROUP_MAVEN_PASSWORD=${{ secrets.GITLAB_PASSWORD }}" >> local.properties
+        echo "app.debug=true" >> local.properties
     - name: 📊 Generate and submit dependency graph
       uses: gradle/actions/dependency-submission@v4
