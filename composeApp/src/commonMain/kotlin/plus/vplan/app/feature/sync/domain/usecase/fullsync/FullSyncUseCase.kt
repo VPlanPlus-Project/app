@@ -11,12 +11,12 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
+import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -24,14 +24,16 @@ import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolDbDto
 import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.TeacherDbDto
 import plus.vplan.app.domain.repository.TeacherRepository
+import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
-import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.SendInvalidSp24CredentialsNotification
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.Sp24CredentialsValidity
@@ -53,6 +55,7 @@ class FullSyncUseCase(
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
     private val syncGradesUseCase: SyncGradesUseCase,
+    private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val stundenplan24Repository: Stundenplan24Repository,
     private val roomRepository: RoomRepository,
     private val teacherRepository: TeacherRepository,
@@ -86,7 +89,13 @@ class FullSyncUseCase(
                 logger.i { "Performing FullSync" }
 
                 val cloudDataUpdate = CoroutineScope(Dispatchers.IO).launch {
-                    logger.i { "Updating schools" }
+                    try {
+                        updateHomeworkUseCase(true)
+                    } catch (e: Exception) {
+                        logger.e(e) { "Error during homework update" }
+                        captureError("FullSync.HomeworkUpdate", "Error during homework update: ${e.stackTraceToString()}")
+                    }
+
                     try {
                         logger.i { "Updating grades" }
                         val gradeStart = Clock.System.now()

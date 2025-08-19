@@ -4,6 +4,7 @@ package plus.vplan.app.feature.sync.domain.usecase.vpp
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -83,6 +84,11 @@ class UpdateHomeworkUseCase(
             downloadedIds.addAll(downloaded.data)
         }
 
+        (existingIds.filter { it > 0 } - downloadedIds).forEach { deletionCandidate ->
+            val item = homeworkRepository.getById(deletionCandidate, true).filter { it !is CacheState.Loading }.first()
+            if (item is CacheState.NotExisting) homeworkRepository.deleteById(deletionCandidate)
+        }
+
         profiles.forEach { studentProfile ->
             updateProfileHomeworkIndexUseCase(studentProfile)
 
@@ -96,9 +102,13 @@ class UpdateHomeworkUseCase(
                         .filterNotNull()
                         .mapNotNull { it.aliases.firstOrNull { alias -> alias.provider == AliasProvider.Vpp }?.value?.toInt() }
 
-                    val newHomework = combine((downloadedIds - existingIds).ifEmpty { return@buildAndSendNotifications }.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
+                    val newHomework = combine((downloadedIds - existingIds).ifEmpty { return@buildAndSendNotifications }
+                        .map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
                         .filterIsInstance<Homework.CloudHomework>()
-                        .filter { homework -> homework.createdBy != studentProfile.vppIdId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days }
+                        .filter { homework ->
+                            homework.createdBy != studentProfile.vppIdId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now()
+                                .toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days
+                        }
                         .filter { it.subjectInstanceId == null || it.subjectInstanceId in allowedSubjectInstanceVppIds }
 
                     if (newHomework.size == 1) {
