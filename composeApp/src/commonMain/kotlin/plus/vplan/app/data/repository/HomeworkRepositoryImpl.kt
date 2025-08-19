@@ -159,12 +159,12 @@ class HomeworkRepositoryImpl(
     }
 
     override fun getByDate(date: LocalDate): Flow<List<Homework>> {
-        return vppDatabase.homeworkDao.getByDate(date).map { it.map { it.toModel() } }
+        return vppDatabase.homeworkDao.getByDate(date).map { it.map { homework -> homework.toModel() } }
     }
 
     override fun getByProfile(profileId: Uuid, date: LocalDate?): Flow<List<Homework>> {
-        if (date == null) return vppDatabase.homeworkDao.getByProfile(profileId).map { it.map { it.toModel() } }
-        return vppDatabase.homeworkDao.getByProfileAndDate(profileId, date).map { it.map { it.toModel() } }
+        if (date == null) return vppDatabase.homeworkDao.getByProfile(profileId).map { it.map { homework -> homework.toModel() } }
+        return vppDatabase.homeworkDao.getByProfileAndDate(profileId, date).map { it.map { homework -> homework.toModel() } }
     }
 
     override fun getAllIds(): Flow<List<Int>> {
