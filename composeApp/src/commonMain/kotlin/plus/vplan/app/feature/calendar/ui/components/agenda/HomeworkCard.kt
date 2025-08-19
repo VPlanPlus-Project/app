@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.calendar.ui.components.agenda
 
 import androidx.compose.animation.AnimatedContent
@@ -38,7 +40,6 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
@@ -55,8 +56,10 @@ import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toDp
+import plus.vplan.app.utils.toLocalDateTime
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun HomeworkCard(

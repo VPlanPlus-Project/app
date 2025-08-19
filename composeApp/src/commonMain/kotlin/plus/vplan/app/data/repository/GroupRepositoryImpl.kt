@@ -27,7 +27,7 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupAlias
 import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
-import plus.vplan.app.data.source.network.getSchoolIdForAuthentication
+import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
@@ -180,7 +180,7 @@ class GroupRepositoryImpl(
 
         val deferred = CoroutineScope(Dispatchers.IO).async download@{
             try {
-                val vppSchoolIdResponse = getSchoolIdForAuthentication(httpClient, URLBuilder(currentConfiguration.appApiUrl).apply {
+                val vppSchoolIdResponse = getAuthenticationOptionsForRestrictedEntity(httpClient, URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("group", "v1", alias.toUrlString())
                 }.buildString())
                 if (vppSchoolIdResponse !is Response.Success) return@download vppSchoolIdResponse as Response.Error

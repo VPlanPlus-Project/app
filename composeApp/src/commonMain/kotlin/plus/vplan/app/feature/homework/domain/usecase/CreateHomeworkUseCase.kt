@@ -1,24 +1,27 @@
-@file:OptIn(ExperimentalUuidApi::class, ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalUuidApi::class, ExperimentalUuidApi::class, ExperimentalTime::class)
 
 package plus.vplan.app.feature.homework.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
+import plus.vplan.app.domain.repository.HomeworkTaskDbDto
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.ui.common.AttachedFile
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 
 class CreateHomeworkUseCase(
@@ -139,7 +142,27 @@ class CreateHomeworkUseCase(
             homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
         }
 
-        homeworkRepository.upsertLocally(listOf(homework), homeworkTasks, files)
+        homeworkRepository.upsertLocally(
+            homeworkId = homework.id,
+            subjectInstanceId = vppSubjectInstanceId,
+            groupId = vppGroupId,
+            dueTo = homework.dueTo,
+            isPublic = isPublic,
+            createdAt = Clock.System.now(),
+            createdBy = if (homework.creator is AppEntity.VppId) homework.creator.id else null,
+            createdByProfileId = if (homework.creator is AppEntity.Profile) homework.creator.id else null,
+            tasks = homeworkTasks.map {
+                HomeworkTaskDbDto(
+                    id = it.id,
+                    content = it.content,
+                    homeworkId = it.homework,
+                    createdAt = Clock.System.now()
+                )
+            },
+            tasksDoneAccount = emptyList(),
+            tasksDoneProfile = emptyList(),
+            associatedFileIds = files.map { it.id }
+        )
         homeworkRepository.createCacheForProfile(profile.id, setOf(homework.id))
         files.forEach { file ->
             localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())

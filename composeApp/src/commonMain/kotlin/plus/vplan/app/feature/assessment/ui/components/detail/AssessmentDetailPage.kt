@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.assessment.ui.components.detail
 
 import androidx.compose.animation.AnimatedContent
@@ -39,7 +41,6 @@ import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.cache.collectAsSingleFlowOld
@@ -61,6 +62,7 @@ import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
+import plus.vplan.app.utils.toKotlinInstant
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.file
@@ -68,6 +70,7 @@ import vplanplus.composeapp.generated.resources.image
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.trash_2
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun DetailPage(
@@ -226,7 +229,7 @@ fun DetailPage(
             if (assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = assessment.creator)
             else SavedLocalRow()
 
-            CreatedAtRow(createdAt = assessment.createdAt.toInstant(TimeZone.UTC))
+            CreatedAtRow(createdAt = assessment.createdAt.toKotlinInstant(TimeZone.UTC))
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             if (state.canEdit) {

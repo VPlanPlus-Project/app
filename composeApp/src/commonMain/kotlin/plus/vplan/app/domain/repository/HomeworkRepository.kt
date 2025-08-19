@@ -19,7 +19,21 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 interface HomeworkRepository: WebEntityRepository<Homework> {
-    suspend fun upsertLocally(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
+
+    suspend fun upsertLocally(
+        homeworkId: Int,
+        subjectInstanceId: Int?,
+        groupId: Int?,
+        dueTo: LocalDate,
+        isPublic: Boolean?,
+        createdAt: Instant,
+        createdBy: Int?,
+        createdByProfileId: Uuid?,
+        tasks: List<HomeworkTaskDbDto>,
+        tasksDoneAccount: List<HomeworkTaskDoneAccountDbDto>,
+        tasksDoneProfile: List<HomeworkTaskDoneProfileDbDto>,
+        associatedFileIds: List<Int>,
+    )
     fun getByGroup(group: Group): Flow<List<Homework>>
 
     fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
@@ -53,7 +67,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
         schoolApiAccess: VppSchoolAuthentication,
         groups: List<Alias>,
         subjectInstanceAliases: List<Alias>
-    ): Response<List<DownloadHomeworkResponseItem>>
+    ): Response<List<Int>>
 
     suspend fun clearCache()
 
@@ -85,23 +99,21 @@ data class CreateHomeworkResponse(
     val taskIds: Map<String, Int>
 )
 
-data class DownloadHomeworkResponseItem(
+data class HomeworkTaskDbDto(
     val id: Int,
-    val subjectInstance: Int?,
-    val group: Int?,
-    val createdBy: Int,
-    val dueTo: LocalDate,
-    val createdAt: Instant,
-    val tasks: List<Task>,
-    val files: List<File>
-) {
-    data class Task(
-        val id: Int,
-        val done: Boolean?,
-        val content: String,
-    )
+    val homeworkId: Int,
+    val content: String,
+    val createdAt: Instant
+)
 
-    data class File(
-        val id: Int,
-    )
-}
+data class HomeworkTaskDoneAccountDbDto(
+    val taskId: Int,
+    val doneBy: Int,
+    val isDone: Boolean
+)
+
+data class HomeworkTaskDoneProfileDbDto(
+    val taskId: Int,
+    val profileId: Uuid,
+    val isDone: Boolean
+)

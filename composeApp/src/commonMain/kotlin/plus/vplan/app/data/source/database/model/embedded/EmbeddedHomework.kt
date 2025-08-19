@@ -6,7 +6,9 @@ import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.domain.model.Homework
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 data class EmbeddedHomework(
     @Embedded val homework: DbHomework,
     @Relation(

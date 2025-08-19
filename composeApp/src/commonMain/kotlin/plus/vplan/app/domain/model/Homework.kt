@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -9,7 +11,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -25,6 +26,8 @@ import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Item
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 sealed class Homework(

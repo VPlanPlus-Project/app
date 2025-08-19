@@ -48,6 +48,7 @@ import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.data.service.SchoolServiceImpl
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
+import plus.vplan.app.data.source.network.VppIdAuthenticationProvider
 import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.CourseRepository
@@ -138,14 +139,13 @@ val appModule = module(createdAtStart = true) {
                 retryIf { request, response ->
                     val isResponseFromVPPServer = response.headers["X-Backend-Family"] == "vpp.ID"
                     val isResponseSuccess = response.status.isSuccess()
-                    val isResponseNotFound = response.status == HttpStatusCode.NotFound
                     if (isResponseFromVPPServer && response.status == HttpStatusCode.InternalServerError) {
                         MainScope().launch {
                             appLogger.e { "Something went wrong at ${request.method} ${request.url}: 500\n${response.bodyAsText()}" }
                         }
                         return@retryIf false
                     }
-                    return@retryIf isResponseFromVPPServer && !isResponseSuccess && !isResponseNotFound
+                    return@retryIf isResponseFromVPPServer && response.status.value in 500..599 && !isResponseSuccess
                 }
             }
 
@@ -167,6 +167,7 @@ val appModule = module(createdAtStart = true) {
     }
 
     singleOf(::SchoolAuthenticationProvider)
+    singleOf(::VppIdAuthenticationProvider)
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()

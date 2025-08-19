@@ -29,7 +29,7 @@ import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectInstanceGroup
 import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
-import plus.vplan.app.data.source.network.getSchoolIdForAuthentication
+import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.domain.cache.AliasState
@@ -183,7 +183,7 @@ class SubjectInstanceRepositoryImpl(
 
         val deferred = CoroutineScope(Dispatchers.IO).async download@{
             try {
-                val vppSchoolIdResponse = getSchoolIdForAuthentication(httpClient, URLBuilder(currentConfiguration.appApiUrl).apply {
+                val vppSchoolIdResponse = getAuthenticationOptionsForRestrictedEntity(httpClient, URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("subject-instance", "v1", alias.toUrlString())
                 }.buildString())
                 if (vppSchoolIdResponse !is Response.Success) return@download vppSchoolIdResponse as Response.Error
