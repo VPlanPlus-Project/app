@@ -19,7 +19,7 @@ suspend fun getAuthenticationOptionsForRestrictedEntity(
         if (response.status != HttpStatusCode.Forbidden) return response.toErrorResponse()
         val schoolIdResponse = response.body<ResponseDataWrapper<AuthenticationOptionResponse>>()
         return AuthenticationOptions(
-            schoolId = schoolIdResponse.data.schoolId,
+            schoolIds = schoolIdResponse.data.schoolIds,
             users = schoolIdResponse.data.userIds
         ).asSuccess()
     }
@@ -28,11 +28,11 @@ suspend fun getAuthenticationOptionsForRestrictedEntity(
 
 @Serializable
 private data class AuthenticationOptionResponse(
-    @SerialName("school_id") val schoolId: Int? = null,
+    @SerialName("school_ids") val schoolIds: List<Int>? = null,
     @SerialName("user_ids") val userIds: List<Int>? = null
 )
 
 data class AuthenticationOptions(
-    val schoolId: Int?,
+    val schoolIds: List<Int>?,
     val users: List<Int>?
 )

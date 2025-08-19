@@ -188,12 +188,17 @@ class SubjectInstanceRepositoryImpl(
                 }.buildString())
                 if (vppSchoolIdResponse !is Response.Success) return@download vppSchoolIdResponse as Response.Error
 
-                val vppSchoolAlias = Alias(AliasProvider.Vpp, vppSchoolIdResponse.data.toString(), 1)
-                val authentication = schoolAuthenticationProvider.getAuthenticationForSchool(setOf(vppSchoolAlias))
+                val authenticationPair = vppSchoolIdResponse.data.schoolIds.orEmpty().firstNotNullOfOrNull { schoolId ->
+                    val vppSchoolAlias = Alias(AliasProvider.Vpp, schoolId.toString(), 1)
+                    val authentication = schoolAuthenticationProvider.getAuthenticationForSchool(setOf(vppSchoolAlias)) ?: return@firstNotNullOfOrNull null
+                    authentication to vppSchoolAlias
+                }
 
-                if (authentication == null) {
+                if (authenticationPair == null) {
                     return@download Response.Error.Other("No authentication found for school with id ${vppSchoolIdResponse.data}")
                 }
+
+                val (authentication, vppSchoolAlias) = authenticationPair
 
                 val localSchoolId = schoolRepository.resolveAliasToLocalId(vppSchoolAlias)
                 if (localSchoolId == null) {
