@@ -355,10 +355,6 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override suspend fun unlinkHomeworkFileLocally(homework: Homework, fileId: Int) {
-        vppDatabase.homeworkDao.deleteFileHomeworkConnections(homework.id, fileId)
-    }
-
     override suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error? {
         if (homework.id < 0 || profile.getVppIdItem() == null) {
             vppDatabase.homeworkDao.deleteById(listOf(homework.id))
@@ -556,7 +552,7 @@ class HomeworkRepositoryImpl(
                 }.buildString()) {
                     vppId.buildVppSchoolAuthentication().authentication(this)
                     contentType(ContentType.Application.Json)
-                    setBody(HomeworkAddFileRequest(fileId))
+                    setBody(HomeworkFileLinkRequest(fileId))
                 }
 
                 if (!response.status.isSuccess()) return response.toErrorResponse()
@@ -564,6 +560,28 @@ class HomeworkRepositoryImpl(
         }
 
         vppDatabase.homeworkDao.upsertHomeworkFileConnection(FKHomeworkFile(homeworkId, fileId))
+        return Unit.asSuccess()
+    }
+
+    override suspend fun unlinkHomeworkFile(vppId: VppId.Active?, homeworkId: Int, fileId: Int): Response<Unit> {
+        if (homeworkId > 0) {
+            require(vppId != null) { "A vpp.ID must be provided when detaching a file from a cloud homework." }
+
+            safeRequest(onError = { return it }) {
+                val response = httpClient.delete(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("homework", "v1", homeworkId.toString(), "file")
+                }.buildString()) {
+                    vppId.buildVppSchoolAuthentication().authentication(this)
+
+                    contentType(ContentType.Application.Json)
+                    setBody(HomeworkFileLinkRequest(fileId))
+                }
+
+                if (!response.status.isSuccess()) return response.toErrorResponse()
+            }
+        }
+
+        vppDatabase.homeworkDao.deleteFileHomeworkConnection(homeworkId, fileId)
         return Unit.asSuccess()
     }
 
@@ -659,6 +677,6 @@ data class HomeworkTaskUpdateContentRequest(
 )
 
 @Serializable
-data class HomeworkAddFileRequest(
+data class HomeworkFileLinkRequest(
     @SerialName("file_id") val fileId: Int
 )

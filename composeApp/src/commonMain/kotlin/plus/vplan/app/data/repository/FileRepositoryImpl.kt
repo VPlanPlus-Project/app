@@ -244,11 +244,11 @@ class FileRepositoryImpl(
         if (file.id < 0 || vppId == null) return
         safeRequest(onError = { vppDatabase.fileDao.updateName(file.id, oldName) }) {
             val response = httpClient.patch {
-                url(URLBuilder(currentConfiguration.apiUrl).apply {
-                    appendPathSegments("api", "v2.2", "file", file.id.toString())
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("file", "v1", file.id.toString())
                 }.build())
 
-                bearerAuth(vppId.accessToken)
+                vppId.buildVppSchoolAuthentication().authentication(this)
                 contentType(ContentType.Application.Json)
                 setBody(FileUpdateNameRequest(newName))
             }

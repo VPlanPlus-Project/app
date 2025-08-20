@@ -56,8 +56,6 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun addTask(homework: Homework, task: String, profile: Profile.StudentProfile): Response.Error?
     suspend fun editHomeworkTask(task: Homework.HomeworkTask, newContent: String, profile: Profile.StudentProfile)
 
-    suspend fun unlinkHomeworkFileLocally(homework: Homework, fileId: Int)
-
     suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error?
     suspend fun deleteHomeworkTask(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Response.Error?
 
@@ -88,6 +86,17 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
      * @param homeworkId If the homework ID is greater than zero (meaning it is stored in the cloud), the [vppId] will be required.
      */
     suspend fun linkHomeworkFile(
+        vppId: VppId.Active?,
+        homeworkId: Int,
+        fileId: Int
+    ): Response<Unit>
+
+    /**
+     * Unlinks a file from a homework.
+     * @param vppId If provided, the file will be unlinked on the api as well.
+     * @param homeworkId If the homework ID is greater than zero (meaning it is stored in the cloud), the [vppId] will be required.
+     */
+    suspend fun unlinkHomeworkFile(
         vppId: VppId.Active?,
         homeworkId: Int,
         fileId: Int
