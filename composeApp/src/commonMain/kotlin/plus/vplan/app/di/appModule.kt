@@ -47,6 +47,7 @@ import plus.vplan.app.data.repository.WeekRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.data.service.SchoolServiceImpl
 import plus.vplan.app.data.source.database.VppDatabase
+import plus.vplan.app.data.source.network.GenericAuthenticationProvider
 import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
 import plus.vplan.app.data.source.network.VppIdAuthenticationProvider
 import plus.vplan.app.domain.di.domainModule
@@ -168,6 +169,7 @@ val appModule = module(createdAtStart = true) {
 
     singleOf(::SchoolAuthenticationProvider)
     singleOf(::VppIdAuthenticationProvider)
+    singleOf(::GenericAuthenticationProvider)
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()

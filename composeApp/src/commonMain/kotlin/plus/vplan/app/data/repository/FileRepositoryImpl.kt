@@ -1,6 +1,10 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.repository
 
+import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.plugins.onDownload
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
@@ -20,38 +24,67 @@ import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.takeWhile
-import kotlinx.datetime.Clock
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbFile
-import plus.vplan.app.data.source.network.isResponseFromBackend
+import plus.vplan.app.data.source.network.GenericAuthenticationProvider
+import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
+import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.data.getByProvider
 import plus.vplan.app.domain.model.File
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.ui.common.AttachedFile
-import plus.vplan.app.utils.sendAll
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class FileRepositoryImpl(
     private val httpClient: HttpClient,
-    private val vppDatabase: VppDatabase
+    private val vppDatabase: VppDatabase,
+    private val genericAuthenticationProvider: GenericAuthenticationProvider
 ) : FileRepository {
+    private val logger = Logger.withTag("FileRepositoryImpl")
+
+    override suspend fun upsertLocally(
+        fileId: Int,
+        fileName: String,
+        fileSize: Long,
+        isOfflineReady: Boolean,
+        createdAt: Instant,
+        createdBy: Int?
+    ) {
+        vppDatabase.fileDao.upsert(DbFile(
+            id = fileId,
+            fileName = fileName,
+            createdAt = createdAt,
+            createdByVppId = createdBy,
+            size = fileSize,
+            isOfflineReady = isOfflineReady,
+            cachedAt = Clock.System.now()
+        ))
+    }
+
     override suspend fun upsert(file: File) {
         vppDatabase.fileDao.upsert(
             DbFile(
@@ -66,105 +99,101 @@ class FileRepositoryImpl(
         )
     }
 
-    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<File>> {
-        val fileFlow = vppDatabase.fileDao.getById(id).map { it?.toModel() }
-        return channelFlow {
-            if (!forceReload) {
-                var hadData = false
-                sendAll(fileFlow.takeWhile { it != null }.filterNotNull().onEach { hadData = true }.map { CacheState.Done(it) })
-                if (hadData || id < 0) return@channelFlow
-            }
-            send(CacheState.Loading(id.toString()))
-            safeRequest(onError = { trySend(CacheState.Error(id.toString(), it)) }) {
-                val response = httpClient.get {
-                    url(URLBuilder(currentConfiguration.apiUrl).apply {
-                        appendPathSegments("api", "v2.2", "file", id.toString())
-                    }.build())
-                }
-                if (response.status == HttpStatusCode.NotFound && response.isResponseFromBackend()) {
+    private val runningDownloads = ConcurrentMutableMap<Int, Deferred<Response.Error?>>()
+    private suspend fun downloadById(id: Int): Response.Error? {
+        runningDownloads[id]?.let { return it.await() }
+
+        val deferred = CoroutineScope(Dispatchers.IO).async download@{
+            try {
+                val authenticationOptions = getAuthenticationOptionsForRestrictedEntity(
+                    httpClient = httpClient,
+                    url = URLBuilder(currentConfiguration.appApiUrl).apply {
+                        appendPathSegments("file", "v1", id.toString())
+                    }.buildString()
+                )
+
+                if (authenticationOptions is Response.Error.OnlineError.NotFound) {
                     vppDatabase.fileDao.deleteById(listOf(id))
-                    return@channelFlow send(CacheState.NotExisting(id.toString()))
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse()))
-                val data = ResponseDataWrapper.fromJson<FileItemSimpleGetRequest>(response.bodyAsText())
-                    ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 
-                val creator = vppDatabase.vppIdDao.getById(data.createdBy).first()?.toModel() as? VppId.Active
-                if (creator != null) {
-                    val fileResponse = httpClient.get {
-                        url(URLBuilder(currentConfiguration.apiUrl).apply {
-                            appendPathSegments("api", "v2.2", "file", id.toString())
-                        }.build())
-                        creator.buildVppSchoolAuthentication().authentication(this)
-                    }
-                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse()))
-                    val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
-                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
-                    val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
-                    vppDatabase.fileDao.upsert(
-                        DbFile(
-                            id = id,
-                            createdAt = Clock.System.now(),
-                            createdByVppId = data.createdBy,
-                            fileName = fileData.fileName,
-                            size = fileData.size,
-                            isOfflineReady = existing?.isOfflineReady == true,
-                            cachedAt = Clock.System.now()
-                        )
-                    )
-                    return@channelFlow sendAll(getById(id, false))
-                }
-                val schools = vppDatabase.schoolDao.getAll().first()
-                    .map { it.toModel() }
-                    .filterIsInstance<School.AppSchool>()
-                    .filter { it.aliases.getByProvider(AliasProvider.Vpp)?.value?.toInt() in data.schoolIds }
-                    .map {
-                        VppSchoolAuthentication.Sp24(
-                            sp24SchoolId = it.sp24Id,
-                            username = it.username,
-                            password = it.password,
-                        )
-                    }
+                if (authenticationOptions !is Response.Success) return@download authenticationOptions as Response.Error
+                val authentication = genericAuthenticationProvider.getAuthentication(authenticationOptions.data)
 
-                schools.forEach { school ->
-                    val fileResponse = httpClient.get {
-                        url(URLBuilder(currentConfiguration.apiUrl).apply {
-                            appendPathSegments("api", "v2.2", "file", id.toString())
-                        }.build())
-                        school.authentication(this)
-                    }
-                    if (fileResponse.status == HttpStatusCode.Forbidden) return@forEach
-                    if (!fileResponse.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), fileResponse.toErrorResponse()))
-                    val fileData = ResponseDataWrapper.fromJson<FileItemGetRequest>(fileResponse.bodyAsText())
-                        ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(fileResponse.bodyAsText())))
-                    val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
-                    vppDatabase.fileDao.upsert(
-                        DbFile(
-                            id = id,
-                            createdAt = Clock.System.now(),
-                            createdByVppId = data.createdBy,
-                            fileName = fileData.fileName,
-                            size = fileData.size,
-                            isOfflineReady = existing?.isOfflineReady == true,
-                            cachedAt = Clock.System.now()
-                        )
-                    )
-                    return@channelFlow sendAll(getById(id, false))
+                if (authentication == null) {
+                    return@download Response.Error.Other("No authentication found for file $id")
                 }
-                return@channelFlow send(CacheState.NotExisting(id.toString()))
+
+                val response = httpClient.get {
+                    url(URLBuilder(currentConfiguration.appApiUrl).apply {
+                        appendPathSegments("file", "v1", id.toString())
+                    }.build())
+                    authentication.authentication(this)
+                }
+
+                if (!response.status.isSuccess()) {
+                    logger.e { "Error downloading file data with id $id: $response" }
+                    return@download response.toErrorResponse()
+                }
+
+                val file = response.body<ResponseDataWrapper<FileItemGetResponse>>().data
+
+                val existing = vppDatabase.fileDao.getById(id).first()?.toModel()
+                upsertLocally(
+                    fileId = id,
+                    fileName = file.fileName,
+                    fileSize = file.size,
+                    isOfflineReady = existing?.isOfflineReady ?: false,
+                    createdAt = Instant.fromEpochSeconds(file.createdAt),
+                    createdBy = file.createdBy.id
+                )
+
+                return@download null
+            } finally {
+                runningDownloads.remove(id)
             }
         }
+
+        runningDownloads[id] = deferred
+        return deferred.await()
+    }
+
+    private val idFileFlowCache = mutableMapOf<String, Flow<CacheState<File>>>()
+    override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<File>> {
+        val cacheKey = "${id}_$forceReload"
+        if (!forceReload) idFileFlowCache[cacheKey]?.let { return it }
+
+        val flow = flow {
+            var hasReloaded = false
+            vppDatabase.fileDao.getById(id).map { it?.toModel() }.collect { file ->
+                if (file == null || (forceReload && !hasReloaded)) {
+                    hasReloaded = true
+                    emit(CacheState.Loading(id.toString()))
+                    val downloadError = downloadById(id)
+                    if (downloadError != null) {
+                        if (downloadError is Response.Error.OnlineError.NotFound) emit(CacheState.NotExisting(id.toString()))
+                        else emit(CacheState.Error(id.toString(), downloadError))
+                        return@collect
+                    }
+                }
+                file?.let { emit(CacheState.Done(it)) }
+            }
+        }
+            .onCompletion { idFileFlowCache.remove(cacheKey) }
+            .shareIn(CoroutineScope(Dispatchers.IO), replay = 1, started = SharingStarted.WhileSubscribed(5000))
+
+        if (!forceReload) idFileFlowCache[cacheKey] = flow
+        return flow
     }
 
     override fun getAllIds(): Flow<List<Int>> {
         return vppDatabase.fileDao.getAll().map { it.map { file -> file.id } }
     }
 
-    override fun cacheFile(file: File, schoolApiAccess: VppSchoolAuthentication): Flow<FileDownloadProgress> = channelFlow {
+    override fun downloadFileContent(file: File, schoolApiAccess: VppSchoolAuthentication): Flow<FileDownloadProgress> = channelFlow {
         safeRequest(onError = { trySend(FileDownloadProgress.Error(it)) }) {
             val response = httpClient.get {
-                url(URLBuilder(currentConfiguration.apiUrl).apply {
-                    appendPathSegments("api", "v2.2", "file", file.id.toString(), "download")
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("file", "v1", file.id.toString(), "download")
                 }.build())
                 schoolApiAccess.authentication(this)
                 onDownload { bytesSentTotal, contentLength ->
@@ -186,8 +215,8 @@ class FileRepositoryImpl(
     ): Response<Int> {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(currentConfiguration.apiUrl).apply {
-                    appendPathSegments("api", "v2.2", "file")
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("file", "v1")
                 }.build())
                 vppId.buildVppSchoolAuthentication().authentication(this)
                 header("File-Name", document.name)
@@ -252,16 +281,11 @@ class FileRepositoryImpl(
 }
 
 @Serializable
-data class FileItemSimpleGetRequest(
-    @SerialName("created_by") val createdBy: Int,
-    @SerialName("school_ids") val schoolIds: List<Int>,
-)
-
-@Serializable
-data class FileItemGetRequest(
-    @SerialName("created_by") val createdBy: Int,
+data class FileItemGetResponse(
+    @SerialName("created_by") val createdBy: IncludedModel,
     @SerialName("file_name") val fileName: String,
-    @SerialName("size") val size: Long,
+    @SerialName("file_size") val size: Long,
+    @SerialName("created_at") val createdAt: Long,
 )
 
 @Serializable

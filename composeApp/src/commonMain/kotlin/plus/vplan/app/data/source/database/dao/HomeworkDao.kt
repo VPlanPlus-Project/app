@@ -70,11 +70,11 @@ interface HomeworkDao {
     suspend fun upsertTaskDoneProfileMany(homeworkTaskDoneProfile: List<DbHomeworkTaskDoneProfile>)
 
     @Upsert
-    suspend fun upsertHomeworkFileConnections(fileHomeworkConnections: List<FKHomeworkFile>)
+    suspend fun upsertHomeworkFileConnection(fileHomeworkConnection: FKHomeworkFile)
 
     @Transaction
     @Upsert
-    suspend fun upsertFileHomeworkConnections(fileHomeworkConnections: List<FKHomeworkFile>)
+    suspend fun upsertHomeworkFileConnections(fileHomeworkConnections: List<FKHomeworkFile>)
 
     @Query("DELETE FROM fk_homework_file WHERE homework_id = :homeworkId")
     suspend fun deleteFileHomeworkConnections(homeworkId: Int)
@@ -96,7 +96,7 @@ interface HomeworkDao {
         upsertTaskMany(homeworkTask)
         upsertTaskDoneAccountMany(homeworkTaskDoneAccount)
         upsertFiles(files)
-        upsertFileHomeworkConnections(fileHomeworkConnections)
+        upsertHomeworkFileConnections(fileHomeworkConnections)
     }
 
     @Transaction

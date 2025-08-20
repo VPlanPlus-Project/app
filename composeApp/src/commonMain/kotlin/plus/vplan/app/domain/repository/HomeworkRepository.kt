@@ -13,7 +13,6 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.VppSchoolAuthentication
-import plus.vplan.app.ui.common.AttachedFile
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -57,7 +56,6 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun addTask(homework: Homework, task: String, profile: Profile.StudentProfile): Response.Error?
     suspend fun editHomeworkTask(task: Homework.HomeworkTask, newContent: String, profile: Profile.StudentProfile)
 
-    suspend fun linkHomeworkFileLocally(homework: Homework, file: plus.vplan.app.domain.model.File)
     suspend fun unlinkHomeworkFileLocally(homework: Homework, fileId: Int)
 
     suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error?
@@ -84,11 +82,16 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
         tasks: List<String>,
     ): Response<CreateHomeworkResponse>
 
-    suspend fun uploadHomeworkDocument(
-        vppId: VppId.Active,
+    /**
+     * Links a file to a homework.
+     * @param vppId If provided, the file will be linked on the api as well.
+     * @param homeworkId If the homework ID is greater than zero (meaning it is stored in the cloud), the [vppId] will be required.
+     */
+    suspend fun linkHomeworkFile(
+        vppId: VppId.Active?,
         homeworkId: Int,
-        document: AttachedFile
-    ): Response<Int>
+        fileId: Int
+    ): Response<Unit>
 
     suspend fun dropIndexForProfile(profileId: Uuid)
     suspend fun createCacheForProfile(profileId: Uuid, homeworkIds: Collection<Int>)

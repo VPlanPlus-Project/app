@@ -13,6 +13,7 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.HomeworkTaskDbDto
@@ -26,8 +27,9 @@ import kotlin.uuid.ExperimentalUuidApi
 
 class CreateHomeworkUseCase(
     private val homeworkRepository: HomeworkRepository,
-    private val localFileRepository: LocalFileRepository,
     private val groupRepository: GroupRepository,
+    private val fileRepository: FileRepository,
+    private val localFileRepository: LocalFileRepository,
     private val profileService: ProfileService,
     private val subjectInstanceRepository: SubjectInstanceRepository,
 ) {
@@ -104,24 +106,21 @@ class CreateHomeworkUseCase(
             )
             homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
 
-            files = emptyList()
-//            selectedFiles.mapNotNull {
-//                val documentId = homeworkRepository.uploadHomeworkDocument(
-//                    vppId = profile.getVppIdItem() as VppId.Active,
-//                    homeworkId = homework.id,
-//                    document = it
-//                )
-//                if (documentId !is Response.Success) return@mapNotNull null
-//                homework = (homework as Homework.CloudHomework).copy(
-//                    files = homework.files + documentId.data
-//                )
-//                Homework.HomeworkFile(
-//                    id = documentId.data,
-//                    name = it.name,
-//                    size = it.size,
-//                    homework = homework.id
-//                )
-//            }
+            files = selectedFiles.mapNotNull {
+                val documentId = fileRepository.uploadFile(
+                    vppId = profile.getVppIdItem() as VppId.Active,
+                    document = it
+                )
+
+                if (documentId !is Response.Success) return@mapNotNull null
+
+                Homework.HomeworkFile(
+                    id = documentId.data,
+                    name = it.name,
+                    size = it.size,
+                    homework = homework.id
+                )
+            }
         } else {
             id = homeworkRepository.getIdForNewLocalHomework() - 1
             val taskIdStart = homeworkRepository.getIdForNewLocalHomeworkTask() - 1
@@ -140,6 +139,19 @@ class CreateHomeworkUseCase(
                 cachedAt = Clock.System.now()
             )
             homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
+        }
+
+        files.forEach { file ->
+            fileRepository.upsertLocally(
+                fileId = file.id,
+                fileName = file.name,
+                fileSize = file.size,
+                createdAt = Clock.System.now(),
+                isOfflineReady = true,
+                createdBy = if (homework.id > 0) profile.getVppIdItem()!!.id else null,
+            )
+
+            localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
         }
 
         homeworkRepository.upsertLocally(
@@ -163,10 +175,14 @@ class CreateHomeworkUseCase(
             tasksDoneProfile = emptyList(),
             associatedFileIds = files.map { it.id }
         )
-        homeworkRepository.createCacheForProfile(profile.id, setOf(homework.id))
         files.forEach { file ->
-            localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
+            homeworkRepository.linkHomeworkFile(
+                vppId = if (homework.id > 0) profile.getVppIdItem() as VppId.Active else null,
+                homeworkId = homework.id,
+                fileId = file.id
+            )
         }
+        homeworkRepository.createCacheForProfile(profile.id, setOf(homework.id))
 
         return CreateHomeworkResult.Success(id)
     }

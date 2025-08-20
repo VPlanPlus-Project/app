@@ -8,20 +8,17 @@ import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
-import io.ktor.client.request.header
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -46,8 +43,7 @@ import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAcco
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
 import plus.vplan.app.data.source.database.model.database.DbProfileHomeworkIndex
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
-import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
-import plus.vplan.app.data.source.network.VppIdAuthenticationProvider
+import plus.vplan.app.data.source.network.GenericAuthenticationProvider
 import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
@@ -58,6 +54,7 @@ import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
+import plus.vplan.app.domain.data.asSuccess
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
@@ -70,7 +67,6 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.HomeworkTaskDbDto
 import plus.vplan.app.domain.repository.HomeworkTaskDoneAccountDbDto
 import plus.vplan.app.domain.repository.HomeworkTaskDoneProfileDbDto
-import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.utils.sha256
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -82,8 +78,7 @@ private val logger = Logger.withTag("HomeworkRepositoryImpl")
 class HomeworkRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase,
-    private val vppIdAuthenticationProvider: VppIdAuthenticationProvider,
-    private val schoolAuthenticationProvider: SchoolAuthenticationProvider,
+    private val genericAuthenticationProvider: GenericAuthenticationProvider,
 ) : HomeworkRepository {
     override suspend fun upsertLocally(
         homeworkId: Int,
@@ -360,10 +355,6 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override suspend fun linkHomeworkFileLocally(homework: Homework, file: plus.vplan.app.domain.model.File) {
-        vppDatabase.homeworkDao.upsertFileHomeworkConnections(listOf(FKHomeworkFile(homeworkId = homework.id, fileId = file.id)))
-    }
-
     override suspend fun unlinkHomeworkFileLocally(homework: Homework, fileId: Int) {
         vppDatabase.homeworkDao.deleteFileHomeworkConnections(homework.id, fileId)
     }
@@ -442,14 +433,7 @@ class HomeworkRepositoryImpl(
                 }.buildString())
                 if (authenticationOptions !is Response.Success) return@download authenticationOptions as Response.Error
 
-                val authentication = run getAuthentication@{
-                    val vppIdAuthentication = authenticationOptions.data.users.orEmpty()
-                        .firstNotNullOfOrNull { vppIdAuthenticationProvider.getAuthenticationForVppId(it) }
-                    if (vppIdAuthentication != null) return@getAuthentication vppIdAuthentication
-
-                    val vppSchoolAlias = Alias(AliasProvider.Vpp, authenticationOptions.data.toString(), 1)
-                    schoolAuthenticationProvider.getAuthenticationForSchool(setOf(vppSchoolAlias))
-                }
+                val authentication = genericAuthenticationProvider.getAuthentication(authenticationOptions.data)
 
                 if (authentication == null) {
                     return@download Response.Error.Other("No authentication found for school with id ${authenticationOptions.data}")
@@ -562,22 +546,25 @@ class HomeworkRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    override suspend fun uploadHomeworkDocument(vppId: VppId.Active, homeworkId: Int, document: AttachedFile): Response<Int> {
-        safeRequest(onError = { return it }) {
-            val response = httpClient.post {
-                url(URLBuilder(currentConfiguration.apiUrl).apply {
-                    appendPathSegments("api", "v2.2", "homework", homeworkId.toString(), "documents")
-                }.build())
-                header("File-Name", document.name)
-                header(HttpHeaders.ContentType, ContentType.Application.OctetStream.toString())
-                header(HttpHeaders.ContentLength, document.size.toString())
-                bearerAuth(vppId.accessToken)
-                setBody(ByteReadChannel(document.platformFile.readBytes()))
+    override suspend fun linkHomeworkFile(vppId: VppId.Active?, homeworkId: Int, fileId: Int): Response<Unit> {
+        if (homeworkId > 0) {
+            require(vppId != null) { "A vpp.ID must be provided when attaching a file to a cloud homework." }
+
+            safeRequest(onError = { return it }) {
+                val response = httpClient.post(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("homework",  "v1", homeworkId.toString(), "file")
+                }.buildString()) {
+                    vppId.buildVppSchoolAuthentication().authentication(this)
+                    contentType(ContentType.Application.Json)
+                    setBody(HomeworkAddFileRequest(fileId))
+                }
+
+                if (!response.status.isSuccess()) return response.toErrorResponse()
             }
-            if (response.status != HttpStatusCode.OK) return response.toErrorResponse()
-            return ResponseDataWrapper.fromJson<Int>(response.bodyAsText())?.let { Response.Success(it) } ?: Response.Error.ParsingError(response.bodyAsText())
         }
-        return Response.Error.Cancelled
+
+        vppDatabase.homeworkDao.upsertHomeworkFileConnection(FKHomeworkFile(homeworkId, fileId))
+        return Unit.asSuccess()
     }
 
     override suspend fun dropIndexForProfile(profileId: Uuid) {
@@ -669,4 +656,9 @@ data class HomeworkAddTaskRequest(
 @Serializable
 data class HomeworkTaskUpdateContentRequest(
     @SerialName("content") val content: String,
+)
+
+@Serializable
+data class HomeworkAddFileRequest(
+    @SerialName("file_id") val fileId: Int
 )

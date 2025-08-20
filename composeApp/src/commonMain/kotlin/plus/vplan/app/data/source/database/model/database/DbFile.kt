@@ -1,10 +1,13 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.source.database.model.database
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
-import kotlinx.datetime.Instant
 import plus.vplan.app.domain.model.File
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @Entity(
     tableName = "file",
