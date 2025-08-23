@@ -20,6 +20,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import vplanplus.composeapp.generated.resources.Res
@@ -65,7 +66,7 @@ fun HolidayScreen(
                     text = "Nächster Schultag am ${nextDay.format(remember { LocalDate.Format {
                         dayOfWeek(DayOfWeekNames("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"))
                         chars(", ")
-                        dayOfMonth()
+                        day(padding = Padding.ZERO)
                         chars(". ")
                         monthName(MonthNames("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"))
                         char(' ')

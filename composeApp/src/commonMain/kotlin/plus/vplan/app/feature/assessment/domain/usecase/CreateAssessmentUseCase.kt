@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
@@ -21,7 +22,6 @@ import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.ui.common.AttachedFile
-import plus.vplan.app.utils.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.Uuid
@@ -83,7 +83,7 @@ class CreateAssessmentUseCase(
                 description = text,
                 type = type,
                 fileIds = files.map { it.id }.toList(),
-                cachedAt = kotlinx.datetime.Clock.System.now()
+                cachedAt = Clock.System.now()
             )
         } else {
             id = assessmentRepository.getIdForNewLocalAssessment() - 1
@@ -105,7 +105,7 @@ class CreateAssessmentUseCase(
                 description = text,
                 type = type,
                 fileIds = files.map { it.id }.toList(),
-                cachedAt = kotlinx.datetime.Clock.System.now()
+                cachedAt = Clock.System.now()
             )
         }
 

@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
@@ -33,7 +34,6 @@ import plus.vplan.app.feature.search.domain.usecase.GetSubjectsUseCase
 import plus.vplan.app.feature.search.domain.usecase.SearchRequest
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
 import plus.vplan.app.utils.now
-import plus.vplan.app.utils.toLocalDateTime
 import kotlin.time.ExperimentalTime
 
 class SearchViewModel(

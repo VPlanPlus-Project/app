@@ -14,7 +14,6 @@ import androidx.sqlite.execSQL
 import plus.vplan.app.data.source.database.converters.AliasPrefixConverter
 import plus.vplan.app.data.source.database.converters.CreationReasonConverter
 import plus.vplan.app.data.source.database.converters.InstantConverter
-import plus.vplan.app.data.source.database.converters.KotlinxInstantConverter
 import plus.vplan.app.data.source.database.converters.LocalDateConverter
 import plus.vplan.app.data.source.database.converters.LocalDateTimeConverter
 import plus.vplan.app.data.source.database.converters.LocalTimeConverter
@@ -239,7 +238,6 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         LocalTimeConverter::class,
         LocalDateTimeConverter::class,
         InstantConverter::class,
-        KotlinxInstantConverter::class,
         AliasPrefixConverter::class,
         CreationReasonConverter::class
     ]

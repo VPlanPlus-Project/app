@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
@@ -56,7 +57,6 @@ import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toDp
-import plus.vplan.app.utils.toLocalDateTime
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import kotlin.time.ExperimentalTime

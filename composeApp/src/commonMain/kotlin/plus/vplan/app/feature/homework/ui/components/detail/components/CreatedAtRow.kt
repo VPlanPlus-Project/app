@@ -6,9 +6,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
+import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.regularTimeFormat
-import plus.vplan.app.utils.toLocalDateTime
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 

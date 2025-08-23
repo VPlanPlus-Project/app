@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.repository.schulverwalter
 
 import io.ktor.client.HttpClient
@@ -13,7 +15,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -33,6 +34,8 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.schulverwalter.Collection
 import plus.vplan.app.domain.repository.schulverwalter.CollectionRepository
 import plus.vplan.app.utils.sendAll
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class CollectionRepositoryImpl(
     private val httpClient: HttpClient,

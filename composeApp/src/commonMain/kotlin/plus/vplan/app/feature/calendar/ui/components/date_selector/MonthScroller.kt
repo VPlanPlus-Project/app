@@ -30,7 +30,7 @@ fun MonthScroller(
     onChangeSelectedDate: (DateSelectionCause, LocalDate) -> Unit
 ) {
     val referenceDate = remember(LocalDate.now()) { LocalDate.now().atStartOfMonth() }
-    val pagerState = rememberPagerState(initialPage = (MONTH_PAGER_SIZE / 2) + referenceDate.until(selectedDate.atStartOfMonth(), DateTimeUnit.MONTH)) { MONTH_PAGER_SIZE }
+    val pagerState = rememberPagerState(initialPage = (MONTH_PAGER_SIZE / 2) + referenceDate.until(selectedDate.atStartOfMonth(), DateTimeUnit.MONTH).toInt()) { MONTH_PAGER_SIZE }
     val isUserDragging = pagerState.interactionSource.collectIsDraggedAsState().value
     LaunchedEffect(pagerState.targetPage, isUserDragging) {
         if (isUserDragging) return@LaunchedEffect
@@ -41,7 +41,7 @@ fun MonthScroller(
     LaunchedEffect(selectedDate) {
         val currentlyOpenedMonth = referenceDate.plus((pagerState.currentPage - MONTH_PAGER_SIZE / 2), DateTimeUnit.MONTH).atStartOfMonth()
         if (currentlyOpenedMonth.month != selectedDate.month) {
-            val newPage = (MONTH_PAGER_SIZE / 2) + referenceDate.until(selectedDate.atStartOfMonth(), DateTimeUnit.MONTH)
+            val newPage = (MONTH_PAGER_SIZE / 2) + referenceDate.until(selectedDate.atStartOfMonth(), DateTimeUnit.MONTH).toInt()
             pagerState.animateScrollToPage(newPage)
         }
     }

@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
+import kotlinx.datetime.format.Padding
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.capture
@@ -30,7 +32,6 @@ import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileHomeworkIndexU
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.shortMonthNames
-import plus.vplan.app.utils.toLocalDateTime
 import plus.vplan.app.utils.until
 import plus.vplan.app.utils.untilRelativeText
 import kotlin.time.Clock
@@ -127,7 +128,7 @@ class UpdateHomeworkUseCase(
                                         (LocalDate.now() untilRelativeText date) ?: date.format(LocalDate.Format {
                                             dayOfWeek(shortDayOfWeekNames)
                                             chars(", ")
-                                            dayOfMonth()
+                                            day(padding = Padding.ZERO)
                                             chars(". ")
                                             monthName(shortMonthNames)
                                         })

@@ -1,6 +1,7 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.model.schulverwalter
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -9,6 +10,8 @@ import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.data.Item
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 data class Grade(
     override val id: Int,

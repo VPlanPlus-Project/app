@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
@@ -14,7 +16,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.currentConfiguration
@@ -34,6 +35,8 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.utils.sendAll
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class NewsRepositoryImpl(
     private val vppDatabase: VppDatabase,

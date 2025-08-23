@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.sync.domain.usecase.fullsync
 
 import co.touchlab.kermit.Logger
@@ -7,7 +9,6 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
@@ -41,7 +42,9 @@ import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Response
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.ExperimentalTime
 
 class FullSyncUseCase(
     private val schoolRepository: SchoolRepository,

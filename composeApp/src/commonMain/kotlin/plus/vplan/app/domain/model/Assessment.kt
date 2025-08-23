@@ -1,13 +1,16 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.data.Item
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 data class Assessment(

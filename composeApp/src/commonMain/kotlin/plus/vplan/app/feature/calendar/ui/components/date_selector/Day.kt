@@ -83,7 +83,7 @@ fun RowScope.Day(
                 color = grayScaledIfRequired(if (showSelection) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline).copy(alpha = 1-(if (isWeekSelected) scrollProgress.coerceAtMost(1f) else 1f))
             )
             Text(
-                text = date.dayOfMonth.toString(),
+                text = date.day.toString(),
                 color = grayScaledIfRequired(
                     if (showSelection) MaterialTheme.colorScheme.tertiary
                     else if (date.dayOfWeek in listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY) || isHoliday) MaterialTheme.colorScheme.error

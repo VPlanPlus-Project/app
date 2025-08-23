@@ -58,6 +58,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -315,7 +316,7 @@ private fun HomeContent(
                                     append(state.day.date.format(LocalDate.Format {
                                         dayOfWeek(longDayOfWeekNames)
                                         chars(", ")
-                                        dayOfMonth()
+                                        day(padding = Padding.ZERO)
                                         chars(". ")
                                         monthName(longMonthNames)
                                         char(' ')
