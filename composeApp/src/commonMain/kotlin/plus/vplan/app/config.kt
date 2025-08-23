@@ -35,7 +35,7 @@ private val localenvConfiguration = WebConfig(
     apiUrl = "https://vplanplus.localhost.dev/api"
 )
 
-val currentConfiguration = localenvConfiguration
+val currentConfiguration = productionConfiguration
 
 data class WebConfig(
     val authUrl: String,
