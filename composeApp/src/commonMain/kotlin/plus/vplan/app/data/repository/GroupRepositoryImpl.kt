@@ -26,7 +26,7 @@ import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupAlias
-import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
+import plus.vplan.app.data.source.network.GenericAuthenticationProvider
 import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.model.IncludedModel
@@ -47,7 +47,7 @@ import kotlin.uuid.Uuid
 
 class GroupRepositoryImpl(
     private val httpClient: HttpClient,
-    private val schoolAuthenticationProvider: SchoolAuthenticationProvider,
+    private val genericAuthenticationProvider: GenericAuthenticationProvider,
     private val vppDatabase: VppDatabase,
     private val schoolRepository: SchoolRepository
 ) : GroupRepository {
@@ -180,21 +180,23 @@ class GroupRepositoryImpl(
 
         val deferred = CoroutineScope(Dispatchers.IO).async download@{
             try {
-                val vppSchoolIdResponse = getAuthenticationOptionsForRestrictedEntity(httpClient, URLBuilder(currentConfiguration.appApiUrl).apply {
+                val options = getAuthenticationOptionsForRestrictedEntity(httpClient, URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("group", "v1", alias.toUrlString())
                 }.buildString())
-                if (vppSchoolIdResponse !is Response.Success) return@download vppSchoolIdResponse as Response.Error
+                if (options !is Response.Success) return@download options as Response.Error
 
-                val vppSchoolAlias = Alias(AliasProvider.Vpp, vppSchoolIdResponse.data.toString(), 1)
-                val authentication = schoolAuthenticationProvider.getAuthenticationForSchool(setOf(vppSchoolAlias))
+                val authentication = genericAuthenticationProvider.getAuthentication(options.data)
 
                 if (authentication == null) {
-                    return@download Response.Error.Other("No authentication found for school with id ${vppSchoolIdResponse.data}")
+                    return@download Response.Error.Other("No authentication found for school ${options.data}")
                 }
 
-                val localSchoolId = schoolRepository.resolveAliasToLocalId(vppSchoolAlias)
+                val schoolAliases = options.data.schoolIds.orEmpty()
+                    .map { Alias(AliasProvider.Vpp, it.toString(), 1) }
+                val localSchoolId = schoolAliases
+                    .firstNotNullOfOrNull { schoolRepository.resolveAliasToLocalId(it) }
                 if (localSchoolId == null) {
-                    return@download Response.Error.Other("No school found for alias $vppSchoolAlias")
+                    return@download Response.Error.Other("No school found for aliases $schoolAliases")
                 }
 
                 val item = downloadById(authentication, alias.toUrlString())

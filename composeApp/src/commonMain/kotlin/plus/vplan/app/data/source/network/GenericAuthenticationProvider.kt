@@ -13,7 +13,7 @@ class GenericAuthenticationProvider(
             .firstNotNullOfOrNull { vppIdAuthenticationProvider.getAuthenticationForVppId(it) }
         if (vppIdAuthentication != null) return vppIdAuthentication
 
-        val vppSchoolAlias = Alias(AliasProvider.Vpp, options.toString(), 1)
-        return schoolAuthenticationProvider.getAuthenticationForSchool(setOf(vppSchoolAlias))
+        val schoolAliases = options.schoolIds.orEmpty().map { Alias(AliasProvider.Vpp, it.toString(), 1) }.toSet()
+        return schoolAuthenticationProvider.getAuthenticationForSchool(schoolAliases)
     }
 }
