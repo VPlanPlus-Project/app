@@ -3,7 +3,12 @@
     <base-config>
         <trust-anchors>
             <certificates src="system"/>
-            <certificates src="@raw/vpp_ca"/>
         </trust-anchors>
     </base-config>
+    <domain-config>
+        <domain includeSubdomains="true">vplanplus.localhost.dev</domain>
+        <trust-anchors>
+            <certificates src="@raw/vpp_ca"/>
+        </trust-anchors>
+    </domain-config>
 </network-security-config>

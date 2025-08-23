@@ -1,9 +1,5 @@
 package plus.vplan.app.feature.search.ui.main.components
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -38,12 +33,13 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.search.ui.main.NewItem
@@ -51,7 +47,6 @@ import plus.vplan.app.ui.components.Grid
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.blendColor
-import plus.vplan.app.utils.coerceLengthAtMost
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormatWithoutYear
 import plus.vplan.app.utils.toDp
@@ -205,41 +200,62 @@ fun SearchStart(
                                 .onSizeChanged { with(localDensity) { it.width.toDp().let { width -> if (width > createdAtByColumnWidth) createdAtByColumnWidth = width } } },
                             horizontalAlignment = Alignment.End
                         ) {
-                            val displayName = when (val creator = when (item) {
+                            val createdByFont = MaterialTheme.typography.labelMedium
+                            val shimmerLoader = remember<@Composable () -> Unit> { {
+                                ShimmerLoader(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .fillMaxWidth(.3f)
+                                        .height(createdByFont.lineHeight.toDp())
+                                )
+                            } }
+
+                            val creator = when (item) {
                                 is NewItem.Assessment -> item.assessment.creator
                                 is NewItem.Homework -> item.homework.creator
-                            }) {
-                                is AppEntity.Profile -> {
-                                    if (creator.id == profile.id) "Du"
-                                    else {
-                                        val creatorProfile = creator.profile.collectAsResultingFlowOld().value
-                                        if (creatorProfile == null) null
-                                        else "Profil ${creatorProfile.name}"
+                            }
+
+                            Row {
+                                when (creator) {
+                                    is AppEntity.Profile -> {
+                                        val profileState by creator.profile.map { profile -> profile?.let { CacheState.Done(it) } ?: CacheState.NotExisting("") }.collectAsState(CacheState.Loading(""))
+                                        when (val profile = profileState) {
+                                            is CacheState.Loading -> shimmerLoader()
+                                            is CacheState.Done -> {
+                                                Text(
+                                                    text = "Profil " + profile.data.name,
+                                                    style = createdByFont
+                                                )
+                                            }
+                                            else -> {
+                                                Text(
+                                                    text = "Unbekannt",
+                                                    style = createdByFont,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                    }
+                                    is AppEntity.VppId -> {
+                                        val vppIdState by creator.vppId.collectAsLoadingStateOld()
+                                        when (val vppId = vppIdState) {
+                                            is CacheState.Loading -> shimmerLoader()
+                                            is CacheState.Done -> {
+                                                Text(
+                                                    text = vppId.data.name,
+                                                    style = createdByFont
+                                                )
+                                            }
+                                            else -> {
+                                                Text(
+                                                    text = "Unbekannt",
+                                                    style = createdByFont,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
                                     }
                                 }
-                                is AppEntity.VppId -> {
-                                    val currentVppId = (profile as? Profile.StudentProfile)?.vppIdId
-                                    val vppId = creator.vppId.collectAsResultingFlowOld().value
-                                    if (vppId == null) null
-                                    else if (currentVppId == vppId.id) "Du"
-                                    else vppId.name
-                                }
-                            }
-                            AnimatedContent(
-                                targetState = displayName,
-                                transitionSpec = { fadeIn() togetherWith fadeOut() }
-                            ) { name ->
-                                if (name == null) ShimmerLoader(
-                                    modifier = Modifier
-                                        .height(12.dp)
-                                        .width(max(createdAtByColumnWidth, 32.dp))
-                                        .clip(RoundedCornerShape(8.dp))
-                                ) else Text(
-                                    text = name.coerceLengthAtMost(16),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
                             }
                             Text(
                                 text = (LocalDate.now() untilRelativeText item.createdAt) ?: item.createdAt.format(regularDateFormatWithoutYear),

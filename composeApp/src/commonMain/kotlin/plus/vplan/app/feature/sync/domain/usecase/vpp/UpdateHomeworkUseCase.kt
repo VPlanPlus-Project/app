@@ -16,6 +16,7 @@ import plus.vplan.app.StartTaskJson
 import plus.vplan.app.capture
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.data.getByProvider
@@ -106,7 +107,7 @@ class UpdateHomeworkUseCase(
                         .map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
                         .filterIsInstance<Homework.CloudHomework>()
                         .filter { homework ->
-                            homework.createdBy != studentProfile.vppIdId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now()
+                            homework.createdById != studentProfile.vppIdId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now()
                                 .toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days
                         }
                         .filter { it.subjectInstanceId == null || it.subjectInstanceId in allowedSubjectInstanceVppIds }
@@ -117,7 +118,7 @@ class UpdateHomeworkUseCase(
                             category = studentProfile.name,
                             message = buildString {
                                 newHomework.first().let { homework ->
-                                    append(homework.getCreatedBy().name)
+                                    append(homework.createdBy.getFirstValueOld()?.name ?: "Ein Nutzer")
                                     append(" hat eine neue Hausaufgabe ")
                                     if (homework.subjectInstance == null) append("für Klasse ${homework.group?.getFirstValue()?.name}")
                                     else append("für ${homework.subjectInstance?.getFirstValue()?.subject}")

@@ -16,7 +16,6 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
@@ -96,13 +95,6 @@ class SearchUseCase(
                         results.value = results.value.plus(
                             SearchResult.Type.Homework to homework
                                 .filter { (query.isEmpty() || it.taskItems!!.any { task -> query in task.content.lowercase() }) && (searchRequest.subject == null || it.subjectInstance?.getFirstValue()?.subject == searchRequest.subject) }
-                                .onEach {
-                                    it.subjectInstance?.getFirstValue() ?: it.group?.getFirstValue()
-                                    when (it) {
-                                        is Homework.CloudHomework -> it.getCreatedBy()
-                                        is Homework.LocalHomework -> it.getCreatedByProfile()
-                                    }
-                                }
                                 .map { SearchResult.Homework(it) })
                     }
                 }
@@ -111,12 +103,6 @@ class SearchUseCase(
                     assessmentRepository.getAll().collectLatest { assessmentList ->
                         val assessments = assessmentList
                             .filter { (query.isEmpty() || query in it.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.getFirstValue()?.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.type == searchRequest.assessmentType) }
-                            .onEach { assessment ->
-                                when (assessment.creator) {
-                                    is AppEntity.VppId -> assessment.getCreatedByVppIdItem()
-                                    is AppEntity.Profile -> assessment.getCreatedByProfileItem()
-                                }
-                            }
                             .sortedByDescending { (if (it.date < LocalDate.now()) "" else "_") + it.date.toString() }
                         results.value = results.value.plus(SearchResult.Type.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
                     }

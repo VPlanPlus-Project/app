@@ -30,7 +30,6 @@ import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
-import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.domain.source.schulverwalter.CollectionSource
 import plus.vplan.app.domain.source.schulverwalter.FinalGradeSource
@@ -56,7 +55,6 @@ val VPP_ID_AUTH_URL = URLBuilder(currentConfiguration.authUrl).apply {
 }.buildString()
 
 object App {
-    lateinit var vppIdSource: VppIdSource
     lateinit var homeworkSource: HomeworkSource
     lateinit var homeworkTaskSource: HomeworkTaskSource
     lateinit var profileSource: ProfileSource

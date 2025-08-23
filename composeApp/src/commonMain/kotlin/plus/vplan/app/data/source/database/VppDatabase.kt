@@ -224,6 +224,11 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
             from = 3,
             to = 4,
             spec = VppDatabase.Migration3to4::class
+        ),
+        AutoMigration(
+            from = 4,
+            to = 5,
+            spec = VppDatabase.Migration4to5::class
         )
     ]
 )
@@ -275,7 +280,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 4
+        const val DATABASE_VERSION = 5
     }
 
     @RenameColumn(
@@ -358,6 +363,45 @@ abstract class VppDatabase : RoomDatabase() {
                 create unique index index_homework_id
                     on homework (id);
 
+
+            """.trimIndent())
+        }
+    }
+
+    /**
+     * Migrate [DbVppIdGroupCrossover] to use vpp group ids instead of local uuids. The
+     * Alias is definitely there, because it is used to resolve the group when adding a VPP ID.
+     */
+    class Migration4to5 : AutoMigrationSpec {
+        override fun onPostMigrate(connection: SQLiteConnection) {
+            connection.execSQL("""
+                create table vpp_id_group_crossover_dg_tmp
+                (
+                    vpp_id   INTEGER not null
+                        references vpp_id
+                            on delete cascade,
+                    group_id INTEGER not null,
+                    primary key (vpp_id, group_id)
+                );
+                
+                insert into vpp_id_group_crossover_dg_tmp(vpp_id, group_id)
+                SELECT vpp_id, ga.alias
+                FROM vpp_id_group_crossover
+                         LEFT JOIN main.school_groups sg ON sg.id = vpp_id_group_crossover.group_id
+                         LEFT JOIN main.groups_aliases ga ON sg.id = ga.group_id
+                
+                WHERE ga.version = 1 AND ga.alias_type = 'vpp';
+                
+                drop table vpp_id_group_crossover;
+                
+                alter table vpp_id_group_crossover_dg_tmp
+                    rename to vpp_id_group_crossover;
+                
+                create index index_vpp_id_group_crossover_group_id
+                    on vpp_id_group_crossover (group_id);
+                
+                create index index_vpp_id_group_crossover_vpp_id
+                    on vpp_id_group_crossover (vpp_id);
 
             """.trimIndent())
         }

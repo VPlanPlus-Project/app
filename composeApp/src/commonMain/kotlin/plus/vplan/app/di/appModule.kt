@@ -89,7 +89,6 @@ import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
-import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.domain.source.schulverwalter.CollectionSource
 import plus.vplan.app.domain.source.schulverwalter.FinalGradeSource
@@ -225,7 +224,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             newsModule
         )
 
-        App.vppIdSource = VppIdSource(koin.get())
         App.homeworkSource = HomeworkSource(koin.get())
         App.homeworkTaskSource = HomeworkTaskSource(koin.get())
         App.profileSource = ProfileSource(koin.get())

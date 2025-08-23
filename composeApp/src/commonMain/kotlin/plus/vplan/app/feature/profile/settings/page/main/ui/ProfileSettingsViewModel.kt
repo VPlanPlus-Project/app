@@ -8,11 +8,11 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.CheckIfVppIdIsStillConnectedUseCase
@@ -31,7 +31,8 @@ class ProfileSettingsViewModel(
     private val checkIfVppIdIsStillConnectedUseCase: CheckIfVppIdIsStillConnectedUseCase,
     private val isLastProfileOfSchoolUseCase: IsLastProfileOfSchoolUseCase,
     private val deleteProfileUseCase: DeleteProfileUseCase,
-    private val connectVppIdUseCase: ConnectVppIdUseCase
+    private val connectVppIdUseCase: ConnectVppIdUseCase,
+    private val vppIdRepository: VppIdRepository
 ) : ViewModel() {
     var state by mutableStateOf(ProfileSettingsState())
         private set
@@ -44,7 +45,7 @@ class ProfileSettingsViewModel(
                 logger.d { "Got profile $profile" }
                 state = state.copy(profile = profile)
                 if (profile is Profile.StudentProfile && profile.vppIdId != null) {
-                    checkIfVppIdIsStillConnectedUseCase(App.vppIdSource.getById(profile.vppIdId).getFirstValueOld() as VppId.Active).let {
+                    checkIfVppIdIsStillConnectedUseCase(vppIdRepository.getById(profile.vppIdId, ResponsePreference.Fast).getFirstValueOld() as VppId.Active).let {
                         state = state.copy(isVppIdStillConnected = it)
                     }
                 }

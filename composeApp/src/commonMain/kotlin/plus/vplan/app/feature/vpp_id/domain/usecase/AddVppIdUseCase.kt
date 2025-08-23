@@ -19,8 +19,6 @@ import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import kotlin.uuid.Uuid
 
-private val logger = Logger.withTag("AddVppIdUseCase")
-
 class AddVppIdUseCase(
     private val vppIdRepository: VppIdRepository,
     private val keyValueRepository: KeyValueRepository,
@@ -29,6 +27,8 @@ class AddVppIdUseCase(
     private val groupRepository: GroupRepository,
     private val schoolService: SchoolService,
 ) {
+    private val logger = Logger.withTag("AddVppIdUseCase")
+
     suspend operator fun invoke(token: String): Response<VppId.Active> {
         val accessToken = vppIdRepository.getAccessToken(token)
         if (accessToken is Response.Error) {
@@ -37,13 +37,19 @@ class AddVppIdUseCase(
         }
         if (accessToken !is Response.Success) throw IllegalStateException("Unexpected response type")
 
+        logger.i { "Got access token" }
+
         val vppId = vppIdRepository.getUserByToken(accessToken.data)
 
         if (vppId is Response.Error) return vppId
         vppId as Response.Success
 
+        logger.i { "Resolved token to user ${vppId.data.id} (${vppId.data.username})" }
+
         schoolService.getSchoolFromAlias(Alias(AliasProvider.Vpp, vppId.data.schoolId.toString(), 1)).getFirstValue()
             ?: return Response.Error.Other("School not found for VPP ID: ${vppId.data.id}")
+
+        logger.d { "Loaded school by vpp school id ${vppId.data.schoolId}" }
 
         val group = groupRepository.findByAlias(
             alias = Alias(AliasProvider.Vpp, vppId.data.groupId.toString(), 1),
@@ -58,10 +64,12 @@ class AddVppIdUseCase(
             return Response.Error.Other("Group not found for VPP ID: ${vppId.data.id}")
         }
 
+        logger.d { "Assured a group with id ${vppId.data.groupId} is cached on the app" }
+
         vppIdRepository.upsert(VppDbDto.AppVppDbDto(
             id = vppId.data.id,
             username = vppId.data.username,
-            groups = listOf(group.id),
+            groups = listOf(group.aliases.first { it.provider == AliasProvider.Vpp }.value.toInt()),
             schulverwalterUserId = vppId.data.schulverwalterId,
             schulverwalterAccessToken = vppId.data.schulverwalterAccessToken,
             accessToken = accessToken.data

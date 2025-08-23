@@ -152,24 +152,32 @@ class SubjectInstanceRepositoryImpl(
         }
 
         val flow = flow {
-            val localId = resolveAliasesToLocalId(aliases.toList())
-            if (localId != null) {
-                if (forceUpdate) {
-                    if (!preferCurrentState) {
-                        val currentCache = getByLocalId(localId).first()?.let { AliasState.Done(it) }
-                        if (currentCache != null) emit(currentCache)
+            suspend fun emitLocalEntity(forceUpdate: Boolean, preferCurrentState: Boolean): Boolean {
+                val localId = resolveAliasesToLocalId(aliases.toList())
+                if (localId != null) {
+                    if (forceUpdate) {
+                        if (!preferCurrentState) {
+                            val currentCache = getByLocalId(localId).first()?.let { AliasState.Done(it) }
+                            if (currentCache != null) emit(currentCache)
+                        }
+                    } else {
+                        emitAll(getByLocalId(localId).map { if (it == null) AliasState.NotExisting(localId.toHexString()) else AliasState.Done(it) })
+                        return true
                     }
-                } else {
-                    emitAll(getByLocalId(localId).map { if (it == null) AliasState.NotExisting(localId.toHexString()) else AliasState.Done(it) })
-                    return@flow
                 }
+                return false
             }
+
+            if (emitLocalEntity(forceUpdate, preferCurrentState)) return@flow
+
             val downloadError = downloadByAlias(aliases.first())
             if (downloadError != null) {
                 emit(AliasState.Error(aliases.first().toString(), downloadError))
                 return@flow
             }
-            emitAll(findByAliases(aliases, forceUpdate = false, preferCurrentState = false))
+            if (!emitLocalEntity(forceUpdate, preferCurrentState)) {
+                emit(AliasState.Error(aliases.first().toString(), Response.Error.Other("Subject instance with alias ${aliases.first()} not found after download")))
+            }
         }.onCompletion { aliasFlowCache.remove(cacheKey) }
             .shareIn(CoroutineScope(Dispatchers.IO), replay = 1, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000))
 

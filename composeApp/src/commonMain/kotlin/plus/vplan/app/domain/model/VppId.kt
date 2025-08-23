@@ -1,16 +1,18 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.data.Item
-import kotlin.uuid.Uuid
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 sealed class VppId : Item<Int, DataTag> {
     abstract val name: String
-    abstract val groups: List<Uuid>
+    abstract val groups: List<Int>
     abstract val cachedAt: Instant
 
     override val tags: Set<DataTag> = emptySet()
@@ -18,14 +20,14 @@ sealed class VppId : Item<Int, DataTag> {
     data class Cached(
         override val id: Int,
         override val name: String,
-        override val groups: List<Uuid>,
+        override val groups: List<Int>,
         override val cachedAt: Instant
     ) : VppId()
 
     data class Active(
         override val id: Int,
         override val name: String,
-        override val groups: List<Uuid>,
+        override val groups: List<Int>,
         override val cachedAt: Instant,
         val accessToken: String,
         val schulverwalterConnection: SchulverwalterConnection?,

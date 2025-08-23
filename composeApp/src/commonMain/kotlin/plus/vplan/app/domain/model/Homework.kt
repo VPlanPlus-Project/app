@@ -26,6 +26,8 @@ import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Item
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
+import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.domain.repository.base.ResponsePreference
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -115,24 +117,23 @@ sealed class Homework(
         override val cachedAt: Instant,
         override val groupId: Int?,
         val isPublic: Boolean,
-        val createdBy: Int,
+        val createdById: Int,
     ) : Homework(
-        creator = AppEntity.VppId(createdBy)
+        creator = AppEntity.VppId(createdById)
     ) {
 
         private val groupRepository by inject<GroupRepository>()
+        private val vppIdRepository by inject<VppIdRepository>()
+
         override val group: Flow<AliasState<Group>>? = groupId?.let {
             groupRepository.findByAlias(Alias(AliasProvider.Vpp, it.toString(), 1), forceUpdate = false, preferCurrentState = false)
         }
 
-        var createdByItem: VppId? = null
-            private set
-
-        suspend fun getCreatedBy(): VppId {
-            return createdByItem ?: createdBy.let { createdById ->
-                App.vppIdSource.getSingleById(createdById)!!.also { createdByItem = it }
-            }
+        val createdBy by lazy {
+            vppIdRepository.getById(createdById, ResponsePreference.Fast)
         }
+
+        fun createdBy(responsePreference: ResponsePreference) = vppIdRepository.getById(createdById, responsePreference)
     }
 
     data class LocalHomework(
@@ -144,22 +145,13 @@ sealed class Homework(
         override val groupId: Int?,
         override val files: List<Int>,
         override val cachedAt: Instant,
-        val createdByProfile: Uuid
+        val createdByProfileId: Uuid
     ) : Homework(
-        creator = AppEntity.Profile(createdByProfile)
+        creator = AppEntity.Profile(createdByProfileId)
     ) {
-        var createdByProfileItem: Profile.StudentProfile? = null
-            private set
-
-        suspend fun getCreatedByProfile(): Profile.StudentProfile {
-            return createdByProfileItem ?: createdByProfile.let { createdByProfileId ->
-                App.profileSource.getById(createdByProfileId).getFirstValueOld().let { it as Profile.StudentProfile }.also { createdByProfileItem = it }
-            }
-        }
-
         @OptIn(ExperimentalCoroutinesApi::class)
         override val group: Flow<AliasState<Group>> by lazy {
-            App.profileSource.getById(createdByProfile)
+            App.profileSource.getById(createdByProfileId)
                 .filterIsInstance<CacheState.Done<Profile.StudentProfile>>()
                 .map { it.data }
                 .flatMapLatest { App.groupSource.getById(it.groupId) }
