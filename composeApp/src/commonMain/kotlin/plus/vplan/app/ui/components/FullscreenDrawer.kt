@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -61,6 +62,7 @@ private val FLING_THRESHOLD = 1000.dp // Threshold for fling to trigger drawer m
 @Composable
 fun FullscreenDrawer(
     contentScrollState: ScrollState,
+    preventClosingByGesture: Boolean,
     onDismissRequest: () -> Unit,
     topAppBar: @Composable (onCloseClicked: () -> Unit, modifier: Modifier, scrollProgress: Float) -> Unit = { _, _, _ -> },
     content: @Composable FullscreenDrawerContext.() -> Unit
@@ -169,13 +171,13 @@ fun FullscreenDrawer(
 
                 val scrollDistance = with(localDensity) { available.y.toDp() }
 
-                if (verticalScrollDirection == VerticalScrollDirection.Up && isContentAtTop) {
+                if (verticalScrollDirection == VerticalScrollDirection.Up && (isContentAtBottom || drawerOffset.value != maxHeight)) {
                     // move drawer up
                     setDrawerOffset(drawerOffset.value - scrollDistance)
                     return Offset(0f, available.y)
                 }
 
-                if (verticalScrollDirection == VerticalScrollDirection.Down && isContentAtBottom) {
+                if (verticalScrollDirection == VerticalScrollDirection.Down && (isContentAtTop || drawerOffset.value != maxHeight)) {
                     // move drawer down
                     setDrawerOffset(drawerOffset.value - scrollDistance)
                     return Offset(0f, available.y)
@@ -245,12 +247,23 @@ fun FullscreenDrawer(
                 .offset { with (localDensity) { IntOffset(horizontalOffset.roundToPx(), (maxHeight - drawerOffset.value).roundToPx()) } }
                 .fillMaxSize()
                 .scale(((1 - (((1.05 * sech(4.0 * scrollProgress).toFloat().ifNan { 0f }) - 0.05) / 6)).toFloat()).coerceIn(0f, 1f))
-                .clip(RoundedCornerShape((sin((1 - scrollProgress) * PI / 2).ifNan { 0.0 } * 32.dp).coerceAtLeast(0.dp)))
                 .nestedScroll(scrollConnection),
         ) {
-            topAppBar(
-                { scope.launch { drawerOffset.animateTo(0.dp) } },
-                Modifier
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        bottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+                    )
+                    .clip(RoundedCornerShape((sin((1 - scrollProgress) * PI / 2).ifNan { 0.0 } * 32.dp).coerceAtLeast(0.dp)))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(
+                        start = WindowInsets.safeDrawing.asPaddingValues().calculateStartPadding(LocalLayoutDirection.current),
+                        end = WindowInsets.safeDrawing.asPaddingValues().calculateEndPadding(LocalLayoutDirection.current),
+                        bottom = (WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() - WindowInsets.ime.asPaddingValues().calculateBottomPadding()).coerceAtLeast(0.dp)
+                    )
+            ) {
+                val dragModifier = remember { Modifier
                     .pointerInput(Unit) {
                         detectVerticalDragGestures(
                             onDragStart = { isUserScrolling = true },
@@ -262,22 +275,16 @@ fun FullscreenDrawer(
                                 drawerOffset.snapTo(drawerOffset.value - y)
                             }
                         }
-                    },
-                scrollProgress
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(
-                        start = WindowInsets.safeDrawing.asPaddingValues().calculateStartPadding(LocalLayoutDirection.current),
-                        end = WindowInsets.safeDrawing.asPaddingValues().calculateEndPadding(LocalLayoutDirection.current),
-                        bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() * scrollProgress
-                    )
-            ) {
+                    } }
+                topAppBar(
+                    { scope.launch { drawerOffset.animateTo(0.dp) } },
+                    dragModifier,
+                    scrollProgress
+                )
                 FullscreenDrawerContext(
                     scrollState = contentScrollState,
-                    hideDrawer = onDismissRequest
+                    hideDrawer = onDismissRequest,
+                    dragModifier = dragModifier,
                 ) { scope.launch { drawerOffset.animateTo(0.dp) } }.content()
             }
         }
@@ -286,6 +293,7 @@ fun FullscreenDrawer(
 
 data class FullscreenDrawerContext(
     val scrollState: ScrollState,
+    val dragModifier: Modifier,
     val hideDrawer: () -> Unit,
     val closeDrawerWithAnimation: () -> Unit
 )

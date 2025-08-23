@@ -25,6 +25,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -62,16 +63,27 @@ import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.cloud_alert
 import vplanplus.composeapp.generated.resources.x
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun FullscreenDrawerContext.NewHomeworkDrawerContent(
     selectedDate: LocalDate? = null
 ) {
     val viewModel = koinViewModel<NewHomeworkViewModel>()
-    val state = viewModel.state
+
+    LaunchedEffect(Unit) { viewModel.init() }
+
+    val state = viewModel.state.collectAsState().value
     if (state.currentProfile == null) return
+
+//    if (isCloseGestureBlocked) {
+//        if (state.hasChanges ||true) AlertDialog(
+//            onDismissRequest = resetCloseGesture,
+//            title = { Text(text = "Abbrechen?") },
+//            text = { Text("Bitte warte, bis die Hausaufgabe gespeichert wurde.") },
+//            confirmButton = remember { { hideDrawer() } },
+//            dismissButton = remember { { resetCloseGesture() } }
+//        ) else LaunchedEffect(Unit) { hideDrawer() }
+//    }
 
     LaunchedEffect(selectedDate) {
         if (selectedDate != null) viewModel.onEvent(NewHomeworkEvent.SelectDate(selectedDate))
@@ -257,7 +269,9 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
             visible = state.savingState == UnoptimisticTaskState.Error && !state.hasInputErrors,
             enter = expandVertically(expandFrom = Alignment.CenterVertically),
             exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically),
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier
+                .then(dragModifier)
+                .padding(horizontal = 16.dp)
         ) {
             InfoCard(
                 imageVector = Res.drawable.cloud_alert,
@@ -271,6 +285,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
 
         Button(
             modifier = Modifier
+                .then(dragModifier)
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp),
             text = "Speichern",

@@ -31,6 +31,7 @@ fun NewHomeworkDrawer(
     FullscreenDrawer(
         contentScrollState = rememberScrollState(),
         onDismissRequest = onDismissRequest,
+        preventClosingByGesture = true,
         topAppBar = { onCloseClicked, modifier, scrollProgress ->
             TopAppBar(
                 modifier = modifier,
