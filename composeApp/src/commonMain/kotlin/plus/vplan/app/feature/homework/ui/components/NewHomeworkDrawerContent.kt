@@ -17,15 +17,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -40,9 +41,7 @@ import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
-import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
@@ -62,31 +61,36 @@ import plus.vplan.app.ui.components.InfoCard
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.cloud_alert
+import vplanplus.composeapp.generated.resources.triangle_alert
 import vplanplus.composeapp.generated.resources.x
 
 @Composable
-fun FullscreenDrawerContext.NewHomeworkDrawerContent(
-    selectedDate: LocalDate? = null
+fun NewHomeworkDrawerContent(
+    viewModel: NewHomeworkViewModel,
+    state: NewHomeworkState,
+    context: FullscreenDrawerContext
 ) {
-    val viewModel = koinViewModel<NewHomeworkViewModel>()
-
-    LaunchedEffect(Unit) { viewModel.init() }
-
-    val state = viewModel.state.collectAsState().value
     if (state.currentProfile == null) return
 
-//    if (isCloseGestureBlocked) {
-//        if (state.hasChanges ||true) AlertDialog(
-//            onDismissRequest = resetCloseGesture,
-//            title = { Text(text = "Abbrechen?") },
-//            text = { Text("Bitte warte, bis die Hausaufgabe gespeichert wurde.") },
-//            confirmButton = remember { { hideDrawer() } },
-//            dismissButton = remember { { resetCloseGesture() } }
-//        ) else LaunchedEffect(Unit) { hideDrawer() }
-//    }
-
-    LaunchedEffect(selectedDate) {
-        if (selectedDate != null) viewModel.onEvent(NewHomeworkEvent.SelectDate(selectedDate))
+    if (context.isCloseRequestHeld) {
+        AlertDialog(
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.triangle_alert),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            onDismissRequest = context.resetCloseRequest,
+            title = { Text(text = "Abbrechen?") },
+            text = { Text("Möchtest du deine Änderungen verwenfen?") },
+            confirmButton = {
+                TextButton(onClick = context.hideDrawer) { Text("Verwerfen") }
+            },
+            dismissButton = {
+                TextButton(onClick = context.resetCloseRequest) { Text("Weiter bearbeiten") }
+            }
+        )
     }
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
@@ -94,7 +98,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
     var fileToRename by rememberSaveable { mutableStateOf<AttachedFile?>(null) }
 
     LaunchedEffect(state.savingState) {
-        if (state.savingState == UnoptimisticTaskState.Success) this@NewHomeworkDrawerContent.closeDrawerWithAnimation()
+        if (state.savingState == UnoptimisticTaskState.Success) context.closeDrawerWithAnimation()
     }
 
     val filePickerLauncher = rememberFilePickerLauncher(
@@ -123,7 +127,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(scrollState)
+                .verticalScroll(context.scrollState)
         ) {
             Text(
                 text = "Aufgaben",
@@ -270,7 +274,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
             enter = expandVertically(expandFrom = Alignment.CenterVertically),
             exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically),
             modifier = Modifier
-                .then(dragModifier)
+                .then(context.dragModifier)
                 .padding(horizontal = 16.dp)
         ) {
             InfoCard(
@@ -285,7 +289,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
 
         Button(
             modifier = Modifier
-                .then(dragModifier)
+                .then(context.dragModifier)
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp),
             text = "Speichern",

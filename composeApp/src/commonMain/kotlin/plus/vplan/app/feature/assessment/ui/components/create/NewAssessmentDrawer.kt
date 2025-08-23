@@ -53,9 +53,10 @@ fun NewAssessmentDrawer(
                 )
             )
         }
-    ) {
+    ) { context ->
         NewAssessmentDrawerContent(
-            selectedDate = selectedDate
+            selectedDate = selectedDate,
+            context = context
         )
     }
 }
