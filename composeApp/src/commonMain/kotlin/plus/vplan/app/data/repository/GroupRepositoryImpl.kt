@@ -176,7 +176,7 @@ class GroupRepositoryImpl(
                 return@flow
             }
 
-            if (!emitLocalEntity(forceUpdate, preferCurrentState)) {
+            if (!emitLocalEntity(forceUpdate = false, preferCurrentState = false)) {
                 emit(AliasState.Error(aliases.first().toString(), Response.Error.Other("Failed to load group with aliases $aliases")))
             }
         }.onCompletion { aliasFlowCache.remove(cacheKey) }

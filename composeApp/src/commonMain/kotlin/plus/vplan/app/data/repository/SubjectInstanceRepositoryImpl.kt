@@ -178,7 +178,8 @@ class SubjectInstanceRepositoryImpl(
                 emit(AliasState.Error(aliases.first().toString(), downloadError))
                 return@flow
             }
-            if (!emitLocalEntity(forceUpdate, preferCurrentState)) {
+
+            if (!emitLocalEntity(forceUpdate = false, preferCurrentState = false)) {
                 emit(AliasState.Error(aliases.first().toString(), Response.Error.Other("Subject instance with alias ${aliases.first()} not found after download")))
             }
         }.onCompletion { aliasFlowCache.remove(cacheKey) }
