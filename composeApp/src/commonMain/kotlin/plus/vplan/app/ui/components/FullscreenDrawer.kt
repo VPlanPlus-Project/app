@@ -84,7 +84,7 @@ fun FullscreenDrawer(
     /**
      * Tracks whether the opening animation of the drawer has been completed.
      */
-    var firstAnimationDone by remember { mutableStateOf(false) }
+    var isEnterAnimationCompleted by remember { mutableStateOf(false) }
 
     /**
      * Tracks the current vertical offset of the drawer. 0.dp means the drawer is fully closed and
@@ -109,15 +109,14 @@ fun FullscreenDrawer(
     LaunchedEffect(preventClosingByGesture) {
         Logger.d { "Prevent closing by gesture: $preventClosingByGesture" }
         isCloseRequestHeld = false
-        firstAnimationDone = false
-        scope.launch {
+        if (isEnterAnimationCompleted) scope.launch {
             drawerOffset.snapTo(maxHeight)
-        }.invokeOnCompletion { firstAnimationDone = true }
+        }
     }
 
     // If the drawer is moved outside of the screen, close it unless the drawer is being opened.
     LaunchedEffect(drawerOffset.value) {
-        if (!firstAnimationDone) return@LaunchedEffect
+        if (!isEnterAnimationCompleted) return@LaunchedEffect
         if (!preventClosingByGesture || !isCloseRequestHeld) {
             if (drawerOffset.value < 10.dp || drawerOffset.value > (2 * maxHeight) - 10.dp) onDismissRequest()
         }
@@ -285,9 +284,9 @@ fun FullscreenDrawer(
             .onSizeChanged {
                 maxHeight = with(localDensity) { it.height.toDp() }
                 scope.launch {
-                    if (firstAnimationDone) drawerOffset.snapTo(maxHeight)
+                    if (isEnterAnimationCompleted) drawerOffset.snapTo(maxHeight)
                     else drawerOffset.animateTo(maxHeight)
-                }.invokeOnCompletion { firstAnimationDone = true }
+                }.invokeOnCompletion { isEnterAnimationCompleted = true }
             }
     ) {
         if (maxHeight == 0.dp) return@Box

@@ -82,10 +82,10 @@ fun NewHomeworkDrawerContent(
                 )
             },
             onDismissRequest = context.resetCloseRequest,
-            title = { Text(text = "Abbrechen?") },
-            text = { Text("Möchtest du deine Änderungen verwenfen?") },
+            title = { Text(text = "Hausaufgabe verwerfen?") },
+            text = { Text("Deine Angaben wurden noch nicht gespeichert.") },
             confirmButton = {
-                TextButton(onClick = context.hideDrawer) { Text("Verwerfen") }
+                TextButton(onClick = context.hideDrawer) { Text("Verwerfen", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
                 TextButton(onClick = context.resetCloseRequest) { Text("Weiter bearbeiten") }
