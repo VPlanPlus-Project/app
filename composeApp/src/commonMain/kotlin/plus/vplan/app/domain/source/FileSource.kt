@@ -30,7 +30,7 @@ class FileSource(
                     it.copy(
                         data = it.data.copy(
                             getBitmap = {
-                                bitmapCache[it.data.id] ?: localFileRepository.getFile("./homework_files/${it.data.id}")?.let { bytes ->
+                                bitmapCache[it.data.id] ?: localFileRepository.getFile("./files/${it.data.id}")?.let { bytes ->
                                     val bitmap = getBitmapFromBytes(bytes)
                                     bitmapCache[it.data.id] = bitmap
                                     bitmap

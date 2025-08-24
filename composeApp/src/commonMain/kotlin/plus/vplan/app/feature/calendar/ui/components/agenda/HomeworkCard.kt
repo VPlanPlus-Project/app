@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.calendar.ui.components.agenda
 
 import androidx.compose.animation.AnimatedContent
@@ -36,6 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
@@ -47,7 +50,6 @@ import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
@@ -57,6 +59,7 @@ import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun HomeworkCard(
@@ -67,10 +70,7 @@ fun HomeworkCard(
     val localDensity = LocalDensity.current
 
     val subject = homework.subjectInstance?.collectAsState(AliasState.Loading(""))?.value
-    val createdBy by when (homework.creator) {
-        is AppEntity.VppId -> homework.creator.vppId.collectAsLoadingStateOld("")
-        is AppEntity.Profile -> homework.creator.profile.collectAsLoadingStateOld("")
-    }
+
     var boxHeight by remember { mutableStateOf(0.dp) }
     val tasks by homework.tasks.collectAsState(emptyList())
     if (tasks.isEmpty() || subject is AliasState.Loading) return
@@ -176,28 +176,67 @@ fun HomeworkCard(
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val font = MaterialTheme.typography.labelMedium
-                if (createdBy is CacheState.Loading) ShimmerLoader(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .fillMaxWidth(.3f)
-                        .height(font.lineHeight.toDp())
-                )
-                Text(
-                    text = buildString {
-                        val creator = (createdBy as? CacheState.Done)?.data
-                        append(when (creator) {
-                            is VppId -> creator.name
-                            is Profile -> creator.name
-                            else -> ""
-                        })
-                        append(", am ")
-                        append(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date.format(regularDateFormat))
-                        append(" erstellt")
-                    },
-                    style = font,
-                    color = MaterialTheme.colorScheme.outline
-                )
+                val createdByFont = MaterialTheme.typography.labelMedium
+                val shimmerLoader = remember<@Composable () -> Unit> { {
+                    ShimmerLoader(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .fillMaxWidth(.3f)
+                            .height(createdByFont.lineHeight.toDp())
+                    )
+                } }
+
+                Row {
+                    when (homework.creator) {
+                        is AppEntity.Profile -> {
+                            val profileState by homework.creator.profile.map { profile -> profile?.let { CacheState.Done(it) } ?: CacheState.NotExisting("") }.collectAsState(CacheState.Loading(""))
+                            when (val profile = profileState) {
+                                is CacheState.Loading -> shimmerLoader()
+                                is CacheState.Done -> {
+                                    Text(
+                                        text = "Profil " + profile.data.name,
+                                        style = createdByFont
+                                    )
+                                }
+                                else -> {
+                                    Text(
+                                        text = "Unbekannt",
+                                        style = createdByFont,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        }
+                        is AppEntity.VppId -> {
+                            val vppIdState by homework.creator.vppId.collectAsLoadingStateOld()
+                            when (val vppId = vppIdState) {
+                                is CacheState.Loading -> shimmerLoader()
+                                is CacheState.Done -> {
+                                    Text(
+                                        text = vppId.data.name,
+                                        style = createdByFont
+                                    )
+                                }
+                                else -> {
+                                    Text(
+                                        text = "Unbekannt",
+                                        style = createdByFont,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Text(
+                        text = buildString {
+                            append(", am ")
+                            append(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date.format(regularDateFormat))
+                            append(" erstellt")
+                        },
+                        style = createdByFont,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
         }
     }

@@ -8,15 +8,19 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Item
+import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.domain.repository.base.ResponsePreference
 import kotlin.uuid.Uuid
 
-abstract class Profile : Item<Uuid, DataTag> {
+abstract class Profile : Item<Uuid, DataTag>, KoinComponent {
     abstract val profileType: ProfileType
     abstract val name: String
 
@@ -32,13 +36,17 @@ abstract class Profile : Item<Uuid, DataTag> {
     ) : Profile() {
         override val profileType = ProfileType.STUDENT
 
+        private val vppIdRepository by inject<VppIdRepository>()
+
         var groupItem: Group? = null
             private set
 
         var vppIdItem: VppId.Active? = null
             private set
 
-        val vppId by lazy { vppIdId?.let { App.vppIdSource.getById(it) } }
+        val vppId by lazy { vppIdId?.let { vppIdRepository.getById(it, ResponsePreference.Fast) } }
+        fun vppId(responsePreference: ResponsePreference) = vppIdId?.let { vppIdRepository.getById(it, responsePreference) }
+
         val subjectInstances by lazy {
             if (subjectInstanceConfiguration.isEmpty()) flowOf(emptyList())
             else combine(subjectInstanceConfiguration.keys.map { App.subjectInstanceSource.getById(it).filterIsInstance<AliasState.Done<SubjectInstance>>().map { cacheState -> cacheState.data } }) { it.toList() }
@@ -55,9 +63,10 @@ abstract class Profile : Item<Uuid, DataTag> {
             return groupItem ?: App.groupSource.getById(groupId).getFirstValue()!!.also { groupItem = it }
         }
 
+        @Deprecated("Use the flow instead")
         suspend fun getVppIdItem(): VppId.Active? {
             if (this.vppIdId == null) return null
-            return vppIdItem ?: App.vppIdSource.getById(vppIdId).getFirstValueOld().let { it as? VppId.Active }.also { this.vppIdItem = it }
+            return vppIdItem ?: vppIdRepository.getById(vppIdId, ResponsePreference.Fast).getFirstValueOld().let { it as? VppId.Active }.also { this.vppIdItem = it }
         }
 
         suspend fun getSubjectInstances(): List<SubjectInstance> {

@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -13,10 +14,14 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.repository.FcmRepository
+import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
@@ -27,6 +32,7 @@ import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseC
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import plus.vplan.app.utils.now
 
 class DeveloperSettingsViewModel(
@@ -40,17 +46,34 @@ class DeveloperSettingsViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
-    private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase
+    private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
+    private val updateHomeworkUseCase: UpdateHomeworkUseCase,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
+    private val groupRepository: GroupRepository
 ) : ViewModel() {
 
     var state by mutableStateOf(DeveloperSettingsState())
 
     init {
         viewModelScope.launch {
-            getCurrentProfileUseCase().collect { profile ->
+            getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(
                     profile = profile,
                 )
+
+                val school = profile.getSchool().getFirstValue()
+                if (school != null) {
+                    launch {
+                        groupRepository.getBySchool(school.id).collectLatest {
+                            state = state.copy(groups = it)
+                        }
+                    }
+                    launch {
+                        subjectInstanceRepository.getBySchool(school.id).collectLatest {
+                            state = state.copy(subjectInstances = it)
+                        }
+                    }
+                }
             }
         }
         viewModelScope.launch {
@@ -128,6 +151,23 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.ToggleAutoSyncDisabled -> {
                     keyValueRepository.set(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC, (!keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).first().toBoolean()).toString())
                 }
+                is DeveloperSettingsEvent.UpdateSubjectInstance -> {
+                    subjectInstanceRepository.findByAliases(event.subjectInstance.aliases, forceUpdate = true, preferCurrentState = false).getFirstValue().also {
+                        Logger.i { "Updated subject instance.\nWas: ${event.subjectInstance}\nIs:  $it" }
+                    }
+                }
+                is DeveloperSettingsEvent.UpdateGroup -> {
+                    groupRepository.findByAliases(event.group.aliases, forceUpdate = true, preferCurrentState = false).getFirstValue().also {
+                        Logger.i { "Updated group.\nWas: ${event.group}\nIs:  $it" }
+                    }
+                }
+                DeveloperSettingsEvent.UpdateHomework -> {
+                    if (state.profile == null) return@launch
+                    if (state.isHomeworkUpdateRunning) return@launch
+                    state = state.copy(isHomeworkUpdateRunning = true)
+                    updateHomeworkUseCase(true)
+                    state = state.copy(isHomeworkUpdateRunning = false)
+                }
             }
         }
     }
@@ -140,7 +180,10 @@ data class DeveloperSettingsState(
     val isSubstitutionPlanUpdateRunning: Boolean = false,
     val isTimetableUpdateRunning: Boolean = false,
     val isLessonTimesUpdateRunning: Boolean = false,
+    val isHomeworkUpdateRunning: Boolean = false,
     val profile: Profile? = null,
+    val subjectInstances: List<SubjectInstance> = emptyList(),
+    val groups: List<Group> = emptyList(),
     val isAutoSyncDisabled: Boolean = false,
     val fcmLogs: List<DbFcmLog> = emptyList()
 )
@@ -153,6 +196,9 @@ sealed class DeveloperSettingsEvent {
     data object UpdateWeeks : DeveloperSettingsEvent()
     data object UpdateLessonTimes : DeveloperSettingsEvent()
     data object UpdateSubjectInstances : DeveloperSettingsEvent()
+    data class UpdateGroup(val group: Group) : DeveloperSettingsEvent()
+    data class UpdateSubjectInstance(val subjectInstance: SubjectInstance) : DeveloperSettingsEvent()
+    data object UpdateHomework : DeveloperSettingsEvent()
     data object ToggleAutoSyncDisabled : DeveloperSettingsEvent()
     data object DeleteSubstitutionPlan : DeveloperSettingsEvent()
 }

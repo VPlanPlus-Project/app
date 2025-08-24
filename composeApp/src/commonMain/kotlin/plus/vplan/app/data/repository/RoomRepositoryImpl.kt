@@ -1,10 +1,9 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbRoomAlias
@@ -12,6 +11,8 @@ import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.Uuid
 
 class RoomRepositoryImpl(
@@ -50,27 +51,4 @@ class RoomRepositoryImpl(
     override fun getAllLocalIds(): Flow<List<Uuid>> {
         return vppDatabase.schoolDao.getAll().map { it.map { school -> school.school.id } }
     }
-}
-
-@Serializable
-private data class SchoolItemRoomsResponse(
-    @SerialName("id") val id: Int,
-    @SerialName("name") val name: String
-)
-
-@Serializable
-private data class RoomUnauthenticatedResponse(
-    @SerialName("school_id") val schoolId: Int
-)
-
-@Serializable
-private data class RoomItemResponse(
-    @SerialName("id") val id: Int,
-    @SerialName("name") val name: String,
-    @SerialName("school") val school: School
-) {
-    @Serializable
-    data class School(
-        @SerialName("id") val id: Int
-    )
 }

@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.source.database.model.database
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
-import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @Entity(
     tableName = "news",

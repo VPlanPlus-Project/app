@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.source.database.converters
 
 import androidx.room.TypeConverter
-import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
-class InstantConverter {
+object InstantConverter {
 
     @TypeConverter
     fun toInstant(value: Long): Instant {

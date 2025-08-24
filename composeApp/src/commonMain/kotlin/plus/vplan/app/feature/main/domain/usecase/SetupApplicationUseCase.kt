@@ -6,6 +6,7 @@ import plus.vplan.app.BuildConfig
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
+import plus.vplan.app.feature.main.domain.usecase.setup.DownloadVppSchoolIdentifierUseCase
 import plus.vplan.app.feature.main.domain.usecase.setup.RemoveDisconnectedVppIdsFromProfilesUseCase
 import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
 
@@ -14,6 +15,7 @@ class SetupApplicationUseCase(
     private val sendSp24CredentialsToServerUseCase: SendSp24CredentialsToServerUseCase,
     private val doAssessmentsAndHomeworkIndexMigrationUseCase: DoAssessmentsAndHomeworkIndexMigrationUseCase,
     private val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase,
+    private val downloadVppSchoolIdentifierUseCase: DownloadVppSchoolIdentifierUseCase,
     private val removeDisconnectedVppIdsFromProfilesUseCase: RemoveDisconnectedVppIdsFromProfilesUseCase
 ) {
     private val logger = Logger.withTag("SetupApplicationUseCase")
@@ -33,6 +35,7 @@ class SetupApplicationUseCase(
         }
 
         keyValueRepository.set(Keys.PREVIOUS_APP_VERSION, BuildConfig.APP_VERSION_CODE.toString())
+        downloadVppSchoolIdentifierUseCase()
 
         sendSp24CredentialsToServerUseCase()
     }

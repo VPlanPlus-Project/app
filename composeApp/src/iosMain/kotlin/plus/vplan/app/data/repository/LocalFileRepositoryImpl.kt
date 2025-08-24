@@ -41,7 +41,7 @@ class LocalFileRepositoryImpl : LocalFileRepository {
         }
 
         // Create the full file path
-        val filePath = documentDirectory.URLByAppendingPathComponent("/homework_files/$name")?.relativePath
+        val filePath = documentDirectory.URLByAppendingPathComponent("/files/$name")?.relativePath
             ?: throw IllegalStateException("Invalid file path")
         val nsData = content.toNSData()
 
@@ -75,7 +75,7 @@ class LocalFileRepositoryImpl : LocalFileRepository {
         }
 
         // Create the full file path
-        val filePath = documentDirectory.URLByAppendingPathComponent("/homework_files/$name")?.relativePath
+        val filePath = documentDirectory.URLByAppendingPathComponent("/files/$name")?.relativePath
             ?: throw IllegalStateException("Invalid file path")
 
         fileManager.removeItemAtPath(filePath, null)
@@ -106,7 +106,7 @@ class LocalFileRepositoryImpl : LocalFileRepository {
         }
 
         // Create the full file path
-        val filePath = documentDirectory.URLByAppendingPathComponent("/homework_files/$name")?.relativePath
+        val filePath = documentDirectory.URLByAppendingPathComponent("/files/$name")?.relativePath
             ?: throw IllegalStateException("Invalid file path")
 
         val data = fileManager.contentsAtPath(filePath)

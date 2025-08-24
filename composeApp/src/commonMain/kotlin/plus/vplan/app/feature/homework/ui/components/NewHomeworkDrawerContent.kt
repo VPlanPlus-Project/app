@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -39,9 +41,7 @@ import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
-import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
@@ -58,26 +58,39 @@ import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.FullscreenDrawerContext
 import plus.vplan.app.ui.components.InfoCard
-import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.colors
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.cloud_alert
 import vplanplus.composeapp.generated.resources.triangle_alert
 import vplanplus.composeapp.generated.resources.x
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 @Composable
-fun FullscreenDrawerContext.NewHomeworkDrawerContent(
-    selectedDate: LocalDate? = null
+fun NewHomeworkDrawerContent(
+    viewModel: NewHomeworkViewModel,
+    state: NewHomeworkState,
+    context: FullscreenDrawerContext
 ) {
-    val viewModel = koinViewModel<NewHomeworkViewModel>()
-    val state = viewModel.state
     if (state.currentProfile == null) return
 
-    LaunchedEffect(selectedDate) {
-        if (selectedDate != null) viewModel.onEvent(NewHomeworkEvent.SelectDate(selectedDate))
+    if (context.isCloseRequestHeld) {
+        AlertDialog(
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.triangle_alert),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            onDismissRequest = context.resetCloseRequest,
+            title = { Text(text = "Abbrechen?") },
+            text = { Text("Möchtest du deine Änderungen verwenfen?") },
+            confirmButton = {
+                TextButton(onClick = context.hideDrawer) { Text("Verwerfen") }
+            },
+            dismissButton = {
+                TextButton(onClick = context.resetCloseRequest) { Text("Weiter bearbeiten") }
+            }
+        )
     }
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
@@ -85,7 +98,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
     var fileToRename by rememberSaveable { mutableStateOf<AttachedFile?>(null) }
 
     LaunchedEffect(state.savingState) {
-        if (state.savingState == UnoptimisticTaskState.Success) this@NewHomeworkDrawerContent.closeDrawerWithAnimation()
+        if (state.savingState == UnoptimisticTaskState.Success) context.closeDrawerWithAnimation()
     }
 
     val filePickerLauncher = rememberFilePickerLauncher(
@@ -114,7 +127,7 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(scrollState)
+                .verticalScroll(context.scrollState)
         ) {
             Text(
                 text = "Aufgaben",
@@ -260,7 +273,9 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
             visible = state.savingState == UnoptimisticTaskState.Error && !state.hasInputErrors,
             enter = expandVertically(expandFrom = Alignment.CenterVertically),
             exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically),
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier
+                .then(context.dragModifier)
+                .padding(horizontal = 16.dp)
         ) {
             InfoCard(
                 imageVector = Res.drawable.cloud_alert,
@@ -272,20 +287,9 @@ fun FullscreenDrawerContext.NewHomeworkDrawerContent(
             )
         }
 
-        InfoCard(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 8.dp)
-                .fillMaxWidth(),
-            imageVector = Res.drawable.triangle_alert,
-            title = "Temporär deaktiviert",
-            text = "Aktuell ist diese Funktion deaktiviert, da sie nicht kompatibel mit dem neuen System ist. Kurzfristige Änderungen zu Stundenplan24.de haben die Fertigstellung dieser Funktion zum Beginn des Schuljahres nicht mehr ermöglicht. Um die App dennoch anbieten zu können, wurde diese Funktion vorerst deaktiviert. Aktualisiere die App regelmäßig, die Funktion wird bald wieder verfügbar sein.",
-            backgroundColor = colors[CustomColor.Yellow]!!.getGroup().container,
-            textColor = colors[CustomColor.Yellow]!!.getGroup().onContainer,
-        )
-
         Button(
             modifier = Modifier
+                .then(context.dragModifier)
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp),
             text = "Speichern",

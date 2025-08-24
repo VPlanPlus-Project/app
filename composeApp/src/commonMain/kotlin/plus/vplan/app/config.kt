@@ -13,3 +13,32 @@ const val LOG_DATABASE_QUERIES: Boolean = false
  * @see plus.vplan.app.di.appModule
  */
 const val LOG_HTTP_REQUESTS: Boolean = true
+
+@Suppress("unused")
+private val productionConfiguration = WebConfig(
+    authUrl = "https://auth.vplan.plus",
+    appApiUrl = "https://vplan.plus/api/app",
+    apiUrl = "https://vplan.plus/api"
+)
+
+@Suppress("unused")
+private val developmentConfiguration = WebConfig(
+    authUrl = "https://auth.development.vplan.plus",
+    appApiUrl = "https://app.development.vplan.plus/api/app",
+    apiUrl = "https://api.development.vplan.plus/api"
+)
+
+@Suppress("unused")
+private val localenvConfiguration = WebConfig(
+    authUrl = "https://auth.vplanplus.localhost.dev",
+    appApiUrl = "https://vplanplus.localhost.dev/api/app",
+    apiUrl = "https://vplanplus.localhost.dev/api"
+)
+
+val currentConfiguration = localenvConfiguration
+
+data class WebConfig(
+    val authUrl: String,
+    val appApiUrl: String,
+    val apiUrl: String
+)

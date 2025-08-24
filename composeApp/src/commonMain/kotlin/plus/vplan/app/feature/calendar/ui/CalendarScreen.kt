@@ -195,8 +195,8 @@ private fun CalendarScreenContent(
     var isMultiFabExpanded by rememberSaveable { mutableStateOf(false) }
     var multiFabFabPosition by remember { mutableStateOf(Offset.Zero) }
 
-    val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)) { CONTENT_PAGER_SIZE }
-    val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY))
+    val pagerState = rememberPagerState(initialPage = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY).toInt()) { CONTENT_PAGER_SIZE }
+    val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY).toInt())
 
     Box(
         modifier = Modifier
@@ -228,7 +228,7 @@ private fun CalendarScreenContent(
                         }
                         Row {
                             AnimatedContent(
-                                targetState = state.selectedDate.dayOfMonth,
+                                targetState = state.selectedDate.day,
                                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                                 modifier = Modifier.animateContentSize()
                             ) {
@@ -363,7 +363,7 @@ private fun CalendarScreenContent(
                     LaunchedEffect(state.selectedDate) {
                         val currentlyOpenedDate = LocalDate.now().plus(((if (state.displayType == DisplayType.Calendar) pagerState.currentPage else lazyListState.firstVisibleItemIndex) - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY)
                         if (currentlyOpenedDate != state.selectedDate) {
-                            val item = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY)
+                            val item = (CONTENT_PAGER_SIZE / 2) + LocalDate.now().until(state.selectedDate, DateTimeUnit.DAY).toInt()
                             when (state.displayType) {
                                 DisplayType.Calendar -> {
                                     if (!pagerState.isScrollInProgress) {
@@ -460,7 +460,7 @@ private fun CalendarScreenContent(
                                                             else MaterialTheme.colorScheme.onSurface
                                                     )
                                                     Text(
-                                                        text = date.dayOfMonth.toString(),
+                                                        text = date.day.toString(),
                                                         style = MaterialTheme.typography.titleSmall,
                                                         color = if (date < LocalDate.now()) MaterialTheme.colorScheme.outline
                                                         else if (date == LocalDate.now()) MaterialTheme.colorScheme.onPrimary
@@ -478,7 +478,7 @@ private fun CalendarScreenContent(
                                             }
                                         }
                                         Column {
-                                            var lessonCount = day.lessons?.size
+                                            val lessonCount = day.lessons?.size
                                             var start by remember { mutableStateOf<LocalTime?>(null) }
                                             var end by remember { mutableStateOf<LocalTime?>(null) }
 

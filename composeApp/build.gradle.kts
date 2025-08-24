@@ -1,5 +1,6 @@
 import groovy.lang.MissingFieldException
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Base64
 import java.util.Properties
 
@@ -190,4 +191,10 @@ buildConfig {
     buildConfigField("POSTHOG_API_KEY", localProperties.getProperty("posthog.api.key") ?: throw MissingFieldException("posthog.api.key not found in local.properties", String::class.java))
 
     generateAtSync = true
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-Xopt-in=kotlin.time.ExperimentalTime")
+    }
 }

@@ -1,14 +1,16 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Item
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 data class Assessment(
@@ -30,22 +32,6 @@ data class Assessment(
     }
 
     val subjectInstance by lazy { App.subjectInstanceSource.getById(subjectInstanceId) }
-
-    var createdByVppId: VppId? = null
-        private set
-
-    suspend fun getCreatedByVppIdItem(): VppId? {
-        if (this.creator !is AppEntity.VppId) return null
-        return this.createdByVppId ?: App.vppIdSource.getSingleById(this.creator.id).also { this.createdByVppId = it }
-    }
-
-    var createdByProfile: Profile.StudentProfile? = null
-        private set
-
-    suspend fun getCreatedByProfileItem(): Profile.StudentProfile? {
-        if (this.creator !is AppEntity.Profile) return null
-        return this.createdByProfile ?: (App.profileSource.getById(this.creator.id).getFirstValueOld() as? Profile.StudentProfile)?.also { createdByProfile = it }
-    }
 
     val files by lazy {
         if (fileIds.isEmpty()) flowOf(emptyList())
