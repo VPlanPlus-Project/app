@@ -1,6 +1,7 @@
 package plus.vplan.app
 
 import android.app.Application
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -65,6 +66,7 @@ class MainApplication : Application() {
             repeatIntervalTimeUnit = TimeUnit.MINUTES
         )
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setBackoffCriteria(BackoffPolicy.LINEAR, 30, TimeUnit.SECONDS)
             .build()
             .let { request ->
                 WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
