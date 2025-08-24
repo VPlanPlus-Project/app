@@ -105,7 +105,6 @@ fun FullscreenDrawer(
      */
     var disableSnapping by remember { mutableStateOf(false) }
 
-    // LaunchedEffect für preventClosingByGesture nach der State-Initialisierung
     LaunchedEffect(preventClosingByGesture) {
         Logger.d { "Prevent closing by gesture: $preventClosingByGesture" }
         isCloseRequestHeld = false
