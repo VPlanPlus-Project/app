@@ -67,6 +67,7 @@ import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.cache.collectAsSingleFlow
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
@@ -486,7 +487,11 @@ private fun HomeContent(
                                                         val rooms = remember(lesson.roomIds) { lesson.rooms }.collectAsSingleFlow().value
                                                         val groups = remember(lesson.groupIds) { lesson.groups }.collectAsSingleFlow().value
                                                         val teachers = remember(lesson.teacherIds) { lesson.teachers }.collectAsSingleFlow().value
-                                                        val homeworkForLesson = homework//.filter { it.subjectInstanceId == lesson.subjectInstanceId } fixme
+                                                        val homeworkForLesson = remember { mutableListOf<Homework>() }
+                                                        LaunchedEffect(homework, lesson.subjectInstanceId) {
+                                                            homeworkForLesson.clear()
+                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == lesson.subjectInstanceId })
+                                                        }
                                                         val assessmentsForLesson = assessments.filter { it.subjectInstanceId == lesson.subjectInstanceId }
                                                         val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
                                                         if (lessonTime != null) Column(Modifier.fillMaxWidth()) {
