@@ -17,7 +17,10 @@ import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.repository.DayRepository
+import plus.vplan.app.domain.repository.GroupDbDto
+import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -30,6 +33,7 @@ import plus.vplan.app.domain.repository.TeacherDbDto
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
@@ -58,8 +62,10 @@ class FullSyncUseCase(
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
     private val syncGradesUseCase: SyncGradesUseCase,
+    private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val stundenplan24Repository: Stundenplan24Repository,
+    private val groupRepository: GroupRepository,
     private val roomRepository: RoomRepository,
     private val teacherRepository: TeacherRepository,
     private val sendInvalidSp24CredentialsNotification: SendInvalidSp24CredentialsNotification,
@@ -124,7 +130,12 @@ class FullSyncUseCase(
                             logger.i { "Checking stundenplan24.de credentials for ${school.id} (${school.name})" }
                             val result = checkSp24CredentialsUseCase(client, Authentication(school.sp24Id, school.username, school.password))
                             if (result !is plus.vplan.app.domain.data.Response.Success) {
-                                throw IllegalStateException("Failed to check credentials for school ${school.id} (${school.name}): $result")
+                                if (result is plus.vplan.app.domain.data.Response.Error.OnlineError.ConnectionError) {
+                                    logger.w { "No internet connection: $result, aborting" }
+                                    return@forEachSchool
+                                }
+                                captureError("FullSync.CheckSp24Credentials", "Failed to check credentials: $result")
+                                return@forEachSchool
                             }
 
                             if (result.data is Sp24CredentialsValidity.Invalid.InvalidFirstTime) {
@@ -139,6 +150,16 @@ class FullSyncUseCase(
                                 val schoolNameResponse = (client.getSchoolName() as? Response.Success)
                                 val schoolName = schoolNameResponse?.data ?: return@updateSchoolName
                                 schoolRepository.upsert(SchoolDbDto.fromModel(school.copy(name = schoolName), CreationReason.Persisted))
+                            }
+
+                            logger.i { "Updating groups" }
+                            run updateGroups@{
+                                val groups = (client.getAllClassesIntelligent() as? Response.Success)?.data
+                                groups.orEmpty().associateWith { group ->
+                                    Group.buildSp24Alias(school.sp24Id.toInt(), group.name)
+                                }.forEach { (group, aliases) ->
+                                    groupRepository.upsert(GroupDbDto(school.id, group.name, aliases = listOf(aliases), creationReason = CreationReason.Cached))
+                                }
                             }
 
                             logger.i { "Updating teachers" }
@@ -179,6 +200,7 @@ class FullSyncUseCase(
                                 }
                             }
 
+                            updateLessonTimesUseCase(school, client)
                             updateSubjectInstanceUseCase(school, client)
                             updateHolidaysUseCase(school, client)
                             updateWeeksUseCase(school, client)

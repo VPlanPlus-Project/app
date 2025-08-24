@@ -166,8 +166,8 @@ private fun AnalyticsContent(
                 val map = remember(state.filteredGrades) {
                     var max = 0
                     when (state.interval.type) {
-                        Interval.Type.SEK1 -> (1..6).toList().associateWith { grade -> state.filteredGrades.count { it.numericValue == grade } }
-                        Interval.Type.SEK2 -> (0..15).toList().associateWith { grade -> state.filteredGrades.count { it.numericValue == grade } }
+                        is Interval.Type.Sek2 -> (0..15).toList().associateWith { grade -> state.filteredGrades.count { it.numericValue == grade } }
+                        else -> (1..6).toList().associateWith { grade -> state.filteredGrades.count { it.numericValue == grade } }
                     }
                         .also { max = it.maxOf { gradeByGrade -> gradeByGrade.value } }
                         .map {
@@ -197,8 +197,8 @@ private fun AnalyticsContent(
                                 .fillMaxHeight(percentageAnimation)
                                 .clip(RoundedCornerShape(8.dp, 8.dp, 4.dp, 4.dp))
                                 .background(when (state.interval.type) {
-                                    Interval.Type.SEK1 -> blendColor(green.container, red.container, (i-1)/5f)
-                                    Interval.Type.SEK2 -> blendColor(red.container, green.container, i/15f)
+                                    is Interval.Type.Sek2 -> blendColor(red.container, green.container, i/15f)
+                                    else -> blendColor(green.container, red.container, (i-1)/5f)
                                 })
                         )
                     }

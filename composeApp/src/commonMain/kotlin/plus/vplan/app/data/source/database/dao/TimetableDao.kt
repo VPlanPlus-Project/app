@@ -94,7 +94,14 @@ interface TimetableDao {
 
     @Transaction
     @Query("DELETE FROM timetable_lessons WHERE id IN (:ids)")
-    suspend fun deleteTimetableByIds(ids: List<Uuid>)
+    suspend fun deleteTimetableByIdsUnsafe(ids: List<Uuid>)
+
+    @Transaction
+    suspend fun deleteTimetableByIds(ids: List<Uuid>) {
+        ids.chunked(20).forEach { chunk ->
+            deleteTimetableByIdsUnsafe(chunk)
+        }
+    }
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
