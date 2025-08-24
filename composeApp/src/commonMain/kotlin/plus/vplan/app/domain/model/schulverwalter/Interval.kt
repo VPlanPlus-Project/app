@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
+import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.data.Item
@@ -21,15 +22,20 @@ data class Interval(
 ): Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
 
-    enum class Type {
-        SEK1, SEK2;
+    sealed class Type {
+        data object Sek1: Type()
+        data object Sek2: Type()
+        data class Other(val raw: String): Type()
 
         companion object {
             fun fromString(type: String): Type {
                 return when (type.lowercase().replace(" ", "")) {
-                    "sek1", "seki" -> SEK1
-                    "sek2", "sekii", "jg11", "jg12", "jg13" -> SEK2
-                    else -> throw IllegalArgumentException("Unknown type: $type")
+                    "sek1", "seki" -> Sek1
+                    "sek2", "sekii", "jg11", "jg12", "jg13" -> Sek2
+                    else -> {
+                        captureError("Interval", "Unknown type: $type")
+                        Other(type)
+                    }
                 }
             }
         }

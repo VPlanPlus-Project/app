@@ -105,16 +105,16 @@ fun GradeCard(
                 val backgroundColor by animateColorAsState(
                     if (!grade.isSelectedForFinalGrade || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.Gray
                     else when (interval.type) {
-                        Interval.Type.SEK1 -> blendColor(blendColor(green.container, red.container, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
-                        Interval.Type.SEK2 -> blendColor(blendColor(red.container, green.container, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                        is Interval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                        else -> blendColor(blendColor(green.container, red.container, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                     }
                 )
 
                 val textColor by animateColorAsState(
                     if (!grade.isSelectedForFinalGrade || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.White
                     else when (interval.type) {
-                        Interval.Type.SEK1 -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
-                        Interval.Type.SEK2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                        is Interval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                        else -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                     }
                 )
 

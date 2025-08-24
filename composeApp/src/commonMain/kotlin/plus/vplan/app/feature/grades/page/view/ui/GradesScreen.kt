@@ -553,16 +553,16 @@ private fun GradesContent(
                                                         val backgroundColor by animateColorAsState(
                                                             if (isSelectedForFinalGrade != true || interval == null || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.Gray
                                                             else when (interval.type) {
-                                                                Interval.Type.SEK1 -> blendColor(blendColor(green.container, red.container, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
-                                                                Interval.Type.SEK2 -> blendColor(blendColor(red.container, green.container, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                                is Interval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                                else -> blendColor(blendColor(green.container, red.container, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                             }
                                                         )
 
                                                         val textColor by animateColorAsState(
                                                             if (isSelectedForFinalGrade != true || interval == null || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.White
                                                             else when (interval.type) {
-                                                                Interval.Type.SEK1 -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
-                                                                Interval.Type.SEK2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                                is Interval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                                else -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                             }
                                                         )
 
@@ -663,15 +663,15 @@ private fun GradesContent(
                                                         val green = colors[CustomColor.Green]!!.getGroup()
                                                         val backgroundColor by animateColorAsState(
                                                             when (state.currentInterval!!.type) {
-                                                                Interval.Type.SEK1 -> blendColor(blendColor(green.container, red.container, (grade-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
-                                                                Interval.Type.SEK2 -> blendColor(blendColor(red.container, green.container, grade/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                                is Interval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, grade/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                                else -> blendColor(blendColor(green.container, red.container, (grade-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                             }
                                                         )
 
                                                         val textColor by animateColorAsState(
                                                             when (state.currentInterval.type) {
-                                                                Interval.Type.SEK1 -> blendColor(blendColor(green.onContainer, red.onContainer, (grade-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
-                                                                Interval.Type.SEK2 -> blendColor(blendColor(red.onContainer, green.onContainer, grade /15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                                is Interval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, grade /15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                                else -> blendColor(blendColor(green.onContainer, red.onContainer, (grade-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                             }
                                                         )
 
@@ -877,7 +877,7 @@ private fun GradesContent(
     if (addGradeToCategoryId != null) AddGradeDialog(
         onDismiss = { addGradeToCategoryId = null },
         onSelectGrade = { onEvent(GradeDetailEvent.AddGrade(addGradeToCategoryId!!, it)); addGradeToCategoryId = null },
-        intervalType = state.currentInterval?.type ?: Interval.Type.SEK1
+        intervalType = state.currentInterval?.type ?: Interval.Type.Sek1
     )
 
     if (showIntervalFilterDrawer) SelectIntervalDrawer(

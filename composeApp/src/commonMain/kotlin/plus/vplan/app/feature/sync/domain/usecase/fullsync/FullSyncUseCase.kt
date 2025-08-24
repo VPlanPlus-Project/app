@@ -11,6 +11,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
+import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
@@ -118,7 +119,12 @@ class FullSyncUseCase(
                             logger.i { "Checking stundenplan24.de credentials for ${school.id} (${school.name})" }
                             val result = checkSp24CredentialsUseCase(client, Authentication(school.sp24Id, school.username, school.password))
                             if (result !is plus.vplan.app.domain.data.Response.Success) {
-                                throw IllegalStateException("Failed to check credentials for school ${school.id} (${school.name}): $result")
+                                if (result is plus.vplan.app.domain.data.Response.Error.OnlineError.ConnectionError) {
+                                    logger.w { "No internet connection: $result, aborting" }
+                                    return@forEachSchool
+                                }
+                                captureError("FullSync.CheckSp24Credentials", "Failed to check credentials: $result")
+                                return@forEachSchool
                             }
 
                             if (result.data is Sp24CredentialsValidity.Invalid.InvalidFirstTime) {
