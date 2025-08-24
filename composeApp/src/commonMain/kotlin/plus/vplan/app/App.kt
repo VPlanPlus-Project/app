@@ -254,4 +254,7 @@ enum class Platform {
 
 expect fun getPlatform(): Platform
 expect fun capture(event: String, properties: Map<String, Any>?)
+fun captureError(location: String, message: String) {
+    capture("error", mapOf("location" to location, "message" to message))
+}
 expect fun isDebug(): Boolean

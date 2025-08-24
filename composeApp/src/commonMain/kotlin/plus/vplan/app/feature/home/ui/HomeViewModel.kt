@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
+import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
@@ -29,17 +30,21 @@ import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetNewsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
+import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.sortedBySuspending
 import plus.vplan.app.utils.until
+import plus.vplan.lib.sp24.source.Authentication
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
@@ -54,7 +59,10 @@ class HomeViewModel(
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
-    private val getNewsUseCase: GetNewsUseCase
+    private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
+    private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
+    private val getNewsUseCase: GetNewsUseCase,
+    private val stundenplan24Repository: Stundenplan24Repository
 ) : ViewModel() {
     var state by mutableStateOf(HomeState())
         private set
@@ -171,9 +179,18 @@ class HomeViewModel(
         state = state.copy(isUpdating = true)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool)
-                updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, forceUpdate = false)
-                updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, setOfNotNull(LocalDate.now(), state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date).sorted(), allowNotification = false)
+                val school = state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool
+                try {
+                    val client = stundenplan24Repository.getSp24Client(Authentication(school.sp24Id, school.username, school.password), true)
+                    updateSubjectInstanceUseCase(school, client)
+                    updateLessonTimesUseCase(school, client)
+                    updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, client)
+                    updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, forceUpdate = false, client = client)
+                    updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, setOfNotNull(LocalDate.now(), state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date).sorted(), allowNotification = false, providedClient = client)
+                } catch (e: Exception) {
+                    LOGGER.e { "Something went wrong on updating the data for Profile ${state.currentProfile!!.id} (${state.currentProfile!!.name}):\n${e.stackTraceToString()}" }
+                    captureError("HomeViewModel.update", "Error on updating the data for school ${school.id}: ${e.stackTraceToString()}")
+                }
             }
         }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }

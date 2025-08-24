@@ -128,14 +128,13 @@ fun GradeDetailPage(
                             val value = if (grade.isOptional) "(${grade.value})" else grade.value
                             when (interval?.type) {
                                 null -> Unit
-                                Interval.Type.SEK1 -> {
-                                    append("Note")
-                                    if (grade.value != null) append(" $value")
-                                }
-
-                                Interval.Type.SEK2 -> {
+                                is Interval.Type.Sek2 -> {
                                     if (grade.value == null) append("Note")
                                     else append("$value Notenpunkte")
+                                }
+                                else -> {
+                                    append("Note")
+                                    if (grade.value != null) append(" $value")
                                 }
                             }
                         },

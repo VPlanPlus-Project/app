@@ -39,20 +39,20 @@ fun AddGradeDialog(
                 Text(text = "Diese Note wird nur für die momentane Durchschnittsberechnung verwendet und nicht gespeichert.")
                 Grid(
                     modifier = Modifier.fillMaxWidth(),
-                    columns = if (intervalType == Interval.Type.SEK1) 3 else 4,
-                    content = List(if (intervalType == Interval.Type.SEK1) 6 else 16) {
+                    columns = if (intervalType == Interval.Type.Sek1) 3 else 4,
+                    content = List(if (intervalType == Interval.Type.Sek1) 6 else 16) {
                         { _, _, index ->
                             val grade = when (intervalType) {
-                                Interval.Type.SEK1 -> index + 1
-                                Interval.Type.SEK2 -> index
+                                is Interval.Type.Sek2 -> index
+                                else -> index + 1
                             }
                             val background = when (intervalType) {
-                                Interval.Type.SEK1 -> blendColor(blendColor(green.container, red.container, (grade -1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
-                                Interval.Type.SEK2 -> blendColor(blendColor(red.container, green.container, grade /15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                is Interval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, grade /15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                else -> blendColor(blendColor(green.container, red.container, (grade -1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                             }
                             val textColor = when (intervalType) {
-                                Interval.Type.SEK1 -> blendColor(blendColor(green.onContainer, red.onContainer, (grade -1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
-                                Interval.Type.SEK2 -> blendColor(blendColor(red.onContainer, green.onContainer, grade /15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                is Interval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, grade /15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                else -> blendColor(blendColor(green.onContainer, red.onContainer, (grade -1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                             }
                             Box(
                                 modifier = Modifier
