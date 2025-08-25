@@ -49,7 +49,7 @@ class SetupApplicationUseCase(
         }
 
         keyValueRepository.set(Keys.PREVIOUS_APP_VERSION, BuildConfig.APP_VERSION_CODE.toString())
-        downloadVppSchoolIdentifierUseCase()
+        if (isFeatureEnabled("core_download-vpp-school-identifier", true)) downloadVppSchoolIdentifierUseCase()
 
         if (isFeatureEnabled("core_analytics-identifier", true)) vppIdRepository.getAllLocalIds().first()
             .firstNotNullOfOrNull { vppIdRepository.getByLocalId(it).first() as? VppId.Active }
