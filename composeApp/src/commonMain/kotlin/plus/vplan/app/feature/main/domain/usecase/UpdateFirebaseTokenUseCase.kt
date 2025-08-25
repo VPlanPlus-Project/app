@@ -7,6 +7,7 @@ import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.usecase.UpdateFirebaseTokenUseCase
 
 expect suspend fun getFirebaseToken(): String?
+expect suspend fun setProperty(property: String, value: String)
 
 class UpdateFirebaseTokenUseCase(
     private val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase,
