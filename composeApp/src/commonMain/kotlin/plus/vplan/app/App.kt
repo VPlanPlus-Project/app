@@ -257,4 +257,17 @@ expect fun capture(event: String, properties: Map<String, Any>?)
 fun captureError(location: String, message: String) {
     capture("error", mapOf("location" to location, "message" to message))
 }
+expect fun setPostHogProperty(key: String, value: String)
 expect fun isDebug(): Boolean
+expect fun posthogIdentify(
+    distinctId: String,
+    userProperties: Map<String, Any>?,
+    userPropertiesSetOnce: Map<String, Any>?,
+)
+expect fun firebaseIdentify(
+    id: String,
+)
+expect fun isFeatureEnabled(
+    key: String,
+    defaultValue: Boolean
+): Boolean
