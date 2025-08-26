@@ -5,8 +5,8 @@ import java.util.Base64
 import java.util.Properties
 
 object ApplicationConfig {
-    const val APP_VERSION_NAME = "0.1.63-production"
-    const val APP_VERSION_CODE = 123
+    const val APP_VERSION_NAME = "0.2.4-production"
+    const val APP_VERSION_CODE = 128
 }
 
 val localProperties = Properties().apply {
