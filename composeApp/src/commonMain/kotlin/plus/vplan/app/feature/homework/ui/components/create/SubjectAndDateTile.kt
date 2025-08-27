@@ -23,9 +23,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
+import kotlinx.datetime.format.Padding
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Group
+import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.mediumDayOfWeekNames
@@ -121,7 +122,7 @@ fun SubjectAndDateTile(
                             text = selectedDate?.format(LocalDate.Format {
                                 dayOfWeek(mediumDayOfWeekNames)
                                 chars(", ")
-                                dayOfMonth()
+                                day(padding = Padding.ZERO)
                                 chars(". ")
                                 monthName(shortMonthNames)
                             }) ?: (if (isAssessment) "Datum" else "Fälligkeit"),

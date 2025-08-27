@@ -1,11 +1,14 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.model
 
-import kotlinx.datetime.Instant
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasedItem
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 data class Room(

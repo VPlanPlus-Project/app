@@ -1,17 +1,22 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.homework.domain.usecase
 
 import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.datetime.Clock
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.ui.common.AttachedFile
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class AddFileUseCase(
     private val localFileRepository: LocalFileRepository,
@@ -19,32 +24,40 @@ class AddFileUseCase(
     private val homeworkRepository: HomeworkRepository
 ) {
     suspend operator fun invoke(homework: Homework, file: PlatformFile, profile: Profile.StudentProfile): Boolean {
-        val id: Int
+        val fileId: Int
         if (homework.id > 0 && profile.getVppIdItem() != null) {
-            val response = homeworkRepository.uploadHomeworkDocument(profile.getVppIdItem()!!, homework.id, AttachedFile.Other(
-                platformFile = file,
-                bitmap = null,
-                size = file.getSize() ?: 0L,
-                name = file.name,
-            ))
+            val fileUploadResponse = fileRepository.uploadFile(
+                vppId = profile.vppId!!.getFirstValueOld() as VppId.Active,
+                document = AttachedFile.fromFile(file)
+            )
+            if (fileUploadResponse !is Response.Success) return false
+            val response = homeworkRepository.linkHomeworkFile(
+                vppId = profile.vppId!!.getFirstValueOld() as VppId.Active,
+                homeworkId = homework.id,
+                fileId = fileUploadResponse.data
+            )
             if (response !is Response.Success) return false
-            id = response.data
+            fileId = fileUploadResponse.data
         } else {
-            id = homeworkRepository.getIdForNewLocalHomeworkFile() - 1
+            fileId = homeworkRepository.getIdForNewLocalHomeworkFile() - 1
             fileRepository.upsert(plus.vplan.app.domain.model.File(
-                id = id,
+                id = fileId,
                 name = file.name,
                 size = file.getSize() ?: 0L,
                 isOfflineReady = true,
                 getBitmap = { null },
                 cachedAt = Clock.System.now()
             ))
+            homeworkRepository.linkHomeworkFile(
+                vppId = null,
+                homeworkId = homework.id,
+                fileId = fileId
+            )
         }
 
-        localFileRepository.writeFile("./homework_files/$id", file.readBytes())
-        val fileItem = fileRepository.getById(id, false).filterIsInstance<CacheState.Done<plus.vplan.app.domain.model.File>>().first().data
+        localFileRepository.writeFile("./files/$fileId", file.readBytes())
+        val fileItem = fileRepository.getById(fileId, false).filterIsInstance<CacheState.Done<plus.vplan.app.domain.model.File>>().first().data
         fileRepository.setOfflineReady(fileItem, true)
-        homeworkRepository.linkHomeworkFileLocally(homework, fileItem)
         return true
     }
 }

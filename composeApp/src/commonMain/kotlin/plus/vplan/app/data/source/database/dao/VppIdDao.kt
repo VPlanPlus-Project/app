@@ -36,6 +36,7 @@ interface VppIdDao {
         upsert(vppId)
         upsert(vppIdAccess)
         vppIdSchulverwalter?.let { upsert(it) }
+        deleteGroupCrossoversByVppId(vppId.id)
         groupCrossovers.forEach { upsert(it) }
     }
 
@@ -45,8 +46,12 @@ interface VppIdDao {
         groupCrossovers: List<DbVppIdGroupCrossover>
     ) {
         upsert(vppId)
+        deleteGroupCrossoversByVppId(vppId.id)
         groupCrossovers.forEach { upsert(it) }
     }
+
+    @Query("DELETE FROM vpp_id_group_crossover WHERE vpp_id = :vppId")
+    suspend fun deleteGroupCrossoversByVppId(vppId: Int)
 
     @Transaction
     @Query("SELECT * FROM vpp_id WHERE id = :id")

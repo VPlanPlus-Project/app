@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.search.ui.main
 
 import androidx.compose.runtime.getValue
@@ -8,7 +10,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -33,6 +34,7 @@ import plus.vplan.app.feature.search.domain.usecase.GetSubjectsUseCase
 import plus.vplan.app.feature.search.domain.usecase.SearchRequest
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
 import plus.vplan.app.utils.now
+import kotlin.time.ExperimentalTime
 
 class SearchViewModel(
     private val searchUseCase: SearchUseCase,

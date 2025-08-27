@@ -4,9 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbVppId
-import kotlin.uuid.Uuid
 
 @Entity(
     tableName = "vpp_id_group_crossover",
@@ -21,16 +19,10 @@ import kotlin.uuid.Uuid
             parentColumns = ["id"],
             childColumns = ["vpp_id"],
             onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = DbGroup::class,
-            parentColumns = ["id"],
-            childColumns = ["group_id"],
-            onDelete = ForeignKey.CASCADE
         )
     ]
 )
 data class DbVppIdGroupCrossover(
     @ColumnInfo(name = "vpp_id") val vppId: Int,
-    @ColumnInfo(name = "group_id") val groupId: Uuid,
+    @ColumnInfo(name = "group_id") val groupId: Int,
 )

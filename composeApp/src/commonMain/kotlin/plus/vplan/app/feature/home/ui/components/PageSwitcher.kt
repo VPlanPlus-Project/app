@@ -29,6 +29,7 @@ import androidx.compose.ui.util.lerp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import plus.vplan.app.utils.blendColor
 import kotlin.math.max
@@ -83,7 +84,7 @@ fun PagerSwitcher(
             ) {
                 Text(
                     text = nextDate.format(LocalDate.Format {
-                        dayOfMonth()
+                        day(padding = Padding.ZERO)
                         chars(". ")
                         monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
                         char(' ')

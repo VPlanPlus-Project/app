@@ -8,7 +8,12 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -26,22 +31,25 @@ import plus.vplan.app.data.repository.FcmRepositoryImpl
 import plus.vplan.app.data.repository.FileRepositoryImpl
 import plus.vplan.app.data.repository.GroupRepositoryImpl
 import plus.vplan.app.data.repository.HomeworkRepositoryImpl
-import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
 import plus.vplan.app.data.repository.LessonTimeRepositoryImpl
 import plus.vplan.app.data.repository.NewsRepositoryImpl
 import plus.vplan.app.data.repository.ProfileRepositoryImpl
 import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.SchoolRepositoryImpl
+import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.SubjectInstanceRepositoryImpl
 import plus.vplan.app.data.repository.SubstitutionPlanRepositoryImpl
 import plus.vplan.app.data.repository.TeacherRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
-import plus.vplan.app.data.service.GroupServiceImpl
+import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.data.service.SchoolServiceImpl
 import plus.vplan.app.data.source.database.VppDatabase
+import plus.vplan.app.data.source.network.GenericAuthenticationProvider
+import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
+import plus.vplan.app.data.source.network.VppIdAuthenticationProvider
 import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.CourseRepository
@@ -50,20 +58,20 @@ import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.domain.service.GroupService
+import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
@@ -81,7 +89,6 @@ import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
-import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.domain.source.schulverwalter.CollectionSource
 import plus.vplan.app.domain.source.schulverwalter.FinalGradeSource
@@ -130,7 +137,15 @@ val appModule = module(createdAtStart = true) {
                 retryOnServerErrors(maxRetries = 5)
                 exponentialDelay()
                 retryIf { request, response ->
-                    response.headers["X-Backend-Family"] != "vpp.ID" && request.url.host.endsWith("vplan.plus")
+                    val isResponseFromVPPServer = response.headers["X-Backend-Family"] == "vpp.ID"
+                    val isResponseSuccess = response.status.isSuccess()
+                    if (isResponseFromVPPServer && response.status == HttpStatusCode.InternalServerError) {
+                        MainScope().launch {
+                            appLogger.e { "Something went wrong at ${request.method} ${request.url}: 500\n${response.bodyAsText()}" }
+                        }
+                        return@retryIf false
+                    }
+                    return@retryIf isResponseFromVPPServer && response.status.value in 500..599 && !isResponseSuccess
                 }
             }
 
@@ -146,8 +161,14 @@ val appModule = module(createdAtStart = true) {
                 header("X-App", "VPlanPlus")
                 header("X-App-Version", BuildConfig.APP_VERSION_CODE)
             }
+
+
         }
     }
+
+    singleOf(::SchoolAuthenticationProvider)
+    singleOf(::VppIdAuthenticationProvider)
+    singleOf(::GenericAuthenticationProvider)
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
@@ -171,7 +192,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
 
     singleOf(::SchoolServiceImpl).bind<SchoolService>()
-    singleOf(::GroupServiceImpl).bind<GroupService>()
+    singleOf(::ProfileServiceImpl).bind<ProfileService>()
 
     singleOf(::GetCurrentProfileUseCase)
 }
@@ -203,7 +224,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             newsModule
         )
 
-        App.vppIdSource = VppIdSource(koin.get())
         App.homeworkSource = HomeworkSource(koin.get())
         App.homeworkTaskSource = HomeworkTaskSource(koin.get())
         App.profileSource = ProfileSource(koin.get())

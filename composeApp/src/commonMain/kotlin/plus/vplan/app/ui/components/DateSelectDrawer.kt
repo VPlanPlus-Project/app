@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
@@ -31,10 +33,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.utils.atStartOfDay
@@ -44,6 +46,8 @@ import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.shortMonthNames
 import plus.vplan.app.utils.untilRelativeText
 import kotlin.time.Duration.Companion.days
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,7 +121,7 @@ private fun DateSelectDrawerContent(
                             text = (LocalDate.now() untilRelativeText date) ?: date.format(LocalDate.Format {
                                 dayOfWeek(shortDayOfWeekNames)
                                 chars(", ")
-                                dayOfMonth()
+                                day(padding = Padding.ZERO)
                                 chars(". ")
                                 monthName(shortMonthNames)
                             })

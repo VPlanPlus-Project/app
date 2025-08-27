@@ -1,8 +1,9 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbCourseAlias
@@ -11,6 +12,8 @@ import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.repository.CourseDbDto
 import plus.vplan.app.domain.repository.CourseRepository
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.Uuid
 
 class CourseRepositoryImpl(

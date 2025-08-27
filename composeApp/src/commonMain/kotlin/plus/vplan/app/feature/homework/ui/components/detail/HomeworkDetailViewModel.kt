@@ -88,7 +88,7 @@ class HomeworkDetailViewModel(
                 state.copy(
                     homework = homework,
                     profile = profile,
-                    canEdit = (homework is Homework.CloudHomework && homework.createdBy == profile.vppIdId) || (homework is Homework.LocalHomework && homework.createdByProfile == profile.id),
+                    canEdit = (homework is Homework.CloudHomework && homework.createdById == profile.vppIdId) || (homework is Homework.LocalHomework && homework.createdByProfileId == profile.id),
                     initDone = true
                 )
             }.filterNotNull().collectLatest { state = it }
@@ -197,7 +197,6 @@ private suspend fun Profile.StudentProfile.prefetch() {
 private suspend fun Homework.prefetch() {
     this.subjectInstance?.getFirstValue()
     this.getFileItems()
-    if (this is Homework.CloudHomework) this.getCreatedBy()
 }
 
 enum class UnoptimisticTaskState {

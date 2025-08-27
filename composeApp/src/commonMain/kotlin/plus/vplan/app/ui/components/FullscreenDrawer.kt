@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -23,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,10 +63,13 @@ private val FLING_THRESHOLD = 1000.dp // Threshold for fling to trigger drawer m
 @Composable
 fun FullscreenDrawer(
     contentScrollState: ScrollState,
+    preventClosingByGesture: Boolean,
     onDismissRequest: () -> Unit,
     topAppBar: @Composable (onCloseClicked: () -> Unit, modifier: Modifier, scrollProgress: Float) -> Unit = { _, _, _ -> },
-    content: @Composable FullscreenDrawerContext.() -> Unit
+    content: @Composable (context: FullscreenDrawerContext) -> Unit
 ) {
+    val confirmationPadding = 400.dp
+    
     val localDensity = LocalDensity.current
     val scope = rememberCoroutineScope()
     val localSoftwareKeyboardController = LocalSoftwareKeyboardController.current
@@ -74,10 +79,12 @@ fun FullscreenDrawer(
      */
     var maxHeight by remember { mutableStateOf(0.dp) }
 
+    var isCloseRequestHeld by rememberSaveable(preventClosingByGesture) { mutableStateOf(false) }
+
     /**
      * Tracks whether the opening animation of the drawer has been completed.
      */
-    var firstAnimationDone by remember { mutableStateOf(false) }
+    var isEnterAnimationCompleted by remember { mutableStateOf(false) }
 
     /**
      * Tracks the current vertical offset of the drawer. 0.dp means the drawer is fully closed and
@@ -98,38 +105,20 @@ fun FullscreenDrawer(
      */
     var disableSnapping by remember { mutableStateOf(false) }
 
-    /**
-     * Function that snaps the drawer to the nearest position based on its current offset.
-     * Either on the top edge of the screen (0.dp), the center of the screen (maxHeight),
-     * or the bottom edge of the screen (2 * maxHeight).
-     * This function is called when the user stops scrolling the content inside the drawer.
-     */
-    val snapOffset = remember {
-        {
-            val height = with(localDensity) { maxHeight.toPx() }
-            ((with(localDensity) { drawerOffset.value.toPx() }) roundToNearest listOf(
-                0f,
-                height,
-                2 * height
-            )).let {
-                scope.launch {
-                    Logger.d { "Snapping drawer to $it" }
-                    drawerOffset.animateTo(with(localDensity) { it.toDp() })
-                }
-            }
+    LaunchedEffect(preventClosingByGesture) {
+        Logger.d { "Prevent closing by gesture: $preventClosingByGesture" }
+        isCloseRequestHeld = false
+        if (isEnterAnimationCompleted) scope.launch {
+            drawerOffset.snapTo(maxHeight)
         }
     }
 
     // If the drawer is moved outside of the screen, close it unless the drawer is being opened.
     LaunchedEffect(drawerOffset.value) {
-        if (!firstAnimationDone) return@LaunchedEffect
-        if (drawerOffset.value < 10.dp || drawerOffset.value > (2 * maxHeight) - 10.dp) onDismissRequest()
-    }
-
-    LaunchedEffect(contentScrollState.isScrollInProgress) {
-        if (disableSnapping) return@LaunchedEffect
-        if (!contentScrollState.isScrollInProgress && isUserScrolling) snapOffset()
-        isUserScrolling = contentScrollState.isScrollInProgress
+        if (!isEnterAnimationCompleted) return@LaunchedEffect
+        if (!preventClosingByGesture || !isCloseRequestHeld) {
+            if (drawerOffset.value < 10.dp || drawerOffset.value > (2 * maxHeight) - 10.dp) onDismissRequest()
+        }
     }
 
     val setDrawerOffset = remember { { value: Dp ->
@@ -138,29 +127,89 @@ fun FullscreenDrawer(
         }
     } }
 
-    val moveDrawerToLowerBound = remember {
+    val moveDrawerToUpperBound = remember(preventClosingByGesture) {
         { initialVelocity: Dp ->
             scope.launch {
                 disableSnapping = true
-                drawerOffset.animateTo(maxHeight * 2, initialVelocity = initialVelocity)
+                if (preventClosingByGesture && !isCloseRequestHeld) {
+                    isCloseRequestHeld = true
+                    drawerOffset.animateTo((maxHeight * 2) - confirmationPadding, initialVelocity = initialVelocity)
+                }
+                else {
+                    isCloseRequestHeld = false
+                    drawerOffset.animateTo(maxHeight * 2, initialVelocity = initialVelocity)
+                }
                 localSoftwareKeyboardController?.hide()
                 disableSnapping = false
             }
         }
     }
 
-    val moveDrawerToUpperBound = remember {
+    val moveDrawerToLowerBound = remember(preventClosingByGesture) {
         { initialVelocity: Dp ->
             scope.launch {
                 disableSnapping = true
-                drawerOffset.animateTo(0.dp, initialVelocity = initialVelocity)
+                if (preventClosingByGesture && !isCloseRequestHeld) {
+                    isCloseRequestHeld = true
+                    drawerOffset.animateTo(confirmationPadding, initialVelocity = initialVelocity)
+                }
+                else {
+                    isCloseRequestHeld = false
+                    drawerOffset.animateTo(0.dp, initialVelocity = initialVelocity)
+                }
                 localSoftwareKeyboardController?.hide()
                 disableSnapping = false
             }
         }
     }
 
-    val scrollConnection = remember {
+    val moveDrawerToCenter = remember(preventClosingByGesture) {
+        { initialVelocity: Dp ->
+            scope.launch {
+                disableSnapping = true
+                drawerOffset.animateTo(maxHeight, initialVelocity = initialVelocity)
+                localSoftwareKeyboardController?.hide()
+                disableSnapping = false
+            }
+        }
+    }
+
+    /**
+     * Function that snaps the drawer to the nearest position based on its current offset.
+     * Either on the top edge of the screen (0.dp), the center of the screen (maxHeight),
+     * or the bottom edge of the screen (2 * maxHeight).
+     * This function is called when the user stops scrolling the content inside the drawer.
+     */
+    val snapOffset = remember(preventClosingByGesture) {
+        {
+            val height = with(localDensity) { maxHeight.toPx() }
+            ((with(localDensity) { drawerOffset.value.toPx() }) roundToNearest listOf(
+                0f,
+                height,
+                2 * height
+            )).let {
+                scope.launch {
+                    if (preventClosingByGesture) {
+                        when (it) {
+                            0f -> moveDrawerToUpperBound(0.dp)
+                            2 * height -> moveDrawerToLowerBound(0.dp)
+                            else -> moveDrawerToCenter(0.dp)
+                        }
+                        return@launch
+                    }
+                    drawerOffset.animateTo(with(localDensity) { it.toDp() })
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(contentScrollState.isScrollInProgress) {
+        if (disableSnapping) return@LaunchedEffect
+        if (!contentScrollState.isScrollInProgress && isUserScrolling) snapOffset()
+        isUserScrolling = contentScrollState.isScrollInProgress
+    }
+
+    val scrollConnection = remember(preventClosingByGesture) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val isContentAtTop = contentScrollState.value == 0
@@ -169,13 +218,13 @@ fun FullscreenDrawer(
 
                 val scrollDistance = with(localDensity) { available.y.toDp() }
 
-                if (verticalScrollDirection == VerticalScrollDirection.Up && isContentAtTop) {
+                if (verticalScrollDirection == VerticalScrollDirection.Up && (isContentAtBottom || drawerOffset.value != maxHeight)) {
                     // move drawer up
                     setDrawerOffset(drawerOffset.value - scrollDistance)
                     return Offset(0f, available.y)
                 }
 
-                if (verticalScrollDirection == VerticalScrollDirection.Down && isContentAtBottom) {
+                if (verticalScrollDirection == VerticalScrollDirection.Down && (isContentAtTop || drawerOffset.value != maxHeight)) {
                     // move drawer down
                     setDrawerOffset(drawerOffset.value - scrollDistance)
                     return Offset(0f, available.y)
@@ -195,13 +244,13 @@ fun FullscreenDrawer(
 
                 if (verticalScrollDirection == VerticalScrollDirection.Up && isContentAtTop) {
                     // fling drawer up
-                    moveDrawerToLowerBound(verticalScrollDistancePerSecond)
+                    moveDrawerToUpperBound(verticalScrollDistancePerSecond)
                     return Velocity(0f, available.y)
                 }
 
                 if (verticalScrollDirection == VerticalScrollDirection.Down && isContentAtBottom) {
                     // fling drawer down
-                    moveDrawerToUpperBound(verticalScrollDistancePerSecond)
+                    moveDrawerToLowerBound(verticalScrollDistancePerSecond)
                     return Velocity(0f, available.y)
                 }
 
@@ -234,9 +283,9 @@ fun FullscreenDrawer(
             .onSizeChanged {
                 maxHeight = with(localDensity) { it.height.toDp() }
                 scope.launch {
-                    if (firstAnimationDone) drawerOffset.snapTo(maxHeight)
+                    if (isEnterAnimationCompleted) drawerOffset.snapTo(maxHeight)
                     else drawerOffset.animateTo(maxHeight)
-                }.invokeOnCompletion { firstAnimationDone = true }
+                }.invokeOnCompletion { isEnterAnimationCompleted = true }
             }
     ) {
         if (maxHeight == 0.dp) return@Box
@@ -245,12 +294,23 @@ fun FullscreenDrawer(
                 .offset { with (localDensity) { IntOffset(horizontalOffset.roundToPx(), (maxHeight - drawerOffset.value).roundToPx()) } }
                 .fillMaxSize()
                 .scale(((1 - (((1.05 * sech(4.0 * scrollProgress).toFloat().ifNan { 0f }) - 0.05) / 6)).toFloat()).coerceIn(0f, 1f))
-                .clip(RoundedCornerShape((sin((1 - scrollProgress) * PI / 2).ifNan { 0.0 } * 32.dp).coerceAtLeast(0.dp)))
                 .nestedScroll(scrollConnection),
         ) {
-            topAppBar(
-                { scope.launch { drawerOffset.animateTo(0.dp) } },
-                Modifier
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        bottom = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+                    )
+                    .clip(RoundedCornerShape((sin((1 - scrollProgress) * PI / 2).ifNan { 0.0 } * 32.dp).coerceAtLeast(0.dp)))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(
+                        start = WindowInsets.safeDrawing.asPaddingValues().calculateStartPadding(LocalLayoutDirection.current),
+                        end = WindowInsets.safeDrawing.asPaddingValues().calculateEndPadding(LocalLayoutDirection.current),
+                        bottom = (WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() - WindowInsets.ime.asPaddingValues().calculateBottomPadding()).coerceAtLeast(0.dp)
+                    )
+            ) {
+                val dragModifier = remember { Modifier
                     .pointerInput(Unit) {
                         detectVerticalDragGestures(
                             onDragStart = { isUserScrolling = true },
@@ -262,23 +322,23 @@ fun FullscreenDrawer(
                                 drawerOffset.snapTo(drawerOffset.value - y)
                             }
                         }
-                    },
-                scrollProgress
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(
-                        start = WindowInsets.safeDrawing.asPaddingValues().calculateStartPadding(LocalLayoutDirection.current),
-                        end = WindowInsets.safeDrawing.asPaddingValues().calculateEndPadding(LocalLayoutDirection.current),
-                        bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() * scrollProgress
-                    )
-            ) {
-                FullscreenDrawerContext(
+                    } }
+                topAppBar(
+                    { moveDrawerToLowerBound(0.dp) },
+                    dragModifier,
+                    scrollProgress
+                )
+                content(FullscreenDrawerContext(
                     scrollState = contentScrollState,
-                    hideDrawer = onDismissRequest
-                ) { scope.launch { drawerOffset.animateTo(0.dp) } }.content()
+                    hideDrawer = { moveDrawerToLowerBound(0.dp) },
+                    dragModifier = dragModifier,
+                    isCloseRequestHeld = isCloseRequestHeld,
+                    resetCloseRequest = {
+                        isCloseRequestHeld = false
+                        moveDrawerToCenter(0.dp)
+                        horizontalOffset = 0.dp
+                    },
+                ) { scope.launch { drawerOffset.animateTo(0.dp) } })
             }
         }
     }
@@ -286,7 +346,10 @@ fun FullscreenDrawer(
 
 data class FullscreenDrawerContext(
     val scrollState: ScrollState,
+    val dragModifier: Modifier,
     val hideDrawer: () -> Unit,
+    val isCloseRequestHeld: Boolean,
+    val resetCloseRequest: () -> Unit,
     val closeDrawerWithAnimation: () -> Unit
 )
 

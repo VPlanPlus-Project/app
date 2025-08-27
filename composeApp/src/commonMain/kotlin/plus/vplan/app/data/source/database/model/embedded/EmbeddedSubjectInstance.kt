@@ -25,7 +25,7 @@ data class EmbeddedSubjectInstance(
             id = subjectInstance.id,
             subject = subjectInstance.subject,
             teacher = subjectInstance.teacherId,
-            groups = groups.map { it.groupId },
+            groupIds = groups.map { it.groupId },
             courseId = subjectInstance.courseId,
             cachedAt = subjectInstance.cachedAt,
             aliases = aliases.map { it.toModel() }.toSet()

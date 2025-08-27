@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.repository.schulverwalter
 
 import io.ktor.client.HttpClient
@@ -13,7 +15,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -29,6 +30,8 @@ import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.schulverwalter.Year
 import plus.vplan.app.domain.repository.schulverwalter.YearRepository
 import plus.vplan.app.utils.sendAll
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class YearRepositoryImpl(
     private val httpClient: HttpClient,
@@ -58,7 +61,7 @@ class YearRepositoryImpl(
                     }
                     bearerAuth(accessToken.schulverwalterAccessToken)
                 }
-                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse<Year>()))
+                if (!response.status.isSuccess()) return@channelFlow send(CacheState.Error(id.toString(), response.toErrorResponse()))
                 val data = ResponseDataWrapper.fromJson<List<YearItemResponse>>(response.bodyAsText())
                     ?: return@channelFlow send(CacheState.Error(id.toString(), Response.Error.ParsingError(response.bodyAsText())))
 

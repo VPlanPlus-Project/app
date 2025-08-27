@@ -9,11 +9,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase

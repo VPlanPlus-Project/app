@@ -17,12 +17,15 @@ import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.model.schulverwalter.Subject
+import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.feature.grades.domain.usecase.GetCurrentIntervalUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetIntervalsUseCase
 
 class AnalyticsViewModel(
     private val getCurrentIntervalUseCase: GetCurrentIntervalUseCase,
-    private val getIntervalsUseCase: GetIntervalsUseCase
+    private val getIntervalsUseCase: GetIntervalsUseCase,
+    private val vppIdRepository: VppIdRepository
 ) : ViewModel() {
     var state by mutableStateOf(AnalyticsState())
         private set
@@ -32,7 +35,7 @@ class AnalyticsViewModel(
         viewModelScope.launch { getIntervalsUseCase().collectLatest { state = state.copy(intervals = it) } }
         viewModelScope.launch {
             getCurrentIntervalUseCase().let { state = state.copy(interval = it) }
-            App.vppIdSource.getById(vppIdId).filterIsInstance<CacheState.Done<VppId.Active>>().map { it.data }.collectLatest { vppId ->
+            vppIdRepository.getById(vppIdId, ResponsePreference.Fast).filterIsInstance<CacheState.Done<VppId.Active>>().map { it.data }.collectLatest { vppId ->
                 state = state.copy(vppId = vppId)
                 App.gradeSource.getAll()
                     .map {

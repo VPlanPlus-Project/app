@@ -17,6 +17,8 @@ import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.model.schulverwalter.Interval
+import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculatorGrade
 import plus.vplan.app.feature.grades.domain.usecase.GetCurrentIntervalUseCase
@@ -34,7 +36,8 @@ class GradesViewModel(
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
     private val lockUseCase: LockGradesUseCase,
-    private val getIntervalsUseCase: GetIntervalsUseCase
+    private val getIntervalsUseCase: GetIntervalsUseCase,
+    private val vppIdRepository: VppIdRepository
 ) : ViewModel() {
     var state by mutableStateOf(GradesState())
         private set
@@ -94,7 +97,7 @@ class GradesViewModel(
             getGradeLockStateUseCase().collectLatest { areGradesLocked ->
                 state = state.copy(gradeLockState = areGradesLocked)
                 if (!areGradesLocked.canAccess) return@collectLatest
-                App.vppIdSource.getById(vppIdId).filterIsInstance<CacheState.Done<VppId>>().map { it.data }.collectLatest collectLatestGrades@{ vppId ->
+                vppIdRepository.getById(vppIdId, ResponsePreference.Fast).filterIsInstance<CacheState.Done<VppId>>().map { it.data }.collectLatest collectLatestGrades@{ vppId ->
                     val interval = getCurrentIntervalUseCase()
                     state = state.copy(vppId = vppId, currentInterval = interval)
                     if (interval == null || vppId !is VppId.Active) return@collectLatestGrades

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.homework.ui.components.detail
 
 import androidx.compose.animation.AnimatedContent
@@ -70,6 +72,7 @@ import vplanplus.composeapp.generated.resources.image
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.trash_2
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun DetailPage(

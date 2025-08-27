@@ -1,7 +1,10 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.repository
 
 import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.submitForm
@@ -17,11 +20,18 @@ import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.SerialName
@@ -30,18 +40,21 @@ import kotlinx.serialization.json.Json
 import plus.vplan.app.APP_ID
 import plus.vplan.app.APP_REDIRECT_URI
 import plus.vplan.app.APP_SECRET
-import plus.vplan.app.api
-import plus.vplan.app.appApi
-import plus.vplan.app.auth
+import plus.vplan.app.captureError
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
+import plus.vplan.app.data.source.network.GenericAuthenticationProvider
+import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
+import plus.vplan.app.data.source.network.isResponseFromBackend
 import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.VppId
@@ -50,17 +63,24 @@ import plus.vplan.app.domain.repository.VppDbDto
 import plus.vplan.app.domain.repository.VppIdDevice
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.VppVppIdDto
+import plus.vplan.app.domain.repository.base.ResponsePreference
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 private val logger = Logger.withTag("VppIdRepositoryImpl")
+private val CACHE_LIFETIME = 1.days
 
 class VppIdRepositoryImpl(
     private val httpClient: HttpClient,
-    private val vppDatabase: VppDatabase
+    private val vppDatabase: VppDatabase,
+    private val genericAuthenticationProvider: GenericAuthenticationProvider
 ) : VppIdRepository {
     override suspend fun getAccessToken(code: String): Response<String> {
         safeRequest(onError = { return it }) {
             val response = httpClient.submitForm(
-                url = "${auth.url}/oauth/token",
+                url = "${currentConfiguration.authUrl}/oauth/token",
                 formParameters = Parameters.build {
                     append("grant_type", "authorization_code")
                     append("code", code)
@@ -84,7 +104,7 @@ class VppIdRepositoryImpl(
     override suspend fun getUserByToken(token: String): Response<VppVppIdDto> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("user", "v1", "me")
                 }.buildString())
                 bearerAuth(token)
@@ -96,16 +116,148 @@ class VppIdRepositoryImpl(
             val data = ResponseDataWrapper.fromJson<UserMeResponse>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
 
-            return Response.Success(VppVppIdDto(
-                id = data.id,
-                username = data.name,
-                groupId = data.group.id,
-                schoolId = data.school.id,
-                schulverwalterId = data.schulverwalterUserId,
-                schulverwalterAccessToken = data.schulverwalterAccessToken
-            ))
+            return Response.Success(
+                VppVppIdDto(
+                    id = data.id,
+                    username = data.name,
+                    groupId = data.group.id,
+                    schoolId = data.school.id,
+                    schulverwalterId = data.schulverwalterUserId,
+                    schulverwalterAccessToken = data.schulverwalterAccessToken
+                )
+            )
         }
         return Response.Error.Cancelled
+    }
+
+    val vppIdFlowMap = mutableMapOf<String, Flow<CacheState<VppId>>>()
+    override fun getById(id: Int, responsePreference: ResponsePreference): Flow<CacheState<VppId>> {
+        val cacheKey = "$id-$responsePreference"
+        if (responsePreference == ResponsePreference.Fast) vppIdFlowMap[cacheKey]?.let { return it }
+        logger.d { "Creating new flow for $id ($responsePreference)" }
+        val flow = channelFlow {
+            val firstEntityState = vppDatabase.vppIdDao.getById(id).first()?.toModel()
+            val doesEntityExist = firstEntityState != null
+
+            fun startEntityEmission(): Job {
+                return CoroutineScope(Dispatchers.IO).launch {
+                    vppDatabase.vppIdDao.getById(id).map { dto -> dto?.toModel()?.let { CacheState.Done(it) } ?: CacheState.NotExisting(id.toString()) }.collect {
+                        trySend(it)
+                    }
+                }
+            }
+
+            when (responsePreference) {
+                ResponsePreference.Fast -> {
+                    if (doesEntityExist) {
+                        val job = startEntityEmission()
+                        if (Clock.System.now() - firstEntityState.cachedAt > CACHE_LIFETIME) {
+                            downloadById(id)
+                        }
+                        job.join()
+                    } else {
+                        trySend(CacheState.Loading(id.toString()))
+                        val downloadResponse = downloadById(id)
+                        if (downloadResponse is Response.Error) {
+                            trySend(CacheState.Error(id.toString(), downloadResponse))
+                            return@channelFlow
+                        }
+                        startEntityEmission().join()
+                    }
+                }
+
+                ResponsePreference.Fresh -> {
+                    trySend(CacheState.Loading(id.toString()))
+                    val downloadResponse = downloadById(id)
+                    if (downloadResponse is Response.Error) {
+                        trySend(CacheState.Error(id.toString(), downloadResponse))
+                        return@channelFlow
+                    }
+                    startEntityEmission().join()
+                }
+
+                ResponsePreference.Secure -> {
+                    val response = downloadById(id)
+                    if (response is Response.Error.OnlineError.NotFound) {
+                        trySend(CacheState.NotExisting(id.toString()))
+                        return@channelFlow
+                    }
+
+                    startEntityEmission().join()
+                }
+            }
+        }
+            .onCompletion { vppIdFlowMap.remove(cacheKey) }
+            .shareIn(CoroutineScope(Dispatchers.IO), replay = 1, started = SharingStarted.WhileSubscribed(5000))
+
+        vppIdFlowMap[cacheKey] = flow
+        return flow
+    }
+
+    private suspend fun downloadById(id: Int): Response<VppId> {
+        safeRequest(onError = { return it }) {
+            val authenticationResponse = getAuthenticationOptionsForRestrictedEntity(
+                httpClient = httpClient,
+                url = URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("user", "v1", id.toString())
+                }.buildString()
+            )
+
+            if (authenticationResponse !is Response.Success) return authenticationResponse as Response.Error
+
+            val authentication = genericAuthenticationProvider.getAuthentication(authenticationResponse.data)
+            if (authentication == null) {
+                logger.e { "No authentication found for vppId $id" }
+                captureError("VppIdRepositoryImpl.downloadById", "No authentication found for vppId $id")
+                return Response.Error.Other("No authentication found for vppId $id")
+            }
+
+            val response = httpClient.get {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("user", "v1", id.toString())
+                }.buildString())
+                authentication.authentication(this)
+            }
+
+            if (response.status == HttpStatusCode.NotFound && response.isResponseFromBackend()) {
+                vppDatabase.vppIdDao.deleteById(listOf(id))
+                return Response.Error.OnlineError.NotFound
+            }
+
+            if (!response.status.isSuccess()) {
+                logger.e { "Error getting vppId by id: $response" }
+                return response.toErrorResponse()
+            }
+
+            val data = response.body<ResponseDataWrapper<UserItemResponse>>().data
+            val existing = vppDatabase.vppIdDao.getById(id).first()
+
+            upsert(
+                id = data.id,
+                name = data.username,
+                groups = data.groups.toSet(),
+                creationReason = if (existing?.vppId?.creationReason == CreationReason.Persisted) CreationReason.Persisted else CreationReason.Cached
+            )
+        }
+        return Response.Error.Cancelled
+    }
+
+    private suspend fun upsert(
+        id: Int,
+        name: String,
+        groups: Set<Int>,
+        creationReason: CreationReason? = null
+    ) {
+        val existing = vppDatabase.vppIdDao.getById(id).first()
+        vppDatabase.vppIdDao.upsert(
+            vppId = DbVppId(
+                id = id,
+                name = name,
+                cachedAt = Clock.System.now(),
+                creationReason = if (existing?.vppId?.creationReason == CreationReason.Persisted) CreationReason.Persisted else creationReason ?: CreationReason.Cached
+            ),
+            groupCrossovers = groups.map { DbVppIdGroupCrossover(id, it) }
+        )
     }
 
     override fun getVppIds(): Flow<List<VppId>> {
@@ -117,7 +269,7 @@ class VppIdRepositoryImpl(
     override suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "user", "me", "session")
                 }.buildString())
 
@@ -139,7 +291,7 @@ class VppIdRepositoryImpl(
     override suspend fun logoutDevice(vppId: VppId.Active, deviceId: Int): Response<Unit> {
         safeRequest(onError = { return it }) {
             val response = httpClient.delete {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "user", "me", "session", deviceId.toString())
                 }.buildString())
 
@@ -156,7 +308,7 @@ class VppIdRepositoryImpl(
 
     override suspend fun logout(token: String): Response<Unit> {
         safeRequest(onError = { return it }) {
-            val response = httpClient.get("${auth.url}/oauth/logout") {
+            val response = httpClient.get("${currentConfiguration.authUrl}/oauth/logout") {
                 bearerAuth(token)
             }
             if (response.status != HttpStatusCode.OK) {
@@ -176,13 +328,13 @@ class VppIdRepositoryImpl(
     override suspend fun getSchulverwalterReauthUrl(vppId: VppId.Active): Response<String> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "app", "schulverwalter-reauth")
                 }.buildString())
                 vppId.buildVppSchoolAuthentication().authentication(this)
             }
 
-            if (!response.status.isSuccess()) return response.toErrorResponse<String>()
+            if (!response.status.isSuccess()) return response.toErrorResponse()
             val url = ResponseDataWrapper.fromJson<String>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
 
@@ -194,7 +346,7 @@ class VppIdRepositoryImpl(
     override suspend fun sendFeedback(access: VppSchoolAuthentication, content: String, email: String?): Response<Unit> {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("app", "feedback", "v1")
                 }.buildString())
 
@@ -203,7 +355,7 @@ class VppIdRepositoryImpl(
                 access.authentication(this)
             }
             if (response.status.isSuccess()) return Response.Success(Unit)
-            return response.toErrorResponse<Unit>()
+            return response.toErrorResponse()
         }
         return Response.Error.Cancelled
     }
@@ -211,7 +363,7 @@ class VppIdRepositoryImpl(
     override suspend fun updateFirebaseToken(vppId: VppId.Active, token: String): Response.Error? {
         safeRequest(onError = { return it }) {
             val response = httpClient.post {
-                url(URLBuilder(api).apply {
+                url(URLBuilder(currentConfiguration.apiUrl).apply {
                     appendPathSegments("api", "v2.2", "user", "firebase")
                 }.buildString())
 
@@ -220,7 +372,7 @@ class VppIdRepositoryImpl(
                 setBody(FirebaseTokenRequest(token))
             }
             if (response.status.isSuccess()) return null
-            return response.toErrorResponse<Unit>()
+            return response.toErrorResponse()
         }
         return Response.Error.Cancelled
     }
@@ -236,6 +388,7 @@ class VppIdRepositoryImpl(
                 ),
                 groupCrossovers = entity.groups.map { DbVppIdGroupCrossover(entity.id, it) }
             )
+
             is VppDbDto.AppVppDbDto -> vppDatabase.vppIdDao.upsert(
                 vppId = DbVppId(
                     id = entity.id,
@@ -262,16 +415,18 @@ class VppIdRepositoryImpl(
         safeRequest(onError = {}) {
             val logger = Logger.withTag("VppIdRepositoryImpl.logSp24Credentials")
             val response = httpClient.post {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("sp24", "v1", "log")
                 }.buildString())
 
                 contentType(ContentType.Application.Json)
-                setBody(Sp24LogRequest(
-                    sp24Id = authentication.sp24SchoolId.toInt(),
-                    username = authentication.username,
-                    password = authentication.password
-                ))
+                setBody(
+                    Sp24LogRequest(
+                        sp24Id = authentication.sp24SchoolId.toInt(),
+                        username = authentication.username,
+                        password = authentication.password
+                    )
+                )
                 authentication.authentication(this)
             }
             if (response.status == HttpStatusCode.OK) logger.i { "Successfully logged sp24 credentials" }
@@ -329,4 +484,11 @@ private data class Sp24LogRequest(
     @SerialName("sp24_id") val sp24Id: Int,
     @SerialName("username") val username: String,
     @SerialName("password") val password: String
+)
+
+@Serializable
+private data class UserItemResponse(
+    @SerialName("id") val id: Int,
+    @SerialName("name") val username: String,
+    @SerialName("groups") val groups: List<Int>
 )

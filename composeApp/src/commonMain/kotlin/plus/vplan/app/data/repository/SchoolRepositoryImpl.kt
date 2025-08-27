@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
@@ -10,10 +12,9 @@ import io.ktor.http.appendPathSegments
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.appApi
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
@@ -27,6 +28,8 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.SchoolDbDto
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.VppSchoolDto
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.Uuid
 
 class SchoolRepositoryImpl(
@@ -68,7 +71,7 @@ class SchoolRepositoryImpl(
     override suspend fun downloadSchools(): Response<List<VppSchoolDto>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("school", "v1", "list")
                 }.build())
             }
@@ -89,7 +92,7 @@ class SchoolRepositoryImpl(
     override suspend fun downloadById(identifier: String): Response<VppSchoolDto> {
         safeRequest(onError = { return  it }) {
             val response = httpClient.get {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("school", "v1", "by-id")
                     appendEncodedPathSegments(identifier)
                 }.build())

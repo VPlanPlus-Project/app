@@ -15,10 +15,14 @@ fun <T> HttpResponse.toResponse(
     }
 }
 
-fun <T> HttpResponse.toErrorResponse(): Response.Error {
+fun HttpResponse.toErrorResponse(): Response.Error {
     return when (status) {
-        HttpStatusCode.Unauthorized -> Response.Error.OnlineError.Unauthorized
-        HttpStatusCode.NotFound -> Response.Error.OnlineError.NotFound
+        HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden -> Response.Error.OnlineError.Unauthorized
+        HttpStatusCode.NotFound -> {
+            if (isResponseFromBackend() || isFromStundenplan24() || isFromBesteSchule()) Response.Error.OnlineError.NotFound
+            else Response.Error.Other("The requested resource was not found on the server.")
+        }
+        HttpStatusCode.BadGateway -> Response.Error.OnlineError.ConnectionError
         else -> throw UnsupportedOperationException("The status code ${status.value} is not supported at the moment")
     }
 }

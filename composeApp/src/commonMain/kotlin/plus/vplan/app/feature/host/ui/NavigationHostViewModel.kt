@@ -8,9 +8,11 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import plus.vplan.app.feature.host.domain.usecase.HasProfileUseCase
+import plus.vplan.app.feature.main.domain.usecase.SetupApplicationUseCase
 
 class NavigationHostViewModel(
-    private val hasProfileUseCase: HasProfileUseCase
+    private val hasProfileUseCase: HasProfileUseCase,
+    private val setupApplicationUseCase: SetupApplicationUseCase
 ) : ViewModel() {
     var state by mutableStateOf(NavigationHostUiState())
         private set
@@ -18,6 +20,12 @@ class NavigationHostViewModel(
     init {
         viewModelScope.launch {
             state = state.copy(hasProfileAtAppStartup = hasProfileUseCase().first())
+        }
+
+        viewModelScope.launch {
+            hasProfileUseCase().collect { hasProfiles ->
+                if (hasProfiles) setupApplicationUseCase()
+            }
         }
     }
 }

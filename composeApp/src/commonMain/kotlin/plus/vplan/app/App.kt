@@ -7,9 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
-import io.ktor.http.URLProtocol
+import io.ktor.http.appendPathSegments
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -31,7 +30,6 @@ import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
-import plus.vplan.app.domain.source.VppIdSource
 import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.domain.source.schulverwalter.CollectionSource
 import plus.vplan.app.domain.source.schulverwalter.FinalGradeSource
@@ -45,44 +43,18 @@ import plus.vplan.app.ui.theme.AppTheme
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-data class Host(
-    val protocol: URLProtocol = URLProtocol.HTTPS,
-    val host: String,
-    val port: Int = 443,
-) {
-    val url = "${protocol.name}://$host:$port"
-}
-
-//const val appApi = "http://10.0.2.2:8002/api/app"
-const val appApi = "https://vplan.plus/api/app"
-//const val appApi = "https://vplan.plus/api/app"
-
-const val api = "https://vplan.plus"
-
-val auth = Host(
-    protocol = URLProtocol.HTTPS,
-    host = "auth.vplan.plus",
-    port = 443
-)
-
 const val APP_ID = "4"
 const val APP_SECRET = "crawling-mom-yesterday-jazz-populace-napkin"
 const val APP_REDIRECT_URI = "vpp://app/auth/"
-val VPP_ID_AUTH_URL = URLBuilder(
-    protocol = auth.protocol,
-    host = auth.host,
-    port = auth.port,
-    pathSegments = listOf("authorize"),
-    parameters = Parameters.build {
-        append("client_id", APP_ID)
-        append("client_secret", APP_SECRET)
-        append("redirect_uri", APP_REDIRECT_URI)
-        append("device_name", getSystemInfo().let { "${it.manufacturer} ${it.deviceName} (${it.device})" })
-    }
-).build().toString()
+val VPP_ID_AUTH_URL = URLBuilder(currentConfiguration.authUrl).apply {
+    appendPathSegments("authorize")
+    parameters.append("client_id", APP_ID)
+    parameters.append("client_secret", APP_SECRET)
+    parameters.append("redirect_uri", APP_REDIRECT_URI)
+    parameters.append("device_name", getSystemInfo().deviceName)
+}.buildString()
 
 object App {
-    lateinit var vppIdSource: VppIdSource
     lateinit var homeworkSource: HomeworkSource
     lateinit var homeworkTaskSource: HomeworkTaskSource
     lateinit var profileSource: ProfileSource
@@ -257,4 +229,17 @@ expect fun capture(event: String, properties: Map<String, Any>?)
 fun captureError(location: String, message: String) {
     capture("error", mapOf("location" to location, "message" to message))
 }
+expect fun setPostHogProperty(key: String, value: String)
 expect fun isDebug(): Boolean
+expect fun posthogIdentify(
+    distinctId: String,
+    userProperties: Map<String, Any>?,
+    userPropertiesSetOnce: Map<String, Any>?,
+)
+expect fun firebaseIdentify(
+    id: String,
+)
+expect fun isFeatureEnabled(
+    key: String,
+    defaultValue: Boolean
+): Boolean

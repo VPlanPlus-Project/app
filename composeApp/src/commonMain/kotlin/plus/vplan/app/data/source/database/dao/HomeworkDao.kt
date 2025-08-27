@@ -6,6 +6,7 @@ import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.data.source.database.model.database.DbFile
 import plus.vplan.app.data.source.database.model.database.DbHomework
@@ -21,8 +22,35 @@ import kotlin.uuid.Uuid
 @Dao
 interface HomeworkDao {
 
+    @Transaction
+    suspend fun upsertSingleHomework(
+        homework: DbHomework,
+        tasks: List<DbHomeworkTask>,
+        tasksDoneAccount: List<DbHomeworkTaskDoneAccount>,
+        tasksDoneProfile: List<DbHomeworkTaskDoneProfile>,
+        fileIds: List<Int>
+    ) {
+        val existing = getById(homework.id).first()
+
+        val existingTasks = existing?.tasks?.map { it.id }
+        if (existingTasks != null) {
+            deleteTaskById(existingTasks - tasks.map { it.id })
+        }
+
+        val existingFiles = existing?.files?.map { it.fileId }
+        if (existingFiles != null) {
+            deleteFileHomeworkConnectionsById(existingFiles - fileIds)
+        }
+
+        upsertSingleHomework(homework)
+        upsertTaskMany(tasks)
+        upsertTaskDoneAccountMany(tasksDoneAccount)
+        upsertTaskDoneProfileMany(tasksDoneProfile)
+        upsertHomeworkFileConnections(fileIds.map { FKHomeworkFile(homework.id, it) })
+    }
+
     @Upsert
-    suspend fun upsert(homework: DbHomework)
+    suspend fun upsertSingleHomework(homework: DbHomework)
 
     @Upsert
     suspend fun upsertMany(homework: List<DbHomework>)
@@ -35,19 +63,27 @@ interface HomeworkDao {
     @Upsert
     suspend fun upsertFiles(files: List<DbFile>)
 
-    @Transaction
     @Upsert
     suspend fun upsertTaskDoneAccountMany(homeworkTaskDoneAccount: List<DbHomeworkTaskDoneAccount>)
 
+    @Upsert
+    suspend fun upsertTaskDoneProfileMany(homeworkTaskDoneProfile: List<DbHomeworkTaskDoneProfile>)
+
+    @Upsert
+    suspend fun upsertHomeworkFileConnection(fileHomeworkConnection: FKHomeworkFile)
+
     @Transaction
     @Upsert
-    suspend fun upsertFileHomeworkConnections(fileHomeworkConnections: List<FKHomeworkFile>)
+    suspend fun upsertHomeworkFileConnections(fileHomeworkConnections: List<FKHomeworkFile>)
+
+    @Query("DELETE FROM fk_homework_file WHERE homework_id = :homeworkId")
+    suspend fun deleteFileHomeworkConnections(homeworkId: Int)
 
     @Query("DELETE FROM fk_homework_file WHERE homework_id IN (:homeworkId)")
     suspend fun deleteFileHomeworkConnections(homeworkId: List<Int>)
 
     @Query("DELETE FROM fk_homework_file WHERE homework_id = :homeworkId AND file_id = :fileId")
-    suspend fun deleteFileHomeworkConnections(homeworkId: Int, fileId: Int)
+    suspend fun deleteFileHomeworkConnection(homeworkId: Int, fileId: Int)
 
     @Transaction
     suspend fun upsertMany(
@@ -57,11 +93,10 @@ interface HomeworkDao {
         files: List<DbFile>,
         fileHomeworkConnections: List<FKHomeworkFile>
     ) {
-        upsertMany(homework)
         upsertTaskMany(homeworkTask)
         upsertTaskDoneAccountMany(homeworkTaskDoneAccount)
         upsertFiles(files)
-        upsertFileHomeworkConnections(fileHomeworkConnections)
+        upsertHomeworkFileConnections(fileHomeworkConnections)
     }
 
     @Transaction
@@ -90,9 +125,11 @@ interface HomeworkDao {
     @Query("DELETE FROM homework WHERE id IN (:ids)")
     suspend fun deleteById(ids: List<Int>)
 
-    @Transaction
     @Query("DELETE FROM homework_task WHERE id IN (:ids)")
     suspend fun deleteTaskById(ids: List<Int>)
+
+    @Query("DELETE FROM fk_homework_file WHERE file_id IN (:ids)")
+    suspend fun deleteFileHomeworkConnectionsById(ids: List<Int>)
 
     @Query("SELECT MIN(id) FROM homework")
     fun getMinId(): Flow<Int?>
@@ -122,7 +159,7 @@ interface HomeworkDao {
     suspend fun upsertTaskDoneProfile(taskDoneProfile: DbHomeworkTaskDoneProfile)
 
     @Query("UPDATE homework SET subject_instance_id = :subjectInstanceId, group_id = :groupId WHERE id = :homeworkId")
-    suspend fun updateSubjectInstanceAndGroup(homeworkId: Int, subjectInstanceId: Int?, groupId: Uuid?)
+    suspend fun updateSubjectInstanceAndGroup(homeworkId: Int, subjectInstanceId: Int?, groupId: Int?)
 
     @Query("UPDATE homework SET due_to = :dueTo WHERE id = :homeworkId")
     suspend fun updateDueTo(homeworkId: Int, dueTo: LocalDate)

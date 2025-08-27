@@ -11,6 +11,10 @@ interface AliasedItemRepository<DBDTO, I: AliasedItem<*>>: ItemRepository<Uuid, 
      */
     suspend fun upsert(item: DBDTO): Uuid
     suspend fun resolveAliasToLocalId(alias: Alias): Uuid?
+
+    /**
+     * Resolves the first existing alias to a local ID.
+     */
     suspend fun resolveAliasesToLocalId(aliases: List<Alias>): Uuid? {
         return aliases.firstNotNullOfOrNull { resolveAliasToLocalId(it) }
     }

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.sync.domain.usecase.fullsync
 
 import co.touchlab.kermit.Logger
@@ -7,7 +9,6 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
@@ -37,14 +38,18 @@ import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseC
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.SendInvalidSp24CredentialsNotification
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.Sp24CredentialsValidity
+import plus.vplan.app.isFeatureEnabled
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Response
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.ExperimentalTime
 
 class FullSyncUseCase(
     private val schoolRepository: SchoolRepository,
@@ -59,6 +64,7 @@ class FullSyncUseCase(
     private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
     private val syncGradesUseCase: SyncGradesUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
+    private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val stundenplan24Repository: Stundenplan24Repository,
     private val groupRepository: GroupRepository,
     private val roomRepository: RoomRepository,
@@ -93,7 +99,13 @@ class FullSyncUseCase(
                 logger.i { "Performing FullSync" }
 
                 val cloudDataUpdate = CoroutineScope(Dispatchers.IO).launch {
-                    logger.i { "Updating schools" }
+                    if (isFeatureEnabled("fullsync_update-homework", true)) try {
+                        updateHomeworkUseCase(true)
+                    } catch (e: Exception) {
+                        logger.e(e) { "Error during homework update" }
+                        captureError("FullSync.HomeworkUpdate", "Error during homework update: ${e.stackTraceToString()}")
+                    }
+
                     try {
                         logger.i { "Updating grades" }
                         val gradeStart = Clock.System.now()

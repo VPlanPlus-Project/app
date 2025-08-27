@@ -2,7 +2,9 @@ package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
@@ -151,7 +153,7 @@ class UpdateTimetableUseCase(
             val lessons = downloadedTimetable?.lessons.orEmpty().map { lesson ->
                 val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }.map { it.id }
                 Lesson.TimetableLesson(
-                    dayOfWeek = lesson.dayOfWeek,
+                    dayOfWeek = DayOfWeek(lesson.dayOfWeek.isoDayNumber),
                     week = week.id,
                     weekType = lesson.weekType,
                     subject = lesson.subject,

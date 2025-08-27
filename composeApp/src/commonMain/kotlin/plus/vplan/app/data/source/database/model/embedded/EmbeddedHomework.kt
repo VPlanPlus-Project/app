@@ -6,7 +6,9 @@ import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.domain.model.Homework
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 data class EmbeddedHomework(
     @Embedded val homework: DbHomework,
     @Relation(
@@ -26,18 +28,19 @@ data class EmbeddedHomework(
                 id = homework.id,
                 dueTo = homework.dueTo,
                 createdAt = homework.createdAt,
-                createdByProfile = homework.createdByProfileId!!,
+                createdByProfileId = homework.createdByProfileId!!,
                 subjectInstanceId = homework.subjectInstanceId,
                 files = files.map { it.fileId },
                 taskIds = tasks.map { it.id },
-                cachedAt = homework.cachedAt
+                cachedAt = homework.cachedAt,
+                groupId = homework.groupId
             )
         }
         return Homework.CloudHomework(
             id = homework.id,
             dueTo = homework.dueTo,
             createdAt = homework.createdAt,
-            createdBy = homework.createdBy!!,
+            createdById = homework.createdBy!!,
             subjectInstanceId = homework.subjectInstanceId,
             groupId = homework.groupId,
             isPublic = homework.isPublic,

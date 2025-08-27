@@ -61,6 +61,9 @@ jobs:
             -   name: Disable debug mode
                 run: echo "app.debug=false" >> local.properties
 
+            -   name: Create placeholder certificate
+                run: touch ${GITHUB_WORKSPACE}/composeApp/src/androidMain/res/raw/vpp_ca.crt
+
             -   uses: actions/cache@v4
                 with:
                     path: |

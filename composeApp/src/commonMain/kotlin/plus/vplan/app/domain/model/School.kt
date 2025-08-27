@@ -1,12 +1,15 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.model
 
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.basicAuth
 import io.ktor.client.request.bearerAuth
-import kotlinx.datetime.Instant
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasedItem
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 sealed class School(): AliasedItem<DataTag> {

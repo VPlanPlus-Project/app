@@ -77,6 +77,14 @@ data class Day(
     }
 
     enum class DayTags: DataTag {
-        HAS_METADATA, HAS_LESSONS
+        HAS_METADATA {
+            override fun toString(): String {
+                return "Has Metadata"
+            }
+        }, HAS_LESSONS {
+            override fun toString(): String {
+                return "Has Lessons"
+            }
+        }
     }
 }

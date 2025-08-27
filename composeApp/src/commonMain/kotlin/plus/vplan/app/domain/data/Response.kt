@@ -34,3 +34,5 @@ sealed class Response<out T> {
         }
     }
 }
+
+inline fun <reified T> T.asSuccess() = Response.Success(data = this)

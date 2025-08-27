@@ -11,12 +11,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atDate
-import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Lesson
