@@ -184,7 +184,7 @@ private fun ProfileSubjectInstanceContent(
                     ) {
                         Checkbox(
                             checked = isSelected,
-                            onCheckedChange = {  }
+                            onCheckedChange = { onEvent(ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection(subjectInstance, !isSelected)) }
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
