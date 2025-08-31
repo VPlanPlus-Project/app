@@ -31,6 +31,7 @@ fun NewAssessmentDrawer(
     FullscreenDrawer(
         contentScrollState = rememberScrollState(),
         onDismissRequest = onDismissRequest,
+        preventClosingByGesture = true,
         topAppBar = { onCloseClicked, modifier, scrollProgress ->
             TopAppBar(
                 modifier = modifier,
@@ -52,9 +53,10 @@ fun NewAssessmentDrawer(
                 )
             )
         }
-    ) {
+    ) { context ->
         NewAssessmentDrawerContent(
-            selectedDate = selectedDate
+            selectedDate = selectedDate,
+            context = context
         )
     }
 }

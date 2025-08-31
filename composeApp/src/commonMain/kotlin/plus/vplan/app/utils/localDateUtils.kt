@@ -1,12 +1,12 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.utils
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.atTime
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
@@ -16,8 +16,10 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
 import kotlin.math.abs
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlin.time.ExperimentalTime
 
 fun LocalDate.atStartOfWeek(): LocalDate {
     return this.minus(this.dayOfWeek.isoDayNumber.minus(1), DateTimeUnit.DAY)
@@ -31,29 +33,21 @@ infix operator fun LocalDate.minus(duration: Duration): LocalDate {
     return this.minus(duration.inWholeDays, DateTimeUnit.DAY)
 }
 
-infix fun LocalDate.progressIn(range: ClosedRange<LocalDate>): Double {
-    val start = range.start.atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds
-    val end = range.endInclusive.atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds
-    val current = this.atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds.toDouble()
-    return (current - start) / (end - start)
-}
-
 fun LocalDate.Companion.now(): LocalDate {
-    //return LocalDate(2025, 5, 27)
     return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 }
 
 fun LocalDate.atStartOfMonth(): LocalDate {
-    return this - this.dayOfMonth.minus(1).days
+    return this - day.minus(1).days
 }
 
 infix fun LocalDate.untilText(other: LocalDate): String {
     when (val days = this.until(other, DateTimeUnit.DAY)) {
-        -2 -> return "Vorgestern"
-        -1 -> return "Gestern"
-        0 -> return "Heute"
-        1 -> return "Morgen"
-        2 -> return "Übermorgen"
+        -2L -> return "Vorgestern"
+        -1L -> return "Gestern"
+        0L -> return "Heute"
+        1L -> return "Morgen"
+        2L -> return "Übermorgen"
         else -> {
             if (days > 0) return "In $days Tagen"
             return "Vor ${abs(days)} Tagen"
@@ -78,7 +72,7 @@ fun LocalDate.atStartOfDay(): LocalDateTime {
 }
 
 val regularDateFormat = LocalDate.Format {
-    dayOfMonth(Padding.ZERO)
+    day(padding = Padding.ZERO)
     char('.')
     monthNumber(Padding.ZERO)
     char('.')
@@ -86,7 +80,7 @@ val regularDateFormat = LocalDate.Format {
 }
 
 val dateFormatDDMMMYY = LocalDate.Format {
-    dayOfMonth(Padding.ZERO)
+    day(padding = Padding.ZERO)
     chars(". ")
     monthName(shortMonthNames)
     char(' ')
@@ -94,7 +88,7 @@ val dateFormatDDMMMYY = LocalDate.Format {
 }
 
 val regularDateFormatWithoutYear = LocalDate.Format {
-    dayOfMonth(Padding.ZERO)
+    day(padding = Padding.ZERO)
     char('.')
     monthNumber(Padding.ZERO)
 }

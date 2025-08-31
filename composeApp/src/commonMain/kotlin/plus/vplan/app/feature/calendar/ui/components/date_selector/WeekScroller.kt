@@ -29,7 +29,7 @@ fun WeekScroller(
     onChangeSelectedDate: (DateSelectionCause, LocalDate) -> Unit
 ) {
     val referenceWeek = remember(LocalDate.now()) { LocalDate.now().atStartOfWeek() }
-    val pagerState = rememberPagerState(initialPage = (WEEK_PAGER_SIZE / 2) + referenceWeek.until(selectedDate.atStartOfWeek(), DateTimeUnit.WEEK)) { WEEK_PAGER_SIZE }
+    val pagerState = rememberPagerState(initialPage = (WEEK_PAGER_SIZE / 2) + referenceWeek.until(selectedDate.atStartOfWeek(), DateTimeUnit.WEEK).toInt()) { WEEK_PAGER_SIZE }
     val isUserDragging = pagerState.interactionSource.collectIsDraggedAsState().value
     LaunchedEffect(pagerState.targetPage, isUserDragging) {
         if (isUserDragging) return@LaunchedEffect
@@ -40,7 +40,7 @@ fun WeekScroller(
     LaunchedEffect(selectedDate) {
         val currentlyOpenedWeek = referenceWeek.plus((pagerState.currentPage - WEEK_PAGER_SIZE / 2) * 7, DateTimeUnit.WEEK).atStartOfWeek()
         if (currentlyOpenedWeek.atStartOfWeek() != selectedDate.atStartOfWeek()) {
-            val newPage = (WEEK_PAGER_SIZE / 2) + referenceWeek.until(selectedDate.atStartOfWeek(), DateTimeUnit.WEEK)
+            val newPage = (WEEK_PAGER_SIZE / 2) + referenceWeek.until(selectedDate.atStartOfWeek(), DateTimeUnit.WEEK).toInt()
             pagerState.animateScrollToPage(newPage)
         }
     }

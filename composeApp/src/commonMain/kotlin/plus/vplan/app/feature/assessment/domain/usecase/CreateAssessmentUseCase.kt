@@ -1,8 +1,9 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.assessment.domain.usecase
 
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -21,6 +22,8 @@ import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.ui.common.AttachedFile
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.Uuid
 
 class CreateAssessmentUseCase(
@@ -107,7 +110,7 @@ class CreateAssessmentUseCase(
         }
 
         files.forEach { file ->
-            localFileRepository.writeFile("./homework_files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
+            localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
             fileRepository.upsert(File(
                 name = file.name,
                 id = file.id,

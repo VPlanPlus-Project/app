@@ -1,7 +1,7 @@
 package plus.vplan.app.domain.data
 
 import io.ktor.http.decodeURLQueryComponent
-import io.ktor.http.encodeURLQueryComponent
+import io.ktor.http.encodeURLPath
 import plus.vplan.app.data.source.database.converters.AliasPrefixConverter
 import plus.vplan.app.domain.cache.DataTag
 import kotlin.uuid.Uuid
@@ -25,7 +25,7 @@ interface VppItem<DT: DataTag> : Item<Int, DT>
 
 /**
  * Interface used for items that may have aliases, where a UUID is used to identify the item in
- * the local database. See [plus.vplan.app.domain.repository.WebEntityRepository.resolveToLocalId]
+ * the local database. See [plus.vplan.app.domain.repository.base.AliasedItemRepository.resolveAliasToLocalId]
  * for more information about the usage of such aliases. This is used for entities that aren't
  * exclusively owned by VPlanPlus. See [VppItem] for such items.
  */
@@ -45,10 +45,14 @@ data class Alias(
 
     /**
      * Returns a string representation of the alias in the format:
-     * `<provider>.<value>.<version>`. This can be used directly in URLs.
+     * `<provider>.<value>.<version>`.
      */
     override fun toString(): String {
-        return "${provider.prefix}.${value.encodeURLQueryComponent(spaceToPlus = false)}.$version"
+        return "${provider.prefix}.${value}.$version"
+    }
+
+    fun toUrlString(): String {
+        return "${provider.prefix}.${value.encodeURLPath(encodeSlash = true, encodeEncoded = true)}.$version"
     }
 
     companion object {
@@ -76,11 +80,6 @@ enum class AliasProvider(val prefix: String) {
     Sp24("sp24"),
     Vpp("vpp"),
     Schulverwalter("schulverwalter")
-}
-
-sealed class EntityIdentifier<E: AliasedItem<*>> {
-    data class LocalIdentifier<E: AliasedItem<*>>(val id: Uuid) : EntityIdentifier<E>()
-    class AliasIdentifier<E: AliasedItem<*>>(val alias: Alias) : EntityIdentifier<E>()
 }
 
 class InvalidAliasTypeException(tried: String, expected: List<String>) : IllegalArgumentException(

@@ -2,16 +2,19 @@ package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDateTime
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.base.ItemRepository
-import kotlin.uuid.Uuid
+import plus.vplan.app.domain.repository.base.ResponsePreference
 
 interface VppIdRepository : ItemRepository<Int, VppId> {
     suspend fun getAccessToken(code: String): Response<String>
     suspend fun getUserByToken(token: String): Response<VppVppIdDto>
+
+    fun getById(id: Int, responsePreference: ResponsePreference): Flow<CacheState<VppId>>
 
     suspend fun getDevices(vppId: VppId.Active): Response<List<VppIdDevice>>
     suspend fun logoutDevice(vppId: VppId.Active, deviceId: Int): Response<Unit>
@@ -40,19 +43,19 @@ data class VppIdDevice(
 sealed class VppDbDto(
     val id: Int,
     val username: String,
-    val groups: List<Uuid>,
+    val groups: List<Int>,
     val creationReason: CreationReason
 ) {
     class CachedVppDbDto(
         id: Int,
         username: String,
-        groups: List<Uuid>
+        groups: List<Int>
     ) : VppDbDto(id, username, groups, CreationReason.Cached)
 
     class AppVppDbDto(
         id: Int,
         username: String,
-        groups: List<Uuid>,
+        groups: List<Int>,
         val schulverwalterUserId: Int?,
         val schulverwalterAccessToken: String?,
         val accessToken: String

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
@@ -14,10 +16,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.appApi
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbNews
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsSchool
@@ -34,6 +35,8 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.utils.sendAll
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class NewsRepositoryImpl(
     private val vppDatabase: VppDatabase,
@@ -43,13 +46,13 @@ class NewsRepositoryImpl(
     override suspend fun download(school: School.AppSchool): Response<List<Int>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
-                url(URLBuilder(appApi).apply {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("app", "v1", "news")
                     parameters.append("school_id", "sp24.${school.buildSp24AppAuthentication().sp24SchoolId}.1")
                 }.build())
                 school.buildSp24AppAuthentication().authentication(this)
             }
-            if (response.status != HttpStatusCode.OK) return response.toErrorResponse<List<News>>()
+            if (response.status != HttpStatusCode.OK) return response.toErrorResponse()
 
             val data = ResponseDataWrapper.fromJson<List<NewsResponse>>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())

@@ -1,8 +1,11 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Homework
@@ -10,12 +13,27 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.VppSchoolAuthentication
-import plus.vplan.app.ui.common.AttachedFile
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 interface HomeworkRepository: WebEntityRepository<Homework> {
-    suspend fun upsert(homework: List<Homework>, tasks: List<Homework.HomeworkTask>, files: List<Homework.HomeworkFile>)
-    fun getByGroup(groupId: Uuid): Flow<List<Homework>>
+
+    suspend fun upsertLocally(
+        homeworkId: Int,
+        subjectInstanceId: Int?,
+        groupId: Int?,
+        dueTo: LocalDate,
+        isPublic: Boolean?,
+        createdAt: Instant,
+        createdBy: Int?,
+        createdByProfileId: Uuid?,
+        tasks: List<HomeworkTaskDbDto>,
+        tasksDoneAccount: List<HomeworkTaskDoneAccountDbDto>,
+        tasksDoneProfile: List<HomeworkTaskDoneProfileDbDto>,
+        associatedFileIds: List<Int>,
+    )
+    fun getByGroup(group: Group): Flow<List<Homework>>
 
     fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
 
@@ -38,37 +56,51 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun addTask(homework: Homework, task: String, profile: Profile.StudentProfile): Response.Error?
     suspend fun editHomeworkTask(task: Homework.HomeworkTask, newContent: String, profile: Profile.StudentProfile)
 
-    suspend fun linkHomeworkFileLocally(homework: Homework, file: plus.vplan.app.domain.model.File)
-    suspend fun unlinkHomeworkFileLocally(homework: Homework, fileId: Int)
-
     suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error?
     suspend fun deleteHomeworkTask(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Response.Error?
 
-    /**
-     * @return List of ids of the created homework
-     */
     suspend fun download(
         schoolApiAccess: VppSchoolAuthentication,
-        groupId: Uuid,
-        subjectInstanceIds: List<Int>
+        groups: List<Alias>,
+        subjectInstanceAliases: List<Alias>
     ): Response<List<Int>>
 
     suspend fun clearCache()
 
+    /**
+     * @param groupId The vpp id of the group, null if bound to subject instance
+     * @param subjectInstanceId The vpp id of the subject instance, null if bound to group
+     */
     suspend fun createHomeworkOnline(
         vppId: VppId.Active,
         until: LocalDate,
-        group: Group,
-        subjectInstance: SubjectInstance?,
+        groupId: Int?,
+        subjectInstanceId: Int?,
         isPublic: Boolean,
         tasks: List<String>,
     ): Response<CreateHomeworkResponse>
 
-    suspend fun uploadHomeworkDocument(
-        vppId: VppId.Active,
+    /**
+     * Links a file to a homework.
+     * @param vppId If provided, the file will be linked on the api as well.
+     * @param homeworkId If the homework ID is greater than zero (meaning it is stored in the cloud), the [vppId] will be required.
+     */
+    suspend fun linkHomeworkFile(
+        vppId: VppId.Active?,
         homeworkId: Int,
-        document: AttachedFile
-    ): Response<Int>
+        fileId: Int
+    ): Response<Unit>
+
+    /**
+     * Unlinks a file from a homework.
+     * @param vppId If provided, the file will be unlinked on the api as well.
+     * @param homeworkId If the homework ID is greater than zero (meaning it is stored in the cloud), the [vppId] will be required.
+     */
+    suspend fun unlinkHomeworkFile(
+        vppId: VppId.Active?,
+        homeworkId: Int,
+        fileId: Int
+    ): Response<Unit>
 
     suspend fun dropIndexForProfile(profileId: Uuid)
     suspend fun createCacheForProfile(profileId: Uuid, homeworkIds: Collection<Int>)
@@ -77,4 +109,23 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
 data class CreateHomeworkResponse(
     val id: Int,
     val taskIds: Map<String, Int>
+)
+
+data class HomeworkTaskDbDto(
+    val id: Int,
+    val homeworkId: Int,
+    val content: String,
+    val createdAt: Instant
+)
+
+data class HomeworkTaskDoneAccountDbDto(
+    val taskId: Int,
+    val doneBy: Int,
+    val isDone: Boolean
+)
+
+data class HomeworkTaskDoneProfileDbDto(
+    val taskId: Int,
+    val profileId: Uuid,
+    val isDone: Boolean
 )

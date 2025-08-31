@@ -7,6 +7,7 @@ import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.usecase.UpdateFirebaseTokenUseCase
 
 expect suspend fun getFirebaseToken(): String?
+expect suspend fun setProperty(property: String, value: String)
 
 class UpdateFirebaseTokenUseCase(
     private val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase,
@@ -14,15 +15,19 @@ class UpdateFirebaseTokenUseCase(
 ) {
     private val logger = Logger.withTag("UpdateFirebaseTokenUseCase[Main]")
     suspend operator fun invoke() {
-        val token = keyValueRepository.get(Keys.FIREBASE_TOKEN).first()?.ifEmpty { null } ?: run {
-            logger.w { "No firebase token found, requesting current..." }
-            val newToken = getFirebaseToken()
-            if (newToken == null) {
-                logger.e { "No firebase token found, aborting update" }
-                return
+        try {
+            val token = keyValueRepository.get(Keys.FIREBASE_TOKEN).first()?.ifEmpty { null } ?: run {
+                logger.w { "No firebase token found, requesting current..." }
+                val newToken = getFirebaseToken()
+                if (newToken == null) {
+                    logger.e { "No firebase token found, aborting update" }
+                    return
+                }
+                newToken
             }
-            newToken
+            updateFirebaseTokenUseCase(token)
+        } catch (e: Exception) {
+            logger.e(e) { "Failed to update Firebase token" }
         }
-        updateFirebaseTokenUseCase(token)
     }
 }

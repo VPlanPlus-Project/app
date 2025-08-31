@@ -58,6 +58,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -66,6 +67,7 @@ import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.cache.collectAsSingleFlow
+import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
@@ -315,7 +317,7 @@ private fun HomeContent(
                                     append(state.day.date.format(LocalDate.Format {
                                         dayOfWeek(longDayOfWeekNames)
                                         chars(", ")
-                                        dayOfMonth()
+                                        day(padding = Padding.ZERO)
                                         chars(". ")
                                         monthName(longMonthNames)
                                         char(' ')
@@ -373,14 +375,14 @@ private fun HomeContent(
                                             ) {
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
                                                     highlightedLessons.currentLessons.forEach { (currentLesson, continuing) ->
-                                                        val homeworkForLesson = homework.filter { it.subjectInstanceId == currentLesson.subjectInstanceId }
+                                                        val homeworkForLesson = homework//.filter { it.subjectInstanceId == currentLesson.subjectInstanceId } fixme
                                                         val assessmentsForLesson = assessments.filter { it.subjectInstanceId == currentLesson.subjectInstanceId }
                                                         CurrentOrNextLesson(
                                                             currentTime = state.currentTime,
                                                             currentLesson = currentLesson,
                                                             currentProfileType = state.currentProfile?.profileType,
                                                             continuing = continuing,
-                                                            homework = homeworkForLesson,
+                                                            homework = homeworkForLesson.toList(),
                                                             assessments = assessmentsForLesson,
                                                             progressType = ProgressType.Regular
                                                         )
@@ -485,7 +487,11 @@ private fun HomeContent(
                                                         val rooms = remember(lesson.roomIds) { lesson.rooms }.collectAsSingleFlow().value
                                                         val groups = remember(lesson.groupIds) { lesson.groups }.collectAsSingleFlow().value
                                                         val teachers = remember(lesson.teacherIds) { lesson.teachers }.collectAsSingleFlow().value
-                                                        val homeworkForLesson = homework.filter { it.subjectInstanceId == lesson.subjectInstanceId }
+                                                        val homeworkForLesson = remember { mutableListOf<Homework>() }
+                                                        LaunchedEffect(homework, lesson.subjectInstanceId) {
+                                                            homeworkForLesson.clear()
+                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == lesson.subjectInstanceId })
+                                                        }
                                                         val assessmentsForLesson = assessments.filter { it.subjectInstanceId == lesson.subjectInstanceId }
                                                         val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
                                                         if (lessonTime != null) Column(Modifier.fillMaxWidth()) {

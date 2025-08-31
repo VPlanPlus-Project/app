@@ -1,11 +1,12 @@
 import groovy.lang.MissingFieldException
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Base64
 import java.util.Properties
 
 object ApplicationConfig {
-    const val APP_VERSION_NAME = "0.1.63-production"
-    const val APP_VERSION_CODE = 123
+    const val APP_VERSION_NAME = "0.2.5-production"
+    const val APP_VERSION_CODE = 131
 }
 
 val localProperties = Properties().apply {
@@ -190,4 +191,10 @@ buildConfig {
     buildConfigField("POSTHOG_API_KEY", localProperties.getProperty("posthog.api.key") ?: throw MissingFieldException("posthog.api.key not found in local.properties", String::class.java))
 
     generateAtSync = true
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-Xopt-in=kotlin.time.ExperimentalTime")
+    }
 }

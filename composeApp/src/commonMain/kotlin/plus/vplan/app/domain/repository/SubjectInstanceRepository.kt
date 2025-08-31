@@ -1,6 +1,7 @@
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
+import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.repository.base.AliasedItemRepository
@@ -12,6 +13,11 @@ interface SubjectInstanceRepository : AliasedItemRepository<SubjectInstanceDbDto
 
     suspend fun deleteById(id: Uuid)
     suspend fun deleteById(ids: List<Uuid>)
+
+    fun findByAlias(alias: Alias, forceUpdate: Boolean, preferCurrentState: Boolean): Flow<AliasState<SubjectInstance>> {
+        return findByAliases(setOf(alias), forceUpdate, preferCurrentState)
+    }
+    fun findByAliases(aliases: Set<Alias>, forceUpdate: Boolean, preferCurrentState: Boolean): Flow<AliasState<SubjectInstance>>
 }
 
 data class SubjectInstanceDbDto(

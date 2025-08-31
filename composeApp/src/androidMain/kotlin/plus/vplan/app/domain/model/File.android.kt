@@ -6,7 +6,7 @@ import plus.vplan.app.activity
 
 actual fun openFile(file: File) {
     val intent = Intent(Intent.ACTION_VIEW)
-    val storedFile = activity.filesDir.resolve("homework_files" + "/" + file.id.toString())
+    val storedFile = activity.filesDir.resolve("files" + "/" + file.id.toString())
 
     val newUri = FileProvider.getUriForFile(
         activity,

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.news.ui
 
 import androidx.compose.animation.AnimatedContent
@@ -34,7 +36,6 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.cache.collectAsSingleFlow
-import plus.vplan.app.domain.cache.collectAsSingleFlowOld
 import plus.vplan.app.ui.components.FullscreenDrawer
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.utils.regularDateFormat
@@ -44,6 +45,7 @@ import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.school
 import vplanplus.composeapp.generated.resources.smartphone
 import vplanplus.composeapp.generated.resources.x
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +59,7 @@ fun NewsDrawer(
     val contentScrollState = rememberScrollState()
     FullscreenDrawer(
         onDismissRequest = onDismissRequest,
+        preventClosingByGesture = false,
         topAppBar = { onCloseClicked, modifier, _ ->
             TopAppBar(
                 title = {

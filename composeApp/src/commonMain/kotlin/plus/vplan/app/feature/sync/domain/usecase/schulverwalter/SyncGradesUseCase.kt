@@ -16,6 +16,7 @@ import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Grade
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.schulverwalter.CollectionRepository
 import plus.vplan.app.domain.repository.schulverwalter.FinalGradeRepository
 import plus.vplan.app.domain.repository.schulverwalter.GradeRepository
@@ -48,7 +49,7 @@ class SyncGradesUseCase(
 
             val invalidVppIdsAfterTokenReload = schulverwalterRepository.checkAccess()
             invalidVppIdsAfterTokenReload.forEach { stillInvalidVppId ->
-                val vppId = App.vppIdSource.getById(stillInvalidVppId).getFirstValueOld() as? VppId.Active ?: return@forEach
+                val vppId = vppIdRepository.getById(stillInvalidVppId, ResponsePreference.Fast).getFirstValueOld() as? VppId.Active ?: return@forEach
                 if (vppId.schulverwalterConnection!!.isValid == false) return@forEach
                 schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection.accessToken, false)
                 platformNotificationRepository.sendNotification(
@@ -74,7 +75,7 @@ class SyncGradesUseCase(
                 )
             }
             (invalidVppIds - invalidVppIdsAfterTokenReload).forEach { nowValidVppId ->
-                val vppId = App.vppIdSource.getById(nowValidVppId).getFirstValueOld() as? VppId.Active ?: return@forEach
+                val vppId = vppIdRepository.getById(nowValidVppId, ResponsePreference.Fast).getFirstValueOld() as? VppId.Active ?: return@forEach
                 schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection!!.accessToken, true)
             }
         }

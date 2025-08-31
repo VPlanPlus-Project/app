@@ -67,8 +67,9 @@ import vplanplus.composeapp.generated.resources.shapes
 import vplanplus.composeapp.generated.resources.triangle_alert
 
 @Composable
-fun FullscreenDrawerContext.NewAssessmentDrawerContent(
-    selectedDate: LocalDate? = null
+fun NewAssessmentDrawerContent(
+    selectedDate: LocalDate? = null,
+    context: FullscreenDrawerContext
 ) {
     val viewModel = koinViewModel<NewAssessmentViewModel>()
     val state = viewModel.state
@@ -83,7 +84,7 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent(
     var fileToRename by rememberSaveable { mutableStateOf<AttachedFile?>(null) }
 
     LaunchedEffect(state.savingState) {
-        if (state.savingState == UnoptimisticTaskState.Success) this@NewAssessmentDrawerContent.closeDrawerWithAnimation()
+        if (state.savingState == UnoptimisticTaskState.Success) context.closeDrawerWithAnimation()
     }
 
     val filePickerLauncher = rememberFilePickerLauncher(
@@ -113,7 +114,7 @@ fun FullscreenDrawerContext.NewAssessmentDrawerContent(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(scrollState)
+                .verticalScroll(context.scrollState)
         ) {
             Text(
                 text = "Thema und Beschreibung",

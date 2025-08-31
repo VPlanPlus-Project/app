@@ -1,8 +1,11 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.model.schulverwalter
 
-import kotlinx.datetime.Instant
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.data.Item
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 data class FinalGrade(
     override val id: Int,
