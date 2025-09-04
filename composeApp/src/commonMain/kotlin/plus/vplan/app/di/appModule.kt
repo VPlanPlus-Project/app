@@ -136,6 +136,9 @@ val appModule = module(createdAtStart = true) {
             install(HttpRequestRetry) {
                 retryOnServerErrors(maxRetries = 5)
                 exponentialDelay()
+
+                retryOnException(2, retryOnTimeout = true)
+
                 retryIf { request, response ->
                     val isResponseFromVPPServer = response.headers["X-Backend-Family"] == "vpp.ID"
                     val isResponseSuccess = response.status.isSuccess()
