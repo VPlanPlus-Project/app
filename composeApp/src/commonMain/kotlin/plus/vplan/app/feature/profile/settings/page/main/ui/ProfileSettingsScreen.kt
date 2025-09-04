@@ -307,7 +307,8 @@ private fun ProfileSettingsContent(
                 title = "Stundenauswahl",
                 subtitle = "Wähle aus, welche Stunden dir angezeigt werden.",
                 icon = painterResource(Res.drawable.graduation_cap),
-                onClick = onOpenSubjectInstances
+                onClick = onOpenSubjectInstances,
+                showArrow = true
             )
         }
 

@@ -195,26 +195,30 @@ private fun InfoContent(
                 title = "Internetseite",
                 subtitle = "vplan.plus",
                 icon = painterResource(Res.drawable.globe),
-                onClick = { BrowserIntent.openUrl("https://vplan.plus") }
+                onClick = { BrowserIntent.openUrl("https://vplan.plus") },
+                showArrow = true,
             )
             SettingsRecord(
                 title = "Datenschutzerklärung",
                 subtitle = "für VPlanPlus und vpp.ID",
                 icon = painterResource(Res.drawable.shield_user),
-                onClick = { BrowserIntent.openUrl("https://vplan.plus/privacy") }
+                onClick = { BrowserIntent.openUrl("https://vplan.plus/privacy") },
+                showArrow = true,
             )
             SettingsRecord(
                 title = "Nutzungsbedingungen",
                 subtitle = "für VPlanPlus und vpp.ID",
                 icon = painterResource(Res.drawable.handshake),
-                onClick = { BrowserIntent.openUrl("https://vplan.plus/tos") }
+                onClick = { BrowserIntent.openUrl("https://vplan.plus/tos") },
+                showArrow = true,
             )
             when (plus.vplan.app.getPlatform()) {
                 Platform.Android -> SettingsRecord(
                     title = "Google Play Store",
                     subtitle = "VPlanPlus: Digitaler Schultag",
                     icon = painterResource(Res.drawable.google_play),
-                    onClick = { BrowserIntent.openUrl("https://play.google.com/store/apps/details?id=plus.vplan.app") }
+                    onClick = { BrowserIntent.openUrl("https://play.google.com/store/apps/details?id=plus.vplan.app") },
+                    showArrow = true,
                 )
                 else -> Unit
             }
@@ -222,7 +226,8 @@ private fun InfoContent(
                 title = "GitHub-Repository",
                 subtitle = "VPlanPlusProject/app",
                 icon = painterResource(Res.drawable.github),
-                onClick = { BrowserIntent.openUrl("https://github.com/VPlanPlus-Project/app") }
+                onClick = { BrowserIntent.openUrl("https://github.com/VPlanPlus-Project/app") },
+                showArrow = true,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -235,25 +240,29 @@ private fun InfoContent(
                 title = "Instagram",
                 subtitle = "@vplanplus",
                 icon = painterResource(Res.drawable.instagram),
-                onClick = { BrowserIntent.openUrl("https://www.instagram.com/vplanplus") }
+                onClick = { BrowserIntent.openUrl("https://www.instagram.com/vplanplus") },
+                showArrow = true,
             )
             SettingsRecord(
                 title = "Threads",
                 subtitle = "@vplanplus",
                 icon = painterResource(Res.drawable.threads),
-                onClick = { BrowserIntent.openUrl("https://www.threads.net/@vplanplus") }
+                onClick = { BrowserIntent.openUrl("https://www.threads.net/@vplanplus") },
+                showArrow = true,
             )
             SettingsRecord(
                 title = "Mastodon",
                 subtitle = "@vpp_app@mastodon.social",
                 icon = painterResource(Res.drawable.mastodon),
-                onClick = { BrowserIntent.openUrl("https://mastodon.social/@vpp_app") }
+                onClick = { BrowserIntent.openUrl("https://mastodon.social/@vpp_app") },
+                showArrow = true,
             )
             SettingsRecord(
                 title = "WhatsApp-Kanal",
                 subtitle = "Erhalte Statusupdates und Infos in WhatsApp",
                 icon = painterResource(Res.drawable.whatsapp),
-                onClick = { BrowserIntent.openUrl("https://whatsapp.com/channel/0029Vagcelf5q08Vjjc7Of1o") }
+                onClick = { BrowserIntent.openUrl("https://whatsapp.com/channel/0029Vagcelf5q08Vjjc7Of1o") },
+                showArrow = true,
             )
             Text(
                 text = "Made with ❤️ by Julius Babies",

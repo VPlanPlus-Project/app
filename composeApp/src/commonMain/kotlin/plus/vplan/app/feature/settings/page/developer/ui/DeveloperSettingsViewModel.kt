@@ -56,24 +56,17 @@ class DeveloperSettingsViewModel(
 
     init {
         viewModelScope.launch {
+            keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).collectLatest {
+                state = state.copy(
+                    isDeveloperModeEnabled = it.toBoolean()
+                )
+            }
+        }
+        viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
                 state = state.copy(
                     profile = profile,
                 )
-
-                val school = profile.getSchool().getFirstValue()
-                if (school != null) {
-                    launch {
-                        groupRepository.getBySchool(school.id).collectLatest {
-                            state = state.copy(groups = it)
-                        }
-                    }
-                    launch {
-                        subjectInstanceRepository.getBySchool(school.id).collectLatest {
-                            state = state.copy(subjectInstances = it)
-                        }
-                    }
-                }
             }
         }
         viewModelScope.launch {
@@ -106,7 +99,7 @@ class DeveloperSettingsViewModel(
                     substitutionPlanRepository.deleteAllSubstitutionPlans()
                     timetableRepository.deleteAllTimetables()
                 }
-                DeveloperSettingsEvent.DeleteSubstitutionPlan -> {
+                DeveloperSettingsEvent.ClearSubstitutionPlanCache -> {
                     substitutionPlanRepository.deleteAllSubstitutionPlans()
                 }
                 DeveloperSettingsEvent.UpdateSubstitutionPlan -> {
@@ -134,8 +127,8 @@ class DeveloperSettingsViewModel(
                     if (state.isSubjectInstanceUpdateRunning) return@launch
                     state = state.copy(isSubjectInstanceUpdateRunning = true)
                     updateSubjectInstanceUseCase(
-                        state.profile!!.getSchool().getFirstValue()!!,
-                        null
+                        school = state.profile!!.getSchool().getFirstValue()!!,
+                        providedClient = null
                     )
                     state = state.copy(isSubjectInstanceUpdateRunning = false)
                 }
@@ -168,6 +161,9 @@ class DeveloperSettingsViewModel(
                     updateHomeworkUseCase(true)
                     state = state.copy(isHomeworkUpdateRunning = false)
                 }
+                DeveloperSettingsEvent.ToggleDeveloperMode -> {
+                    keyValueRepository.set(Keys.DEVELOPER_SETTINGS_ACTIVE, (!state.isDeveloperModeEnabled).toString())
+                }
             }
         }
     }
@@ -181,9 +177,8 @@ data class DeveloperSettingsState(
     val isTimetableUpdateRunning: Boolean = false,
     val isLessonTimesUpdateRunning: Boolean = false,
     val isHomeworkUpdateRunning: Boolean = false,
+    val isDeveloperModeEnabled: Boolean = true,
     val profile: Profile? = null,
-    val subjectInstances: List<SubjectInstance> = emptyList(),
-    val groups: List<Group> = emptyList(),
     val isAutoSyncDisabled: Boolean = false,
     val fcmLogs: List<DbFcmLog> = emptyList()
 )
@@ -199,6 +194,7 @@ sealed class DeveloperSettingsEvent {
     data class UpdateGroup(val group: Group) : DeveloperSettingsEvent()
     data class UpdateSubjectInstance(val subjectInstance: SubjectInstance) : DeveloperSettingsEvent()
     data object UpdateHomework : DeveloperSettingsEvent()
+    data object ToggleDeveloperMode : DeveloperSettingsEvent()
     data object ToggleAutoSyncDisabled : DeveloperSettingsEvent()
-    data object DeleteSubstitutionPlan : DeveloperSettingsEvent()
+    data object ClearSubstitutionPlanCache : DeveloperSettingsEvent()
 }

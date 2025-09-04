@@ -10,19 +10,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,10 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.cache.collectAsSingleFlow
-import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.feature.settings.ui.components.SettingsRecord
+import plus.vplan.app.ui.components.TopToggle
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
+import vplanplus.composeapp.generated.resources.rotate_cw
+import vplanplus.composeapp.generated.resources.trash_2
 
 @Composable
 fun DeveloperSettingsScreen(
@@ -85,97 +84,84 @@ private fun DeveloperSettingsContent(
                 .padding(top = 4.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row {
-                Button(
-                    onClick = remember { { onEvent(DeveloperSettingsEvent.StartFullSync) } },
-                    enabled = !state.isFullSyncRunning,
-                ) {
-                    Text("Full sync")
-                }
-                if (state.isFullSyncRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
-            }
-            Button(
-                onClick = remember { { onEvent(DeveloperSettingsEvent.ClearLessonCache) } }
-            ) {
-                Text("Clear lesson cache")
-            }
-            Row {
-                Button(
-                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateSubstitutionPlan) } },
-                    enabled = !state.isSubstitutionPlanUpdateRunning,
-                ) {
-                    Text("Update substitution plan")
-                }
-                if (state.isSubstitutionPlanUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
-            }
-            Row {
-                Button(
-                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateTimetable) } },
-                    enabled = !state.isTimetableUpdateRunning,
-                ) {
-                    Text("Update timetable")
-                }
-                if (state.isTimetableUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
-            }
-            Row {
-                Button(
-                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateWeeks) } },
-                    enabled = !state.isWeekUpdateRunning,
-                ) {
-                    Text("Update weeks")
-                }
-                if (state.isWeekUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
-            }
-            Row {
-                Button(
-                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateSubjectInstances) } },
-                    enabled = !state.isSubjectInstanceUpdateRunning,
-                ) {
-                    Text("Update subject instances + courses")
-                }
-                if (state.isSubjectInstanceUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
-            }
-            Row {
-                Button(
-                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateLessonTimes) } },
-                    enabled = !state.isLessonTimesUpdateRunning
-                ) {
-                    Text("Update lesson times")
-                }
-                if (state.isLessonTimesUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
-            }
-            Row {
-                Button(
-                    onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateHomework) } }
-                ) {
-                    Text("Update homework")
-                }
-                if (state.isHomeworkUpdateRunning) CircularProgressIndicator(Modifier.padding(start = 8.dp))
-            }
+            TopToggle(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                text = "Entwickleroptionen",
+                state = state.isDeveloperModeEnabled,
+                onToggle = { onEvent(DeveloperSettingsEvent.ToggleDeveloperMode) },
+            )
 
-            Column {
-                state.subjectInstances.forEach { subjectInstance ->
-                    TextButton(
-                        onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateSubjectInstance(subjectInstance)) } },
-                        enabled = !state.isSubjectInstanceUpdateRunning
-                    ) {
-                        val groups by subjectInstance.groups.collectAsSingleFlow()
-                        val groupNames = remember(groups) { groups.joinToString { it.name } }
-                        Text("$groupNames ${subjectInstance.subject} ${subjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value}")
-                    }
-                }
-            }
+            SettingsRecord(
+                title = "Vollständige Aktualisierung",
+                subtitle = "Lädt alle Daten neu herunter",
+                icon = painterResource(Res.drawable.rotate_cw),
+                isLoading = state.isFullSyncRunning,
+                enabled = !state.isFullSyncRunning,
+                onClick = { onEvent(DeveloperSettingsEvent.StartFullSync) }
+            )
+            SettingsRecord(
+                title = "Vertretungsplan aktualisieren",
+                subtitle = "Erzwingt das Neuladen des Vertretungsplans",
+                icon = painterResource(Res.drawable.rotate_cw),
+                isLoading = state.isSubstitutionPlanUpdateRunning,
+                enabled = !state.isSubstitutionPlanUpdateRunning,
+                onClick = { onEvent(DeveloperSettingsEvent.UpdateSubstitutionPlan) }
+            )
+            SettingsRecord(
+                title = "Stundenplan aktualisieren",
+                subtitle = "Erzwingt das Neuladen des Stundenplans",
+                icon = painterResource(Res.drawable.rotate_cw),
+                isLoading = state.isTimetableUpdateRunning,
+                enabled = !state.isTimetableUpdateRunning,
+                onClick = { onEvent(DeveloperSettingsEvent.UpdateTimetable) }
+            )
+            SettingsRecord(
+                title = "Wochen aktualisieren",
+                subtitle = "Erzwingt das Neuladen der Wochen",
+                icon = painterResource(Res.drawable.rotate_cw),
+                isLoading = state.isWeekUpdateRunning,
+                enabled = !state.isWeekUpdateRunning,
+                onClick = { onEvent(DeveloperSettingsEvent.UpdateWeeks) }
+            )
+            SettingsRecord(
+                title = "Hausaufgaben aktualisieren",
+                subtitle = "Erzwingt das Neuladen der Hausaufgaben",
+                icon = painterResource(Res.drawable.rotate_cw),
+                isLoading = state.isHomeworkUpdateRunning,
+                enabled = !state.isHomeworkUpdateRunning,
+                onClick = { onEvent(DeveloperSettingsEvent.UpdateHomework) }
+            )
+            SettingsRecord(
+                title = "Fachinstanzen und Kurse aktualisieren",
+                subtitle = "Erzwingt das Neuladen der Fachinstanzen und Kurse",
+                icon = painterResource(Res.drawable.rotate_cw),
+                isLoading = state.isSubjectInstanceUpdateRunning,
+                enabled = !state.isSubjectInstanceUpdateRunning,
+                onClick = { onEvent(DeveloperSettingsEvent.UpdateSubjectInstances) }
+            )
+            SettingsRecord(
+                title = "Stundenzeiten aktualisieren",
+                subtitle = "Erzwingt das Neuladen der Stundenzeiten",
+                icon = painterResource(Res.drawable.rotate_cw),
+                isLoading = state.isLessonTimesUpdateRunning,
+                enabled = !state.isLessonTimesUpdateRunning,
+                onClick = { onEvent(DeveloperSettingsEvent.UpdateLessonTimes) }
+            )
 
-            Column {
-                state.groups.forEach { group ->
-                    TextButton(
-                        onClick = remember { { onEvent(DeveloperSettingsEvent.UpdateGroup(group)) } },
-                        enabled = !state.isSubstitutionPlanUpdateRunning
-                    ) {
-                        Text("Update group ${group.name} ${group.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value}")
-                    }
-                }
-            }
+            HorizontalDivider(Modifier.padding(16.dp))
+
+            SettingsRecord(
+                title = "Stundencache leeren",
+                subtitle = "Löscht alle lokal gespeicherten (Vertretungs)stunden",
+                icon = painterResource(Res.drawable.trash_2),
+                onClick = { onEvent(DeveloperSettingsEvent.ClearLessonCache) }
+            )
+            SettingsRecord(
+                title = "Vertretungsplancache leeren",
+                subtitle = "Löscht alle lokal gespeicherten Vertretungspläne",
+                icon = painterResource(Res.drawable.trash_2),
+                onClick = { onEvent(DeveloperSettingsEvent.ClearSubstitutionPlanCache) }
+            )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
@@ -183,9 +169,6 @@ private fun DeveloperSettingsContent(
                     onCheckedChange = remember { { onEvent(DeveloperSettingsEvent.ToggleAutoSyncDisabled) } }
                 )
                 Text("Auto-Sync aktivieren", modifier = Modifier.padding(start = 8.dp))
-            }
-            Button(onClick = remember { { onEvent(DeveloperSettingsEvent.DeleteSubstitutionPlan) } }) {
-                Text("Drop substitution plan")
             }
             Text("FCM Logs", modifier = Modifier.padding(top = 8.dp))
             if (state.fcmLogs.isEmpty()) {
