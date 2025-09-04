@@ -5,8 +5,12 @@ package plus.vplan.app.data.repository.schulverwalter
 import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.URLProtocol
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -171,6 +175,26 @@ class YearRepositoryImpl(
         }
         return Response.Error.Cancelled
     }
+
+    override suspend fun setCurrent(accessToken: String, yearId: Int?): Response<Unit> {
+        safeRequest(onError = { return it }) {
+            val response = httpClient.post {
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = "beste.schule"
+                    port = 443
+                    pathSegments = listOf("api", "years", "current")
+                }
+                bearerAuth(accessToken)
+
+                contentType(ContentType.Application.Json)
+                setBody(SetYearRequest(yearId))
+            }
+            if (!response.status.isSuccess()) return response.toErrorResponse()
+            return Response.Success(Unit)
+        }
+        return Response.Error.Cancelled
+    }
 }
 
 @Serializable
@@ -191,3 +215,8 @@ private data class YearItemResponse(
         @SerialName("included_interval_id") val includedIntervalId: Int?,
     )
 }
+
+@Serializable
+private data class SetYearRequest(
+    @SerialName("id") val yearId: Int?
+)

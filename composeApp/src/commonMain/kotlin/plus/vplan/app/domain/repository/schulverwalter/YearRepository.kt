@@ -6,4 +6,5 @@ import plus.vplan.app.domain.repository.WebEntityRepository
 
 interface YearRepository: WebEntityRepository<Year> {
     suspend fun download(): Response<Set<Int>>
+    suspend fun setCurrent(accessToken: String, yearId: Int?): Response<Unit>
 }
