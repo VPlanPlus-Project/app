@@ -12,6 +12,7 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.schulverwalter.Interval
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
@@ -54,11 +55,22 @@ class ProfileViewModel(
                 state = it
                 val profile = state.currentProfile
                 if (!it.areGradesLocked && profile is Profile.StudentProfile) {
-                    if (profile.getVppIdItem()?.gradeIds.orEmpty().isNotEmpty()) {
+
+                    val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active ?: return@collectLatest
+
+                    if (vppId.gradeIds.isNotEmpty()) {
                         state = state.copy(currentInterval = getCurrentIntervalUseCase())
-                        val grades = profile.getVppIdItem()?.gradeIds?.map { gradeId -> App.gradeSource.getById(gradeId).getFirstValueOld()!! } ?: emptyList()
+                        val grades = vppId.gradeIds.map { gradeId -> App.gradeSource.getById(gradeId).getFirstValueOld()!! }
                         state.currentInterval?.let { interval ->
-                            state = state.copy(averageGrade = calculateAverageUseCase(grades, interval))
+                            state = state.copy(
+                                averageGrade = calculateAverageUseCase(grades, interval),
+                                latestGrade = grades
+                                    .filter { grade -> grade.givenAt in interval.from..interval.to }
+                                    .filterNot { grade -> grade.value == null }
+                                    .maxByOrNull { grade -> grade.givenAt }
+                                    ?.let { LatestGrade.Value(it.value!!) }
+                                    ?: LatestGrade.NotExisting
+                            )
                         }
                     }
                 }
@@ -87,6 +99,7 @@ data class ProfileState(
     val areGradesLocked: Boolean = false,
     val currentInterval: Interval? = null,
     val averageGrade: Double? = null,
+    val latestGrade: LatestGrade = LatestGrade.Loading,
 )
 
 sealed class ProfileScreenEvent {
@@ -94,4 +107,10 @@ sealed class ProfileScreenEvent {
     data class SetActiveProfile(val profile: Profile): ProfileScreenEvent()
 
     data object RequestGradeUnlock: ProfileScreenEvent()
+}
+
+sealed class LatestGrade {
+    data object Loading: LatestGrade()
+    data object NotExisting: LatestGrade()
+    data class Value(val value: String): LatestGrade()
 }

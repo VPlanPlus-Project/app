@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
-import plus.vplan.app.domain.cache.collectAsSingleFlowOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.feature.main.ui.MainScreen
@@ -180,7 +179,6 @@ private fun ProfileContent(
                             .distinctUntilChanged()
                             .collectAsState(emptySet()).value
 
-                        val grades = vppId.grades.collectAsSingleFlowOld().value
                         if (vppId.schulverwalterConnection != null) {
                             GradesCard(
                                 modifier = Modifier
@@ -188,8 +186,12 @@ private fun ProfileContent(
                                 areGradesLocked = state.areGradesLocked,
                                 subjects = subjectInstances,
                                 infiniteTransition = infiniteTransition,
-                                averageGrade = if (vppId.gradeIds.isEmpty()) GradesCardFeaturedGrade.NotExisting else if (state.averageGrade == null) GradesCardFeaturedGrade.Loading else GradesCardFeaturedGrade.Value(state.averageGrade.toString()),
-                                latestGrade = if (vppId.gradeIds.isEmpty()) GradesCardFeaturedGrade.NotExisting else if (grades.isEmpty()) GradesCardFeaturedGrade.Loading else GradesCardFeaturedGrade.Value(grades.maxByOrNull { it.givenAt }?.value.toString()),
+                                averageGrade = if (vppId.gradeIds.isEmpty() || state.averageGrade?.isNaN() == true) GradesCardFeaturedGrade.NotExisting else if (state.averageGrade == null) GradesCardFeaturedGrade.Loading else GradesCardFeaturedGrade.Value(state.averageGrade.toString()),
+                                latestGrade = when (state.latestGrade) {
+                                    is LatestGrade.Loading -> GradesCardFeaturedGrade.Loading
+                                    is LatestGrade.NotExisting -> GradesCardFeaturedGrade.NotExisting
+                                    is LatestGrade.Value -> GradesCardFeaturedGrade.Value(state.latestGrade.value)
+                                },
                                 onRequestUnlock = {
                                     openGradesScreenAfterUnlock = true
                                     onEvent(ProfileScreenEvent.RequestGradeUnlock)
