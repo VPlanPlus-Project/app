@@ -107,7 +107,7 @@ fun GradesScreen(
     vppId: Int
 ) {
     val viewModel = koinViewModel<GradesViewModel>()
-    val state = viewModel.state
+    val state by viewModel.state.collectAsState()
 
     LaunchedEffect(vppId) { viewModel.init(vppId) }
 
