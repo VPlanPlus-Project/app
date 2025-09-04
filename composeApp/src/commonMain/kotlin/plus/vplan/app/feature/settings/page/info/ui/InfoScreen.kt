@@ -212,7 +212,7 @@ private fun InfoContent(
             when (plus.vplan.app.getPlatform()) {
                 Platform.Android -> SettingsRecord(
                     title = "Google Play Store",
-                    subtitle = "VPlanPlus: Digitaler Schultag",
+                    subtitle = "VPlanPlus für stundenplan24.de",
                     icon = painterResource(Res.drawable.google_play),
                     onClick = { BrowserIntent.openUrl("https://play.google.com/store/apps/details?id=plus.vplan.app") }
                 )
