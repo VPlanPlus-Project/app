@@ -89,14 +89,16 @@ private fun SettingsContent(
                 title = "Meine Schulen",
                 subtitle = "Zugänge für Schulen verwalten",
                 icon = painterResource(Res.drawable.school),
-                onClick = onOpenSchoolSettings
+                onClick = onOpenSchoolSettings,
+                showArrow = true,
             )
             HorizontalDivider(Modifier.padding(horizontal = 24.dp))
             SettingsRecord(
                 title = "Anmeldung und Sicherheit",
                 subtitle = "Noten und vpp.ID schützen",
                 icon = painterResource(Res.drawable.lock),
-                onClick = onOpenSecuritySettings
+                onClick = onOpenSecuritySettings,
+                showArrow = true,
             )
             HorizontalDivider(Modifier.padding(horizontal = 24.dp))
             if (state.isDeveloperSettingsEnabled) {
@@ -104,7 +106,8 @@ private fun SettingsContent(
                     title = "Entwickleroptionen",
                     subtitle = "Flags, Diagnose und erweiterte Optionen",
                     icon = painterResource(Res.drawable.bug_play),
-                    onClick = onOpenDeveloperSettings
+                    onClick = onOpenDeveloperSettings,
+                    showArrow = true,
                 )
                 HorizontalDivider(Modifier.padding(horizontal = 24.dp))
             }
@@ -112,7 +115,8 @@ private fun SettingsContent(
                 title = "Info & Feedback",
                 subtitle = "Über VPlanPlus, Rückmeldung an die Entwickler",
                 icon = painterResource(Res.drawable.info),
-                onClick = onOpenInfoAndFeedback
+                onClick = onOpenInfoAndFeedback,
+                showArrow = true,
             )
             HorizontalDivider(Modifier.padding(horizontal = 24.dp))
         }

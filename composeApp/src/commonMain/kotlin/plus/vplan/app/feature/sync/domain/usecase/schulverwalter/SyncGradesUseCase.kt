@@ -85,10 +85,27 @@ class SyncGradesUseCase(
         collectionRepository.download()
         finalGradeRepository.download()
         val existingGrades = gradeRepository.getAllIds().first().toSet()
-        val downloadedGrades = gradeRepository.download()
 
-        if (allowNotifications && downloadedGrades is Response.Success && downloadedGrades.data.isNotEmpty()) {
-            val newGradeIds = (downloadedGrades.data - existingGrades)
+        val downloadedGradeIds = mutableSetOf<Int>()
+        val vppIds = vppIdRepository.getVppIds().first()
+            .filterIsInstance<VppId.Active>()
+            .mapNotNull { it.schulverwalterConnection?.accessToken }
+
+        if (vppIds.size > 1) downloadedGradeIds.addAll((gradeRepository.download() as? Response.Success)?.data.orEmpty())
+        else {
+            yearRepository.getAllIds().first()
+                .mapNotNull { yearRepository.getById(it, false).getFirstValueOld() }
+                .sortedBy { it.to }
+                .forEach { year ->
+                    yearRepository.setCurrent(vppIds.first(), year.id)
+
+                    downloadedGradeIds.addAll((gradeRepository.download() as? Response.Success)?.data.orEmpty())
+                }
+            yearRepository.setCurrent(vppIds.first(), null)
+        }
+
+        if (allowNotifications && downloadedGradeIds.isNotEmpty()) {
+            val newGradeIds = (downloadedGradeIds - existingGrades)
             val newGrades = combine(newGradeIds.ifEmpty { return }.map { ids -> App.gradeSource.getById(ids).filterIsInstance<CacheState.Done<Grade>>().map { it.data } }) { it.toList() }.first()
                 .filter {  LocalDate.now().toEpochDays() - it.givenAt.toEpochDays() <= 2 }
 
