@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -76,7 +77,8 @@ fun SearchBar(
     onQueryChange: (to: String) -> Unit,
     onSelectDate: (date: LocalDate) -> Unit,
     onSelectSubject: (subject: String?) -> Unit,
-    onSelectAssessmentType: (type: Assessment.Type?) -> Unit
+    onSelectAssessmentType: (type: Assessment.Type?) -> Unit,
+    onSearchbarFocusChanges: (focused: Boolean) -> Unit,
 ) {
     val searchObjects = remember { listOf("Räumen", "Lehrern", "Klassen", "Hausaufgaben", "Leistungserhebungen").shuffled() }
     val infiniteTransition = rememberInfiniteTransition(label = "infinite placeholder")
@@ -281,6 +283,9 @@ fun SearchBar(
                     .let {
                         if (focusRequester != null) it.focusRequester(focusRequester)
                         else it
+                    }
+                    .onFocusEvent {
+                        onSearchbarFocusChanges(it.isFocused)
                     }
             )
         }

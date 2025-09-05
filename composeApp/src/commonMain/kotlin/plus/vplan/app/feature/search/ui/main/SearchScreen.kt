@@ -68,6 +68,11 @@ private fun SearchScreenContent(
             .padding(bottom = 8.dp)
     ) {
         val searchBarFocusRequester = remember { FocusRequester() }
+        LaunchedEffect(state.isSearchBarFocused) {
+            if (state.isSearchBarFocused) try {
+                searchBarFocusRequester.requestFocus()
+            } catch (_: Exception) {}
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -113,7 +118,8 @@ private fun SearchScreenContent(
             onQueryChange = { onEvent(SearchEvent.UpdateQuery(it)) },
             onSelectDate = { onEvent(SearchEvent.SelectDate(it)) },
             onSelectSubject = { onEvent(SearchEvent.FilterForSubject(it)) },
-            onSelectAssessmentType = { onEvent(SearchEvent.FilterForAssessmentType(it)) }
+            onSelectAssessmentType = { onEvent(SearchEvent.FilterForAssessmentType(it)) },
+            onSearchbarFocusChanges = { onEvent(SearchEvent.SearchBarFocusChanged(it)) },
         )
     }
 
