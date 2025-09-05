@@ -267,8 +267,8 @@ class FileRepositoryImpl(
         }
         safeRequest(onError = { return it }) {
             val response = httpClient.delete {
-                url(URLBuilder(currentConfiguration.apiUrl).apply {
-                    appendPathSegments("api", "v2.2", "file", file.id.toString())
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("file", "v1", file.id.toString())
                 }.build())
                 bearerAuth(vppId.accessToken)
             }
