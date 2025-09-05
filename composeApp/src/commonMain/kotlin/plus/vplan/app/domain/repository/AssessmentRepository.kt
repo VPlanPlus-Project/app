@@ -4,6 +4,7 @@ package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
@@ -20,7 +21,7 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
      */
     suspend fun download(
         schoolApiAccess: VppSchoolAuthentication,
-        subjectInstanceIds: List<Int>
+        subjectInstanceAliases: List<Alias>
     ): Response<List<Int>>
 
     suspend fun createAssessmentOnline(

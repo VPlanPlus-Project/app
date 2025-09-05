@@ -32,6 +32,7 @@ import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseC
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import plus.vplan.app.utils.now
 
@@ -48,6 +49,7 @@ class DeveloperSettingsViewModel(
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
+    private val updateAssessmentsUseCase: UpdateAssessmentsUseCase,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val groupRepository: GroupRepository
 ) : ViewModel() {
@@ -161,6 +163,13 @@ class DeveloperSettingsViewModel(
                     updateHomeworkUseCase(true)
                     state = state.copy(isHomeworkUpdateRunning = false)
                 }
+                DeveloperSettingsEvent.UpdateAssessments -> {
+                    if (state.profile == null) return@launch
+                    if (state.isAssessmentsUpdateRunning) return@launch
+                    state = state.copy(isAssessmentsUpdateRunning = true)
+                    updateAssessmentsUseCase(true)
+                    state = state.copy(isAssessmentsUpdateRunning = false)
+                }
                 DeveloperSettingsEvent.ToggleDeveloperMode -> {
                     keyValueRepository.set(Keys.DEVELOPER_SETTINGS_ACTIVE, (!state.isDeveloperModeEnabled).toString())
                 }
@@ -177,6 +186,7 @@ data class DeveloperSettingsState(
     val isTimetableUpdateRunning: Boolean = false,
     val isLessonTimesUpdateRunning: Boolean = false,
     val isHomeworkUpdateRunning: Boolean = false,
+    val isAssessmentsUpdateRunning: Boolean = false,
     val isDeveloperModeEnabled: Boolean = true,
     val profile: Profile? = null,
     val isAutoSyncDisabled: Boolean = false,
@@ -194,6 +204,7 @@ sealed class DeveloperSettingsEvent {
     data class UpdateGroup(val group: Group) : DeveloperSettingsEvent()
     data class UpdateSubjectInstance(val subjectInstance: SubjectInstance) : DeveloperSettingsEvent()
     data object UpdateHomework : DeveloperSettingsEvent()
+    data object UpdateAssessments : DeveloperSettingsEvent()
     data object ToggleDeveloperMode : DeveloperSettingsEvent()
     data object ToggleAutoSyncDisabled : DeveloperSettingsEvent()
     data object ClearSubstitutionPlanCache : DeveloperSettingsEvent()

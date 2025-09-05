@@ -38,6 +38,7 @@ import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseC
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.SendInvalidSp24CredentialsNotification
@@ -65,6 +66,7 @@ class FullSyncUseCase(
     private val syncGradesUseCase: SyncGradesUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
+    private val updateAssessmentsUseCase: UpdateAssessmentsUseCase,
     private val stundenplan24Repository: Stundenplan24Repository,
     private val groupRepository: GroupRepository,
     private val roomRepository: RoomRepository,
@@ -104,6 +106,13 @@ class FullSyncUseCase(
                     } catch (e: Exception) {
                         logger.e(e) { "Error during homework update" }
                         captureError("FullSync.HomeworkUpdate", "Error during homework update: ${e.stackTraceToString()}")
+                    }
+
+                    if (isFeatureEnabled("fullsync_update-assessments", true)) try {
+                        updateAssessmentsUseCase(true)
+                    } catch (e: Exception) {
+                        logger.e(e) { "Error during assessments update" }
+                        captureError("FullSync.AssessmentsUpdate", "Error during assessments update: ${e.stackTraceToString()}")
                     }
 
                     try {
