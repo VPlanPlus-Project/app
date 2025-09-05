@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
@@ -7,6 +9,8 @@ import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.VppSchoolAuthentication
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 interface AssessmentRepository: WebEntityRepository<Assessment> {
@@ -23,7 +27,7 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
         vppId: VppId.Active,
         date: LocalDate,
         type: Assessment.Type,
-        subjectInstanceId: Uuid,
+        subjectInstanceId: Int,
         isPublic: Boolean,
         content: String
     ): Response<Int>
@@ -49,7 +53,19 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
     suspend fun deleteAssessment(assessment: Assessment, profile: Profile.StudentProfile): Response.Error?
 
     suspend fun getIdForNewLocalAssessment(): Int
-    suspend fun upsert(assessments: List<Assessment>)
+
+    suspend fun upsertLocally(
+        assessmentId: Int,
+        subjectInstanceId: Int,
+        date: LocalDate,
+        isPublic: Boolean?,
+        createdAt: Instant,
+        createdBy: Int?,
+        createdByProfile: Uuid?,
+        description: String,
+        type: Assessment.Type,
+        associatedFileIds: List<Int>
+    )
 
     suspend fun changeType(
         assessment: Assessment,
