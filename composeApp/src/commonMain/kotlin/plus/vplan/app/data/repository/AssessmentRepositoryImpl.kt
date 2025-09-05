@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
@@ -45,6 +46,7 @@ import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
@@ -196,7 +198,22 @@ class AssessmentRepositoryImpl(
         assessment: Assessment,
         profile: Profile.StudentProfile
     ): Response.Error? {
-        TODO()
+        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
+        if (assessment.id < 0 || vppId == null) {
+            vppDatabase.assessmentDao.deleteById(listOf(assessment.id))
+            return null
+        }
+        safeRequest(onError = { return it }) {
+            val response = httpClient.delete(URLBuilder(currentConfiguration.appApiUrl).apply {
+                appendPathSegments("assessment", "v1", assessment.id.toString())
+            }.build()) {
+                vppId.buildVppSchoolAuthentication().authentication(this)
+            }
+            if (!response.status.isSuccess()) return response.toErrorResponse()
+            vppDatabase.assessmentDao.deleteById(listOf(assessment.id))
+            return null
+        }
+        return Response.Error.Cancelled
     }
 
     override suspend fun getIdForNewLocalAssessment(): Int {
