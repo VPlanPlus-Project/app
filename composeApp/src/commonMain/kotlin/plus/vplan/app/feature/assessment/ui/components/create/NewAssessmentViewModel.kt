@@ -1,17 +1,19 @@
 package plus.vplan.app.feature.assessment.ui.components.create
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.vinceglb.filekit.core.PlatformFile
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.CreateAssessmentUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
@@ -25,13 +27,15 @@ class NewAssessmentViewModel(
     private val hideVppIdBannerUseCase: HideVppIdBannerUseCase,
     private val createAssessmentUseCase: CreateAssessmentUseCase
 ) : ViewModel() {
-    var state by mutableStateOf(NewAssessmentState())
-        private set
+    private val _state = MutableStateFlow(NewAssessmentState())
+    val state = _state.asStateFlow()
 
     init {
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
-                state = state.copy(
+                val vppId = (profile as? Profile.StudentProfile)?.vppId?.getFirstValueOld() as? VppId.Active
+
+                _state.value = _state.value.copy(
                     currentProfile = (profile as? Profile.StudentProfile).also {
                         it?.getGroupItem()
                         it?.getSubjectInstances()?.onEach { subjectInstance ->
@@ -40,13 +44,13 @@ class NewAssessmentViewModel(
                             subjectInstance.getGroupItems()
                         }
                     },
-                    isVisible = if ((profile as? Profile.StudentProfile)?.getVppIdItem() != null) true else null
+                    isVisible = if (vppId != null) true else null
                 )
             }
         }
         viewModelScope.launch vppIdBanner@{
             isVppIdBannerAllowedUseCase().collectLatest { canShow ->
-                state = state.copy(canShowVppIdBanner = canShow)
+                _state.value = _state.value.copy(canShowVppIdBanner = canShow)
             }
         }
     }
@@ -55,35 +59,39 @@ class NewAssessmentViewModel(
         viewModelScope.launch {
             when (event) {
                 is NewAssessmentEvent.HideVppIdBanner -> hideVppIdBannerUseCase()
-                is NewAssessmentEvent.SelectSubjectInstance -> state = state.copy(selectedSubjectInstance = event.subjectInstance, showSubjectInstanceError = false)
-                is NewAssessmentEvent.SelectDate -> state = state.copy(selectedDate = event.date, showDateError = false)
-                is NewAssessmentEvent.SetVisibility -> state = state.copy(isVisible = event.isVisible)
-                is NewAssessmentEvent.UpdateDescription -> state = state.copy(description = event.description, showContentError = state.showContentError && event.description.isBlank())
+                is NewAssessmentEvent.SelectSubjectInstance -> _state.update { it.copy(selectedSubjectInstance = event.subjectInstance, showSubjectInstanceError = false) }
+                is NewAssessmentEvent.SelectDate -> _state.update { it.copy(selectedDate = event.date, showDateError = false) }
+                is NewAssessmentEvent.SetVisibility -> _state.update { it.copy(isVisible = event.isVisible) }
+                is NewAssessmentEvent.UpdateDescription -> _state.update { it.copy(description = event.description, showContentError = it.showContentError && event.description.isBlank()) }
                 is NewAssessmentEvent.AddFile -> {
                     val file = AttachedFile.fromFile(event.file)
-                    state = state.copy(files = state.files + file)
+                    _state.update { it.copy(files = it.files + file) }
                 }
-                is NewAssessmentEvent.UpdateFile -> state = state.copy(files = state.files.map { file -> if (file.platformFile.path.hashCode() == event.file.platformFile.path.hashCode()) event.file else file })
-                is NewAssessmentEvent.RemoveFile -> state = state.copy(files = state.files.filter { it.platformFile.path.hashCode() != event.file.platformFile.path.hashCode() })
-                is NewAssessmentEvent.UpdateType -> state = state.copy(type = event.type, showTypeError = false)
+                is NewAssessmentEvent.UpdateFile -> _state.update { it.copy(files = it.files.map { file -> if (file.platformFile.path.hashCode() == event.file.platformFile.path.hashCode()) event.file else file }) }
+                is NewAssessmentEvent.RemoveFile -> _state.update { it.copy(files = it.files.filter { file -> file.platformFile.path.hashCode() != event.file.platformFile.path.hashCode() }) }
+                is NewAssessmentEvent.UpdateType -> _state.update { it.copy(type = event.type, showTypeError = false) }
                 NewAssessmentEvent.Save -> {
-                    if (state.selectedDate == null) state = state.copy(showDateError = true)
-                    if (state.description.isBlank()) state = state.copy(showContentError = true)
-                    if (state.type == null) state = state.copy(showTypeError = true)
-                    if (state.selectedSubjectInstance == null) state = state.copy(showSubjectInstanceError = true)
-                    if (state.savingState == UnoptimisticTaskState.InProgress) return@launch
-                    state = state.copy(savingState = UnoptimisticTaskState.InProgress)
-                    run save@{
-                        createAssessmentUseCase(
-                            text = state.description.trim().ifBlank { return@save false },
-                            isPublic = state.isVisible,
-                            date = state.selectedDate ?: return@save false,
-                            subjectInstance = state.selectedSubjectInstance ?: return@save false,
-                            type = state.type ?: return@save false,
-                            selectedFiles = state.files
-                        )
-                        return@save true
-                    }.let { state = state.copy(savingState = if (it) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error) }
+                    _state.update { current ->
+                        var newState = current
+                        if (current.selectedDate == null) newState = newState.copy(showDateError = true)
+                        if (current.description.isBlank()) newState = newState.copy(showContentError = true)
+                        if (current.type == null) newState = newState.copy(showTypeError = true)
+                        if (current.selectedSubjectInstance == null) newState = newState.copy(showSubjectInstanceError = true)
+                        if (current.savingState == UnoptimisticTaskState.InProgress) return@update newState
+                        newState = newState.copy(savingState = UnoptimisticTaskState.InProgress)
+                        val success = run save@{
+                            createAssessmentUseCase(
+                                text = newState.description.trim().ifBlank { return@save false },
+                                isPublic = newState.isVisible,
+                                date = newState.selectedDate ?: return@save false,
+                                subjectInstance = newState.selectedSubjectInstance ?: return@save false,
+                                type = newState.type ?: return@save false,
+                                selectedFiles = newState.files
+                            )
+                            return@save true
+                        }
+                        newState.copy(savingState = if (success) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error)
+                    }
                 }
             }
         }
@@ -106,7 +114,9 @@ data class NewAssessmentState(
     val showTypeError: Boolean = false,
 
     val savingState: UnoptimisticTaskState? = null
-)
+) {
+    val hasChanges: Boolean = description.isNotBlank() || selectedSubjectInstance != null || selectedDate != null || isVisible != null || type != null || files.isNotEmpty()
+}
 
 sealed class NewAssessmentEvent {
     data object HideVppIdBanner : NewAssessmentEvent()

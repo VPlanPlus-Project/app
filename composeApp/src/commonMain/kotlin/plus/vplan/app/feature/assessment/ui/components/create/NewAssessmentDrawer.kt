@@ -10,12 +10,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.ui.components.FullscreenDrawer
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.x
@@ -28,10 +31,14 @@ fun NewAssessmentDrawer(
 ) {
     val density = LocalDensity.current
     val direction = LocalLayoutDirection.current
+
+    val viewModel = koinViewModel<NewAssessmentViewModel>()
+    val state by viewModel.state.collectAsState()
+
     FullscreenDrawer(
         contentScrollState = rememberScrollState(),
         onDismissRequest = onDismissRequest,
-        preventClosingByGesture = true,
+        preventClosingByGesture = state.hasChanges,
         topAppBar = { onCloseClicked, modifier, scrollProgress ->
             TopAppBar(
                 modifier = modifier,
@@ -55,6 +62,7 @@ fun NewAssessmentDrawer(
         }
     ) { context ->
         NewAssessmentDrawerContent(
+            viewModel = viewModel,
             selectedDate = selectedDate,
             context = context
         )
