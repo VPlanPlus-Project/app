@@ -219,7 +219,10 @@ class HomeworkRepositoryImpl(
     override suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile) {
         val oldState = task.isDone(profile)
         val newState = !oldState
-        if (profile.getVppIdItem() == null || task.id < 0) {
+
+        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
+
+        if (vppId == null || task.id < 0) {
             vppDatabase.homeworkDao.upsertTaskDoneProfile(DbHomeworkTaskDoneProfile(task.id, profile.id, newState))
             return
         }
@@ -228,7 +231,7 @@ class HomeworkRepositoryImpl(
             val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                 appendPathSegments("homework", "v1", task.homework.toString(), "task", task.id.toString())
             }.build()) {
-                profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
+                vppId.buildVppSchoolAuthentication().authentication(this)
                 contentType(ContentType.Application.Json)
                 setBody(HomeworkTaskUpdateDoneStateRequest(isDone = newState))
             }
@@ -247,14 +250,16 @@ class HomeworkRepositoryImpl(
         val subjectInstanceVppId = subjectInstance?.aliases?.first { it.provider == AliasProvider.Vpp }?.value?.toInt()
         val groupVppId = group?.aliases?.first { it.provider == AliasProvider.Vpp }?.value?.toInt()
 
+        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
+
         vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, subjectInstanceVppId, groupVppId)
 
-        if (homework.id < 0 || profile.getVppIdItem() == null) return
+        if (homework.id < 0 || vppId == null) return
         safeRequest(onError = { vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, subjectInstanceVppId, oldGroupVppId) }) {
             val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                 appendPathSegments("homework", "v1", homework.id.toString())
             }.build()) {
-                (profile.vppId!!.getFirstValueOld() as VppId.Active).buildVppSchoolAuthentication().authentication(this)
+                vppId.buildVppSchoolAuthentication().authentication(this)
                 contentType(ContentType.Application.Json)
                 setBody(HomeworkUpdateSubjectInstanceRequest(subjectInstanceId = subjectInstanceVppId, groupId = groupVppId))
             }
@@ -266,12 +271,13 @@ class HomeworkRepositoryImpl(
         val oldDueTo = homework.dueTo
         vppDatabase.homeworkDao.updateDueTo(homework.id, dueTo)
 
-        if (homework.id < 0 || profile.getVppIdItem() == null) return
+        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
+        if (homework.id < 0 || vppId == null) return
         safeRequest(onError = { vppDatabase.homeworkDao.updateDueTo(homework.id, oldDueTo) }) {
             val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                 appendPathSegments("homework", "v1", homework.id.toString())
             }.build()) {
-                profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
+                vppId.buildVppSchoolAuthentication().authentication(this)
                 contentType(ContentType.Application.Json)
                 setBody(HomeworkUpdateDueToRequest(dueTo = dueTo.toString()))
             }
@@ -283,12 +289,13 @@ class HomeworkRepositoryImpl(
         val oldVisibility = homework.isPublic
         vppDatabase.homeworkDao.updateVisibility(homework.id, isPublic)
 
-        if (homework.id < 0 || profile.getVppIdItem() == null) return
+        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
+        if (homework.id < 0 || vppId == null) return
         safeRequest(onError = { vppDatabase.homeworkDao.updateVisibility(homework.id, oldVisibility) }) {
             val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                 appendPathSegments("homework", "v1", homework.id.toString())
             }.build()) {
-                profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
+                vppId.buildVppSchoolAuthentication().authentication(this)
                 contentType(ContentType.Application.Json)
                 setBody(HomeworkUpdateVisibilityRequest(isPublic = isPublic))
             }
@@ -297,7 +304,8 @@ class HomeworkRepositoryImpl(
     }
 
     override suspend fun addTask(homework: Homework, task: String, profile: Profile.StudentProfile): Response.Error? {
-        if (homework.id < 0 || profile.getVppIdItem() == null) {
+        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
+        if (homework.id < 0 || vppId == null) {
             val id = getIdForNewLocalHomeworkTask() - 1
             vppDatabase.homeworkDao.upsertTaskMany(
                 listOf(
@@ -316,7 +324,7 @@ class HomeworkRepositoryImpl(
                 url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("homework", "v1", homework.id.toString(), "task")
                 }.build())
-                profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
+                vppId.buildVppSchoolAuthentication().authentication(this)
                 contentType(ContentType.Application.Json)
                 setBody(HomeworkAddTaskRequest(task = task))
             }
@@ -341,13 +349,14 @@ class HomeworkRepositoryImpl(
         val oldContent = task.content
         vppDatabase.homeworkDao.updateTaskContent(task.id, newContent)
 
-        if (task.id < 0 || profile.getVppIdItem() == null) return
+        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
+        if (task.id < 0 || vppId == null) return
         safeRequest(onError = { vppDatabase.homeworkDao.updateTaskContent(task.id, oldContent) }) {
             val response = httpClient.patch {
                 url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("homework", "v1", task.homework.toString(), "task", task.id.toString())
                 }.build())
-                profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
+                vppId.buildVppSchoolAuthentication().authentication(this)
                 contentType(ContentType.Application.Json)
                 setBody(HomeworkTaskUpdateContentRequest(content = newContent))
             }
@@ -356,7 +365,8 @@ class HomeworkRepositoryImpl(
     }
 
     override suspend fun deleteHomework(homework: Homework, profile: Profile.StudentProfile): Response.Error? {
-        if (homework.id < 0 || profile.getVppIdItem() == null) {
+        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
+        if (homework.id < 0 || vppId == null) {
             vppDatabase.homeworkDao.deleteById(listOf(homework.id))
             return null
         }
@@ -364,7 +374,7 @@ class HomeworkRepositoryImpl(
             val response = httpClient.delete(URLBuilder(currentConfiguration.appApiUrl).apply {
                 appendPathSegments("homework", "v1", homework.id.toString())
             }.build()) {
-                profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
+                vppId.buildVppSchoolAuthentication().authentication(this)
             }
             if (!response.status.isSuccess()) return response.toErrorResponse()
             vppDatabase.homeworkDao.deleteById(listOf(homework.id))
@@ -374,7 +384,8 @@ class HomeworkRepositoryImpl(
     }
 
     override suspend fun deleteHomeworkTask(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Response.Error? {
-        if (task.id < 0 || profile.getVppIdItem() == null) {
+        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
+        if (task.id < 0 || vppId == null) {
             vppDatabase.homeworkDao.deleteTaskById(listOf(task.id))
             return null
         }
@@ -383,7 +394,7 @@ class HomeworkRepositoryImpl(
                 url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("homework", "v1", task.homework.toString(), "task", task.id.toString())
                 }.build())
-                profile.getVppIdItem()!!.buildVppSchoolAuthentication().authentication(this)
+                vppId.buildVppSchoolAuthentication().authentication(this)
             }
             if (!response.status.isSuccess()) return response.toErrorResponse()
             vppDatabase.homeworkDao.deleteTaskById(listOf(task.id))
@@ -680,3 +691,4 @@ data class HomeworkTaskUpdateContentRequest(
 data class HomeworkFileLinkRequest(
     @SerialName("file_id") val fileId: Int
 )
+
