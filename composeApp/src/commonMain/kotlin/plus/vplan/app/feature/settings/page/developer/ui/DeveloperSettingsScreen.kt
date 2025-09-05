@@ -132,6 +132,14 @@ private fun DeveloperSettingsContent(
                 onClick = { onEvent(DeveloperSettingsEvent.UpdateHomework) }
             )
             SettingsRecord(
+                title = "Leistungserhebungen aktualisieren",
+                subtitle = "Erzwingt das Neuladen der Leistungserhebungen",
+                icon = painterResource(Res.drawable.rotate_cw),
+                isLoading = state.isAssessmentsUpdateRunning,
+                enabled = !state.isAssessmentsUpdateRunning,
+                onClick = { onEvent(DeveloperSettingsEvent.UpdateAssessments) }
+            )
+            SettingsRecord(
                 title = "Fachinstanzen und Kurse aktualisieren",
                 subtitle = "Erzwingt das Neuladen der Fachinstanzen und Kurse",
                 icon = painterResource(Res.drawable.rotate_cw),

@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -16,12 +17,18 @@ import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
@@ -31,9 +38,14 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.DbProfileAssessmentIndex
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
+import plus.vplan.app.data.source.network.GenericAuthenticationProvider
+import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
+import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
+import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
@@ -49,13 +61,36 @@ private val logger = Logger.withTag("AssessmentRepositoryImpl")
 
 class AssessmentRepositoryImpl(
     private val httpClient: HttpClient,
-    private val vppDatabase: VppDatabase
+    private val vppDatabase: VppDatabase,
+    private val genericAuthenticationProvider: GenericAuthenticationProvider,
 ) : AssessmentRepository {
 
     private val onlineChangeRequests = mutableListOf<OnlineChangeRequest>()
 
-    override suspend fun download(schoolApiAccess: VppSchoolAuthentication, subjectInstanceIds: List<Int>): Response<List<Int>> {
-        TODO()
+    override suspend fun download(schoolApiAccess: VppSchoolAuthentication, subjectInstanceAliases: List<Alias>): Response<List<Int>> {
+        safeRequest(onError = { return it }) {
+            val response = httpClient.get {
+                url(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("assessment", "v1")
+                    if (subjectInstanceAliases.isNotEmpty()) {
+                        parameters.append("filter_subject_instances", subjectInstanceAliases.joinToString(","))
+                    }
+                    parameters.append("include_files", "true")
+                }.build())
+                schoolApiAccess.authentication(this)
+            }
+
+            if (response.status != HttpStatusCode.OK) return response.toErrorResponse()
+
+            val data = response.body<ResponseDataWrapper<List<AssessmentGetResponse>>>().data
+
+            data.forEach { item ->
+                upsertApiResponse(item)
+            }
+
+            return Response.Success(data.map { it.id })
+        }
+        return Response.Error.Cancelled
     }
 
     override suspend fun createAssessmentOnline(
@@ -127,8 +162,34 @@ class AssessmentRepositoryImpl(
         return vppDatabase.assessmentDao.getAll().map { it.map { it.assessment.id } }
     }
 
+    private val idAssessmentFlowCache = mutableMapOf<String, Flow<CacheState<Assessment>>>()
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Assessment>> {
-        return flowOf(CacheState.Error(id.toString(), Response.Error.Cancelled))
+        val cacheKey = "${id}_${forceReload}"
+        if (!forceReload) {
+            idAssessmentFlowCache[cacheKey]?.let { return it }
+        }
+
+        val flow = flow {
+            var hasReloaded = false
+            vppDatabase.assessmentDao.getById(id).map { it?.toModel() }.collect { assessment ->
+                if (assessment == null || (forceReload && !hasReloaded)) {
+                    hasReloaded = true
+                    emit(CacheState.Loading(id.toString()))
+                    val downloadError = downloadById(id)
+                    if (downloadError != null) {
+                        if (downloadError is Response.Error.OnlineError.NotFound) emit(CacheState.NotExisting(id.toString()))
+                        else emit(CacheState.Error(id.toString(), downloadError))
+                        return@collect
+                    }
+                }
+                assessment?.let { emit(CacheState.Done(assessment)) }
+            }
+        }
+            .onCompletion { idAssessmentFlowCache.remove(cacheKey) }
+            .shareIn(CoroutineScope(Dispatchers.Default), replay = 1, started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000))
+
+        if (!forceReload) idAssessmentFlowCache[cacheKey] = flow
+        return flow
     }
 
     override suspend fun deleteAssessment(
@@ -316,19 +377,74 @@ class AssessmentRepositoryImpl(
     override suspend fun createCacheForProfile(profileId: Uuid, assessmentIds: Collection<Int>) {
         vppDatabase.assessmentDao.upsertAssessmentsIndex(assessmentIds.map { DbProfileAssessmentIndex(it, profileId) })
     }
+
+    private val runningDownloads = mutableMapOf<Int, Deferred<Response.Error?>>()
+    private suspend fun downloadById(id: Int): Response.Error? {
+        runningDownloads[id]?.let { return it.await() }
+
+        val deferred = CoroutineScope(Dispatchers.Default).async download@{
+            try {
+                val authenticationOptions = getAuthenticationOptionsForRestrictedEntity(
+                    httpClient,
+                    URLBuilder(currentConfiguration.appApiUrl).apply { appendPathSegments("assessment", "v1", id.toString()) }.buildString()
+                )
+                if (authenticationOptions !is Response.Success) return@download authenticationOptions as Response.Error
+
+                val authentication = genericAuthenticationProvider.getAuthentication(authenticationOptions.data)
+                if (authentication == null) {
+                    return@download Response.Error.Other("No authentication found for school with id ${authenticationOptions.data}")
+                }
+
+                val response = httpClient.get(URLBuilder(currentConfiguration.appApiUrl).apply {
+                    appendPathSegments("assessment", "v1", id.toString())
+                }.build()) {
+                    authentication.authentication(this)
+                }
+
+                if (response.status != HttpStatusCode.OK) {
+                    logger.e { "Error downloading assessment with id $id: $response" }
+                    return@download response.toErrorResponse()
+                }
+
+                val assessment = response.body<ResponseDataWrapper<AssessmentGetResponse>>().data
+                upsertApiResponse(assessment)
+
+                return@download null
+            } finally {
+                runningDownloads.remove(id)
+            }
+        }
+        runningDownloads[id] = deferred
+        return deferred.await()
+    }
+
+    private suspend fun upsertApiResponse(item: AssessmentGetResponse) {
+        upsertLocally(
+            assessmentId = item.id,
+            subjectInstanceId = item.subject.id,
+            date = LocalDate.parse(item.date),
+            isPublic = item.isPublic,
+            createdAt = Instant.fromEpochSeconds(item.createdAt),
+            createdBy = item.createdBy.id,
+            createdByProfile = null,
+            description = item.description,
+            type = Assessment.Type.valueOf(item.type),
+            associatedFileIds = item.files.map { it.id }
+        )
+    }
 }
 
 @Serializable
 private data class AssessmentGetResponse(
     @SerialName("id") val id: Int,
-    @SerialName("subject_instance_id") val subject: Int,
+    @SerialName("subject_instance") val subject: IncludedModel,
     @SerialName("content") val description: String = "",
     @SerialName("is_public") val isPublic: Boolean,
     @SerialName("date") val date: String,
     @SerialName("type") val type: String,
     @SerialName("created_at") val createdAt: Long,
-    @SerialName("created_by") val createdBy: Int,
-    @SerialName("files") val files: List<Int>
+    @SerialName("created_by") val createdBy: IncludedModel,
+    @SerialName("files") val files: List<IncludedModel>
 )
 
 @Serializable
