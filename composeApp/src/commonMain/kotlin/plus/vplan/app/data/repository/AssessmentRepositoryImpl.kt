@@ -136,7 +136,19 @@ class AssessmentRepositoryImpl(
         assessmentId: Int,
         fileId: Int
     ): Response.Error? {
-        TODO()
+        safeRequest(onError = { return it }) {
+            val response = httpClient.post(URLBuilder(currentConfiguration.appApiUrl).apply {
+                appendPathSegments("assessment", "v1", assessmentId.toString(), "file")
+            }.buildString()) {
+                vppId.buildVppSchoolAuthentication().authentication(this)
+                contentType(ContentType.Application.Json)
+                setBody(AssessmentFileLinkRequest(fileId))
+            }
+
+            if (!response.status.isSuccess()) return response.toErrorResponse()
+            return null
+        }
+        return Response.Error.Cancelled
     }
 
     override suspend fun linkFileToAssessment(assessmentId: Int, fileId: Int) {
@@ -152,16 +164,16 @@ class AssessmentRepositoryImpl(
     }
 
     override fun getByDate(date: LocalDate): Flow<List<Assessment>> {
-        return vppDatabase.assessmentDao.getByDate(date).map { it.map { it.toModel() } }
+        return vppDatabase.assessmentDao.getByDate(date).map { it.map { assessment -> assessment.toModel() } }
     }
 
     override fun getByProfile(profileId: Uuid, date: LocalDate?): Flow<List<Assessment>> {
-        if (date == null) return vppDatabase.assessmentDao.getByProfile(profileId).map { it.map { it.toModel() } }
-        return vppDatabase.assessmentDao.getByProfileAndDate(profileId, date).map { it.map { it.toModel() } }
+        if (date == null) return vppDatabase.assessmentDao.getByProfile(profileId).map { it.map { assessment -> assessment.toModel() } }
+        return vppDatabase.assessmentDao.getByProfileAndDate(profileId, date).map { it.map { assessment -> assessment.toModel() } }
     }
 
     override fun getAllIds(): Flow<List<Int>> {
-        return vppDatabase.assessmentDao.getAll().map { it.map { it.assessment.id } }
+        return vppDatabase.assessmentDao.getAll().map { it.map { assessment -> assessment.assessment.id } }
     }
 
     private val idAssessmentFlowCache = mutableMapOf<String, Flow<CacheState<Assessment>>>()
@@ -480,12 +492,6 @@ private data class AssessmentPostRequest(
 @Serializable
 private data class AssessmentPostResponse(
     @SerialName("id") val id: Int
-)
-
-@Serializable
-private data class AssessmentMetadataResponse(
-    @SerialName("school_ids") val schoolIds: List<Int>,
-    @SerialName("created_by") val createdBy: Int
 )
 
 @Serializable
