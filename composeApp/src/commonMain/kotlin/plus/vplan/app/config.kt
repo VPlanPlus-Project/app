@@ -40,5 +40,5 @@ val currentConfiguration = vocusConfiguration
 data class WebConfig(
     val authUrl: String,
     val appApiUrl: String,
-    val apiUrl: String
+    @Deprecated("Use appApiUrl instead") val apiUrl: String
 )
