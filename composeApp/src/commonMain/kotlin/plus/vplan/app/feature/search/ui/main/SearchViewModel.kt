@@ -99,6 +99,10 @@ class SearchViewModel(
                 }
                 is SearchEvent.RequestGradeLock -> lockGradesUseCase()
                 is SearchEvent.RequestGradeUnlock -> requestGradeUnlockUseCase()
+                is SearchEvent.SearchBarFocusChanged -> {
+                    if (state.isSearchBarFocused == event.isFocused) return@launch
+                    state = state.copy(isSearchBarFocused = event.isFocused)
+                }
             }
         }
     }
@@ -130,7 +134,8 @@ data class SearchState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = LocalDateTime.now(),
     val gradeLockState: GradeLockState = GradeLockState.NotConfigured,
-    val subjects: List<String> = emptyList()
+    val subjects: List<String> = emptyList(),
+    val isSearchBarFocused: Boolean = false
 ) {
     val newItems = (assessments.map { NewItem.Assessment(it) } + homework.map { NewItem.Homework(it) }).sortedByDescending { it.createdAt }.take(5)
 }
@@ -140,6 +145,7 @@ sealed class SearchEvent {
     data class SelectDate(val date: LocalDate): SearchEvent()
     data class FilterForSubject(val subject: String?): SearchEvent()
     data class FilterForAssessmentType(val type: Assessment.Type?): SearchEvent()
+    data class SearchBarFocusChanged(val isFocused: Boolean): SearchEvent()
 
     data object RequestGradeUnlock: SearchEvent()
     data object RequestGradeLock: SearchEvent()
