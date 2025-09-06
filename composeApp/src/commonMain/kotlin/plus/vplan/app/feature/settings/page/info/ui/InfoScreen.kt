@@ -202,14 +202,14 @@ private fun InfoContent(
                 title = "Datenschutzerklärung",
                 subtitle = "für VPlanPlus und vpp.ID",
                 icon = painterResource(Res.drawable.shield_user),
-                onClick = { BrowserIntent.openUrl("https://vplan.plus/privacy") },
+                onClick = { BrowserIntent.openUrl("https://vplan.plus/about/privacy") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "Nutzungsbedingungen",
                 subtitle = "für VPlanPlus und vpp.ID",
                 icon = painterResource(Res.drawable.handshake),
-                onClick = { BrowserIntent.openUrl("https://vplan.plus/tos") },
+                onClick = { BrowserIntent.openUrl("https://vplan.plus/about/tos") },
                 showArrow = true,
             )
             when (plus.vplan.app.getPlatform()) {
