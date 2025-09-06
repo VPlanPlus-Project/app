@@ -1,11 +1,12 @@
 package plus.vplan.app.feature.onboarding.stage.a_school_search.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.OnboardingSchoolOption
@@ -17,8 +18,9 @@ class OnboardingSchoolSearchViewModel(
     private val searchForSchoolUseCase: SearchForSchoolUseCase,
     private val selectSp24SchoolUseCase: SelectSp24SchoolUseCase
 ) : ViewModel() {
-    var state by mutableStateOf(OnboardingSchoolSearchState())
-        private set
+
+    private val _state = MutableStateFlow(OnboardingSchoolSearchState())
+    val state = _state.asStateFlow()
 
     private lateinit var navController: NavHostController
 
@@ -32,27 +34,44 @@ class OnboardingSchoolSearchViewModel(
         this.navController = navController
     }
 
+    private var searchJob: Job? = null
+    private fun search() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _state.update { it.copy(results = Response.Loading) }
+            val response = searchForSchoolUseCase(_state.value.searchQuery)
+            _state.update {
+                it.copy(
+                    results = response,
+                    textFieldError = null,
+                )
+            }
+        }
+    }
+
     fun handleEvent(event: OnboardingSchoolSearchEvent) {
         viewModelScope.launch {
             when (event) {
                 is OnboardingSchoolSearchEvent.OnQueryChanged -> {
-                    state = state.copy(
-                        searchQuery = event.query,
-                        textFieldError = null
-                    )
-                    state = state.copy(results = searchForSchoolUseCase(event.query))
+                    _state.update {
+                        it.copy(
+                            searchQuery = event.query,
+                            textFieldError = null,
+                        )
+                    }
+                    search()
                 }
                 is OnboardingSchoolSearchEvent.OnUseSp24SchoolClicked -> {
-                    if ((state.searchQuery.toIntOrNull() ?: 0) !in 10000000..99999999) {
-                        state = state.copy(textFieldError = OnboardingSchoolSearchTextFieldError.BadSp24Id)
+                    if ((state.value.searchQuery.toIntOrNull() ?: 0) !in 10000000..99999999) {
+                        _state.update { it.copy(textFieldError = OnboardingSchoolSearchTextFieldError.BadSp24Id) }
                         return@launch
                     }
-                    selectSp24SchoolUseCase(state.searchQuery.toInt())
+                    selectSp24SchoolUseCase(state.value.searchQuery.toInt())
                     navController.navigate(OnboardingScreen.OnboardingScreenSp24Login)
                 }
                 is OnboardingSchoolSearchEvent.OnSchoolSelected -> {
                     if (event.school.sp24Id == null) {
-                        state = state.copy(textFieldError = OnboardingSchoolSearchTextFieldError.SchoolNotFound)
+                        _state.update { it.copy(textFieldError = OnboardingSchoolSearchTextFieldError.SchoolNotFound) }
                         return@launch
                     }
                     selectSp24SchoolUseCase(event.school.sp24Id)
