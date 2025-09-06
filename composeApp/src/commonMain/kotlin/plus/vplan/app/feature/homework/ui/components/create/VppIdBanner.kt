@@ -12,7 +12,7 @@ import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.theme.ColorToken
 import plus.vplan.app.ui.theme.customColors
-import plus.vplan.app.utils.BrowserIntent
+import plus.vplan.app.utils.openUrl
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.info
 
@@ -40,7 +40,7 @@ fun VppIdBanner(
             buttonText1 = "Ignorieren",
             buttonAction1 = onHide,
             buttonText2 = "Anmelden",
-            buttonAction2 = { BrowserIntent.openUrl(VPP_ID_AUTH_URL) },
+            buttonAction2 = { openUrl(VPP_ID_AUTH_URL) },
             backgroundColor = customColors[ColorToken.YellowContainer]!!.get(),
             textColor = customColors[ColorToken.OnYellowContainer]!!.get()
         )

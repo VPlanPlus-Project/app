@@ -76,7 +76,7 @@ import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
 import plus.vplan.app.feature.settings.page.security.ui.SecuritySettingsScreen
 import plus.vplan.app.feature.settings.ui.SettingsScreen
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateNewsUseCase
-import plus.vplan.app.utils.BrowserIntent
+import plus.vplan.app.utils.openUrl
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.house
@@ -332,7 +332,7 @@ fun MainScreenHost(
             onSelectProfile = { profileViewModel.onEvent(ProfileScreenEvent.SetActiveProfile(it)) },
             onDismiss = { profileViewModel.onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(false)) },
             onCreateNewProfile = onNavigateToOnboarding,
-            onConnectVppId = { BrowserIntent.openUrl(VPP_ID_AUTH_URL) },
+            onConnectVppId = { openUrl(VPP_ID_AUTH_URL) },
             onOpenProfileSettings = {
                 navController.navigate(MainScreen.ProfileSettings(activeProfile.id.toString()))
             }

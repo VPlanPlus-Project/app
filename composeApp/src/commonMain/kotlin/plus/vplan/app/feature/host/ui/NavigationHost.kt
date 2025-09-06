@@ -33,7 +33,7 @@ import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.feature.schulverwalter.domain.usecase.UpdateSchulverwalterAccessUseCase
 import plus.vplan.app.feature.vpp_id.ui.VppIdSetupScreen
-import plus.vplan.app.utils.BrowserIntent
+import plus.vplan.app.utils.openUrl
 import kotlin.uuid.Uuid
 
 @Composable
@@ -74,9 +74,9 @@ fun NavigationHost(task: StartTask?) {
             is StartTask.StartSchulverwalterReconnect -> {
                 val vppId = (vppIdRepository.getById(task.userId, ResponsePreference.Fast).getFirstValueOld() as? VppId.Active) ?: return@LaunchedEffect
                 val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@LaunchedEffect
-                BrowserIntent.openUrl(url)
+                openUrl(url)
             }
-            is StartTask.OpenUrl -> BrowserIntent.openUrl(task.url)
+            is StartTask.OpenUrl -> openUrl(task.url)
             else -> Unit
         }
     }
