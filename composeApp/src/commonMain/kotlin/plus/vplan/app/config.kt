@@ -29,10 +29,10 @@ private val developmentConfiguration = WebConfig(
 )
 
 @Suppress("unused")
-private val localenvConfiguration = WebConfig(
-    authUrl = "https://auth.vplanplus.localhost.dev",
-    appApiUrl = "https://vplanplus.localhost.dev/api/app",
-    apiUrl = "https://vplanplus.localhost.dev/api"
+private val vocusConfiguration = WebConfig(
+    authUrl = "https://auth.vpp.local.vocus.dev",
+    appApiUrl = "https://vpp.local.vocus.dev/api/app",
+    apiUrl = "https://vpp.local.vocus.dev/api"
 )
 
 val currentConfiguration = productionConfiguration

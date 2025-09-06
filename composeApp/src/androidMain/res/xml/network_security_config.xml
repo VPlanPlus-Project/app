@@ -6,9 +6,9 @@
         </trust-anchors>
     </base-config>
     <domain-config>
-        <domain includeSubdomains="true">vplanplus.localhost.dev</domain>
+        <domain includeSubdomains="true">vpp.local.vocus.dev</domain>
         <trust-anchors>
-            <certificates src="@raw/vpp_ca"/>
+            <certificates src="@raw/vocusca"/>
         </trust-anchors>
     </domain-config>
 </network-security-config>
