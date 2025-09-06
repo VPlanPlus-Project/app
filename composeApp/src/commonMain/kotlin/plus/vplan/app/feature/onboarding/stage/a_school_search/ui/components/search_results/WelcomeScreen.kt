@@ -93,11 +93,11 @@ fun WelcomeScreen(
             text = buildAnnotatedString {
                 withStyle(MaterialTheme.typography.labelMedium.let { it.copy(lineHeight = it.fontSize) }.toSpanStyle()) {
                     append("Wenn du fortfährst, akzeptierst du die ")
-                    withLink(LinkAnnotation.Url("https://vplan.plus/privacy", TextLinkStyles(style = SpanStyle(fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)))) {
+                    withLink(LinkAnnotation.Url("https://vplan.plus/about/privacy", TextLinkStyles(style = SpanStyle(fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)))) {
                         append("Datenschutzerklärung")
                     }
                     append(" und die ")
-                    withLink(LinkAnnotation.Url("https://vplan.plus/tos", TextLinkStyles(style = SpanStyle(fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)))) {
+                    withLink(LinkAnnotation.Url("https://vplan.plus/about/tos", TextLinkStyles(style = SpanStyle(fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)))) {
                         append("Nutzungsbedingungen")
                     }
                     append(".")
