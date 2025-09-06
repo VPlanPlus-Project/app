@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
+import plus.vplan.app.captureError
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
@@ -150,8 +151,22 @@ class UpdateTimetableUseCase(
         LOGGER.d { "Preparing lessons to insert/update" }
         val lessonTimes = lessonTimeRepository.getBySchool(sp24School.id).first()
         if (week != null) {
-            val lessons = downloadedTimetable?.lessons.orEmpty().map { lesson ->
+            val lessons = downloadedTimetable?.lessons.orEmpty().mapNotNull { lesson ->
                 val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }.map { it.id }
+                if (lessonGroups.isEmpty()) {
+                    captureError(
+                        location = "UpdateTimetableUseCase",
+                        message = """
+                            Skipping lesson, because it does not have any groups set.
+                            School: ${sp24School.sp24Id} ${sp24School.name}
+                            Week: CW${week.calendarWeek} (${week.weekIndex} week of school year)
+                            Lesson: ${lesson.subject} on ${lesson.dayOfWeek}, lesson number ${lesson.lessonNumber}
+                            Groups configured in app: ${groups.joinToString { it.name }}
+                            Groups for lesson: ${lesson.classes.joinToString()}
+                        """.trimIndent()
+                    )
+                    return@mapNotNull null
+                }
                 Lesson.TimetableLesson(
                     dayOfWeek = DayOfWeek(lesson.dayOfWeek.isoDayNumber),
                     week = week.id,
@@ -161,7 +176,7 @@ class UpdateTimetableUseCase(
                     teachers = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
                     groups = lessonGroups,
                     lessonTime = lessonTimes.firstOrNull { it.lessonNumber == lesson.lessonNumber && it.group in lessonGroups }?.id
-                        ?: throw NullPointerException("No lesson time found for lesson ${lesson.lessonNumber} in group ${lessonGroups.joinToString(", ")}")
+                        ?: throw NullPointerException("No lesson time found for lesson ${lesson.lessonNumber} in groups ${lessonGroups.joinToString(", ")}")
                 )
             }
 
