@@ -1,5 +1,3 @@
 package plus.vplan.app.utils
 
-expect object BrowserIntent {
-    fun openUrl(url: String)
-}
+expect fun openUrl(url: String)

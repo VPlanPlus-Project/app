@@ -47,7 +47,7 @@ import plus.vplan.app.Platform
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import plus.vplan.app.ui.components.noRippleClickable
-import plus.vplan.app.utils.BrowserIntent
+import plus.vplan.app.utils.openUrl
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.chevron_right
@@ -195,21 +195,21 @@ private fun InfoContent(
                 title = "Internetseite",
                 subtitle = "vplan.plus",
                 icon = painterResource(Res.drawable.globe),
-                onClick = { BrowserIntent.openUrl("https://vplan.plus") },
+                onClick = { openUrl("https://vplan.plus") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "Datenschutzerklärung",
                 subtitle = "für VPlanPlus und vpp.ID",
                 icon = painterResource(Res.drawable.shield_user),
-                onClick = { BrowserIntent.openUrl("https://vplan.plus/about/privacy") },
+                onClick = { openUrl("https://vplan.plus/about/privacy") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "Nutzungsbedingungen",
                 subtitle = "für VPlanPlus und vpp.ID",
                 icon = painterResource(Res.drawable.handshake),
-                onClick = { BrowserIntent.openUrl("https://vplan.plus/about/tos") },
+                onClick = { openUrl("https://vplan.plus/about/tos") },
                 showArrow = true,
             )
             when (plus.vplan.app.getPlatform()) {
@@ -217,7 +217,7 @@ private fun InfoContent(
                     title = "Google Play Store",
                     subtitle = "VPlanPlus für stundenplan24.de",
                     icon = painterResource(Res.drawable.google_play),
-                    onClick = { BrowserIntent.openUrl("https://play.google.com/store/apps/details?id=plus.vplan.app") },
+                    onClick = { openUrl("https://play.google.com/store/apps/details?id=plus.vplan.app") },
                     showArrow = true,
                 )
                 else -> Unit
@@ -226,7 +226,7 @@ private fun InfoContent(
                 title = "GitHub-Repository",
                 subtitle = "VPlanPlusProject/app",
                 icon = painterResource(Res.drawable.github),
-                onClick = { BrowserIntent.openUrl("https://github.com/VPlanPlus-Project/app") },
+                onClick = { openUrl("https://github.com/VPlanPlus-Project/app") },
                 showArrow = true,
             )
 
@@ -240,28 +240,28 @@ private fun InfoContent(
                 title = "Instagram",
                 subtitle = "@vplanplus",
                 icon = painterResource(Res.drawable.instagram),
-                onClick = { BrowserIntent.openUrl("https://www.instagram.com/vplanplus") },
+                onClick = { openUrl("https://www.instagram.com/vplanplus") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "Threads",
                 subtitle = "@vplanplus",
                 icon = painterResource(Res.drawable.threads),
-                onClick = { BrowserIntent.openUrl("https://www.threads.net/@vplanplus") },
+                onClick = { openUrl("https://www.threads.net/@vplanplus") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "Mastodon",
                 subtitle = "@vpp_app@mastodon.social",
                 icon = painterResource(Res.drawable.mastodon),
-                onClick = { BrowserIntent.openUrl("https://mastodon.social/@vpp_app") },
+                onClick = { openUrl("https://mastodon.social/@vpp_app") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "WhatsApp-Kanal",
                 subtitle = "Erhalte Statusupdates und Infos in WhatsApp",
                 icon = painterResource(Res.drawable.whatsapp),
-                onClick = { BrowserIntent.openUrl("https://whatsapp.com/channel/0029Vagcelf5q08Vjjc7Of1o") },
+                onClick = { openUrl("https://whatsapp.com/channel/0029Vagcelf5q08Vjjc7Of1o") },
                 showArrow = true,
             )
             Text(
