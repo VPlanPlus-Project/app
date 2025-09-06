@@ -89,10 +89,10 @@ import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
-import plus.vplan.app.utils.BrowserIntent
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.longDayOfWeekNames
 import plus.vplan.app.utils.longMonthNames
+import plus.vplan.app.utils.openUrl
 import plus.vplan.app.utils.progressIn
 import plus.vplan.app.utils.regularDateFormatWithoutYear
 import plus.vplan.app.utils.regularTimeFormat
@@ -254,7 +254,7 @@ private fun HomeContent(
                                 buttonAction1 = { scope.launch {
                                     if (vppId == null) return@launch
                                     val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@launch
-                                    BrowserIntent.openUrl(url)
+                                    openUrl(url)
                                 } },
                                 buttonText1 = "Aktualisieren",
                                 imageVector = Res.drawable.key_round
@@ -375,8 +375,18 @@ private fun HomeContent(
                                             ) {
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
                                                     highlightedLessons.currentLessons.forEach { (currentLesson, continuing) ->
-                                                        val homeworkForLesson = homework//.filter { it.subjectInstanceId == currentLesson.subjectInstanceId } fixme
-                                                        val assessmentsForLesson = assessments.filter { it.subjectInstanceId == currentLesson.subjectInstanceId }
+                                                        val homeworkForLesson = remember { mutableListOf<Homework>() }
+                                                        LaunchedEffect(homework, currentLesson.subjectInstanceId) {
+                                                            homeworkForLesson.clear()
+                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == currentLesson.subjectInstanceId })
+                                                        }
+
+                                                        val assessmentsForLesson = remember { mutableListOf<Assessment>() }
+                                                        LaunchedEffect(assessments, currentLesson.subjectInstanceId) {
+                                                            assessmentsForLesson.clear()
+                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == currentLesson.subjectInstanceId })
+                                                        }
+
                                                         CurrentOrNextLesson(
                                                             currentTime = state.currentTime,
                                                             currentLesson = currentLesson,
@@ -492,7 +502,13 @@ private fun HomeContent(
                                                             homeworkForLesson.clear()
                                                             homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == lesson.subjectInstanceId })
                                                         }
-                                                        val assessmentsForLesson = assessments.filter { it.subjectInstanceId == lesson.subjectInstanceId }
+
+                                                        val assessmentsForLesson = remember { mutableListOf<Assessment>() }
+                                                        LaunchedEffect(assessments, lesson.subjectInstanceId) {
+                                                            assessmentsForLesson.clear()
+                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == lesson.subjectInstanceId })
+                                                        }
+
                                                         val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
                                                         if (lessonTime != null) Column(Modifier.fillMaxWidth()) {
                                                             Row(

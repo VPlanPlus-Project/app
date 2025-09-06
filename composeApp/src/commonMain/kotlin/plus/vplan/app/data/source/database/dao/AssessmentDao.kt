@@ -6,6 +6,7 @@ import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.DbProfileAssessmentIndex
@@ -83,4 +84,19 @@ interface AssessmentDao {
 
     @Query("DELETE FROM fk_assessment_file WHERE assessment_id = :assessmentId AND file_id = :fileId")
     suspend fun deleteFileAssessmentConnections(assessmentId: Int, fileId: Int)
+
+    @Transaction
+    suspend fun upsertSingleAssessment(
+        assessment: DbAssessment,
+        fileIds: List<Int>
+    ) {
+        val existing = getById(assessment.id).first()
+        if (existing != null) {
+            deleteFileLinks(listOf(assessment.id))
+        }
+        upsert(assessment)
+        fileIds.forEach { fileId ->
+            upsert(FKAssessmentFile(assessmentId = assessment.id, fileId = fileId))
+        }
+    }
 }

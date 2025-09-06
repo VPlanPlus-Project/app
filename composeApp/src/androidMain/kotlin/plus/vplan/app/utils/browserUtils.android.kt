@@ -4,10 +4,8 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
 import plus.vplan.app.activity
 
-actual object BrowserIntent {
-    actual fun openUrl(url: String) {
-        val context = activity
-        val intent = CustomTabsIntent.Builder().build()
-        intent.launchUrl(context, url.toUri())
-    }
+actual fun openUrl(url: String) {
+    val context = activity
+    val intent = CustomTabsIntent.Builder().build()
+    intent.launchUrl(context, url.toUri())
 }

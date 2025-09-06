@@ -44,7 +44,7 @@ import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.page.ui.components.GradesCard
 import plus.vplan.app.feature.profile.page.ui.components.GradesCardFeaturedGrade
 import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
-import plus.vplan.app.utils.BrowserIntent
+import plus.vplan.app.utils.openUrl
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.log_in
 import vplanplus.composeapp.generated.resources.settings
@@ -148,7 +148,7 @@ private fun ProfileContent(
                 )
                 Spacer(Modifier.height(8.dp))
                 TextButton(
-                    onClick = { BrowserIntent.openUrl(VPP_ID_AUTH_URL) },
+                    onClick = { openUrl(VPP_ID_AUTH_URL) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(

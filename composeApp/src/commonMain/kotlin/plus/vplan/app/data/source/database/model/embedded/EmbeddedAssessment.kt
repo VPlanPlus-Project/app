@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.data.source.database.model.embedded
 
 import androidx.room.Embedded
@@ -5,10 +7,10 @@ import androidx.room.Relation
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.data.source.database.model.database.DbAssessment
-import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
+import kotlin.time.ExperimentalTime
 
 data class EmbeddedAssessment(
     @Embedded val assessment: DbAssessment,
@@ -17,11 +19,6 @@ data class EmbeddedAssessment(
         entityColumn = "assessment_id",
         entity = FKAssessmentFile::class
     ) val files: List<FKAssessmentFile>,
-    @Relation(
-        parentColumn = "subject_instance_id",
-        entityColumn = "id",
-        entity = DbSubjectInstance::class
-    ) val subjectInstance: EmbeddedSubjectInstance
 ) {
     fun toModel() = Assessment(
         id = assessment.id,

@@ -228,6 +228,11 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
             from = 4,
             to = 5,
             spec = VppDatabase.Migration4to5::class
+        ),
+        AutoMigration(
+            from = 5,
+            to = 6,
+            spec = VppDatabase.Migration5to6::class
         )
     ]
 )
@@ -278,7 +283,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 5
+        const val DATABASE_VERSION = 6
     }
 
     @RenameColumn(
@@ -404,13 +409,67 @@ abstract class VppDatabase : RoomDatabase() {
             """.trimIndent())
         }
     }
+
+    /**
+     * Recreate assessments to use integer references for subject instances.
+     */
+    class Migration5to6 : AutoMigrationSpec {
+        override fun onPostMigrate(connection: SQLiteConnection) {
+            connection.execSQL("""
+                DELETE FROM assessments;
+                
+                create table assessments_dg_tmp
+                (
+                    id                  INTEGER not null
+                        primary key,
+                    created_by          INTEGER,
+                    created_by_profile  TEXT
+                        references profiles
+                            on delete cascade,
+                    created_at          INTEGER not null,
+                    date                TEXT    not null,
+                    is_public           INTEGER not null,
+                    subject_instance_id INT     not null,
+                    description         TEXT    not null,
+                    type                INTEGER not null,
+                    cached_at           INTEGER not null
+                );
+
+                insert into assessments_dg_tmp(id, created_by, created_by_profile, created_at, date, is_public, subject_instance_id,
+                                               description, type, cached_at)
+                select id,
+                       created_by,
+                       created_by_profile,
+                       created_at,
+                       date,
+                       is_public,
+                       subject_instance_id,
+                       description,
+                       type,
+                       cached_at
+                from assessments;
+
+                drop table assessments;
+
+                alter table assessments_dg_tmp
+                    rename to assessments;
+
+                create index index_assessments_created_by_profile
+                    on assessments (created_by_profile);
+
+                create index index_assessments_subject_instance_id
+                    on assessments (subject_instance_id);
+
+
+            """.trimIndent())
+        }
+    }
 }
 
 // Room compiler generates the `actual` implementations
 @Suppress(
     "NO_ACTUAL_FOR_EXPECT",
     "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING",
-    "KotlinNoActualForExpect"
 )
 expect object VppDatabaseConstructor : RoomDatabaseConstructor<VppDatabase> {
     override fun initialize(): VppDatabase

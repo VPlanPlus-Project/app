@@ -17,13 +17,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +43,6 @@ import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
@@ -57,9 +59,6 @@ import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.FullscreenDrawerContext
-import plus.vplan.app.ui.components.InfoCard
-import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.toName
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
@@ -68,14 +67,35 @@ import vplanplus.composeapp.generated.resources.triangle_alert
 
 @Composable
 fun NewAssessmentDrawerContent(
+    viewModel: NewAssessmentViewModel,
     selectedDate: LocalDate? = null,
     context: FullscreenDrawerContext
 ) {
-    val viewModel = koinViewModel<NewAssessmentViewModel>()
-    val state = viewModel.state
+    val state = viewModel.state.collectAsState().value
 
     LaunchedEffect(selectedDate) {
         if (selectedDate != null) viewModel.onEvent(NewAssessmentEvent.SelectDate(selectedDate))
+    }
+
+    if (context.isCloseRequestHeld) {
+        AlertDialog(
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.triangle_alert),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            onDismissRequest = context.resetCloseRequest,
+            title = { Text(text = "Leistung verwerfen?") },
+            text = { Text("Deine Angaben wurden noch nicht gespeichert.") },
+            confirmButton = {
+                TextButton(onClick = context.hideDrawer) { Text("Verwerfen", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = context.resetCloseRequest) { Text("Weiter bearbeiten") }
+            }
+        )
     }
 
     var showLessonSelectDrawer by rememberSaveable { mutableStateOf(false) }
@@ -277,25 +297,13 @@ fun NewAssessmentDrawerContent(
             }
         }
 
-        InfoCard(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 8.dp)
-                .fillMaxWidth(),
-            imageVector = Res.drawable.triangle_alert,
-            title = "Temporär deaktiviert",
-            text = "Aktuell ist diese Funktion deaktiviert, da sie nicht kompatibel mit dem neuen System ist. Kurzfristige Änderungen zu Stundenplan24.de haben die Fertigstellung dieser Funktion zum Beginn des Schuljahres nicht mehr ermöglicht. Um die App dennoch anbieten zu können, wurde diese Funktion vorerst deaktiviert. Aktualisiere die App regelmäßig, die Funktion wird bald wieder verfügbar sein.",
-            backgroundColor = colors[CustomColor.Yellow]!!.getGroup().container,
-            textColor = colors[CustomColor.Yellow]!!.getGroup().onContainer,
-        )
-
         Button(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp),
             text = "Speichern",
             icon = Res.drawable.check,
-            state = ButtonState.Disabled, //if (state.savingState == UnoptimisticTaskState.InProgress) ButtonState.Loading else ButtonState.Enabled,
+            state = if (state.savingState == UnoptimisticTaskState.InProgress) ButtonState.Loading else ButtonState.Enabled,
             size = ButtonSize.Normal,
             onlyEventOnActive = true,
             onClick = { viewModel.onEvent(NewAssessmentEvent.Save) }
