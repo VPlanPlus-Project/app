@@ -68,6 +68,7 @@ import plus.vplan.app.feature.profile.page.ui.components.ProfileSwitcher
 import plus.vplan.app.feature.profile.settings.page.main.ui.ProfileSettingsScreen
 import plus.vplan.app.feature.profile.settings.page.subject_instances.ui.components.ProfileSubjectInstanceScreen
 import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
+import plus.vplan.app.feature.search.ui.main.SearchEvent
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
 import plus.vplan.app.feature.settings.page.developer.ui.DeveloperSettingsScreen
@@ -190,7 +191,12 @@ fun MainScreenHost(
                     selected = currentDestination == "_Search",
                     label = { Text("Suche") },
                     icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) } }
+                    onClick = {
+                        if (currentDestination == "_Search") {
+                            // If we are already on the search screen, focus the search bar
+                            searchViewModel.onEvent(SearchEvent.SearchBarFocusChanged(true))
+                        } else navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) }
+                    }
                 )
                 NavigationBarItem(
                     selected = currentDestination == "_Profile",
