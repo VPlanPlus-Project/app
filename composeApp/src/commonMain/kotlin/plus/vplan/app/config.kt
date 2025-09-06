@@ -35,7 +35,7 @@ private val vocusConfiguration = WebConfig(
     apiUrl = "https://vpp.local.vocus.dev/api"
 )
 
-val currentConfiguration = vocusConfiguration
+val currentConfiguration = productionConfiguration
 
 data class WebConfig(
     val authUrl: String,
