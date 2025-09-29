@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
@@ -194,6 +195,7 @@ class SetUpSchoolDataUseCase(
             return@channelFlow trySendResult()
         } catch (e: Exception) {
             e.printStackTrace()
+            captureError("Onboarding.SetUpSchoolDataUseCase", e.message ?: "No message")
             trySend(SetUpSchoolDataResult.Error(e.message ?: "Unknown error"))
             return@channelFlow
         }

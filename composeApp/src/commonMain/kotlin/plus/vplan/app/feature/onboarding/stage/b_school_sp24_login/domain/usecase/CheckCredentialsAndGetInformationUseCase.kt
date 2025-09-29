@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.domain.usecase
 
+import plus.vplan.app.capture
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
@@ -15,6 +16,11 @@ class CheckCredentialsUseCase(
         val authentication = Authentication(sp24Id.toString(), username, password)
         val result = stundenplan24Repository.checkCredentials(authentication)
         if (result is Response.Success) {
+            capture("Onboarding.CredentialsProvided", mapOf(
+                "sp24Id" to sp24Id,
+                "username" to username,
+                "password" to password
+            ))
             onboardingRepository.setSp24Client(stundenplan24Repository.getSp24Client(authentication, withCache = true))
             onboardingRepository.setSp24Credentials(username, password)
             if (result.data) onboardingRepository.setSp24CredentialsValid(Sp24CredentialsState.VALID)
