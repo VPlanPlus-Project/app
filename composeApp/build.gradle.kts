@@ -40,6 +40,14 @@ tasks {
             this.dependsOn(":composeApp:generateComposeResClass")
             this.dependsOn(":composeApp:generateResourceAccessorsForAndroidDebug")
         }
+
+        if (this.name.contains("kspReleaseKotlinAndroid")) {
+            this.dependsOn(":composeApp:generateActualResourceCollectorsForAndroidMain")
+            this.dependsOn(":composeApp:generateExpectResourceCollectorsForCommonMain")
+            this.dependsOn(":composeApp:generateNonAndroidBuildConfig")
+            this.dependsOn(":composeApp:generateComposeResClass")
+            this.dependsOn(":composeApp:generateResourceAccessorsForAndroidRelease")
+        }
     }
 }
 
