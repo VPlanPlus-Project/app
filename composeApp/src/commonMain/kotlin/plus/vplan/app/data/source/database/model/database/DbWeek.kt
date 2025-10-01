@@ -30,7 +30,7 @@ data class DbWeek(
     @ColumnInfo(name = "calendar_week") val calendarWeek: Int,
     @ColumnInfo(name = "start") val start: LocalDate,
     @ColumnInfo(name = "end") val end: LocalDate,
-    @ColumnInfo(name = "week_type") val weekType: String,
+    @ColumnInfo(name = "week_type") val weekType: String?,
     @ColumnInfo(name = "week_index") val weekIndex: Int
 ) {
     fun toModel(): Week {
