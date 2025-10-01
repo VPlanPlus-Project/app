@@ -11,7 +11,7 @@ kotlinxDatetime = "0.7.1"
 gradle-buildconfig-plugin = "5.6.8"
 biometric = "1.1.0"
 
-ksp = "2.2.20-2.0.3"
+ksp = "2.2.20-2.0.3" # 2.2.20-2.0.3 / 2025-10-01 @Julius-Babies when updating ksp next time, check the task block in build.gradle.kts if the manual task bindings are still necessary
 androidx-room = "2.8.1"
 androidx-sqlite = "2.6.1"
 navigationCompose = "2.9.0"
