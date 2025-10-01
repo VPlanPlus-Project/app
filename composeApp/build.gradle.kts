@@ -29,6 +29,20 @@ plugins {
     alias(libs.plugins.buildconfig)
 }
 
+// https://slack-chats.kotlinlang.org/t/27543360/hey-after-updating-to-latest-kotlin-and-ksp-version-in-multi
+// https://github.com/google/ksp/issues/2595
+tasks {
+    configureEach {
+        if (this.name.contains("kspDebugKotlinAndroid")) {
+            this.dependsOn(":composeApp:generateActualResourceCollectorsForAndroidMain")
+            this.dependsOn(":composeApp:generateExpectResourceCollectorsForCommonMain")
+            this.dependsOn(":composeApp:generateNonAndroidBuildConfig")
+            this.dependsOn(":composeApp:generateComposeResClass")
+            this.dependsOn(":composeApp:generateResourceAccessorsForAndroidDebug")
+        }
+    }
+}
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -66,6 +80,7 @@ kotlin {
             implementation(libs.androidx.biometric)
 
             implementation(libs.androidx.material)
+            implementation(libs.androidx.icons.extended)
             implementation(libs.androidx.sqlite.framework)
             implementation(libs.androidx.work.runtime.ktx)
 
