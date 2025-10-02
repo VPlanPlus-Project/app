@@ -275,5 +275,5 @@ private fun InfoContent(
         }
     }
 
-    if (showFeedbackDrawer) FeedbackDrawer { showFeedbackDrawer = false }
+    if (showFeedbackDrawer) FeedbackDrawer(null) { showFeedbackDrawer = false }
 }

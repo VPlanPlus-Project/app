@@ -16,7 +16,7 @@ data class Week(
     val calendarWeek: Int,
     val start: LocalDate,
     val end: LocalDate,
-    val weekType: String,
+    val weekType: String?,
     val weekIndex: Int,
     val school: Uuid
 ): Item<String, DataTag> {
@@ -24,7 +24,7 @@ data class Week(
         calendarWeek: Int,
         start: LocalDate,
         end: LocalDate,
-        weekType: String,
+        weekType: String?,
         weekIndex: Int,
         school: Uuid
     ) : this(

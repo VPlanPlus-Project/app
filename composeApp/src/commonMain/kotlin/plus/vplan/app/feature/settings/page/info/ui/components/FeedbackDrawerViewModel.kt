@@ -9,27 +9,30 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.domain.usecase.CheckEMailStructureUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.feature.settings.page.info.domain.usecase.GetFeedbackMetadataUseCase
-import plus.vplan.app.feature.settings.page.info.domain.usecase.SendFeedbackUseCase
 import plus.vplan.app.feature.settings.page.info.domain.usecase.FeedbackMetadata
+import plus.vplan.app.feature.settings.page.info.domain.usecase.GetFeedbackMetadataUseCase
+import plus.vplan.app.feature.settings.page.info.domain.usecase.SendFeedbackWithProfileUseCase
+import plus.vplan.app.feature.settings.page.info.domain.usecase.SendFeedbackWithSp24CredentialsUseCase
 
 class FeedbackDrawerViewModel(
     private val getFeedbackMetadataUseCase: GetFeedbackMetadataUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val checkEMailStructureUseCase: CheckEMailStructureUseCase,
-    private val sendFeedbackUseCase: SendFeedbackUseCase
+    private val sendFeedbackWithProfileUseCase: SendFeedbackWithProfileUseCase,
+    private val sendFeedbackWithSp24CredentialsUseCase: SendFeedbackWithSp24CredentialsUseCase
 ) : ViewModel() {
     var state by mutableStateOf(FeedbackDrawerState())
         private set
 
-    init {
-        init()
-    }
-
-    fun init() {
-        state = FeedbackDrawerState()
+    fun init(
+        sp24: VppSchoolAuthentication.Sp24?
+    ) {
+        state = FeedbackDrawerState(
+            sp24Credentials = sp24
+        )
         viewModelScope.launch { getFeedbackMetadataUseCase().collectLatest { state = state.copy(feedbackMetadata = it) } }
         viewModelScope.launch { getCurrentProfileUseCase().collectLatest { state = state.copy(currentProfile = it) } }
     }
@@ -58,8 +61,14 @@ class FeedbackDrawerViewModel(
                     }
                     if (error) return@launch
                     state = state.copy(showEmptyError = false, showEmailError = false, isLoading = true)
-                    state = state.copy(sendResult = sendFeedbackUseCase(
-                        profile = state.currentProfile!!,
+                    state = state.copy(sendResult = state.currentProfile?.let { profile ->
+                        sendFeedbackWithProfileUseCase(
+                            profile = profile,
+                            message = state.message,
+                            email = state.customEmail.ifEmpty { null }
+                        )
+                    } ?: sendFeedbackWithSp24CredentialsUseCase(
+                        sp24Credentials = state.sp24Credentials!!,
                         message = state.message,
                         email = state.customEmail.ifEmpty { null }
                     ), isLoading = false)
@@ -74,6 +83,7 @@ data class FeedbackDrawerState(
     val message: String = "",
     var feedbackMetadata: FeedbackMetadata? = null,
     val currentProfile: Profile? = null,
+    val sp24Credentials: VppSchoolAuthentication.Sp24? = null,
     val customEmail: String = "",
     val showEmailError: Boolean = false,
     val isLoading: Boolean = false,

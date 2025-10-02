@@ -3,6 +3,7 @@ package plus.vplan.app.feature.settings.page.info.ui.components
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
@@ -18,8 +19,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -58,10 +59,12 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
+import plus.vplan.app.ui.keyboardAsState
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.circle_user_round
 import vplanplus.composeapp.generated.resources.message_circle_heart
@@ -72,14 +75,14 @@ import vplanplus.composeapp.generated.resources.smartphone
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedbackDrawer(
+    sp24: VppSchoolAuthentication.Sp24?,
     onDismiss: () -> Unit
 ) {
     val modalState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val viewModel = koinViewModel<FeedbackDrawerViewModel>()
     val state = viewModel.state
 
-    LaunchedEffect(Unit) { viewModel.init() }
-    if (state.currentProfile == null) return
+    LaunchedEffect(sp24) { viewModel.init(sp24) }
 
     LaunchedEffect(state.sendResult) {
         if (state.sendResult !is Response.Success) return@LaunchedEffect
@@ -110,11 +113,15 @@ private fun FeedbackDrawerContent(
     LaunchedEffect(state.isLoading) {
         if (state.isLoading) localKeyboardController?.hide()
     }
+
+    val isKeyboardVisible by keyboardAsState()
+    val bottomPadding by animateDpAsState(if (isKeyboardVisible) 16.dp else WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 16.dp)
+
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
+            .padding(bottom = bottomPadding)
     ) {
         AnimatedContent(
             targetState = state.sendResult is Response.Success
@@ -213,7 +220,7 @@ private fun FeedbackDrawerContent(
                 Text(
                     text = buildAnnotatedString {
                         withStyle(MaterialTheme.typography.bodySmall.toSpanStyle()) {
-                            append("Deinem Feedback werden einige Informationen zur App-Version und zu deinem Gerät angefügt. ")
+                            append("Deinem Feedback werden einige Informationen zur App-Konfiguration und zu deinem Gerät angefügt. ")
                             withLink(LinkAnnotation.Clickable(
                                 tag = "show_details",
                                 linkInteractionListener = { showSystemInfoDialog = true }

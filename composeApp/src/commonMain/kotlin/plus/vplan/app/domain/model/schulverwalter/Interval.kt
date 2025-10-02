@@ -32,7 +32,12 @@ data class Interval(
 
         companion object {
             fun fromString(type: String): Type {
-                return when (type.lowercase().replace(" ", "")) {
+                return when (
+                    type
+                        .lowercase()
+                        .replace(" ", "")
+                        .replace(".", "")
+                ) {
                     "sek1", "seki" -> Sek1
                     "sek2", "sekii", "jg11", "jg12", "jg13" -> Sek2
                     else -> {

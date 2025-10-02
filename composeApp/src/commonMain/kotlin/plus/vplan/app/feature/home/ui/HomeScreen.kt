@@ -328,8 +328,11 @@ private fun HomeContent(
                                     }))
                                     if (week != null) {
                                         append("\n")
-                                        append(week.weekType)
-                                        append("-Woche (KW ")
+                                        if (week.weekType != null) {
+                                            append(week.weekType)
+                                            append("-Woche ")
+                                        }
+                                        append("(KW")
                                         append(week.calendarWeek)
                                         append(", SW ")
                                         append(week.weekIndex)
@@ -720,7 +723,7 @@ private fun HomeContent(
 
     if (isNewHomeworkDrawerVisible) NewHomeworkDrawer { isNewHomeworkDrawerVisible = false }
     if (isNewAssessmentDrawerVisible) NewAssessmentDrawer { isNewAssessmentDrawerVisible = false }
-    if (isFeedbackDrawerVisible) FeedbackDrawer { isFeedbackDrawerVisible = false }
+    if (isFeedbackDrawerVisible) FeedbackDrawer(null) { isFeedbackDrawerVisible = false }
     visibleNews?.let { NewsDrawer(it) { visibleNews = null } }
 }
 

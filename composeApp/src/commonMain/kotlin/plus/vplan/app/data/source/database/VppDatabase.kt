@@ -233,6 +233,11 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
             from = 5,
             to = 6,
             spec = VppDatabase.Migration5to6::class
+        ),
+        AutoMigration(
+            from = 6,
+            to = 7,
+            spec = VppDatabase.Migration6to7::class
         )
     ]
 )
@@ -283,7 +288,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 6
+        const val DATABASE_VERSION = 7
     }
 
     @RenameColumn(
@@ -460,6 +465,45 @@ abstract class VppDatabase : RoomDatabase() {
                 create index index_assessments_subject_instance_id
                     on assessments (subject_instance_id);
 
+
+            """.trimIndent())
+        }
+    }
+
+    /**
+     * Makes weeks.week_type nullable
+     */
+    class Migration6to7 : AutoMigrationSpec {
+        override fun onPostMigrate(connection: SQLiteConnection) {
+            connection.execSQL("""
+                create table weeks_dg_tmp
+                (
+                    id            TEXT    not null
+                        primary key,
+                    school_id     TEXT    not null
+                        references schools
+                            on delete cascade,
+                    calendar_week INTEGER not null,
+                    start         TEXT    not null,
+                    end           TEXT    not null,
+                    week_type     TEXT,
+                    week_index    INTEGER not null
+                );
+
+                insert into weeks_dg_tmp(id, school_id, calendar_week, start, end, week_type, week_index)
+                select id, school_id, calendar_week, start, end, week_type, week_index
+                from weeks;
+
+                drop table weeks;
+
+                alter table weeks_dg_tmp
+                    rename to weeks;
+
+                create unique index index_weeks_id
+                    on weeks (id);
+
+                create index index_weeks_school_id
+                    on weeks (school_id);
 
             """.trimIndent())
         }

@@ -1,13 +1,13 @@
 package plus.vplan.app.feature.search.subfeature.room_search.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -26,19 +26,26 @@ class RoomSearchViewModel(
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getLessonTimesForProfileUseCase: GetLessonTimesForProfileUseCase
 ) : ViewModel() {
-    var state by mutableStateOf(RoomSearchState())
-        private set
+
+    private val _state = MutableStateFlow(RoomSearchState())
+    val state: StateFlow<RoomSearchState> = _state
 
     init {
-        viewModelScope.launch { getCurrentDateTimeUseCase().collectLatest { state = state.copy(currentTime = it) } }
+        viewModelScope.launch {
+            getCurrentDateTimeUseCase().collectLatest { currentTime ->
+                _state.update { it.copy(currentTime = currentTime) }
+            }
+        }
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { currentProfile ->
-                state = state.copy(currentProfile = currentProfile)
+                _state.update { it.copy(currentProfile = currentProfile) }
                 combine(
                     getRoomOccupationMapUseCase(currentProfile, LocalDate.now()),
                     getLessonTimesForProfileUseCase(currentProfile)
                 ) { map, lessonTimes ->
-                    state = state.copy(rooms = map, lessonTimes = lessonTimes.associateWith { false }, initDone = true)
+                    _state.update { oldState ->
+                        oldState.copy(rooms = map, lessonTimes = lessonTimes.associateWith { oldState.lessonTimes[it] ?: false }, initDone = true)
+                    }
                 }.collect()
             }
         }
@@ -47,7 +54,11 @@ class RoomSearchViewModel(
     fun onEvent(event: RoomSearchEvent) {
         viewModelScope.launch {
             when (event) {
-                is RoomSearchEvent.ToggleLessonTimeSelection -> state = state.copy(lessonTimes = state.lessonTimes.plus(event.lessonTime to (state.lessonTimes[event.lessonTime]?.not() ?: false)))
+                is RoomSearchEvent.ToggleLessonTimeSelection -> {
+                    _state.update {
+                        it.copy(lessonTimes = it.lessonTimes.plus(event.lessonTime to (it.lessonTimes[event.lessonTime]?.not() ?: false)))
+                    }
+                }
             }
         }
     }
