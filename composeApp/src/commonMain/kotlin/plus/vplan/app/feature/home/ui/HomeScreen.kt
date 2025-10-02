@@ -576,6 +576,20 @@ private fun HomeContent(
                                                                         style = MaterialTheme.typography.bodyMedium
                                                                     )
                                                                 }
+                                                                if (lesson is Lesson.TimetableLesson && lesson.limitedToWeekIds != null) Row {
+                                                                    Icon(
+                                                                        painter = painterResource(Res.drawable.info),
+                                                                        contentDescription = "Information",
+                                                                        modifier = Modifier
+                                                                            .padding(end = 8.dp)
+                                                                            .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
+                                                                    )
+                                                                    Text(
+                                                                        text = if (lesson.limitedToWeekIds.size == 1) "Nur in Schulwoche ${lesson.limitedToWeekIds.first()}"
+                                                                                else "Nur in Schulwochen ${lesson.limitedToWeekIds.sorted().dropLast(1).joinToString()} und ${lesson.limitedToWeekIds.maxOf { it }}",
+                                                                        style = MaterialTheme.typography.bodyMedium
+                                                                    )
+                                                                }
                                                                 if (lessonTime.interpolated) {
                                                                     Row(
                                                                         modifier = Modifier.fillMaxWidth(),

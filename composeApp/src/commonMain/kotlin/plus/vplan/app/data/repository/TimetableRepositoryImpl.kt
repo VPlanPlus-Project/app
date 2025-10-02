@@ -12,6 +12,7 @@ import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
+import plus.vplan.app.data.source.database.model.database.DbTimetableWeekLimitation
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
@@ -71,6 +72,11 @@ class TimetableRepositoryImpl(
                             timetableLessonId = it.id
                         )
                     }
+            },
+            weekLimitations = lessons.flatMap { lesson ->
+                lesson.limitedToWeekIds.orEmpty().map {
+                    DbTimetableWeekLimitation(timetableLessonId = lesson.id, weekId = it)
+                }
             }
         )
     }
@@ -101,7 +107,9 @@ class TimetableRepositoryImpl(
     override fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
         return vppDatabase.timetableDao.getWeekIds(weekIndex).flatMapLatest { weeks ->
             if (weeks.isEmpty()) flowOf(emptySet())
-            else vppDatabase.timetableDao.getBySchool(schoolId, weeks.last(), dayOfWeek).map { it.toSet() }.distinctUntilChanged()
+            else vppDatabase.timetableDao.getBySchool(schoolId, weeks.last(), dayOfWeek)
+                .map { it.toSet() }
+                .distinctUntilChanged()
         }
     }
 

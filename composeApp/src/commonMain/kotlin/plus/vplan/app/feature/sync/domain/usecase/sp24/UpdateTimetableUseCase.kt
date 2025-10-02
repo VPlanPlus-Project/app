@@ -175,6 +175,10 @@ class UpdateTimetableUseCase(
                     rooms = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
                     teachers = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
                     groups = lessonGroups,
+                    limitedToWeekIds = lesson.limitToWeekNumber
+                        ?.mapNotNull { weeks.firstOrNull { week -> week.weekIndex == it } }
+                        ?.map { it.id }
+                        ?.toSet(),
                     lessonTime = lessonTimes.firstOrNull { it.lessonNumber == lesson.lessonNumber && it.group in lessonGroups }?.id
                         ?: throw NullPointerException("No lesson time found for lesson ${lesson.lessonNumber} in groups ${lessonGroups.joinToString(", ")}")
                 )
