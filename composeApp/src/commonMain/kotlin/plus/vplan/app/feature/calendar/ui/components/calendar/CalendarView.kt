@@ -57,11 +57,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.cache.AliasState
+import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
@@ -300,6 +302,32 @@ fun CalendarView(
                                                 )
                                                 Text(
                                                     text = lesson.lesson.info,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                            if (lesson.lesson is Lesson.TimetableLesson && lesson.lesson.limitedToWeekIds != null) Row {
+                                                val weeks = remember(lesson.lesson.limitedToWeekIds) {
+                                                    lesson.lesson.limitedToWeeks?.map { it.mapNotNull { week -> (week as? CacheState.Done)?.data?.weekIndex } }
+                                                }?.collectAsState(null)?.value
+                                                Box(
+                                                    modifier = Modifier
+                                                        .padding(end = 4.dp)
+                                                        .size(MaterialTheme.typography.bodySmall.fontSize.toDp()),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(Res.drawable.info),
+                                                        contentDescription = null,
+                                                        modifier = Modifier
+                                                            .size(8.dp),
+                                                        tint = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                }
+                                                if (weeks != null && weeks.isNotEmpty()) Text(
+                                                    text = if (weeks.size == 1) "Nur in Schulwoche ${weeks.first()}"
+                                                        else "Nur in Schulwochen ${weeks.sorted().dropLast(1).joinToString()} und ${weeks.maxOf { it }}",
                                                     style = MaterialTheme.typography.bodySmall,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis

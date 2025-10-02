@@ -52,6 +52,8 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         override val groups by lazy { if (groupIds.isEmpty()) flowOf(emptyList()) else combine(groupIds.map { App.groupSource.getById(it) }) { it.toList() } }
         override val teachers by lazy { if (teacherIds.isEmpty()) flowOf(emptyList()) else combine(teacherIds.map { App.teacherSource.getById(it) }) { it.toList() } }
 
+        val limitedToWeeks by lazy { if (limitedToWeekIds.isNullOrEmpty()) null else combine(limitedToWeekIds.map { App.weekSource.getById(it) }) { it.toList() } }
+
         override val subjectInstanceId = null
         override val isCancelled: Boolean = false
 
