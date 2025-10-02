@@ -89,6 +89,7 @@ import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherAlias
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
+import plus.vplan.app.data.source.database.model.database.DbTimetableWeekLimitation
 import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
@@ -157,6 +158,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         DbTimetableGroupCrossover::class,
         DbTimetableTeacherCrossover::class,
         DbTimetableRoomCrossover::class,
+        DbTimetableWeekLimitation::class,
 
         DbSubstitutionPlanLesson::class,
         DbSubstitutionPlanGroupCrossover::class,
@@ -238,6 +240,10 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
             from = 6,
             to = 7,
             spec = VppDatabase.Migration6to7::class
+        ),
+        AutoMigration(
+            from = 7,
+            to = 8
         )
     ]
 )
@@ -288,7 +294,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 7
+        const val DATABASE_VERSION = 8
     }
 
     @RenameColumn(
