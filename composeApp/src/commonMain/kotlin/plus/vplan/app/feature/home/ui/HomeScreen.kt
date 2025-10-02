@@ -325,8 +325,11 @@ private fun HomeContent(
                                     }))
                                     if (week != null) {
                                         append("\n")
-                                        append(week.weekType)
-                                        append("-Woche (KW ")
+                                        if (week.weekType != null) {
+                                            append(week.weekType)
+                                            append("-Woche ")
+                                        }
+                                        append("(KW")
                                         append(week.calendarWeek)
                                         append(", SW ")
                                         append(week.weekIndex)
