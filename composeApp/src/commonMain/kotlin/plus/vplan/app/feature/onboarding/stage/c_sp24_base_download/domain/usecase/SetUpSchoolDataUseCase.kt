@@ -6,12 +6,14 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Holiday
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupDbDto
 import plus.vplan.app.domain.repository.GroupRepository
@@ -48,13 +50,14 @@ class SetUpSchoolDataUseCase(
         trySend(SetUpSchoolDataResult.Loading(result.toMap()))
         val prefix = "Onboarding/${this::class.simpleName}"
 
+
         val state = onboardingRepository.getState().first()
         require(state.sp24Id != null) { "$prefix sp24Id is null" }
         require(state.username != null) { "$prefix username is null" }
         require(state.password != null) { "$prefix password is null" }
 
+        val sp24Authentication = Authentication(state.sp24Id.toString(), state.username, state.password)
         try {
-            val sp24Authentication = Authentication(state.sp24Id.toString(), state.username, state.password)
             val client = onboardingRepository.getSp24Client()!!
 
             result[SetUpSchoolDataStep.DOWNLOAD_BASE_DATA] = SetUpSchoolDataState.IN_PROGRESS
@@ -65,7 +68,11 @@ class SetUpSchoolDataUseCase(
 
             val baseData = client.getMobileBaseDataStudent(sp24Authentication)
             if (baseData !is plus.vplan.lib.sp24.source.Response.Success) {
-                trySend(SetUpSchoolDataResult.Error("$prefix baseData is not successful: $baseData"))
+                trySend(SetUpSchoolDataResult.Error("$prefix baseData is not successful: $baseData", VppSchoolAuthentication.Sp24(
+                    sp24Authentication.sp24SchoolId,
+                    sp24Authentication.username,
+                    sp24Authentication.password
+                )))
                 return@channelFlow
             }
             result[SetUpSchoolDataStep.DOWNLOAD_BASE_DATA] = SetUpSchoolDataState.DONE
@@ -194,7 +201,12 @@ class SetUpSchoolDataUseCase(
             return@channelFlow trySendResult()
         } catch (e: Exception) {
             e.printStackTrace()
-            trySend(SetUpSchoolDataResult.Error(e.message ?: "Unknown error"))
+            captureError("Onboarding.SetUpSchoolDataUseCase", sp24Authentication.toString() + "\n\n" + e.stackTraceToString())
+            trySend(SetUpSchoolDataResult.Error(e.message ?: "Unknown error", VppSchoolAuthentication.Sp24(
+                sp24Authentication.sp24SchoolId,
+                sp24Authentication.username,
+                sp24Authentication.password
+            )))
             return@channelFlow
         }
     }
@@ -202,7 +214,7 @@ class SetUpSchoolDataUseCase(
 
 sealed class SetUpSchoolDataResult {
     data class Loading(val data: Map<SetUpSchoolDataStep, SetUpSchoolDataState> = SetUpSchoolDataStep.entries.associateWith { SetUpSchoolDataState.NOT_STARTED }) : SetUpSchoolDataResult()
-    data class Error(val message: String) : SetUpSchoolDataResult() {
+    data class Error(val message: String, val sp24Credentials: VppSchoolAuthentication.Sp24) : SetUpSchoolDataResult() {
         init {
             Logger.e("SetUpSchoolDataResult.Error") { message }
         }

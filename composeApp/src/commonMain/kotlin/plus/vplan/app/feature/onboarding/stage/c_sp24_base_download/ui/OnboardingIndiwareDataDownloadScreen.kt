@@ -55,114 +55,100 @@ fun OnboardingIndiwareDataDownloadScreen(
 private fun OnboardingIndiwareDataDownloadContent(
     state: OnboardingIndiwareDataDownloadUiState
 ) {
-    Column(
-        modifier = Modifier
-            .safeDrawingPadding()
-            .fillMaxSize()
-    ) {
-        Column(
-            modifier = Modifier
-                .weight(1f, true)
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                painter = painterResource(Res.drawable.download),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.size(8.dp))
-            Text(
-                text = "VPlanPlus wird vorbereitet",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "Wir laden aktuelle Daten herunter, bitte warte einen kleinen Moment.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
-        }
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .fillMaxWidth()
-        ) {
+    AnimatedContent(state.error != null) { hasError ->
+        if (hasError) {
+            state.error?.let { OnboardingSetupErrorScreen(modifier = Modifier.safeDrawingPadding(), error = it) }
+        } else {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                    .safeDrawingPadding()
+                    .fillMaxSize()
             ) {
-                state.steps.forEach { (stage, state) ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
+                Column(
+                    modifier = Modifier
+                        .weight(1f, true)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.download),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "VPlanPlus wird vorbereitet",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "Wir laden aktuelle Daten herunter, bitte warte einen kleinen Moment.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        AnimatedContent(
-                            targetState = state
-                        ) { displayState ->
-                            when (displayState) {
-                                SetUpSchoolDataState.IN_PROGRESS -> CircularProgressIndicator(
-                                    Modifier.size(24.dp)
-                                )
+                        state.steps.forEach { (stage, state) ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                AnimatedContent(
+                                    targetState = state
+                                ) { displayState ->
+                                    when (displayState) {
+                                        SetUpSchoolDataState.IN_PROGRESS -> CircularProgressIndicator(
+                                            Modifier.size(24.dp)
+                                        )
 
-                                SetUpSchoolDataState.NOT_STARTED -> Box(
-                                    modifier = Modifier.size(24.dp)
-                                )
+                                        SetUpSchoolDataState.NOT_STARTED -> Box(
+                                            modifier = Modifier.size(24.dp)
+                                        )
 
-                                SetUpSchoolDataState.DONE -> Box(
-                                    modifier = Modifier.size(24.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(Res.drawable.check),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
+                                        SetUpSchoolDataState.DONE -> Box(
+                                            modifier = Modifier.size(24.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(Res.drawable.check),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                    }
                                 }
+                                Spacer(modifier = Modifier.size(8.dp))
+                                Text(
+                                    text = when (stage) {
+                                        SetUpSchoolDataStep.SET_UP_DATA -> "Daten anpassen"
+                                        SetUpSchoolDataStep.DOWNLOAD_BASE_DATA -> "Daten herunterladen"
+                                        SetUpSchoolDataStep.GET_SCHOOL_INFORMATION -> "Schulinformationen laden"
+                                        SetUpSchoolDataStep.GET_HOLIDAYS -> "Ferientage laden"
+                                        SetUpSchoolDataStep.GET_GROUPS -> "Gruppen laden"
+                                        SetUpSchoolDataStep.GET_TEACHERS -> "Lehrer laden"
+                                        SetUpSchoolDataStep.GET_ROOMS -> "Räume laden"
+                                        SetUpSchoolDataStep.GET_LESSON_TIMES -> "Stundenzeiten laden"
+                                        SetUpSchoolDataStep.GET_WEEKS -> "Schulwochen laden"
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
                             }
                         }
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = when (stage) {
-                                SetUpSchoolDataStep.SET_UP_DATA -> "Daten anpassen"
-                                SetUpSchoolDataStep.DOWNLOAD_BASE_DATA -> "Daten herunterladen"
-                                SetUpSchoolDataStep.GET_SCHOOL_INFORMATION -> "Schulinformationen laden"
-                                SetUpSchoolDataStep.GET_HOLIDAYS -> "Ferientage laden"
-                                SetUpSchoolDataStep.GET_GROUPS -> "Gruppen laden"
-                                SetUpSchoolDataStep.GET_TEACHERS -> "Lehrer laden"
-                                SetUpSchoolDataStep.GET_ROOMS -> "Räume laden"
-                                SetUpSchoolDataStep.GET_LESSON_TIMES -> "Stundenzeiten laden"
-                                SetUpSchoolDataStep.GET_WEEKS -> "Schulwochen laden"
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                }
-                AnimatedContent(
-                    targetState = state.error
-                ) { error ->
-                    Column {
-                        if (error != null) {
-                            Text(
-                                text = "Fehler beim Laden der Daten",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            Text(
-                                text = "Fehler: " + error.message,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            return@AnimatedContent
-                        }
-
                     }
                 }
             }

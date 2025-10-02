@@ -8,7 +8,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.VppIdRepository
 
-class SendFeedbackUseCase(
+class SendFeedbackWithProfileUseCase(
     private val vppIdRepository: VppIdRepository,
     private val getFeedbackMetadataUseCase: GetFeedbackMetadataUseCase
 ) {

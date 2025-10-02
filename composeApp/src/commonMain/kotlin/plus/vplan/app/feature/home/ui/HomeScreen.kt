@@ -720,7 +720,7 @@ private fun HomeContent(
 
     if (isNewHomeworkDrawerVisible) NewHomeworkDrawer { isNewHomeworkDrawerVisible = false }
     if (isNewAssessmentDrawerVisible) NewAssessmentDrawer { isNewAssessmentDrawerVisible = false }
-    if (isFeedbackDrawerVisible) FeedbackDrawer { isFeedbackDrawerVisible = false }
+    if (isFeedbackDrawerVisible) FeedbackDrawer(null) { isFeedbackDrawerVisible = false }
     visibleNews?.let { NewsDrawer(it) { visibleNews = null } }
 }
 
