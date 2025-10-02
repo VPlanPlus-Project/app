@@ -105,19 +105,40 @@ class TimetableRepositoryImpl(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
-        return vppDatabase.timetableDao.getWeekIds(weekIndex).flatMapLatest { weeks ->
-            if (weeks.isEmpty()) flowOf(emptySet())
-            else vppDatabase.timetableDao.getBySchool(schoolId, weeks.last(), dayOfWeek)
-                .map { it.toSet() }
-                .distinctUntilChanged()
-        }
+        return vppDatabase.weekDao.getBySchool(schoolId)
+            .map { emission -> emission.map { week -> week.toModel() }.sortedBy { it.weekIndex } }
+            .flatMapLatest { weeks ->
+                vppDatabase.timetableDao.getWeekIds(weekIndex).flatMapLatest { timetableWeeks ->
+                    if (weeks.isEmpty() || timetableWeeks.isEmpty()) flowOf(emptySet())
+                    else {
+                        val currentWeekId = weeks.firstOrNull { it.weekIndex == weekIndex }?.id ?: weeks.last().id
+                        vppDatabase.timetableDao.getBySchool(schoolId, timetableWeeks.last(), currentWeekId, dayOfWeek)
+                            .map { it.toSet() }
+                            .distinctUntilChanged()
+                    }
+                }
+            }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
-        return vppDatabase.timetableDao.getWeekIds(weekIndex).flatMapLatest { weeks ->
-            if (weeks.isEmpty()) flowOf(emptySet())
-            else vppDatabase.timetableDao.getLessonsForProfile(profile.id, weeks.last(), dayOfWeek).map { it.map { it.timetableLessonId }.toSet() }.distinctUntilChanged()
-        }
+        return profile.getSchool()
+            .map { Uuid.parse(it.entityId) }
+            .distinctUntilChanged()
+            .flatMapLatest { schoolId ->
+                vppDatabase.weekDao.getBySchool(schoolId)
+                    .map { emission -> emission.map { week -> week.toModel() }.sortedBy { it.weekIndex } }
+                .flatMapLatest { weeks ->
+                    vppDatabase.timetableDao.getWeekIds(weekIndex).flatMapLatest { timetableWeeks ->
+                        if (timetableWeeks.isEmpty()) flowOf(emptySet())
+                        else {
+                            val currentWeekId = weeks.firstOrNull { it.weekIndex == weekIndex }?.id ?: weeks.last().id
+                            vppDatabase.timetableDao.getLessonsForProfile(profile.id, timetableWeeks.last(), currentWeekId, dayOfWeek)
+                                .map { it.toSet() }
+                                .distinctUntilChanged()
+                        }
+                    }
+                }
+            }
     }
 }
