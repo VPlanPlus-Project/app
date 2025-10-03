@@ -45,8 +45,8 @@ import plus.vplan.app.BuildConfig
 import plus.vplan.app.ui.theme.displayFontFamily
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_right
-import vplanplus.composeapp.generated.resources.logo_dark
-import vplanplus.composeapp.generated.resources.logo_light
+import vplanplus.composeapp.generated.resources.logo_black
+import vplanplus.composeapp.generated.resources.logo_white
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -114,7 +114,7 @@ private fun OnboardingWelcomeScreenContent(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = if (!isSystemInDarkTheme()) painterResource(Res.drawable.logo_light) else painterResource(Res.drawable.logo_dark),
+                        painter = if (isSystemInDarkTheme()) painterResource(Res.drawable.logo_white) else painterResource(Res.drawable.logo_black),
                         contentDescription = "App Logo",
                         modifier = Modifier
                             .size(127.dp)

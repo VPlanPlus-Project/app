@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,9 +85,9 @@ fun OnboardingScreen(
             }
         }
 
-        var isOnWelcomeScreen by rememberSaveable { mutableStateOf(false) }
+        var showColorfulBackground by rememberSaveable { mutableStateOf(false) }
         AnimatedVisibility(
-            visible = isOnWelcomeScreen,
+            visible = showColorfulBackground,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
@@ -102,13 +103,16 @@ fun OnboardingScreen(
             popExitTransition = exitSlideTransitionRight
         ) {
             composable<OnboardingScreen.OnboardingScreenStart> {
-                LaunchedEffect(Unit) { isOnWelcomeScreen = true }
                 OnboardingWelcomeScreen(
                     onNext = remember { {
+                        showColorfulBackground = false
                         navController.navigate(OnboardingScreen.OnboardingScreenSchoolSearch)
-                        isOnWelcomeScreen = false
                     } }
                 )
+                DisposableEffect(Unit) {
+                    showColorfulBackground = true
+                    onDispose { showColorfulBackground = false }
+                }
             }
 
             composable<OnboardingScreen.OnboardingScreenSchoolSearch> {
