@@ -69,6 +69,7 @@ val exitSlideTransitionRight: (AnimatedContentTransitionScope<NavBackStackEntry>
 @Composable
 fun OnboardingScreen(
     schoolId: Uuid?,
+    skipIntroAnimation: Boolean,
     onFinish: () -> Unit,
 ) {
     val viewModel = koinViewModel<OnboardingHostViewModel>()
@@ -96,7 +97,7 @@ fun OnboardingScreen(
 
         NavHost(
             navController = navController,
-            startDestination = OnboardingScreen.OnboardingScreenStart,
+            startDestination = if (skipIntroAnimation) OnboardingScreen.OnboardingScreenSchoolSearch else OnboardingScreen.OnboardingScreenStart,
             enterTransition = enterSlideTransition,
             exitTransition = exitSlideTransition,
             popEnterTransition = enterSlideTransitionRight,
