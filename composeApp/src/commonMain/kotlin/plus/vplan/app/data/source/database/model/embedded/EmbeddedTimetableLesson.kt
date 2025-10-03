@@ -7,6 +7,7 @@ import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
+import plus.vplan.app.data.source.database.model.database.DbTimetableWeekLimitation
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
@@ -43,7 +44,12 @@ data class EmbeddedTimetableLesson(
         parentColumn = "lesson_time_id",
         entityColumn = "id",
         entity = DbLessonTime::class
-    ) val lessonTime: DbLessonTime
+    ) val lessonTime: DbLessonTime,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "timetable_lesson_id",
+        entity = DbTimetableWeekLimitation::class
+    ) val weekLimitations: List<DbTimetableWeekLimitation>
 ) {
     fun toModel(): Lesson.TimetableLesson {
         return Lesson.TimetableLesson(
@@ -55,7 +61,8 @@ data class EmbeddedTimetableLesson(
             roomIds = rooms.map { it.id },
             groupIds = groups.map { it.groupId },
             lessonTimeId = timetableLesson.lessonTimeId,
-            weekType = timetableLesson.weekType
+            weekType = timetableLesson.weekType,
+            limitedToWeekIds = weekLimitations.map { it.weekId }.toSet().ifEmpty { null }
         )
     }
 }

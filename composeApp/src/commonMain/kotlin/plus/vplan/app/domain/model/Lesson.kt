@@ -43,13 +43,16 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         override val roomIds: List<Uuid>?,
         override val groupIds: List<Uuid>,
         override val lessonTimeId: String,
-        val weekType: String?
+        val weekType: String?,
+        val limitedToWeekIds: Set<String>?
     ) : Lesson {
         override val lessonTime by lazy { App.lessonTimeSource.getById(lessonTimeId) }
         override val subjectInstance = null
         override val rooms by lazy { if (roomIds.isNullOrEmpty()) flowOf(emptyList()) else combine(roomIds.map { App.roomSource.getById(it) }) { it.toList() } }
         override val groups by lazy { if (groupIds.isEmpty()) flowOf(emptyList()) else combine(groupIds.map { App.groupSource.getById(it) }) { it.toList() } }
         override val teachers by lazy { if (teacherIds.isEmpty()) flowOf(emptyList()) else combine(teacherIds.map { App.teacherSource.getById(it) }) { it.toList() } }
+
+        val limitedToWeeks by lazy { if (limitedToWeekIds.isNullOrEmpty()) null else combine(limitedToWeekIds.map { App.weekSource.getById(it) }) { it.toList() } }
 
         override val subjectInstanceId = null
         override val isCancelled: Boolean = false
@@ -66,7 +69,8 @@ sealed interface Lesson : Item<Uuid, DataTag> {
             rooms: List<Uuid>?,
             groups: List<Uuid>,
             lessonTime: String,
-            weekType: String?
+            weekType: String?,
+            limitedToWeekIds: Set<String>?,
         ) : this(
             id = Uuid.random(),
             dayOfWeek = dayOfWeek,
@@ -77,6 +81,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
             groupIds = groups,
             lessonTimeId = lessonTime,
             weekType = weekType,
+            limitedToWeekIds = limitedToWeekIds,
         )
     }
 

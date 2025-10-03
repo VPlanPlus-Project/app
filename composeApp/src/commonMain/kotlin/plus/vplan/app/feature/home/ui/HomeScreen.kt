@@ -54,6 +54,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -573,6 +574,23 @@ private fun HomeContent(
                                                                     )
                                                                     Text(
                                                                         text = lesson.info,
+                                                                        style = MaterialTheme.typography.bodyMedium
+                                                                    )
+                                                                }
+                                                                if (lesson is Lesson.TimetableLesson && lesson.limitedToWeekIds != null) Row {
+                                                                    val weeks = remember(lesson.limitedToWeekIds) {
+                                                                        lesson.limitedToWeeks?.map { it.mapNotNull { week -> (week as? CacheState.Done)?.data?.weekIndex } }
+                                                                    }?.collectAsState(null)?.value
+                                                                    Icon(
+                                                                        painter = painterResource(Res.drawable.info),
+                                                                        contentDescription = "Information",
+                                                                        modifier = Modifier
+                                                                            .padding(end = 8.dp)
+                                                                            .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
+                                                                    )
+                                                                    if (weeks != null && weeks.isNotEmpty()) Text(
+                                                                        text = if (weeks.size == 1) "Nur in Schulwoche ${weeks.first()}"
+                                                                                else "Nur in Schulwochen ${weeks.sorted().dropLast(1).joinToString()} und ${weeks.maxOf { it }}",
                                                                         style = MaterialTheme.typography.bodyMedium
                                                                     )
                                                                 }
