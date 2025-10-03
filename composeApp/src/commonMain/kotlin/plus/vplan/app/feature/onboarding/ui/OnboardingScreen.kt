@@ -1,15 +1,21 @@
 package plus.vplan.app.feature.onboarding.ui
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
@@ -18,6 +24,8 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingSchoolSearch
+import plus.vplan.app.feature.onboarding.stage.a_welcome.ui.OnboardingWelcomeScreen
+import plus.vplan.app.feature.onboarding.stage.a_welcome.ui.components.BlurredBackground
 import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.OnboardingIndiwareLoginScreen
 import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.ui.OnboardingIndiwareDataDownloadScreen
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileScreen
@@ -64,7 +72,7 @@ fun OnboardingScreen(
 ) {
     val viewModel = koinViewModel<OnboardingHostViewModel>()
 
-    Column(
+    Box(
         modifier = Modifier.fillMaxSize()
     ) {
         val navController = rememberNavController()
@@ -76,16 +84,37 @@ fun OnboardingScreen(
             }
         }
 
+        var isOnWelcomeScreen by rememberSaveable { mutableStateOf(false) }
+        AnimatedVisibility(
+            visible = isOnWelcomeScreen,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Box(Modifier.fillMaxSize()) { BlurredBackground() }
+        }
+
         NavHost(
             navController = navController,
-            startDestination = OnboardingScreen.OnboardingScreenHome,
+            startDestination = OnboardingScreen.OnboardingScreenStart,
             enterTransition = enterSlideTransition,
             exitTransition = exitSlideTransition,
             popEnterTransition = enterSlideTransitionRight,
             popExitTransition = exitSlideTransitionRight
         ) {
-            composable<OnboardingScreen.OnboardingScreenHome> {
-                OnboardingSchoolSearch(navController)
+            composable<OnboardingScreen.OnboardingScreenStart> {
+                LaunchedEffect(Unit) { isOnWelcomeScreen = true }
+                OnboardingWelcomeScreen(
+                    onNext = remember { {
+                        navController.navigate(OnboardingScreen.OnboardingScreenSchoolSearch)
+                        isOnWelcomeScreen = false
+                    } }
+                )
+            }
+
+            composable<OnboardingScreen.OnboardingScreenSchoolSearch> {
+                OnboardingSchoolSearch(
+                    navController = navController
+                )
             }
 
             composable<OnboardingScreen.OnboardingScreenSp24Login> {
@@ -113,7 +142,8 @@ fun OnboardingScreen(
 
 @Serializable
 sealed class OnboardingScreen(val name: String) {
-    @Serializable data object OnboardingScreenHome : OnboardingScreen("OnboardingScreenHome")
+    @Serializable data object OnboardingScreenStart : OnboardingScreen("OnboardingScreenStart")
+    @Serializable data object OnboardingScreenSchoolSearch : OnboardingScreen("OnboardingScreenSchoolSearch")
     @Serializable data object OnboardingScreenSp24Login : OnboardingScreen("OnboardingScreenIndiwareLogin")
     @Serializable data object OnboardingIndiwareDataDownload : OnboardingScreen("OnboardingScreenDataDownload")
     @Serializable data object OnboardingChooseProfile : OnboardingScreen("OnboardingScreenChooseProfileType")
