@@ -6,25 +6,18 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import org.jetbrains.compose.resources.Font
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_Black
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_BlackItalic
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_Bold
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_BoldItalic
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_ExtraBold
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_ExtraBoldItalic
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_Medium
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_MediumItalic
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_Regular
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_SemiBold
+import vplanplus.composeapp.generated.resources.PlayfairDisplay_SemiBoldItalic
 import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.albertsans_black
-import vplanplus.composeapp.generated.resources.albertsans_black_italic
-import vplanplus.composeapp.generated.resources.albertsans_bold
-import vplanplus.composeapp.generated.resources.albertsans_bold_italic
-import vplanplus.composeapp.generated.resources.albertsans_extrabold
-import vplanplus.composeapp.generated.resources.albertsans_extrabold_italic
-import vplanplus.composeapp.generated.resources.albertsans_extralight
-import vplanplus.composeapp.generated.resources.albertsans_extralight_italic
-import vplanplus.composeapp.generated.resources.albertsans_light
-import vplanplus.composeapp.generated.resources.albertsans_light_italic
-import vplanplus.composeapp.generated.resources.albertsans_medium
-import vplanplus.composeapp.generated.resources.albertsans_medium_italic
-import vplanplus.composeapp.generated.resources.albertsans_regular
-import vplanplus.composeapp.generated.resources.albertsans_regular_italic
-import vplanplus.composeapp.generated.resources.albertsans_semibold
-import vplanplus.composeapp.generated.resources.albertsans_semibold_italic
-import vplanplus.composeapp.generated.resources.albertsans_thin
-import vplanplus.composeapp.generated.resources.albertsans_thin_italic
 import vplanplus.composeapp.generated.resources.inter_black
 import vplanplus.composeapp.generated.resources.inter_black_italic
 import vplanplus.composeapp.generated.resources.inter_bold
@@ -60,24 +53,17 @@ fun bodyFontFamily() = FontFamily(
 
 @Composable
 fun displayFontFamily() = FontFamily(
-    Font(Res.font.albertsans_black, FontWeight.Black, FontStyle.Normal),
-    Font(Res.font.albertsans_black_italic, FontWeight.Black, FontStyle.Italic),
-    Font(Res.font.albertsans_bold, FontWeight.Bold, FontStyle.Normal),
-    Font(Res.font.albertsans_bold_italic, FontWeight.Bold, FontStyle.Italic),
-    Font(Res.font.albertsans_extrabold, FontWeight.ExtraBold, FontStyle.Normal),
-    Font(Res.font.albertsans_extrabold_italic, FontWeight.ExtraBold, FontStyle.Italic),
-    Font(Res.font.albertsans_extralight, FontWeight.ExtraLight, FontStyle.Normal),
-    Font(Res.font.albertsans_extralight_italic, FontWeight.ExtraLight, FontStyle.Italic),
-    Font(Res.font.albertsans_regular, FontWeight.Normal, FontStyle.Normal),
-    Font(Res.font.albertsans_regular_italic, FontWeight.Normal, FontStyle.Italic),
-    Font(Res.font.albertsans_light, FontWeight.Light, FontStyle.Normal),
-    Font(Res.font.albertsans_light_italic, FontWeight.Light, FontStyle.Italic),
-    Font(Res.font.albertsans_medium, FontWeight.Medium, FontStyle.Normal),
-    Font(Res.font.albertsans_medium_italic, FontWeight.Medium, FontStyle.Italic),
-    Font(Res.font.albertsans_semibold, FontWeight.SemiBold, FontStyle.Normal),
-    Font(Res.font.albertsans_semibold_italic, FontWeight.SemiBold, FontStyle.Italic),
-    Font(Res.font.albertsans_thin, FontWeight.Thin, FontStyle.Normal),
-    Font(Res.font.albertsans_thin_italic, FontWeight.Thin, FontStyle.Italic)
+    Font(Res.font.PlayfairDisplay_Black, FontWeight.Black, FontStyle.Normal),
+    Font(Res.font.PlayfairDisplay_BlackItalic, FontWeight.Black, FontStyle.Italic),
+    Font(Res.font.PlayfairDisplay_Bold, FontWeight.Bold, FontStyle.Normal),
+    Font(Res.font.PlayfairDisplay_BoldItalic, FontWeight.Bold, FontStyle.Italic),
+    Font(Res.font.PlayfairDisplay_ExtraBold, FontWeight.ExtraBold, FontStyle.Normal),
+    Font(Res.font.PlayfairDisplay_ExtraBoldItalic, FontWeight.ExtraBold, FontStyle.Italic),
+    Font(Res.font.PlayfairDisplay_Regular, FontWeight.Normal, FontStyle.Normal),
+    Font(Res.font.PlayfairDisplay_Medium, FontWeight.Medium, FontStyle.Normal),
+    Font(Res.font.PlayfairDisplay_MediumItalic, FontWeight.Medium, FontStyle.Italic),
+    Font(Res.font.PlayfairDisplay_SemiBold, FontWeight.SemiBold, FontStyle.Normal),
+    Font(Res.font.PlayfairDisplay_SemiBoldItalic, FontWeight.SemiBold, FontStyle.Italic),
 )
 
 val baseline = Typography()

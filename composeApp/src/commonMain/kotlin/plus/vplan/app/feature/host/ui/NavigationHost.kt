@@ -83,18 +83,19 @@ fun NavigationHost(task: StartTask?) {
 
     NavHost(
         navController = navigationHostController,
-        startDestination = if (state.hasProfileAtAppStartup) AppScreen.MainScreen else AppScreen.Onboarding(null)
+        startDestination = if (state.hasProfileAtAppStartup) AppScreen.MainScreen else AppScreen.Onboarding(null, false)
     ) {
         composable<AppScreen.Onboarding> { route ->
             val args = route.toRoute<AppScreen.Onboarding>()
             OnboardingScreen(
+                skipIntroAnimation = args.skipIntroAnimation,
                 schoolId = args.schoolId?.let { Uuid.parseHex(it) },
             ) { navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) } }
         }
 
         composable<AppScreen.MainScreen> {
             MainScreenHost(
-                onNavigateToOnboarding = { navigationHostController.navigate(AppScreen.Onboarding(it?.id?.toHexString())) },
+                onNavigateToOnboarding = { navigationHostController.navigate(AppScreen.Onboarding(it?.id?.toHexString(), true)) },
                 contentPaddingDevice = contentPadding,
                 navigationTask = task
             )
@@ -128,7 +129,7 @@ fun NavigationHost(task: StartTask?) {
 @Serializable
 sealed class AppScreen(val name: String) {
     @Serializable data object MainScreen : AppScreen("MainScreen")
-    @Serializable data class Onboarding(val schoolId: String?) : AppScreen("Onboarding")
+    @Serializable data class Onboarding(val schoolId: String?, val skipIntroAnimation: Boolean) : AppScreen("Onboarding")
 
     @Serializable data class VppIdLogin(val token: String) : AppScreen("VppIdLogin")
     @Serializable data class SchulverwalterReconnect(val schulverwalterAccessToken: String, val vppId: Int): AppScreen("SchulverwalterReconnect")
