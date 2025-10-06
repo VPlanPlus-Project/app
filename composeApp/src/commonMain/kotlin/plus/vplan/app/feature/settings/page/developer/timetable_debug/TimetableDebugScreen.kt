@@ -79,10 +79,10 @@ private fun TimetableDebugContent(
     ) { contentPadding ->
         Column(
             modifier = Modifier
-                .padding(contentPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .nestedScroll(scrollBehaviour.nestedScrollConnection)
+                .padding(contentPadding)
                 .padding(top = 4.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
