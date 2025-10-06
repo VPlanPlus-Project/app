@@ -27,7 +27,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import plus.vplan.app.ui.components.TopToggle
 import vplanplus.composeapp.generated.resources.Res
@@ -45,6 +47,7 @@ fun DeveloperSettingsScreen(
     DeveloperSettingsContent(
         onBack = navHostController::navigateUp,
         onEvent = viewModel::handleEvent,
+        onOpenTimetableDebug = remember { { navHostController.navigate(MainScreen.DeveloperSettings.TimetableDebug) } },
         state = state
     )
 }
@@ -52,7 +55,8 @@ fun DeveloperSettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DeveloperSettingsContent(
-    onBack: () -> Unit,
+    onBack: () -> Unit = {},
+    onOpenTimetableDebug: () -> Unit = {},
     onEvent: (DeveloperSettingsEvent) -> Unit,
     state: DeveloperSettingsState
 ) {
@@ -90,6 +94,14 @@ private fun DeveloperSettingsContent(
                 state = state.isDeveloperModeEnabled,
                 onToggle = { onEvent(DeveloperSettingsEvent.ToggleDeveloperMode) },
             )
+
+            SettingsRecord(
+                title = "Stundenplandebugging",
+                subtitle = "Zeigt zusätzliche Debug-Informationen für Stundenpläne an",
+                onClick = onOpenTimetableDebug,
+            )
+
+            HorizontalDivider()
 
             SettingsRecord(
                 title = "Vollständige Aktualisierung",
@@ -197,4 +209,15 @@ private fun DeveloperSettingsContent(
             }
         }
     }
+}
+
+@Preview
+@Composable
+private fun DeveloperSettingsScreenPreview() {
+    DeveloperSettingsContent(
+        onEvent = {},
+        state = DeveloperSettingsState(
+            isWeekUpdateRunning = true
+        )
+    )
 }

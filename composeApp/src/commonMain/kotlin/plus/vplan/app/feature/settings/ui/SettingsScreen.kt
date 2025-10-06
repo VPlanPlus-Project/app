@@ -42,7 +42,7 @@ fun SettingsScreen(
         onBack = navHostController::navigateUp,
         onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings()) } },
         onOpenSecuritySettings = remember { { navHostController.navigate(MainScreen.SecuritySettings) } },
-        onOpenDeveloperSettings = remember { { navHostController.navigate(MainScreen.DeveloperSettings) } },
+        onOpenDeveloperSettings = remember { { navHostController.navigate(MainScreen.DeveloperSettings.Home) } },
         onOpenInfoAndFeedback = remember { { navHostController.navigate(MainScreen.InfoFeedbackSettings) } },
         state = state
     )
