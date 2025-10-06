@@ -13,6 +13,7 @@ import kotlin.uuid.Uuid
     indices = [
         Index(value = ["lesson_time_id"], unique = false),
         Index(value = ["week_id"], unique = false),
+        Index(value = ["timetable_id"], unique = false),
     ],
     foreignKeys = [
         ForeignKey(
@@ -28,11 +29,19 @@ import kotlin.uuid.Uuid
             childColumns = ["lesson_time_id"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
-        )
+        ),
+        ForeignKey(
+            entity = DbTimetable::class,
+            parentColumns = ["id"],
+            childColumns = ["timetable_id"],
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE
+        ),
     ]
 )
 data class DbTimetableLesson(
     @ColumnInfo(name = "id") val id: Uuid,
+    @ColumnInfo(name = "timetable_id") val timetableId: Uuid,
     @ColumnInfo(name = "day_of_week") val dayOfWeek: DayOfWeek,
     @ColumnInfo(name = "week_id") val weekId: String,
     @ColumnInfo(name = "lesson_time_id") val lessonTimeId: String,

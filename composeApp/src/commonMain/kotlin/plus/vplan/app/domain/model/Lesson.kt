@@ -43,6 +43,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         override val roomIds: List<Uuid>?,
         override val groupIds: List<Uuid>,
         override val lessonTimeId: String,
+        val timetableId: Uuid,
         val weekType: String?,
         val limitedToWeekIds: Set<String>?
     ) : Lesson {
@@ -69,6 +70,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
             rooms: List<Uuid>?,
             groups: List<Uuid>,
             lessonTime: String,
+            timetableId: Uuid,
             weekType: String?,
             limitedToWeekIds: Set<String>?,
         ) : this(
@@ -80,6 +82,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
             roomIds = rooms,
             groupIds = groups,
             lessonTimeId = lessonTime,
+            timetableId = timetableId,
             weekType = weekType,
             limitedToWeekIds = limitedToWeekIds,
         )

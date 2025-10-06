@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
+import plus.vplan.app.data.source.database.model.database.DbTimetable
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.DbTimetableWeekLimitation
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
@@ -23,6 +24,9 @@ interface TimetableDao {
 
     @Upsert
     suspend fun upsert(timetable: DbTimetableLesson)
+
+    @Upsert
+    suspend fun upsert(timetable: DbTimetable)
 
     @Upsert
     suspend fun upsert(crossover: DbTimetableGroupCrossover)
@@ -47,8 +51,8 @@ interface TimetableDao {
     }
 
     @Transaction
-    suspend fun replaceForSchool(
-        schoolId: Uuid,
+    suspend fun replaceForTimetable(
+        timetableId: Uuid,
         lessons: List<DbTimetableLesson>,
         groups: List<DbTimetableGroupCrossover>,
         teachers: List<DbTimetableTeacherCrossover>,
@@ -57,7 +61,7 @@ interface TimetableDao {
         weekLimitations: List<DbTimetableWeekLimitation>
     ) {
         Logger.d { "Start replacing" }
-        val oldLessons = getBySchool(schoolId).first().map { it.timetableLesson.id }
+        val oldLessons = getByTimetable(timetableId).first().map { it.timetableLesson.id }
         Logger.d { "Old lessons: ${oldLessons.size}x" }
         if (oldLessons.isNotEmpty()) deleteTimetableByIds(oldLessons)
         Logger.d { "Deleted old lessons" }
@@ -81,12 +85,17 @@ interface TimetableDao {
     fun getBySchool(schoolId: Uuid): Flow<List<EmbeddedTimetableLesson>>
 
     @Transaction
+    @RewriteQueriesToDropUnusedColumns
+    @Query("SELECT * FROM timetable_lessons WHERE timetable_id = :timetableId")
+    fun getByTimetable(timetableId: Uuid): Flow<List<EmbeddedTimetableLesson>>
+
+    @Transaction
     @Query("SELECT DISTINCT timetable_lessons.id FROM timetable_lessons LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id LEFT JOIN timetable_week_limitation ON timetable_week_limitation.timetable_lesson_id = timetable_lessons.id WHERE school_groups.school_id = :schoolId AND timetable_lessons.week_id = :timetableReleaseWeekId AND timetable_lessons.day_of_week = :dayOfWeek AND (timetable_week_limitation.week_id IS NULL OR timetable_week_limitation.week_id = :currentWeekId)")
     fun getBySchool(schoolId: Uuid, timetableReleaseWeekId: String, currentWeekId: String, dayOfWeek: DayOfWeek): Flow<List<Uuid>>
 
     @Transaction
-    @Query("SELECT DISTINCT weeks.id FROM timetable_lessons LEFT JOIN weeks ON weeks.id = timetable_lessons.week_id WHERE week_index <= :maxWeekIndex")
-    fun getWeekIds(maxWeekIndex: Int): Flow<List<String>>
+    @Query("SELECT DISTINCT weeks.id FROM timetable_lessons LEFT JOIN weeks ON weeks.id = timetable_lessons.week_id LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id WHERE week_index <= :maxWeekIndex AND school_groups.school_id = :schoolId")
+    fun getWeekIds(schoolId: Uuid, maxWeekIndex: Int): Flow<List<String>>
 
     @Transaction
     @Query("SELECT * FROM timetable_lessons WHERE id = :id")

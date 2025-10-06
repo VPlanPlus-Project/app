@@ -14,6 +14,10 @@ interface Stundenplan24Repository {
 
     suspend fun getSp24Client(authentication: Authentication, withCache: Boolean): Stundenplan24Client
 
-    suspend fun hasTimetableForWeek(sp24SchoolId: Int, weekId: String): Boolean?
-    suspend fun setHasTimetableForWeek(sp24SchoolId: Int, weekId: String, hasTimetable: Boolean)
+    suspend fun hasTimetableForWeek(sp24SchoolId: String, weekId: String): HasData
+    suspend fun setHasTimetableForWeek(sp24SchoolId: String, weekId: String, hasTimetable: Boolean)
+
+    enum class HasData {
+        Yes, No, Unknown
+    }
 }

@@ -61,6 +61,7 @@ data class EmbeddedTimetableLesson(
             roomIds = rooms.map { it.id },
             groupIds = groups.map { it.groupId },
             lessonTimeId = timetableLesson.lessonTimeId,
+            timetableId = timetableLesson.timetableId,
             weekType = timetableLesson.weekType,
             limitedToWeekIds = weekLimitations.map { it.weekId }.toSet().ifEmpty { null }
         )

@@ -63,15 +63,19 @@ class Stundenplan24RepositoryImpl(
         }
     }
 
-    override suspend fun hasTimetableForWeek(sp24SchoolId: Int, weekId: String): Boolean? {
-        return vppDatabase.stundenplan24Dao.getHasTimetableInWeek(weekId, sp24SchoolId.toString())?.hasData
+    override suspend fun hasTimetableForWeek(sp24SchoolId: String, weekId: String): Stundenplan24Repository.HasData {
+        return when (vppDatabase.stundenplan24Dao.getHasTimetableInWeek(weekId, sp24SchoolId)?.hasData) {
+            true -> Stundenplan24Repository.HasData.Yes
+            false -> Stundenplan24Repository.HasData.No
+            null -> Stundenplan24Repository.HasData.Unknown
+        }
     }
 
     override suspend fun setHasTimetableForWeek(
-        sp24SchoolId: Int,
+        sp24SchoolId: String,
         weekId: String,
         hasTimetable: Boolean,
     ) {
-        vppDatabase.stundenplan24Dao.upsert(DbStundenplan24TimetableMetadata(sp24SchoolId.toString(), weekId, hasTimetable))
+        vppDatabase.stundenplan24Dao.upsert(DbStundenplan24TimetableMetadata(sp24SchoolId, weekId, hasTimetable))
     }
 }
