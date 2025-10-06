@@ -25,6 +25,7 @@ interface TimetableRepository {
     fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
 
     suspend fun upsertTimetable(timetable: Timetable)
+    suspend fun getTimetableData(schoolId: Uuid, weekId: String): Flow<Timetable?>
 
     suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>)
 }

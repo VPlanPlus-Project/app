@@ -124,6 +124,9 @@ interface TimetableDao {
     @Query("DELETE FROM profile_timetable_cache WHERE profile_id = :profileId")
     suspend fun dropIndexForProfile(profileId: Uuid)
 
+    @Query("SELECT * FROM timetables WHERE school_id = :schoolId AND week_id = :weekId LIMIT 1")
+    fun getTimetableData(schoolId: Uuid, weekId: String): Flow<DbTimetable?>
+
     @Upsert
     suspend fun upsert(entries: List<DbProfileTimetableCache>)
 

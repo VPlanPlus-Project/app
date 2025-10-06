@@ -34,7 +34,6 @@ import plus.vplan.app.data.source.database.dao.ProfileDao
 import plus.vplan.app.data.source.database.dao.ProfileTimetableCacheDao
 import plus.vplan.app.data.source.database.dao.RoomDao
 import plus.vplan.app.data.source.database.dao.SchoolDao
-import plus.vplan.app.data.source.database.dao.Stundenplan24Dao
 import plus.vplan.app.data.source.database.dao.SubjectInstanceDao
 import plus.vplan.app.data.source.database.dao.SubstitutionPlanDao
 import plus.vplan.app.data.source.database.dao.TeacherDao
@@ -82,7 +81,6 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterv
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
-import plus.vplan.app.data.source.database.model.database.DbStundenplan24TimetableMetadata
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
@@ -123,7 +121,6 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         DbSchool::class,
         DbSchoolAlias::class,
         DbSchoolSp24Acess::class,
-        DbStundenplan24TimetableMetadata::class,
 
         DbGroup::class,
         DbGroupAlias::class,
@@ -274,7 +271,6 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val weekDao: WeekDao
     abstract val lessonTimeDao: LessonTimeDao
     abstract val timetableDao: TimetableDao
-    abstract val stundenplan24Dao: Stundenplan24Dao
     abstract val dayDao: DayDao
     abstract val holidayDao: HolidayDao
     abstract val substitutionPlanDao: SubstitutionPlanDao
@@ -525,18 +521,22 @@ abstract class VppDatabase : RoomDatabase() {
                 id TEXT NOT NULL,
                 school_id TEXT NOT NULL,
                 week_id TEXT NOT NULL,
-                data_state INTEGER NOT NULL,
+                data_state TEXT NOT NULL,
                 PRIMARY KEY (school_id, week_id),
                 FOREIGN KEY (school_id) REFERENCES schools(id) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY (week_id) REFERENCES weeks(id) ON UPDATE CASCADE ON DELETE CASCADE
             );
         """.trimIndent())
 
+            connection.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_timetables_id ON timetables (id);")
+            connection.execSQL("CREATE INDEX IF NOT EXISTS index_timetables_school_id ON timetables (school_id);")
+            connection.execSQL("CREATE INDEX IF NOT EXISTS index_timetables_week_id ON timetables (week_id);")
+
             connection.execSQL("""
             CREATE TABLE timetable_lessons_tmp (
                 id TEXT NOT NULL PRIMARY KEY,
                 timetable_id TEXT NOT NULL,
-                day_of_week INTEGER NOT NULL,
+                day_of_week TEXT NOT NULL,
                 week_id TEXT NOT NULL,
                 lesson_time_id TEXT NOT NULL,
                 subject TEXT,
@@ -548,6 +548,7 @@ abstract class VppDatabase : RoomDatabase() {
         """.trimIndent())
 
             connection.execSQL("DROP TABLE timetable_lessons;")
+            connection.execSQL("DROP TABLE stundenplan24_timetable_metadata;")
             connection.execSQL("ALTER TABLE timetable_lessons_tmp RENAME TO timetable_lessons;")
 
             connection.execSQL("CREATE INDEX index_timetable_lessons_lesson_time_id ON timetable_lessons (lesson_time_id);")
@@ -561,7 +562,7 @@ abstract class VppDatabase : RoomDatabase() {
 // Room compiler generates the `actual` implementations
 @Suppress(
     "NO_ACTUAL_FOR_EXPECT",
-    "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING",
+    "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "KotlinNoActualForExpect",
 )
 expect object VppDatabaseConstructor : RoomDatabaseConstructor<VppDatabase> {
     override fun initialize(): VppDatabase

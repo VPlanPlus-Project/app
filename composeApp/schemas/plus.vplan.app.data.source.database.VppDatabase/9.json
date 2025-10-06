@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "df79f7a504076701af279613f4410256",
+    "identityHash": "98c649ad7b51f50cfa0936f2243b9369",
     "entities": [
       {
         "tableName": "schools",
@@ -190,60 +190,6 @@
             "onUpdate": "CASCADE",
             "columns": [
               "school_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          }
-        ]
-      },
-      {
-        "tableName": "stundenplan24_timetable_metadata",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stundenplan24_school_id` TEXT NOT NULL, `week_id` TEXT NOT NULL, `has_data` INTEGER NOT NULL, PRIMARY KEY(`week_id`), FOREIGN KEY(`week_id`) REFERENCES `weeks`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
-        "fields": [
-          {
-            "fieldPath": "stundenplan24Id",
-            "columnName": "stundenplan24_school_id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "weekId",
-            "columnName": "week_id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "hasData",
-            "columnName": "has_data",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "week_id"
-          ]
-        },
-        "indices": [
-          {
-            "name": "index_stundenplan24_timetable_metadata_week_id",
-            "unique": true,
-            "columnNames": [
-              "week_id"
-            ],
-            "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_stundenplan24_timetable_metadata_week_id` ON `${TABLE_NAME}` (`week_id`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "weeks",
-            "onDelete": "CASCADE",
-            "onUpdate": "CASCADE",
-            "columns": [
-              "week_id"
             ],
             "referencedColumns": [
               "id"
@@ -4576,7 +4522,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'df79f7a504076701af279613f4410256')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '98c649ad7b51f50cfa0936f2243b9369')"
     ]
   }
 }

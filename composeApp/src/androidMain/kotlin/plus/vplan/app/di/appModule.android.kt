@@ -33,7 +33,8 @@ actual val platformModule: Module = module(createdAtStart = true) {
                 else builder
             }
             .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
-            .fallbackToDestructiveMigration(true)
+            .fallbackToDestructiveMigration(false)
+            .config()
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()
     }

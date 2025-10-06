@@ -132,6 +132,10 @@ class TimetableRepositoryImpl(
         ))
     }
 
+    override suspend fun getTimetableData(schoolId: Uuid, weekId: String): Flow<Timetable?> {
+        return vppDatabase.timetableDao.getTimetableData(schoolId, weekId).map { it?.toModel() }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
         return profile.getSchool()
