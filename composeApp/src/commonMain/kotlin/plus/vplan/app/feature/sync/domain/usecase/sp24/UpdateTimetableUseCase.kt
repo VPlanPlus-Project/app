@@ -86,9 +86,7 @@ class UpdateTimetableUseCase(
                 when (timetableResponse) {
                     is Sp24Response.Error.OnlineError.NotFound -> {
                         LOGGER.i { "Timetable not found for sp24 school ${sp24School.id} and week CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)" }
-                        if (week.relativeTime == WeekState.RelativeTime.Past) {
-                            timetableRepository.upsertTimetable(timetableMetadata.copy(dataState = Stundenplan24Repository.HasData.No))
-                        }
+                        timetableRepository.upsertTimetable(timetableMetadata.copy(dataState = Stundenplan24Repository.HasData.No))
                         return@forEachWeek
                     }
                     is Sp24Response.Success -> {
