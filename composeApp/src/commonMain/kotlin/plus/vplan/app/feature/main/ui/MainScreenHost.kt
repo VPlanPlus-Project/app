@@ -44,6 +44,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -71,6 +72,7 @@ import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchEvent
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
+import plus.vplan.app.feature.settings.page.developer.timetable_debug.TimetableDebugScreen
 import plus.vplan.app.feature.settings.page.developer.ui.DeveloperSettingsScreen
 import plus.vplan.app.feature.settings.page.info.ui.InfoScreen
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
@@ -291,13 +293,21 @@ fun MainScreenHost(
                     navHostController = navController
                 )
             }
-            composable<MainScreen.DeveloperSettings>(
+            composable<MainScreen.DeveloperSettings.Home>(
                 enterTransition = defaultEnterAnimation,
                 exitTransition = defaultExitAnimation,
                 popEnterTransition = defaultPopEnterAnimation,
                 popExitTransition = defaultPopExitAnimation
             ) {
                 DeveloperSettingsScreen(navHostController = navController)
+            }
+            composable<MainScreen.DeveloperSettings.TimetableDebug>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
+                TimetableDebugScreen(navHostController = navController)
             }
             composable<MainScreen.InfoFeedbackSettings>(
                 enterTransition = defaultEnterAnimation,
@@ -388,7 +398,7 @@ fun MainScreenHost(
  * @param name The name of the screen, used for the route. If it starts with an underscore, the bottom bar will be shown.
  */
 @Serializable
-sealed class MainScreen(val name: String) {
+sealed class MainScreen(open val name: String) {
     @Serializable data object MainHome : MainScreen("_Home")
     @Serializable data object MainCalendar : MainScreen("_Calendar")
     @Serializable data object MainSearch : MainScreen("_Search")
@@ -402,7 +412,10 @@ sealed class MainScreen(val name: String) {
     @Serializable data object Settings : MainScreen("Settings")
     @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: String? = null) : MainScreen("SchoolSettings")
     @Serializable data object SecuritySettings : MainScreen("SecuritySettings")
-    @Serializable data object DeveloperSettings : MainScreen("DeveloperSettings")
+    @Serializable sealed class DeveloperSettings(@SerialName("developer_subpath") override val name: String) : MainScreen("DeveloperSettings/$name") {
+        @Serializable data object Home : DeveloperSettings("Home")
+        @Serializable data object TimetableDebug : DeveloperSettings("TimetableDebug")
+    }
     @Serializable data object InfoFeedbackSettings : MainScreen("InfoFeedbackSettings")
 
     @Serializable data class Grades(val vppId: Int) : MainScreen("Grades")

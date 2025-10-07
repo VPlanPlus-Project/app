@@ -5,12 +5,11 @@ package plus.vplan.app.data.repository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbProfileTimetableCache
+import plus.vplan.app.data.source.database.model.database.DbTimetable
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.DbTimetableWeekLimitation
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
@@ -18,6 +17,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.Timetable
 import plus.vplan.app.domain.repository.TimetableRepository
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -26,9 +26,9 @@ class TimetableRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : TimetableRepository {
 
-    override suspend fun upsertLessons(schoolId: Uuid, lessons: List<Lesson.TimetableLesson>, profiles: List<Profile.StudentProfile>) {
-        vppDatabase.timetableDao.replaceForSchool(
-            schoolId = schoolId,
+    override suspend fun upsertLessons(timetableId: Uuid, lessons: List<Lesson.TimetableLesson>, profiles: List<Profile.StudentProfile>) {
+        vppDatabase.timetableDao.replaceForTimetable(
+            timetableId = timetableId,
             lessons = lessons.map { lesson ->
                 DbTimetableLesson(
                     id = lesson.id,
@@ -36,7 +36,8 @@ class TimetableRepositoryImpl(
                     weekId = lesson.week,
                     weekType = lesson.weekType,
                     lessonTimeId = lesson.lessonTimeId,
-                    subject = lesson.subject
+                    subject = lesson.subject,
+                    timetableId = lesson.timetableId
                 )
             },
             groups = lessons.flatMap { lesson ->
@@ -105,40 +106,28 @@ class TimetableRepositoryImpl(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
-        return vppDatabase.weekDao.getBySchool(schoolId)
-            .map { emission -> emission.map { week -> week.toModel() }.sortedBy { it.weekIndex } }
-            .flatMapLatest { weeks ->
-                vppDatabase.timetableDao.getWeekIds(weekIndex).flatMapLatest { timetableWeeks ->
-                    if (weeks.isEmpty() || timetableWeeks.isEmpty()) flowOf(emptySet())
-                    else {
-                        val currentWeekId = weeks.firstOrNull { it.weekIndex == weekIndex }?.id ?: weeks.last().id
-                        vppDatabase.timetableDao.getBySchool(schoolId, timetableWeeks.last(), currentWeekId, dayOfWeek)
-                            .map { it.toSet() }
-                            .distinctUntilChanged()
-                    }
-                }
-            }
+        return vppDatabase.timetableDao.getBySchool(schoolId, weekIndex, dayOfWeek)
+            .map { it.toSet() }
+            .distinctUntilChanged()
+    }
+
+    override suspend fun upsertTimetable(timetable: Timetable) {
+        vppDatabase.timetableDao.upsert(DbTimetable(
+            id = timetable.id,
+            schoolId = timetable.schoolId,
+            weekId = timetable.weekId,
+            dataState = timetable.dataState
+        ))
+    }
+
+    override suspend fun getTimetableData(schoolId: Uuid, weekId: String): Flow<Timetable?> {
+        return vppDatabase.timetableDao.getTimetableData(schoolId, weekId).map { it?.toModel() }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
-        return profile.getSchool()
-            .map { Uuid.parse(it.entityId) }
+        return vppDatabase.timetableDao.getLessonsForProfile(profile.id, weekIndex, dayOfWeek)
+            .map { it.toSet() }
             .distinctUntilChanged()
-            .flatMapLatest { schoolId ->
-                vppDatabase.weekDao.getBySchool(schoolId)
-                    .map { emission -> emission.map { week -> week.toModel() }.sortedBy { it.weekIndex } }
-                .flatMapLatest { weeks ->
-                    vppDatabase.timetableDao.getWeekIds(weekIndex).flatMapLatest { timetableWeeks ->
-                        if (timetableWeeks.isEmpty()) flowOf(emptySet())
-                        else {
-                            val currentWeekId = weeks.firstOrNull { it.weekIndex == weekIndex }?.id ?: weeks.last().id
-                            vppDatabase.timetableDao.getLessonsForProfile(profile.id, timetableWeeks.last(), currentWeekId, dayOfWeek)
-                                .map { it.toSet() }
-                                .distinctUntilChanged()
-                        }
-                    }
-                }
-            }
     }
 }

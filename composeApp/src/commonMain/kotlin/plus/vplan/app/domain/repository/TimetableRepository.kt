@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.Timetable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -13,7 +14,7 @@ interface TimetableRepository {
     suspend fun deleteAllTimetables()
 
     suspend fun upsertLessons(
-        schoolId: Uuid,
+        timetableId: Uuid,
         lessons: List<Lesson.TimetableLesson>,
         profiles: List<Profile.StudentProfile>
     )
@@ -22,6 +23,9 @@ interface TimetableRepository {
     fun getById(id: Uuid): Flow<Lesson.TimetableLesson?>
     fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
     fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>>
+
+    suspend fun upsertTimetable(timetable: Timetable)
+    suspend fun getTimetableData(schoolId: Uuid, weekId: String): Flow<Timetable?>
 
     suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>)
 }

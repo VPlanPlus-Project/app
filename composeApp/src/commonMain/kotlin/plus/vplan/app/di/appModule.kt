@@ -118,8 +118,8 @@ import plus.vplan.app.feature.vpp_id.di.vppIdModule
 
 expect val platformModule: Module
 
-@Suppress("unused")
 fun RoomDatabase.Builder<VppDatabase>.config(): RoomDatabase.Builder<VppDatabase> = this
+    .addMigrations(VppDatabase.Migration8to9)
 
 val appModule = module(createdAtStart = true) {
     single<HttpClient> {
@@ -164,8 +164,6 @@ val appModule = module(createdAtStart = true) {
                 header("X-App", "VPlanPlus")
                 header("X-App-Version", BuildConfig.APP_VERSION_CODE)
             }
-
-
         }
     }
 

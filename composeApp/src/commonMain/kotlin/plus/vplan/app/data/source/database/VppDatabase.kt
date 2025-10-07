@@ -9,6 +9,7 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
+import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 import plus.vplan.app.data.source.database.converters.AliasPrefixConverter
@@ -33,7 +34,6 @@ import plus.vplan.app.data.source.database.dao.ProfileDao
 import plus.vplan.app.data.source.database.dao.ProfileTimetableCacheDao
 import plus.vplan.app.data.source.database.dao.RoomDao
 import plus.vplan.app.data.source.database.dao.SchoolDao
-import plus.vplan.app.data.source.database.dao.Stundenplan24Dao
 import plus.vplan.app.data.source.database.dao.SubjectInstanceDao
 import plus.vplan.app.data.source.database.dao.SubstitutionPlanDao
 import plus.vplan.app.data.source.database.dao.TeacherDao
@@ -81,13 +81,13 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterv
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
-import plus.vplan.app.data.source.database.model.database.DbStundenplan24TimetableMetadata
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherAlias
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
+import plus.vplan.app.data.source.database.model.database.DbTimetable
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.DbTimetableWeekLimitation
 import plus.vplan.app.data.source.database.model.database.DbVppId
@@ -121,7 +121,6 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         DbSchool::class,
         DbSchoolAlias::class,
         DbSchoolSp24Acess::class,
-        DbStundenplan24TimetableMetadata::class,
 
         DbGroup::class,
         DbGroupAlias::class,
@@ -154,6 +153,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
 
         DbWeek::class,
         DbLessonTime::class,
+        DbTimetable::class,
         DbTimetableLesson::class,
         DbTimetableGroupCrossover::class,
         DbTimetableTeacherCrossover::class,
@@ -271,7 +271,6 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val weekDao: WeekDao
     abstract val lessonTimeDao: LessonTimeDao
     abstract val timetableDao: TimetableDao
-    abstract val stundenplan24Dao: Stundenplan24Dao
     abstract val dayDao: DayDao
     abstract val holidayDao: HolidayDao
     abstract val substitutionPlanDao: SubstitutionPlanDao
@@ -294,7 +293,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 8
+        const val DATABASE_VERSION = 9
     }
 
     @RenameColumn(
@@ -514,12 +513,56 @@ abstract class VppDatabase : RoomDatabase() {
             """.trimIndent())
         }
     }
+
+    object Migration8to9 : Migration(8, 9) {
+        override fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("""
+            CREATE TABLE IF NOT EXISTS timetables (
+                id TEXT NOT NULL,
+                school_id TEXT NOT NULL,
+                week_id TEXT NOT NULL,
+                data_state TEXT NOT NULL,
+                PRIMARY KEY (school_id, week_id),
+                FOREIGN KEY (school_id) REFERENCES schools(id) ON UPDATE CASCADE ON DELETE CASCADE,
+                FOREIGN KEY (week_id) REFERENCES weeks(id) ON UPDATE CASCADE ON DELETE CASCADE
+            );
+        """.trimIndent())
+
+            connection.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_timetables_id ON timetables (id);")
+            connection.execSQL("CREATE INDEX IF NOT EXISTS index_timetables_school_id ON timetables (school_id);")
+            connection.execSQL("CREATE INDEX IF NOT EXISTS index_timetables_week_id ON timetables (week_id);")
+
+            connection.execSQL("""
+            CREATE TABLE timetable_lessons_tmp (
+                id TEXT NOT NULL PRIMARY KEY,
+                timetable_id TEXT NOT NULL,
+                day_of_week TEXT NOT NULL,
+                week_id TEXT NOT NULL,
+                lesson_time_id TEXT NOT NULL,
+                subject TEXT,
+                week_type TEXT,
+                FOREIGN KEY (week_id) REFERENCES weeks(id) ON UPDATE CASCADE ON DELETE CASCADE,
+                FOREIGN KEY (lesson_time_id) REFERENCES lesson_times(id) ON UPDATE CASCADE ON DELETE CASCADE,
+                FOREIGN KEY (timetable_id) REFERENCES timetables(id) ON UPDATE CASCADE ON DELETE CASCADE
+            );
+        """.trimIndent())
+
+            connection.execSQL("DROP TABLE timetable_lessons;")
+            connection.execSQL("DROP TABLE stundenplan24_timetable_metadata;")
+            connection.execSQL("ALTER TABLE timetable_lessons_tmp RENAME TO timetable_lessons;")
+
+            connection.execSQL("CREATE INDEX index_timetable_lessons_lesson_time_id ON timetable_lessons (lesson_time_id);")
+            connection.execSQL("CREATE INDEX index_timetable_lessons_week_id ON timetable_lessons (week_id);")
+            connection.execSQL("CREATE INDEX index_timetable_lessons_timetable_id ON timetable_lessons (timetable_id);")
+        }
+    }
+
 }
 
 // Room compiler generates the `actual` implementations
 @Suppress(
     "NO_ACTUAL_FOR_EXPECT",
-    "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING",
+    "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "KotlinNoActualForExpect",
 )
 expect object VppDatabaseConstructor : RoomDatabaseConstructor<VppDatabase> {
     override fun initialize(): VppDatabase
