@@ -59,8 +59,22 @@ class UpdateTimetableUseCase(
         val groups = groupRepository.getBySchool(sp24School.id).first()
 
         val weeks = getWeekStates(sp24School)
+            .let { weeks ->
+                if (forceUpdate) weeks
+                else weeks
+                    .filter { weekState -> weekState.relativeTime == WeekState.RelativeTime.CurrentOrFuture || (weekState.relativeTime == WeekState.RelativeTime.Past && weekState.hasData == Stundenplan24Repository.HasData.Unknown) }
+                    .groupBy { it.hasData }
+                    .let {
+                        val unknown = it[Stundenplan24Repository.HasData.Unknown].orEmpty()
 
-        LOGGER.d { "Found ${rooms.size} rooms, ${teachers.size} teachers, ${groups.size} groups and ${weeks.size} weeks" }
+                        val other = (it[Stundenplan24Repository.HasData.Yes].orEmpty() + it[Stundenplan24Repository.HasData.No].orEmpty())
+                            .sortedBy { week -> week.weekEntity.weekIndex }
+                            .take(3)
+
+                        (unknown + other)
+                            .sortedBy { week -> week.weekEntity.weekIndex }
+                    }
+            }
 
         weeks.forEach forEachWeek@{ week ->
             if (week.relativeTime == WeekState.RelativeTime.Past && !forceUpdate) return@forEachWeek
