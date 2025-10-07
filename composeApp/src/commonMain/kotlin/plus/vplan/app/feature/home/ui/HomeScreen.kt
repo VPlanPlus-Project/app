@@ -176,7 +176,6 @@ private fun HomeContent(
         Column(
             modifier = Modifier
                 .padding(top = 8.dp)
-                .padding(contentPadding)
                 .fillMaxWidth()
         ) {
             AnimatedContent(
@@ -196,7 +195,8 @@ private fun HomeContent(
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = contentPadding
                 ) {
                     item {
                         Greeting(
