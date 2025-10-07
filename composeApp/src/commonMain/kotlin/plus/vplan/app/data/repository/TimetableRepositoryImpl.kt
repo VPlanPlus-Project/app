@@ -5,8 +5,6 @@ package plus.vplan.app.data.repository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.data.source.database.VppDatabase
@@ -108,19 +106,9 @@ class TimetableRepositoryImpl(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
-        return vppDatabase.weekDao.getBySchool(schoolId)
-            .map { emission -> emission.map { week -> week.toModel() }.sortedBy { it.weekIndex } }
-            .flatMapLatest { weeks ->
-                vppDatabase.timetableDao.getWeekIds(schoolId, weekIndex).flatMapLatest { timetableWeeks ->
-                    if (weeks.isEmpty() || timetableWeeks.isEmpty()) flowOf(emptySet())
-                    else {
-                        val currentWeekId = weeks.firstOrNull { it.weekIndex == weekIndex }?.id ?: weeks.last().id
-                        vppDatabase.timetableDao.getBySchool(schoolId, timetableWeeks.last(), currentWeekId, dayOfWeek)
-                            .map { it.toSet() }
-                            .distinctUntilChanged()
-                    }
-                }
-            }
+        return vppDatabase.timetableDao.getBySchool(schoolId, weekIndex, dayOfWeek)
+            .map { it.toSet() }
+            .distinctUntilChanged()
     }
 
     override suspend fun upsertTimetable(timetable: Timetable) {
@@ -138,32 +126,8 @@ class TimetableRepositoryImpl(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
-        return profile.getSchool()
-            .map { Uuid.parse(it.entityId) }
+        return vppDatabase.timetableDao.getLessonsForProfile(profile.id, weekIndex, dayOfWeek)
+            .map { it.toSet() }
             .distinctUntilChanged()
-            .flatMapLatest { schoolId ->
-                if (dayOfWeek == DayOfWeek.MONDAY && weekIndex == 16) {
-                    schoolId.hashCode()
-                }
-                vppDatabase.weekDao.getBySchool(schoolId)
-                    .map { emission -> emission.map { week -> week.toModel() }.sortedBy { it.weekIndex } }
-                    .flatMapLatest { weeks ->
-                        if (dayOfWeek == DayOfWeek.MONDAY && weekIndex == 16) {
-                            weeks.hashCode()
-                        }
-                        vppDatabase.timetableDao.getWeekIds(schoolId, weekIndex).flatMapLatest { timetableWeeks ->
-                            if (dayOfWeek == DayOfWeek.MONDAY && weekIndex == 16) {
-                                timetableWeeks.hashCode()
-                            }
-                            if (timetableWeeks.isEmpty()) flowOf(emptySet())
-                            else {
-                                val currentWeekId = weeks.firstOrNull { it.weekIndex == weekIndex }?.id ?: weeks.last().id
-                                vppDatabase.timetableDao.getLessonsForProfile(profile.id, timetableWeeks.last(), currentWeekId, dayOfWeek)
-                                    .map { it.toSet() }
-                                    .distinctUntilChanged()
-                            }
-                        }
-                }
-            }
     }
 }

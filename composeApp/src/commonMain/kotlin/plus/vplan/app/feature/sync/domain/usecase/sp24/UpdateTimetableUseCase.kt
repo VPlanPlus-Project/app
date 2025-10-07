@@ -126,7 +126,22 @@ class UpdateTimetableUseCase(
                                     ?.map { it.weekEntity.id }
                                     ?.toSet(),
                                 lessonTime = lessonTimes.firstOrNull { it.lessonNumber == lesson.lessonNumber && it.group in lessonGroups }?.id
-                                    ?: throw NullPointerException("No lesson time found for lesson ${lesson.dayOfWeek}/${lesson.lessonNumber} in groups ${lesson.classes.joinToString(", ")}")
+                                    ?: run {
+                                        captureError(
+                                            location = "UpdateTimetableUseCase",
+                                            message = """
+                                        Couldn't find lesson time for lesson, setting to first lesson time of the first group.
+                                        School: ${sp24School.sp24Id} ${sp24School.name}
+                                        Week: CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)
+                                        Lesson: ${lesson.subject} on ${lesson.dayOfWeek}, lesson number ${lesson.lessonNumber}
+                                        Groups for lesson: ${lesson.classes.joinToString()}
+                                        Teachers for lesson: ${lesson.teachers.joinToString()}
+                                        Rooms for lesson: ${lesson.rooms.joinToString()}
+                                        Lesson times configured in app: ${lessonTimes.joinToString { "${it.lessonNumber} (${it.group})"} }
+                                    """.trimIndent()
+                                        )
+                                        return@mapNotNull null
+                                    }
                             )
                         }
 
