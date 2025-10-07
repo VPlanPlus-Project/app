@@ -104,7 +104,15 @@ class CalendarViewModel(
                                 .groupBy { lesson -> lesson.lessonNumber }
                                 .mapValues { lessonOverLessonNumber -> lessonOverLessonNumber.value.sortedBy { lesson -> lesson.subject } }
 
-                            val layoutedLessons = it.calculateLayouting()
+                            val hasTooManyInterpolatedLessonTimes = it.count { lesson -> lesson.lessonTime?.getFirstValueOld()?.interpolated == false } < it.size / 2
+                            val hasMissingLessonTimes = it.any { lesson -> lesson.lessonTime == null }
+
+                            val layoutedLessons = if (hasTooManyInterpolatedLessonTimes || hasMissingLessonTimes) null
+                            else try {
+                                it.calculateLayouting()
+                            } catch (_: LessonWithoutTimeException) {
+                                null
+                            }
                             calendarDay = calendarDay.copy(
                                 layoutedLessons = layoutedLessons,
                                 lessons = lessons.toList()
@@ -250,7 +258,7 @@ data class CalendarDay(
     val assessments: List<Assessment>,
     val homework: List<Homework>,
     val lessons: Map<Int, List<Lesson>>?,
-    val layoutedLessons: List<LessonLayoutingInfo>
+    val layoutedLessons: List<LessonLayoutingInfo>?
 ) {
     constructor(date: LocalDate): this(date, null, Day.DayType.UNKNOWN, null, emptyList(), emptyList(), null, emptyList())
 }

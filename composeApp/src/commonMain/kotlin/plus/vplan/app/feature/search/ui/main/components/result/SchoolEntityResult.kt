@@ -34,6 +34,7 @@ import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
+import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLessons
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.ui.components.LineShimmer
 import plus.vplan.app.utils.DOT
@@ -122,7 +123,7 @@ fun SchoolEntityResults(
                             profile = null,
                             dayType = Day.DayType.REGULAR,
                             date = contextDate,
-                            lessons = result.lessons,
+                            lessons = CalendarViewLessons.CalendarView(result.lessons), // TODO
                             assessments = emptyList(),
                             homework = emptyList(),
                             autoLimitTimeSpanToLessons = true,

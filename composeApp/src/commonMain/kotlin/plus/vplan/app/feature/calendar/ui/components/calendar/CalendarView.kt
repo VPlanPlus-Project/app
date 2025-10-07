@@ -76,6 +76,7 @@ import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
 import plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard
+import plus.vplan.app.feature.home.ui.components.FollowingLessons
 import plus.vplan.app.feature.home.ui.components.HolidayScreen
 import plus.vplan.app.feature.home.ui.components.headerFont
 import plus.vplan.app.ui.components.InfoCard
@@ -102,7 +103,7 @@ fun CalendarView(
     profile: Profile?,
     date: LocalDate,
     dayType: Day.DayType,
-    lessons: List<LessonLayoutingInfo>,
+    lessons: CalendarViewLessons,
     assessments: List<Assessment>,
     homework: List<Homework>,
     bottomIslandPadding: PaddingValues = PaddingValues(0.dp),
@@ -128,214 +129,237 @@ fun CalendarView(
                 Day.DayType.WEEKEND -> HolidayScreen(isWeekend = true, nextRegularSchoolDay = null)
                 Day.DayType.HOLIDAY -> HolidayScreen(isWeekend = false, nextRegularSchoolDay = null)
                 else -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .onSizeChanged { availableWidth = with(localDensity) { it.width.toDp() } - 2 * 8.dp - 32.dp }
-                            .let { if (contentScrollState == null) it else it.verticalScroll(contentScrollState) }
-                    ) {
-                        var start by remember { mutableStateOf(LocalTime(0, 0)) }
-                        var end by remember { mutableStateOf(LocalTime(23, 59, 59, 99)) }
-
-                        LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons, limitTimeSpanToLessonsLowerBound) {
-                            if (!autoLimitTimeSpanToLessons || lessons.isEmpty()) return@LaunchedEffect
-                            start = limitTimeSpanToLessonsLowerBound ?: lessons.minOf { it.lessonTime.start }.minusWithCapAtMidnight(30.minutes)
-                            end = lessons.maxOf { it.lessonTime.end }.plusWithCapAtMidnight(30.minutes)
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(minute * (start until end).inWholeMinutes.toInt())
-                        ) {
-                            repeat(24) {
-                                val time = LocalTime(it, 0)
-                                val y = (time.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
-                                if (y < 0.dp) return@repeat
-                                HorizontalDivider(Modifier.fillMaxWidth().offset(y = y).zIndex(-10f))
-                                Text(
-                                    text = "${it.toString().padStart(2, '0')}:00",
-                                    color = Color.Gray,
-                                    modifier = Modifier.offset(y = y).widthIn(max = 48.dp).align(Alignment.TopEnd),
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
-                            if (date == LocalDate.now()) {
-                                val currentTime = LocalTime.now()
-                                val y = (currentTime.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
-                                HorizontalDivider(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .offset(y = y + 2.dp)
-                                        .drawWithCache {
-                                            val triangleShape = Path().apply {
-                                                moveTo(0f, 1.dp.toPx())
-                                                relativeMoveTo(0f, 6.dp.toPx())
-                                                relativeLineTo(0f, -12.dp.toPx())
-                                                relativeLineTo(8.dp.toPx(), 6.dp.toPx())
-                                                relativeLineTo(-8.dp.toPx(), 6.dp.toPx())
-                                                close()
-                                            }
-                                            onDrawBehind {
-                                                drawPath(
-                                                    color = Color.Red,
-                                                    path = triangleShape,
-                                                    style = Fill
-                                                )
-                                            }
-                                        }
-                                        .zIndex(-9f),
-                                    color = Color.Red,
-                                    thickness = 2.dp
-                                )
-                            } 
-                            lessons.forEachIndexed { i, lesson ->
-                                val y = (lesson.lessonTime.start.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
-                                val groups = remember(lesson.lesson.groupIds) { lesson.lesson.groups }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Group>>().map { it.data }
-                                val rooms = remember(lesson.lesson.roomIds) { lesson.lesson.rooms }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Room>>().map { it.data }
-                                val teachers = remember(lesson.lesson.teacherIds) { lesson.lesson.teachers }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Teacher>>().map { it.data }
+                    when (lessons) {
+                        is CalendarViewLessons.CalendarView -> {
+                            lessons.lessons.let { lessons ->
                                 Box(
                                     modifier = Modifier
-                                        .width(availableWidth / lesson.of)
-                                        .padding(horizontal = 8.dp)
-                                        .height(lesson.lessonTime.start.until(lesson.lessonTime.end).inWholeMinutes.toFloat() * minute)
-                                        .offset(y = y, x = (availableWidth / lesson.of) * lesson.sideShift)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(
-                                            if (lesson.lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
-                                            else MaterialTheme.colorScheme.surfaceVariant
-                                        )
-                                        .padding(4.dp)
+                                        .fillMaxWidth()
+                                        .onSizeChanged { availableWidth = with(localDensity) { it.width.toDp() } - 2 * 8.dp - 32.dp }
+                                        .let { if (contentScrollState == null) it else it.verticalScroll(contentScrollState) }
                                 ) {
-                                    CompositionLocalProvider(
-                                        LocalContentColor provides if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                    var start by remember { mutableStateOf(LocalTime(0, 0)) }
+                                    var end by remember { mutableStateOf(LocalTime(23, 59, 59, 99)) }
+
+                                    LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons, limitTimeSpanToLessonsLowerBound) {
+                                        if (!autoLimitTimeSpanToLessons || lessons.isEmpty()) return@LaunchedEffect
+                                        start = limitTimeSpanToLessonsLowerBound ?: lessons.minOf { it.lessonTime.start }.minusWithCapAtMidnight(30.minutes)
+                                        end = lessons.maxOf { it.lessonTime.end }.plusWithCapAtMidnight(30.minutes)
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(minute * (start until end).inWholeMinutes.toInt())
                                     ) {
-                                        Column {
-                                            Row(
-                                                verticalAlignment = Alignment.Top,
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.isSubjectChanged) SubjectIcon(
-                                                    modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                                                    subject = lesson.lesson.subject,
-                                                    contentColor = MaterialTheme.colorScheme.onError,
-                                                    containerColor = MaterialTheme.colorScheme.error
-                                                )
-                                                else SubjectIcon(
-                                                    modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                                                    subject = lesson.lesson.subject
-                                                )
-                                                Column {
-                                                    FlowRow(
-                                                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                    ) {
-                                                        val subjectInstance = remember { lesson.lesson.subjectInstance }?.collectAsResultingFlow()?.value
-                                                        val itemHeight = max(MaterialTheme.typography.bodyMedium.lineHeight.toDp(), MaterialTheme.typography.bodySmall.lineHeight.toDp())
-                                                        Box(
-                                                            modifier = Modifier.height(itemHeight),
-                                                            contentAlignment = Alignment.BottomStart
-                                                        ) {
-                                                            Text(
-                                                                text = buildAnnotatedString {
-                                                                    withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
-                                                                        if (lesson.lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                            append(subjectInstance?.subject?.plus(" ").orEmpty() + "Entfall")
-                                                                        } else append(lesson.lesson.subject)
-                                                                    }
-                                                                },
-                                                                style = MaterialTheme.typography.bodySmall
-                                                            )
+                                        repeat(24) {
+                                            val time = LocalTime(it, 0)
+                                            val y = (time.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
+                                            if (y < 0.dp) return@repeat
+                                            HorizontalDivider(Modifier.fillMaxWidth().offset(y = y).zIndex(-10f))
+                                            Text(
+                                                text = "${it.toString().padStart(2, '0')}:00",
+                                                color = Color.Gray,
+                                                modifier = Modifier.offset(y = y).widthIn(max = 48.dp).align(Alignment.TopEnd),
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+                                        }
+                                        if (date == LocalDate.now()) {
+                                            val currentTime = LocalTime.now()
+                                            val y = (currentTime.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
+                                            HorizontalDivider(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .offset(y = y + 2.dp)
+                                                    .drawWithCache {
+                                                        val triangleShape = Path().apply {
+                                                            moveTo(0f, 1.dp.toPx())
+                                                            relativeMoveTo(0f, 6.dp.toPx())
+                                                            relativeLineTo(0f, -12.dp.toPx())
+                                                            relativeLineTo(8.dp.toPx(), 6.dp.toPx())
+                                                            relativeLineTo(-8.dp.toPx(), 6.dp.toPx())
+                                                            close()
                                                         }
-                                                        if (groups.isNotEmpty() && profile !is Profile.StudentProfile) Box(
-                                                            modifier = Modifier.height(itemHeight),
-                                                            contentAlignment = Alignment.BottomStart
-                                                        ) {
-                                                            Text(
-                                                                text = groups.joinToString { it.name },
-                                                                style = MaterialTheme.typography.labelMedium
-                                                            )
-                                                        }
-                                                        if (rooms.isNotEmpty()) Box(
-                                                            modifier = Modifier.height(itemHeight),
-                                                            contentAlignment = Alignment.BottomStart
-                                                        ) {
-                                                            Text(
-                                                                text = rooms.joinToString { it.name },
-                                                                style = MaterialTheme.typography.labelMedium
-                                                            )
-                                                        }
-                                                        if (teachers.isNotEmpty()) Box(
-                                                            modifier = Modifier.height(itemHeight),
-                                                            contentAlignment = Alignment.BottomStart
-                                                        ) {
-                                                            Text(
-                                                                text = teachers.joinToString { it.name },
-                                                                style = MaterialTheme.typography.labelMedium
+                                                        onDrawBehind {
+                                                            drawPath(
+                                                                color = Color.Red,
+                                                                path = triangleShape,
+                                                                style = Fill
                                                             )
                                                         }
                                                     }
-                                                    Text(
-                                                        buildString {
-                                                            append(lesson.lessonTime.lessonNumber)
-                                                            append(". $DOT ")
-                                                            append(lesson.lessonTime.start.format(regularTimeFormat))
-                                                            append(" - ")
-                                                            append(lesson.lessonTime.end.format(regularTimeFormat))
-                                                        },
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
+                                                    .zIndex(-9f),
+                                                color = Color.Red,
+                                                thickness = 2.dp
+                                            )
+                                        }
+                                        lessons.forEachIndexed { i, lesson ->
+                                            val y = (lesson.lessonTime.start.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
+                                            val groups = remember(lesson.lesson.groupIds) { lesson.lesson.groups }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Group>>().map { it.data }
+                                            val rooms = remember(lesson.lesson.roomIds) { lesson.lesson.rooms }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Room>>().map { it.data }
+                                            val teachers = remember(lesson.lesson.teacherIds) { lesson.lesson.teachers }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Teacher>>().map { it.data }
+                                            Box(
+                                                modifier = Modifier
+                                                    .width(availableWidth / lesson.of)
+                                                    .padding(horizontal = 8.dp)
+                                                    .height(lesson.lessonTime.start.until(lesson.lessonTime.end).inWholeMinutes.toFloat() * minute)
+                                                    .offset(y = y, x = (availableWidth / lesson.of) * lesson.sideShift)
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(
+                                                        if (lesson.lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
+                                                        else MaterialTheme.colorScheme.surfaceVariant
                                                     )
-                                                }
-                                            }
-                                            if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.info != null) Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                modifier = Modifier.padding(start = 16.dp)
+                                                    .padding(4.dp)
                                             ) {
-                                                Icon(
-                                                    painter = painterResource(Res.drawable.info),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(8.dp),
-                                                    tint = MaterialTheme.colorScheme.onSurface
-                                                )
-                                                Text(
-                                                    text = lesson.lesson.info,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                            }
-                                            if (lesson.lesson is Lesson.TimetableLesson && lesson.lesson.limitedToWeekIds != null) Row {
-                                                val weeks = remember(lesson.lesson.limitedToWeekIds) {
-                                                    lesson.lesson.limitedToWeeks?.map { it.mapNotNull { week -> (week as? CacheState.Done)?.data?.weekIndex } }
-                                                }?.collectAsState(null)?.value
-                                                Box(
-                                                    modifier = Modifier
-                                                        .padding(end = 4.dp)
-                                                        .size(MaterialTheme.typography.bodySmall.fontSize.toDp()),
-                                                    contentAlignment = Alignment.Center
+                                                CompositionLocalProvider(
+                                                    LocalContentColor provides if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                                 ) {
-                                                    Icon(
-                                                        painter = painterResource(Res.drawable.info),
-                                                        contentDescription = null,
-                                                        modifier = Modifier
-                                                            .size(8.dp),
-                                                        tint = MaterialTheme.colorScheme.onSurface
-                                                    )
+                                                    Column {
+                                                        Row(
+                                                            verticalAlignment = Alignment.Top,
+                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                        ) {
+                                                            if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.isSubjectChanged) SubjectIcon(
+                                                                modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                                                                subject = lesson.lesson.subject,
+                                                                contentColor = MaterialTheme.colorScheme.onError,
+                                                                containerColor = MaterialTheme.colorScheme.error
+                                                            )
+                                                            else SubjectIcon(
+                                                                modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
+                                                                subject = lesson.lesson.subject
+                                                            )
+                                                            Column {
+                                                                FlowRow(
+                                                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                                ) {
+                                                                    val subjectInstance = remember { lesson.lesson.subjectInstance }?.collectAsResultingFlow()?.value
+                                                                    val itemHeight = max(MaterialTheme.typography.bodyMedium.lineHeight.toDp(), MaterialTheme.typography.bodySmall.lineHeight.toDp())
+                                                                    Box(
+                                                                        modifier = Modifier.height(itemHeight),
+                                                                        contentAlignment = Alignment.BottomStart
+                                                                    ) {
+                                                                        Text(
+                                                                            text = buildAnnotatedString {
+                                                                                withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
+                                                                                    if (lesson.lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
+                                                                                        append(subjectInstance?.subject?.plus(" ").orEmpty() + "Entfall")
+                                                                                    } else append(lesson.lesson.subject)
+                                                                                }
+                                                                            },
+                                                                            style = MaterialTheme.typography.bodySmall
+                                                                        )
+                                                                    }
+                                                                    if (groups.isNotEmpty() && profile !is Profile.StudentProfile) Box(
+                                                                        modifier = Modifier.height(itemHeight),
+                                                                        contentAlignment = Alignment.BottomStart
+                                                                    ) {
+                                                                        Text(
+                                                                            text = groups.joinToString { it.name },
+                                                                            style = MaterialTheme.typography.labelMedium
+                                                                        )
+                                                                    }
+                                                                    if (rooms.isNotEmpty()) Box(
+                                                                        modifier = Modifier.height(itemHeight),
+                                                                        contentAlignment = Alignment.BottomStart
+                                                                    ) {
+                                                                        Text(
+                                                                            text = rooms.joinToString { it.name },
+                                                                            style = MaterialTheme.typography.labelMedium
+                                                                        )
+                                                                    }
+                                                                    if (teachers.isNotEmpty()) Box(
+                                                                        modifier = Modifier.height(itemHeight),
+                                                                        contentAlignment = Alignment.BottomStart
+                                                                    ) {
+                                                                        Text(
+                                                                            text = teachers.joinToString { it.name },
+                                                                            style = MaterialTheme.typography.labelMedium
+                                                                        )
+                                                                    }
+                                                                }
+                                                                Text(
+                                                                    buildString {
+                                                                        append(lesson.lessonTime.lessonNumber)
+                                                                        append(". $DOT ")
+                                                                        append(lesson.lessonTime.start.format(regularTimeFormat))
+                                                                        append(" - ")
+                                                                        append(lesson.lessonTime.end.format(regularTimeFormat))
+                                                                    },
+                                                                    style = MaterialTheme.typography.labelSmall,
+                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                                    maxLines = 1,
+                                                                    overflow = TextOverflow.Ellipsis
+                                                                )
+                                                            }
+                                                        }
+                                                        if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.info != null) Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                            modifier = Modifier.padding(start = 16.dp)
+                                                        ) {
+                                                            Icon(
+                                                                painter = painterResource(Res.drawable.info),
+                                                                contentDescription = null,
+                                                                modifier = Modifier.size(8.dp),
+                                                                tint = MaterialTheme.colorScheme.onSurface
+                                                            )
+                                                            Text(
+                                                                text = lesson.lesson.info,
+                                                                style = MaterialTheme.typography.bodySmall,
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis
+                                                            )
+                                                        }
+                                                        if (lesson.lesson is Lesson.TimetableLesson && lesson.lesson.limitedToWeekIds != null) Row {
+                                                            val weeks = remember(lesson.lesson.limitedToWeekIds) {
+                                                                lesson.lesson.limitedToWeeks?.map { it.mapNotNull { week -> (week as? CacheState.Done)?.data?.weekIndex } }
+                                                            }?.collectAsState(null)?.value
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .padding(end = 4.dp)
+                                                                    .size(MaterialTheme.typography.bodySmall.fontSize.toDp()),
+                                                                contentAlignment = Alignment.Center
+                                                            ) {
+                                                                Icon(
+                                                                    painter = painterResource(Res.drawable.info),
+                                                                    contentDescription = null,
+                                                                    modifier = Modifier
+                                                                        .size(8.dp),
+                                                                    tint = MaterialTheme.colorScheme.onSurface
+                                                                )
+                                                            }
+                                                            if (weeks != null && weeks.isNotEmpty()) Text(
+                                                                text = if (weeks.size == 1) "Nur in Schulwoche ${weeks.first()}"
+                                                                else "Nur in Schulwochen ${weeks.sorted().dropLast(1).joinToString()} und ${weeks.maxOf { it }}",
+                                                                style = MaterialTheme.typography.bodySmall,
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis
+                                                            )
+                                                        }
+                                                    }
                                                 }
-                                                if (weeks != null && weeks.isNotEmpty()) Text(
-                                                    text = if (weeks.size == 1) "Nur in Schulwoche ${weeks.first()}"
-                                                        else "Nur in Schulwochen ${weeks.sorted().dropLast(1).joinToString()} und ${weeks.maxOf { it }}",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
                                             }
                                         }
                                     }
                                 }
+                            }
+                        }
+                        is CalendarViewLessons.ListView -> {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .let { if (contentScrollState == null) it else it.verticalScroll(contentScrollState) }
+                            ) {
+                                FollowingLessons(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 4.dp),
+                                    date = date,
+                                    showFirstGradient = false,
+                                    paddingStart = 8.dp,
+                                    lessons = lessons.lessons.groupBy { it.lessonNumber }
+                                )
                             }
                         }
                     }
@@ -448,4 +472,17 @@ fun CalendarView(
             }
         }
     }
+}
+
+sealed class CalendarViewLessons {
+
+    /**
+     * Used if there are enough information to render a layout.
+     */
+    data class CalendarView(val lessons: List<LessonLayoutingInfo>): CalendarViewLessons()
+
+    /**
+     * Used if lesson times are missing ore unsafe.
+     */
+    data class ListView(val lessons: List<Lesson>): CalendarViewLessons()
 }

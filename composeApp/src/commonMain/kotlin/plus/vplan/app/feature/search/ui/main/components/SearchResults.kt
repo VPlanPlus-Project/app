@@ -38,6 +38,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.components.agenda.GradeCard
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
+import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLessons
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.result.SchoolEntityResults
 import plus.vplan.app.utils.now
@@ -278,7 +279,7 @@ private fun LessonsDrawer(
                     profile = null,
                     dayType = dayType,
                     date = date,
-                    lessons = lessons,
+                    lessons = CalendarViewLessons.CalendarView(lessons), // TODO
                     assessments = emptyList(),
                     homework = emptyList(),
                     autoLimitTimeSpanToLessons = true,

@@ -41,7 +41,7 @@ import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.chevron_down
 
 @Composable
-fun Head(
+fun AgendaHead(
     date: LocalDate,
     dayType: Day.DayType,
     lessons: Int?,

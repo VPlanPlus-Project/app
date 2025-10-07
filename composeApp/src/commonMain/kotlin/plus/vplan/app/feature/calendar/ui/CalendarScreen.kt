@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.MutatePriority
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.stopScroll
@@ -34,7 +35,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -90,10 +90,11 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.components.DisplaySelectType
+import plus.vplan.app.feature.calendar.ui.components.agenda.AgendaHead
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
-import plus.vplan.app.feature.calendar.ui.components.agenda.Head
 import plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
+import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLessons
 import plus.vplan.app.feature.calendar.ui.components.date_selector.DateSelectionCause
 import plus.vplan.app.feature.calendar.ui.components.date_selector.ScrollableDateSelector
 import plus.vplan.app.feature.calendar.ui.components.date_selector.weekHeightDefault
@@ -148,7 +149,8 @@ private fun CalendarScreenContent(
     var isNewHomeworkDrawerOpen by rememberSaveable { mutableStateOf(false) }
 
     var scrollProgress by remember { mutableStateOf(0f) }
-    val contentScrollState = rememberScrollState()
+    val contentScrollStates = remember { mutableMapOf<LocalDate, ScrollState>() }
+    val contentScrollState = remember(state.selectedDate) { contentScrollStates.getOrPut(state.selectedDate) { ScrollState(0) } }
     var isUserScrolling by remember { mutableStateOf(false) }
     var isAnimating by remember { mutableStateOf(false) }
     LaunchedEffect(contentScrollState.isScrollInProgress) {
@@ -168,10 +170,10 @@ private fun CalendarScreenContent(
     val minute = 1.25.dp
     var containerHeight by remember { mutableStateOf(0.dp) }
 
-    val scrollConnection = remember(state.selectedDate, containerHeight) {
+    val scrollConnection = remember(state.selectedDate, containerHeight, contentScrollState) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val isContentAtTop = with(localDensity) { contentScrollState.value <= ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).roundToPx() }
+                val isContentAtTop = (state.calendarDays[state.selectedDate]?.layoutedLessons == null && contentScrollState.value == 0) || (with(localDensity) { contentScrollState.value <= ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).roundToPx() } && state.calendarDays[state.selectedDate]?.layoutedLessons != null)
                 val y = ((with(localDensity) { available.y.toDp()/2 }) / (5 * weekHeightDefault)).let {
                     if (it > 1) 1 + (with(localDensity) { available.y.toDp()/2 }) / (containerHeight - (5*weekHeightDefault))
                     else it
@@ -399,12 +401,15 @@ private fun CalendarScreenContent(
                                 modifier = Modifier.fillMaxSize()
                             ) { page ->
                                 val date = remember(page) { LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY) }
+                                val contentScrollState = remember(date) { contentScrollStates.getOrPut(state.selectedDate) { ScrollState(0) } }
                                 val day = state.calendarDays[date] ?: CalendarDay(date)
                                 CalendarView(
                                     profile = state.currentProfile,
                                     date = date,
                                     dayType = day.dayType,
-                                    lessons = day.layoutedLessons,
+                                    lessons = day.layoutedLessons?.let {
+                                        CalendarViewLessons.CalendarView(it)
+                                    } ?: CalendarViewLessons.ListView(day.lessons.orEmpty().values.flatten()),
                                     assessments = day.assessments,
                                     homework = day.homework,
                                     bottomIslandPadding = remember { PaddingValues(end = 80.dp) },
@@ -482,7 +487,7 @@ private fun CalendarScreenContent(
                                             var start by remember { mutableStateOf<LocalTime?>(null) }
                                             var end by remember { mutableStateOf<LocalTime?>(null) }
 
-                                            Head(
+                                            AgendaHead(
                                                 date = date,
                                                 dayType = day.dayType,
                                                 lessons = lessonCount,
