@@ -184,7 +184,7 @@ private fun getHeaderTextForTeacherOrGroupWithCurrentLessons(lessons: List<Lesso
     return if (roomIds.isEmpty()) "Aktuell keine Stunde"
     else {
         val rooms = roomIds.map { App.roomSource.getById(it) }.collectAsResultingFlow().value
-        val until = lessons.map { it.lessonTime }.collectAsResultingFlowOld().value.maxOfOrNull { it.end }
+        val until = lessons.mapNotNull { it.lessonTime }.collectAsResultingFlowOld().value.maxOfOrNull { it.end }
         buildString {
             append("Momentan in ${rooms.map { it.name }.sorted().joinToString()}")
             if (until != null) append(" (bis $until)")

@@ -41,7 +41,6 @@ import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.associateWithNotNull
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
-import plus.vplan.app.utils.filterKeysNotNull
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
@@ -102,8 +101,8 @@ class CalendarViewModel(
                     launch {
                         day.lessons.collectLatest {
                             val lessons = it
-                                .groupBy { lesson -> lesson.lessonTime.getFirstValueOld()?.lessonNumber }
-                                .mapValues { lessonOverLessonNumber -> lessonOverLessonNumber.value.sortedBy { lesson -> lesson.subject } }.filterKeysNotNull()
+                                .groupBy { lesson -> lesson.lessonNumber }
+                                .mapValues { lessonOverLessonNumber -> lessonOverLessonNumber.value.sortedBy { lesson -> lesson.subject } }
 
                             val layoutedLessons = it.calculateLayouting()
                             calendarDay = calendarDay.copy(
@@ -259,11 +258,13 @@ data class CalendarDay(
 /**
  * Creates a layout for a calendar view of the given lessons based on their overlap if some exists.
  */
-suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> =
-    withContext(Dispatchers.Default) {
+suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> {
+    this.firstOrNull { it.lessonTime == null }?.let { throw LessonWithoutTimeException(it) }
+
+    return withContext(Dispatchers.Default) {
         // Step 1: Extract the first lesson time and sort lessons by start time and subject
         val lessons = this@calculateLayouting
-            .associateWithNotNull { it.lessonTime.getFirstValueOld() }
+            .associateWithNotNull { it.lessonTime!!.getFirstValueOld() }
             .toList()
             .sortedBy { it.second.start.inWholeMinutes().toString().padStart(4, '0') + " " + it.first.subject }
 
@@ -271,6 +272,7 @@ suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> =
 
         // Step 2: Create events for start and end of each lesson (times in minutes)
         data class Event(val time: Long, val isStart: Boolean, val lesson: Lesson, val lessonTime: LessonTime)
+
         val events = lessons.flatMap { (lesson, lessonTime) ->
             listOf(
                 Event(lessonTime.start.inWholeMinutes().toLong(), true, lesson, lessonTime),
@@ -316,8 +318,9 @@ suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> =
             }
         }
 
-        layoutingInfo
+        return@withContext layoutingInfo
     }
+}
 
 data class LessonLayoutingInfo(
     val lesson: Lesson,
@@ -329,3 +332,6 @@ data class LessonLayoutingInfo(
 enum class DisplayType {
     Agenda, Calendar
 }
+
+sealed class LessonLayoutingException(message: String) : Exception(message)
+class LessonWithoutTimeException(lesson: Lesson) : LessonLayoutingException("Lesson ${lesson.id} has no lesson time")

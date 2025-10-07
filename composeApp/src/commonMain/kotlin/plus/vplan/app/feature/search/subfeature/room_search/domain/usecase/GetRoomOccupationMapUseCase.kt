@@ -74,7 +74,7 @@ sealed class Occupancy(
     data class Lesson(val lesson: plus.vplan.app.domain.model.Lesson, val date: LocalDate, override val start: LocalDateTime, override val end: LocalDateTime) : Occupancy(start, end) {
         companion object {
             suspend fun fromLesson(lesson: plus.vplan.app.domain.model.Lesson, contextDate: LocalDate): Occupancy {
-                return Lesson(lesson, contextDate, lesson.lessonTime.getFirstValueOld()!!.start.atDate(contextDate), lesson.lessonTime.getFirstValueOld()!!.end.atDate(contextDate))
+                return Lesson(lesson, contextDate, lesson.lessonTime!!.getFirstValueOld()!!.start.atDate(contextDate), lesson.lessonTime!!.getFirstValueOld()!!.end.atDate(contextDate))
             }
         }
     }

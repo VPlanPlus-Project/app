@@ -89,20 +89,18 @@ class HomeViewModel(
                             if (lastSpecialLessonUpdate until time < 5.seconds) return@collect
 
                             val hasInterpolatedLessonTimes = state.day?.lessons?.first().orEmpty()
-                                .any { lesson -> lesson.lessonTime.getFirstValueOld()?.interpolated == true }
+                                .any { lesson -> lesson.lessonTime?.getFirstValueOld()?.interpolated == true }
 
                             if (state.day?.date == time.date) {
                                 val currentLessons = state.day?.lessons?.first().orEmpty()
                                     .filter { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
+                                        val lessonTimeItem = lesson.lessonTime?.getFirstValueOld() ?: return@filter false
                                         time.time in lessonTimeItem.start..lessonTimeItem.end
                                     }.map { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                         CurrentLesson(
                                             lesson = lesson,
                                             continuing = state.day?.lessons?.first().orEmpty().firstOrNull {
-                                                val nextLessonTimeItem = it.lessonTime.getFirstValueOld()!!
-                                                it.subject != null && it.subject == lesson.subject && it.subjectInstanceId == lesson.subjectInstanceId && nextLessonTimeItem.lessonNumber == lessonTimeItem.lessonNumber + 1
+                                                it.subject != null && it.subject == lesson.subject && it.subjectInstanceId == lesson.subjectInstanceId && it.lessonNumber == lesson.lessonNumber + 1
                                             }
                                         )
                                     }
@@ -110,31 +108,26 @@ class HomeViewModel(
 
                                 val nextLessons = state.day?.lessons?.first().orEmpty()
                                     .filter { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
+                                        val lessonTimeItem = lesson.lessonTime?.getFirstValueOld() ?: return@filter true
                                         lessonTimeItem.start > time.time
                                     }
-                                    .groupBy { it.lessonTimeId }
-                                    .toList()
-                                    .associate {
-                                        App.lessonTimeSource.getById(it.first).getFirstValueOld()!! to it.second
-                                    }
-                                    .minByOrNull { it.key.lessonNumber }
+                                    .groupBy { it.lessonNumber }
+                                    .minByOrNull { it.key }
                                     ?.value
                                     .orEmpty()
 
                                 val remainingLessons = state.day?.lessons?.first().orEmpty()
                                     .filter { lesson ->
                                         if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
+                                        val lessonTimeItem = lesson.lessonTime?.getFirstValueOld() ?: return@filter true
                                         lessonTimeItem.start > time.time
                                     }
                                     .sortedBySuspending { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                         val subject = lesson.subject ?: ""
                                         val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
-                                        lessonTimeItem.start.toSecondOfDay().toString().padStart(6, '0') + "${subject}_${courseName}"
+                                        lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
                                     }
-                                    .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }
+                                    .groupBy { it.lessonNumber }
 
                                 state = state.copy(
                                     currentLessons = currentLessons,
@@ -149,12 +142,11 @@ class HomeViewModel(
                                     nextLessons = emptyList(),
                                     remainingLessons = state.day?.lessons?.first().orEmpty()
                                         .sortedBySuspending { lesson ->
-                                            val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                             val subject = lesson.subject ?: ""
                                             val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
-                                            lessonTimeItem.start.toSecondOfDay().toString().padStart(6, '0') + "${subject}_${courseName}"
+                                            lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
                                         }
-                                        .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber },
+                                        .groupBy { it.lessonNumber },
                                     hasInterpolatedLessonTimes = hasInterpolatedLessonTimes
                                 )
                             }
@@ -165,7 +157,11 @@ class HomeViewModel(
                     .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.name}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
                     .collectLatest { day ->
                         state = state.copy(initDone = true)
-                        if (day.lessons.first().any { it.lessonTime.getFirstValueOld()!!.end >= state.currentTime.time }) state = state.copy(
+
+                        val hasDayMissingLessonTimes = day.lessons.first().any { it.lessonTime == null }
+                        if (hasDayMissingLessonTimes) state = state.copy(day = day)
+
+                        if (day.lessons.first().any { it.lessonTime!!.getFirstValueOld()!!.end >= state.currentTime.time }) state = state.copy(
                             day = day
                         ) else if (day.nextSchoolDayId != null) App.daySource.getById(day.nextSchoolDayId, profile).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { nextDay ->
                             state = state.copy(day = nextDay)

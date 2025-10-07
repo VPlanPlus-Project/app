@@ -244,7 +244,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         AutoMigration(
             from = 7,
             to = 8
-        )
+        ),
     ]
 )
 @TypeConverters(
@@ -293,7 +293,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 9
+        const val DATABASE_VERSION = 10
     }
 
     @RenameColumn(
@@ -557,12 +557,68 @@ abstract class VppDatabase : RoomDatabase() {
         }
     }
 
+    object Migration9to10 : Migration(9, 10) {
+        override fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("""
+                DROP TABLE timetable_lessons;
+            """.trimIndent())
+
+            connection.execSQL("""
+                CREATE TABLE timetable_lessons (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    timetable_id TEXT NOT NULL REFERENCES timetables(id) ON UPDATE CASCADE ON DELETE CASCADE,
+                    day_of_week TEXT NOT NULL,
+                    lesson_number INTEGER NOT NULL,
+                    subject TEXT,
+                    week_type TEXT
+                );
+            """.trimIndent())
+
+            connection.execSQL("""
+                CREATE INDEX index_timetable_lessons_timetable_id
+                    ON timetable_lessons (timetable_id);
+            """.trimIndent())
+
+            connection.execSQL("""
+                DROP TABLE substitution_plan_lesson;
+            """.trimIndent())
+
+            connection.execSQL("""
+                CREATE TABLE substitution_plan_lesson (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    day_id TEXT NOT NULL REFERENCES day(id) ON UPDATE CASCADE ON DELETE CASCADE,
+                    lesson_number INTEGER NOT NULL,
+                    subject TEXT,
+                    is_subject_changed INTEGER NOT NULL,
+                    info TEXT,
+                    subject_instance_id TEXT REFERENCES subject_instance(id) ON UPDATE CASCADE ON DELETE CASCADE,
+                    is_room_changed INTEGER NOT NULL,
+                    is_teacher_changed INTEGER NOT NULL
+                );
+            """.trimIndent())
+
+            connection.execSQL("""
+                CREATE INDEX index_substitution_plan_lesson_day_id
+                    ON substitution_plan_lesson (day_id);
+            """.trimIndent())
+
+            connection.execSQL("""
+                CREATE UNIQUE INDEX index_substitution_plan_lesson_id
+                    ON substitution_plan_lesson (id);
+            """.trimIndent())
+
+            connection.execSQL("""
+                CREATE INDEX index_substitution_plan_lesson_subject_instance_id
+                    ON substitution_plan_lesson (subject_instance_id);
+            """.trimIndent())
+        }
+    }
 }
 
 // Room compiler generates the `actual` implementations
 @Suppress(
-    "NO_ACTUAL_FOR_EXPECT",
-    "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING", "KotlinNoActualForExpect",
+    "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING",
+    "KotlinNoActualForExpect",
 )
 expect object VppDatabaseConstructor : RoomDatabaseConstructor<VppDatabase> {
     override fun initialize(): VppDatabase
