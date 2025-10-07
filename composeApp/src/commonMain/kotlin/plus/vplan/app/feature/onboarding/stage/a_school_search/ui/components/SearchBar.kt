@@ -1,7 +1,6 @@
 package plus.vplan.app.feature.onboarding.stage.a_school_search.ui.components
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,16 +33,13 @@ import vplanplus.composeapp.generated.resources.search
 
 @Composable
 fun SearchBar(
+    modifier: Modifier = Modifier,
     query: String,
     textFieldError: OnboardingSchoolSearchTextFieldError?,
     onEvent: (OnboardingSchoolSearchEvent) -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 8.dp)
-            .padding(bottom = 16.dp)
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Top
     ) {
