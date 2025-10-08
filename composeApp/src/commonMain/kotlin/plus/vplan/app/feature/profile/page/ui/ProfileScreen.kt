@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +50,7 @@ import plus.vplan.app.feature.profile.page.ui.components.GradesCard
 import plus.vplan.app.feature.profile.page.ui.components.GradesCardFeaturedGrade
 import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
 import plus.vplan.app.utils.openUrl
+import plus.vplan.app.utils.roundTo
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.log_in
 import vplanplus.composeapp.generated.resources.settings
@@ -147,7 +149,8 @@ private fun ProfileContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(contentPadding),
+                    .padding(contentPadding)
+                    .padding(top = 64.dp),
             ) {
                 Spacer(Modifier.height(8.dp))
                 if (state.currentProfile is Profile.StudentProfile) {
@@ -169,7 +172,7 @@ private fun ProfileContent(
                                     areGradesLocked = state.areGradesLocked,
                                     subjects = subjectInstances,
                                     infiniteTransition = infiniteTransition,
-                                    averageGrade = if (vppId.gradeIds.isEmpty() || state.averageGrade?.isNaN() == true) GradesCardFeaturedGrade.NotExisting else if (state.averageGrade == null) GradesCardFeaturedGrade.Loading else GradesCardFeaturedGrade.Value(state.averageGrade.toString()),
+                                    averageGrade = if (vppId.gradeIds.isEmpty() || state.averageGrade?.isNaN() == true) GradesCardFeaturedGrade.NotExisting else if (state.averageGrade == null) GradesCardFeaturedGrade.Loading else GradesCardFeaturedGrade.Value(state.averageGrade.roundTo(2).toString()),
                                     latestGrade = when (state.latestGrade) {
                                         is LatestGrade.Loading -> GradesCardFeaturedGrade.Loading
                                         is LatestGrade.NotExisting -> GradesCardFeaturedGrade.NotExisting
@@ -188,32 +191,33 @@ private fun ProfileContent(
             }
         }
 
-        ProfileTitle(
+        Row(
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 8.dp)
+                .align(Alignment.TopCenter)
                 .padding(contentPadding)
-                .padding(vertical = 4.dp, horizontal = 8.dp)
-                .clip(RoundedCornerShape(50))
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-            currentProfileName = state.currentProfile?.name.orEmpty()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(true))
-        }
-
-        FilledTonalIconButton(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(vertical = 8.dp, horizontal = 16.dp)
-                .padding(contentPadding),
-            onClick = onOpenSettings
-        ) {
-            Icon(
-                painter = painterResource(Res.drawable.settings),
-                modifier = Modifier.size(24.dp),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
-            )
+            ProfileTitle(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                currentProfileName = state.currentProfile?.name.orEmpty()
+            ) {
+                onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(true))
+            }
+            FilledTonalIconButton(
+                onClick = onOpenSettings
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.settings),
+                    modifier = Modifier.size(24.dp),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
         }
     }
 }
