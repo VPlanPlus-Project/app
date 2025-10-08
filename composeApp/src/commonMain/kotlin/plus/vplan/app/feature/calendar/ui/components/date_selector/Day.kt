@@ -35,7 +35,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import plus.vplan.app.feature.calendar.ui.DateSelectorDay
 import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.bodyFontFamily
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.atStartOfWeek
@@ -90,7 +89,6 @@ fun RowScope.Day(
                     else if (date.dayOfWeek in listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY) || isHoliday) MaterialTheme.colorScheme.error
                     else MaterialTheme.colorScheme.onSurface
                 ),
-                fontFamily = bodyFontFamily(),
                 style = (if (showSelection) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall).copy(fontWeight = if (showSelection) FontWeight.Black else FontWeight.Bold),
             )
             Box(

@@ -24,7 +24,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.ui.theme.bodyFontFamily
 import plus.vplan.app.utils.blendColor
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.chevron_right
@@ -65,7 +64,6 @@ fun SettingsRecord(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontFamily = bodyFontFamily(),
                     color = if (enabled) MaterialTheme.colorScheme.onSurface else blendColor(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.surface, 0.5f)
                 )
             }
