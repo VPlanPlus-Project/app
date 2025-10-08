@@ -191,11 +191,11 @@ private fun ProfileContent(
         ProfileTitle(
             modifier = Modifier
                 .align(Alignment.TopStart)
+                .padding(top = 8.dp)
                 .padding(contentPadding)
                 .padding(vertical = 4.dp, horizontal = 8.dp)
                 .clip(RoundedCornerShape(50))
-                .background(MaterialTheme.colorScheme.secondaryContainer)
-                .padding(vertical = 4.dp, horizontal = 8.dp),
+                .background(MaterialTheme.colorScheme.secondaryContainer),
             currentProfileName = state.currentProfile?.name.orEmpty()
         ) {
             onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(true))
