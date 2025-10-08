@@ -47,6 +47,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -125,7 +126,7 @@ fun CalendarScreen(
     paddingValues: PaddingValues,
     viewModel: CalendarViewModel
 ) {
-    val state = viewModel.state
+    val state by viewModel.state.collectAsState()
     CalendarScreenContent(
         state = state,
         paddingValues = paddingValues,
@@ -337,7 +338,7 @@ private fun CalendarScreenContent(
                         scrollProgress = displayScrollProgress,
                         allowInteractions = !isUserScrolling && !isAnimating && displayScrollProgress.roundToInt().toFloat() == displayScrollProgress,
                         selectedDate = state.selectedDate,
-                        days = state.selecorDays.values.toList(),
+                        days = state.selectorDays.values.toList(),
                         containerMaxHeight = containerHeight,
                         onSelectDate = remember { { cause, date ->
                             onEvent(CalendarEvent.SelectDate(date))
@@ -403,13 +404,15 @@ private fun CalendarScreenContent(
                                 val date = remember(page) { LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY) }
                                 val contentScrollState = remember(date) { contentScrollStates.getOrPut(state.selectedDate) { ScrollState(0) } }
                                 val day = state.calendarDays[date] ?: CalendarDay(date)
+                                val lessonsForCalendarView = when {
+                                    state.dsForceUnlayoutedLessons || day.layoutedLessons == null -> CalendarViewLessons.ListView(day.lessons.orEmpty().values.flatten())
+                                    else -> CalendarViewLessons.CalendarView(day.layoutedLessons)
+                                }
                                 CalendarView(
                                     profile = state.currentProfile,
                                     date = date,
                                     dayType = day.dayType,
-                                    lessons = day.layoutedLessons?.let {
-                                        CalendarViewLessons.CalendarView(it)
-                                    } ?: CalendarViewLessons.ListView(day.lessons.orEmpty().values.flatten()),
+                                    lessons = lessonsForCalendarView,
                                     assessments = day.assessments,
                                     homework = day.homework,
                                     bottomIslandPadding = remember { PaddingValues(end = 80.dp) },

@@ -1,11 +1,14 @@
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 interface KeyValueRepository {
     suspend fun set(key: String, value: String)
     suspend fun delete(key: String)
     fun get(key: String): Flow<String?>
+    fun getBoolean(key: String): Flow<Boolean?> = get(key).map { it?.toBooleanStrictOrNull() }
+    fun getBooleanOrDefault(key: String, default: Boolean): Flow<Boolean> = getBoolean(key).map { it ?: default }
 }
 
 object Keys {
@@ -30,10 +33,15 @@ object Keys {
     const val DEVELOPER_SETTINGS_ACTIVE = "developer_settings_active"
     const val DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC = "developer_settings_disable_auto_sync"
 
+    /**
+     * If true, the calendar view will always use the list view instead of the default calendar view.
+     * This view is also used if there are not enough lesson times.
+     */
     const val DS_FORCE_REDUCED_CALENDAR_VIEW = "ds_force_reduced_calendar_view"
+    val forceReducedCalendarView = DeveloperFlag.Boolean(DS_FORCE_REDUCED_CALENDAR_VIEW, false)
 
     val developerSettings = listOf(
-        DeveloperFlag.Boolean(DS_FORCE_REDUCED_CALENDAR_VIEW, false)
+        forceReducedCalendarView
     )
 
     sealed class DeveloperFlag {
