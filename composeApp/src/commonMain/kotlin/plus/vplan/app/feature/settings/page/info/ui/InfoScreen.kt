@@ -106,10 +106,10 @@ private fun InfoContent(
     ) { contentPadding ->
         Column(
             modifier = Modifier
-                .padding(contentPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .nestedScroll(scrollBehaviour.nestedScrollConnection)
+                .padding(contentPadding)
                 .padding(top = 4.dp)
         ) {
             Row(

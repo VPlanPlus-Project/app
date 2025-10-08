@@ -109,7 +109,6 @@ fun RoomSearch(
         AnimatedContent(
             targetState = state.initDone,
             modifier = Modifier
-                .padding(contentPadding)
                 .fillMaxSize()
         ) { initDone ->
             if (!initDone) {
@@ -201,6 +200,7 @@ fun RoomSearch(
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                             .nestedScroll(scrollBehaviour.nestedScrollConnection)
+                            .padding(contentPadding)
                             .padding(top = headerHeight)
                     ) map@{
                         Column {
