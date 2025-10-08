@@ -1,8 +1,5 @@
 package plus.vplan.app.feature.calendar.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
@@ -11,11 +8,14 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
@@ -32,6 +32,8 @@ import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.Week
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetFirstLessonStartUseCase
@@ -41,7 +43,6 @@ import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.associateWithNotNull
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.atStartOfWeek
-import plus.vplan.app.utils.filterKeysNotNull
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
@@ -55,17 +56,18 @@ class CalendarViewModel(
     private val getLastDisplayTypeUseCase: GetLastDisplayTypeUseCase,
     private val setLastDisplayTypeUseCase: SetLastDisplayTypeUseCase,
     private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase,
-    private val getHolidaysUseCase: GetHolidaysUseCase
+    private val getHolidaysUseCase: GetHolidaysUseCase,
+    private val keyValueRepository: KeyValueRepository,
 ) : ViewModel() {
-    var state by mutableStateOf(CalendarState())
-        private set
+    private val _state = MutableStateFlow(CalendarState())
+    val state = _state.asStateFlow()
 
     private val syncJobs = mutableListOf<SyncJob>()
     private val holidays: MutableList<LocalDate> = mutableListOf()
 
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
-            val currentProfile = state.currentProfile
+            val currentProfile = _state.value.currentProfile
             if (currentProfile == null) return@launch
             val school = currentProfile.getSchool().getFirstValue() ?: return@launch
             App.daySource.getById(Day.buildId(school.id, date), currentProfile)
@@ -84,44 +86,49 @@ class CalendarViewModel(
                         info = day.info,
                         dayType = day.dayType,
                         week = day.week?.getFirstValueOld(),
-                        assessments = emptyList(),
-                        homework = emptyList(),
-                        lessons = emptyMap(),
-                        layoutedLessons = emptyList()
+                        lessons = null
                     )
 
                     fun updateState() {
-                        state = state.copy(
-                            uiUpdateVersion = state.uiUpdateVersion + 1,
-                            calendarDays = state.calendarDays + (date to calendarDay),
-                            selecorDays = state.selecorDays + (date to selectorDay)
-                        )
-                    }
-
-                coroutineScope {
-                    launch {
-                        day.lessons.collectLatest {
-                            val lessons = it
-                                .groupBy { lesson -> lesson.lessonTime.getFirstValueOld()?.lessonNumber }
-                                .mapValues { lessonOverLessonNumber -> lessonOverLessonNumber.value.sortedBy { lesson -> lesson.subject } }.filterKeysNotNull()
-
-                            val layoutedLessons = it.calculateLayouting()
-                            calendarDay = calendarDay.copy(
-                                layoutedLessons = layoutedLessons,
-                                lessons = lessons.toList()
-                                    .sortedBy { (lessonNumber, _) -> lessonNumber }
-                                    .toMap()
+                        _state.update {
+                            it.copy(
+                                uiUpdateVersion = it.uiUpdateVersion + 1,
+                                calendarDays = it.calendarDays + (date to calendarDay),
+                                selectorDays = it.selectorDays + (date to selectorDay)
                             )
-                            updateState()
                         }
                     }
-                    launch {
-                        day.assessments.collectLatest { assessments ->
+
+                    coroutineScope {
+                        launch {
+                            day.lessons.collectLatest {
+                                val lessons = it
+                                    .groupBy { lesson -> lesson.lessonNumber }
+                                    .mapValues { lessonOverLessonNumber -> lessonOverLessonNumber.value.sortedBy { lesson -> lesson.subject } }
+
+                                val hasTooManyInterpolatedLessonTimes = it.count { lesson -> lesson.lessonTime?.getFirstValueOld()?.interpolated == false } < it.size / 2
+                                val hasMissingLessonTimes = it.any { lesson -> lesson.lessonTime == null }
+
+                                keyValueRepository.getBooleanOrDefault(Keys.forceReducedCalendarView.key, false).collectLatest { forceReducedCalendarView ->
+                                    val layoutedLessons = if (_state.value.displayType == DisplayType.Agenda || hasTooManyInterpolatedLessonTimes || hasMissingLessonTimes || forceReducedCalendarView) null
+                                    else try {
+                                        it.calculateLayouting()
+                                    } catch (_: LessonWithoutTimeException) {
+                                        null
+                                    }
+
+                                    calendarDay = calendarDay.copy(lessons = if (layoutedLessons != null) LessonRendering.Layouted(layoutedLessons) else LessonRendering.ListView(lessons))
+                                    updateState()
+                                }
+                            }
+                        }
+                        launch {
+                            day.assessments.collectLatest { assessments ->
                                 calendarDay = calendarDay.copy(assessments = assessments.toList())
                                 assessments
-                                .map { assessment -> assessment.subjectInstance.getFirstValue()?.subject ?: "?" }
-                                .sorted()
-                                .let { assessments -> selectorDay = selectorDay.copy(assessments = assessments) }
+                                    .map { assessment -> assessment.subjectInstance.getFirstValue()?.subject ?: "?" }
+                                    .sorted()
+                                    .let { assessments -> selectorDay = selectorDay.copy(assessments = assessments) }
                                 updateState()
                             }
                         }
@@ -129,7 +136,12 @@ class CalendarViewModel(
                             day.homework.collectLatest { dayHomework ->
                                 calendarDay = calendarDay.copy(homework = dayHomework.toList())
                                 dayHomework
-                                    .map { DateSelectorDay.HomeworkItem(subject = it.subjectInstance?.getFirstValue()?.subject ?: it.group?.getFirstValue()?.name ?: "?", isDone = state.currentProfile is Profile.StudentProfile && it.tasks.first().all { task -> task.isDone(state.currentProfile as Profile.StudentProfile) }) }
+                                    .map {
+                                        DateSelectorDay.HomeworkItem(
+                                            subject = it.subjectInstance?.getFirstValue()?.subject ?: it.group?.getFirstValue()?.name ?: "?",
+                                            isDone = _state.value.currentProfile is Profile.StudentProfile && it.tasks.first()
+                                                .all { task -> task.isDone(_state.value.currentProfile as Profile.StudentProfile) })
+                                    }
                                     .sortedBy { it.subject }
                                     .let { selectorDay = selectorDay.copy(homework = it) }
                                 updateState()
@@ -143,7 +155,7 @@ class CalendarViewModel(
     }
 
     private fun startDaySyncJobsFromSelectedDate() {
-        val startOfWeek = state.selectedDate.atStartOfWeek()
+        val startOfWeek = _state.value.selectedDate.atStartOfWeek()
         val startOfMonth = startOfWeek.atStartOfMonth()
         val coveredDates = mutableListOf<LocalDate>()
         repeat(2*31) {
@@ -154,15 +166,17 @@ class CalendarViewModel(
     }
 
     init {
-        viewModelScope.launch { getCurrentDateTimeUseCase().debounce(100).collectLatest { state = state.copy(currentTime = it) } }
-        viewModelScope.launch { getLastDisplayTypeUseCase().collectLatest { state = state.copy(displayType = it) } }
+        viewModelScope.launch { getCurrentDateTimeUseCase().debounce(100).collectLatest { _state.update { state -> state.copy(currentTime = it) } } }
+        viewModelScope.launch { getLastDisplayTypeUseCase().collectLatest { _state.update { state -> state.copy(displayType = it) } } }
 
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
-                state = state.copy(
-                    currentProfile = profile,
-                    start = getFirstLessonStartUseCase(profile)
-                )
+                _state.update {
+                    it.copy(
+                        currentProfile = profile,
+                        start = getFirstLessonStartUseCase(profile)
+                    )
+                }
                 syncJobs.forEach { it.job.cancel() }
                 syncJobs.clear()
 
@@ -192,11 +206,11 @@ class CalendarViewModel(
         viewModelScope.launch {
             when (event) {
                 is CalendarEvent.SelectDate -> {
-                    while (state.currentProfile == null) {
+                    while (_state.value.currentProfile == null) {
                         delay(10)
                         Logger.d { "Waiting for profile" }
                     }
-                    state = state.copy(selectedDate = event.date)
+                    _state.update { it.copy(selectedDate = event.date) }
                     startDaySyncJobsFromSelectedDate()
                 }
                 is CalendarEvent.SelectDisplayType -> {
@@ -214,7 +228,7 @@ data class CalendarState(
     val uiUpdateVersion: Int = 0,
     val displayType: DisplayType = DisplayType.Calendar,
     val start: LocalTime = LocalTime(0, 0),
-    val selecorDays: Map<LocalDate, DateSelectorDay> = emptyMap(),
+    val selectorDays: Map<LocalDate, DateSelectorDay> = emptyMap(),
     val calendarDays: Map<LocalDate, CalendarDay> = emptyMap()
 )
 
@@ -246,24 +260,23 @@ data class DateSelectorDay(
 data class CalendarDay(
     val date: LocalDate,
     val info: String? = null,
-    val dayType: Day.DayType,
-    val week: Week?,
-    val assessments: List<Assessment>,
-    val homework: List<Homework>,
-    val lessons: Map<Int, List<Lesson>>?,
-    val layoutedLessons: List<LessonLayoutingInfo>
-) {
-    constructor(date: LocalDate): this(date, null, Day.DayType.UNKNOWN, null, emptyList(), emptyList(), null, emptyList())
-}
+    val dayType: Day.DayType = Day.DayType.UNKNOWN,
+    val week: Week? = null,
+    val assessments: List<Assessment> = emptyList(),
+    val homework: List<Homework> = emptyList(),
+    val lessons: LessonRendering? = null
+)
 
 /**
  * Creates a layout for a calendar view of the given lessons based on their overlap if some exists.
  */
-suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> =
-    withContext(Dispatchers.Default) {
+suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> {
+    this.firstOrNull { it.lessonTime == null }?.let { throw LessonWithoutTimeException(it) }
+
+    return withContext(Dispatchers.Default) {
         // Step 1: Extract the first lesson time and sort lessons by start time and subject
         val lessons = this@calculateLayouting
-            .associateWithNotNull { it.lessonTime.getFirstValueOld() }
+            .associateWithNotNull { it.lessonTime!!.getFirstValueOld() }
             .toList()
             .sortedBy { it.second.start.inWholeMinutes().toString().padStart(4, '0') + " " + it.first.subject }
 
@@ -271,6 +284,7 @@ suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> =
 
         // Step 2: Create events for start and end of each lesson (times in minutes)
         data class Event(val time: Long, val isStart: Boolean, val lesson: Lesson, val lessonTime: LessonTime)
+
         val events = lessons.flatMap { (lesson, lessonTime) ->
             listOf(
                 Event(lessonTime.start.inWholeMinutes().toLong(), true, lesson, lessonTime),
@@ -316,8 +330,9 @@ suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> =
             }
         }
 
-        layoutingInfo
+        return@withContext layoutingInfo
     }
+}
 
 data class LessonLayoutingInfo(
     val lesson: Lesson,
@@ -329,3 +344,17 @@ data class LessonLayoutingInfo(
 enum class DisplayType {
     Agenda, Calendar
 }
+
+sealed class LessonRendering {
+    data class ListView(val lessons: Map<Int, List<Lesson>>) : LessonRendering()
+    data class Layouted(val lessons: List<LessonLayoutingInfo>) : LessonRendering()
+
+    val size: Int
+        get() = when (this) {
+            is ListView -> lessons.size
+            is Layouted -> lessons.size
+        }
+}
+
+sealed class LessonLayoutingException(message: String) : Exception(message)
+class LessonWithoutTimeException(lesson: Lesson) : LessonLayoutingException("Lesson ${lesson.id} has no lesson time")

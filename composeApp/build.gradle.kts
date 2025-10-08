@@ -38,6 +38,10 @@ kotlin {
 
     compilerOptions {
         optIn.add("kotlin.uuid.ExperimentalUuidApi")
+        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
+        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.add("-Xnested-type-aliases")
+        freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
     }
     
     listOf(

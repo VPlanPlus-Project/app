@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package plus.vplan.app.feature.home.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +45,7 @@ import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.calendar
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.triangle_alert
+import kotlin.time.ExperimentalTime
 
 private fun LocalDateTime.format(): String {
     return toInstant(TimeZone.of("Europe/Berlin")).toLocalDateTime(TimeZone.currentSystemDefault()).format(
@@ -128,20 +131,21 @@ fun FollowingLesson(
                         else MaterialTheme.colorScheme.onSurface
                     )
                 }
-                val lessonTime = remember(lesson.id) { lesson.lessonTime }.collectAsResultingFlowOld().value
-                lessonTime?.let {
-                    Text(
-                        text = buildString {
-                            append(lessonTime.lessonNumber)
-                            append(". Stunde $DOT ")
+                val lessonTime = remember(lesson.id) { lesson.lessonTime }?.collectAsResultingFlowOld()?.value
+                Text(
+                    text = buildString {
+                        append(lesson.lessonNumber)
+                        append(". Stunde")
+                        if (lessonTime != null) {
+                            append( "$DOT ")
                             append(lessonTime.start.atDate(date).format())
                             append(" - ")
                             append(lessonTime.end.atDate(date).format())
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                        }
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {

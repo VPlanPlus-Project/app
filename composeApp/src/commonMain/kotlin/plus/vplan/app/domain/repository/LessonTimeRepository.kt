@@ -6,6 +6,7 @@ import kotlin.uuid.Uuid
 
 interface LessonTimeRepository {
     fun getByGroup(groupId: Uuid): Flow<List<LessonTime>>
+    fun get(groupId: Uuid, lessonNumber: Int): Flow<LessonTime?>
     fun getBySchool(schoolId: Uuid): Flow<List<LessonTime>>
     fun getById(id: String): Flow<LessonTime?>
 

@@ -30,6 +30,8 @@ import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
@@ -62,7 +64,8 @@ class HomeViewModel(
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val getNewsUseCase: GetNewsUseCase,
-    private val stundenplan24Repository: Stundenplan24Repository
+    private val stundenplan24Repository: Stundenplan24Repository,
+    private val keyValueRepository: KeyValueRepository
 ) : ViewModel() {
     var state by mutableStateOf(HomeState())
         private set
@@ -89,56 +92,59 @@ class HomeViewModel(
                             if (lastSpecialLessonUpdate until time < 5.seconds) return@collect
 
                             val hasInterpolatedLessonTimes = state.day?.lessons?.first().orEmpty()
-                                .any { lesson -> lesson.lessonTime.getFirstValueOld()?.interpolated == true }
+                                .any { lesson -> lesson.lessonTime?.getFirstValueOld()?.interpolated == true }
 
                             if (state.day?.date == time.date) {
-                                val currentLessons = state.day?.lessons?.first().orEmpty()
+                                val allLessons = state.day?.lessons?.first().orEmpty()
+
+                                /**
+                                 * If the current or next lesson can be determined reliably, show them. Otherwise, only show the full list of lessons.
+                                 * This includes the corresponding developer setting.
+                                 */
+                                val canShowCurrentAndNextLesson = !keyValueRepository.getBooleanOrDefault(Keys.forceStaticTimetableHomescreen.key, Keys.forceStaticTimetableHomescreen.default).first() &&
+                                        (allLessons.isEmpty() || allLessons.count { it.lessonTime?.getFirstValueOld()?.interpolated != false } <= allLessons.size)
+
+                                val currentLessons = if (!canShowCurrentAndNextLesson) null else allLessons
                                     .filter { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
+                                        val lessonTimeItem = lesson.lessonTime?.getFirstValueOld() ?: return@filter false
                                         time.time in lessonTimeItem.start..lessonTimeItem.end
                                     }.map { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                         CurrentLesson(
                                             lesson = lesson,
-                                            continuing = state.day?.lessons?.first().orEmpty().firstOrNull {
-                                                val nextLessonTimeItem = it.lessonTime.getFirstValueOld()!!
-                                                it.subject != null && it.subject == lesson.subject && it.subjectInstanceId == lesson.subjectInstanceId && nextLessonTimeItem.lessonNumber == lessonTimeItem.lessonNumber + 1
+                                            continuing = allLessons.firstOrNull {
+                                                it.subject != null && it.subject == lesson.subject && it.subjectInstanceId == lesson.subjectInstanceId && it.lessonNumber == lesson.lessonNumber + 1
                                             }
                                         )
                                     }
                                     .sortedBySuspending { it.lesson.subject + it.lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name }
 
-                                val nextLessons = state.day?.lessons?.first().orEmpty()
+                                val nextLessons = if (!canShowCurrentAndNextLesson) null else allLessons
                                     .filter { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
+                                        val lessonTimeItem = lesson.lessonTime?.getFirstValueOld() ?: return@filter true
                                         lessonTimeItem.start > time.time
                                     }
-                                    .groupBy { it.lessonTimeId }
-                                    .toList()
-                                    .associate {
-                                        App.lessonTimeSource.getById(it.first).getFirstValueOld()!! to it.second
-                                    }
-                                    .minByOrNull { it.key.lessonNumber }
+                                    .groupBy { it.lessonNumber }
+                                    .minByOrNull { it.key }
                                     ?.value
                                     .orEmpty()
 
-                                val remainingLessons = state.day?.lessons?.first().orEmpty()
+                                val remainingLessons = allLessons
                                     .filter { lesson ->
+                                        if (!canShowCurrentAndNextLesson || nextLessons == null || currentLessons == null) return@filter true // Show all lessons if current/next cannot be determined
                                         if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
+                                        val lessonTimeItem = lesson.lessonTime?.getFirstValueOld() ?: return@filter true
                                         lessonTimeItem.start > time.time
                                     }
                                     .sortedBySuspending { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                         val subject = lesson.subject ?: ""
                                         val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
-                                        lessonTimeItem.start.toSecondOfDay().toString().padStart(6, '0') + "${subject}_${courseName}"
+                                        lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
                                     }
-                                    .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber }
+                                    .groupBy { it.lessonNumber }
 
                                 state = state.copy(
-                                    currentLessons = currentLessons,
-                                    nextLessons = nextLessons,
+                                    currentLessons = currentLessons.orEmpty(),
+                                    nextLessons = nextLessons.orEmpty(),
                                     remainingLessons = remainingLessons,
                                     hasInterpolatedLessonTimes = hasInterpolatedLessonTimes
                                 )
@@ -149,12 +155,11 @@ class HomeViewModel(
                                     nextLessons = emptyList(),
                                     remainingLessons = state.day?.lessons?.first().orEmpty()
                                         .sortedBySuspending { lesson ->
-                                            val lessonTimeItem = lesson.lessonTime.getFirstValueOld()!!
                                             val subject = lesson.subject ?: ""
                                             val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
-                                            lessonTimeItem.start.toSecondOfDay().toString().padStart(6, '0') + "${subject}_${courseName}"
+                                            lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
                                         }
-                                        .groupBy { it.lessonTime.getFirstValueOld()!!.lessonNumber },
+                                        .groupBy { it.lessonNumber },
                                     hasInterpolatedLessonTimes = hasInterpolatedLessonTimes
                                 )
                             }
@@ -165,7 +170,11 @@ class HomeViewModel(
                     .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.name}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
                     .collectLatest { day ->
                         state = state.copy(initDone = true)
-                        if (day.lessons.first().any { it.lessonTime.getFirstValueOld()!!.end >= state.currentTime.time }) state = state.copy(
+
+                        val hasDayMissingLessonTimes = day.lessons.first().any { it.lessonTime == null }
+                        if (hasDayMissingLessonTimes) state = state.copy(day = day)
+
+                        if (day.lessons.first().any { it.lessonTime!!.getFirstValueOld()!!.end >= state.currentTime.time }) state = state.copy(
                             day = day
                         ) else if (day.nextSchoolDayId != null) App.daySource.getById(day.nextSchoolDayId, profile).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { nextDay ->
                             state = state.copy(day = nextDay)

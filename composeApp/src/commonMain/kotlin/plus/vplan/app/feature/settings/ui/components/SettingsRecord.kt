@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,11 +39,67 @@ fun SettingsRecord(
     showArrow: Boolean = false,
     onClick: () -> Unit
 ) {
+    BaseSettingsRecord(
+        title = title,
+        subtitle = subtitle,
+        icon = icon,
+        isLoading = isLoading,
+        enabled = enabled,
+        onClick = onClick,
+        endContent = if (showArrow) {
+            {
+                Icon(
+                    painter = painterResource(Res.drawable.chevron_right),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        } else null
+    )
+}
+
+@Composable
+fun SettingsRecordCheckbox(
+    title: String,
+    subtitle: String? = null,
+    icon: Painter? = null,
+    isLoading: Boolean = false,
+    enabled: Boolean = true,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    BaseSettingsRecord(
+        title = title,
+        subtitle = subtitle,
+        icon = icon,
+        isLoading = isLoading,
+        enabled = enabled,
+        onClick = { if (enabled) onCheckedChange(!checked) },
+        endContent = {
+            Checkbox(
+                checked = checked,
+                onCheckedChange = { onCheckedChange(it) },
+                enabled = enabled
+            )
+        }
+    )
+}
+
+@Composable
+private fun BaseSettingsRecord(
+    title: String,
+    subtitle: String? = null,
+    icon: Painter? = null,
+    isLoading: Boolean = false,
+    enabled: Boolean = true,
+    onClick: (() -> Unit)? = null,
+    endContent: (@Composable (() -> Unit))? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .clickable(enabled = enabled) { onClick() }
+            .let { base -> if (onClick != null) base.clickable(enabled = enabled) { onClick() } else base }
             .padding(vertical = 16.dp, horizontal = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -60,30 +117,26 @@ fun SettingsRecord(
             AnimatedContent(
                 targetState = enabled,
                 transitionSpec = { fadeIn() togetherWith fadeOut() }
-            ) { enabled ->
+            ) { isEnabled ->
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurface else blendColor(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.surface, 0.5f)
+                    color = if (isEnabled) MaterialTheme.colorScheme.onSurface else blendColor(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.surface, 0.5f)
                 )
             }
-            subtitle?.let {
+            subtitle?.let { sub ->
                 AnimatedContent(
                     targetState = enabled,
                     transitionSpec = { fadeIn() togetherWith fadeOut() }
-                ) { enabled ->
+                ) { isEnabled ->
                     Text(
-                        text = it,
+                        text = sub,
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else blendColor(MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.colorScheme.surface, 0.5f)
+                        color = if (isEnabled) MaterialTheme.colorScheme.onSurfaceVariant else blendColor(MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.colorScheme.surface, 0.5f)
                     )
                 }
             }
         }
-        if (showArrow) Icon(
-            painter = painterResource(Res.drawable.chevron_right),
-            contentDescription = null,
-            modifier = Modifier.size(24.dp)
-        )
+        endContent?.invoke()
     }
 }

@@ -72,6 +72,7 @@ import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchEvent
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
+import plus.vplan.app.feature.settings.page.developer.flags.DeveloperFlagsScreen
 import plus.vplan.app.feature.settings.page.developer.timetable_debug.TimetableDebugScreen
 import plus.vplan.app.feature.settings.page.developer.ui.DeveloperSettingsScreen
 import plus.vplan.app.feature.settings.page.info.ui.InfoScreen
@@ -309,6 +310,14 @@ fun MainScreenHost(
             ) {
                 TimetableDebugScreen(navHostController = navController)
             }
+            composable<MainScreen.DeveloperSettings.Flags>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
+                DeveloperFlagsScreen(navHostController = navController)
+            }
             composable<MainScreen.InfoFeedbackSettings>(
                 enterTransition = defaultEnterAnimation,
                 exitTransition = defaultExitAnimation,
@@ -414,6 +423,7 @@ sealed class MainScreen(open val name: String) {
     @Serializable data object SecuritySettings : MainScreen("SecuritySettings")
     @Serializable sealed class DeveloperSettings(@SerialName("developer_subpath") override val name: String) : MainScreen("DeveloperSettings/$name") {
         @Serializable data object Home : DeveloperSettings("Home")
+        @Serializable data object Flags : DeveloperSettings("Flags")
         @Serializable data object TimetableDebug : DeveloperSettings("TimetableDebug")
     }
     @Serializable data object InfoFeedbackSettings : MainScreen("InfoFeedbackSettings")

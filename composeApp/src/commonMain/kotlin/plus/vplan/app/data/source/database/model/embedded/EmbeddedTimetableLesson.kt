@@ -3,9 +3,9 @@ package plus.vplan.app.data.source.database.model.embedded
 import androidx.room.Embedded
 import androidx.room.Junction
 import androidx.room.Relation
-import plus.vplan.app.data.source.database.model.database.DbLessonTime
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbTeacher
+import plus.vplan.app.data.source.database.model.database.DbTimetable
 import plus.vplan.app.data.source.database.model.database.DbTimetableLesson
 import plus.vplan.app.data.source.database.model.database.DbTimetableWeekLimitation
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
@@ -41,28 +41,28 @@ data class EmbeddedTimetableLesson(
         entity = DbTimetableGroupCrossover::class
     ) val groups: List<DbTimetableGroupCrossover>,
     @Relation(
-        parentColumn = "lesson_time_id",
-        entityColumn = "id",
-        entity = DbLessonTime::class
-    ) val lessonTime: DbLessonTime,
-    @Relation(
         parentColumn = "id",
         entityColumn = "timetable_lesson_id",
         entity = DbTimetableWeekLimitation::class
-    ) val weekLimitations: List<DbTimetableWeekLimitation>
+    ) val weekLimitations: List<DbTimetableWeekLimitation>,
+    @Relation(
+        parentColumn = "timetable_id",
+        entityColumn = "id",
+        entity = DbTimetable::class
+    ) val timetable: DbTimetable,
 ) {
     fun toModel(): Lesson.TimetableLesson {
         return Lesson.TimetableLesson(
             id = timetableLesson.id,
             dayOfWeek = timetableLesson.dayOfWeek,
-            week = timetableLesson.weekId,
+            weekId = timetable.weekId,
             subject = timetableLesson.subject,
             teacherIds = teachers.map { it.id },
             roomIds = rooms.map { it.id },
             groupIds = groups.map { it.groupId },
-            lessonTimeId = timetableLesson.lessonTimeId,
             timetableId = timetableLesson.timetableId,
             weekType = timetableLesson.weekType,
+            lessonNumber = timetableLesson.lessonNumber,
             limitedToWeekIds = weekLimitations.map { it.weekId }.toSet().ifEmpty { null }
         )
     }

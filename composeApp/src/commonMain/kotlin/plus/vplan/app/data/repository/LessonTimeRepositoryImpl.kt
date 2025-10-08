@@ -15,6 +15,10 @@ class LessonTimeRepositoryImpl(
         return vppDatabase.lessonTimeDao.getByGroup(groupId).map { it.map { lt -> lt.toModel() } }
     }
 
+    override fun get(groupId: Uuid, lessonNumber: Int): Flow<LessonTime?> {
+        return vppDatabase.lessonTimeDao.get(groupId, lessonNumber).map { it?.toModel() }
+    }
+
     override fun getBySchool(schoolId: Uuid): Flow<List<LessonTime>> {
         return vppDatabase.lessonTimeDao.getBySchool(schoolId).map { it.map { lt -> lt.toModel() } }
     }
