@@ -1,19 +1,16 @@
 package plus.vplan.app.feature.profile.page.ui.components
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.ui.components.noRippleClickable
@@ -22,27 +19,25 @@ import vplanplus.composeapp.generated.resources.chevron_down
 
 @Composable
 fun ProfileTitle(
+    modifier: Modifier = Modifier,
     currentProfileName: String,
     onClick: () -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.noRippleClickable(onClick)
+        modifier = modifier.noRippleClickable(onClick)
     ) {
         AnimatedContent(
             targetState = currentProfileName
         ) { displayProfileName ->
             Text(
                 text = displayProfileName,
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleMedium
             )
         }
         Box(
-            modifier = Modifier
-                .size(24.dp)
-                .clip(RoundedCornerShape(50))
-                .background(MaterialTheme.colorScheme.secondaryContainer),
+            modifier = Modifier.size(24.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
