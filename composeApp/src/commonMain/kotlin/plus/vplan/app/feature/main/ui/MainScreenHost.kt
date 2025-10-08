@@ -15,11 +15,15 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -34,7 +38,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -72,6 +75,7 @@ import plus.vplan.app.feature.search.subfeature.room_search.ui.RoomSearch
 import plus.vplan.app.feature.search.ui.main.SearchEvent
 import plus.vplan.app.feature.search.ui.main.SearchScreen
 import plus.vplan.app.feature.search.ui.main.SearchViewModel
+import plus.vplan.app.feature.settings.page.developer.flags.DeveloperFlagsScreen
 import plus.vplan.app.feature.settings.page.developer.timetable_debug.TimetableDebugScreen
 import plus.vplan.app.feature.settings.page.developer.ui.DeveloperSettingsScreen
 import plus.vplan.app.feature.settings.page.info.ui.InfoScreen
@@ -157,58 +161,11 @@ fun MainScreenHost(
         top = contentPaddingDevice.calculateTopPadding(),
         end = contentPaddingDevice.calculateEndPadding(layoutDirection),
         bottom = listOf(contentPaddingDevice.calculateBottomPadding(), bottomBarHeight).max()
-    )
 
+    )
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        AnimatedVisibility(
-            visible = currentDestination?.startsWith("_") == true,
-            enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
-            exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .onSizeChanged {
-                    with(localDensity) { bottomBarHeight = it.height.toDp() }
-                }
-        ) {
-            NavigationBar(
-                modifier = Modifier
-                    .shadow(elevation = 4.dp)
-            ) {
-                NavigationBarItem(
-                    selected = currentDestination == "_Home",
-                    label = { Text("Home") },
-                    icon = { Icon(painter = painterResource(Res.drawable.house), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainHome) { popUpTo(0) } }
-                )
-                NavigationBarItem(
-                    selected = currentDestination == "_Calendar",
-                    label = { Text("Kalender") },
-                    icon = { Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainCalendar) { popUpTo(MainScreen.MainHome) } }
-                )
-                NavigationBarItem(
-                    selected = currentDestination == "_Search",
-                    label = { Text("Suche") },
-                    icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = {
-                        if (currentDestination == "_Search") {
-                            // If we are already on the search screen, focus the search bar
-                            searchViewModel.onEvent(SearchEvent.SearchBarFocusChanged(true))
-                        } else navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) }
-                    }
-                )
-                NavigationBarItem(
-                    selected = currentDestination == "_Profile",
-                    label = { Text("Profil") },
-                    icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainProfile) { popUpTo(MainScreen.MainHome) } },
-                )
-            }
-        }
-
         NavHost(
             modifier = Modifier.fillMaxSize(),
             navController = navController,
@@ -309,6 +266,14 @@ fun MainScreenHost(
             ) {
                 TimetableDebugScreen(navHostController = navController)
             }
+            composable<MainScreen.DeveloperSettings.Flags>(
+                enterTransition = defaultEnterAnimation,
+                exitTransition = defaultExitAnimation,
+                popEnterTransition = defaultPopEnterAnimation,
+                popExitTransition = defaultPopExitAnimation
+            ) {
+                DeveloperFlagsScreen(navHostController = navController)
+            }
             composable<MainScreen.InfoFeedbackSettings>(
                 enterTransition = defaultEnterAnimation,
                 exitTransition = defaultExitAnimation,
@@ -335,6 +300,56 @@ fun MainScreenHost(
             ) {
                 val args = it.toRoute<MainScreen.Analytics>()
                 AnalyticsScreen(navController, args.vppId)
+            }
+        }
+
+        AnimatedVisibility(
+            visible = currentDestination?.startsWith("_") == true,
+            enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .onSizeChanged {
+                    with(localDensity) { bottomBarHeight = it.height.toDp() }
+                }
+        ) {
+            NavigationBar(
+                windowInsets = WindowInsets(0.dp)
+            ) {
+                NavigationBarItem(
+                    selected = currentDestination == "_Home",
+                    label = { Text("Home") },
+                    icon = { Icon(painter = painterResource(Res.drawable.house), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainHome) { popUpTo(0) } },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Calendar",
+                    label = { Text("Kalender") },
+                    icon = { Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainCalendar) { popUpTo(MainScreen.MainHome) } },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Search",
+                    label = { Text("Suche") },
+                    icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = {
+                        if (currentDestination == "_Search") {
+                            // If we are already on the search screen, focus the search bar
+                            searchViewModel.onEvent(SearchEvent.SearchBarFocusChanged(true))
+                        } else navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) }
+                    },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Profile",
+                    label = { Text("Profil") },
+                    icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainProfile) { popUpTo(MainScreen.MainHome) } },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
+                )
             }
         }
     }
@@ -367,7 +382,7 @@ fun MainScreenHost(
                 navController.navigate(MainScreen.MainCalendar)
             }
             is StartTask.NavigateTo.SchoolSettings -> {
-                navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId?.toHexString()))
+                navController.navigate(MainScreen.SchoolSettings(navigationTask.openSp24SettingsSchoolId?.toHexString()))
             }
             is StartTask.NavigateTo.Grades -> navController.navigate(MainScreen.Grades(navigationTask.vppId))
             is StartTask.Open.Homework -> homeworkSheetHomeworkId = navigationTask.homeworkId
@@ -414,6 +429,7 @@ sealed class MainScreen(open val name: String) {
     @Serializable data object SecuritySettings : MainScreen("SecuritySettings")
     @Serializable sealed class DeveloperSettings(@SerialName("developer_subpath") override val name: String) : MainScreen("DeveloperSettings/$name") {
         @Serializable data object Home : DeveloperSettings("Home")
+        @Serializable data object Flags : DeveloperSettings("Flags")
         @Serializable data object TimetableDebug : DeveloperSettings("TimetableDebug")
     }
     @Serializable data object InfoFeedbackSettings : MainScreen("InfoFeedbackSettings")

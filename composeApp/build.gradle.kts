@@ -5,8 +5,8 @@ import java.util.Base64
 import java.util.Properties
 
 object ApplicationConfig {
-    const val APP_VERSION_NAME = "0.2.13-production"
-    const val APP_VERSION_CODE = 187
+    const val APP_VERSION_NAME = "0.2.17-production"
+    const val APP_VERSION_CODE = 227
 }
 
 val localProperties = Properties().apply {
@@ -38,6 +38,10 @@ kotlin {
 
     compilerOptions {
         optIn.add("kotlin.uuid.ExperimentalUuidApi")
+        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
+        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.add("-Xnested-type-aliases")
+        freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
     }
     
     listOf(

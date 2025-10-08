@@ -138,7 +138,7 @@ class UpdateSubstitutionPlanUseCase(
                 Lesson.SubstitutionPlanLesson(
                     id = Uuid.random(),
                     date = date,
-                    week = week?.id,
+                    weekId = week?.id,
                     subject = lesson.subject,
                     isSubjectChanged = lesson.subjectChanged,
                     teacherIds = teachers.filter { it.name in lesson.teachers }.map { it.id },
@@ -147,10 +147,7 @@ class UpdateSubstitutionPlanUseCase(
                     isRoomChanged = lesson.roomsChanged,
                     groupIds = groups.filter { it.name in lesson.classes }.map { it.id },
                     subjectInstanceId = lesson.subjectInstanceId?.let { subjectInstances.firstOrNull { it.aliases.any { alias -> alias.provider == AliasProvider.Sp24 && alias.version == 1 && alias.value.split("/").last() == lesson.subjectInstanceId.toString() } } }?.id,
-                    lessonTimeId = lessonTimes.firstOrNull { it.lessonNumber == lesson.lessonNumber }?.id ?: run {
-                        Logger.e { "No lesson time found for lesson number ${lesson.lessonNumber} in group ${lesson.classes.first()} at $date" }
-                        return@mapNotNull null
-                    },
+                    lessonNumber = lesson.lessonNumber,
                     info = lesson.info
                 )
             }.let { lessonsForDay.addAll(it) }
@@ -168,14 +165,14 @@ class UpdateSubstitutionPlanUseCase(
                 }
                 .mapKeys { it.key.id }
 
-            if (allowNotification ||true) profileRepository.getAll().first()
+            if (allowNotification) profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
                 .filter { it.getSchool().getFirstValue()?.id == sp24School.id }
                 .forEach forEachProfile@{ profile ->
                     val old = oldPlan[profile.id] ?: return@forEachProfile
                     val new = newPlan[profile.id] ?: return@forEachProfile
 
-                    if ((old + new).mapNotNull { it.lessonTime.getFirstValueOld()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachProfile
+                    if ((old + new).mapNotNull { it.lessonTime?.getFirstValueOld()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachProfile
 
                     val oldLessons = old.map { it.getLessonSignature() }
                     val newLessons = new.associateWith { it.getLessonSignature() }
@@ -188,7 +185,7 @@ class UpdateSubstitutionPlanUseCase(
 
                     val changedLessons = changedOrNewLessons
                         .filter { it.isRelevantForProfile(profile) }
-                        .associateWith { it.lessonTime.getFirstValueOld()?.lessonNumber }
+                        .associateWith { it.lessonNumber }
                         .toList()
                         .sortedBy { it.second }
                         .map { it.first }
@@ -201,7 +198,7 @@ class UpdateSubstitutionPlanUseCase(
                             largeText = buildString {
                                 changedLessons.forEachIndexed { i, lesson ->
                                     if (i > 0) append("\n")
-                                    append(lesson.lessonTime.getFirstValueOld()?.lessonNumber)
+                                    append(lesson.lessonNumber)
                                     append(". ")
                                     append(lesson.subject ?: "Entfall")
                                     if (lesson.teacherIds.isNotEmpty()) {
