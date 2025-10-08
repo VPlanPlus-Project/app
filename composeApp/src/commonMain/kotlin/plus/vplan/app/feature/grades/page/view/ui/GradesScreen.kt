@@ -33,8 +33,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,6 +48,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -119,7 +121,7 @@ fun GradesScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun GradesContent(
     state: GradesState,
@@ -228,7 +230,7 @@ private fun GradesContent(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularWavyProgressIndicator()
                     }
                     return@gradeLockStateAvailable
                 }
@@ -277,7 +279,17 @@ private fun GradesContent(
                         state = pullToRefreshState,
                         onRefresh = { onEvent(GradeDetailEvent.Refresh) },
                         isRefreshing = state.isUpdating,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        indicator = {
+                            LoadingIndicator(
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter),
+                                isRefreshing = state.isUpdating,
+                                state = pullToRefreshState,
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
                     ) {
                         if (state.allGrades.isEmpty()) {
                             Column(
@@ -504,7 +516,7 @@ private fun GradesContent(
                                                 ) {
                                                     Text(
                                                         text = category.name,
-                                                        style = MaterialTheme.typography.titleSmall
+                                                        style = MaterialTheme.typography.titleSmall,
                                                     )
                                                     Text(
                                                         text = "${((category.weight / subject.categories.sumOf { it.weight }) * 100).roundToInt()}%",

@@ -47,6 +47,7 @@ import plus.vplan.app.Platform
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import plus.vplan.app.ui.components.noRippleClickable
+import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.utils.openUrl
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
@@ -130,7 +131,8 @@ private fun InfoContent(
                 Column {
                     Text(
                         text = "VPlanPlus für ${getPlatform()}",
-                        style = MaterialTheme.typography.headlineSmall
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontFamily = displayFontFamily(),
                     )
 
                     var clickCounter by remember { mutableIntStateOf(0) }
