@@ -13,14 +13,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -65,6 +63,7 @@ import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.keyboardAsState
+import plus.vplan.app.utils.safeBottomPadding
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.circle_user_round
 import vplanplus.composeapp.generated.resources.message_circle_heart
@@ -115,7 +114,7 @@ private fun FeedbackDrawerContent(
     }
 
     val isKeyboardVisible by keyboardAsState()
-    val bottomPadding by animateDpAsState(if (isKeyboardVisible) 16.dp else WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 16.dp)
+    val bottomPadding by animateDpAsState(if (isKeyboardVisible) 16.dp else safeBottomPadding())
 
     Column(
         modifier = Modifier
