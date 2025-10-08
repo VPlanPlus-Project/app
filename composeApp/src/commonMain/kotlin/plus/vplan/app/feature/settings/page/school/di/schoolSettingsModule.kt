@@ -6,12 +6,12 @@ import org.koin.dsl.module
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.domain.usecase.GetSchoolsUseCase
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsViewModel
-import plus.vplan.app.feature.settings.page.school.ui.components.IndiwareCredentialViewModel
+import plus.vplan.app.feature.settings.page.school.ui.components.Sp24CredentialViewModel
 
 val schoolSettingsModule = module {
     singleOf(::GetSchoolsUseCase)
     singleOf(::CheckSp24CredentialsUseCase)
 
     viewModelOf(::SchoolSettingsViewModel)
-    viewModelOf(::IndiwareCredentialViewModel)
+    viewModelOf(::Sp24CredentialViewModel)
 }

@@ -3,10 +3,8 @@ package plus.vplan.app.feature.grades.page.view.ui.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -22,6 +20,7 @@ import plus.vplan.app.ui.components.SelectContainer
 import plus.vplan.app.ui.components.SelectItem
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.getState
+import plus.vplan.app.utils.safeBottomPadding
 
 @Composable
 private fun SelectIntervalDrawerContent(
@@ -77,7 +76,7 @@ fun SelectIntervalDrawer(
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
+                .padding(bottom = safeBottomPadding())
         ) {
             Text(
                 text = "Interval auswählen",
