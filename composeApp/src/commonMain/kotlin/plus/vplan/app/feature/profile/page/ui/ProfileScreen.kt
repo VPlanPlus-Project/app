@@ -2,18 +2,21 @@ package plus.vplan.app.feature.profile.page.ui
 
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -30,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
@@ -93,115 +97,123 @@ private fun ProfileContent(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .padding(contentPadding)
-            .fillMaxSize()
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            ProfileTitle(state.currentProfile?.name.orEmpty()) {
-                onEvent(
-                    ProfileScreenEvent.SetProfileSwitcherVisibility(
-                        true
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            if (state.currentProfile is Profile.StudentProfile && state.currentProfile.vppId == null) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(contentPadding)
+                        .padding(horizontal = 32.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(Res.drawable.undraw_profile),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 200.dp)
+                        )
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        text = "Hier landen deine Noten",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary
                     )
-                )
+                    Text(
+                        text = "wenn du eine vpp.ID mit beste.schule hinzufügst."
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(
+                        onClick = { openUrl(VPP_ID_AUTH_URL) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.log_in),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Anmelden/Registrieren")
+                    }
+                }
             }
-            FilledTonalIconButton(
-                onClick = onOpenSettings
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.settings),
-                    modifier = Modifier.size(24.dp),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
-        }
-        if (state.currentProfile is Profile.StudentProfile && state.currentProfile.vppId == null) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 32.dp),
-                verticalArrangement = Arrangement.Center
+                    .verticalScroll(rememberScrollState())
+                    .padding(contentPadding),
             ) {
-                Image(
-                    painter = painterResource(Res.drawable.undraw_profile),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = "Hier landen deine Noten",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "wenn du eine vpp.ID mit beste.schule hinzufügst."
-                )
                 Spacer(Modifier.height(8.dp))
-                TextButton(
-                    onClick = { openUrl(VPP_ID_AUTH_URL) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.log_in),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text("Anmelden/Registrieren")
-                }
-            }
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-        ) {
-            Spacer(Modifier.height(8.dp))
-            if (state.currentProfile is Profile.StudentProfile) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    val vppId = state.currentProfile.vppId?.collectAsResultingFlowOld()?.value
-                    if (vppId is VppId.Active) {
-                        val subjectInstances = state.currentProfile.subjectInstances
-                            .map { it.map { subjectInstance -> subjectInstance.subject }.toSet() }
-                            .distinctUntilChanged()
-                            .collectAsState(emptySet()).value
+                if (state.currentProfile is Profile.StudentProfile) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        val vppId = state.currentProfile.vppId?.collectAsResultingFlowOld()?.value
+                        if (vppId is VppId.Active) {
+                            val subjectInstances = state.currentProfile.subjectInstances
+                                .map { it.map { subjectInstance -> subjectInstance.subject }.toSet() }
+                                .distinctUntilChanged()
+                                .collectAsState(emptySet()).value
 
-                        if (vppId.schulverwalterConnection != null) {
-                            GradesCard(
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp),
-                                areGradesLocked = state.areGradesLocked,
-                                subjects = subjectInstances,
-                                infiniteTransition = infiniteTransition,
-                                averageGrade = if (vppId.gradeIds.isEmpty() || state.averageGrade?.isNaN() == true) GradesCardFeaturedGrade.NotExisting else if (state.averageGrade == null) GradesCardFeaturedGrade.Loading else GradesCardFeaturedGrade.Value(state.averageGrade.toString()),
-                                latestGrade = when (state.latestGrade) {
-                                    is LatestGrade.Loading -> GradesCardFeaturedGrade.Loading
-                                    is LatestGrade.NotExisting -> GradesCardFeaturedGrade.NotExisting
-                                    is LatestGrade.Value -> GradesCardFeaturedGrade.Value(state.latestGrade.value)
-                                },
-                                onRequestUnlock = {
-                                    openGradesScreenAfterUnlock = true
-                                    onEvent(ProfileScreenEvent.RequestGradeUnlock)
-                                },
-                                onOpenGrades = onOpenGrades,
-                            )
+                            if (vppId.schulverwalterConnection != null) {
+                                GradesCard(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp),
+                                    areGradesLocked = state.areGradesLocked,
+                                    subjects = subjectInstances,
+                                    infiniteTransition = infiniteTransition,
+                                    averageGrade = if (vppId.gradeIds.isEmpty() || state.averageGrade?.isNaN() == true) GradesCardFeaturedGrade.NotExisting else if (state.averageGrade == null) GradesCardFeaturedGrade.Loading else GradesCardFeaturedGrade.Value(state.averageGrade.toString()),
+                                    latestGrade = when (state.latestGrade) {
+                                        is LatestGrade.Loading -> GradesCardFeaturedGrade.Loading
+                                        is LatestGrade.NotExisting -> GradesCardFeaturedGrade.NotExisting
+                                        is LatestGrade.Value -> GradesCardFeaturedGrade.Value(state.latestGrade.value)
+                                    },
+                                    onRequestUnlock = {
+                                        openGradesScreenAfterUnlock = true
+                                        onEvent(ProfileScreenEvent.RequestGradeUnlock)
+                                    },
+                                    onOpenGrades = onOpenGrades,
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
+
+        ProfileTitle(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 8.dp)
+                .padding(contentPadding)
+                .padding(vertical = 4.dp, horizontal = 8.dp)
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+            currentProfileName = state.currentProfile?.name.orEmpty()
+        ) {
+            onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(true))
+        }
+
+        FilledTonalIconButton(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(vertical = 8.dp, horizontal = 16.dp)
+                .padding(contentPadding),
+            onClick = onOpenSettings
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.settings),
+                modifier = Modifier.size(24.dp),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
         }
     }
 }
