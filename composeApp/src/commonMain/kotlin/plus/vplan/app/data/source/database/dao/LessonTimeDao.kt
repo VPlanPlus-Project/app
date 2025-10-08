@@ -16,6 +16,9 @@ interface LessonTimeDao {
     @Query("SELECT * FROM lesson_times WHERE group_id = :groupId")
     fun getByGroup(groupId: Uuid): Flow<List<DbLessonTime>>
 
+    @Query("SELECT * FROM lesson_times WHERE group_id = :groupId AND lesson_number = :lessonNumber LIMIT 1")
+    fun get(groupId: Uuid, lessonNumber: Int): Flow<DbLessonTime?>
+
     @Transaction
     @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM lesson_times LEFT JOIN school_groups ON lesson_times.group_id = school_groups.id WHERE school_groups.school_id = :schoolId")

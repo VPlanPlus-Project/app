@@ -34,6 +34,7 @@ import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import plus.vplan.app.ui.components.TopToggle
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
+import vplanplus.composeapp.generated.resources.flag
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.trash_2
 
@@ -48,6 +49,7 @@ fun DeveloperSettingsScreen(
         onBack = navHostController::navigateUp,
         onEvent = viewModel::handleEvent,
         onOpenTimetableDebug = remember { { navHostController.navigate(MainScreen.DeveloperSettings.TimetableDebug) } },
+        onOpenFlags = remember { { navHostController.navigate(MainScreen.DeveloperSettings.Flags) } },
         state = state
     )
 }
@@ -56,6 +58,7 @@ fun DeveloperSettingsScreen(
 @Composable
 private fun DeveloperSettingsContent(
     onBack: () -> Unit = {},
+    onOpenFlags: () -> Unit = {},
     onOpenTimetableDebug: () -> Unit = {},
     onEvent: (DeveloperSettingsEvent) -> Unit,
     state: DeveloperSettingsState
@@ -93,6 +96,13 @@ private fun DeveloperSettingsContent(
                 text = "Entwickleroptionen",
                 state = state.isDeveloperModeEnabled,
                 onToggle = { onEvent(DeveloperSettingsEvent.ToggleDeveloperMode) },
+            )
+
+            SettingsRecord(
+                title = "Flags",
+                subtitle = "Experimentelle Funktionen aktivieren",
+                onClick = onOpenFlags,
+                icon = painterResource(Res.drawable.flag)
             )
 
             SettingsRecord(

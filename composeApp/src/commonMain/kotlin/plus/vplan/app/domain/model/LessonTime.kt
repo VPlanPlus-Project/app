@@ -14,4 +14,8 @@ data class LessonTime(
     val interpolated: Boolean = false
 ) : Item<String, DataTag> {
     override val tags: Set<DataTag> = emptySet()
+
+    companion object {
+        fun buildId(schoolId: Uuid, groupId: Uuid, lessonNumber: Int) = "${schoolId}/${groupId}/${lessonNumber}"
+    }
 }

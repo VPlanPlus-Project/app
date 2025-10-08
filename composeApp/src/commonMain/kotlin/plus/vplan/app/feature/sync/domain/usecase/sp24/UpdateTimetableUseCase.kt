@@ -13,7 +13,6 @@ import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.Timetable
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
@@ -37,7 +36,6 @@ class UpdateTimetableUseCase(
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val weekRepository: WeekRepository,
-    private val lessonTimeRepository: LessonTimeRepository,
     private val timetableRepository: TimetableRepository,
     private val profileRepository: ProfileRepository
 ) {
@@ -59,11 +57,24 @@ class UpdateTimetableUseCase(
         val rooms = roomRepository.getBySchool(sp24School.id).first()
         val teachers = teacherRepository.getBySchool(sp24School.id).first()
         val groups = groupRepository.getBySchool(sp24School.id).first()
-        val lessonTimes = lessonTimeRepository.getBySchool(sp24School.id).first()
 
         val weeks = getWeekStates(sp24School)
+            .let { weeks ->
+                if (forceUpdate) weeks
+                else weeks
+                    .filter { weekState -> weekState.relativeTime == WeekState.RelativeTime.CurrentOrFuture || (weekState.relativeTime == WeekState.RelativeTime.Past && weekState.hasData == Stundenplan24Repository.HasData.Unknown) }
+                    .groupBy { it.hasData }
+                    .let {
+                        val unknown = it[Stundenplan24Repository.HasData.Unknown].orEmpty()
 
-        LOGGER.d { "Found ${rooms.size} rooms, ${teachers.size} teachers, ${groups.size} groups and ${weeks.size} weeks" }
+                        val other = (it[Stundenplan24Repository.HasData.Yes].orEmpty() + it[Stundenplan24Repository.HasData.No].orEmpty())
+                            .sortedBy { week -> week.weekEntity.weekIndex }
+                            .take(3)
+
+                        (unknown + other)
+                            .sortedBy { week -> week.weekEntity.weekIndex }
+                    }
+            }
 
         weeks.forEach forEachWeek@{ week ->
             if (week.relativeTime == WeekState.RelativeTime.Past && !forceUpdate) return@forEachWeek
@@ -114,34 +125,19 @@ class UpdateTimetableUseCase(
 
                             Lesson.TimetableLesson(
                                 dayOfWeek = DayOfWeek(lesson.dayOfWeek.isoDayNumber),
-                                week = week.weekEntity.id,
                                 weekType = lesson.weekType,
                                 subject = lesson.subject,
-                                rooms = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
-                                teachers = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
-                                groups = lessonGroups,
+                                roomIds = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
+                                teacherIds = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
+                                groupIds = lessonGroups,
                                 timetableId = timetableMetadata.id,
                                 limitedToWeekIds = lesson.limitToWeekNumber
                                     ?.mapNotNull { weeks.firstOrNull { week -> week.weekEntity.weekIndex == it } }
                                     ?.map { it.weekEntity.id }
                                     ?.toSet(),
-                                lessonTime = lessonTimes.firstOrNull { it.lessonNumber == lesson.lessonNumber && it.group in lessonGroups }?.id
-                                    ?: run {
-                                        captureError(
-                                            location = "UpdateTimetableUseCase",
-                                            message = """
-                                        Couldn't find lesson time for lesson, setting to first lesson time of the first group.
-                                        School: ${sp24School.sp24Id} ${sp24School.name}
-                                        Week: CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)
-                                        Lesson: ${lesson.subject} on ${lesson.dayOfWeek}, lesson number ${lesson.lessonNumber}
-                                        Groups for lesson: ${lesson.classes.joinToString()}
-                                        Teachers for lesson: ${lesson.teachers.joinToString()}
-                                        Rooms for lesson: ${lesson.rooms.joinToString()}
-                                        Lesson times configured in app: ${lessonTimes.joinToString { "${it.lessonNumber} (${it.group})"} }
-                                    """.trimIndent()
-                                        )
-                                        return@mapNotNull null
-                                    }
+                                lessonNumber = lesson.lessonNumber,
+                                weekId = week.weekEntity.id,
+                                id = Uuid.random()
                             )
                         }
 
