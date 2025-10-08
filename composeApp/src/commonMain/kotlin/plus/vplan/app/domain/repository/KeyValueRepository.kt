@@ -29,4 +29,15 @@ object Keys {
 
     const val DEVELOPER_SETTINGS_ACTIVE = "developer_settings_active"
     const val DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC = "developer_settings_disable_auto_sync"
+
+    const val DS_FORCE_REDUCED_CALENDAR_VIEW = "ds_force_reduced_calendar_view"
+
+    val developerSettings = listOf(
+        DeveloperFlag.Boolean(DS_FORCE_REDUCED_CALENDAR_VIEW, false)
+    )
+
+    sealed class DeveloperFlag {
+        abstract val key: String
+        data class Boolean(override val key: String, val default: kotlin.Boolean) : DeveloperFlag()
+    }
 }
