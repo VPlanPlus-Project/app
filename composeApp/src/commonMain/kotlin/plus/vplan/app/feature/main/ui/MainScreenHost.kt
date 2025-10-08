@@ -160,8 +160,8 @@ fun MainScreenHost(
         top = contentPaddingDevice.calculateTopPadding(),
         end = contentPaddingDevice.calculateEndPadding(layoutDirection),
         bottom = listOf(contentPaddingDevice.calculateBottomPadding(), bottomBarHeight).max()
-    )
 
+    )
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
