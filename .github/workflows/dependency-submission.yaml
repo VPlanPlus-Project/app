@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   dependency-submission:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Generate and submit dependency graph
     steps:
     - name: 📥 Checkout sources

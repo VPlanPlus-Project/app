@@ -11,7 +11,7 @@ env:
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
             -   name: Checkout sources
                 uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
 
     release:
         needs: build
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
             -   name: Download build artifacts
                 uses: actions/download-artifact@v4
