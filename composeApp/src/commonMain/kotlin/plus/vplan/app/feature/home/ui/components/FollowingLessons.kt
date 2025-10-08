@@ -27,6 +27,7 @@ fun FollowingLessons(
 ) {
     lessons
         .entries
+        .sortedBy { it.key }
         .forEachIndexed { i, (_, followingLessons) ->
             val colorScheme = MaterialTheme.colorScheme
             val headerFont = headerFont()

@@ -117,6 +117,7 @@ fun CalendarView(
 ) {
     val localDensity = LocalDensity.current
     var availableWidth by remember { mutableStateOf(0.dp) }
+    var bottomIslandHeight by remember { mutableStateOf(0.dp) }
     val minute = 1.25.dp
     Column(
         modifier = modifier
@@ -351,6 +352,7 @@ fun CalendarView(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .let { if (contentScrollState == null) it else it.verticalScroll(contentScrollState) }
+                                    .padding(bottom = bottomIslandHeight)
                             ) {
                                 FollowingLessons(
                                     modifier = Modifier
@@ -373,7 +375,8 @@ fun CalendarView(
                     .fillMaxWidth()
                     .drawWithCache { onDrawBehind { drawRect(Brush.verticalGradient(listOf(colorScheme.surface.transparent(), colorScheme.surface))) } }
                     .padding(vertical = 4.dp, horizontal = 8.dp)
-                    .padding(bottomIslandPadding),
+                    .padding(bottomIslandPadding)
+                    .onSizeChanged { bottomIslandHeight = with(localDensity) { it.height.toDp() } },
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (info != null) {
