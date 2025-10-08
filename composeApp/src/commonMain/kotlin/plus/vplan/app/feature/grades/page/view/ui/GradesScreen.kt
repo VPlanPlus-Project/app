@@ -87,6 +87,7 @@ import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
+import plus.vplan.app.ui.theme.bodyFontFamily
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.toDp
@@ -356,6 +357,7 @@ private fun GradesContent(
                                                 ) {
                                                     Text(
                                                         text = "∅ ",
+                                                        fontFamily = bodyFontFamily(),
                                                         style = MaterialTheme.typography.headlineLarge,
                                                     )
                                                     AnimatedContent(
@@ -367,6 +369,7 @@ private fun GradesContent(
                                                         ) else Text(
                                                             text = if (average.isNaN()) "-" else ((average * 100).roundToInt() / 100.0).toString(),
                                                             style = MaterialTheme.typography.headlineLarge,
+                                                            fontFamily = bodyFontFamily(),
                                                         )
                                                     }
                                                 }
@@ -417,6 +420,7 @@ private fun GradesContent(
                                                 CompositionLocalProvider(LocalContentColor provides colors[CustomColor.Green]!!.getGroup().onContainer) {
                                                     Text(
                                                         text = "Analyse",
+                                                        fontFamily = bodyFontFamily(),
                                                         style = MaterialTheme.typography.titleSmall,
                                                         modifier = Modifier
                                                             .padding(8.dp)
@@ -446,6 +450,7 @@ private fun GradesContent(
                                                     Text(
                                                         text = "Notenrechner",
                                                         style = MaterialTheme.typography.titleSmall,
+                                                        fontFamily = bodyFontFamily(),
                                                         modifier = Modifier
                                                             .padding(8.dp)
                                                             .align(Alignment.TopStart)
@@ -475,6 +480,7 @@ private fun GradesContent(
                                         Text(
                                             text = subject.name,
                                             style = MaterialTheme.typography.titleMedium,
+                                            fontFamily = bodyFontFamily(),
                                             modifier = Modifier.weight(1f)
                                         )
                                         AnimatedContent(
@@ -516,7 +522,8 @@ private fun GradesContent(
                                                 ) {
                                                     Text(
                                                         text = category.name,
-                                                        style = MaterialTheme.typography.titleSmall
+                                                        style = MaterialTheme.typography.titleSmall,
+                                                        fontFamily = bodyFontFamily(),
                                                     )
                                                     Text(
                                                         text = "${((category.weight / subject.categories.sumOf { it.weight }) * 100).roundToInt()}%",
@@ -809,6 +816,7 @@ private fun GradesContent(
                                 Text(
                                     text = "∅",
                                     style = MaterialTheme.typography.headlineSmall,
+                                    fontFamily = bodyFontFamily(),
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 AnimatedContent(
@@ -823,6 +831,7 @@ private fun GradesContent(
                                     ) else Text(
                                         text = if (average.isNaN()) "-" else ((average * 100).roundToInt() / 100.0).toString(),
                                         style = MaterialTheme.typography.headlineSmall,
+                                        fontFamily = bodyFontFamily(),
                                         color = MaterialTheme.colorScheme.onSurface,
                                     )
                                 }

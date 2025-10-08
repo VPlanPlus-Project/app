@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.ui.theme.bodyFontFamily
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.toBlackAndWhite
 
@@ -54,7 +55,7 @@ fun InfoCard(
                 tint = textColor
             )
             Column(modifier = Modifier.padding(start = 12.dp)) {
-                Text(text = title, style = MaterialTheme.typography.titleSmall, color = textColor)
+                Text(text = title, style = MaterialTheme.typography.titleSmall, color = textColor, fontFamily = bodyFontFamily())
                 Text(text = text, color = textColor, style = MaterialTheme.typography.bodySmall)
             }
         }

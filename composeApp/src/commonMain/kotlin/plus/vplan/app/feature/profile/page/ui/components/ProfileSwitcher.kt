@@ -50,6 +50,7 @@ import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
+import plus.vplan.app.ui.theme.bodyFontFamily
 import plus.vplan.app.utils.blendColor
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.logo_dark
@@ -99,6 +100,7 @@ fun ProfileSwitcher(
                         Text(
                             text = school.name,
                             style = MaterialTheme.typography.titleMedium,
+                            fontFamily = bodyFontFamily(),
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(horizontal = 16.dp),
                             maxLines = 1,

@@ -64,6 +64,7 @@ import plus.vplan.app.feature.grades.page.view.ui.components.SelectIntervalDrawe
 import plus.vplan.app.ui.animatePlacement
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
+import plus.vplan.app.ui.theme.bodyFontFamily
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.blendColor
 import vplanplus.composeapp.generated.resources.Res
@@ -147,6 +148,7 @@ private fun AnalyticsContent(
                 ) {
                     Text(
                         text = "Notenverteilung",
+                        fontFamily = bodyFontFamily(),
                         style = MaterialTheme.typography.titleMedium
                     )
                     AnimatedContent(

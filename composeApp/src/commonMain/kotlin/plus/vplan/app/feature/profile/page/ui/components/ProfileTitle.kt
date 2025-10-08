@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.ui.components.noRippleClickable
+import plus.vplan.app.ui.theme.bodyFontFamily
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.chevron_down
 
@@ -35,6 +36,7 @@ fun ProfileTitle(
         ) { displayProfileName ->
             Text(
                 text = displayProfileName,
+                fontFamily = bodyFontFamily(),
                 style = MaterialTheme.typography.titleLarge
             )
         }
