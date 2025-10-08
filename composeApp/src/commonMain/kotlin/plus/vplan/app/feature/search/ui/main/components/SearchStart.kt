@@ -46,6 +46,7 @@ import plus.vplan.app.feature.search.ui.main.NewItem
 import plus.vplan.app.ui.components.Grid
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
+import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormatWithoutYear
@@ -59,7 +60,7 @@ import vplanplus.composeapp.generated.resources.door_open
 import vplanplus.composeapp.generated.resources.search
 
 @Composable
-private fun sectionTitleFont() = MaterialTheme.typography.titleMedium
+private fun sectionTitleFont() = MaterialTheme.typography.titleMedium.copy(fontFamily = displayFontFamily())
 
 @Composable
 fun SearchStart(
