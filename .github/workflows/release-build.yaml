@@ -24,7 +24,7 @@ jobs:
                     cache: 'gradle'
                     cache-dependency-path: |
                         ${{ github.workspace }}/gradle/wrapper/gradle-wrapper.properties
-                        ${{ github.workspace }}/**/*.gradle*
+                        ${{ github.workspace }}/**/*.versions.toml
 
             -   name: Setup Android SDK
                 uses: android-actions/setup-android@v3
