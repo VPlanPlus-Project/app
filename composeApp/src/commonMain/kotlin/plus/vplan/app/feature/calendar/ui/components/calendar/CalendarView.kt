@@ -74,6 +74,7 @@ import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
+import plus.vplan.app.feature.calendar.ui.LessonRendering
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
 import plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard
 import plus.vplan.app.feature.home.ui.components.FollowingLessons
@@ -358,7 +359,7 @@ fun CalendarView(
                                     date = date,
                                     showFirstGradient = false,
                                     paddingStart = 8.dp,
-                                    lessons = lessons.lessons.groupBy { it.lessonNumber }
+                                    lessons = lessons.lessons
                                 )
                             }
                         }
@@ -484,5 +485,14 @@ sealed class CalendarViewLessons {
     /**
      * Used if lesson times are missing ore unsafe.
      */
-    data class ListView(val lessons: List<Lesson>): CalendarViewLessons()
+    data class ListView(val lessons: Map<Int, List<Lesson>>): CalendarViewLessons()
+
+    companion object {
+        operator fun invoke(lessonRendering: LessonRendering): CalendarViewLessons {
+            return when (lessonRendering) {
+                is LessonRendering.Layouted -> CalendarView(lessonRendering.lessons)
+                is LessonRendering.ListView -> ListView(lessonRendering.lessons)
+            }
+        }
+    }
 }

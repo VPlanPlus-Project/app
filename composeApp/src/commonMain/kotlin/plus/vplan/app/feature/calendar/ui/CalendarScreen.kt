@@ -171,10 +171,16 @@ private fun CalendarScreenContent(
     val minute = 1.25.dp
     var containerHeight by remember { mutableStateOf(0.dp) }
 
-    val scrollConnection = remember(state.selectedDate, containerHeight, contentScrollState) {
+    val scrollConnection = remember(state.selectedDate, containerHeight) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val isContentAtTop = (state.calendarDays[state.selectedDate]?.layoutedLessons == null && contentScrollState.value == 0) || (with(localDensity) { contentScrollState.value <= ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).roundToPx() } && state.calendarDays[state.selectedDate]?.layoutedLessons != null)
+                val day = state.calendarDays[state.selectedDate]
+                val isContentAtTop = when (day?.lessons) {
+                    null -> true
+                    is LessonRendering.Layouted -> with(localDensity) { contentScrollState.value <= ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).roundToPx() }
+                    is LessonRendering.ListView -> contentScrollState.value == 0
+                }
+
                 val y = ((with(localDensity) { available.y.toDp()/2 }) / (5 * weekHeightDefault)).let {
                     if (it > 1) 1 + (with(localDensity) { available.y.toDp()/2 }) / (containerHeight - (5*weekHeightDefault))
                     else it
@@ -402,12 +408,9 @@ private fun CalendarScreenContent(
                                 modifier = Modifier.fillMaxSize()
                             ) { page ->
                                 val date = remember(page) { LocalDate.now().plus((page - CONTENT_PAGER_SIZE / 2), DateTimeUnit.DAY) }
-                                val contentScrollState = remember(date) { contentScrollStates.getOrPut(state.selectedDate) { ScrollState(0) } }
+                                val contentScrollState = remember(date) { contentScrollStates.getOrPut(date) { ScrollState(0) } }
                                 val day = state.calendarDays[date] ?: CalendarDay(date)
-                                val lessonsForCalendarView = when {
-                                    state.dsForceUnlayoutedLessons || day.layoutedLessons == null -> CalendarViewLessons.ListView(day.lessons.orEmpty().values.flatten())
-                                    else -> CalendarViewLessons.CalendarView(day.layoutedLessons)
-                                }
+                                val lessonsForCalendarView = CalendarViewLessons(day.lessons ?: LessonRendering.ListView(emptyMap()))
                                 CalendarView(
                                     profile = state.currentProfile,
                                     date = date,
@@ -478,7 +481,7 @@ private fun CalendarScreenContent(
                                             }
                                             if (date.dayOfWeek == DayOfWeek.MONDAY) {
                                                 if (day.week != null) Text(
-                                                    text = listOf("KW ${day.week.calendarWeek}", "SW ${day.week.weekIndex}", day.week.weekType).joinToString("\n"),
+                                                    text = listOfNotNull("KW ${day.week.calendarWeek}", "SW ${day.week.weekIndex}", day.week.weekType).joinToString("\n"),
                                                     color = MaterialTheme.colorScheme.outline,
                                                     style = MaterialTheme.typography.labelSmall,
                                                     textAlign = TextAlign.Center
@@ -522,11 +525,11 @@ private fun CalendarScreenContent(
                                             ) lessonsSection@{
                                                 Column {
                                                     FollowingLessons(
-                                                        modifier = Modifier.padding(horizontal = 4.dp),
+                                                        modifier = Modifier.padding(horizontal = 8.dp),
                                                         showFirstGradient = false,
                                                         date = date,
                                                         paddingStart = 8.dp,
-                                                        lessons = day.lessons.orEmpty()
+                                                        lessons = (day.lessons as? LessonRendering.ListView)?.lessons.orEmpty()
                                                     )
                                                 }
                                             }

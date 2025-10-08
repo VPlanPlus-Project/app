@@ -86,10 +86,7 @@ class CalendarViewModel(
                         info = day.info,
                         dayType = day.dayType,
                         week = day.week?.getFirstValueOld(),
-                        assessments = emptyList(),
-                        homework = emptyList(),
-                        lessons = emptyMap(),
-                        layoutedLessons = emptyList()
+                        lessons = null
                     )
 
                     fun updateState() {
@@ -112,19 +109,17 @@ class CalendarViewModel(
                                 val hasTooManyInterpolatedLessonTimes = it.count { lesson -> lesson.lessonTime?.getFirstValueOld()?.interpolated == false } < it.size / 2
                                 val hasMissingLessonTimes = it.any { lesson -> lesson.lessonTime == null }
 
-                                val layoutedLessons = if (hasTooManyInterpolatedLessonTimes || hasMissingLessonTimes) null
-                                else try {
-                                    it.calculateLayouting()
-                                } catch (_: LessonWithoutTimeException) {
-                                    null
+                                keyValueRepository.getBooleanOrDefault(Keys.forceReducedCalendarView.key, false).collectLatest { forceReducedCalendarView ->
+                                    val layoutedLessons = if (_state.value.displayType == DisplayType.Agenda || hasTooManyInterpolatedLessonTimes || hasMissingLessonTimes || forceReducedCalendarView) null
+                                    else try {
+                                        it.calculateLayouting()
+                                    } catch (_: LessonWithoutTimeException) {
+                                        null
+                                    }
+
+                                    calendarDay = calendarDay.copy(lessons = if (layoutedLessons != null) LessonRendering.Layouted(layoutedLessons) else LessonRendering.ListView(lessons))
+                                    updateState()
                                 }
-                                calendarDay = calendarDay.copy(
-                                    layoutedLessons = layoutedLessons,
-                                    lessons = lessons.toList()
-                                        .sortedBy { (lessonNumber, _) -> lessonNumber }
-                                        .toMap()
-                                )
-                                updateState()
                             }
                         }
                         launch {
@@ -173,7 +168,6 @@ class CalendarViewModel(
     init {
         viewModelScope.launch { getCurrentDateTimeUseCase().debounce(100).collectLatest { _state.update { state -> state.copy(currentTime = it) } } }
         viewModelScope.launch { getLastDisplayTypeUseCase().collectLatest { _state.update { state -> state.copy(displayType = it) } } }
-        viewModelScope.launch { keyValueRepository.getBooleanOrDefault(Keys.forceReducedCalendarView.key, Keys.forceReducedCalendarView.default).collectLatest { _state.update { state -> state.copy(dsForceUnlayoutedLessons = it) } } }
 
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
@@ -235,12 +229,7 @@ data class CalendarState(
     val displayType: DisplayType = DisplayType.Calendar,
     val start: LocalTime = LocalTime(0, 0),
     val selectorDays: Map<LocalDate, DateSelectorDay> = emptyMap(),
-    val calendarDays: Map<LocalDate, CalendarDay> = emptyMap(),
-
-    /**
-     * @see plus.vplan.app.domain.repository.Keys.DS_FORCE_REDUCED_CALENDAR_VIEW
-     */
-    val dsForceUnlayoutedLessons: Boolean = false,
+    val calendarDays: Map<LocalDate, CalendarDay> = emptyMap()
 )
 
 sealed class CalendarEvent {
@@ -271,15 +260,12 @@ data class DateSelectorDay(
 data class CalendarDay(
     val date: LocalDate,
     val info: String? = null,
-    val dayType: Day.DayType,
-    val week: Week?,
-    val assessments: List<Assessment>,
-    val homework: List<Homework>,
-    val lessons: Map<Int, List<Lesson>>?,
-    val layoutedLessons: List<LessonLayoutingInfo>?
-) {
-    constructor(date: LocalDate): this(date, null, Day.DayType.UNKNOWN, null, emptyList(), emptyList(), null, emptyList())
-}
+    val dayType: Day.DayType = Day.DayType.UNKNOWN,
+    val week: Week? = null,
+    val assessments: List<Assessment> = emptyList(),
+    val homework: List<Homework> = emptyList(),
+    val lessons: LessonRendering? = null
+)
 
 /**
  * Creates a layout for a calendar view of the given lessons based on their overlap if some exists.
@@ -357,6 +343,17 @@ data class LessonLayoutingInfo(
 
 enum class DisplayType {
     Agenda, Calendar
+}
+
+sealed class LessonRendering {
+    data class ListView(val lessons: Map<Int, List<Lesson>>) : LessonRendering()
+    data class Layouted(val lessons: List<LessonLayoutingInfo>) : LessonRendering()
+
+    val size: Int
+        get() = when (this) {
+            is ListView -> lessons.size
+            is Layouted -> lessons.size
+        }
 }
 
 sealed class LessonLayoutingException(message: String) : Exception(message)
