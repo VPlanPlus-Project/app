@@ -15,11 +15,12 @@ class DeveloperFlagsViewModel(
 ) : ViewModel() {
     private val _state = MutableStateFlow(DeveloperFlagsState())
     val state = _state.asStateFlow()
+
     init {
-        viewModelScope.launch {
-            Keys.developerSettings.forEach { developerFlag ->
-                when (developerFlag) {
-                    is Keys.DeveloperFlag.Boolean -> {
+        Keys.developerSettings.forEach { developerFlag ->
+            when (developerFlag) {
+                is Keys.DeveloperFlag.Boolean -> {
+                    viewModelScope.launch {
                         keyValueRepository.get(developerFlag.key).collectLatest { value ->
                             _state.update { it.copy(booleans = it.booleans.plus(developerFlag.key to value.toBoolean())) }
                         }
@@ -46,5 +47,5 @@ data class DeveloperFlagsState(
 )
 
 sealed class DeveloperFlagsEvent {
-    data class Toggle(val key: String): DeveloperFlagsEvent()
+    data class Toggle(val key: String) : DeveloperFlagsEvent()
 }
