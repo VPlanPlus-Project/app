@@ -89,6 +89,7 @@ import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.blendColor
+import plus.vplan.app.utils.roundTo
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
@@ -365,7 +366,7 @@ private fun GradesContent(
                                                             modifier = Modifier.size(MaterialTheme.typography.headlineLarge.lineHeight.toDp()).clip(RoundedCornerShape(8.dp)),
                                                             infiniteTransition = infiniteTransition
                                                         ) else Text(
-                                                            text = if (average.isNaN()) "-" else ((average * 100).roundToInt() / 100.0).toString(),
+                                                            text = if (average.isNaN()) "-" else average.roundTo(2).toString(),
                                                             style = MaterialTheme.typography.headlineLarge,
                                                         )
                                                     }
