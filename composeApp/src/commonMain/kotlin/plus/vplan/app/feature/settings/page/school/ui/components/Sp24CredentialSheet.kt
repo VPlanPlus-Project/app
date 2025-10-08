@@ -3,11 +3,9 @@ package plus.vplan.app.feature.settings.page.school.ui.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,6 +31,7 @@ import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
+import plus.vplan.app.utils.safeBottomPadding
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.school
@@ -40,12 +39,12 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IndiwareCredentialSheet(
+fun Sp24CredentialSheet(
     schoolId: Uuid,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val viewModel = koinViewModel<IndiwareCredentialViewModel>()
+    val viewModel = koinViewModel<Sp24CredentialViewModel>()
     val state = viewModel.state
     val scope = rememberCoroutineScope()
 
@@ -53,9 +52,10 @@ fun IndiwareCredentialSheet(
 
     if (state != null) ModalBottomSheet(
         onDismissRequest = onDismiss,
+        contentWindowInsets = { WindowInsets(0.dp) },
         sheetState = sheetState
     ) {
-        IndiwareCredentialSheetContent(
+        Sp24CredentialSheetContent(
             state = state,
             onDismiss = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } },
             onEvent = viewModel::onEvent
@@ -64,10 +64,10 @@ fun IndiwareCredentialSheet(
 }
 
 @Composable
-private fun IndiwareCredentialSheetContent(
-    state: IndiwareCredentialState,
+private fun Sp24CredentialSheetContent(
+    state: Sp24CredentialState,
     onDismiss: () -> Unit,
-    onEvent: (IndiwareCredentialEvent) -> Unit
+    onEvent: (Sp24CredentialEvent) -> Unit
 ) {
     val passwordFocusRequester = remember { FocusRequester() }
 
@@ -77,9 +77,9 @@ private fun IndiwareCredentialSheetContent(
 
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding())
             .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = safeBottomPadding())
     ) {
         Text(
             text = "Stundenplan24.de",
@@ -110,7 +110,7 @@ private fun IndiwareCredentialSheetContent(
             username = state.username,
             isUsernameValid = state.username in listOf("schueler", "lehrer"),
             areCredentialsInvalid = state.state == SchoolSettingsCredentialsState.Invalid,
-            onUsernameChanged = { onEvent(IndiwareCredentialEvent.SetUsername(it)) },
+            onUsernameChanged = { onEvent(Sp24CredentialEvent.SetUsername(it)) },
             onFocusPassword = { passwordFocusRequester.requestFocus() },
             hideBottomLine = false
         )
@@ -119,7 +119,7 @@ private fun IndiwareCredentialSheetContent(
             password = state.password,
             passwordFocusRequester = passwordFocusRequester,
             areCredentialsInvalid = state.state == SchoolSettingsCredentialsState.Invalid,
-            onPasswordChanged = { onEvent(IndiwareCredentialEvent.SetPassword(it)) },
+            onPasswordChanged = { onEvent(Sp24CredentialEvent.SetPassword(it)) },
             onCheckCredentials = {},
             hideBottomLine = false
         )
@@ -132,7 +132,7 @@ private fun IndiwareCredentialSheetContent(
             state = if (state.state == SchoolSettingsCredentialsState.Loading) ButtonState.Loading else ButtonState.Enabled,
             center = false,
             onlyEventOnActive = true,
-            onClick = { onEvent(IndiwareCredentialEvent.Save) }
+            onClick = { onEvent(Sp24CredentialEvent.Save) }
         )
     }
 }

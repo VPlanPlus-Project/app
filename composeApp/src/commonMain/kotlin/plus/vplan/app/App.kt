@@ -106,7 +106,7 @@ sealed class StartTask(val profileId: Uuid? = null) {
     data class OpenUrl(val url: String): StartTask()
     sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
         class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
-        class SchoolSettings(profileId: Uuid?, val openIndiwareSettingsSchoolId: Uuid? = null): NavigateTo(profileId)
+        class SchoolSettings(profileId: Uuid?, val openSp24SettingsSchoolId: Uuid? = null): NavigateTo(profileId)
         class Grades(profileId: Uuid?, val vppId: Int): NavigateTo(profileId)
     }
 

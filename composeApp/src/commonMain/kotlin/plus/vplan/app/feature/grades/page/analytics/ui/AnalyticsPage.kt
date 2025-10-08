@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -66,6 +65,7 @@ import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.blendColor
+import plus.vplan.app.utils.safeBottomPadding
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.chevron_down
@@ -133,9 +133,9 @@ private fun AnalyticsContent(
     ) { contentPadding ->
         Column(
             modifier = Modifier
+                .verticalScroll(rememberScrollState())
                 .padding(contentPadding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
         ) {
             Column gradesByGrade@{
                 Row(
@@ -439,7 +439,7 @@ private fun AnalyticsContent(
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
+                    .padding(bottom = safeBottomPadding())
                     .fillMaxWidth()
                     .animateContentSize()
             ) {

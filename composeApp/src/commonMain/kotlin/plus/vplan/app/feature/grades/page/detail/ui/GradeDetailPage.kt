@@ -5,12 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -48,6 +45,7 @@ import plus.vplan.app.feature.grades.page.detail.ui.components.UseForFinalGradeR
 import plus.vplan.app.feature.grades.page.detail.ui.components.UserRow
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
+import plus.vplan.app.utils.safeBottomPadding
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.info
@@ -81,7 +79,7 @@ fun GradeDetailPage(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth()
-                        .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
+                        .padding(bottom = safeBottomPadding())
                 ) {
                     Text(
                         text = "Noten entsperren",
