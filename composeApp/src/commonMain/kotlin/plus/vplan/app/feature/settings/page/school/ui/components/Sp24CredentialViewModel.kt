@@ -15,18 +15,18 @@ import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsS
 import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
 import kotlin.uuid.Uuid
 
-class IndiwareCredentialViewModel(
+class Sp24CredentialViewModel(
     private val schoolRepository: SchoolRepository,
     private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
     private val sendSp24CredentialsToServerUseCase: SendSp24CredentialsToServerUseCase
 ): ViewModel() {
-    var state by mutableStateOf<IndiwareCredentialState?>(null)
+    var state by mutableStateOf<Sp24CredentialState?>(null)
         private set
 
     fun init(schoolId: Uuid) {
         viewModelScope.launch {
             val school = schoolRepository.getByLocalId(schoolId).first() as? School.AppSchool ?: return@launch
-            state = IndiwareCredentialState(
+            state = Sp24CredentialState(
                 school = school,
                 schoolName = school.name,
                 sp24Id = school.sp24Id,
@@ -37,11 +37,11 @@ class IndiwareCredentialViewModel(
         }
     }
 
-    fun onEvent(event: IndiwareCredentialEvent) {
+    fun onEvent(event: Sp24CredentialEvent) {
         when (event) {
-            is IndiwareCredentialEvent.SetUsername -> state = state?.copy(username = event.username)
-            is IndiwareCredentialEvent.SetPassword -> state = state?.copy(password = event.password)
-            is IndiwareCredentialEvent.Save -> {
+            is Sp24CredentialEvent.SetUsername -> state = state?.copy(username = event.username)
+            is Sp24CredentialEvent.SetPassword -> state = state?.copy(password = event.password)
+            is Sp24CredentialEvent.Save -> {
                 viewModelScope.launch {
                     state = state?.copy(state = SchoolSettingsCredentialsState.Loading)
                     delay(1000)
@@ -64,7 +64,7 @@ class IndiwareCredentialViewModel(
     }
 }
 
-data class IndiwareCredentialState(
+data class Sp24CredentialState(
     val school: School.AppSchool,
     val schoolName: String,
     val sp24Id: String,
@@ -73,9 +73,9 @@ data class IndiwareCredentialState(
     val state: SchoolSettingsCredentialsState? = null
 )
 
-sealed class IndiwareCredentialEvent {
-    data class SetUsername(val username: String) : IndiwareCredentialEvent()
-    data class SetPassword(val password: String) : IndiwareCredentialEvent()
+sealed class Sp24CredentialEvent {
+    data class SetUsername(val username: String) : Sp24CredentialEvent()
+    data class SetPassword(val password: String) : Sp24CredentialEvent()
 
-    data object Save : IndiwareCredentialEvent()
+    data object Save : Sp24CredentialEvent()
 }

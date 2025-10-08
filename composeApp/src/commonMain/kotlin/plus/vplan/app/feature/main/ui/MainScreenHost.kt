@@ -15,11 +15,15 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -34,7 +38,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -312,20 +315,21 @@ fun MainScreenHost(
                 }
         ) {
             NavigationBar(
-                modifier = Modifier
-                    .shadow(elevation = 4.dp)
+                windowInsets = WindowInsets(0.dp)
             ) {
                 NavigationBarItem(
                     selected = currentDestination == "_Home",
                     label = { Text("Home") },
                     icon = { Icon(painter = painterResource(Res.drawable.house), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainHome) { popUpTo(0) } }
+                    onClick = { navController.navigate(MainScreen.MainHome) { popUpTo(0) } },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
                 )
                 NavigationBarItem(
                     selected = currentDestination == "_Calendar",
                     label = { Text("Kalender") },
                     icon = { Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainCalendar) { popUpTo(MainScreen.MainHome) } }
+                    onClick = { navController.navigate(MainScreen.MainCalendar) { popUpTo(MainScreen.MainHome) } },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
                 )
                 NavigationBarItem(
                     selected = currentDestination == "_Search",
@@ -336,13 +340,15 @@ fun MainScreenHost(
                             // If we are already on the search screen, focus the search bar
                             searchViewModel.onEvent(SearchEvent.SearchBarFocusChanged(true))
                         } else navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) }
-                    }
+                    },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
                 )
                 NavigationBarItem(
                     selected = currentDestination == "_Profile",
                     label = { Text("Profil") },
                     icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
                     onClick = { navController.navigate(MainScreen.MainProfile) { popUpTo(MainScreen.MainHome) } },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
                 )
             }
         }
@@ -376,7 +382,7 @@ fun MainScreenHost(
                 navController.navigate(MainScreen.MainCalendar)
             }
             is StartTask.NavigateTo.SchoolSettings -> {
-                navController.navigate(MainScreen.SchoolSettings(navigationTask.openIndiwareSettingsSchoolId?.toHexString()))
+                navController.navigate(MainScreen.SchoolSettings(navigationTask.openSp24SettingsSchoolId?.toHexString()))
             }
             is StartTask.NavigateTo.Grades -> navController.navigate(MainScreen.Grades(navigationTask.vppId))
             is StartTask.Open.Homework -> homeworkSheetHomeworkId = navigationTask.homeworkId

@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -43,6 +41,7 @@ import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.result.SchoolEntityResults
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormat
+import plus.vplan.app.utils.safeBottomPadding
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
 import plus.vplan.app.utils.untilRelativeText
@@ -245,9 +244,9 @@ private fun LessonsDrawer(
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
+                    .padding(bottom = safeBottomPadding())
             ) {
                 Text(
                     text = buildString {

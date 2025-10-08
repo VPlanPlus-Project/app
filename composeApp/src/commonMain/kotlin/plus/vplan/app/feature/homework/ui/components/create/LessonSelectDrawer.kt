@@ -12,12 +12,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,6 +40,7 @@ import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.thenIf
+import plus.vplan.app.utils.safeBottomPadding
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.users
 
@@ -85,7 +84,7 @@ private fun LessonSelectContent(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
+            .padding(bottom = safeBottomPadding())
     ) {
         if (allowGroup) {
             AnimatedContent(
