@@ -2,7 +2,6 @@ package plus.vplan.app.feature.profile.page.ui
 
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -34,7 +32,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
@@ -201,9 +198,6 @@ private fun ProfileContent(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             ProfileTitle(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(MaterialTheme.colorScheme.secondaryContainer),
                 currentProfileName = state.currentProfile?.name.orEmpty()
             ) {
                 onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(true))
