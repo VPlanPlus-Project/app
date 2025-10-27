@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -55,6 +53,7 @@ import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.theme.ColorToken
 import plus.vplan.app.ui.theme.customColors
 import plus.vplan.app.utils.DOT
+import plus.vplan.app.utils.safeBottomPadding
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.logout
 
@@ -74,7 +73,7 @@ private fun VppIdManagementDrawerContent(
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp)
-            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
+            .padding(bottom = safeBottomPadding())
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
     ) {

@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
@@ -42,6 +40,7 @@ import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.utils.atStartOfDay
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
+import plus.vplan.app.utils.safeBottomPadding
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.shortMonthNames
 import plus.vplan.app.utils.untilRelativeText
@@ -84,7 +83,7 @@ private fun DateSelectDrawerContent(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(bottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding() + 16.dp)
+            .padding(bottom = safeBottomPadding())
     ) {
 
         Column(

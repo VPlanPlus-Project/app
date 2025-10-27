@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -48,9 +47,6 @@ fun NavigationHost(task: StartTask?) {
     val top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
     val left = WindowInsets.safeDrawing.asPaddingValues().calculateLeftPadding(localLayoutDirection)
     val right = WindowInsets.safeDrawing.asPaddingValues().calculateRightPadding(localLayoutDirection)
-    with (LocalDensity.current) {
-
-    }
     val bottom by animateDpAsState(WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding())
     val contentPadding = PaddingValues(left, top, right, bottom)
 

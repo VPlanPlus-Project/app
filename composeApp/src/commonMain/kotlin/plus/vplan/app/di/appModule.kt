@@ -120,6 +120,7 @@ expect val platformModule: Module
 
 fun RoomDatabase.Builder<VppDatabase>.config(): RoomDatabase.Builder<VppDatabase> = this
     .addMigrations(VppDatabase.Migration8to9)
+    .addMigrations(VppDatabase.Migration9to10)
 
 val appModule = module(createdAtStart = true) {
     single<HttpClient> {

@@ -33,9 +33,8 @@ class TimetableRepositoryImpl(
                 DbTimetableLesson(
                     id = lesson.id,
                     dayOfWeek = lesson.dayOfWeek,
-                    weekId = lesson.week,
                     weekType = lesson.weekType,
-                    lessonTimeId = lesson.lessonTimeId,
+                    lessonNumber = lesson.lessonNumber,
                     subject = lesson.subject,
                     timetableId = lesson.timetableId
                 )

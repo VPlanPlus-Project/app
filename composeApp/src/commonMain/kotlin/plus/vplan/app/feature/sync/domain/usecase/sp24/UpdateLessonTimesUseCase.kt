@@ -37,7 +37,7 @@ class UpdateLessonTimesUseCase(
             ?.mapNotNull { lessonTime ->
                 val group = groups.firstOrNull { it.name == lessonTime.className } ?: return@mapNotNull null
                 LessonTime(
-                    id = "${school.id}/${group.id}/${lessonTime.lessonNumber}",
+                    id = LessonTime.buildId(school.id, group.id, lessonTime.lessonNumber),
                     start = lessonTime.start,
                     end = lessonTime.end,
                     lessonNumber = lessonTime.lessonNumber,

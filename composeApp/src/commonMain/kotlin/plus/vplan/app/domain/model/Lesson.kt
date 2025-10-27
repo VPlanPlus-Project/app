@@ -3,30 +3,34 @@ package plus.vplan.app.domain.model
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.data.Item
+import plus.vplan.app.domain.repository.LessonTimeRepository
 import kotlin.uuid.Uuid
 
 sealed interface Lesson : Item<Uuid, DataTag> {
-    val week: String?
+    val weekId: String?
     val subject: String?
     val teacherIds: List<Uuid>
     val roomIds: List<Uuid>?
     val groupIds: List<Uuid>
     val subjectInstanceId: Uuid?
-    val lessonTimeId: String
+    val lessonNumber: Int
 
     fun getLessonSignature(): String
 
     override val tags: Set<DataTag>
         get() = emptySet()
 
-    val lessonTime: Flow<CacheState<LessonTime>>
+    val lessonTime: Flow<CacheState<LessonTime>>?
     val subjectInstance: Flow<AliasState<SubjectInstance>>?
     val rooms: Flow<List<AliasState<Room>>>
     val groups: Flow<List<AliasState<Group>>>
@@ -34,20 +38,29 @@ sealed interface Lesson : Item<Uuid, DataTag> {
 
     val isCancelled: Boolean
 
+    /**
+     * @param weekId The ID of the week where the corresponding timetable starts to be valid.
+     */
     data class TimetableLesson(
         override val id: Uuid,
         val dayOfWeek: DayOfWeek,
-        override val week: String,
+        override val weekId: String,
         override val subject: String?,
         override val teacherIds: List<Uuid>,
         override val roomIds: List<Uuid>?,
         override val groupIds: List<Uuid>,
-        override val lessonTimeId: String,
+        override val lessonNumber: Int,
         val timetableId: Uuid,
         val weekType: String?,
         val limitedToWeekIds: Set<String>?
-    ) : Lesson {
-        override val lessonTime by lazy { App.lessonTimeSource.getById(lessonTimeId) }
+    ) : Lesson, KoinComponent {
+        private val lessonTimeRepository by inject<LessonTimeRepository>()
+
+        override val lessonTime by lazy {
+            if (groupIds.isEmpty()) null
+            else lessonTimeRepository.get(groupIds.first(), lessonNumber)
+                .map { it?.let { CacheState.Done(it) } ?: CacheState.NotExisting() }
+        }
         override val subjectInstance = null
         override val rooms by lazy { if (roomIds.isNullOrEmpty()) flowOf(emptyList()) else combine(roomIds.map { App.roomSource.getById(it) }) { it.toList() } }
         override val groups by lazy { if (groupIds.isEmpty()) flowOf(emptyList()) else combine(groupIds.map { App.groupSource.getById(it) }) { it.toList() } }
@@ -59,39 +72,14 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         override val isCancelled: Boolean = false
 
         override fun getLessonSignature(): String {
-            return "$subject/$teacherIds/$roomIds/$groupIds/$lessonTimeId/$dayOfWeek/$weekType"
+            return "$subject/$teacherIds/$roomIds/$groupIds/$lessonNumber/$dayOfWeek/$weekType"
         }
-
-        constructor(
-            dayOfWeek: DayOfWeek,
-            week: String,
-            subject: String?,
-            teachers: List<Uuid>,
-            rooms: List<Uuid>?,
-            groups: List<Uuid>,
-            lessonTime: String,
-            timetableId: Uuid,
-            weekType: String?,
-            limitedToWeekIds: Set<String>?,
-        ) : this(
-            id = Uuid.random(),
-            dayOfWeek = dayOfWeek,
-            week = week,
-            subject = subject,
-            teacherIds = teachers,
-            roomIds = rooms,
-            groupIds = groups,
-            lessonTimeId = lessonTime,
-            timetableId = timetableId,
-            weekType = weekType,
-            limitedToWeekIds = limitedToWeekIds,
-        )
     }
 
     data class SubstitutionPlanLesson(
         override val id: Uuid,
         val date: LocalDate,
-        override val week: String?,
+        override val weekId: String?,
         override val subject: String?,
         val isSubjectChanged: Boolean,
         override val teacherIds: List<Uuid>,
@@ -100,10 +88,16 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         val isRoomChanged: Boolean,
         override val groupIds: List<Uuid>,
         override val subjectInstanceId: Uuid?,
-        override val lessonTimeId: String,
+        override val lessonNumber: Int,
         val info: String?
-    ) : Lesson {
-        override val lessonTime by lazy { App.lessonTimeSource.getById(lessonTimeId) }
+    ) : Lesson, KoinComponent {
+        private val lessonTimeRepository by inject<LessonTimeRepository>()
+
+        override val lessonTime by lazy {
+            if (groupIds.isEmpty()) null
+            else lessonTimeRepository.get(groupIds.first(), lessonNumber)
+                .map { it?.let { CacheState.Done(it) } ?: CacheState.NotExisting() }
+        }
         override val subjectInstance by lazy { if (subjectInstanceId == null) null else App.subjectInstanceSource.getById(subjectInstanceId) }
         override val rooms by lazy { if (roomIds.isEmpty()) flowOf(emptyList()) else combine(roomIds.map { App.roomSource.getById(it) }) { it.toList() } }
         override val groups by lazy { if (groupIds.isEmpty()) flowOf(emptyList()) else combine(groupIds.map { App.groupSource.getById(it) }) { it.toList() } }
@@ -113,7 +107,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
             get() = subject == null && subjectInstanceId != null
 
         override fun getLessonSignature(): String {
-            return "$subject/${teacherIds.sorted()}/${roomIds.sorted()}/${groupIds.sorted()}/$lessonTimeId/$date/$subjectInstanceId"
+            return "$subject/${teacherIds.sorted()}/${roomIds.sorted()}/${groupIds.sorted()}/$lessonNumber/$date/$subjectInstanceId"
         }
     }
 

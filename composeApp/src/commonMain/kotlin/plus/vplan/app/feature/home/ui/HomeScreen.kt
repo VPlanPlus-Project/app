@@ -176,7 +176,6 @@ private fun HomeContent(
         Column(
             modifier = Modifier
                 .padding(top = 8.dp)
-                .padding(contentPadding)
                 .fillMaxWidth()
         ) {
             AnimatedContent(
@@ -196,7 +195,8 @@ private fun HomeContent(
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = contentPadding
                 ) {
                     item {
                         Greeting(
@@ -500,7 +500,7 @@ private fun HomeContent(
                                                 ) {
                                                     val headFont = MaterialTheme.typography.bodyLarge
                                                     lessons.forEach forEachLesson@{ lesson ->
-                                                        val lessonTime = remember(lesson) { lesson.lessonTime }.collectAsResultingFlowOld().value
+                                                        val lessonTime = remember(lesson) { lesson.lessonTime }?.collectAsResultingFlowOld()?.value
                                                         val rooms = remember(lesson.roomIds) { lesson.rooms }.collectAsSingleFlow().value
                                                         val groups = remember(lesson.groupIds) { lesson.groups }.collectAsSingleFlow().value
                                                         val teachers = remember(lesson.teacherIds) { lesson.teachers }.collectAsSingleFlow().value
@@ -517,7 +517,7 @@ private fun HomeContent(
                                                         }
 
                                                         val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
-                                                        if (lessonTime != null) Column(Modifier.fillMaxWidth()) {
+                                                        Column(Modifier.fillMaxWidth()) {
                                                             Row(
                                                                 modifier = Modifier
                                                                     .fillMaxWidth()
@@ -551,17 +551,19 @@ private fun HomeContent(
                                                                     text = groups.joinToString { it.name },
                                                                     style = headFont
                                                                 )
-                                                                Spacer(Modifier.weight(1f))
-                                                                Text(
-                                                                    text = buildString {
-                                                                        append(lessonTime.start.format(regularTimeFormat))
-                                                                        append(" - ")
-                                                                        append(lessonTime.end.format(regularTimeFormat))
-                                                                    },
-                                                                    style = MaterialTheme.typography.labelSmall,
-                                                                    color = if (lessonTime.interpolated) MaterialTheme.colorScheme.primary
-                                                                    else MaterialTheme.colorScheme.onSurfaceVariant
-                                                                )
+                                                                if (lessonTime != null) {
+                                                                    Spacer(Modifier.weight(1f))
+                                                                    Text(
+                                                                        text = buildString {
+                                                                            append(lessonTime.start.format(regularTimeFormat))
+                                                                            append(" - ")
+                                                                            append(lessonTime.end.format(regularTimeFormat))
+                                                                        },
+                                                                        style = MaterialTheme.typography.labelSmall,
+                                                                        color = if (lessonTime.interpolated) MaterialTheme.colorScheme.primary
+                                                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                    )
+                                                                }
                                                             }
                                                             Column(
                                                                 modifier = Modifier.padding(top = 4.dp),
@@ -597,7 +599,7 @@ private fun HomeContent(
                                                                         style = MaterialTheme.typography.bodyMedium
                                                                     )
                                                                 }
-                                                                if (lessonTime.interpolated) {
+                                                                if (lessonTime?.interpolated == true) {
                                                                     Row(
                                                                         modifier = Modifier.fillMaxWidth(),
                                                                         verticalAlignment = Alignment.Top,
@@ -760,13 +762,12 @@ private fun CurrentOrNextLesson(
     val rooms by remember(currentLesson.roomIds) { currentLesson.rooms }.collectAsSingleFlow()
     val groups by remember(currentLesson.groupIds) { currentLesson.groups }.collectAsSingleFlow()
     val teachers by remember(currentLesson.teacherIds) { currentLesson.teachers }.collectAsSingleFlow()
-    val lessonTime = remember(currentLesson) { currentLesson.lessonTime }.collectAsResultingFlowOld().value
+    val lessonTime = remember(currentLesson) { currentLesson.lessonTime }?.collectAsResultingFlowOld()?.value
     if (
         (subject == null && currentLesson.subjectInstanceId != null) ||
         (rooms.isEmpty() && currentLesson.roomIds.orEmpty().isNotEmpty()) ||
         (teachers.isEmpty() && currentLesson.teacherIds.isNotEmpty()) ||
-        (groups.isEmpty() && currentLesson.groupIds.isNotEmpty()) ||
-        lessonTime == null
+        (groups.isEmpty() && currentLesson.groupIds.isNotEmpty())
     ) return
     Column(
         modifier = Modifier
@@ -812,11 +813,14 @@ private fun CurrentOrNextLesson(
                 }
                 Text(
                     text = buildString {
-                        append(lessonTime.lessonNumber)
-                        append(". Stunde $DOT ")
-                        append(lessonTime.start.format(regularTimeFormat))
-                        append(" - ")
-                        append(lessonTime.end.format(regularTimeFormat))
+                        append(currentLesson.lessonNumber)
+                        append(". Stunde")
+                        if (lessonTime != null) {
+                            append(" $DOT ")
+                            append(lessonTime.start.format(regularTimeFormat))
+                            append(" - ")
+                            append(lessonTime.end.format(regularTimeFormat))
+                        }
                     },
                     style = MaterialTheme.typography.labelMedium
                 )
@@ -839,7 +843,7 @@ private fun CurrentOrNextLesson(
                         .size(bodyFont.lineHeight.toDp())
                 )
                 Text(
-                    text = "Weiter in ${lessonTime.lessonNumber + 1}. Stunde",
+                    text = "Weiter in ${currentLesson.lessonNumber + 1}. Stunde",
                     style = bodyFont
                 )
             }
@@ -856,7 +860,7 @@ private fun CurrentOrNextLesson(
                     style = bodyFont
                 )
             }
-            if (lessonTime.interpolated) Row {
+            if (lessonTime?.interpolated == true) Row {
                 Icon(
                     painter = painterResource(Res.drawable.clock_fading),
                     contentDescription = null,
@@ -902,7 +906,7 @@ private fun CurrentOrNextLesson(
                 )
             }
         }
-        if (progressType != ProgressType.Disabled) {
+        if (progressType != ProgressType.Disabled && lessonTime != null) {
             Spacer(Modifier.size(4.dp))
             Box(
                 modifier = Modifier

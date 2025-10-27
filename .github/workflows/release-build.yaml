@@ -11,7 +11,7 @@ env:
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
             -   name: Checkout sources
                 uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
                     cache: 'gradle'
                     cache-dependency-path: |
                         ${{ github.workspace }}/gradle/wrapper/gradle-wrapper.properties
-                        ${{ github.workspace }}/**/*.gradle*
+                        ${{ github.workspace }}/**/*.versions.toml
 
             -   name: Setup Android SDK
                 uses: android-actions/setup-android@v3
@@ -94,7 +94,7 @@ jobs:
 
     release:
         needs: build
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
             -   name: Download build artifacts
                 uses: actions/download-artifact@v4

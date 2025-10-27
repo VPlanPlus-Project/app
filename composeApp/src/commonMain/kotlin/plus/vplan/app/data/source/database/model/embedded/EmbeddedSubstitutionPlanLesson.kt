@@ -36,7 +36,7 @@ data class EmbeddedSubstitutionPlanLesson(
         return Lesson.SubstitutionPlanLesson(
             id = substitutionPlanLesson.id,
             date = day.date,
-            week = day.weekId,
+            weekId = day.weekId,
             subject = substitutionPlanLesson.subject,
             isSubjectChanged = substitutionPlanLesson.isSubjectChanged,
             teacherIds = teachers.map { it.teacherId },
@@ -45,7 +45,7 @@ data class EmbeddedSubstitutionPlanLesson(
             isRoomChanged = substitutionPlanLesson.isRoomChanged,
             groupIds = groups.map { it.groupId },
             subjectInstanceId = substitutionPlanLesson.subjectInstanceId,
-            lessonTimeId = substitutionPlanLesson.lessonTimeId,
+            lessonNumber = substitutionPlanLesson.lessonNumber,
             info = substitutionPlanLesson.info
         )
     }

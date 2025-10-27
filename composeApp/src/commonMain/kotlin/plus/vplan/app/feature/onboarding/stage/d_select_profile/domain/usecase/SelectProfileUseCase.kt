@@ -58,7 +58,7 @@ class SelectProfileUseCase(
         if (onboardingRepository.getNeedToDownloadLessonData()) {
             (profile.getSchool().getFirstValue() as? School.AppSchool)?.let {
                 val client = onboardingRepository.getSp24Client()!!
-                updateTimetableUseCase(it, client, false)
+                updateTimetableUseCase(it, client, true)
                 updateSubstitutionPlanUseCase(it, listOf(LocalDate.now()), client, allowNotification = false)
             }
         } else {

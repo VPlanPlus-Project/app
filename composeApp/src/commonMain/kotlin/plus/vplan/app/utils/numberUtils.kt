@@ -5,6 +5,7 @@ package plus.vplan.app.utils
 import kotlin.math.abs
 import kotlin.math.log
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 fun List<Int>.isContinuous(): Boolean {
@@ -73,4 +74,9 @@ fun Long.toHumanSize(): String {
     val value = this / 1024.0.pow(exponent.toDouble())
 
     return "${((value * 10).roundToLong() / 10)} $unit"
+}
+
+fun Double.roundTo(numFractionDigits: Int): Double {
+    val factor = 10.0.pow(numFractionDigits.toDouble())
+    return (this * factor).roundToInt() / factor
 }
