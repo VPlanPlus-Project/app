@@ -77,7 +77,7 @@ class UpdateTimetableUseCase(
             }
 
         weeks.forEach forEachWeek@{ week ->
-            if (week.relativeTime == WeekState.RelativeTime.Past && !forceUpdate) return@forEachWeek
+            if ((week.relativeTime == WeekState.RelativeTime.Past && week.hasData != Stundenplan24Repository.HasData.Unknown) && !forceUpdate) return@forEachWeek
             if (week.hasData != Stundenplan24Repository.HasData.Yes || forceUpdate) {
                 LOGGER.d {
                     buildString {
