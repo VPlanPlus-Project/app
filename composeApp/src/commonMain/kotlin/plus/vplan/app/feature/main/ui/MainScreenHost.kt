@@ -166,6 +166,56 @@ fun MainScreenHost(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
+        AnimatedVisibility(
+            visible = currentDestination?.startsWith("_") == true,
+            enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .onSizeChanged {
+                    with(localDensity) { bottomBarHeight = it.height.toDp() }
+                }
+        ) {
+            NavigationBar(
+                windowInsets = WindowInsets(0.dp)
+            ) {
+                NavigationBarItem(
+                    selected = currentDestination == "_Home",
+                    label = { Text("Home") },
+                    icon = { Icon(painter = painterResource(Res.drawable.house), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainHome) { popUpTo(0) } },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Calendar",
+                    label = { Text("Kalender") },
+                    icon = { Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainCalendar) { popUpTo(MainScreen.MainHome) } },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Search",
+                    label = { Text("Suche") },
+                    icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = {
+                        if (currentDestination == "_Search") {
+                            // If we are already on the search screen, focus the search bar
+                            searchViewModel.onEvent(SearchEvent.SearchBarFocusChanged(true))
+                        } else navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) }
+                    },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
+                )
+                NavigationBarItem(
+                    selected = currentDestination == "_Profile",
+                    label = { Text("Profil") },
+                    icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    onClick = { navController.navigate(MainScreen.MainProfile) { popUpTo(MainScreen.MainHome) } },
+                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
+                )
+            }
+        }
+
         NavHost(
             modifier = Modifier.fillMaxSize(),
             navController = navController,
@@ -300,56 +350,6 @@ fun MainScreenHost(
             ) {
                 val args = it.toRoute<MainScreen.Analytics>()
                 AnalyticsScreen(navController, args.vppId)
-            }
-        }
-
-        AnimatedVisibility(
-            visible = currentDestination?.startsWith("_") == true,
-            enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
-            exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .onSizeChanged {
-                    with(localDensity) { bottomBarHeight = it.height.toDp() }
-                }
-        ) {
-            NavigationBar(
-                windowInsets = WindowInsets(0.dp)
-            ) {
-                NavigationBarItem(
-                    selected = currentDestination == "_Home",
-                    label = { Text("Home") },
-                    icon = { Icon(painter = painterResource(Res.drawable.house), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainHome) { popUpTo(0) } },
-                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
-                )
-                NavigationBarItem(
-                    selected = currentDestination == "_Calendar",
-                    label = { Text("Kalender") },
-                    icon = { Icon(painter = painterResource(Res.drawable.calendar), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainCalendar) { popUpTo(MainScreen.MainHome) } },
-                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
-                )
-                NavigationBarItem(
-                    selected = currentDestination == "_Search",
-                    label = { Text("Suche") },
-                    icon = { Icon(painter = painterResource(Res.drawable.search), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = {
-                        if (currentDestination == "_Search") {
-                            // If we are already on the search screen, focus the search bar
-                            searchViewModel.onEvent(SearchEvent.SearchBarFocusChanged(true))
-                        } else navController.navigate(MainScreen.MainSearch) { popUpTo(MainScreen.MainHome) }
-                    },
-                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
-                )
-                NavigationBarItem(
-                    selected = currentDestination == "_Profile",
-                    label = { Text("Profil") },
-                    icon = { Icon(painter = painterResource(Res.drawable.user), contentDescription = null, modifier = Modifier.size(20.dp)) },
-                    onClick = { navController.navigate(MainScreen.MainProfile) { popUpTo(MainScreen.MainHome) } },
-                    modifier = Modifier.padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()/2)
-                )
             }
         }
     }

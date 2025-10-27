@@ -171,6 +171,7 @@ private fun HomeContent(
             )
         },
         modifier = Modifier
+            .padding(bottom = contentPadding.calculateBottomPadding())
             .fillMaxSize()
     ) {
         Column(
