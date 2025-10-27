@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -92,20 +93,29 @@ private fun TimetableDebugContent(
                     .fillMaxWidth()
             ) {
                 state.weeks.forEach { week ->
-                    Text(
-                        text = "Woche KW ${week.week.calendarWeek} (SW ${week.week.weekIndex})"
-                    )
-                    week.timetableMetadata?.let {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Text(
-                            text = buildString {
-                                append(it.dataState.toString())
-                                append(" ")
-                                append(it.id.toHexDashString())
-                            },
-                            maxLines = 1,
-                            overflow = TextOverflow.Clip,
-                            modifier = Modifier.padding(start = 8.dp)
+                            text = "Woche KW ${week.week.calendarWeek} (SW ${week.week.weekIndex})"
                         )
+                        if (week.timetableMetadata == null) {
+                            Text(
+                                text = "No metadata available",
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        } else {
+                            Text(
+                                text = buildString {
+                                    append(week.timetableMetadata.dataState.toString())
+                                    append(" ")
+                                    append(week.timetableMetadata.id.toHexDashString())
+                                },
+                                maxLines = 1,
+                                overflow = TextOverflow.Clip,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
                     }
 
                     HorizontalDivider(Modifier.padding(4.dp))
