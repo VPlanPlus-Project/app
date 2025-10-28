@@ -49,7 +49,6 @@ const val APP_REDIRECT_URI = "vpp://app/auth/"
 val VPP_ID_AUTH_URL = URLBuilder(currentConfiguration.authUrl).apply {
     appendPathSegments("authorize")
     parameters.append("client_id", APP_ID)
-    parameters.append("client_secret", APP_SECRET)
     parameters.append("redirect_uri", APP_REDIRECT_URI)
     parameters.append("device_name", getSystemInfo().deviceName)
 }.buildString()
