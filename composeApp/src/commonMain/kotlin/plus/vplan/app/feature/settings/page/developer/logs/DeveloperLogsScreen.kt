@@ -51,11 +51,11 @@ import plus.vplan.app.utils.generateColor
 import plus.vplan.app.utils.now
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
+import vplanplus.composeapp.generated.resources.arrow_up
 import vplanplus.composeapp.generated.resources.ban
 import vplanplus.composeapp.generated.resources.bug
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.message_square
-import vplanplus.composeapp.generated.resources.move_up
 import vplanplus.composeapp.generated.resources.trash_2
 import vplanplus.composeapp.generated.resources.triangle_alert
 
@@ -116,14 +116,16 @@ private fun DeveloperSettingsLogsContent(
             ) {
                 val scope = rememberCoroutineScope()
                 ExtendedFloatingActionButton(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(16.dp),
                     onClick = { scope.launch { listScrollState.animateScrollToItem(0, 0) } },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.move_up),
+                            painter = painterResource(Res.drawable.arrow_up),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -151,13 +153,13 @@ private fun DeveloperSettingsLogsContent(
 
 @Composable
 private fun LogEntry(log: Log) {
-    val font = MaterialTheme.typography.bodyMedium.copy(fontFamily = monospaceFontFamily())
+    val font = MaterialTheme.typography.bodySmall.copy(fontFamily = monospaceFontFamily())
     val style = font.toSpanStyle()
     val backgroundColor = blendColor(MaterialTheme.colorScheme.background, log.tag.generateColor(), 0.1f)
     Row(
         modifier = Modifier
-            .background(backgroundColor)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .background(backgroundColor),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -184,7 +186,7 @@ private fun LogEntry(log: Log) {
             text = buildAnnotatedString {
                 withStyle(style) {
                     withStyle(style.copy(color = MaterialTheme.colorScheme.outline)) {
-                        append("[${log.timestamp}] ")
+                        append("[${log.date}] ")
                     }
                     withStyle(style.copy(color = when(log.level) {
                         Log.LogLevel.ERROR -> colors.getValue(CustomColor.Red).getGroup().color

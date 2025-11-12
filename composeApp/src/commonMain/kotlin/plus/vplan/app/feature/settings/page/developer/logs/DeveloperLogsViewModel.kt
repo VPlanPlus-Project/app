@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.format
+import kotlinx.datetime.format.Padding
+import kotlinx.datetime.format.char
 
 expect fun getLogs(): Flow<Log>
 expect fun clearLogs()
@@ -51,6 +54,7 @@ sealed class DeveloperLogsEvent {
     object ClearLogs : DeveloperLogsEvent()
 }
 
+@Stable
 data class Log(
     val timestamp: LocalDateTime,
     val tag: String,
@@ -64,4 +68,18 @@ data class Log(
         WARN,
         ERROR,
     }
+
+    val date = timestamp.format(LocalDateTime.Format {
+        year(Padding.ZERO)
+        char('-')
+        monthNumber(Padding.ZERO)
+        char('-')
+        day(Padding.ZERO)
+        char(' ')
+        hour(Padding.ZERO)
+        char(':')
+        minute(Padding.ZERO)
+        char(':')
+        second(Padding.ZERO)
+    })
 }
