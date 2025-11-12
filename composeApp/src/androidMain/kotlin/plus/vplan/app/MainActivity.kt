@@ -2,6 +2,7 @@ package plus.vplan.app
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Process
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,9 +11,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentActivity
 import co.touchlab.kermit.Logger
+import com.google.firebase.Firebase
+import com.google.firebase.crashlytics.crashlytics
 import com.posthog.PostHog
 import io.github.vinceglb.filekit.core.FileKit
 import io.ktor.http.URLBuilder
+import kotlin.system.exitProcess
 
 class MainActivity : FragmentActivity() {
 
@@ -33,6 +37,24 @@ class MainActivity : FragmentActivity() {
         setContent {
             fragmentActivity = LocalActivity.current as FragmentActivity
             if (canStart) App(task)
+        }
+
+        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+            Thread {
+                val intent = Intent(this, ErrorActivity::class.java).apply {
+                    putExtra("stacktrace", throwable.stackTraceToString())
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                }
+
+                Logger.e(throwable) { "Uncaught exception" }
+                startActivity(intent)
+                Firebase.crashlytics.recordException(throwable)
+                captureError("UncaughtException", throwable.stackTraceToString())
+
+                Thread.sleep(500)
+                Process.killProcess(Process.myPid())
+                exitProcess(10)
+            }.start()
         }
     }
 

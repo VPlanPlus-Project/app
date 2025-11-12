@@ -27,6 +27,7 @@ plugins {
     alias(libs.plugins.google.gms)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.buildconfig)
+    alias(libs.plugins.stability.analyzer)
 }
 
 // https://slack-chats.kotlinlang.org/t/27543360/hey-after-updating-to-latest-kotlin-and-ksp-version-in-multi
@@ -194,6 +195,7 @@ room {
 }
 
 dependencies {
+    implementation(libs.androidx.activity)
     debugImplementation(compose.uiTooling)
 
     add("kspAndroid", libs.androidx.room.compiler)
