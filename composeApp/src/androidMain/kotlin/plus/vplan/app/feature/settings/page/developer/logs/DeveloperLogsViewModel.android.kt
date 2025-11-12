@@ -9,9 +9,8 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
-actual fun getLogs(): Flow<List<Log>> {
+actual fun getLogs(): Flow<Log> {
     return flow {
-        val logs = mutableListOf<Log>()
         Runtime.getRuntime().exec("logcat")
             .inputStream
             .bufferedReader()
@@ -45,15 +44,19 @@ actual fun getLogs(): Flow<List<Log>> {
                             char(':')
                             second(padding = Padding.ZERO)
                         })
-                        logs.add(Log(
+                        emit(Log(
                             timestamp = timestamp,
                             tag = tag,
                             level = level,
                             message = message
                         ))
-                        emit(logs)
                     }
                 }
             }
     }
+}
+
+actual fun clearLogs() {
+    val process = Runtime.getRuntime().exec("logcat -c")
+    process.waitFor()
 }

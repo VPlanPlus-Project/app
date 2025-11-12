@@ -54,6 +54,7 @@ import vplanplus.composeapp.generated.resources.bug
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.message_square
 import vplanplus.composeapp.generated.resources.move_up
+import vplanplus.composeapp.generated.resources.trash_2
 import vplanplus.composeapp.generated.resources.triangle_alert
 
 @Composable
@@ -65,6 +66,7 @@ fun DeveloperSettingsLogsScreen(
 
     DeveloperSettingsLogsContent(
         state = state,
+        onEvent = viewModel::onEvent,
         onBack = navHostController::navigateUp
     )
 }
@@ -72,6 +74,7 @@ fun DeveloperSettingsLogsScreen(
 @Composable
 private fun DeveloperSettingsLogsContent(
     state: DeveloperLogsState,
+    onEvent: (event: DeveloperLogsEvent) -> Unit,
     onBack: () -> Unit
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
@@ -87,6 +90,16 @@ private fun DeveloperSettingsLogsContent(
                             painter = painterResource(Res.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { onEvent(DeveloperLogsEvent.ClearLogs) }) {
+                        Icon(
+                            painter = painterResource(Res.drawable.trash_2),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 },
@@ -222,6 +235,7 @@ private fun DeveloperSettingsLogsContentPreview() {
                 )
             }
         ),
+        onEvent = {},
         onBack = {}
     )
 }
