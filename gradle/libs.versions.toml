@@ -1,23 +1,23 @@
 [versions]
-agp = "8.13.0"
+agp = "8.13.1"
 androidx-activityCompose = "1.11.0"
-androidx-lifecycle = "2.9.4"
+androidx-lifecycle = "2.9.6"
 cmpEasyPermission = "1.0.3"
-compose-multiplatform = "1.9.0"
+compose-multiplatform = "1.9.3"
 filekitCompose = "0.8.8"
 kermit = "2.0.8"
-kotlin = "2.2.20"
+kotlin = "2.2.21"
 kotlinxDatetime = "0.7.1"
-gradle-buildconfig-plugin = "5.6.8"
+gradle-buildconfig-plugin = "5.7.1"
 biometric = "1.1.0"
 
-ksp = "2.2.20-2.0.3" # 2.2.20-2.0.3 / 2025-10-01 @Julius-Babies when updating ksp next time, check the task block in build.gradle.kts if the manual task bindings are still necessary
-androidx-room = "2.8.1"
+ksp = "2.3.2"
+androidx-room = "2.8.3"
 androidx-sqlite = "2.6.1"
-navigationCompose = "2.9.0"
-posthogAndroid = "3.22.0"
+navigationCompose = "2.9.1"
+posthogAndroid = "3.26.0"
 
-androidx-material = "1.10.0-alpha01"
+androidx-material = "1.10.0-alpha04"
 androidx-icons = "1.7.8"
 
 koin = "4.1.1"
@@ -26,13 +26,13 @@ kotlinSerialization = "1.9.0"
 
 coroutines = "1.10.2"
 
-google-gms = "4.4.3"
-firebase-bom = "34.3.0"
+google-gms = "4.4.4"
+firebase-bom = "34.5.0"
 
-ktor = "3.3.0"
+ktor = "3.3.2"
 
 androidBrowser = "1.9.0"
-workRuntimeKtx = "2.10.5"
+workRuntimeKtx = "2.11.0"
 
 sp24-kt = "v2025.10.2"
 
