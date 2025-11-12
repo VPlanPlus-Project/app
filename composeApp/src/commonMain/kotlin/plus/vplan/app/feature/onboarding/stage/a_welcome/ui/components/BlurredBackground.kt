@@ -1,7 +1,9 @@
 package plus.vplan.app.feature.onboarding.stage.a_welcome.ui.components
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -13,10 +15,13 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import plus.vplan.app.BuildConfig
+import plus.vplan.app.utils.blendColor
 import kotlin.random.Random
 
 @Composable
 fun BlurredBackground(seed: String = BuildConfig.APP_VERSION) {
+    val isSystemInDarkTheme = isSystemInDarkTheme()
+    val colorScheme = MaterialTheme.colorScheme
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -30,6 +35,10 @@ fun BlurredBackground(seed: String = BuildConfig.APP_VERSION) {
                         Color(0xFFB5EAD7),
                         Color(0xFFFFF5BA)
                     )
+                        .map { color ->
+                            if (isSystemInDarkTheme) blendColor(colorScheme.background, color, .3f)
+                            else color
+                        }
                     repeat(8) {
                         val color = colors[random.nextInt(colors.size)]
                         val radius = 200f + random.nextFloat() * 300f

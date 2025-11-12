@@ -119,7 +119,7 @@ private fun OnboardingWelcomeScreenContent(
                         modifier = Modifier
                             .size(127.dp)
                             .clip(RoundedCornerShape(24.dp))
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = .2f))
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = if (isSystemInDarkTheme()) .8f else .2f))
                             .padding(24.dp)
                     )
                 }
