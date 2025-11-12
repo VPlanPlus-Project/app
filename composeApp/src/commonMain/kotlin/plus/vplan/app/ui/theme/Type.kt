@@ -32,6 +32,22 @@ import vplanplus.composeapp.generated.resources.inter_medium
 import vplanplus.composeapp.generated.resources.inter_medium_italic
 import vplanplus.composeapp.generated.resources.inter_regular
 import vplanplus.composeapp.generated.resources.inter_regular_italic
+import vplanplus.composeapp.generated.resources.jetbrains_mono_bold
+import vplanplus.composeapp.generated.resources.jetbrains_mono_bold_italic
+import vplanplus.composeapp.generated.resources.jetbrains_mono_extrabold
+import vplanplus.composeapp.generated.resources.jetbrains_mono_extrabold_italic
+import vplanplus.composeapp.generated.resources.jetbrains_mono_extralight
+import vplanplus.composeapp.generated.resources.jetbrains_mono_extralight_italic
+import vplanplus.composeapp.generated.resources.jetbrains_mono_italic
+import vplanplus.composeapp.generated.resources.jetbrains_mono_light
+import vplanplus.composeapp.generated.resources.jetbrains_mono_light_italic
+import vplanplus.composeapp.generated.resources.jetbrains_mono_medium
+import vplanplus.composeapp.generated.resources.jetbrains_mono_medium_italic
+import vplanplus.composeapp.generated.resources.jetbrains_mono_regular
+import vplanplus.composeapp.generated.resources.jetbrains_mono_semibold
+import vplanplus.composeapp.generated.resources.jetbrains_mono_semibold_italic
+import vplanplus.composeapp.generated.resources.jetbrains_mono_thin
+import vplanplus.composeapp.generated.resources.jetbrains_mono_thin_italic
 
 @Composable
 fun bodyFontFamily() = FontFamily(
@@ -64,6 +80,26 @@ fun displayFontFamily() = FontFamily(
     Font(Res.font.PlayfairDisplay_MediumItalic, FontWeight.Medium, FontStyle.Italic),
     Font(Res.font.PlayfairDisplay_SemiBold, FontWeight.SemiBold, FontStyle.Normal),
     Font(Res.font.PlayfairDisplay_SemiBoldItalic, FontWeight.SemiBold, FontStyle.Italic),
+)
+
+@Composable
+fun monospaceFontFamily() = FontFamily(
+    Font(Res.font.jetbrains_mono_extralight, FontWeight.ExtraLight, FontStyle.Normal),
+    Font(Res.font.jetbrains_mono_extralight_italic, FontWeight.ExtraLight, FontStyle.Italic),
+    Font(Res.font.jetbrains_mono_light, FontWeight.Light, FontStyle.Normal),
+    Font(Res.font.jetbrains_mono_light_italic, FontWeight.Light, FontStyle.Italic),
+    Font(Res.font.jetbrains_mono_regular, FontWeight.Normal, FontStyle.Normal),
+    Font(Res.font.jetbrains_mono_italic, FontWeight.Normal, FontStyle.Italic),
+    Font(Res.font.jetbrains_mono_medium, FontWeight.Medium, FontStyle.Normal),
+    Font(Res.font.jetbrains_mono_medium_italic, FontWeight.Medium, FontStyle.Italic),
+    Font(Res.font.jetbrains_mono_semibold, FontWeight.SemiBold, FontStyle.Normal),
+    Font(Res.font.jetbrains_mono_semibold_italic, FontWeight.SemiBold, FontStyle.Italic),
+    Font(Res.font.jetbrains_mono_bold, FontWeight.Bold, FontStyle.Normal),
+    Font(Res.font.jetbrains_mono_bold_italic, FontWeight.Bold, FontStyle.Italic),
+    Font(Res.font.jetbrains_mono_extrabold, FontWeight.ExtraBold, FontStyle.Normal),
+    Font(Res.font.jetbrains_mono_extrabold_italic, FontWeight.ExtraBold, FontStyle.Italic),
+    Font(Res.font.jetbrains_mono_thin, FontWeight.Thin, FontStyle.Normal),
+    Font(Res.font.jetbrains_mono_thin_italic, FontWeight.Thin, FontStyle.Italic)
 )
 
 val baseline = Typography()

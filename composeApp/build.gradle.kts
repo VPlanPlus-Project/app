@@ -27,6 +27,7 @@ plugins {
     alias(libs.plugins.google.gms)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.buildconfig)
+    alias(libs.plugins.stability.analyzer)
 }
 
 kotlin {
@@ -172,6 +173,7 @@ room {
 }
 
 dependencies {
+    implementation(libs.androidx.activity)
     debugImplementation(compose.uiTooling)
 
     add("kspAndroid", libs.androidx.room.compiler)
