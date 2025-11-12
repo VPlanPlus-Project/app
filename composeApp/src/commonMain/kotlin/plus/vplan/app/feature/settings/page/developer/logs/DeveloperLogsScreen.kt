@@ -137,8 +137,7 @@ private fun DeveloperSettingsLogsContent(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .horizontalScroll(rememberScrollState())
-                .padding(top = 4.dp),
+                .horizontalScroll(rememberScrollState()),
             contentPadding = contentPadding,
             state = listScrollState,
         ) {
