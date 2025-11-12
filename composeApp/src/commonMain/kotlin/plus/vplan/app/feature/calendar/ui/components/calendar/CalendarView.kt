@@ -140,12 +140,12 @@ fun CalendarView(
                                         .onSizeChanged { availableWidth = with(localDensity) { it.width.toDp() } - 2 * 8.dp - 32.dp }
                                         .let { if (contentScrollState == null) it else it.verticalScroll(contentScrollState) }
                                 ) {
-                                    var start by remember { mutableStateOf(LocalTime(0, 0)) }
+                                    var start by remember { mutableStateOf(limitTimeSpanToLessonsLowerBound ?: LocalTime(0, 0)) }
                                     var end by remember { mutableStateOf(LocalTime(23, 59, 59, 99)) }
 
-                                    LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons, limitTimeSpanToLessonsLowerBound) {
+                                    LaunchedEffect(lessons.size, autoLimitTimeSpanToLessons) {
                                         if (!autoLimitTimeSpanToLessons || lessons.isEmpty()) return@LaunchedEffect
-                                        start = limitTimeSpanToLessonsLowerBound ?: lessons.minOf { it.lessonTime.start }.minusWithCapAtMidnight(30.minutes)
+                                        start = lessons.minOf { it.lessonTime.start }.minusWithCapAtMidnight(30.minutes)
                                         end = lessons.maxOf { it.lessonTime.end }.plusWithCapAtMidnight(30.minutes)
                                     }
                                     Box(

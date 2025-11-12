@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.utils.toDp
 
 @Composable
@@ -43,6 +44,7 @@ fun FeedTitle(
         ) {
             Text(
                 text = title,
+                fontFamily = displayFontFamily(),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium)
             )
             endText?.let { Text(
