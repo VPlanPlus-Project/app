@@ -4,13 +4,18 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.core.FileKit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ErrorActivity : FragmentActivity() {
     var error by mutableStateOf<Error?>(null)
@@ -23,8 +28,14 @@ class ErrorActivity : FragmentActivity() {
         FileKit.init(this)
         enableEdgeToEdge()
 
+        val logLines = mutableStateListOf<String>()
+        lifecycleScope.launch(Dispatchers.IO) {
+
+        }
+
         setContent {
             error?.let { error ->
+                Text(logLines.joinToString("\n"))
                 ErrorPage(
                     error = error,
                     onOpenAppInfo = remember { {

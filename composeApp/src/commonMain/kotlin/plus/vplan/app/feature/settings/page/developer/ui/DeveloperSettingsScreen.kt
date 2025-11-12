@@ -35,6 +35,7 @@ import plus.vplan.app.ui.components.TopToggle
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.flag
+import vplanplus.composeapp.generated.resources.logs
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.trash_2
 import vplanplus.composeapp.generated.resources.triangle_alert
@@ -49,6 +50,7 @@ fun DeveloperSettingsScreen(
     DeveloperSettingsContent(
         onBack = navHostController::navigateUp,
         onEvent = viewModel::handleEvent,
+        onOpenLogs = remember { { navHostController.navigate(MainScreen.DeveloperSettings.Logs) } },
         onOpenTimetableDebug = remember { { navHostController.navigate(MainScreen.DeveloperSettings.TimetableDebug) } },
         onOpenFlags = remember { { navHostController.navigate(MainScreen.DeveloperSettings.Flags) } },
         state = state
@@ -59,6 +61,7 @@ fun DeveloperSettingsScreen(
 @Composable
 private fun DeveloperSettingsContent(
     onBack: () -> Unit = {},
+    onOpenLogs: () -> Unit = {},
     onOpenFlags: () -> Unit = {},
     onOpenTimetableDebug: () -> Unit = {},
     onEvent: (DeveloperSettingsEvent) -> Unit,
@@ -111,6 +114,13 @@ private fun DeveloperSettingsContent(
                 subtitle = "Testet den Absturz-Handler",
                 onClick = { throw RuntimeException("Test Crash from Developer Settings") },
                 icon = painterResource(Res.drawable.triangle_alert)
+            )
+
+            SettingsRecord(
+                title = "Logs",
+                subtitle = "Zeige alle Logs der App an",
+                onClick = onOpenLogs,
+                icon = painterResource(Res.drawable.logs)
             )
 
             SettingsRecord(

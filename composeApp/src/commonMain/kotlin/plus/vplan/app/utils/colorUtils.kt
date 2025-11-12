@@ -30,3 +30,16 @@ fun blendColor(color1: Color, color2: Color, factor: Float): Color {
 
     return Color(red, green, blue, alpha)
 }
+
+fun String.generateColor(): Color {
+    var hash = 0
+    for (char in this) {
+        hash = char.code + ((hash shl 5) - hash)
+    }
+
+    val hue = (hash % 360 + 360) % 360
+    val saturation = 0.9f
+    val lightness = 0.5f
+
+    return Color.hsl(hue.toFloat(), saturation, lightness)
+}
