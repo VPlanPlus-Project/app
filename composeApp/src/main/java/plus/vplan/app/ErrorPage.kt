@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonType
+import plus.vplan.app.ui.theme.monospaceFontFamily
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.rotate_cw
@@ -62,13 +63,15 @@ fun ErrorPage(
         )
         Text(
             text = "Das tut uns leid. VPlanPlus muss neugestartet werden. Ein Fehlerbericht wurde erstellt und versant.",
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Text(
             text = "Fehlerdetails",
             style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Row(
@@ -82,7 +85,9 @@ fun ErrorPage(
             Box {
                 Text(
                     text = error.stacktrace,
+                    fontFamily = monospaceFontFamily(),
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     softWrap = false
                 )
             }

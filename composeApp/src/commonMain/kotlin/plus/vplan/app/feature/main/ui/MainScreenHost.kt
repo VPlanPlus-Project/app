@@ -265,7 +265,9 @@ fun MainScreenHost(
                 popEnterTransition = defaultPopEnterAnimation,
                 popExitTransition = defaultPopExitAnimation
             ) {
-                DeveloperSettingsLogsScreen(navHostController = navController)
+                DeveloperSettingsLogsScreen(
+                    onNavigateUp = navController::navigateUp,
+                )
             }
             composable<MainScreen.DeveloperSettings.TimetableDebug>(
                 enterTransition = defaultEnterAnimation,

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -16,6 +17,7 @@ import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.core.FileKit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import plus.vplan.app.ui.theme.AppTheme
 
 class ErrorActivity : FragmentActivity() {
     var error by mutableStateOf<Error?>(null)
@@ -34,26 +36,28 @@ class ErrorActivity : FragmentActivity() {
         }
 
         setContent {
-            error?.let { error ->
-                Text(logLines.joinToString("\n"))
-                ErrorPage(
-                    error = error,
-                    onOpenAppInfo = remember { {
-                        val intent = Intent().apply {
-                            action = android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                            data = android.net.Uri.fromParts("package", packageName, null)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
+            AppTheme(darkTheme = isSystemInDarkTheme()) {
+                error?.let { error ->
+                    Text(logLines.joinToString("\n"))
+                    ErrorPage(
+                        error = error,
+                        onOpenAppInfo = remember { {
+                            val intent = Intent().apply {
+                                action = android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                                data = android.net.Uri.fromParts("package", packageName, null)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
 
-                        startActivity(intent)
-                    } },
-                    onRestartApp = remember { {
-                        val intent = packageManager?.getLaunchIntentForPackage(packageName)
-                        intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                        startActivity(intent)
-                        finish()
-                    } }
-                )
+                            startActivity(intent)
+                        } },
+                        onRestartApp = remember { {
+                            val intent = packageManager?.getLaunchIntentForPackage(packageName)
+                            intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                            startActivity(intent)
+                            finish()
+                        } }
+                    )
+                }
             }
         }
     }

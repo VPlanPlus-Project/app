@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.settings.page.developer.logs
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +42,7 @@ class DeveloperLogsViewModel : ViewModel() {
     }
 }
 
+@Stable
 data class DeveloperLogsState(
     val logs: List<Log> = emptyList()
 )

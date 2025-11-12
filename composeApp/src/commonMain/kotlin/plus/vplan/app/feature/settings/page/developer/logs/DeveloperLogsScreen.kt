@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -35,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.painterResource
@@ -44,6 +45,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.bodyFontFamily
 import plus.vplan.app.ui.theme.colors
+import plus.vplan.app.ui.theme.monospaceFontFamily
 import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.generateColor
 import plus.vplan.app.utils.now
@@ -59,7 +61,7 @@ import vplanplus.composeapp.generated.resources.triangle_alert
 
 @Composable
 fun DeveloperSettingsLogsScreen(
-    navHostController: NavHostController
+    onNavigateUp: () -> Unit,
 ) {
     val viewModel = koinViewModel<DeveloperLogsViewModel>()
     val state by viewModel.state.collectAsState()
@@ -67,7 +69,7 @@ fun DeveloperSettingsLogsScreen(
     DeveloperSettingsLogsContent(
         state = state,
         onEvent = viewModel::onEvent,
-        onBack = navHostController::navigateUp
+        onBack = onNavigateUp
     )
 }
 
@@ -135,6 +137,7 @@ private fun DeveloperSettingsLogsContent(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .horizontalScroll(rememberScrollState())
                 .padding(top = 4.dp),
             contentPadding = contentPadding,
             state = listScrollState,
@@ -149,7 +152,7 @@ private fun DeveloperSettingsLogsContent(
 
 @Composable
 private fun LogEntry(log: Log) {
-    val font = MaterialTheme.typography.bodyMedium
+    val font = MaterialTheme.typography.bodyMedium.copy(fontFamily = monospaceFontFamily())
     val style = font.toSpanStyle()
     val backgroundColor = blendColor(MaterialTheme.colorScheme.background, log.tag.generateColor(), 0.1f)
     Row(
