@@ -37,6 +37,7 @@ import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.flag
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.trash_2
+import vplanplus.composeapp.generated.resources.triangle_alert
 
 @Composable
 fun DeveloperSettingsScreen(
@@ -103,6 +104,13 @@ private fun DeveloperSettingsContent(
                 subtitle = "Experimentelle Funktionen aktivieren",
                 onClick = onOpenFlags,
                 icon = painterResource(Res.drawable.flag)
+            )
+
+            SettingsRecord(
+                title = "Absturz auslösen",
+                subtitle = "Testet den Absturz-Handler",
+                onClick = { throw RuntimeException("Test Crash from Developer Settings") },
+                icon = painterResource(Res.drawable.triangle_alert)
             )
 
             SettingsRecord(
