@@ -70,6 +70,7 @@ kotlin {
             implementation(libs.androidx.biometric)
 
             implementation(libs.androidx.material)
+            implementation(libs.androidx.icons.extended)
             implementation(libs.androidx.sqlite.framework)
             implementation(libs.androidx.work.runtime.ktx)
 
