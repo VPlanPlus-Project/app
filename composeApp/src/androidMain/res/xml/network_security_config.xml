@@ -6,9 +6,9 @@
         </trust-anchors>
     </base-config>
     <domain-config>
-        <domain includeSubdomains="true">vpp.local.vocus.dev</domain>
+        <domain includeSubdomains="true">vpp.werkbank.space</domain>
         <trust-anchors>
-            <certificates src="@raw/vocusca"/>
+            <certificates src="@raw/werkbankca"/>
         </trust-anchors>
     </domain-config>
 </network-security-config>
