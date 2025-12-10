@@ -6,6 +6,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterval
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterIntervalUser
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSchulverwalterInterval
 
@@ -24,4 +25,16 @@ interface IntervalDao {
 
     @Query("DELETE FROM fk_schulverwalter_year_schulverwalter_interval WHERE interval_id = :intervalId AND year_id NOT IN (:yearIds)")
     suspend fun deleteSchulverwalterYearSchulverwalterInterval(intervalId: Int, yearIds: List<Int>)
+
+    @Transaction
+    suspend fun updateIntervalUserConnections(schulverwalterUserId: Int, intervalIds: Set<Int>) {
+        deleteIntervalConnectionsForUser(schulverwalterUserId)
+        upsert(intervalIds.map { DbSchulverwalterIntervalUser(it, schulverwalterUserId) })
+    }
+
+    @Query("DELETE FROM schulverwalter_interval_user WHERE schulverwalter_user_id = :schulverwalterUserId")
+    suspend fun deleteIntervalConnectionsForUser(schulverwalterUserId: Int)
+
+    @Upsert
+    suspend fun upsert(items: List<DbSchulverwalterIntervalUser>)
 }

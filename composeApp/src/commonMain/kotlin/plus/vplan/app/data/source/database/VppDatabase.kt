@@ -78,6 +78,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchulverwalterCollec
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterFinalGrade
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterGrade
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterval
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterIntervalUser
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubject
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
@@ -190,6 +191,7 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         DbSchulverwalterFinalGrade::class,
         DbSchulverwalterGrade::class,
         DbSchulverwalterInterval::class,
+        DbSchulverwalterIntervalUser::class,
         DbSchulverwalterSubject::class,
         DbSchulverwalterTeacher::class,
         DbSchulverwalterYear::class,
@@ -245,6 +247,10 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
             from = 7,
             to = 8
         ),
+        AutoMigration( // Add DbSchulverwalterIntervalUser
+            from = 10,
+            to = 11
+        )
     ]
 )
 @TypeConverters(
@@ -293,7 +299,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val finalGradeDao: FinalGradeDao
 
     companion object {
-        const val DATABASE_VERSION = 10
+        const val DATABASE_VERSION = 11
     }
 
     @RenameColumn(

@@ -28,4 +28,7 @@ interface YearDao {
 
     @Query("DELETE FROM fk_schulverwalter_year_schulverwalter_interval WHERE year_id = :yearId AND interval_id NOT IN (:intervalIds)")
     suspend fun deleteSchulverwalterYearSchulverwalterInterval(yearId: Int, intervalIds: List<Int>)
+
+    @Query("DELETE FROM fk_schulverwalter_year_schulverwalter_interval WHERE interval_id IN (SELECT interval_id FROM fk_schulverwalter_year_schulverwalter_interval LEFT JOIN schulverwalter_year ON schulverwalter_year.id = fk_schulverwalter_year_schulverwalter_interval.interval_id WHERE schulverwalter_year.user_for_request = :schulverwalterUserId AND fk_schulverwalter_year_schulverwalter_interval.interval_id NOT IN (:downloadedIntervalIds))")
+    suspend fun deleteSchulverwalterIntervalsForUserThatAreNotInList(schulverwalterUserId: Int, downloadedIntervalIds: Set<Int>)
 }

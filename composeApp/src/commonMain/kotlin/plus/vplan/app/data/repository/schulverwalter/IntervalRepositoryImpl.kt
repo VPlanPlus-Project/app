@@ -36,53 +36,6 @@ class IntervalRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase
 ): IntervalRepository {
-    override suspend fun download(): Response<Set<Int>> {
-        safeRequest(onError = { return it }) {
-            val accessTokens = vppDatabase.vppIdDao.getSchulverwalterAccess().first().filter { it.isValid != false }
-            val ids = mutableSetOf<Int>()
-            accessTokens.forEach { accessToken ->
-                val response = httpClient.get {
-                    url {
-                        protocol = URLProtocol.HTTPS
-                        host = "beste.schule"
-                        port = 443
-                        pathSegments = listOf("api", "intervals")
-                    }
-                    bearerAuth(accessToken.schulverwalterAccessToken)
-                }
-                if (!response.status.isSuccess()) return@forEach
-                val data = ResponseDataWrapper.fromJson<List<IntervalItemResponse>>(response.bodyAsText())
-                    ?: return@forEach
-                vppDatabase.intervalDao.upsert(
-                    intervals = data.map {
-                        DbSchulverwalterInterval(
-                            id = it.id,
-                            name = it.name,
-                            type = it.type,
-                            from = LocalDate.parse(it.from),
-                            to = LocalDate.parse(it.to),
-                            includedIntervalId = it.includedIntervalId,
-                            userForRequest = accessToken.schulverwalterUserId,
-                            cachedAt = Clock.System.now()
-                        )
-                    },
-                    intervalYearCrossovers = data.map { interval ->
-                        FKSchulverwalterYearSchulverwalterInterval(
-                            yearId = interval.year,
-                            intervalId = interval.id
-                        )
-                    }
-                )
-                data.forEach { interval ->
-                    vppDatabase.intervalDao.deleteSchulverwalterYearSchulverwalterInterval(intervalId = interval.id, yearIds = listOf(interval.year))
-                }
-                ids.addAll(data.map { it.id })
-            }
-            return Response.Success(ids)
-        }
-        return Response.Error.Cancelled
-    }
-
     override fun getById(id: Int, forceReload: Boolean): Flow<CacheState<Interval>> = channelFlow {
         val intervalFlow = vppDatabase.intervalDao.getById(id).map { it?.toModel() }
         if (!forceReload) {
@@ -142,6 +95,13 @@ class IntervalRepositoryImpl(
     }
 
     override fun getAllIds(): Flow<List<Int>> = vppDatabase.intervalDao.getAll()
+
+    override suspend fun connectIntervalsWithSchulverwalterUserId(
+        schulverwalterUserId: Int,
+        intervalIds: Set<Int>
+    ) {
+        vppDatabase.intervalDao.updateIntervalUserConnections(schulverwalterUserId, intervalIds)
+    }
 }
 
 @Serializable

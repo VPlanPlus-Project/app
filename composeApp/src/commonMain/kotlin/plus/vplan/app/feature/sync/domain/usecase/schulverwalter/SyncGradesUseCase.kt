@@ -9,6 +9,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
@@ -81,15 +82,33 @@ class SyncGradesUseCase(
         }
 
         yearRepository.download()
-        intervalRepository.download()
+
+        val vppIds = vppIdRepository.getVppIds().first()
+            .filterIsInstance<VppId.Active>()
+            .filter { it.schulverwalterConnection?.accessToken != null }
+
+        vppIds.forEach forEachUser@{ user ->
+            val schulverwalterUserId = user.schulverwalterConnection!!.userId
+
+            val schulverwalterUserData = schulverwalterRepository.getUserData(user.schulverwalterConnection.accessToken)
+            if (schulverwalterUserData !is Response.Success) {
+                if (schulverwalterUserData is Response.Error.OnlineError.ConnectionError) return@forEachUser
+                captureError("SyncGradesUseCase/forEachUser.UserData", message = "failed to load user data: $schulverwalterUserData")
+                return@forEachUser
+            }
+
+            val intervals = schulverwalterUserData.data.year.intervals
+            intervalRepository.connectIntervalsWithSchulverwalterUserId(
+                schulverwalterUserId = schulverwalterUserId,
+                intervalIds = intervals.map { it.id }.toSet()
+            )
+        }
+
         collectionRepository.download()
         finalGradeRepository.download()
         val existingGrades = gradeRepository.getAllIds().first().toSet()
 
         val downloadedGradeIds = mutableSetOf<Int>()
-        val vppIds = vppIdRepository.getVppIds().first()
-            .filterIsInstance<VppId.Active>()
-            .mapNotNull { it.schulverwalterConnection?.accessToken }
 
         if (vppIds.size > 1) downloadedGradeIds.addAll((gradeRepository.download() as? Response.Success)?.data.orEmpty())
         else {
@@ -97,11 +116,11 @@ class SyncGradesUseCase(
                 .mapNotNull { yearRepository.getById(it, false).getFirstValueOld() }
                 .sortedBy { it.to }
                 .forEach { year ->
-                    yearRepository.setCurrent(vppIds.first(), year.id)
+                    yearRepository.setCurrent(vppIds.first().schulverwalterConnection!!.accessToken, year.id)
 
                     downloadedGradeIds.addAll((gradeRepository.download() as? Response.Success)?.data.orEmpty())
                 }
-            yearRepository.setCurrent(vppIds.first(), null)
+            yearRepository.setCurrent(vppIds.first().schulverwalterConnection!!.accessToken, null)
         }
 
         if (allowNotifications && downloadedGradeIds.isNotEmpty()) {

@@ -166,9 +166,13 @@ class YearRepositoryImpl(
                         }
                     }
                 )
-                data.forEach { year ->
-                    vppDatabase.yearDao.deleteSchulverwalterYearSchulverwalterInterval(year.id, year.intervals.map { it.id })
-                }
+                val downloadedIntervalIds = data
+                    .flatMap { it.intervals.map { interval -> interval.id } }
+                    .toSet()
+                vppDatabase.yearDao.deleteSchulverwalterIntervalsForUserThatAreNotInList(
+                    schulverwalterUserId = accessToken.schulverwalterUserId,
+                    downloadedIntervalIds = downloadedIntervalIds
+                )
                 ids.addAll(data.map { it.id })
             }
             return Response.Success(ids)
