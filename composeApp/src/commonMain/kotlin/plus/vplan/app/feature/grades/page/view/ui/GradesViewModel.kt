@@ -3,12 +3,16 @@ package plus.vplan.app.feature.grades.page.view.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import plus.vplan.app.App
@@ -23,7 +27,6 @@ import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculatorGrade
 import plus.vplan.app.feature.grades.domain.usecase.GetCurrentIntervalUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GetIntervalsUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
@@ -36,7 +39,6 @@ class GradesViewModel(
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
     private val lockUseCase: LockGradesUseCase,
-    private val getIntervalsUseCase: GetIntervalsUseCase,
     private val vppIdRepository: VppIdRepository
 ) : ViewModel() {
     private val gradeState = MutableStateFlow(GradesState())
@@ -90,35 +92,51 @@ class GradesViewModel(
             }
     }
 
+    private var mainJob: Job? = null
     fun init(vppIdId: Int) {
+        mainJob?.cancel()
         gradeState.value = GradesState()
-        viewModelScope.launch { getIntervalsUseCase().collectLatest { gradeState.value = gradeState.value.copy(intervals = it) } }
-        viewModelScope.launch {
-            getGradeLockStateUseCase().collectLatest { areGradesLocked ->
-                gradeState.update { it.copy(gradeLockState = areGradesLocked) }
-                if (!areGradesLocked.canAccess) return@collectLatest
-                vppIdRepository.getById(vppIdId, ResponsePreference.Fast)
-                    .filterIsInstance<CacheState.Done<VppId>>()
-                    .map { it.data }
-                    .collectLatest collectLatestGrades@{ vppId ->
-                        val interval = getCurrentIntervalUseCase()
+        mainJob = viewModelScope.launch {
+            val activeJobs = mutableListOf<Job>()
+            vppIdRepository.getById(vppIdId, ResponsePreference.Fast)
+                .filterIsInstance<CacheState.Done<VppId.Active>>()
+                .map { it.data }
+                .filter { it.schulverwalterConnection != null }
+                .distinctUntilChangedBy { it.id.hashCode() + it.schulverwalterConnection.hashCode() }
+                .onEach { vppIdActive ->
+                    activeJobs.forEach { it.cancelAndJoin() }
+                    activeJobs.clear()
+                    gradeState.value = gradeState.value.copy(vppId = vppIdActive)
+                }
+                .collectLatest { vppId ->
+                    launch {
+                        App.intervalSource.getForUser(vppId.schulverwalterConnection!!.userId)
+                            .collectLatest { gradeState.value = gradeState.value.copy(intervals = it) }
+                    }.let(activeJobs::add)
 
-                        gradeState.update { it.copy(vppId = vppId, currentInterval = interval) }
+                    launch {
+                        getGradeLockStateUseCase().collectLatest { areGradesLocked ->
+                            gradeState.update { it.copy(gradeLockState = areGradesLocked) }
+                            if (!areGradesLocked.canAccess) return@collectLatest
 
-                        if (interval == null || vppId !is VppId.Active) return@collectLatestGrades
+                            val interval = getCurrentIntervalUseCase(vppId.schulverwalterConnection!!.userId)
+                                ?: return@collectLatest
 
-                        gradeState.update {
-                            it.copy(
-                                intervals = gradeState.value.intervals,
-                                selectedInterval = interval
-                            )
+                            gradeState.update { it.copy(vppId = vppId, currentInterval = interval) }
+
+                            gradeState.update {
+                                it.copy(
+                                    intervals = gradeState.value.intervals,
+                                    selectedInterval = interval
+                                )
+                            }
+
+                            grades = App.gradeSource.getAll().map { it.filterIsInstance<CacheState.Done<Grade>>().map { gradeState -> gradeState.data } }.first()
+
+                            setGrades()
                         }
-
-                        grades = App.gradeSource.getAll().map { it.filterIsInstance<CacheState.Done<Grade>>().map { gradeState -> gradeState.data } }.first()
-
-                        setGrades()
-                    }
-            }
+                    }.let(activeJobs::add)
+                }
         }
     }
 

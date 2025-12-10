@@ -5,9 +5,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
@@ -20,39 +25,58 @@ import plus.vplan.app.domain.model.schulverwalter.Subject
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.feature.grades.domain.usecase.GetCurrentIntervalUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GetIntervalsUseCase
 
 class AnalyticsViewModel(
     private val getCurrentIntervalUseCase: GetCurrentIntervalUseCase,
-    private val getIntervalsUseCase: GetIntervalsUseCase,
     private val vppIdRepository: VppIdRepository
 ) : ViewModel() {
     var state by mutableStateOf(AnalyticsState())
         private set
 
+    private var mainJob: Job? = null
     fun init(vppIdId: Int) {
+        mainJob?.cancel()
         state = AnalyticsState()
-        viewModelScope.launch { getIntervalsUseCase().collectLatest { state = state.copy(intervals = it) } }
-        viewModelScope.launch {
-            getCurrentIntervalUseCase().let { state = state.copy(interval = it) }
-            vppIdRepository.getById(vppIdId, ResponsePreference.Fast).filterIsInstance<CacheState.Done<VppId.Active>>().map { it.data }.collectLatest { vppId ->
-                state = state.copy(vppId = vppId)
-                App.gradeSource.getAll()
-                    .map {
-                        it
-                            .filterIsInstance<CacheState.Done<Grade>>()
-                            .map { gradeState -> gradeState.data }
-                            .filter { grade -> grade.vppIdId == vppIdId }
-                    }.collectLatest { grades ->
-                        state = state.copy(
-                            grades = grades,
-                            filteredGrades = emptyList(),
-                            availableSubjectFilters = grades.map { it.subject.getFirstValueOld()!! }.distinctBy { subject -> subject.id }.sortedBy { it.localId },
-                            filteredSubjects = emptyList()
-                        )
-                        updateFiltered()
-                    }
-            }
+        mainJob = viewModelScope.launch {
+            val activeJobs = mutableListOf<Job>()
+            vppIdRepository.getById(vppIdId, ResponsePreference.Fast)
+                .filterIsInstance<CacheState.Done<VppId.Active>>()
+                .map { it.data }
+                .filter { it.schulverwalterConnection != null }
+                .distinctUntilChangedBy { it.id.hashCode() + it.schulverwalterConnection.hashCode() }
+                .onEach { vppIdActive ->
+                    activeJobs.forEach { it.cancelAndJoin() }
+                    activeJobs.clear()
+                    state = state.copy(vppId = vppIdActive)
+                }
+                .collectLatest { vppId ->
+                    launch {
+                        App.intervalSource.getForUser(vppId.schulverwalterConnection!!.userId)
+                            .collectLatest { state = state.copy(intervals = it) }
+                    }.let(activeJobs::add)
+
+                    launch {
+                        val interval = getCurrentIntervalUseCase(vppId.schulverwalterConnection!!.userId)
+                            ?: return@launch
+                        state = state.copy(interval = interval)
+
+                        App.gradeSource.getAll()
+                            .map {
+                                it
+                                    .filterIsInstance<CacheState.Done<Grade>>()
+                                    .map { gradeState -> gradeState.data }
+                                    .filter { grade -> grade.vppIdId == vppIdId }
+                            }.collectLatest { grades ->
+                                state = state.copy(
+                                    grades = grades,
+                                    filteredGrades = emptyList(),
+                                    availableSubjectFilters = grades.map { it.subject.getFirstValueOld()!! }.distinctBy { subject -> subject.id }.sortedBy { it.localId },
+                                    filteredSubjects = emptyList()
+                                )
+                                updateFiltered()
+                            }
+                    }.let(activeJobs::add)
+                }
         }
     }
 

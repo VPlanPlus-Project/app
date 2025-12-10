@@ -90,7 +90,8 @@ class SchulverwalterRepositoryImpl(
                                 includedIntervalId = interval.includedIntervalId,
                                 yearId = interval.yearId,
                                 cachedAt = Clock.System.now(),
-                                collectionIds = emptyList()
+                                collectionIds = emptyList(),
+                                linkedWithSchulverwalterUserIds = emptySet(),
                             )
                         }
                     )

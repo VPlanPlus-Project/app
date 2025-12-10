@@ -21,7 +21,8 @@ data class Interval(
     val includedIntervalId: Int?,
     val yearId: Int,
     val collectionIds: List<Int>,
-    val cachedAt: Instant
+    val cachedAt: Instant,
+    val linkedWithSchulverwalterUserIds: Set<Int>,
 ): Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
 

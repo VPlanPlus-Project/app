@@ -3,6 +3,7 @@ package plus.vplan.app.data.source.database.model.embedded
 import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterval
+import plus.vplan.app.data.source.database.model.database.DbSchulverwalterIntervalUser
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 import plus.vplan.app.domain.model.schulverwalter.Interval
@@ -18,7 +19,12 @@ data class EmbeddedSchulverwalterInterval(
         parentColumn = "id",
         entityColumn = "interval_id",
         entity = FKSchulverwalterCollectionSchulverwalterInterval::class
-    ) val collections: List<FKSchulverwalterCollectionSchulverwalterInterval>
+    ) val collections: List<FKSchulverwalterCollectionSchulverwalterInterval>,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "interval_id",
+        entity = DbSchulverwalterIntervalUser::class
+    ) val users: List<DbSchulverwalterIntervalUser>
 ) {
     fun toModel() = Interval(
         id = interval.id,
@@ -29,6 +35,7 @@ data class EmbeddedSchulverwalterInterval(
         includedIntervalId = interval.includedIntervalId,
         yearId = year.yearId,
         collectionIds = collections.map { it.collectionId },
-        cachedAt = interval.cachedAt
+        cachedAt = interval.cachedAt,
+        linkedWithSchulverwalterUserIds = users.map { it.schulverwalterUserId }.toSet(),
     )
 }

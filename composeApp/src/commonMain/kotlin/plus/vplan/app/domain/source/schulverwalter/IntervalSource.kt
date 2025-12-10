@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.schulverwalter.Interval
@@ -37,5 +38,15 @@ class IntervalSource(
             if (ids.isEmpty()) flowOf(emptyList())
             else combine(ids.map { getById(it) }) { it.toList() }
         }
+    }
+
+    fun getForUser(schulverwalterUserId: Int): Flow<List<Interval>> {
+        return getAll()
+            .map { value ->
+                value
+                    .filterIsInstance<CacheState.Done<Interval>>()
+                    .map { it.data }
+                    .filter { schulverwalterUserId in it.linkedWithSchulverwalterUserIds }
+            }
     }
 }

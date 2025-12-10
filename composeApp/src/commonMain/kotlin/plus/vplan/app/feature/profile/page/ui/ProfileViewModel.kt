@@ -59,7 +59,7 @@ class ProfileViewModel(
                     val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active ?: return@collectLatest
 
                     if (vppId.gradeIds.isNotEmpty()) {
-                        state = state.copy(currentInterval = getCurrentIntervalUseCase())
+                        state = state.copy(currentInterval = getCurrentIntervalUseCase(vppId.schulverwalterConnection!!.userId))
                         val grades = vppId.gradeIds.map { gradeId -> App.gradeSource.getById(gradeId).getFirstValueOld()!! }
                         state.currentInterval?.let { interval ->
                             state = state.copy(
