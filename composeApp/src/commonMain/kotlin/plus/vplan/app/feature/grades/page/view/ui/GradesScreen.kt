@@ -300,7 +300,7 @@ private fun GradesContent(
                                         if (state.selectedInterval != null) {
                                             if (state.selectedInterval.includedIntervalId == null) append("für das Interval ${state.selectedInterval.name} ")
                                             else state.selectedInterval.includedInterval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data.name }?.collectAsState(null)?.let {
-                                                append("für die Intervalle $it und ${state.selectedInterval.name}")
+                                                append("für die Intervalle ${it.value} und ${state.selectedInterval.name}")
                                             }
                                         }
                                         append("verfügbar.")
