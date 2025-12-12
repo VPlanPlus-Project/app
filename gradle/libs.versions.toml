@@ -1,6 +1,6 @@
 [versions]
-agp = "8.13.1"
-androidx-activityCompose = "1.11.0"
+agp = "8.13.2"
+androidx-activityCompose = "1.12.1"
 androidx-lifecycle = "2.9.6"
 cmpEasyPermission = "1.0.3"
 compose-multiplatform = "1.9.3"
@@ -8,16 +8,16 @@ filekitCompose = "0.8.8"
 kermit = "2.0.8"
 kotlin = "2.2.21"
 kotlinxDatetime = "0.7.1"
-gradle-buildconfig-plugin = "5.7.1"
+gradle-buildconfig-plugin = "6.0.6"
 biometric = "1.1.0"
 
 ksp = "2.3.2"
-androidx-room = "2.8.3"
-androidx-sqlite = "2.6.1"
+androidx-room = "2.8.4"
+androidx-sqlite = "2.6.2"
 navigationCompose = "2.9.1"
-posthogAndroid = "3.26.0"
+posthogAndroid = "3.27.2"
 
-androidx-material = "1.10.0-alpha04"
+androidx-material = "1.10.0-alpha05"
 androidx-icons = "1.7.8"
 
 koin = "4.1.1"
@@ -27,15 +27,15 @@ kotlinSerialization = "1.9.0"
 coroutines = "1.10.2"
 
 google-gms = "4.4.4"
-firebase-bom = "34.5.0"
+firebase-bom = "34.7.0"
 
-ktor = "3.3.2"
+ktor = "3.3.3"
 
 androidBrowser = "1.9.0"
 workRuntimeKtx = "2.11.0"
 
 sp24-kt = "v2025.10.2"
-activity = "1.8.0"
+activity = "1.12.1"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -101,4 +101,4 @@ firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.
 google-gms = { id = "com.google.gms.google-services", version.ref = "google-gms" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "gradle-buildconfig-plugin" }
 
-stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version = "0.5.1" }
+stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version = "0.6.1" }
