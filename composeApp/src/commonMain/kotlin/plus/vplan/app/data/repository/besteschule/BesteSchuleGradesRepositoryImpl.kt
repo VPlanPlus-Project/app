@@ -7,10 +7,18 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.http.URLProtocol
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.job
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -33,6 +41,8 @@ class BesteSchuleGradesRepositoryImpl : BesteSchuleGradesRepository, KoinCompone
     private val besteschuleApiRepository by inject<BesteSchuleApiRepository>()
     private val vppDatabase by inject<VppDatabase>()
     private val httpClient by inject<HttpClient>()
+
+    private val cacheFlows = mutableMapOf<Int, Flow<BesteSchuleGrade?>>()
 
     override suspend fun getGradesFromApi(schulverwalterAccessToken: String): Response<List<ApiStudentGradesData>> {
         val response = besteschuleApiRepository.getStudentGradeData(schulverwalterAccessToken)
@@ -84,21 +94,41 @@ class BesteSchuleGradesRepositoryImpl : BesteSchuleGradesRepository, KoinCompone
     }
 
     override fun getGradeFromCache(gradeId: Int): Flow<BesteSchuleGrade?> {
-        return vppDatabase.besteSchuleGradesDao.getById(gradeId).map { it?.toModel() }
+        return cacheFlows.getOrPut(gradeId) {
+            val upstreamScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            val shared = vppDatabase.besteSchuleGradesDao.getById(gradeId).map { it?.toModel() }
+                .shareIn(
+                    upstreamScope,
+                    started = SharingStarted.WhileSubscribed(
+                        stopTimeoutMillis = 5_000,
+                        replayExpirationMillis = Long.MAX_VALUE
+                    ),
+                    replay = 1
+                )
+
+            upstreamScope.coroutineContext.job.invokeOnCompletion {
+                cacheFlows.remove(gradeId)
+            }
+
+            shared
+        }
     }
 
+    private val getGradesHotFlows = mutableMapOf<Int, SharedFlow<Response<List<BesteSchuleGrade>>>>()
     override fun getGrades(
         responsePreference: ResponsePreference,
         contextBesteschuleAccessToken: String?,
         contextBesteschuleUserId: Int?
-    ): Flow<Response<List<BesteSchuleGrade>>> = flow {
-        val dbFlow = if (contextBesteschuleUserId != null) {
-            vppDatabase.besteSchuleGradesDao.getAllForUser(contextBesteschuleUserId)
-        } else {
-            vppDatabase.besteSchuleGradesDao.getAll()
-        }.map { db -> db.map { it.toModel() } }
+    ): Flow<Response<List<BesteSchuleGrade>>> {
+        val key = responsePreference.hashCode() + contextBesteschuleAccessToken.hashCode() + (contextBesteschuleUserId ?: 0)
+        val constructFlow = { flow {
+            val dbFlow = if (contextBesteschuleUserId != null) {
+                vppDatabase.besteSchuleGradesDao.getAllForUser(contextBesteschuleUserId)
+            } else {
+                vppDatabase.besteSchuleGradesDao.getAll()
+            }.map { db -> db.map { it.toModel() } }
 
-        dbFlow.collect { cached ->
+            dbFlow.collect { cached ->
             val now = Clock.System.now()
             val cacheIsEmpty = cached.isEmpty()
             val cacheIsStale = cached.all { now - it.cachedAt > 1.days }
@@ -156,6 +186,28 @@ class BesteSchuleGradesRepositoryImpl : BesteSchuleGradesRepository, KoinCompone
                     }
                 }
             }
+                }
+        } }
+
+        if (responsePreference != ResponsePreference.Fresh) return constructFlow()
+
+        return getGradesHotFlows.getOrPut(key) {
+            val upstreamScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            val shared = constructFlow()
+                .shareIn(
+                    upstreamScope,
+                    started = SharingStarted.WhileSubscribed(
+                        stopTimeoutMillis = 5_000,
+                        replayExpirationMillis = Long.MAX_VALUE
+                    ),
+                    replay = 1
+                )
+
+            upstreamScope.coroutineContext.job.invokeOnCompletion {
+                getGradesHotFlows.remove(key)
+            }
+
+            shared
         }
     }
 

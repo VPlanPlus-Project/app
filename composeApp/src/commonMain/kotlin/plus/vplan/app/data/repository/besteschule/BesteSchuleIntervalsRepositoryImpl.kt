@@ -1,9 +1,17 @@
 package plus.vplan.app.data.repository.besteschule
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.job
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -22,6 +30,8 @@ import kotlin.time.Duration.Companion.days
 class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinComponent {
     private val besteschuleApiRepository by inject<BesteSchuleApiRepository>()
     private val vppDatabase by inject<VppDatabase>()
+
+    private val cacheFlows = mutableMapOf<Int, Flow<BesteSchuleInterval?>>()
 
     override suspend fun getIntervalsFromApi(schulverwalterAccessToken: String, withCache: Boolean): Response<List<ApiStudentData.Interval>> {
         val response = besteschuleApiRepository.getStudentData(schulverwalterAccessToken, withCache)
@@ -63,26 +73,46 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
     }
 
     override fun getIntervalFromCache(intervalId: Int): Flow<BesteSchuleInterval?> {
-        return vppDatabase.besteSchuleIntervalDao.getById(intervalId).map { it?.toModel() }
+        return cacheFlows.getOrPut(intervalId) {
+            val upstreamScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            val shared = vppDatabase.besteSchuleIntervalDao.getById(intervalId).map { it?.toModel() }
+                .shareIn(
+                    upstreamScope,
+                    started = SharingStarted.WhileSubscribed(
+                        stopTimeoutMillis = 5_000,
+                        replayExpirationMillis = Long.MAX_VALUE
+                    ),
+                    replay = 1
+                )
+
+            upstreamScope.coroutineContext.job.invokeOnCompletion {
+                cacheFlows.remove(intervalId)
+            }
+
+            shared
+        }
     }
 
+    private val getIntervalsHotFlows = mutableMapOf<Int, SharedFlow<Response<List<BesteSchuleInterval>>>>()
     override fun getIntervals(
         responsePreference: ResponsePreference,
         contextBesteschuleAccessToken: String?,
         contextBesteschuleUserId: Int?,
         withCache: Boolean
-    ): Flow<Response<List<BesteSchuleInterval>>> = flow {
+    ): Flow<Response<List<BesteSchuleInterval>>> {
+        val key = responsePreference.hashCode() + contextBesteschuleAccessToken.hashCode() + (contextBesteschuleUserId ?: 0)
+        val constructFlow = { flow {
 
-        // This flow keeps listening to DB updates
-        val dbFlow = if (contextBesteschuleUserId != null) {
-            vppDatabase.besteSchuleIntervalDao.getIntervalsForUser(contextBesteschuleUserId)
-        } else {
-            vppDatabase.besteSchuleIntervalDao.getAll()
-        }.map { embedded ->
-            embedded.map { it.toModel() }
-        }
+            // This flow keeps listening to DB updates
+            val dbFlow = if (contextBesteschuleUserId != null) {
+                vppDatabase.besteSchuleIntervalDao.getIntervalsForUser(contextBesteschuleUserId)
+            } else {
+                vppDatabase.besteSchuleIntervalDao.getAll()
+            }.map { embedded ->
+                embedded.map { it.toModel() }
+            }
 
-        dbFlow.collect { cached ->
+            dbFlow.collect { cached ->
 
             val now = Clock.System.now()
             val cacheIsEmpty = cached.isEmpty()
@@ -149,6 +179,28 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
                     }
                 }
             }
+                }
+        } }
+
+        if (responsePreference != ResponsePreference.Fresh) return constructFlow()
+
+        return getIntervalsHotFlows.getOrPut(key) {
+            val upstreamScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            val shared = constructFlow()
+                .shareIn(
+                    upstreamScope,
+                    started = SharingStarted.WhileSubscribed(
+                        stopTimeoutMillis = 5_000,
+                        replayExpirationMillis = Long.MAX_VALUE
+                    ),
+                    replay = 1
+                )
+
+            upstreamScope.coroutineContext.job.invokeOnCompletion {
+                getIntervalsHotFlows.remove(key)
+            }
+
+            shared
         }
     }
 
