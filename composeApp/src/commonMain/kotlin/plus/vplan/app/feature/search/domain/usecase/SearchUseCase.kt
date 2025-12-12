@@ -8,24 +8,29 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.schulverwalter.Collection
+import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
+import plus.vplan.app.domain.repository.base.ResponsePreference
+import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.search.domain.model.SearchResult
@@ -40,12 +45,14 @@ class SearchUseCase(
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val homeworkRepository: HomeworkRepository,
     private val assessmentRepository: AssessmentRepository
-) {
+): KoinComponent {
+    private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
+
     operator fun invoke(searchRequest: SearchRequest) = channelFlow {
-        if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
+        if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap())
         val query = searchRequest.query.lowercase().trim()
         val profile = getCurrentProfileUseCase().first()
-        val school = profile.getSchool().getFirstValue() ?: return@channelFlow send(emptyMap<SearchResult.Type, List<SearchResult>>())
+        val school = profile.getSchool().getFirstValue() ?: return@channelFlow send(emptyMap())
 
         launch {
             substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, searchRequest.date).collectLatest { substitutionPlanLessonIds ->
@@ -109,16 +116,18 @@ class SearchUseCase(
                 }
 
                 if (searchRequest.assessmentType == null) launch {
-                    App.collectionSource.getAll().map { it.filterIsInstance<CacheState.Done<Collection>>().map { it.data } }.collectLatest { collections ->
-                        val filteredGrades = collections
-                            .filter { query in it.name.lowercase() }
-                            .flatMap { collection ->
-                                collection.grades.first()
-                                    .filter { grade -> grade.vppIdId == (profile as? Profile.StudentProfile)?.vppIdId }
-                            }
-                            .distinctBy { it.id }
-                        results.value = results.value.plus(SearchResult.Type.Grade to filteredGrades.map { SearchResult.Grade(it) })
-                    }
+                    besteSchuleGradesRepository.getGrades(
+                        responsePreference = ResponsePreference.Fast,
+                        contextBesteschuleAccessToken = null,
+                        contextBesteschuleUserId = null
+                    )
+                        .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
+                        .map { response ->
+                            response.data.filter { grade -> query.lowercase() in grade.collection.first()!!.name }
+                        }
+                        .collectLatest { grades ->
+                            results.value = results.value.plus(SearchResult.Type.Grade to grades.map { SearchResult.Grade(it) })
+                        }
                 }
             }
         }

@@ -1,8 +1,5 @@
 package plus.vplan.app.domain.repository.schulverwalter
 
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.schulverwalter.Interval
-
 interface SchulverwalterRepository {
 
     /**
@@ -14,14 +11,4 @@ interface SchulverwalterRepository {
     suspend fun setSchulverwalterAccessValidity(token: String, valid: Boolean)
 
     suspend fun setSchulverwalterAccessTokenForUser(vppIdId: Int, token: String)
-
-    suspend fun getUserData(schulverwalterAccessToken: String): Response<SchulverwalterUserData>
-}
-
-data class SchulverwalterUserData(
-    val year: Year
-) {
-    data class Year(
-        val intervals: List<Interval>
-    )
 }

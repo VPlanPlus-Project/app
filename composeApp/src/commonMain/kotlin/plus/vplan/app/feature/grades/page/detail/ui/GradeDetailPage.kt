@@ -25,16 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.model.schulverwalter.Collection
-import plus.vplan.app.domain.model.schulverwalter.Interval
-import plus.vplan.app.domain.model.schulverwalter.Subject
-import plus.vplan.app.domain.model.schulverwalter.Teacher
-import plus.vplan.app.domain.model.schulverwalter.Year
+import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.components.GivenAtRow
 import plus.vplan.app.feature.grades.page.detail.ui.components.GivenByRow
@@ -59,13 +51,12 @@ fun GradeDetailPage(
     onEvent: (event: GradeDetailEvent) -> Unit
 ) {
     val grade = state.grade ?: return
-
-    val subject = grade.subject.filterIsInstance<CacheState.Done<Subject>>().map { it.data }.collectAsState(null).value
-    val collection = grade.collection.filterIsInstance<CacheState.Done<Collection>>().map { it.data }.collectAsState(null).value
-    val interval = collection?.interval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
-    val year = interval?.year?.filterIsInstance<CacheState.Done<Year>>()?.map { it.data }?.collectAsState(null)?.value
-    val vppId = grade.vppId.filterIsInstance<CacheState.Done<VppId>>().map { it.data }.collectAsState(null).value
-    val teacher = grade.teacher.filterIsInstance<CacheState.Done<Teacher>>().map { it.data }.collectAsState(null).value
+    val vppId = state.gradeUser
+    val collection = grade.collection.collectAsState(null).value
+    val teacher = collection?.teacher?.collectAsState(null)?.value
+    val subject = collection?.subject?.collectAsState(null)?.value
+    val interval = collection?.interval?.collectAsState(null)?.value
+    val year = interval?.year?.collectAsState(null)?.value
 
     AnimatedContent(
         targetState = state.lockState!!.canAccess
@@ -126,7 +117,7 @@ fun GradeDetailPage(
                             val value = if (grade.isOptional) "(${grade.value})" else grade.value
                             when (interval?.type) {
                                 null -> Unit
-                                is Interval.Type.Sek2 -> {
+                                is BesteSchuleInterval.Type.Sek2 -> {
                                     if (grade.value == null) append("Note")
                                     else append("$value Notenpunkte")
                                 }
@@ -187,7 +178,7 @@ fun GradeDetailPage(
                     }
                 }
                 if (subject != null) Text(
-                    text = subject.name,
+                    text = subject.fullName,
                     style = MaterialTheme.typography.labelLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -197,13 +188,13 @@ fun GradeDetailPage(
                 if (subject != null) SubjectGroupRow(
                     canEdit = false,
                     allowGroup = false,
-                    subject = subject.localId,
+                    subject = subject.shortName,
                     onClick = {}
                 )
                 if (collection != null) TypeRow(type = collection.type)
                 if (interval != null) IntervalRow(schoolYearName = year?.name ?: "?", intervalName = interval.name)
                 GivenAtRow(grade.givenAt)
-                if (teacher != null) GivenByRow("${teacher.forename} ${teacher.name}")
+                if (teacher != null) GivenByRow("${teacher.forename} ${teacher.surname}")
                 if (vppId != null) UserRow(vppId.name)
                 OptionalRow(grade.isOptional)
                 UseForFinalGradeRow(grade.isSelectedForFinalGrade, grade.value == null) { onEvent(GradeDetailEvent.ToggleConsiderForFinalGrade) }

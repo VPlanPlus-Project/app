@@ -3,7 +3,7 @@ package plus.vplan.app.feature.sync.di
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
-import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
+import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase

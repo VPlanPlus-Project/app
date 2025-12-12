@@ -114,6 +114,17 @@ private fun DeveloperSettingsContent(
             HorizontalDivider()
 
             SettingsRecord(
+                title = "Noten aktualisieren",
+                subtitle = "Noten über alle Jahre aktualisieren",
+                icon = painterResource(Res.drawable.rotate_cw),
+                isLoading = state.isGradeUpdateRunning,
+                enabled = !state.isGradeUpdateRunning,
+                onClick = { onEvent(DeveloperSettingsEvent.UpdateGrades) }
+            )
+
+            HorizontalDivider()
+
+            SettingsRecord(
                 title = "Vollständige Aktualisierung",
                 subtitle = "Lädt alle Daten neu herunter",
                 icon = painterResource(Res.drawable.rotate_cw),

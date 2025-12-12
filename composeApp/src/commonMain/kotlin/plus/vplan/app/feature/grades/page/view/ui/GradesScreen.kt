@@ -69,14 +69,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.model.schulverwalter.Collection
-import plus.vplan.app.domain.model.schulverwalter.Interval
-import plus.vplan.app.domain.model.schulverwalter.Teacher
+import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.AddGradeDialog
@@ -298,8 +294,8 @@ private fun GradesContent(
                                     text = buildString {
                                         append("Keine Noten ")
                                         if (state.selectedInterval != null) {
-                                            if (state.selectedInterval.includedIntervalId == null) append("für das Interval ${state.selectedInterval.name} ")
-                                            else state.selectedInterval.includedInterval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data.name }?.collectAsState(null)?.let {
+                                            if (state.selectedInterval.includedIntervalId == null) append("für das Intervall ${state.selectedInterval.name} ")
+                                            else state.selectedInterval.includedInterval?.map { it?.name }?.collectAsState(null)?.let {
                                                 append("für die Intervalle ${it.value} und ${state.selectedInterval.name}")
                                             }
                                         }
@@ -361,7 +357,7 @@ private fun GradesContent(
                                                 }
                                                 val interval = state.selectedInterval
                                                 val hasIncludedInterval = interval?.includedIntervalId != null
-                                                val includeInterval = state.selectedInterval?.includedInterval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
+                                                val includeInterval = state.selectedInterval?.includedInterval?.collectAsState(null)?.value
 
                                                 Text(
                                                     text = "Durchschnitt",
@@ -529,9 +525,9 @@ private fun GradesContent(
                                             }
 
                                             category.grades.forEach forEachGrade@{ (grade, isSelectedForFinalGrade) ->
-                                                val collection = grade.collection.filterIsInstance<CacheState.Done<Collection>>().map { it.data }.collectAsState(null).value
-                                                val interval = collection?.interval?.filterIsInstance<CacheState.Done<Interval>>()?.map { it.data }?.collectAsState(null)?.value
-                                                val teacher = grade.teacher.filterIsInstance<CacheState.Done<Teacher>>().map { it.data }.collectAsState(null).value
+                                                val collection = grade.collection.collectAsState(null).value
+                                                val interval = collection?.interval?.collectAsState(null)?.value
+                                                val teacher = collection?.teacher?.collectAsState(null)?.value
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
@@ -554,7 +550,7 @@ private fun GradesContent(
                                                         val backgroundColor by animateColorAsState(
                                                             if (isSelectedForFinalGrade != true || interval == null || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.Gray
                                                             else when (interval.type) {
-                                                                is Interval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                                 else -> blendColor(blendColor(green.container, red.container, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                             }
                                                         )
@@ -562,7 +558,7 @@ private fun GradesContent(
                                                         val textColor by animateColorAsState(
                                                             if (isSelectedForFinalGrade != true || interval == null || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.White
                                                             else when (interval.type) {
-                                                                is Interval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                                 else -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                             }
                                                         )
@@ -620,7 +616,7 @@ private fun GradesContent(
                                                                 )
                                                             }
                                                             AnimatedContent(
-                                                                targetState = teacher?.let { "${it.forename} ${it.name}" },
+                                                                targetState = teacher?.let { "${it.forename} ${it.surname}" },
                                                                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                                                                 modifier = Modifier.fillMaxWidth()
                                                             ) { teacherName ->
@@ -664,14 +660,14 @@ private fun GradesContent(
                                                         val green = colors[CustomColor.Green]!!.getGroup()
                                                         val backgroundColor by animateColorAsState(
                                                             when (state.selectedInterval!!.type) {
-                                                                is Interval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, grade/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, grade/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                                 else -> blendColor(blendColor(green.container, red.container, (grade-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                             }
                                                         )
 
                                                         val textColor by animateColorAsState(
                                                             when (state.selectedInterval.type) {
-                                                                is Interval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, grade /15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, grade /15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                                 else -> blendColor(blendColor(green.onContainer, red.onContainer, (grade-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                             }
                                                         )
@@ -878,7 +874,7 @@ private fun GradesContent(
     if (addGradeToCategoryId != null) AddGradeDialog(
         onDismiss = { addGradeToCategoryId = null },
         onSelectGrade = { onEvent(GradeDetailEvent.AddGrade(addGradeToCategoryId!!, it)); addGradeToCategoryId = null },
-        intervalType = state.selectedInterval?.type ?: Interval.Type.Sek1
+        intervalType = state.selectedInterval?.type ?: BesteSchuleInterval.Type.Sek1
     )
 
     if (showIntervalFilterDrawer) SelectIntervalDrawer(

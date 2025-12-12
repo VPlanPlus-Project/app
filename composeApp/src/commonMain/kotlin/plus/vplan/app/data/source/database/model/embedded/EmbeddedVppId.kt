@@ -2,7 +2,6 @@ package plus.vplan.app.data.source.database.model.embedded
 
 import androidx.room.Embedded
 import androidx.room.Relation
-import plus.vplan.app.data.source.database.model.database.DbSchulverwalterGrade
 import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
@@ -26,11 +25,6 @@ data class EmbeddedVppId(
         entityColumn = "vpp_id",
         entity = DbVppIdSchulverwalter::class
     ) val schulverwalterAccess: DbVppIdSchulverwalter?,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "vpp_id",
-        entity = DbSchulverwalterGrade::class
-    ) val grades: List<DbSchulverwalterGrade>
 ) {
     fun toModel(): VppId {
         if (access == null) return VppId.Cached(
@@ -45,14 +39,13 @@ data class EmbeddedVppId(
             groups = groups.map { it.groupId },
             accessToken = access.accessToken,
             cachedAt = vppId.cachedAt,
-            gradeIds = grades.map { it.id },
             schulverwalterConnection =
-            if (schulverwalterAccess == null) null
-            else VppId.Active.SchulverwalterConnection(
-                accessToken = schulverwalterAccess.schulverwalterAccessToken,
-                userId = schulverwalterAccess.schulverwalterUserId,
-                isValid = schulverwalterAccess.isValid
-            )
+                if (schulverwalterAccess == null) null
+                else VppId.Active.SchulverwalterConnection(
+                    accessToken = schulverwalterAccess.schulverwalterAccessToken,
+                    userId = schulverwalterAccess.schulverwalterUserId,
+                    isValid = schulverwalterAccess.isValid
+                )
         )
     }
 }

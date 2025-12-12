@@ -1,18 +1,17 @@
 package plus.vplan.app.feature.grades.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.model.schulverwalter.Grade
-import plus.vplan.app.domain.model.schulverwalter.Interval
-import plus.vplan.app.domain.model.schulverwalter.Subject
+import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.domain.model.besteschule.BesteSchuleSubject
 
 class CalculateAverageUseCase {
-    suspend operator fun invoke(grades: List<Grade>, interval: Interval, additionalGrades: List<CalculatorGrade> = emptyList()) = invoke(grades.map { CalculatorGrade.ActualGrade(it) } + additionalGrades, interval)
+    suspend operator fun invoke(grades: List<BesteSchuleGrade>, interval: BesteSchuleInterval, additionalGrades: List<CalculatorGrade> = emptyList()) = invoke(grades.map { CalculatorGrade.ActualGrade(it) } + additionalGrades, interval)
 
-    suspend operator fun invoke(grades: List<CalculatorGrade>, interval: Interval): Double {
+    suspend operator fun invoke(grades: List<CalculatorGrade>, interval: BesteSchuleInterval): Double {
         val gradesForInterval = grades.filter {
             val intervalForGrade = when (it) {
-                is CalculatorGrade.ActualGrade -> it.grade.collection.getFirstValueOld()!!.interval.getFirstValueOld()!!
+                is CalculatorGrade.ActualGrade -> it.grade.collection.first()!!.interval.first()!!
                 else -> interval
             }
             intervalForGrade.id == interval.id || intervalForGrade.includedIntervalId == interval.id
@@ -21,7 +20,7 @@ class CalculateAverageUseCase {
         val gradesBySubject = gradesForInterval.groupBy { it.getSubject() }
         val subjectAverages = mutableListOf<Double>()
 
-        gradesBySubject.forEach { (subject, gradesForSubject) ->
+        gradesBySubject.forEach { (_, gradesForSubject) ->
 
             val categoryAverages = mutableListOf<Double>()
 
@@ -35,11 +34,13 @@ class CalculateAverageUseCase {
 
                 if (gradesToConsider.isEmpty()) return@mapNotNull null
 
-                val rule = subject.finalGrade?.first()?.calculationRule
-                val weight = if (rule != null) {
-                    val regex = Regex("""([\d.]+)\s*\*\s*\(\(($categoryType)_sum\)/\(($categoryType)_count\)\)""")
-                    regex.find(rule)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
-                } else 1.0
+                //fixme
+                val weight = 1.0
+//                val rule = subject.finalGrade?.first()?.calculationRule
+//                val weight = if (rule != null) {
+//                    val regex = Regex("""([\d.]+)\s*\*\s*\(\(($categoryType)_sum\)/\(($categoryType)_count\)\)""")
+//                    regex.find(rule)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
+//                } else 1.0
 
                 Category(
                     name = categoryType,
@@ -69,17 +70,17 @@ private data class Category(
 
 sealed class CalculatorGrade {
 
-    abstract suspend fun getSubject(): Subject
+    abstract suspend fun getSubject(): BesteSchuleSubject
     abstract suspend fun getType(): String
     abstract fun getValue(): Int?
 
-    data class ActualGrade(val grade: Grade): CalculatorGrade() {
-        override suspend fun getSubject(): Subject = grade.subject.getFirstValueOld()!!
-        override suspend fun getType(): String = grade.collection.getFirstValueOld()!!.type
+    data class ActualGrade(val grade: BesteSchuleGrade): CalculatorGrade() {
+        override suspend fun getSubject(): BesteSchuleSubject = grade.collection.first()!!.subject.first()!!
+        override suspend fun getType(): String = grade.collection.first()!!.type
         override fun getValue(): Int? = grade.numericValue
     }
-    data class CustomGrade(val grade: Int, val subject: Subject, val type: String): CalculatorGrade() {
-        override suspend fun getSubject(): Subject = subject
+    data class CustomGrade(val grade: Int, val subject: BesteSchuleSubject, val type: String): CalculatorGrade() {
+        override suspend fun getSubject(): BesteSchuleSubject = subject
         override suspend fun getType(): String = type
         override fun getValue(): Int = grade
     }
