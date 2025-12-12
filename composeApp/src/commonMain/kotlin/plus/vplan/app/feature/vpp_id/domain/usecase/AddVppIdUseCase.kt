@@ -16,7 +16,7 @@ import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppDbDto
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.service.SchoolService
-import plus.vplan.app.feature.sync.domain.usecase.schulverwalter.SyncGradesUseCase
+import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import kotlin.uuid.Uuid
 
 class AddVppIdUseCase(
