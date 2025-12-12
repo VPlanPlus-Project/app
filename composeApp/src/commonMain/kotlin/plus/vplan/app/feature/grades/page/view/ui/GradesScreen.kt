@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
@@ -59,6 +58,7 @@ import plus.vplan.app.feature.grades.page.view.ui.components.NoGradesForInterval
 import plus.vplan.app.feature.grades.page.view.ui.components.SelectYearDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.TopBar
 import plus.vplan.app.feature.grades.page.view.ui.components.latest.LatestGrades
+import plus.vplan.app.feature.grades.page.view.ui.components.subject.Subjects
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.ui.components.Switcher
 
@@ -217,7 +217,8 @@ private fun GradesContent(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .defaultMinSize(minHeight = bodyHeight - contentPadding.calculateBottomPadding())
+                                        .defaultMinSize(minHeight = bodyHeight - contentPadding.calculateBottomPadding()),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier
@@ -231,7 +232,6 @@ private fun GradesContent(
                                             avg = intervalData.avg
                                         )
                                     }
-                                    Spacer(Modifier.height(8.dp))
 
                                     if (intervalData.subjects.all { it.categories.isEmpty() }) {
                                         NoGradesForInterval(
@@ -244,13 +244,16 @@ private fun GradesContent(
                                         return@Column
                                     }
 
-                                    if (intervalData.latestGrades.isNotEmpty()) {
-                                        Spacer(Modifier.height(8.dp))
-                                        LatestGrades(
-                                            grades = intervalData.latestGrades.associateWith { true },
-                                            onOpenGrade = { gradeDrawerId = it }
-                                        )
-                                    }
+                                    if (intervalData.latestGrades.isNotEmpty()) LatestGrades(
+                                        grades = intervalData.latestGrades.associateWith { true },
+                                        onOpenGrade = { gradeDrawerId = it }
+                                    )
+
+                                    if (intervalData.subjects.isNotEmpty()) Subjects(
+                                        intervalType = selectedInterval?.type ?: BesteSchuleInterval.Type.Sek1,
+                                        subjects = intervalData.subjects,
+                                        onOpenGrade = { gradeDrawerId = it }
+                                    )
                                 }
                             }
                         }
