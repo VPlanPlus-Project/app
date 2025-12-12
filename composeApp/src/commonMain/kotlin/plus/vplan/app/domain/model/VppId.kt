@@ -2,9 +2,6 @@
 
 package plus.vplan.app.domain.model
 
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
-import plus.vplan.app.App
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.data.Item
 import kotlin.time.ExperimentalTime
@@ -31,15 +28,9 @@ sealed class VppId : Item<Int, DataTag> {
         override val cachedAt: Instant,
         val accessToken: String,
         val schulverwalterConnection: SchulverwalterConnection?,
-        val gradeIds: List<Int>
     ) : VppId() {
         fun buildVppSchoolAuthentication(schoolId: Int = -1): VppSchoolAuthentication.Vpp {
             return VppSchoolAuthentication.Vpp(schoolId, id, accessToken)
-        }
-
-        val grades by lazy {
-            if (gradeIds.isEmpty()) flowOf(emptyList())
-            else combine(gradeIds.map { App.gradeSource.getById(it) }) { it.toList() }
         }
 
         data class SchulverwalterConnection(

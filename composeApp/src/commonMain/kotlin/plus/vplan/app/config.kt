@@ -29,13 +29,13 @@ private val developmentConfiguration = WebConfig(
 )
 
 @Suppress("unused")
-private val vocusConfiguration = WebConfig(
-    authUrl = "https://auth.vpp.local.vocus.dev",
-    appApiUrl = "https://vpp.local.vocus.dev/api/app",
+private val werkbankConfiguration = WebConfig(
+    authUrl = "https://auth.vpp.werkbank.space",
+    appApiUrl = "https://vpp.werkbank.space/api/app",
     apiUrl = "https://vpp.local.vocus.dev/api"
 )
 
-val currentConfiguration = productionConfiguration
+val currentConfiguration = werkbankConfiguration
 
 data class WebConfig(
     val authUrl: String,

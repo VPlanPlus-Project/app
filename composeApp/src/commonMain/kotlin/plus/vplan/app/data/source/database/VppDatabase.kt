@@ -3,6 +3,7 @@ package plus.vplan.app.data.source.database
 import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
+import androidx.room.DeleteTable
 import androidx.room.RenameColumn
 import androidx.room.RenameTable
 import androidx.room.RoomDatabase
@@ -31,7 +32,6 @@ import plus.vplan.app.data.source.database.dao.KeyValueDao
 import plus.vplan.app.data.source.database.dao.LessonTimeDao
 import plus.vplan.app.data.source.database.dao.NewsDao
 import plus.vplan.app.data.source.database.dao.ProfileDao
-import plus.vplan.app.data.source.database.dao.ProfileTimetableCacheDao
 import plus.vplan.app.data.source.database.dao.RoomDao
 import plus.vplan.app.data.source.database.dao.SchoolDao
 import plus.vplan.app.data.source.database.dao.SubjectInstanceDao
@@ -40,12 +40,12 @@ import plus.vplan.app.data.source.database.dao.TeacherDao
 import plus.vplan.app.data.source.database.dao.TimetableDao
 import plus.vplan.app.data.source.database.dao.VppIdDao
 import plus.vplan.app.data.source.database.dao.WeekDao
-import plus.vplan.app.data.source.database.dao.schulverwalter.CollectionDao
-import plus.vplan.app.data.source.database.dao.schulverwalter.FinalGradeDao
-import plus.vplan.app.data.source.database.dao.schulverwalter.GradeDao
-import plus.vplan.app.data.source.database.dao.schulverwalter.IntervalDao
-import plus.vplan.app.data.source.database.dao.schulverwalter.SubjectDao
-import plus.vplan.app.data.source.database.dao.schulverwalter.YearDao
+import plus.vplan.app.data.source.database.dao.besteschule.BesteschuleCollectionDao
+import plus.vplan.app.data.source.database.dao.besteschule.BesteschuleGradesDao
+import plus.vplan.app.data.source.database.dao.besteschule.BesteschuleIntervalDao
+import plus.vplan.app.data.source.database.dao.besteschule.BesteschuleSubjectDao
+import plus.vplan.app.data.source.database.dao.besteschule.BesteschuleTeacherDao
+import plus.vplan.app.data.source.database.dao.besteschule.BesteschuleYearDao
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbCourseAlias
@@ -74,13 +74,6 @@ import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
 import plus.vplan.app.data.source.database.model.database.DbSchoolSp24Acess
-import plus.vplan.app.data.source.database.model.database.DbSchulverwalterCollection
-import plus.vplan.app.data.source.database.model.database.DbSchulverwalterFinalGrade
-import plus.vplan.app.data.source.database.model.database.DbSchulverwalterGrade
-import plus.vplan.app.data.source.database.model.database.DbSchulverwalterInterval
-import plus.vplan.app.data.source.database.model.database.DbSchulverwalterSubject
-import plus.vplan.app.data.source.database.model.database.DbSchulverwalterTeacher
-import plus.vplan.app.data.source.database.model.database.DbSchulverwalterYear
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
@@ -94,6 +87,13 @@ import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.DbWeek
+import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteSchuleCollection
+import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteSchuleGrade
+import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteSchuleInterval
+import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteschuleIntervalUser
+import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteschuleSubject
+import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteschuleTeacher
+import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteschuleYear
 import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
@@ -106,15 +106,7 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessme
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsSchool
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterInterval
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterCollectionSchulverwalterSubject
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterCollection
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterSubject
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterGradeSchulverwalterTeacher
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterSubjectSchulverwalterFinalGrade
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSchulverwalterYearSchulverwalterInterval
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectInstanceGroup
-import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as SchulverwalterTeacherDao
 
 @Database(
     entities = [
@@ -186,27 +178,19 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
         DbAssessment::class,
         FKAssessmentFile::class,
 
-        DbSchulverwalterCollection::class,
-        DbSchulverwalterFinalGrade::class,
-        DbSchulverwalterGrade::class,
-        DbSchulverwalterInterval::class,
-        DbSchulverwalterSubject::class,
-        DbSchulverwalterTeacher::class,
-        DbSchulverwalterYear::class,
-
-        FKSchulverwalterYearSchulverwalterInterval::class,
-        FKSchulverwalterCollectionSchulverwalterInterval::class,
-        FKSchulverwalterCollectionSchulverwalterSubject::class,
-        FKSchulverwalterGradeSchulverwalterCollection::class,
-        FKSchulverwalterGradeSchulverwalterSubject::class,
-        FKSchulverwalterGradeSchulverwalterTeacher::class,
-        FKSchulverwalterSubjectSchulverwalterFinalGrade::class,
-
         DbProfileTimetableCache::class,
         DbProfileSubstitutionPlanCache::class,
 
         DbNews::class,
         FKNewsSchool::class,
+
+        DbBesteschuleSubject::class,
+        DbBesteschuleYear::class,
+        DbBesteSchuleInterval::class,
+        DbBesteschuleIntervalUser::class,
+        DbBesteschuleTeacher::class,
+        DbBesteSchuleCollection::class,
+        DbBesteSchuleGrade::class,
     ],
     version = VppDatabase.DATABASE_VERSION,
     exportSchema = true,
@@ -245,6 +229,11 @@ import plus.vplan.app.data.source.database.dao.schulverwalter.TeacherDao as Schu
             from = 7,
             to = 8
         ),
+        AutoMigration( // Add DbSchulverwalterIntervalUser
+            from = 10,
+            to = 11,
+            spec = VppDatabase.Migration10to11::class
+        )
     ]
 )
 @TypeConverters(
@@ -278,22 +267,20 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val homeworkDao: HomeworkDao
     abstract val fileDao: FileDao
     abstract val assessmentDao: AssessmentDao
-    abstract val profileTimetableCacheDao: ProfileTimetableCacheDao
     abstract val newsDao: NewsDao
 
     abstract val fcmDao: FcmDao
 
-    // Schulverwalter
-    abstract val yearDao: YearDao
-    abstract val intervalDao: IntervalDao
-    abstract val collectionDao: CollectionDao
-    abstract val subjectDao: SubjectDao
-    abstract val schulverwalterTeacherDao: SchulverwalterTeacherDao
-    abstract val gradeDao: GradeDao
-    abstract val finalGradeDao: FinalGradeDao
+    // Beste.Schule
+    abstract val besteSchuleSubjectDao: BesteschuleSubjectDao
+    abstract val besteSchuleYearDao: BesteschuleYearDao
+    abstract val besteSchuleIntervalDao: BesteschuleIntervalDao
+    abstract val besteSchuleTeacherDao: BesteschuleTeacherDao
+    abstract val besteSchuleCollectionDao: BesteschuleCollectionDao
+    abstract val besteSchuleGradesDao: BesteschuleGradesDao
 
     companion object {
-        const val DATABASE_VERSION = 10
+        const val DATABASE_VERSION = 11
     }
 
     @RenameColumn(
@@ -613,6 +600,22 @@ abstract class VppDatabase : RoomDatabase() {
             """.trimIndent())
         }
     }
+
+    @DeleteTable(tableName = "schulverwalter_collection")
+    @DeleteTable(tableName = "schulverwalter_final_grade")
+    @DeleteTable(tableName = "schulverwalter_grade")
+    @DeleteTable(tableName = "schulverwalter_interval")
+    @DeleteTable(tableName = "schulverwalter_subject")
+    @DeleteTable(tableName = "schulverwalter_teacher")
+    @DeleteTable(tableName = "schulverwalter_year")
+    @DeleteTable(tableName = "fk_schulverwalter_year_schulverwalter_interval")
+    @DeleteTable(tableName = "fk_schulverwalter_collection_schulverwalter_interval")
+    @DeleteTable(tableName = "fk_schulverwalter_collection_schulverwalter_subject")
+    @DeleteTable(tableName = "fk_schulverwalter_grade_schulverwalter_collection")
+    @DeleteTable(tableName = "fk_schulverwalter_grade_schulverwalter_subject")
+    @DeleteTable(tableName = "fk_schulverwalter_grade_schulverwalter_teacher")
+    @DeleteTable(tableName = "fk_schulverwalter_subject_schulverwalter_final_grade")
+    class Migration10to11: AutoMigrationSpec
 }
 
 // Room compiler generates the `actual` implementations
