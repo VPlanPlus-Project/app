@@ -1,8 +1,16 @@
 package plus.vplan.app.data.repository.besteschule
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.job
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.data.source.database.VppDatabase
@@ -19,6 +27,8 @@ import kotlin.time.Duration.Companion.days
 class BesteSchuleSubjectsRepositoryImpl : BesteSchuleSubjectsRepository, KoinComponent {
     private val besteschuleApiRepository by inject<BesteSchuleApiRepository>()
     private val vppDatabase by inject<VppDatabase>()
+
+    private val cacheFlows = mutableMapOf<Int, Flow<BesteSchuleSubject?>>()
 
     override suspend fun getSubjectsFromApi(schulverwalterAccessToken: String): Response<List<ApiStudentData.Subject>> {
         val response = besteschuleApiRepository.getStudentData(schulverwalterAccessToken)
@@ -39,21 +49,39 @@ class BesteSchuleSubjectsRepositoryImpl : BesteSchuleSubjectsRepository, KoinCom
     }
 
     override fun getSubjectFromCache(subjectId: Int): Flow<BesteSchuleSubject?> {
-        return vppDatabase.besteSchuleSubjectDao.getById(subjectId).map { it?.toModel() }
+        return cacheFlows.getOrPut(subjectId) {
+            val upstreamScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            val shared = vppDatabase.besteSchuleSubjectDao.getById(subjectId).map { it?.toModel() }
+                .shareIn(
+                    upstreamScope,
+                    started = SharingStarted.WhileSubscribed(
+                        stopTimeoutMillis = 5_000,
+                        replayExpirationMillis = Long.MAX_VALUE
+                    ),
+                    replay = 1
+                )
+
+            upstreamScope.coroutineContext.job.invokeOnCompletion {
+                cacheFlows.remove(subjectId)
+            }
+
+            shared
+        }
     }
 
+    private val getSubjectsHotFlows = mutableMapOf<Int, SharedFlow<Response<List<BesteSchuleSubject>>>>()
     override fun getSubjects(
         responsePreference: ResponsePreference,
         contextBesteschuleAccessToken: String?,
         contextBesteschuleUserId: Int?
-    ): Flow<Response<List<BesteSchuleSubject>>> = flow {
+    ): Flow<Response<List<BesteSchuleSubject>>> {
+        val key = responsePreference.hashCode() + contextBesteschuleAccessToken.hashCode()
+        val constructFlow = { flow {
 
-        // This flow keeps listening to DB updates
-        val dbFlow = vppDatabase.besteSchuleSubjectDao.getAll().map { embedded ->
-            embedded.map { it.toModel() }
-        }
-
-        dbFlow.collect { cached ->
+            // This flow keeps listening to DB updates
+            vppDatabase.besteSchuleSubjectDao.getAll()
+                .map { embedded -> embedded.map { it.toModel() } }
+                .collect { cached ->
 
             val now = Clock.System.now()
             val cacheIsEmpty = cached.isEmpty()
@@ -118,6 +146,28 @@ class BesteSchuleSubjectsRepositoryImpl : BesteSchuleSubjectsRepository, KoinCom
                     }
                 }
             }
+                }
+        } }
+
+        if (responsePreference != ResponsePreference.Fresh) return constructFlow()
+
+        return getSubjectsHotFlows.getOrPut(key) {
+            val upstreamScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            val shared = constructFlow()
+                .shareIn(
+                    upstreamScope,
+                    started = SharingStarted.WhileSubscribed(
+                        stopTimeoutMillis = 5_000,
+                        replayExpirationMillis = Long.MAX_VALUE
+                    ),
+                    replay = 1
+                )
+
+            upstreamScope.coroutineContext.job.invokeOnCompletion {
+                getSubjectsHotFlows.remove(key)
+            }
+
+            shared
         }
     }
 

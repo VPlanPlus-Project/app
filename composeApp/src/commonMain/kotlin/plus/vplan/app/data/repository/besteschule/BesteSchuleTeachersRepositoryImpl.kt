@@ -1,8 +1,16 @@
 package plus.vplan.app.data.repository.besteschule
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.job
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.data.source.database.VppDatabase
@@ -19,6 +27,8 @@ import kotlin.time.Duration.Companion.days
 class BesteSchuleTeachersRepositoryImpl : BesteSchuleTeachersRepository, KoinComponent {
     private val besteschuleApiRepository by inject<BesteSchuleApiRepository>()
     private val vppDatabase by inject<VppDatabase>()
+
+    private val cacheFlows = mutableMapOf<Int, Flow<BesteSchuleTeacher?>>()
 
     override suspend fun getTeachersFromApi(schulverwalterAccessToken: String): Response<List<ApiStudentGradesData.Teacher>> {
         val response = besteschuleApiRepository.getStudentGradeData(schulverwalterAccessToken)
@@ -40,84 +50,124 @@ class BesteSchuleTeachersRepositoryImpl : BesteSchuleTeachersRepository, KoinCom
     }
 
     override fun getTeacherFromCache(teacherId: Int): Flow<BesteSchuleTeacher?> {
-        return vppDatabase.besteSchuleTeacherDao.getTeacher(teacherId).map { it?.toModel() }
+        return cacheFlows.getOrPut(teacherId) {
+            val upstreamScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            val shared = vppDatabase.besteSchuleTeacherDao.getTeacher(teacherId).map { it?.toModel() }
+                .shareIn(
+                    upstreamScope,
+                    started = SharingStarted.WhileSubscribed(
+                        stopTimeoutMillis = 5_000, // when last subscriber leaves, wait 5s then stop
+                        replayExpirationMillis = Long.MAX_VALUE
+                    ),
+                    replay = 1 // last value available immediately for new subscribers
+                )
+
+            upstreamScope.coroutineContext.job.invokeOnCompletion {
+                cacheFlows.remove(teacherId)
+            }
+
+            shared
+        }
     }
 
+    private val getTeachersHotFlows = mutableMapOf<Int, SharedFlow<Response<List<BesteSchuleTeacher>>>>()
     override fun getTeachers(
         responsePreference: ResponsePreference,
         contextBesteschuleAccessToken: String?,
-    ): Flow<Response<List<BesteSchuleTeacher>>> = flow {
+    ): Flow<Response<List<BesteSchuleTeacher>>> {
+        val key = responsePreference.hashCode() + contextBesteschuleAccessToken.hashCode()
+        val constructFlow = { flow {
 
-        // This flow keeps listening to DB updates
-        val dbFlow = vppDatabase.besteSchuleTeacherDao.getAll().map { embedded ->
-            embedded.map { it.toModel() }
-        }
+            // This flow keeps listening to DB updates
+            vppDatabase.besteSchuleTeacherDao.getAll()
+                .map { embedded -> embedded.map { it.toModel() } }
+                .collect { cached ->
 
-        dbFlow.collect { cached ->
+                    val now = Clock.System.now()
+                    val cacheIsEmpty = cached.isEmpty()
+                    val cacheIsStale = cached.all { now - it.cachedAt > 1.days }
 
-            val now = Clock.System.now()
-            val cacheIsEmpty = cached.isEmpty()
-            val cacheIsStale = cached.all { now - it.cachedAt > 1.days }
+                    when (responsePreference) {
 
-            when (responsePreference) {
-
-                ResponsePreference.Fast -> {
-                    // Always emit cached data first
-                    emit(Response.Success(cached))
-
-                    // In fast mode, stale or missing data triggers a silent background refresh
-                    if ((cacheIsEmpty || cacheIsStale) && contextBesteschuleAccessToken != null) {
-                        try {
-                            refreshTeachers(contextBesteschuleAccessToken)
-                        } catch (_: Exception) {
-                            // Ignore refresh errors in fast mode
-                        }
-                    }
-                }
-
-                ResponsePreference.Secure -> {
-                    if ((cacheIsEmpty || cacheIsStale) && contextBesteschuleAccessToken != null) {
-
-                        val refreshed = try {
-                            refreshTeachers(contextBesteschuleAccessToken)
-                        } catch (_: Exception) {
-                            null
-                        }
-
-                        if (refreshed != null) {
-                            // A successful refresh produces updated DB rows, which will re-trigger DB flow
-                            emit(refreshed)
-                        } else if (cached.isNotEmpty()) {
-                            // Fallback to existing cache
+                        ResponsePreference.Fast -> {
+                            // Always emit cached data first
                             emit(Response.Success(cached))
-                        } else {
-                            emit(Response.Error.Other("Failed to refresh teachers and cache is empty"))
+
+                            // In fast mode, stale or missing data triggers a silent background refresh
+                            if ((cacheIsEmpty || cacheIsStale) && contextBesteschuleAccessToken != null) {
+                                try {
+                                    refreshTeachers(contextBesteschuleAccessToken)
+                                } catch (_: Exception) {
+                                    // Ignore refresh errors in fast mode
+                                }
+                            }
                         }
 
-                    } else {
-                        emit(Response.Success(cached))
+                        ResponsePreference.Secure -> {
+                            if ((cacheIsEmpty || cacheIsStale) && contextBesteschuleAccessToken != null) {
+
+                                val refreshed = try {
+                                    refreshTeachers(contextBesteschuleAccessToken)
+                                } catch (_: Exception) {
+                                    null
+                                }
+
+                                if (refreshed != null) {
+                                    // A successful refresh produces updated DB rows, which will re-trigger DB flow
+                                    emit(refreshed)
+                                } else if (cached.isNotEmpty()) {
+                                    // Fallback to existing cache
+                                    emit(Response.Success(cached))
+                                } else {
+                                    emit(Response.Error.Other("Failed to refresh teachers and cache is empty"))
+                                }
+
+                            } else {
+                                emit(Response.Success(cached))
+                            }
+                        }
+
+                        ResponsePreference.Fresh -> {
+                            // Fresh mode always requires a successful API update
+                            if (contextBesteschuleAccessToken == null) {
+                                throw IllegalStateException("When fresh values are requested, a token is required.")
+                            } else {
+                                val refreshed = try {
+                                    refreshTeachers(contextBesteschuleAccessToken)
+                                } catch (_: Exception) {
+                                    null
+                                }
+
+                                if (refreshed != null) {
+                                    emit(refreshed)
+                                } else {
+                                    emit(Response.Error.Other("Failed to refresh teachers"))
+                                }
+                            }
+                        }
                     }
                 }
+        } }
 
-                ResponsePreference.Fresh -> {
-                    // Fresh mode always requires a successful API update
-                    if (contextBesteschuleAccessToken == null) {
-                        throw IllegalStateException("When fresh values are requested, a token is required.")
-                    } else {
-                        val refreshed = try {
-                            refreshTeachers(contextBesteschuleAccessToken)
-                        } catch (_: Exception) {
-                            null
-                        }
+        if (responsePreference != ResponsePreference.Fresh) return constructFlow()
 
-                        if (refreshed != null) {
-                            emit(refreshed)
-                        } else {
-                            emit(Response.Error.Other("Failed to refresh teachers"))
-                        }
-                    }
-                }
+        return getTeachersHotFlows.getOrPut(key) {
+            val upstreamScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            val shared = constructFlow()
+                .shareIn(
+                    upstreamScope,
+                    started = SharingStarted.WhileSubscribed(
+                        stopTimeoutMillis = 5_000, // when last subscriber leaves, wait 5s then stop
+                        replayExpirationMillis = Long.MAX_VALUE
+                    ),
+                    replay = 1 // last value available immediately for new subscribers
+                )
+
+            upstreamScope.coroutineContext.job.invokeOnCompletion {
+                getTeachersHotFlows.remove(key)
             }
+
+            shared
         }
     }
 
