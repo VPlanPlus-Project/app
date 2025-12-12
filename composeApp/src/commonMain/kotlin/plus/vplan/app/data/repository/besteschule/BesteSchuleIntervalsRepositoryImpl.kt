@@ -41,7 +41,7 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
     }
 
     override suspend fun addIntervalsToCache(intervals: Set<BesteSchuleInterval>) {
-        val existingYears = vppDatabase.besteSchuleYearDao.getAll().first().map { it.id }.toSet()
+        val existingYears = vppDatabase.besteSchuleYearDao.getAll().first().map { it.besteSchuleYear.id }.toSet()
         val existingIntervals = vppDatabase.besteSchuleIntervalDao.getAll().first().map { it.interval.id }
             .toSet() + intervals.map { it.id }
 

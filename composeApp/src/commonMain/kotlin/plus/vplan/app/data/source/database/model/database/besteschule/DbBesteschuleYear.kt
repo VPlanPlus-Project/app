@@ -20,12 +20,4 @@ data class DbBesteschuleYear(
     @ColumnInfo("from") val from: LocalDate,
     @ColumnInfo("to") val to: LocalDate,
     @ColumnInfo("cached_at") val cachedAt: Instant
-) {
-    fun toModel() = BesteSchuleYear(
-        id = this.id,
-        name = this.name,
-        from = this.from,
-        to = this.to,
-        cachedAt = this.cachedAt
-    )
-}
+)

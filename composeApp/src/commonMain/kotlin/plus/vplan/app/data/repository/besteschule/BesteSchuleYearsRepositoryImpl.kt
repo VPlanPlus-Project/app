@@ -203,7 +203,8 @@ class BesteSchuleYearsRepositoryImpl : BesteSchuleYearsRepository, KoinComponent
                 name = it.name,
                 from = LocalDate.parse(it.from),
                 to = LocalDate.parse(it.to),
-                cachedAt = now
+                cachedAt = now,
+                intervalIds = emptySet(),
             )
         }.toSet()
 
