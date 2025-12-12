@@ -58,7 +58,7 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
-import plus.vplan.app.feature.grades.page.view.ui.components.SelectIntervalDrawer
+import plus.vplan.app.feature.grades.page.view.ui.components.SelectYearDrawer
 import plus.vplan.app.ui.animatePlacement
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.CustomColor
@@ -232,12 +232,13 @@ private fun AnalyticsContent(
         }
     }
 
-    if (showIntervalFilterDrawer) SelectIntervalDrawer(
-        intervals = state.intervals,
-        selectedInterval = state.interval,
-        onDismiss = { showIntervalFilterDrawer = false },
-        onClickInterval = { onEvent(AnalyticsAction.SetInterval(it)) }
-    )
+    // fixme
+//    if (showIntervalFilterDrawer) SelectYearDrawer(
+//        intervals = state.intervals,
+//        selectedInterval = state.interval,
+//        onDismiss = { showIntervalFilterDrawer = false },
+//        onClickInterval = { onEvent(AnalyticsAction.SetInterval(it)) }
+//    )
 
     if (showFilterDrawer) {
         val sheetState = rememberModalBottomSheetState(true)
