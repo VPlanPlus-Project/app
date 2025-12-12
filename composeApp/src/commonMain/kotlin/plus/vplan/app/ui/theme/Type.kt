@@ -1,5 +1,6 @@
 package plus.vplan.app.ui.theme
 
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontFamily
@@ -104,6 +105,7 @@ fun monospaceFontFamily() = FontFamily(
 
 val baseline = Typography()
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun appTypography() = Typography(
     displayLarge = baseline.displayLarge.copy(fontFamily = bodyFontFamily()),
@@ -111,9 +113,12 @@ fun appTypography() = Typography(
     displaySmall = baseline.displaySmall.copy(fontFamily = bodyFontFamily()),
     headlineLarge = baseline.headlineLarge.copy(fontFamily = bodyFontFamily()),
     headlineMedium = baseline.headlineMedium.copy(fontFamily = bodyFontFamily()),
+    headlineMediumEmphasized = baseline.headlineMedium.copy(fontFamily = displayFontFamily()),
     headlineSmall = baseline.headlineSmall.copy(fontFamily = bodyFontFamily()),
+    headlineSmallEmphasized = baseline.headlineSmall.copy(fontFamily = displayFontFamily()),
     titleLarge = baseline.titleLarge.copy(fontFamily = bodyFontFamily()),
     titleMedium = baseline.titleMedium.copy(fontFamily = bodyFontFamily()),
+    titleMediumEmphasized = baseline.titleMedium.copy(fontFamily = displayFontFamily()),
     titleSmall = baseline.titleSmall.copy(fontFamily = bodyFontFamily()),
     bodyLarge = baseline.bodyLarge.copy(fontFamily = bodyFontFamily()),
     bodyMedium = baseline.bodyMedium.copy(fontFamily = bodyFontFamily()),

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.domain.cache.getFirstValueOld
@@ -34,7 +35,10 @@ import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
+import plus.vplan.app.utils.atStartOfDay
 import plus.vplan.app.utils.now
+import plus.vplan.app.utils.until
+import kotlin.time.Duration.Companion.days
 
 class GradesViewModel(
     private val calculateAverageUseCase: CalculateAverageUseCase,
@@ -86,7 +90,11 @@ class GradesViewModel(
                         gradeState.update {
                             it.copy(
                                 intervalsForSelectedYear = intervalsForYear.associateWith { _ ->
-                                    IntervalData(avg = null, subjects = emptyList())
+                                    IntervalData(
+                                        avg = null,
+                                        subjects = emptyList(),
+                                        latestGrades = emptyList()
+                                    )
                                 }
                             )
                         }
@@ -185,7 +193,11 @@ class GradesViewModel(
         }
 
         if (gradesForInterval.isEmpty()) {
-            return IntervalData(avg = Double.NaN, subjects = emptyList())
+            return IntervalData(
+                avg = Double.NaN,
+                subjects = emptyList(),
+                latestGrades = emptyList()
+            )
         }
 
         val subjects = gradesForInterval
@@ -271,7 +283,11 @@ class GradesViewModel(
 
         return IntervalData(
             avg = fullAverage,
-            subjects = subjectsWithAverages
+            subjects = subjectsWithAverages,
+            latestGrades = gradesForInterval
+                .filter { it.givenAt.atStartOfDay() until LocalDateTime.now() < 14.days }
+                .sortedByDescending { it.givenAt }
+                .take(4)
         )
     }
 
@@ -475,7 +491,8 @@ data class GradesState(
 
 data class IntervalData(
     val avg: Double?,
-    val subjects: List<Subject>
+    val subjects: List<Subject>,
+    val latestGrades: List<BesteSchuleGrade>
 )
 
 data class Subject(

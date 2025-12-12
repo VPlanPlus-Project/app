@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
@@ -14,22 +15,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
@@ -45,11 +41,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.painterResource
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -58,13 +54,13 @@ import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.AddGradeDialog
 import plus.vplan.app.feature.grades.page.view.ui.components.AverageCard
+import plus.vplan.app.feature.grades.page.view.ui.components.GradesLocked
+import plus.vplan.app.feature.grades.page.view.ui.components.NoGradesForInterval
 import plus.vplan.app.feature.grades.page.view.ui.components.SelectYearDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.TopBar
+import plus.vplan.app.feature.grades.page.view.ui.components.latest.LatestGrades
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.ui.components.Switcher
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.lock
-import vplanplus.composeapp.generated.resources.lock_open
 
 @Composable
 fun GradesScreen(
@@ -145,52 +141,23 @@ private fun GradesContent(
                     return@AnimatedContent
                 }
 
+                val contentModifier = Modifier
+                    .padding(
+                        top = contentPadding.calculateTopPadding(),
+                        start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                        end = contentPadding.calculateEndPadding(LocalLayoutDirection.current)
+                    )
+                    .fillMaxSize()
+
                 AnimatedContent(
                     targetState = !state.gradeLockState.canAccess,
                     modifier = Modifier.fillMaxSize()
                 ) { areGradesLocked ->
                     if (areGradesLocked) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(
-                                    top = contentPadding.calculateTopPadding(),
-                                    start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-                                    end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
-                                    bottom = contentPadding.calculateBottomPadding()
-                                ),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
-                        ) {
-                            Icon(
-                                painter = painterResource(Res.drawable.lock),
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Text(
-                                text = "Noten gesperrt",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            TextButton(
-                                onClick = { onEvent(GradeDetailEvent.RequestGradeUnlock) },
-                                colors = ButtonDefaults.textButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.tertiary
-                                )
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(Res.drawable.lock_open),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Text("Entsperren")
-                                }
-                            }
-                        }
+                        GradesLocked(
+                            modifier = contentModifier,
+                            onRequestGradeUnlock = { onEvent(GradeDetailEvent.RequestGradeUnlock) }
+                        )
                         return@AnimatedContent
                     }
 
@@ -207,13 +174,7 @@ private fun GradesContent(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         },
-                        modifier = Modifier
-                            .padding(
-                                top = contentPadding.calculateTopPadding(),
-                                start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-                                end = contentPadding.calculateEndPadding(LocalLayoutDirection.current)
-                            )
-                            .fillMaxSize()
+                        modifier = contentModifier
                     ) {
                     Column(
                         modifier = Modifier
@@ -255,7 +216,7 @@ private fun GradesContent(
                                 val (interval, intervalData) = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }[page]
                                 Column(
                                     modifier = Modifier
-                                        .fillMaxWidth()
+                                        .fillMaxSize()
                                         .defaultMinSize(minHeight = bodyHeight - contentPadding.calculateBottomPadding())
                                 ) {
                                     Row(
@@ -268,6 +229,26 @@ private fun GradesContent(
                                         AverageCard(
                                             modifier = Modifier.weight(1f),
                                             avg = intervalData.avg
+                                        )
+                                    }
+                                    Spacer(Modifier.height(8.dp))
+
+                                    if (intervalData.subjects.all { it.categories.isEmpty() }) {
+                                        NoGradesForInterval(
+                                            modifier = Modifier
+                                                .padding(8.dp)
+                                                .weight(1f)
+                                                .fillMaxSize(),
+                                            intervalName = interval.name
+                                        )
+                                        return@Column
+                                    }
+
+                                    if (intervalData.latestGrades.isNotEmpty()) {
+                                        Spacer(Modifier.height(8.dp))
+                                        LatestGrades(
+                                            grades = intervalData.latestGrades.associateWith { true },
+                                            onOpenGrade = { gradeDrawerId = it }
                                         )
                                     }
                                 }
@@ -284,60 +265,6 @@ private fun GradesContent(
 //                .padding(contentPadding)
 //                .fillMaxSize()
 //        ) {
-//            AnimatedContent(
-//                targetState = state.gradeLockState != null,
-//                modifier = Modifier.fillMaxSize(),
-//            ) gradeLockStateAvailable@{ isGradeLockStateLoaded ->
-//                if (!isGradeLockStateLoaded) {
-//                    Box(
-//                        modifier = Modifier.fillMaxSize(),
-//                        contentAlignment = Alignment.Center
-//                    ) {
-//                        CircularWavyProgressIndicator()
-//                    }
-//                    return@gradeLockStateAvailable
-//                }
-//                AnimatedContent(
-//                    targetState = state.gradeLockState?.canAccess?.not() != false,
-//                    modifier = Modifier.fillMaxSize(),
-//                ) { areGradesLocked ->
-//                    if (areGradesLocked) {
-//                        Column(
-//                            modifier = Modifier.fillMaxSize(),
-//                            horizontalAlignment = Alignment.CenterHorizontally,
-//                            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
-//                        ) {
-//                            Icon(
-//                                painter = painterResource(Res.drawable.lock),
-//                                contentDescription = null,
-//                                modifier = Modifier.size(24.dp)
-//                            )
-//                            Text(
-//                                text = "Noten gesperrt",
-//                                style = MaterialTheme.typography.titleMedium,
-//                                color = MaterialTheme.colorScheme.onSurface
-//                            )
-//                            TextButton(
-//                                onClick = { onEvent(GradeDetailEvent.RequestGradeUnlock) },
-//                                colors = ButtonDefaults.textButtonColors(
-//                                    contentColor = MaterialTheme.colorScheme.tertiary
-//                                )
-//                            ) {
-//                                Row(
-//                                    verticalAlignment = Alignment.CenterVertically,
-//                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-//                                ) {
-//                                    Icon(
-//                                        painter = painterResource(Res.drawable.lock_open),
-//                                        contentDescription = null,
-//                                        modifier = Modifier.size(24.dp)
-//                                    )
-//                                    Text("Entsperren")
-//                                }
-//                            }
-//                        }
-//                        return@AnimatedContent
-//                    }
 //                    PullToRefreshBox(
 //                        state = pullToRefreshState,
 //                        onRefresh = { onEvent(GradeDetailEvent.Refresh) },
