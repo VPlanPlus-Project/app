@@ -180,7 +180,7 @@ private fun ProfileContent(
                                     areGradesLocked = state.areGradesLocked,
                                     subjects = subjectInstances,
                                     infiniteTransition = infiniteTransition,
-                                    averageGrade = if (vppId.gradeIds.isEmpty() || state.averageGrade?.isNaN() == true) GradesCardFeaturedGrade.NotExisting else if (state.averageGrade == null) GradesCardFeaturedGrade.Loading else GradesCardFeaturedGrade.Value(state.averageGrade.roundTo(2).toString()),
+                                    averageGrade = if (state.averageGrade?.isNaN() == true) GradesCardFeaturedGrade.NotExisting else if (state.averageGrade == null) GradesCardFeaturedGrade.Loading else GradesCardFeaturedGrade.Value(state.averageGrade.roundTo(2).toString()),
                                     latestGrade = when (state.latestGrade) {
                                         is LatestGrade.Loading -> GradesCardFeaturedGrade.Loading
                                         is LatestGrade.NotExisting -> GradesCardFeaturedGrade.NotExisting

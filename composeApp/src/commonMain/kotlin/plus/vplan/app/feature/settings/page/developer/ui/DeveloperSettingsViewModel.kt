@@ -12,6 +12,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Group
@@ -25,6 +27,7 @@ import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
@@ -52,9 +55,11 @@ class DeveloperSettingsViewModel(
     private val updateAssessmentsUseCase: UpdateAssessmentsUseCase,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val groupRepository: GroupRepository
-) : ViewModel() {
+) : ViewModel(), KoinComponent {
 
     var state by mutableStateOf(DeveloperSettingsState())
+
+    private val syncGradesUseCase by inject<SyncGradesUseCase>()
 
     init {
         viewModelScope.launch {
@@ -143,6 +148,17 @@ class DeveloperSettingsViewModel(
                     )
                     state = state.copy(isLessonTimesUpdateRunning = false)
                 }
+                DeveloperSettingsEvent.UpdateGrades -> {
+                    if (state.isGradeUpdateRunning) return@launch
+                    state = state.copy(isGradeUpdateRunning = true)
+                    try {
+                        syncGradesUseCase(false)
+                    } catch (e: Exception) {
+                        Logger.e { "Failed to sync grades: $e" }
+                    } finally {
+                        state = state.copy(isGradeUpdateRunning = false)
+                    }
+                }
                 DeveloperSettingsEvent.ToggleAutoSyncDisabled -> {
                     keyValueRepository.set(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC, (!keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).first().toBoolean()).toString())
                 }
@@ -187,6 +203,7 @@ data class DeveloperSettingsState(
     val isLessonTimesUpdateRunning: Boolean = false,
     val isHomeworkUpdateRunning: Boolean = false,
     val isAssessmentsUpdateRunning: Boolean = false,
+    val isGradeUpdateRunning: Boolean = false,
     val isDeveloperModeEnabled: Boolean = true,
     val profile: Profile? = null,
     val isAutoSyncDisabled: Boolean = false,
@@ -205,6 +222,7 @@ sealed class DeveloperSettingsEvent {
     data class UpdateSubjectInstance(val subjectInstance: SubjectInstance) : DeveloperSettingsEvent()
     data object UpdateHomework : DeveloperSettingsEvent()
     data object UpdateAssessments : DeveloperSettingsEvent()
+    data object UpdateGrades: DeveloperSettingsEvent()
     data object ToggleDeveloperMode : DeveloperSettingsEvent()
     data object ToggleAutoSyncDisabled : DeveloperSettingsEvent()
     data object ClearSubstitutionPlanCache : DeveloperSettingsEvent()

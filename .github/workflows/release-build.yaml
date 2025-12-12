@@ -62,7 +62,7 @@ jobs:
                 run: echo "app.debug=false" >> local.properties
 
             -   name: Create placeholder certificate
-                run: touch ${GITHUB_WORKSPACE}/composeApp/src/androidMain/res/raw/vocusca.crt
+                run: touch ${GITHUB_WORKSPACE}/composeApp/src/androidMain/res/raw/werkbankca.crt
 
             -   uses: actions/cache@v4
                 with:

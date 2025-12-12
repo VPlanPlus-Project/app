@@ -18,6 +18,7 @@ sealed class Response<out T> {
             data object ConnectionError : OnlineError()
             data object Unauthorized : OnlineError()
             data object NotFound : OnlineError()
+            data object ServerError : OnlineError()
         }
 
         companion object {

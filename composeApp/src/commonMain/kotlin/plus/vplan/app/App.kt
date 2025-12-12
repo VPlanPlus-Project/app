@@ -31,12 +31,6 @@ import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.WeekSource
-import plus.vplan.app.domain.source.schulverwalter.CollectionSource
-import plus.vplan.app.domain.source.schulverwalter.FinalGradeSource
-import plus.vplan.app.domain.source.schulverwalter.GradeSource
-import plus.vplan.app.domain.source.schulverwalter.IntervalSource
-import plus.vplan.app.domain.source.schulverwalter.SubjectSource
-import plus.vplan.app.domain.source.schulverwalter.YearSource
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.feature.settings.page.info.domain.usecase.getSystemInfo
 import plus.vplan.app.ui.theme.AppTheme
@@ -71,14 +65,6 @@ object App {
     lateinit var assessmentSource: AssessmentSource
     lateinit var fileSource: FileSource
     lateinit var newsSource: NewsSource
-
-    lateinit var yearSource: YearSource
-    lateinit var intervalSource: IntervalSource
-    lateinit var collectionSource: CollectionSource
-    lateinit var subjectSource: SubjectSource
-    lateinit var schulverwalterTeacherSource: plus.vplan.app.domain.source.schulverwalter.TeacherSource
-    lateinit var gradeSource: GradeSource
-    lateinit var finalGradeSource: FinalGradeSource
 }
 
 @Composable

@@ -10,31 +10,37 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.schulverwalter.Grade
+import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.domain.repository.ProfileRepository
+import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
-import plus.vplan.app.feature.grades.domain.usecase.ToggleConsiderGradeForFinalGradeUseCase
 import plus.vplan.app.feature.grades.domain.usecase.UpdateGradeUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 
 class GradeDetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateGradeUseCase: UpdateGradeUseCase,
-    private val toggleConsiderGradeForFinalGradeUseCase: ToggleConsiderGradeForFinalGradeUseCase,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
     private val lockGradesUseCase: LockGradesUseCase
-) : ViewModel() {
+) : ViewModel(), KoinComponent {
     var state by mutableStateOf(GradeDetailState())
         private set
+
+    private val profileRepository by inject<ProfileRepository>()
+    private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
 
     private var mainJob: Job? = null
 
@@ -45,15 +51,22 @@ class GradeDetailViewModel(
             combine(
                 getCurrentProfileUseCase(),
                 getGradeLockStateUseCase(),
-                App.gradeSource.getById(gradeId)
-            ) { profile, gradeLockState, gradeData ->
-                if (gradeData !is CacheState.Done || profile !is Profile.StudentProfile) return@combine null
-                val grade = gradeData.data
+                besteSchuleGradesRepository.getGradeFromCache(gradeId)
+            ) { profile, gradeLockState, grade ->
+                if (profile !is Profile.StudentProfile) return@combine null
 
                 profile.prefetch()
 
                 state.copy(
                     grade = grade,
+                    gradeUser = profileRepository.getAll()
+                        .first()
+                        .filterIsInstance<Profile.StudentProfile>()
+                        .filter { it.vppIdId != null }
+                        .map { it.vppId!!.getFirstValueOld() }
+                        .filterIsInstance<VppId.Active>()
+                        .filter { it.schulverwalterConnection != null }
+                        .firstOrNull { it.schulverwalterConnection?.userId == grade?.schulverwalterUserId },
                     profile = profile,
                     lockState = gradeLockState,
                     initDone = true
@@ -65,10 +78,22 @@ class GradeDetailViewModel(
     fun onEvent(event: GradeDetailEvent) {
         viewModelScope.launch {
             when (event) {
-                is GradeDetailEvent.ToggleConsiderForFinalGrade -> toggleConsiderGradeForFinalGradeUseCase(state.grade!!.id, !state.grade!!.isSelectedForFinalGrade)
+                is GradeDetailEvent.ToggleConsiderForFinalGrade -> {
+                    besteSchuleGradesRepository.addGradesToCache(
+                        listOf(
+                            state.grade!!.copy(
+                                isSelectedForFinalGrade = !state.grade!!.isSelectedForFinalGrade
+                            )
+                        )
+                    )
+                }
                 is GradeDetailEvent.Reload -> {
                     state = state.copy(reloadingState = UnoptimisticTaskState.InProgress)
-                    val result = updateGradeUseCase(state.grade!!.id)
+                    val result = updateGradeUseCase(
+                        gradeId = state.grade!!.id,
+                        schulverwalterAccessToken = state.gradeUser!!.schulverwalterConnection!!.accessToken,
+                        schulverwalterUserId = state.gradeUser!!.schulverwalterConnection!!.userId
+                    )
                     when (result) {
                         UpdateResult.SUCCESS -> {
                             state = state.copy(reloadingState = UnoptimisticTaskState.Success)
@@ -89,7 +114,8 @@ class GradeDetailViewModel(
 }
 
 data class GradeDetailState(
-    val grade: Grade? = null,
+    val grade: BesteSchuleGrade? = null,
+    val gradeUser: VppId.Active? = null,
     val profile: Profile.StudentProfile? = null,
     val initDone: Boolean = false,
     val reloadingState: UnoptimisticTaskState? = null,
