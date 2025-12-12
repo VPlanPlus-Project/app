@@ -1,9 +1,11 @@
 package plus.vplan.app.domain.model.besteschule
 
+import kotlinx.coroutines.flow.combine
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.captureError
+import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleYearsRepository
 import kotlin.time.Instant
@@ -54,7 +56,13 @@ data class BesteSchuleInterval(
 
     private val besteschuleIntervalsRepository by inject<BesteSchuleIntervalsRepository>()
     private val besteschuleYearsRepository by inject<BesteSchuleYearsRepository>()
+    private val besteSchuleCollectionsRepository by inject<BesteSchuleCollectionsRepository>()
 
     val includedInterval by lazy { includedIntervalId?.let { besteschuleIntervalsRepository.getIntervalFromCache(it) } }
     val year by lazy { besteschuleYearsRepository.getYearFromCache(yearId) }
+    val collections by lazy {
+        combine(collectionIds.map { besteSchuleCollectionsRepository.getFromCache(it) }) {
+            it.toList().filterNotNull()
+        }
+    }
 }
