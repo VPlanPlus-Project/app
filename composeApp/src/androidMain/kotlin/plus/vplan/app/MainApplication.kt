@@ -50,7 +50,7 @@ class MainApplication : Application() {
         PostHog.register("debug_mode", isDebug().toString())
 
         FirebaseApp.initializeApp(this)
-        Firebase.crashlytics.isCrashlyticsCollectionEnabled = !isDebug()
+        Firebase.crashlytics.isCrashlyticsCollectionEnabled = false
 
         initKoin {
             androidContext(this@MainApplication)
