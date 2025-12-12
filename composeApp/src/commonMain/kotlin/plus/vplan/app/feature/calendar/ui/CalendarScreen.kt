@@ -43,9 +43,11 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -70,11 +72,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionOnScreen
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -107,8 +111,8 @@ import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
+import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.ui.thenIf
-import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.untilText
@@ -119,7 +123,6 @@ import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
 
 private const val CONTENT_PAGER_SIZE = 800
-private const val CALENDAR_SCREEN_START_PADDING_MINUTES = 15
 
 @Composable
 fun CalendarScreen(
@@ -152,6 +155,7 @@ private fun CalendarScreenContent(
     var scrollProgress by remember { mutableStateOf(0f) }
     val contentScrollStates = remember { mutableMapOf<LocalDate, ScrollState>() }
     val contentScrollState = remember(state.selectedDate) { contentScrollStates.getOrPut(state.selectedDate) { ScrollState(0) } }
+    Logger.d { "Date ${state.selectedDate}, ${contentScrollState.value}" }
     var isUserScrolling by remember { mutableStateOf(false) }
     var isAnimating by remember { mutableStateOf(false) }
     LaunchedEffect(contentScrollState.isScrollInProgress) {
@@ -168,18 +172,12 @@ private fun CalendarScreenContent(
     )
     val displayScrollProgress = if (isUserScrolling) scrollProgress else animatedScrollProgress
 
-    val minute = 1.25.dp
     var containerHeight by remember { mutableStateOf(0.dp) }
 
     val scrollConnection = remember(state.selectedDate, containerHeight) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val day = state.calendarDays[state.selectedDate]
-                val isContentAtTop = when (day?.lessons) {
-                    null -> true
-                    is LessonRendering.Layouted -> with(localDensity) { contentScrollState.value <= ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).roundToPx() }
-                    is LessonRendering.ListView -> contentScrollState.value == 0
-                }
+                val isContentAtTop = contentScrollState.value == 0
 
                 val y = ((with(localDensity) { available.y.toDp()/2 }) / (5 * weekHeightDefault)).let {
                     if (it > 1) 1 + (with(localDensity) { available.y.toDp()/2 }) / (containerHeight - (5*weekHeightDefault))
@@ -235,46 +233,54 @@ private fun CalendarScreenContent(
                                 style = MaterialTheme.typography.titleSmall
                             )
                         }
-                        Row {
-                            AnimatedContent(
-                                targetState = state.selectedDate.day,
-                                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                                modifier = Modifier.animateContentSize()
-                            ) {
-                                Text(
-                                    text = it.toString(),
-                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        CompositionLocalProvider(
+                            LocalTextStyle provides LocalTextStyle.current.merge(
+                                TextStyle(
+                                    fontFamily = displayFontFamily()
                                 )
-                            }
-                            Text(
-                                text = ". ",
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                             )
-                            AnimatedContent(
-                                targetState = state.selectedDate.format(LocalDate.Format {
-                                    monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
-                                }),
-                                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                                modifier = Modifier.animateContentSize()
-                            ) {
+                        ) {
+                            Row {
+                                AnimatedContent(
+                                    targetState = state.selectedDate.day,
+                                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                                    modifier = Modifier.animateContentSize()
+                                ) {
+                                    Text(
+                                        text = it.toString(),
+                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                }
                                 Text(
-                                    text = it,
+                                    text = ". ",
                                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                                 )
-                            }
-                            Text(
-                                text = " ",
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                            )
-                            AnimatedContent(
-                                targetState = state.selectedDate.year,
-                                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                                modifier = Modifier.animateContentSize()
-                            ) {
+                                AnimatedContent(
+                                    targetState = state.selectedDate.format(LocalDate.Format {
+                                        monthName(MonthNames("Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"))
+                                    }),
+                                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                                    modifier = Modifier.animateContentSize()
+                                ) {
+                                    Text(
+                                        text = it,
+                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                }
                                 Text(
-                                    text = it.toString().drop(2),
+                                    text = " ",
                                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                                 )
+                                AnimatedContent(
+                                    targetState = state.selectedDate.year,
+                                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                                    modifier = Modifier.animateContentSize()
+                                ) {
+                                    Text(
+                                        text = it.toString().drop(2),
+                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                }
                             }
                         }
                     }
@@ -390,10 +396,6 @@ private fun CalendarScreenContent(
                                 }
                             }
                         }
-                    }
-
-                    LaunchedEffect(state.start) {
-                        contentScrollState.animateScrollTo(with(localDensity) { ((state.start.inWholeMinutes().toFloat() - CALENDAR_SCREEN_START_PADDING_MINUTES) * minute).coerceAtLeast(0.dp).roundToPx() })
                     }
 
                     val infiniteTransition = rememberInfiniteTransition()
