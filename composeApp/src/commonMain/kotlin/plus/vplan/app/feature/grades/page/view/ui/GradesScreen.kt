@@ -3,7 +3,6 @@
 package plus.vplan.app.feature.grades.page.view.ui
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,18 +14,25 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +49,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.painterResource
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -55,6 +62,9 @@ import plus.vplan.app.feature.grades.page.view.ui.components.SelectYearDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.TopBar
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.ui.components.Switcher
+import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.lock
+import vplanplus.composeapp.generated.resources.lock_open
 
 @Composable
 fun GradesScreen(
@@ -84,9 +94,7 @@ private fun GradesContent(
 ) {
     val localDensity = LocalDensity.current
     val topScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
-    val infiniteTransition = rememberInfiniteTransition()
 
     var gradeDrawerId by rememberSaveable { mutableStateOf<Int?>(null) }
     var addGradeToCategoryId by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -106,10 +114,11 @@ private fun GradesContent(
     if (state.gradeLockState == null) return
 
     val pagerState = rememberPagerState(initialPage = 0) { state.intervalsForSelectedYear.size }
-    val (selectedInterval, selectedIntervalData) = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }.let {
-        val data = it.getOrNull(pagerState.currentPage) ?: return@let null to null
-        data.key to data.value
-    }
+    val (selectedInterval, selectedIntervalData) = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }
+        .let {
+            val data = it.getOrNull(pagerState.currentPage) ?: return@let null to null
+            data.key to data.value
+        }
 
     Scaffold(
         topBar = {
@@ -136,72 +145,139 @@ private fun GradesContent(
                     return@AnimatedContent
                 }
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(
-                            top = contentPadding.calculateTopPadding(),
-                            start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-                            end = contentPadding.calculateEndPadding(LocalLayoutDirection.current)
-                        )
-                ) {
-                    Switcher(
-                        modifier = Modifier.padding(8.dp),
-                        items = state.intervalsForSelectedYear.keys.sortedBy { it.from },
-                        currentPage = pagerState.currentPage,
-                        currentPageOffsetFraction = pagerState.currentPageOffsetFraction,
-                        onSelect = { _, index ->
-                            scope.launch { pagerState.animateScrollToPage(index) }
+                AnimatedContent(
+                    targetState = !state.gradeLockState.canAccess,
+                    modifier = Modifier.fillMaxSize()
+                ) { areGradesLocked ->
+                    if (areGradesLocked) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(
+                                    top = contentPadding.calculateTopPadding(),
+                                    start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                                    end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
+                                    bottom = contentPadding.calculateBottomPadding()
+                                ),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.lock),
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Text(
+                                text = "Noten gesperrt",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            TextButton(
+                                onClick = { onEvent(GradeDetailEvent.RequestGradeUnlock) },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.tertiary
+                                )
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.lock_open),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Text("Entsperren")
+                                }
+                            }
                         }
-                    ) { item, _, _ ->
-                        Text(
-                            text = item.name,
-                            style = MaterialTheme.typography.labelMedium
-                        )
+                        return@AnimatedContent
                     }
 
-                    var bodyHeight by remember { mutableStateOf(0.dp) }
+                    PullToRefreshBox(
+                        state = pullToRefreshState,
+                        onRefresh = { onEvent(GradeDetailEvent.Refresh) },
+                        isRefreshing = state.isUpdating,
+                        indicator = {
+                            LoadingIndicator(
+                                modifier = Modifier.align(Alignment.TopCenter),
+                                isRefreshing = state.isUpdating,
+                                state = pullToRefreshState,
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        modifier = Modifier
+                            .padding(
+                                top = contentPadding.calculateTopPadding(),
+                                start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                                end = contentPadding.calculateEndPadding(LocalLayoutDirection.current)
+                            )
+                            .fillMaxSize()
+                    ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .onSizeChanged { with(localDensity) { bodyHeight = it.height.toDp() } }
-                            .verticalScroll(rememberScrollState())
-                            .padding(bottom = contentPadding.calculateBottomPadding())
                     ) {
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier.fillMaxSize(),
-                            pageSize = PageSize.Fill
-                        ) { page ->
-                            val (interval, intervalData) = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }[page]
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .defaultMinSize(minHeight = bodyHeight - contentPadding.calculateBottomPadding())
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .padding(horizontal = 8.dp)
-                                        .fillMaxWidth()
-                                        .height(100.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    AverageCard(
-                                        modifier = Modifier.weight(1f),
-                                        avg = intervalData.avg
-                                    )
+                        Switcher(
+                            modifier = Modifier.padding(8.dp),
+                            items = state.intervalsForSelectedYear.keys.sortedBy { it.from },
+                            currentPage = pagerState.currentPage,
+                            currentPageOffsetFraction = pagerState.currentPageOffsetFraction,
+                            onSelect = { _, index ->
+                                scope.launch { pagerState.animateScrollToPage(index) }
+                            }
+                        ) { item, _, _ ->
+                            Text(
+                                text = item.name,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+
+                        var bodyHeight by remember { mutableStateOf(0.dp) }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .onSizeChanged {
+                                    with(localDensity) {
+                                        bodyHeight = it.height.toDp()
+                                    }
                                 }
-                                Text(buildString {
-                                    appendLine("Page $page")
-                                    appendLine("Current Page ${pagerState.currentPage}")
-                                    appendLine("Current Page ${pagerState.currentPageOffsetFraction}")
-                                })
+                                .verticalScroll(rememberScrollState())
+                                .nestedScroll(topScrollBehavior.nestedScrollConnection)
+                                .padding(bottom = contentPadding.calculateBottomPadding())
+                        ) {
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize(),
+                                pageSize = PageSize.Fill
+                            ) { page ->
+                                val (interval, intervalData) = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }[page]
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .defaultMinSize(minHeight = bodyHeight - contentPadding.calculateBottomPadding())
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .padding(horizontal = 8.dp)
+                                            .fillMaxWidth()
+                                            .height(100.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        AverageCard(
+                                            modifier = Modifier.weight(1f),
+                                            avg = intervalData.avg
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
 
 //        Box(
 //            modifier = Modifier
@@ -875,7 +951,14 @@ private fun GradesContent(
 
     if (addGradeToCategoryId != null) AddGradeDialog(
         onDismiss = { addGradeToCategoryId = null },
-        onSelectGrade = { onEvent(GradeDetailEvent.AddGrade(addGradeToCategoryId!!, it)); addGradeToCategoryId = null },
+        onSelectGrade = {
+            onEvent(
+                GradeDetailEvent.AddGrade(
+                    addGradeToCategoryId!!,
+                    it
+                )
+            ); addGradeToCategoryId = null
+        },
         intervalType = selectedInterval?.type ?: BesteSchuleInterval.Type.Sek1
     )
 
