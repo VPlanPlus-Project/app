@@ -176,84 +176,98 @@ private fun GradesContent(
                         },
                         modifier = contentModifier
                     ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                    ) {
-                        Switcher(
-                            modifier = Modifier.padding(8.dp),
-                            items = state.intervalsForSelectedYear.keys.sortedBy { it.from },
-                            currentPage = pagerState.currentPage,
-                            currentPageOffsetFraction = pagerState.currentPageOffsetFraction,
-                            onSelect = { _, index ->
-                                scope.launch { pagerState.animateScrollToPage(index) }
-                            }
-                        ) { item, _, _ ->
-                            Text(
-                                text = item.name,
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                        }
-
-                        var bodyHeight by remember { mutableStateOf(0.dp) }
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .onSizeChanged {
-                                    with(localDensity) {
-                                        bodyHeight = it.height.toDp()
-                                    }
-                                }
-                                .verticalScroll(rememberScrollState())
-                                .nestedScroll(topScrollBehavior.nestedScrollConnection)
-                                .padding(bottom = contentPadding.calculateBottomPadding())
                         ) {
-                            HorizontalPager(
-                                state = pagerState,
-                                modifier = Modifier.fillMaxSize(),
-                                pageSize = PageSize.Fill
-                            ) { page ->
-                                val (interval, intervalData) = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }[page]
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .defaultMinSize(minHeight = bodyHeight - contentPadding.calculateBottomPadding()),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Row(
+                            Switcher(
+                                modifier = Modifier.padding(8.dp),
+                                items = state.intervalsForSelectedYear.keys.sortedBy { it.from },
+                                currentPage = pagerState.currentPage,
+                                currentPageOffsetFraction = pagerState.currentPageOffsetFraction,
+                                onSelect = { _, index ->
+                                    scope.launch { pagerState.animateScrollToPage(index) }
+                                }
+                            ) { item, _, _ ->
+                                Text(
+                                    text = item.name,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+
+                            val verticalScrollState = rememberScrollState()
+
+                            LaunchedEffect(pagerState.currentPage) {
+                                verticalScrollState.animateScrollTo(0)
+                            }
+
+                            var bodyHeight by remember { mutableStateOf(0.dp) }
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .onSizeChanged {
+                                        with(localDensity) {
+                                            bodyHeight = it.height.toDp()
+                                        }
+                                    }
+                                    .verticalScroll(verticalScrollState)
+                                    .nestedScroll(topScrollBehavior.nestedScrollConnection)
+                                    .padding(bottom = contentPadding.calculateBottomPadding())
+                            ) {
+                                HorizontalPager(
+                                    state = pagerState,
+                                    modifier = Modifier.fillMaxSize(),
+                                    pageSize = PageSize.Fill,
+                                    verticalAlignment = Alignment.Top,
+                                    beyondViewportPageCount = 0
+                                ) { page ->
+                                    val (interval, intervalData) = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }[page]
+
+                                    Column(
                                         modifier = Modifier
-                                            .padding(horizontal = 8.dp)
-                                            .fillMaxWidth()
-                                            .height(100.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            .fillMaxSize()
+                                            .defaultMinSize(minHeight = bodyHeight - contentPadding.calculateBottomPadding()),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        AverageCard(
-                                            modifier = Modifier.weight(1f),
-                                            avg = intervalData.avg
-                                        )
-                                    }
-
-                                    if (intervalData.subjects.all { it.categories.isEmpty() }) {
-                                        NoGradesForInterval(
+                                        Row(
                                             modifier = Modifier
-                                                .padding(8.dp)
-                                                .weight(1f)
-                                                .fillMaxSize(),
-                                            intervalName = interval.name
-                                        )
-                                        return@Column
+                                                .padding(horizontal = 8.dp)
+                                                .fillMaxWidth()
+                                                .height(100.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            AverageCard(
+                                                modifier = Modifier.weight(1f),
+                                                avg = intervalData.avg
+                                            )
+                                        }
+
+                                        if (intervalData.subjects.all { it.categories.isEmpty() }) {
+                                            NoGradesForInterval(
+                                                modifier = Modifier
+                                                    .padding(8.dp)
+                                                    .weight(1f)
+                                                    .fillMaxSize(),
+                                                intervalName = interval.name
+                                            )
+                                            return@Column
+                                        }
+
+                                        if (intervalData.latestGrades.isNotEmpty()) Column {
+                                            LatestGrades(
+                                                grades = intervalData.latestGrades.associateWith { true },
+                                                onOpenGrade = { gradeDrawerId = it }
+                                            )
+                                        }
+
+                                        if (intervalData.subjects.isNotEmpty()) Column {
+                                            Subjects(
+                                                intervalType = selectedInterval?.type ?: BesteSchuleInterval.Type.Sek1,
+                                                subjects = intervalData.subjects,
+                                                onOpenGrade = { gradeDrawerId = it }
+                                            )
+                                        }
                                     }
-
-                                    if (intervalData.latestGrades.isNotEmpty()) LatestGrades(
-                                        grades = intervalData.latestGrades.associateWith { true },
-                                        onOpenGrade = { gradeDrawerId = it }
-                                    )
-
-                                    if (intervalData.subjects.isNotEmpty()) Subjects(
-                                        intervalType = selectedInterval?.type ?: BesteSchuleInterval.Type.Sek1,
-                                        subjects = intervalData.subjects,
-                                        onOpenGrade = { gradeDrawerId = it }
-                                    )
                                 }
                             }
                         }
@@ -261,7 +275,6 @@ private fun GradesContent(
                 }
             }
         }
-    }
 
 //        Box(
 //            modifier = Modifier
