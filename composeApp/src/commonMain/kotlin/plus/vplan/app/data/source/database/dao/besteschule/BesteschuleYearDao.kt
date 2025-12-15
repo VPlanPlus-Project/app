@@ -2,6 +2,7 @@ package plus.vplan.app.data.source.database.dao.besteschule
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteschuleYear
@@ -17,5 +18,6 @@ interface BesteschuleYearDao {
     fun getAll(): Flow<List<EmbeddedBesteSchuleYear>>
 
     @Query("SELECT * FROM besteschule_year WHERE id = :id")
+    @RewriteQueriesToDropUnusedColumns
     fun getById(id: Int): Flow<EmbeddedBesteSchuleYear?>
 }

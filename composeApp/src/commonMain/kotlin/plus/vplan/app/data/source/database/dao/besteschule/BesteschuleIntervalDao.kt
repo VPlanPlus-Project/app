@@ -2,6 +2,7 @@ package plus.vplan.app.data.source.database.dao.besteschule
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +27,7 @@ interface BesteschuleIntervalDao {
     fun getById(id: Int): Flow<EmbeddedBesteschuleInterval?>
 
     @Transaction
+    @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM besteschule_intervals LEFT JOIN besteschule_interval_user ON besteschule_intervals.id = besteschule_interval_user.interval_id WHERE besteschule_interval_user.schulverwalter_user_id = :userId")
     fun getIntervalsForUser(userId: Int): Flow<List<EmbeddedBesteschuleInterval>>
 }
