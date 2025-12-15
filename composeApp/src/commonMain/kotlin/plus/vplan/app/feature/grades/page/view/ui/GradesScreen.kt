@@ -176,25 +176,10 @@ private fun GradesContent(
                         },
                         modifier = contentModifier
                     ) {
-                        Column(
+                        Box(
                             modifier = Modifier
                                 .fillMaxSize()
                         ) {
-                            Switcher(
-                                modifier = Modifier.padding(8.dp),
-                                items = state.intervalsForSelectedYear.keys.sortedBy { it.from },
-                                currentPage = pagerState.currentPage,
-                                currentPageOffsetFraction = pagerState.currentPageOffsetFraction,
-                                onSelect = { _, index ->
-                                    scope.launch { pagerState.animateScrollToPage(index) }
-                                }
-                            ) { item, _, _ ->
-                                Text(
-                                    text = item.name,
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                            }
-
                             val verticalScrollState = rememberScrollState()
 
                             LaunchedEffect(pagerState.currentPage) {
@@ -202,6 +187,7 @@ private fun GradesContent(
                             }
 
                             var bodyHeight by remember { mutableStateOf(0.dp) }
+                            var contentBottomPadding by remember { mutableStateOf(0.dp) }
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -212,14 +198,14 @@ private fun GradesContent(
                                     }
                                     .verticalScroll(verticalScrollState)
                                     .nestedScroll(topScrollBehavior.nestedScrollConnection)
-                                    .padding(bottom = contentPadding.calculateBottomPadding())
+                                    .padding(bottom = contentPadding.calculateBottomPadding() + contentBottomPadding)
                             ) {
                                 HorizontalPager(
                                     state = pagerState,
                                     modifier = Modifier.fillMaxSize(),
                                     pageSize = PageSize.Fill,
                                     verticalAlignment = Alignment.Top,
-                                    beyondViewportPageCount = 0
+                                    beyondViewportPageCount = 1
                                 ) { page ->
                                     val (interval, intervalData) = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }[page]
 
@@ -227,7 +213,7 @@ private fun GradesContent(
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .defaultMinSize(minHeight = bodyHeight - contentPadding.calculateBottomPadding()),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        verticalArrangement = Arrangement.spacedBy(16.dp)
                                     ) {
                                         Row(
                                             modifier = Modifier
@@ -269,6 +255,25 @@ private fun GradesContent(
                                         }
                                     }
                                 }
+                            }
+
+                            Switcher(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(16.dp)
+                                    .padding(bottom = contentPadding.calculateBottomPadding())
+                                    .onSizeChanged { with(localDensity) { contentBottomPadding = it.height.toDp() + (2*16).dp } },
+                                items = state.intervalsForSelectedYear.keys.sortedBy { it.from },
+                                currentPage = pagerState.currentPage,
+                                currentPageOffsetFraction = pagerState.currentPageOffsetFraction,
+                                onSelect = { _, index ->
+                                    scope.launch { pagerState.animateScrollToPage(index) }
+                                }
+                            ) { item, _, _ ->
+                                Text(
+                                    text = item.name,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
                             }
                         }
                     }

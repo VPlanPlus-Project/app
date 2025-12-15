@@ -22,6 +22,7 @@ import plus.vplan.app.feature.grades.page.view.ui.components.GradeValue
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.roundTo
 import plus.vplan.app.utils.toDp
+import kotlin.math.roundToInt
 
 @Composable
 private fun sectionTitleFont() = MaterialTheme.typography.titleMediumEmphasized
@@ -66,7 +67,7 @@ fun SubjectTitle(
                 gradeString = average?.roundTo(1)?.toString() ?: "-",
                 isSelected = true,
                 intervalType = intervalType,
-                numericValue = null
+                numericValue = average?.roundToInt()
             )
         }
     }
