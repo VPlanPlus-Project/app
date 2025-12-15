@@ -101,7 +101,7 @@ fun Subjects(
         if (subjectIndex < subjects.lastIndex) {
             WavySeparator(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
                     .padding(bottom = 8.dp)
                     .fillMaxWidth()
                     .height(8.dp),

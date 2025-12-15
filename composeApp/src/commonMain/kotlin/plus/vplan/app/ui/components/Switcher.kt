@@ -36,6 +36,7 @@ fun <T> Switcher(
     currentPage: Int,
     currentPageOffsetFraction: Float,
     onSelect: (item: T, index: Int) -> Unit = { _, _ -> },
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
     block: @Composable (item: T, index: Int, contentColor: Color) -> Unit,
 ) {
     val localDensity = LocalDensity.current
@@ -46,6 +47,7 @@ fun <T> Switcher(
             .fillMaxWidth()
             .height(40.dp)
             .clip(RoundedCornerShape(8.dp))
+            .background(backgroundColor)
             .border(
                 1.dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
