@@ -70,7 +70,6 @@ kotlin {
             implementation(libs.androidx.browser)
             implementation(libs.androidx.biometric)
 
-            implementation(libs.androidx.material)
             implementation(libs.androidx.icons.extended)
             implementation(libs.androidx.sqlite.framework)
             implementation(libs.androidx.work.runtime.ktx)
@@ -83,6 +82,7 @@ kotlin {
             implementation(libs.posthog.android)
         }
         commonMain.dependencies {
+            implementation(libs.androidx.material)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -177,7 +177,7 @@ dependencies {
     implementation(libs.androidx.activity)
     debugImplementation(compose.uiTooling)
 
-    add("kspAndroid", libs.androidx.room.compiler)
+//    add("kspAndroid", libs.androidx.room.compiler)
     add("kspIosSimulatorArm64", libs.androidx.room.compiler)
     add("kspIosX64", libs.androidx.room.compiler)
     add("kspIosArm64", libs.androidx.room.compiler)

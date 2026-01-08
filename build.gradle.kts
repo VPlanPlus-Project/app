@@ -9,4 +9,5 @@ plugins {
     alias(libs.plugins.serialization) apply false
     alias(libs.plugins.google.gms) apply false
     alias(libs.plugins.firebase.crashlytics) apply false
+    alias(libs.plugins.stability.analyzer) apply false
 }
