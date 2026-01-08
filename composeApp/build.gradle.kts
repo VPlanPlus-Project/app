@@ -124,8 +124,11 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.ktor.client.serialization.json)
 
+            // Permissions
+            implementation(libs.moko.permissions.compose)
+            implementation(libs.moko.permissions.notifications)
+
             // Third-party
-            implementation(libs.cmp.easy.permission)
             implementation(libs.filekit.core)
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.kermit)

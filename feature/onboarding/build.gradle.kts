@@ -46,7 +46,8 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
 
             // Permissions
-            implementation(libs.cmp.easy.permission)
+            implementation(libs.moko.permissions.core)
+            implementation(libs.moko.permissions.notifications)
         }
     }
 }

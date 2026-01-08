@@ -1,5 +1,6 @@
 package plus.vplan.app.di
 
+import dev.icerock.moko.permissions.PermissionsController
 import kotlinx.cinterop.ExperimentalForeignApi
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -14,13 +15,16 @@ import plus.vplan.app.core.platform.BiometricAuthentication
 import plus.vplan.app.core.platform.BiometricAuthenticationImpl
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.platform.NotificationRepositoryImpl
+import plus.vplan.app.core.platform.PermissionRepository
+import plus.vplan.app.core.platform.PermissionRepositoryImpl
 
 @OptIn(ExperimentalForeignApi::class)
 actual val platformModule: Module = module {
     single<NotificationRepository> { NotificationRepositoryImpl() }
     single<AuthenticationRepository> { AuthenticationRepositoryImpl() }
     single<BiometricAuthentication> { BiometricAuthenticationImpl() }
-    
+    factory<PermissionRepository> { (controller: PermissionsController) -> PermissionRepositoryImpl(controller) }
+
     // New file infrastructure
     single<ThumbnailGenerator> { ThumbnailGenerator() }
     single<OpenQuicklook> { quicklook }
@@ -34,9 +38,9 @@ actual val platformModule: Module = module {
             create = true,
             error = null
         )?.path ?: throw IllegalStateException("Could not access document directory")
-        
-        val pathResolver: (String) -> String = { relativePath: String -> 
-            "$documentDirectoryPath/$relativePath" 
+
+        val pathResolver: (String) -> String = { relativePath: String ->
+            "$documentDirectoryPath/$relativePath"
         }
         pathResolver
     }

@@ -19,6 +19,10 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.koin.core)
             implementation(libs.kermit)
+
+            // Permissions
+            implementation(libs.moko.permissions.compose)
+            implementation(libs.moko.permissions.notifications)
         }
     }
 }
