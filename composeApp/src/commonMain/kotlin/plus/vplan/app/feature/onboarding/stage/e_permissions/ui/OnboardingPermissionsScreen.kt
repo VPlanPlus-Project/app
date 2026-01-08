@@ -13,24 +13,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import network.chaintech.cmpeasypermission.PermissionState
-import network.chaintech.cmpeasypermission.RequestPermission
+import dev.icerock.moko.permissions.DeniedAlwaysException
+import dev.icerock.moko.permissions.DeniedException
+import dev.icerock.moko.permissions.Permission
+import dev.icerock.moko.permissions.RequestCanceledException
+import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
+import dev.icerock.moko.permissions.notifications.REMOTE_NOTIFICATION
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
-import plus.vplan.app.utils.isPermissionGranted
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_right
 import vplanplus.composeapp.generated.resources.bell_ring
@@ -40,8 +42,12 @@ fun OnboardingPermissionsScreen(
     navHostController: NavHostController
 ) {
     val viewModel = koinViewModel<OnboardingPermissionViewModel>()
+    val permissionFactory = rememberPermissionsControllerFactory()
+    val permissionController = remember(permissionFactory) { permissionFactory.createPermissionsController() }
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
-        val isPermissionGranted = isPermissionGranted(PermissionState.POST_NOTIFICATIONS)
+        val isPermissionGranted = permissionController.isPermissionGranted(Permission.REMOTE_NOTIFICATION)
         if (isPermissionGranted) viewModel.onNotificationGranted()
     }
     Column(
@@ -78,8 +84,6 @@ fun OnboardingPermissionsScreen(
             )
         }
 
-        var requestPermission by rememberSaveable { mutableStateOf(false) }
-
         Column(
             modifier = Modifier
                 .padding(horizontal = 8.dp)
@@ -92,17 +96,20 @@ fun OnboardingPermissionsScreen(
                 icon = Res.drawable.arrow_right,
                 size = ButtonSize.Big,
                 onlyEventOnActive = true,
-                onClick = { requestPermission = true }
+                onClick = {
+                    scope.launch {
+                        try {
+                            permissionController.providePermission(Permission.REMOTE_NOTIFICATION)
+                            viewModel.onNotificationGranted()
+                        } catch (_: DeniedException) {
+                            viewModel.onNotificationDenied()
+                        } catch (_: DeniedAlwaysException) {
+                            viewModel.onNotificationDenied()
+                        } catch (_: RequestCanceledException) {}
+                    }
+                }
             )
         }
-
-        if (requestPermission) RequestPermission(
-            permission = PermissionState.POST_NOTIFICATIONS,
-            openSetting = false,
-            deniedDialogTitle = "",
-            deniedDialogDesc = "",
-            isGranted = { viewModel.onNotificationGranted() }
-        )
 
         LaunchedEffect(viewModel.state.canContinue) {
             if (viewModel.state.canContinue) navHostController.navigate(OnboardingScreen.OnboardingFinished)

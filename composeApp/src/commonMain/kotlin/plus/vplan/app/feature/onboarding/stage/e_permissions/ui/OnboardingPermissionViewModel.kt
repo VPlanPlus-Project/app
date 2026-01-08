@@ -20,6 +20,12 @@ class OnboardingPermissionViewModel(
             state = OnboardingPermissionState(canContinue = true)
         }
     }
+
+    fun onNotificationDenied() {
+        viewModelScope.launch {
+            state = OnboardingPermissionState(canContinue = true)
+        }
+    }
 }
 
 data class OnboardingPermissionState(

@@ -94,7 +94,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.navigation.compose)
 
-            implementation(libs.cmp.easy.permission)
+            implementation(libs.moko.permissions.core)
+            implementation(libs.moko.permissions.compose)
+            implementation(libs.moko.permissions.notifications)
 
             implementation(libs.filekit.compose)
 
