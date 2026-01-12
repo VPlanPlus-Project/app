@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -17,20 +18,23 @@ import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.HomeworkRepository
 
 class HomeworkSource(
     private val homeworkRepository: HomeworkRepository
 ) {
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<Homework>>>()
+    private val flows: ConcurrentMutableMap<Int, MutableSharedFlow<CacheState<Homework>>> = ConcurrentMutableMap()
     fun getById(id: Int, forceUpdate: Boolean = false): Flow<CacheState<Homework>> {
-        if (forceUpdate) flows.remove(id)
-        return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<Homework>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            CoroutineScope(Dispatchers.IO).launch {
-                homeworkRepository.getById(id, forceUpdate).collectLatest { flow.tryEmit(it) }
-            }
-            flow
+        if (forceUpdate) kotlinx.coroutines.runBlocking { flows.remove(id) }
+        return channelFlow {
+            flows.getOrPut(id) {
+                val flow = MutableSharedFlow<CacheState<Homework>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+                CoroutineScope(Dispatchers.IO).launch {
+                    homeworkRepository.getById(id, forceUpdate).collectLatest { flow.tryEmit(it) }
+                }
+                return@getOrPut flow
+            }.collect { send(it) }
         }
     }
 
@@ -47,11 +51,13 @@ class HomeworkSource(
 class HomeworkTaskSource(
     private val homeworkRepository: HomeworkRepository
 ) {
-    private val cache = hashMapOf<Int, Flow<CacheState<Homework.HomeworkTask>>>()
-    private val cacheItems = hashMapOf<Int, CacheState<Homework.HomeworkTask>>()
+    private val cache: ConcurrentMutableMap<Int, Flow<CacheState<Homework.HomeworkTask>>> = ConcurrentMutableMap()
+    private val cacheItems: ConcurrentMutableMap<Int, CacheState<Homework.HomeworkTask>> = ConcurrentMutableMap()
 
     fun getById(id: Int): Flow<CacheState<Homework.HomeworkTask>> {
-        return cache.getOrPut(id) { homeworkRepository.getTaskById(id).onEach { cacheItems[id] = it } }
+        return channelFlow {
+            cache.getOrPut(id) { homeworkRepository.getTaskById(id).onEach { cacheItems[id] = it } }.collect { send(it) }
+        }
     }
 
     suspend fun getSingleById(id: Int): Homework.HomeworkTask? {

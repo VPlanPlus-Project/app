@@ -13,6 +13,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.emitAll
@@ -54,11 +55,11 @@ class SubjectInstanceRepositoryImpl(
     private val schoolAuthenticationProvider: SchoolAuthenticationProvider
 ) : SubjectInstanceRepository {
 
-    private val getByGroupCache = mutableMapOf<Uuid, Flow<List<SubjectInstance>>>()
+    private val getByGroupCache = ConcurrentMutableMap<Uuid, Flow<List<SubjectInstance>>>()
     override fun getByGroup(groupId: Uuid): Flow<List<SubjectInstance>> {
-        return getByGroupCache.getOrPut(groupId) {
+        return runBlocking { getByGroupCache.getOrPut(groupId) {
             vppDatabase.subjectInstanceDao.getByGroup(groupId).map { it.map { dl -> dl.toModel() } }
-        }
+        } }
     }
 
     private var allLocalIdsFlowCache: Flow<List<Uuid>>? = null
@@ -77,11 +78,11 @@ class SubjectInstanceRepositoryImpl(
         return sharedFlow
     }
 
-    private val getBySchoolCache = mutableMapOf<Uuid, Flow<List<SubjectInstance>>>()
+    private val getBySchoolCache = ConcurrentMutableMap<Uuid, Flow<List<SubjectInstance>>>()
     override fun getBySchool(schoolId: Uuid): Flow<List<SubjectInstance>> {
-        return getBySchoolCache.getOrPut(schoolId) {
+        return runBlocking { getBySchoolCache.getOrPut(schoolId) {
             vppDatabase.subjectInstanceDao.getBySchool(schoolId).map { it.map { dl -> dl.toModel() } }
-        }
+        } }
     }
 
     override suspend fun deleteById(id: Uuid) {
@@ -92,11 +93,11 @@ class SubjectInstanceRepositoryImpl(
         vppDatabase.subjectInstanceDao.deleteById(ids)
     }
 
-    private val findByLocalIdCache = mutableMapOf<Uuid, Flow<SubjectInstance?>>()
+    private val findByLocalIdCache = ConcurrentMutableMap<Uuid, Flow<SubjectInstance?>>()
     override fun getByLocalId(id: Uuid): Flow<SubjectInstance?> {
-        return findByLocalIdCache.getOrPut(id) {
+        return runBlocking { findByLocalIdCache.getOrPut(id) {
             vppDatabase.subjectInstanceDao.findById(id).map { it?.toModel() }
-        }
+        } }
     }
 
     override suspend fun resolveAliasToLocalId(alias: Alias): Uuid? {
@@ -143,7 +144,7 @@ class SubjectInstanceRepositoryImpl(
         return Response.Error.Cancelled
     }
 
-    private val aliasFlowCache = mutableMapOf<String, Flow<AliasState<SubjectInstance>>>()
+    private val aliasFlowCache = ConcurrentMutableMap<String, Flow<AliasState<SubjectInstance>>>()
     override fun findByAliases(aliases: Set<Alias>, forceUpdate: Boolean, preferCurrentState: Boolean): Flow<AliasState<SubjectInstance>> {
         val cacheKey = buildString {
             append(aliases.sortedBy { it.toString() }.joinToString(","))
@@ -151,7 +152,7 @@ class SubjectInstanceRepositoryImpl(
         }
 
         if (!forceUpdate) {
-            aliasFlowCache[cacheKey]?.let { return it }
+            runBlocking { aliasFlowCache[cacheKey] }?.let { return it }
         }
 
         val flow = flow {
@@ -185,7 +186,7 @@ class SubjectInstanceRepositoryImpl(
         }.onCompletion { aliasFlowCache.remove(cacheKey) }
             .shareIn(CoroutineScope(Dispatchers.IO), replay = 1, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000))
 
-        aliasFlowCache[cacheKey] = flow
+        runBlocking { aliasFlowCache[cacheKey] = flow }
         return flow
     }
 

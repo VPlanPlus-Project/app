@@ -8,24 +8,28 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.model.Course
+import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.CourseRepository
 import kotlin.uuid.Uuid
 
 class CourseSource(
     private val courseRepository: CourseRepository
 ) {
-    private val flows = hashMapOf<Uuid, MutableSharedFlow<AliasState<Course>>>()
+    private val flows: ConcurrentMutableMap<Uuid, MutableSharedFlow<AliasState<Course>>> = ConcurrentMutableMap()
 
     fun getById(id: Uuid): Flow<AliasState<Course>> {
-        return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<AliasState<Course>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            CoroutineScope(Dispatchers.IO).launch {
-                courseRepository.getByLocalId(id).distinctUntilChanged().collectLatest { flow.tryEmit(it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString())) }
-            }
-            flow
+        return channelFlow {
+            flows.getOrPut(id) {
+                val flow = MutableSharedFlow<AliasState<Course>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+                CoroutineScope(Dispatchers.IO).launch {
+                    courseRepository.getByLocalId(id).distinctUntilChanged().collectLatest { flow.tryEmit(it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString())) }
+                }
+                return@getOrPut flow
+            }.collect { send(it) }
         }
     }
 }

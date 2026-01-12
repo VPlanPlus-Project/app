@@ -7,24 +7,29 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.News
+import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.NewsRepository
 
 class NewsSource(
     private val newsRepository: NewsRepository
 ) {
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<News>>>()
+    private val flows: ConcurrentMutableMap<Int, MutableSharedFlow<CacheState<News>>> = ConcurrentMutableMap()
 
     fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<News>> {
-        return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<News>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            CoroutineScope(Dispatchers.IO).launch {
-                newsRepository.getById(id, forceReload)
-                    .collectLatest { flow.tryEmit(it) }
-            }
-            flow
+        if (forceReload) kotlinx.coroutines.runBlocking { flows.remove(id) }
+        return channelFlow {
+            flows.getOrPut(id) {
+                val flow = MutableSharedFlow<CacheState<News>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+                CoroutineScope(Dispatchers.IO).launch {
+                    newsRepository.getById(id, forceReload)
+                        .collectLatest { flow.tryEmit(it) }
+                }
+                return@getOrPut flow
+            }.collect { send(it) }
         }
     }
 }

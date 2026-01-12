@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -42,6 +43,7 @@ import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 
 class DaySource(
     private val dayRepository: DayRepository,
@@ -51,7 +53,7 @@ class DaySource(
     private val assessmentRepository: AssessmentRepository,
     private val homeworkRepository: HomeworkRepository,
 ) {
-    val flows = hashMapOf<String, MutableSharedFlow<CacheState<Day>>>()
+    private val flows: ConcurrentMutableMap<String, MutableSharedFlow<CacheState<Day>>> = ConcurrentMutableMap()
     fun findNextRegularSchoolDayAfter(
         holidays: List<LocalDate>,
         weeks: List<Week>,
@@ -72,131 +74,133 @@ class DaySource(
     }
 
     fun getById(id: String, contextProfile: Profile? = null): Flow<CacheState<Day>> {
-        return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<Day>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            CoroutineScope(Dispatchers.IO).launch {
-                val schoolId = Uuid.parse(id.substringBefore("/"))
-                val date = LocalDate.parse(id.substringAfter("/"))
-                val school = App.schoolSource.getById(schoolId).filterIsInstance<AliasState.Done<School>>().firstOrNull()?.data ?: return@launch
-                val weeks = weekRepository.getBySchool(schoolId).first()
-                val day = MutableStateFlow(
-                    Day(
-                        id = Day.buildId(school, date),
-                        date = date,
-                        schoolId = schoolId,
-                        weekId = weeks.firstOrNull { date in it.start..it.end }?.id,
-                        info = null,
-                        dayType = Day.DayType.UNKNOWN,
-                        timetable = emptySet(),
-                        substitutionPlan = emptySet(),
-                        assessmentIds = emptySet(),
-                        homeworkIds = emptySet(),
-                        nextSchoolDayId = null,
-                        tags = emptySet()
+        return channelFlow {
+            flows.getOrPut(id) {
+                val flow = MutableSharedFlow<CacheState<Day>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+                CoroutineScope(Dispatchers.IO).launch {
+                    val schoolId = Uuid.parse(id.substringBefore("/"))
+                    val date = LocalDate.parse(id.substringAfter("/"))
+                    val school = App.schoolSource.getById(schoolId).filterIsInstance<AliasState.Done<School>>().firstOrNull()?.data ?: return@launch
+                    val weeks = weekRepository.getBySchool(schoolId).first()
+                    val day = MutableStateFlow(
+                        Day(
+                            id = Day.buildId(school, date),
+                            date = date,
+                            schoolId = schoolId,
+                            weekId = weeks.firstOrNull { date in it.start..it.end }?.id,
+                            info = null,
+                            dayType = Day.DayType.UNKNOWN,
+                            timetable = emptySet(),
+                            substitutionPlan = emptySet(),
+                            assessmentIds = emptySet(),
+                            homeworkIds = emptySet(),
+                            nextSchoolDayId = null,
+                            tags = emptySet()
+                        )
                     )
-                )
 
-                launch {
-                    day.collect {
-                        flow.tryEmit(CacheState.Done(it))
-                    }
-                }
-
-                launch {
-                    combine(
-                        weekRepository.getBySchool(schoolId).distinctUntilChanged(),
-                        dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } }.distinctUntilChanged(),
-                        dayRepository.getBySchool(date, schoolId).distinctUntilChanged()
-                    ) { weeks, holidays, dayInfo ->
-                        val dayWeek = weeks.firstOrNull { date in it.start..it.end }
-                        day.update {
-                            it.copy(
-                                weekId = dayWeek?.id,
-                                info = dayInfo?.info,
-                                dayType =
-                                    if (date in holidays) Day.DayType.HOLIDAY
-                                    else if (date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY) {
-                                        var friday = date
-                                        while (friday.dayOfWeek != DayOfWeek.FRIDAY) {
-                                            friday -= 1.days
-                                        }
-                                        var monday = date
-                                        while (monday.dayOfWeek != DayOfWeek.MONDAY) {
-                                            monday += 1.days
-                                        }
-                                        if (holidays.any { it == friday } || holidays.any { it == monday }) Day.DayType.HOLIDAY else Day.DayType.WEEKEND
-                                    } else Day.DayType.REGULAR,
-                                tags = it.tags + Day.DayTags.HAS_METADATA
-                            )
+                    launch {
+                        day.collect {
+                            flow.tryEmit(CacheState.Done(it))
                         }
                     }
-                        .collect()
-                }
 
-                launch {
-                    (if (contextProfile == null) substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
-                    else substitutionPlanRepository.getForProfile(contextProfile, date)).collectLatest { substitutionPlanLessonIds ->
-                        day.update {
-                            it.copy(
-                                substitutionPlan = substitutionPlanLessonIds,
-                                tags = it.tags + Day.DayTags.HAS_LESSONS
-                            )
+                    launch {
+                        combine(
+                            weekRepository.getBySchool(schoolId).distinctUntilChanged(),
+                            dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } }.distinctUntilChanged(),
+                            dayRepository.getBySchool(date, schoolId).distinctUntilChanged()
+                        ) { weeks, holidays, dayInfo ->
+                            val dayWeek = weeks.firstOrNull { date in it.start..it.end }
+                            day.update {
+                                it.copy(
+                                    weekId = dayWeek?.id,
+                                    info = dayInfo?.info,
+                                    dayType =
+                                        if (date in holidays) Day.DayType.HOLIDAY
+                                        else if (date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY) {
+                                            var friday = date
+                                            while (friday.dayOfWeek != DayOfWeek.FRIDAY) {
+                                                friday -= 1.days
+                                            }
+                                            var monday = date
+                                            while (monday.dayOfWeek != DayOfWeek.MONDAY) {
+                                                monday += 1.days
+                                            }
+                                            if (holidays.any { it == friday } || holidays.any { it == monday }) Day.DayType.HOLIDAY else Day.DayType.WEEKEND
+                                        } else Day.DayType.REGULAR,
+                                    tags = it.tags + Day.DayTags.HAS_METADATA
+                                )
+                            }
+                        }
+                            .collect()
+                    }
+
+                    launch {
+                        (if (contextProfile == null) substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
+                        else substitutionPlanRepository.getForProfile(contextProfile, date)).collectLatest { substitutionPlanLessonIds ->
+                            day.update {
+                                it.copy(
+                                    substitutionPlan = substitutionPlanLessonIds,
+                                    tags = it.tags + Day.DayTags.HAS_LESSONS
+                                )
+                            }
                         }
                     }
-                }
 
-                launch {
-                    val week = day.value.week?.getFirstValueOld()
-                    val weekIndex = week?.weekIndex ?: -1
+                    launch {
+                        val week = day.value.week?.getFirstValueOld()
+                        val weekIndex = week?.weekIndex ?: -1
 
-                    (if (contextProfile == null) timetableRepository.getForSchool(schoolId, weekIndex, dayOfWeek = date.dayOfWeek)
-                    else timetableRepository.getForProfile(contextProfile, weekIndex, dayOfWeek = date.dayOfWeek)).collectLatest { timetableLessonIds ->
-                        day.update {
-                            it.copy(
-                                timetable = timetableLessonIds,
-                                tags = it.tags + Day.DayTags.HAS_LESSONS
-                            )
+                        (if (contextProfile == null) timetableRepository.getForSchool(schoolId, weekIndex, dayOfWeek = date.dayOfWeek)
+                        else timetableRepository.getForProfile(contextProfile, weekIndex, dayOfWeek = date.dayOfWeek)).collectLatest { timetableLessonIds ->
+                            day.update {
+                                it.copy(
+                                    timetable = timetableLessonIds,
+                                    tags = it.tags + Day.DayTags.HAS_LESSONS
+                                )
+                            }
                         }
                     }
-                }
 
-                launch {
-                    (if (contextProfile == null) assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged()
-                    else assessmentRepository.getByProfile(contextProfile.id, date).map { assessments -> assessments.map { it.id }.toSet() }.distinctUntilChanged()).collectLatest { assessmentIds ->
-                        day.update {
-                            it.copy(
-                                assessmentIds = assessmentIds
-                            )
+                    launch {
+                        (if (contextProfile == null) assessmentRepository.getByDate(date).map { assessments -> assessments.map { it.id }.toSet() }
+                        else assessmentRepository.getByProfile(contextProfile.id, date).map { assessments -> assessments.map { it.id }.toSet() }).collectLatest { assessmentIds ->
+                            day.update {
+                                it.copy(
+                                    assessmentIds = assessmentIds
+                                )
+                            }
                         }
                     }
-                }
 
-                launch {
-                    (if (contextProfile == null) homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()
-                    else homeworkRepository.getByProfile(contextProfile.id, date).map { homework -> homework.map { it.id }.toSet() }.distinctUntilChanged()).collectLatest { homeworkIds ->
-                        day.update {
-                            it.copy(
-                                homeworkIds = homeworkIds
-                            )
+                    launch {
+                        (if (contextProfile == null) homeworkRepository.getByDate(date).map { homework -> homework.map { it.id }.toSet() }
+                        else homeworkRepository.getByProfile(contextProfile.id, date).map { homework -> homework.map { it.id }.toSet() }).collectLatest { homeworkIds ->
+                            day.update {
+                                it.copy(
+                                    homeworkIds = homeworkIds
+                                )
+                            }
                         }
                     }
-                }
 
-                launch {
-                    combine(
-                        dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } },
-                        weekRepository.getBySchool(schoolId)
-                    ) { holidays, weeks ->
-                        val nextSchoolDay = findNextRegularSchoolDayAfter(holidays, weeks, date, (school as? School.AppSchool)?.daysPerWeek)
-                        day.update {
-                            it.copy(
-                                nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },
-                            )
-                        }
-                    }.collect()
+                    launch {
+                        combine(
+                            dayRepository.getHolidays(schoolId).map { it.map { holiday -> holiday.date } },
+                            weekRepository.getBySchool(schoolId)
+                        ) { holidays, weeks ->
+                            val nextSchoolDay = findNextRegularSchoolDayAfter(holidays, weeks, date, (school as? School.AppSchool)?.daysPerWeek)
+                            day.update {
+                                it.copy(
+                                    nextSchoolDayId = nextSchoolDay?.let { Day.buildId(school, nextSchoolDay) },
+                                )
+                            }
+                        }.collect()
+                    }
                 }
-            }
-            flow
+                return@getOrPut flow
+            }.collect { send(it) }
         }
     }
 }
