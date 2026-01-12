@@ -6,5 +6,5 @@ import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 @Suppress("unused") // Called in Swift App
 fun sync() {
     val useCase: FullSyncUseCase = getKoinInstance()
-    useCase.invoke(FullSyncCause.Manual)
+    useCase.invoke(FullSyncCause.Job)
 }
