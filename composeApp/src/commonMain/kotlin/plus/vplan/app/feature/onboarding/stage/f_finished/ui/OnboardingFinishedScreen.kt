@@ -12,11 +12,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.feature.onboarding.stage.e_permissions.ui.OnboardingPermissionViewModel
+import plus.vplan.app.feature.onboarding.ui.PlatformOnboardingController
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
@@ -27,6 +32,8 @@ import vplanplus.composeapp.generated.resources.check
 fun OnboardingFinishedScreen(
     onFinish: () -> Unit
 ) {
+    val platformOnboardingController = koinInject<PlatformOnboardingController>()
+
     Column(
         modifier = Modifier
             .safeDrawingPadding()
@@ -72,7 +79,9 @@ fun OnboardingFinishedScreen(
                 icon = Res.drawable.check,
                 size = ButtonSize.Big,
                 onlyEventOnActive = true,
-                onClick = onFinish
+                onClick = remember { {
+                    platformOnboardingController.showPostOnboardingSheet(onFinish)
+                } }
             )
         }
     }

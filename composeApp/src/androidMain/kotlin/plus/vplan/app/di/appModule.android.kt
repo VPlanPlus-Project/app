@@ -14,6 +14,8 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.PlatformAuthenticationRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
+import plus.vplan.app.feature.onboarding.ui.AndroidPlatformOnboardingController
+import plus.vplan.app.feature.onboarding.ui.PlatformOnboardingController
 import plus.vplan.app.ui.platform.OpenBiometricSettings
 import plus.vplan.app.ui.platform.OpenBiometricSettingsImpl
 import plus.vplan.app.ui.platform.RunBiometricAuthentication
@@ -43,4 +45,5 @@ actual val platformModule: Module = module(createdAtStart = true) {
     single<PlatformAuthenticationRepository> { PlatformAuthenticationRepositoryImpl(get()) }
     single<OpenBiometricSettings> { OpenBiometricSettingsImpl(get()) }
     single<RunBiometricAuthentication> { RunBiometricAuthenticationImpl() }
+    single<PlatformOnboardingController> { AndroidPlatformOnboardingController() }
 }

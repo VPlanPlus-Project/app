@@ -21,11 +21,12 @@ struct iOSApp: SwiftUI.App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView(
-                url: launchUrl ?? "",
-                notificationTask: notificationManager.notificationData,
-                onQuicklook: { path in quickLookUrl = URL(string: path) }
-            )
+            VStack {
+                ContentView(
+                    url: launchUrl ?? "",
+                    notificationTask: notificationManager.notificationData,
+                    onQuicklook: { path in quickLookUrl = URL(string: path) }
+                )
                 .onOpenURL { url in
                     (getVisibleViewController(UIApplication.shared.keyWindow?.rootViewController) as! SFSafariViewController).dismiss(animated: true)
                     
@@ -34,6 +35,7 @@ struct iOSApp: SwiftUI.App {
                     }
                 }
                 .quickLookPreview($quickLookUrl)
+            }
         }.onChange(of: phase) { newPhase in
             switch newPhase {
             case .background: scheduleAppRefresh()

@@ -16,11 +16,41 @@ struct ComposeView: UIViewControllerRepresentable {
     }
 }
 
+class AppViewModel: ObservableObject {
+    @Published var showIosDevInfoSheet = false
+    
+    init() {
+        // Init iOS Sheet Bridge
+        PostOnboardingBridge.shared.showSheetCallback = { [weak self] in
+            DispatchQueue.main.async {
+                self?.showIosDevInfoSheet = true
+            }
+        }
+    }
+}
+
 struct ContentView: View {
     let url: String
     let notificationTask: String?
     let onQuicklook: (String)->()
+    
+    @StateObject private var viewModel = AppViewModel()
+    @State private var hasBeenShown = false
+    
     var body: some View {
-        return ComposeView(url: url, notificationTask: notificationTask, onQuicklook: onQuicklook).ignoresSafeArea()
+        return ComposeView(url: url, notificationTask: notificationTask, onQuicklook: onQuicklook)
+            .ignoresSafeArea()
+            .sheet(isPresented: $viewModel.showIosDevInfoSheet) {
+                IosDevInfoSheet()
+            }
+            .onChange(of: viewModel.showIosDevInfoSheet) { isPresented in
+                if !isPresented && hasBeenShown {
+                    PostOnboardingBridge.shared.onClosed()
+                }
+                
+                if isPresented {
+                    hasBeenShown = true
+                }
+            }
     }
 }
