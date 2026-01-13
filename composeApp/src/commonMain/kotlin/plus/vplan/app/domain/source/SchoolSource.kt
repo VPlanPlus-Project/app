@@ -3,49 +3,54 @@ package plus.vplan.app.domain.source
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.stateIn
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
 import plus.vplan.app.domain.repository.SchoolRepository
 import kotlin.uuid.Uuid
 
-class SchoolSource(
-    private val schoolRepository: SchoolRepository
-) {
-    private val flows: ConcurrentMutableMap<Uuid, MutableSharedFlow<AliasState<School>>> = ConcurrentMutableMap()
-    private val appFlows: ConcurrentMutableMap<Uuid, MutableSharedFlow<AliasState<School.AppSchool>>> = ConcurrentMutableMap()
+class SchoolSource : KoinComponent {
+    private val schoolRepository: SchoolRepository by inject()
+    private val concurrentHashMapFactory: ConcurrentHashMapFactory by inject()
+
+    private val flows: ConcurrentHashMap<Uuid, StateFlow<AliasState<School>>> = concurrentHashMapFactory.create()
+    private val appFlows: ConcurrentHashMap<Uuid, StateFlow<AliasState<School.AppSchool>>> = concurrentHashMapFactory.create()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     fun getById(
         id: Uuid,
-    ): Flow<AliasState<School>> {
-        return channelFlow {
-            flows.getOrPut(id) {
-                val flow = MutableSharedFlow<AliasState<School>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-                CoroutineScope(Dispatchers.IO).launch {
-                    schoolRepository.getByLocalId(id).collectLatest { flow.tryEmit(it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString())) }
-                }
-                return@getOrPut flow
-            }.collect { send(it) }
+    ): StateFlow<AliasState<School>> {
+        return flows.getOrPut(id) {
+            schoolRepository.getByLocalId(id)
+                .map { it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString()) }
+                .stateIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+                    initialValue = AliasState.Loading(id.toHexString())
+                )
         }
     }
 
     fun getAppSchoolById(
         id: Uuid
-    ): Flow<AliasState<School.AppSchool>> {
-        return channelFlow {
-            appFlows.getOrPut(id) {
-                val flow = MutableSharedFlow<AliasState<School.AppSchool>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-                CoroutineScope(Dispatchers.IO).launch {
-                    schoolRepository.getByLocalId(id).map { it as? School.AppSchool }.collectLatest { flow.tryEmit(it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString())) }
-                }
-                return@getOrPut flow
-            }.collect { send(it) }
+    ): StateFlow<AliasState<School.AppSchool>> {
+        return appFlows.getOrPut(id) {
+            schoolRepository.getByLocalId(id)
+                .map { it as? School.AppSchool }
+                .map { it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString()) }
+                .stateIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+                    initialValue = AliasState.Loading(id.toHexString())
+                )
         }
     }
 }

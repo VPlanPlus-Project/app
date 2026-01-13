@@ -43,17 +43,22 @@ import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
 
-class DaySource(
-    private val dayRepository: DayRepository,
-    private val weekRepository: WeekRepository,
-    private val timetableRepository: TimetableRepository,
-    private val substitutionPlanRepository: SubstitutionPlanRepository,
-    private val assessmentRepository: AssessmentRepository,
-    private val homeworkRepository: HomeworkRepository,
-) {
-    private val flows: ConcurrentMutableMap<String, MutableSharedFlow<CacheState<Day>>> = ConcurrentMutableMap()
+class DaySource : KoinComponent {
+    private val dayRepository: DayRepository by inject()
+    private val weekRepository: WeekRepository by inject()
+    private val timetableRepository: TimetableRepository by inject()
+    private val substitutionPlanRepository: SubstitutionPlanRepository by inject()
+    private val assessmentRepository: AssessmentRepository by inject()
+    private val homeworkRepository: HomeworkRepository by inject()
+    private val concurrentHashMapFactory: ConcurrentHashMapFactory by inject()
+
+    private val flows: ConcurrentHashMap<String, MutableSharedFlow<CacheState<Day>>> = concurrentHashMapFactory.create()
+
     fun findNextRegularSchoolDayAfter(
         holidays: List<LocalDate>,
         weeks: List<Week>,

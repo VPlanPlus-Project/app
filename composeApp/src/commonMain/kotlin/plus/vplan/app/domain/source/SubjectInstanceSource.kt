@@ -3,32 +3,36 @@ package plus.vplan.app.domain.source
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import kotlin.uuid.Uuid
 
-class SubjectInstanceSource(
-    private val subjectInstanceRepository: SubjectInstanceRepository
-) {
-    private val flows: ConcurrentMutableMap<Uuid, MutableSharedFlow<AliasState<SubjectInstance>>> = ConcurrentMutableMap()
+class SubjectInstanceSource : KoinComponent {
+    private val subjectInstanceRepository: SubjectInstanceRepository by inject()
+    private val concurrentHashMapFactory: ConcurrentHashMapFactory by inject()
 
-    fun getById(id: Uuid): Flow<AliasState<SubjectInstance>> {
-        return channelFlow {
-            flows.getOrPut(id) {
-                val flow = MutableSharedFlow<AliasState<SubjectInstance>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-                CoroutineScope(Dispatchers.IO).launch {
-                    subjectInstanceRepository.getByLocalId(id).collectLatest { flow.tryEmit(it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString())) }
-                }
-                return@getOrPut flow
-            }.collect { send(it) }
+    private val flows: ConcurrentHashMap<Uuid, StateFlow<AliasState<SubjectInstance>>> = concurrentHashMapFactory.create()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    fun getById(id: Uuid): StateFlow<AliasState<SubjectInstance>> {
+        return flows.getOrPut(id) {
+            subjectInstanceRepository.getByLocalId(id)
+                .map { it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString()) }
+                .stateIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+                    initialValue = AliasState.Loading(id.toHexString())
+                )
         }
     }
 }

@@ -4,35 +4,39 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.stateIn
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
 import plus.vplan.app.domain.repository.AssessmentRepository
 
-class AssessmentSource(
-    private val assessmentRepository: AssessmentRepository
-) {
-    private val flows: ConcurrentMutableMap<Int, MutableSharedFlow<CacheState<Assessment>>> = ConcurrentMutableMap()
-    fun getById(id: Int, forceUpdate: Boolean = false): Flow<CacheState<Assessment>> {
-        if (forceUpdate) kotlinx.coroutines.runBlocking { flows.remove(id) }
-        return channelFlow {
-            flows.getOrPut(id) {
-                val flow = MutableSharedFlow<CacheState<Assessment>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-                CoroutineScope(Dispatchers.IO).launch {
-                    assessmentRepository.getById(id, forceUpdate).collectLatest { flow.tryEmit(it) }
-                }
-                return@getOrPut flow
-            }.collect { send(it) }
+class AssessmentSource : KoinComponent {
+    private val assessmentRepository: AssessmentRepository by inject()
+    private val concurrentHashMapFactory: ConcurrentHashMapFactory by inject()
+
+    private val flows: ConcurrentHashMap<Int, StateFlow<CacheState<Assessment>>> = concurrentHashMapFactory.create()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    fun getById(id: Int, forceUpdate: Boolean = false): StateFlow<CacheState<Assessment>> {
+        if (forceUpdate) flows.remove(id)
+        return flows.getOrPut(id) {
+            assessmentRepository.getById(id, forceUpdate)
+                .stateIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+                    initialValue = CacheState.Loading(id.toString())
+                )
         }
     }
 

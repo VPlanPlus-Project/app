@@ -218,6 +218,24 @@ val appModule = module(createdAtStart = true) {
     singleOf(::ProfileServiceImpl).bind<ProfileService>()
 
     singleOf(::GetCurrentProfileUseCase)
+
+    single { GroupSource() }
+    single { TeacherSource() }
+    single { RoomSource() }
+    single { CourseSource() }
+    single { SchoolSource() }
+    single { LessonTimeSource() }
+    single { TimetableSource() }
+    single { SubstitutionPlanSource() }
+    single { NewsSource() }
+    single { WeekSource() }
+    single { ProfileSource() }
+    single { HomeworkSource() }
+    single { HomeworkTaskSource() }
+    single { AssessmentSource() }
+    single { SubjectInstanceSource() }
+    single { FileSource() }
+    single { DaySource() }
 }
 
 fun initKoin(configuration: KoinAppDeclaration? = null) {
@@ -247,22 +265,22 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             newsModule
         )
 
-        App.homeworkSource = HomeworkSource(koin.get())
-        App.homeworkTaskSource = HomeworkTaskSource(koin.get())
-        App.profileSource = ProfileSource(koin.get())
-        App.groupSource = GroupSource(koin.get())
-        App.schoolSource = SchoolSource(koin.get())
-        App.subjectInstanceSource = SubjectInstanceSource(koin.get())
-        App.daySource = DaySource(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
-        App.timetableSource = TimetableSource(koin.get())
-        App.weekSource = WeekSource(koin.get())
-        App.courseSource = CourseSource(koin.get())
-        App.teacherSource = TeacherSource(koin.get())
-        App.roomSource = RoomSource(koin.get())
-        App.lessonTimeSource = LessonTimeSource(koin.get())
-        App.substitutionPlanSource = SubstitutionPlanSource(koin.get())
-        App.assessmentSource = AssessmentSource(koin.get())
-        App.fileSource = FileSource(koin.get(), koin.get())
-        App.newsSource = NewsSource(koin.get())
+        App.homeworkSource = koin.get()
+        App.homeworkTaskSource = koin.get()
+        App.profileSource = koin.get()
+        App.groupSource = koin.get()
+        App.schoolSource = koin.get()
+        App.subjectInstanceSource = koin.get()
+        App.daySource = koin.get()
+        App.timetableSource = koin.get()
+        App.weekSource = koin.get()
+        App.courseSource = koin.get()
+        App.teacherSource = koin.get()
+        App.roomSource = koin.get()
+        App.lessonTimeSource = koin.get()
+        App.substitutionPlanSource = koin.get()
+        App.assessmentSource = koin.get()
+        App.fileSource = koin.get()
+        App.newsSource = koin.get()
     }
 }
