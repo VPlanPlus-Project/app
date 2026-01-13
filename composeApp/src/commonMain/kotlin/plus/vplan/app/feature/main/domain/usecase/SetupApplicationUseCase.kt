@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import plus.vplan.app.BuildConfig
 import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.VppId
@@ -21,6 +20,7 @@ import plus.vplan.app.firebaseIdentify
 import plus.vplan.app.isFeatureEnabled
 import plus.vplan.app.posthogIdentify
 import plus.vplan.app.setPostHogProperty
+import plus.vplan.app.versionCode
 
 class SetupApplicationUseCase(
     private val keyValueRepository: KeyValueRepository,
@@ -36,7 +36,7 @@ class SetupApplicationUseCase(
     suspend operator fun invoke() {
         removeDisconnectedVppIdsFromProfilesUseCase()
         updateFirebaseTokenUseCase()
-        if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != BuildConfig.APP_VERSION_CODE.toString()) {
+        if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != versionCode.toString()) {
             logger.i { "First run of VPlanPlus" }
             logger.d { "Saving migration flags" }
 
@@ -48,7 +48,7 @@ class SetupApplicationUseCase(
             doAssessmentsAndHomeworkIndexMigrationUseCase()
         }
 
-        keyValueRepository.set(Keys.PREVIOUS_APP_VERSION, BuildConfig.APP_VERSION_CODE.toString())
+        keyValueRepository.set(Keys.PREVIOUS_APP_VERSION, versionCode.toString())
         if (isFeatureEnabled("core_download-vpp-school-identifier", true)) downloadVppSchoolIdentifierUseCase()
 
         if (isFeatureEnabled("core_analytics-identifier", true)) vppIdRepository.getAllLocalIds().first()

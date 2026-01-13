@@ -45,8 +45,8 @@ class MainApplication : Application() {
 
         // Setup PostHog with the given Context and Config
         PostHogAndroid.setup(this, config)
-        PostHog.register("\$app_build", BuildConfig.APP_VERSION_CODE)
-        PostHog.register("\$os_name", "Android")
+        PostHog.register($$"$app_build", versionName)
+        PostHog.register($$"$os_name", "Android")
         PostHog.register("debug_mode", isDebug().toString())
 
         FirebaseApp.initializeApp(this)

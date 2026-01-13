@@ -57,29 +57,37 @@ kotlin {
     }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
+        androidMain {
+            buildConfig {
+                buildConfigField("APP_VERSION_CODE", ApplicationConfig.APP_VERSION_CODE)
+                buildConfigField("APP_VERSION", ApplicationConfig.APP_VERSION_NAME)
+                buildConfigField("APP_DEBUG", localProperties.getProperty("app.debug")?.toBoolean()!!)
+            }
 
-            implementation(libs.koin.android)
-            implementation(libs.koin.androidx.compose)
-            implementation(libs.koin.androidx.workmanager)
-            implementation(libs.ktor.client.okhttp)
-            implementation(libs.kotlinx.coroutines.android)
+            dependencies {
+                implementation(compose.preview)
+                implementation(libs.androidx.activity.compose)
 
-            implementation(libs.androidx.browser)
-            implementation(libs.androidx.biometric)
+                implementation(libs.koin.android)
+                implementation(libs.koin.androidx.compose)
+                implementation(libs.koin.androidx.workmanager)
+                implementation(libs.ktor.client.okhttp)
+                implementation(libs.kotlinx.coroutines.android)
 
-            implementation(libs.androidx.icons.extended)
-            implementation(libs.androidx.sqlite.framework)
-            implementation(libs.androidx.work.runtime.ktx)
+                implementation(libs.androidx.browser)
+                implementation(libs.androidx.biometric)
 
-            implementation(project.dependencies.platform(libs.firebase.bom))
-            implementation(libs.firebase.messaging)
-            implementation(libs.firebase.analytics)
-            implementation(libs.firebase.crashlytics)
+                implementation(libs.androidx.icons.extended)
+                implementation(libs.androidx.sqlite.framework)
+                implementation(libs.androidx.work.runtime.ktx)
 
-            implementation(libs.posthog.android)
+                implementation(project.dependencies.platform(libs.firebase.bom))
+                implementation(libs.firebase.messaging)
+                implementation(libs.firebase.analytics)
+                implementation(libs.firebase.crashlytics)
+
+                implementation(libs.posthog.android)
+            }
         }
         commonMain.dependencies {
             implementation(libs.androidx.material)
@@ -193,10 +201,6 @@ buildConfig {
 
     className("BuildConfig")
     packageName("plus.vplan.app")
-
-    buildConfigField("APP_VERSION_CODE", ApplicationConfig.APP_VERSION_CODE)
-    buildConfigField("APP_VERSION", ApplicationConfig.APP_VERSION_NAME)
-    buildConfigField("APP_DEBUG", localProperties.getProperty("app.debug")?.toBoolean()!!)
 
     buildConfigField("POSTHOG_API_KEY", localProperties.getProperty("posthog.api.key") ?: throw MissingFieldException("posthog.api.key not found in local.properties", String::class.java))
 

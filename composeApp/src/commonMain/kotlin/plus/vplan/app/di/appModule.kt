@@ -22,7 +22,6 @@ import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import plus.vplan.app.App
-import plus.vplan.app.BuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
@@ -123,6 +122,9 @@ import plus.vplan.app.feature.settings.di.settingsModule
 import plus.vplan.app.feature.sync.di.syncModule
 import plus.vplan.app.feature.system.di.systemModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
+import plus.vplan.app.getPlatform
+import plus.vplan.app.versionCode
+import plus.vplan.app.versionName
 
 expect val platformModule: Module
 
@@ -171,7 +173,9 @@ val appModule = module(createdAtStart = true) {
 
             install(DefaultRequest) {
                 header("X-App", "VPlanPlus")
-                header("X-App-Version", BuildConfig.APP_VERSION_CODE)
+                header("X-App-Version", versionCode)
+                header("X-App-Version-Name", versionName)
+                header("X-App-Platform", getPlatform().name)
             }
         }
     }

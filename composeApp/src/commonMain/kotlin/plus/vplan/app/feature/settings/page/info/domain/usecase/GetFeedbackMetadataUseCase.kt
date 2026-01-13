@@ -4,13 +4,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.BuildConfig
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.getByProvider
 import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.host.domain.usecase.HasProfileUseCase
+import plus.vplan.app.isDebug
+import plus.vplan.app.versionCode
+import plus.vplan.app.versionName
 
 class GetFeedbackMetadataUseCase(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
@@ -23,9 +25,9 @@ class GetFeedbackMetadataUseCase(
             return@map FeedbackMetadata(
                 systemInfo,
                 appInfo = AppInfo(
-                    versionCode = BuildConfig.APP_VERSION_CODE,
-                    versionName = BuildConfig.APP_VERSION,
-                    buildType = if (BuildConfig.APP_DEBUG) "Debug" else "Release"
+                    versionCode = versionCode,
+                    versionName = versionName,
+                    buildType = if (isDebug()) "Debug" else "Release"
                 ),
                 profileInfo = FeedbackProfileInfo(
                     schoolId = school?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toIntOrNull(),
