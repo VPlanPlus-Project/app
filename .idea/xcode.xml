@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="XcodeMetaData" PROJECT_DIR="$PROJECT_DIR$/iosApp" PROJECT_FILE="$PROJECT_DIR$/iosApp/iosApp.xcodeproj">
+    <contentRoot DIR="$PROJECT_DIR$/app" />
+  </component>
+  <component name="XcodeSettings">
+    <option name="PROJECT_FILE" value="$PROJECT_DIR$/iosApp/iosApp.xcodeproj" />
+  </component>
+</project>
