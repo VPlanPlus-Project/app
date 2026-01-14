@@ -43,7 +43,7 @@ class MainActivity : FragmentActivity() {
             Thread {
                 val intent = Intent(this, ErrorActivity::class.java).apply {
                     putExtra("stacktrace", throwable.stackTraceToString())
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 }
 
                 Logger.e(throwable) { "Uncaught exception" }
@@ -51,9 +51,9 @@ class MainActivity : FragmentActivity() {
                 Firebase.crashlytics.recordException(throwable)
                 captureError("UncaughtException", throwable.stackTraceToString())
 
-                Thread.sleep(500)
-                Process.killProcess(Process.myPid())
-                exitProcess(10)
+                fragmentActivity.runOnUiThread {
+                    fragmentActivity.finishAffinity()
+                }
             }.start()
         }
     }

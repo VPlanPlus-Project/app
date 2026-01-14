@@ -12,7 +12,7 @@ const val LOG_DATABASE_QUERIES: Boolean = false
  * If the server sends an answer, its status code and headers will be logged as well.
  * @see plus.vplan.app.di.appModule
  */
-const val LOG_HTTP_REQUESTS: Boolean = true
+const val LOG_HTTP_REQUESTS: Boolean = false
 
 @Suppress("unused")
 private val productionConfiguration = WebConfig(

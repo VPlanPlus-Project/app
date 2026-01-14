@@ -17,7 +17,12 @@ import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.ui.subjectIcon
 
 @Composable
-fun SubjectIcon(modifier: Modifier = Modifier, subject: String?, containerColor: Color = subject.subjectColor().getGroup().container, contentColor: Color = subject.subjectColor().getGroup().onContainer) {
+fun SubjectIcon(
+    modifier: Modifier = Modifier,
+    subject: String?,
+    containerColor: Color = subject.subjectColor().getGroup().container,
+    contentColor: Color = subject.subjectColor().getGroup().onContainer
+) {
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(2.dp))
