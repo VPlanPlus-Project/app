@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -358,7 +359,7 @@ class BesteSchuleGradesRepositoryImpl : BesteSchuleGradesRepository, KoinCompone
         )
     }
 
-    override suspend fun clearCacheForUser(schulverwalterUserId: Int) {
+    override suspend fun clearCacheForUser(schulverwalterUserId: Int) = withContext(Dispatchers.IO) {
         vppDatabase.besteSchuleGradesDao.clearCacheForUser(schulverwalterUserId)
     }
 }

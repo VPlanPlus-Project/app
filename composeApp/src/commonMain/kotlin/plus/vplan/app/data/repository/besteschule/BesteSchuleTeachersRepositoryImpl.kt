@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.data.source.database.VppDatabase
@@ -37,7 +38,7 @@ class BesteSchuleTeachersRepositoryImpl : BesteSchuleTeachersRepository, KoinCom
         return Response.Success(response.data.map { it.teacher }.distinctBy { it.id })
     }
 
-    override suspend fun addTeachersToCache(items: List<BesteSchuleTeacher>) {
+    override suspend fun addTeachersToCache(items: List<BesteSchuleTeacher>) = withContext(Dispatchers.IO) {
         vppDatabase.besteSchuleTeacherDao.upsert(items.map { teacher ->
             DbBesteschuleTeacher(
                 id = teacher.id,
@@ -173,11 +174,11 @@ class BesteSchuleTeachersRepositoryImpl : BesteSchuleTeachersRepository, KoinCom
 
     private suspend fun refreshTeachers(
         accessToken: String
-    ): Response<List<BesteSchuleTeacher>> {
+    ): Response<List<BesteSchuleTeacher>> = withContext(Dispatchers.IO) {
 
         // Load data from API
         val apiResponse = getTeachersFromApi(accessToken)
-        if (apiResponse !is Response.Success) return apiResponse as Response.Error
+        if (apiResponse !is Response.Success) return@withContext apiResponse as Response.Error
 
         val now = Clock.System.now()
 
@@ -196,6 +197,6 @@ class BesteSchuleTeachersRepositoryImpl : BesteSchuleTeachersRepository, KoinCom
         addTeachersToCache(teachers)
 
         // Return the new cached model
-        return Response.Success(teachers)
+        return@withContext Response.Success(teachers)
     }
 }
