@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.ui.components.native.NativeButton
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.book_open
@@ -38,6 +39,13 @@ fun QuickActions(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item { Spacer(Modifier.width(8.dp)) }
+            item {
+                NativeButton(
+                    modifier = Modifier,
+                    text = "Test",
+                    onClick = onFeedbackClicked
+                )
+            }
             item {
                 androidx.compose.material3.FilledTonalButton(
                     onClick = onNewHomeworkClicked,

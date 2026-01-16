@@ -8,7 +8,12 @@ struct ComposeView: UIViewControllerRepresentable {
     let onQuicklook: (String) -> ()
     
     func makeUIViewController(context: Context) -> UIViewController {
-        return MainViewControllerKt.mainViewController(url: url, notificationTask: notificationTask, quicklookImpl: QuickLookImpl(onQuicklook: onQuicklook))
+        return MainViewControllerKt.mainViewController(
+            url: url,
+            notificationTask: notificationTask,
+            quicklookImpl: QuickLookImpl(onQuicklook: onQuicklook),
+            nativeViewFactory: IOSNativeViewFactory.shared
+        )
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
