@@ -149,6 +149,14 @@ class GradesViewModel(
                             (intervals as? Response.Success)?.data?.map { it.id }.orEmpty()
                         years.filter { year -> year.intervalIds.any { it in intervalIdsForUser } }
                     }.collectLatest { years ->
+                        val allIntervals = withContext(Dispatchers.Default) {
+                            years.flatMap { year ->
+                                year.intervalIds.map { intervalId ->
+                                    besteSchuleIntervalsRepository.getIntervalFromCache(intervalId).first()
+                                }
+                            }.filterNotNull()
+                        }
+
                         gradeState.update { gradesState ->
                             val isFirstLoad = gradesState.isLoading
                             val selectedYear =
@@ -158,19 +166,9 @@ class GradesViewModel(
                             gradesState.copy(
                                 availableYears = years,
                                 selectedYear = selectedYear,
-                                availableIntervals = emptyList(),
+                                availableIntervals = allIntervals,
+                                isLoading = false
                             )
-                        }
-
-                        combine(years.map { it.intervals }) {
-                            it.toList().flatten()
-                        }.collectLatest { intervals ->
-                            gradeState.update { gradesState ->
-                                gradesState.copy(
-                                    availableIntervals = intervals,
-                                    isLoading = false
-                                )
-                            }
                         }
                     }
                 }
@@ -205,10 +203,17 @@ class GradesViewModel(
             )
         }
 
+        val subjectIds = gradesForInterval.map { it.collection.first()!!.subjectId }.distinct()
+        val subjectsMap = withContext(Dispatchers.IO) {
+            subjectIds.associateWith { subjectId ->
+                besteSchuleSubjectsRepository.getSubjectFromCache(subjectId).first()
+            }
+        }
+
         val subjects = gradesForInterval
             .groupBy { grade -> grade.collection.first()!!.subjectId }
-            .map { (subjectId, gradesForSubject) ->
-                val subject = besteSchuleSubjectsRepository.getSubjectFromCache(subjectId).first()!!
+            .mapNotNull { (subjectId, gradesForSubject) ->
+                val subject = subjectsMap[subjectId] ?: return@mapNotNull null
 
                 val categoriesMap = gradesForSubject.groupBy { grade ->
                     grade.collection.first()!!.type
@@ -297,7 +302,7 @@ class GradesViewModel(
     }
 
     fun init(vppIdId: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val vppId = vppIdRepository.getById(vppIdId, ResponsePreference.Fast)
                 .getFirstValueOld() as? VppId.Active
             val schulverwalterConnection = vppId?.schulverwalterConnection ?: return@launch
