@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.data.source.database.VppDatabase
@@ -37,7 +38,7 @@ class BesteSchuleSubjectsRepositoryImpl : BesteSchuleSubjectsRepository, KoinCom
         return Response.Success((response as Response.Success).data.subjects)
     }
 
-    override suspend fun addSubjectsToCache(subjects: Set<BesteSchuleSubject>) {
+    override suspend fun addSubjectsToCache(subjects: Set<BesteSchuleSubject>) = withContext(Dispatchers.IO) {
         vppDatabase.besteSchuleSubjectDao.upsert(subjects.map { subject ->
             DbBesteschuleSubject(
                 id = subject.id,

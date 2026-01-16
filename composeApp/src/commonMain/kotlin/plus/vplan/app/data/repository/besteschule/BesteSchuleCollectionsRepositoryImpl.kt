@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -39,7 +40,7 @@ class BesteSchuleCollectionsRepositoryImpl : BesteSchuleCollectionsRepository, K
         return Response.Success(response.data.map { it.collection })
     }
 
-    override suspend fun addCollectionsToCache(items: Set<BesteSchuleCollection>) {
+    override suspend fun addCollectionsToCache(items: Set<BesteSchuleCollection>) = withContext(Dispatchers.IO) {
         val existingIntervals = vppDatabase.besteSchuleIntervalDao.getAll().first().map { it.interval.id }
         val existingTeachers = vppDatabase.besteSchuleTeacherDao.getAll().first().map { it.id }
         val existingSubjects = vppDatabase.besteSchuleSubjectDao.getAll().first().map { it.id }
@@ -187,11 +188,11 @@ class BesteSchuleCollectionsRepositoryImpl : BesteSchuleCollectionsRepository, K
 
     private suspend fun refreshCollections(
         accessToken: String,
-    ): Response<List<BesteSchuleCollection>> {
+    ): Response<List<BesteSchuleCollection>> = withContext(Dispatchers.IO) {
 
         // Load data from API
         val apiResponse = getCollectionsFromApi(accessToken)
-        if (apiResponse !is Response.Success) return apiResponse as Response.Error
+        if (apiResponse !is Response.Success) return@withContext apiResponse as Response.Error
 
         val now = Clock.System.now()
 
@@ -213,6 +214,6 @@ class BesteSchuleCollectionsRepositoryImpl : BesteSchuleCollectionsRepository, K
         addCollectionsToCache(collection)
 
         // Return the new cached model
-        return Response.Success(collection.toList())
+        return@withContext Response.Success(collection.toList())
     }
 }

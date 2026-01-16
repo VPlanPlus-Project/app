@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -40,7 +41,7 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
         return Response.Success((response as Response.Success).data.intervals)
     }
 
-    override suspend fun addIntervalsToCache(intervals: Set<BesteSchuleInterval>) {
+    override suspend fun addIntervalsToCache(intervals: Set<BesteSchuleInterval>) = withContext(Dispatchers.IO) {
         val existingYears = vppDatabase.besteSchuleYearDao.getAll().first().map { it.besteSchuleYear.id }.toSet()
         val existingIntervals = vppDatabase.besteSchuleIntervalDao.getAll().first().map { it.interval.id }
             .toSet() + intervals.map { it.id }
@@ -208,11 +209,11 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
         accessToken: String,
         userId: Int,
         withCache: Boolean
-    ): Response<List<BesteSchuleInterval>> {
+    ): Response<List<BesteSchuleInterval>> = withContext(Dispatchers.IO) {
 
         // Load data from API
         val apiResponse = getIntervalsFromApi(accessToken, withCache)
-        if (apiResponse !is Response.Success) return apiResponse as Response.Error
+        if (apiResponse !is Response.Success) return@withContext apiResponse as Response.Error
 
         val now = Clock.System.now()
 
@@ -235,7 +236,7 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
         addIntervalsToCache(intervals)
 
         // Return the new cached model
-        return Response.Success(intervals.toList())
+        return@withContext Response.Success(intervals.toList())
     }
 
 }
