@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.domain.cache.CacheConfig
@@ -22,6 +23,7 @@ import plus.vplan.app.domain.cache.RefreshPolicy
 import plus.vplan.app.domain.cache.isStale
 import plus.vplan.app.domain.model.data_structure.ConcurrentHashMap
 import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
+import kotlin.time.Clock
 
 /**
  * Enhanced base data source with intelligent caching, refresh coordination, and linked entity tracking.
@@ -145,18 +147,18 @@ abstract class EnhancedDataSource<ID, T> : KoinComponent {
         
         if (cached != null) {
             val linkedLoading = getLinkedEntityIds(cached)
+            val now = Clock.System.now()
             emit(DataSourceState.Success(
                 data = cached,
                 linkedEntitiesLoading = linkedLoading,
                 isRefreshing = false,
-                cachedAt = System.currentTimeMillis()
+                cachedAt = now
             ))
             
             // Check if stale and refresh in background if needed
-            val cacheConfig = getCacheConfig()
-            val isStale = System.currentTimeMillis() - (System.currentTimeMillis()) > cacheConfig.ttlMillis
-            
-            if (isStale || forceRefresh) {
+            // Note: The cache already checks staleness in get(), so if we got data, it's not stale
+            // We only force refresh if explicitly requested
+            if (forceRefresh) {
                 refreshInBackground(id, emit)
             }
         } else {
@@ -168,7 +170,7 @@ abstract class EnhancedDataSource<ID, T> : KoinComponent {
                 data = fresh,
                 linkedEntitiesLoading = linkedLoading,
                 isRefreshing = false,
-                cachedAt = System.currentTimeMillis()
+                cachedAt = Clock.System.now()
             ))
         }
     }
@@ -209,7 +211,7 @@ abstract class EnhancedDataSource<ID, T> : KoinComponent {
                 data = fresh,
                 linkedEntitiesLoading = linkedLoading,
                 isRefreshing = false,
-                cachedAt = System.currentTimeMillis()
+                cachedAt = Clock.System.now()
             ))
         } catch (e: Exception) {
             // Fall back to cache on error
@@ -219,7 +221,8 @@ abstract class EnhancedDataSource<ID, T> : KoinComponent {
                 emit(DataSourceState.Success(
                     data = cached,
                     linkedEntitiesLoading = linkedLoading,
-                    isRefreshing = false
+                    isRefreshing = false,
+                    cachedAt = Clock.System.now()
                 ))
             } else {
                 throw e
@@ -238,7 +241,7 @@ abstract class EnhancedDataSource<ID, T> : KoinComponent {
             data = fresh,
             linkedEntitiesLoading = linkedLoading,
             isRefreshing = false,
-            cachedAt = System.currentTimeMillis()
+            cachedAt = Clock.System.now()
         ))
     }
     
@@ -291,7 +294,7 @@ abstract class EnhancedDataSource<ID, T> : KoinComponent {
                     data = fresh,
                     linkedEntitiesLoading = linkedLoading,
                     isRefreshing = false,
-                    cachedAt = System.currentTimeMillis()
+                    cachedAt = Clock.System.now()
                 ))
             } catch (e: Exception) {
                 // Silent failure for background refresh

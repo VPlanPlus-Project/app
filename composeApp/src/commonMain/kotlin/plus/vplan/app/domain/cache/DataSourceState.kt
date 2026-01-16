@@ -1,7 +1,9 @@
 package plus.vplan.app.domain.cache
 
+import kotlinx.datetime.Instant
 import plus.vplan.app.domain.data.AliasedItem
 import plus.vplan.app.domain.data.Item
+import kotlin.time.Clock
 
 /**
  * Represents the state of data in a data source with enhanced loading information.
@@ -20,7 +22,7 @@ sealed class DataSourceState<out T> {
         val data: T,
         val linkedEntitiesLoading: Set<String> = emptySet(),
         val isRefreshing: Boolean = false,
-        val cachedAt: Long = System.currentTimeMillis()
+        val cachedAt: Instant = Clock.System.now()
     ) : DataSourceState<T>()
     
     /**
@@ -72,7 +74,7 @@ enum class RefreshPolicy {
  * Cache invalidation strategy
  */
 data class CacheConfig(
-    val ttlMillis: Long = 24 * 60 * 60 * 1000, // 24 hours default
+    val ttlMillis: Long = 24 * 60 * 60 * 1000L, // 24 hours default in milliseconds
     val maxEntries: Int = 1000,
     val evictionPolicy: EvictionPolicy = EvictionPolicy.LRU
 )
@@ -87,7 +89,8 @@ enum class EvictionPolicy {
  * Extension to check if data is stale based on cache config
  */
 fun <T> DataSourceState.Success<T>.isStale(config: CacheConfig): Boolean {
-    return System.currentTimeMillis() - cachedAt > config.ttlMillis
+    val now = Clock.System.now()
+    return (now - cachedAt).inWholeMilliseconds > config.ttlMillis
 }
 
 /**

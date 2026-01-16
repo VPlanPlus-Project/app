@@ -2,16 +2,18 @@ package plus.vplan.app.domain.cache
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.Instant
 import plus.vplan.app.domain.model.data_structure.ConcurrentHashMap
 import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
+import kotlin.time.Clock
 
 /**
  * Cache entry with metadata for intelligent eviction
  */
 private data class CacheEntry<T>(
     val data: T,
-    val cachedAt: Long,
-    var lastAccessedAt: Long,
+    val cachedAt: Instant,
+    var lastAccessedAt: Instant,
     var accessCount: Int = 1
 )
 
@@ -34,8 +36,8 @@ class IntelligentCache<K, V>(
         val entry = cache[key] ?: return null
         
         // Check if entry is stale
-        val now = System.currentTimeMillis()
-        if (now - entry.cachedAt > config.ttlMillis) {
+        val now = Clock.System.now()
+        if ((now - entry.cachedAt).inWholeMilliseconds > config.ttlMillis) {
             invalidate(key)
             return null
         }
@@ -60,7 +62,7 @@ class IntelligentCache<K, V>(
      */
     suspend fun put(key: K, value: V) {
         mutex.withLock {
-            val now = System.currentTimeMillis()
+            val now = Clock.System.now()
             
             // Check if we need to evict
             if (cache.size >= config.maxEntries && !cache.containsKey(key)) {
@@ -126,11 +128,11 @@ class IntelligentCache<K, V>(
      */
     suspend fun evictStale() {
         mutex.withLock {
-            val now = System.currentTimeMillis()
+            val now = Clock.System.now()
             val keysToRemove = mutableListOf<K>()
             
             cache.forEach { (key, entry) ->
-                if (now - entry.cachedAt > config.ttlMillis) {
+                if ((now - entry.cachedAt).inWholeMilliseconds > config.ttlMillis) {
                     keysToRemove.add(key)
                 }
             }
