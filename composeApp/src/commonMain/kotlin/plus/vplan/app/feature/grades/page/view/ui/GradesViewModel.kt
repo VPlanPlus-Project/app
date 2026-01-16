@@ -3,6 +3,8 @@ package plus.vplan.app.feature.grades.page.view.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.koin.core.component.KoinComponent
@@ -36,6 +39,7 @@ import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.utils.atStartOfDay
+import plus.vplan.app.utils.currentThreadName
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.until
 import kotlin.time.Duration.Companion.days
@@ -68,6 +72,7 @@ class GradesViewModel(
         }
 
         viewModelScope.launch subscribeToSelectedYearAndIntervals@{
+            Logger.d("subscribeToSelectedYearAndIntervals") {"thread: ${currentThreadName()}"}
             combine(
                 gradeState.map { it.selectedYear },
                 gradeState.map { it.availableIntervals },
@@ -451,17 +456,21 @@ class GradesViewModel(
         val allIntervalsInYear = currentState.intervalsForSelectedYear.keys.toList()
         val schulverwalterUser = currentSchulverwalterUser.value ?: return
 
-        val allGrades = besteSchuleGradesRepository.getGrades(
-            responsePreference = ResponsePreference.Fast,
-            contextBesteschuleUserId = schulverwalterUser.userId,
-            contextBesteschuleAccessToken = schulverwalterUser.accessToken
-        )
-            .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
-            .first()
-            .data
+        val allGrades = withContext(Dispatchers.IO) {
+            besteSchuleGradesRepository.getGrades(
+                responsePreference = ResponsePreference.Fast,
+                contextBesteschuleUserId = schulverwalterUser.userId,
+                contextBesteschuleAccessToken = schulverwalterUser.accessToken
+            )
+                .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
+                .first()
+                .data
+        }
 
-        val updatedIntervalsMap = allIntervalsInYear.associateWith { interval ->
-            calculateIntervalData(interval, allIntervalsInYear, allGrades)
+        val updatedIntervalsMap = withContext(Dispatchers.Default) {
+            allIntervalsInYear.associateWith { interval ->
+                calculateIntervalData(interval, allIntervalsInYear, allGrades)
+            }
         }
 
         gradeState.update { it.copy(intervalsForSelectedYear = updatedIntervalsMap) }

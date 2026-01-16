@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -37,7 +38,7 @@ class BesteSchuleYearsRepositoryImpl : BesteSchuleYearsRepository, KoinComponent
     private val vppDatabase by inject<VppDatabase>()
     private val httpClient by inject<HttpClient>()
 
-    override suspend fun addYearsToCache(years: Set<BesteSchuleYear>) {
+    override suspend fun addYearsToCache(years: Set<BesteSchuleYear>) = withContext(Dispatchers.IO) {
         vppDatabase.besteSchuleYearDao.upsert(years.map { year ->
             DbBesteschuleYear(
                 id = year.id,
@@ -192,9 +193,9 @@ class BesteSchuleYearsRepositoryImpl : BesteSchuleYearsRepository, KoinComponent
     /**
      * Helper function to refresh years from API and store to DB.
      */
-    private suspend fun refreshYearsIfNeeded(token: String): Response<List<BesteSchuleYear>> {
+    private suspend fun refreshYearsIfNeeded(token: String): Response<List<BesteSchuleYear>> = withContext(Dispatchers.IO) {
         val apiResponse = getYearsFromApi(token)
-        if (apiResponse !is Response.Success) return apiResponse as Response.Error
+        if (apiResponse !is Response.Success) return@withContext apiResponse as Response.Error
 
         val now = Clock.System.now()
         val cachedModels = apiResponse.data.map {
@@ -210,6 +211,6 @@ class BesteSchuleYearsRepositoryImpl : BesteSchuleYearsRepository, KoinComponent
 
         // Store refreshed data to DB
         addYearsToCache(cachedModels)
-        return Response.Success(cachedModels.toList())
+        return@withContext Response.Success(cachedModels.toList())
     }
 }
