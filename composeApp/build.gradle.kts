@@ -1,7 +1,5 @@
 import groovy.lang.MissingFieldException
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.util.Base64
 import java.util.Properties
 
 val localProperties = Properties().apply {
@@ -13,7 +11,7 @@ val localProperties = Properties().apply {
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.ksp)
@@ -24,10 +22,10 @@ plugins {
 }
 
 kotlin {
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
+    androidLibrary {
+        namespace = "plus.vplan.app.composeapp"
+        compileSdk = 36
+        experimentalProperties["android.experimental.kmp.enableAndroidResources"] = true
     }
 
     compilerOptions {
@@ -51,7 +49,6 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
 
             implementation(libs.koin.android)
@@ -115,22 +112,6 @@ kotlin {
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
         }
-    }
-}
-
-android {
-    namespace = "plus.vplan.app"
-    compileSdk = 36
-
-    defaultConfig {
-        minSdk = 24
-    }
-    buildFeatures {
-        compose = true
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 }
 
