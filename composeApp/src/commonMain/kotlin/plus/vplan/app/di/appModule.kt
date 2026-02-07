@@ -22,7 +22,6 @@ import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import plus.vplan.app.App
-import plus.vplan.app.BuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
@@ -123,6 +122,9 @@ import plus.vplan.app.feature.settings.di.settingsModule
 import plus.vplan.app.feature.sync.di.syncModule
 import plus.vplan.app.feature.system.di.systemModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
+import plus.vplan.app.getPlatform
+import plus.vplan.app.versionCode
+import plus.vplan.app.versionName
 
 expect val platformModule: Module
 
@@ -171,7 +173,9 @@ val appModule = module(createdAtStart = true) {
 
             install(DefaultRequest) {
                 header("X-App", "VPlanPlus")
-                header("X-App-Version", BuildConfig.APP_VERSION_CODE)
+                header("X-App-Version", versionCode)
+                header("X-App-Version-Name", versionName)
+                header("X-App-Platform", getPlatform().name)
             }
         }
     }
@@ -214,6 +218,24 @@ val appModule = module(createdAtStart = true) {
     singleOf(::ProfileServiceImpl).bind<ProfileService>()
 
     singleOf(::GetCurrentProfileUseCase)
+
+    single { GroupSource() }
+    single { TeacherSource() }
+    single { RoomSource() }
+    single { CourseSource() }
+    single { SchoolSource() }
+    single { LessonTimeSource() }
+    single { TimetableSource() }
+    single { SubstitutionPlanSource() }
+    single { NewsSource() }
+    single { WeekSource() }
+    single { ProfileSource() }
+    single { HomeworkSource() }
+    single { HomeworkTaskSource() }
+    single { AssessmentSource() }
+    single { SubjectInstanceSource() }
+    single { FileSource() }
+    single { DaySource() }
 }
 
 fun initKoin(configuration: KoinAppDeclaration? = null) {
@@ -243,22 +265,22 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             newsModule
         )
 
-        App.homeworkSource = HomeworkSource(koin.get())
-        App.homeworkTaskSource = HomeworkTaskSource(koin.get())
-        App.profileSource = ProfileSource(koin.get())
-        App.groupSource = GroupSource(koin.get())
-        App.schoolSource = SchoolSource(koin.get())
-        App.subjectInstanceSource = SubjectInstanceSource(koin.get())
-        App.daySource = DaySource(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
-        App.timetableSource = TimetableSource(koin.get())
-        App.weekSource = WeekSource(koin.get())
-        App.courseSource = CourseSource(koin.get())
-        App.teacherSource = TeacherSource(koin.get())
-        App.roomSource = RoomSource(koin.get())
-        App.lessonTimeSource = LessonTimeSource(koin.get())
-        App.substitutionPlanSource = SubstitutionPlanSource(koin.get())
-        App.assessmentSource = AssessmentSource(koin.get())
-        App.fileSource = FileSource(koin.get(), koin.get())
-        App.newsSource = NewsSource(koin.get())
+        App.homeworkSource = koin.get()
+        App.homeworkTaskSource = koin.get()
+        App.profileSource = koin.get()
+        App.groupSource = koin.get()
+        App.schoolSource = koin.get()
+        App.subjectInstanceSource = koin.get()
+        App.daySource = koin.get()
+        App.timetableSource = koin.get()
+        App.weekSource = koin.get()
+        App.courseSource = koin.get()
+        App.teacherSource = koin.get()
+        App.roomSource = koin.get()
+        App.lessonTimeSource = koin.get()
+        App.substitutionPlanSource = koin.get()
+        App.assessmentSource = koin.get()
+        App.fileSource = koin.get()
+        App.newsSource = koin.get()
     }
 }

@@ -3,35 +3,37 @@ package plus.vplan.app.domain.source
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.Teacher
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
 import plus.vplan.app.domain.repository.TeacherRepository
 import kotlin.uuid.Uuid
 
-class TeacherSource(
-    private val teacherRepository: TeacherRepository
-) {
+class TeacherSource : KoinComponent {
+    private val teacherRepository: TeacherRepository by inject()
+    private val concurrentHashMapFactory: ConcurrentHashMapFactory by inject()
 
-    private val flows = hashMapOf<Uuid, MutableSharedFlow<AliasState<Teacher>>>()
-    private val cacheItems = hashMapOf<Uuid, AliasState<Teacher>>()
-    fun getById(id: Uuid, forceReload: Boolean = false): Flow<AliasState<Teacher>> {
+    private val flows: ConcurrentHashMap<Uuid, StateFlow<AliasState<Teacher>>> = concurrentHashMapFactory.create()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    fun getById(id: Uuid, forceReload: Boolean = false): StateFlow<AliasState<Teacher>> {
         if (forceReload) flows.remove(id)
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<AliasState<Teacher>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            CoroutineScope(Dispatchers.IO).launch {
-                teacherRepository.getByLocalId(id).collectLatest { flow.tryEmit(it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString())) }
-            }
-            flow
+            teacherRepository.getByLocalId(id)
+                .map { it?.let { AliasState.Done(it) } ?: AliasState.NotExisting(id.toHexString()) }
+                .stateIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+                    initialValue = AliasState.Loading(id.toHexString())
+                )
         }
-    }
-
-    suspend fun getSingleById(id: Uuid): Teacher? {
-        return (cacheItems[id] as? AliasState.Done<Teacher>)?.data ?: getById(id).getFirstValue()
     }
 }

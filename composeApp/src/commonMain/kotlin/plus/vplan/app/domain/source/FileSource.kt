@@ -4,47 +4,53 @@ import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.stateIn
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.File
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.utils.getBitmapFromBytes
 
-class FileSource(
-    private val fileRepository: FileRepository,
-    private val localFileRepository: LocalFileRepository
-) {
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<File>>>()
+class FileSource : KoinComponent {
+    private val fileRepository: FileRepository by inject()
+    private val localFileRepository: LocalFileRepository by inject()
+    private val concurrentHashMapFactory: ConcurrentHashMapFactory by inject()
+
+    private val flows: ConcurrentHashMap<Int, StateFlow<CacheState<File>>> = concurrentHashMapFactory.create()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val bitmapCache = hashMapOf<Int, ImageBitmap?>()
 
-    fun getById(id: Int): Flow<CacheState<File>> {
+    fun getById(id: Int): StateFlow<CacheState<File>> {
         return flows.getOrPut(id) {
-            val fileFlow = fileRepository.getById(id, forceReload = false).map {
-                if (it is CacheState.Done<File>) {
-                    it.copy(
-                        data = it.data.copy(
-                            getBitmap = {
-                                bitmapCache[it.data.id] ?: localFileRepository.getFile("./files/${it.data.id}")?.let { bytes ->
-                                    val bitmap = getBitmapFromBytes(bytes)
-                                    bitmapCache[it.data.id] = bitmap
-                                    bitmap
+            fileRepository.getById(id, forceReload = false)
+                .map { state ->
+                    if (state is CacheState.Done<File>) {
+                        state.copy(
+                            data = state.data.copy(
+                                getBitmap = {
+                                    bitmapCache[state.data.id] ?: localFileRepository.getFile("./files/${state.data.id}")?.let { bytes ->
+                                        val bitmap = getBitmapFromBytes(bytes)
+                                        bitmapCache[state.data.id] = bitmap
+                                        bitmap
+                                    }
                                 }
-                            }
+                            )
                         )
-                    )
-                } else it
-            }
-            val flow = MutableSharedFlow<CacheState<File>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            CoroutineScope(Dispatchers.IO).launch {
-                fileFlow.collectLatest { flow.tryEmit(it) }
-            }
-            flow
+                    } else state
+                }
+                .stateIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+                    initialValue = CacheState.Loading(id.toString())
+                )
         }
     }
 }

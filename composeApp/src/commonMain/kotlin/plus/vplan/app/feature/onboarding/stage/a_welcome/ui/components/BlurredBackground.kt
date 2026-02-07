@@ -16,10 +16,11 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import plus.vplan.app.BuildConfig
 import plus.vplan.app.utils.blendColor
+import plus.vplan.app.versionName
 import kotlin.random.Random
 
 @Composable
-fun BlurredBackground(seed: String = BuildConfig.APP_VERSION) {
+fun BlurredBackground(seed: String = versionName) {
     val isSystemInDarkTheme = isSystemInDarkTheme()
     val colorScheme = MaterialTheme.colorScheme
     Box(

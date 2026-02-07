@@ -11,9 +11,13 @@ import plus.vplan.app.data.repository.LocalFileRepositoryImpl
 import plus.vplan.app.data.repository.PlatformAuthenticationRepositoryImpl
 import plus.vplan.app.data.repository.PlatformNotificationImpl
 import plus.vplan.app.data.source.database.VppDatabase
+import plus.vplan.app.domain.model.data_structure.AndroidConcurrentHashMapFactory
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.PlatformAuthenticationRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
+import plus.vplan.app.feature.onboarding.ui.AndroidPlatformOnboardingController
+import plus.vplan.app.feature.onboarding.ui.PlatformOnboardingController
 import plus.vplan.app.ui.platform.OpenBiometricSettings
 import plus.vplan.app.ui.platform.OpenBiometricSettingsImpl
 import plus.vplan.app.ui.platform.RunBiometricAuthentication
@@ -21,6 +25,8 @@ import plus.vplan.app.ui.platform.RunBiometricAuthenticationImpl
 import java.util.concurrent.Executors
 
 actual val platformModule: Module = module(createdAtStart = true) {
+    single<ConcurrentHashMapFactory> { AndroidConcurrentHashMapFactory() }
+
     single<VppDatabase>(createdAtStart = true) {
         Room.databaseBuilder<VppDatabase>(
             context = get(),
@@ -43,4 +49,5 @@ actual val platformModule: Module = module(createdAtStart = true) {
     single<PlatformAuthenticationRepository> { PlatformAuthenticationRepositoryImpl(get()) }
     single<OpenBiometricSettings> { OpenBiometricSettingsImpl(get()) }
     single<RunBiometricAuthentication> { RunBiometricAuthenticationImpl() }
+    single<PlatformOnboardingController> { AndroidPlatformOnboardingController() }
 }

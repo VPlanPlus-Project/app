@@ -14,6 +14,7 @@ import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.utils.now
+import plus.vplan.app.versionCode
 
 class GetNewsUseCase(
     private val newsRepository: NewsRepository
@@ -26,8 +27,8 @@ class GetNewsUseCase(
                 (news.schoolIds.isEmpty() || school.id in news.schoolIds) &&
                         LocalDate.now() >= news.dateFrom.toLocalDateTime(TimeZone.currentSystemDefault()).date &&
                         LocalDate.now() <= news.dateTo.toLocalDateTime(TimeZone.currentSystemDefault()).date &&
-                        news.versionFrom?.let { BuildConfig.APP_VERSION_CODE >= news.versionFrom } ?: true &&
-                        news.versionTo?.let { BuildConfig.APP_VERSION_CODE <= news.versionTo } ?: true
+                        news.versionFrom?.let { versionCode >= news.versionFrom } ?: true &&
+                        news.versionTo?.let { versionCode <= news.versionTo } ?: true
             }
         }.distinctUntilChanged()
     }

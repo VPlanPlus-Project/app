@@ -16,6 +16,7 @@ import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Item
+import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import kotlin.uuid.Uuid
@@ -52,11 +53,18 @@ abstract class Profile : Item<Uuid, DataTag>, KoinComponent {
             else combine(subjectInstanceConfiguration.keys.map { App.subjectInstanceSource.getById(it).filterIsInstance<AliasState.Done<SubjectInstance>>().map { cacheState -> cacheState.data } }) { it.toList() }
         }
 
-        private val subjectInstanceCache = hashMapOf<Uuid, SubjectInstance>()
+        private val subjectInstanceCache: ConcurrentMutableMap<Uuid, SubjectInstance> = ConcurrentMutableMap()
         val subjectInstanceItems: List<SubjectInstance>
-            get() = this.subjectInstanceCache.values.toList()
+            get() = subjectInstanceConfiguration.keys.mapNotNull { key ->
+                kotlinx.coroutines.runBlocking { subjectInstanceCache[key] }
+            }
+
         suspend fun getSubjectInstance(id: Uuid): SubjectInstance {
-            return subjectInstanceCache.getOrPut(id) { App.subjectInstanceSource.getById(id).filterIsInstance<AliasState.Done<SubjectInstance>>().first().data }
+            // compute value using suspend calls, then store atomically
+            subjectInstanceCache[id]?.let { return it }
+            val value = App.subjectInstanceSource.getById(id).filterIsInstance<AliasState.Done<SubjectInstance>>().first().data
+            subjectInstanceCache.put(id, value)
+            return value
         }
 
         suspend fun getGroupItem(): Group {

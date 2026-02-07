@@ -3,28 +3,34 @@ package plus.vplan.app.domain.source
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.model.News
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
 import plus.vplan.app.domain.repository.NewsRepository
 
-class NewsSource(
-    private val newsRepository: NewsRepository
-) {
-    private val flows = hashMapOf<Int, MutableSharedFlow<CacheState<News>>>()
+class NewsSource : KoinComponent {
+    private val newsRepository: NewsRepository by inject()
+    private val concurrentHashMapFactory: ConcurrentHashMapFactory by inject()
 
-    fun getById(id: Int, forceReload: Boolean = false): Flow<CacheState<News>> {
+    private val flows: ConcurrentHashMap<Int, StateFlow<CacheState<News>>> = concurrentHashMapFactory.create()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    fun getById(id: Int, forceReload: Boolean = false): StateFlow<CacheState<News>> {
+        if (forceReload) flows.remove(id)
         return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<News>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            CoroutineScope(Dispatchers.IO).launch {
-                newsRepository.getById(id, forceReload)
-                    .collectLatest { flow.tryEmit(it) }
-            }
-            flow
+            newsRepository.getById(id, forceReload)
+                .stateIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+                    initialValue = CacheState.Loading(id.toString())
+                )
         }
     }
 }

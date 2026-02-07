@@ -216,6 +216,10 @@ fun captureError(location: String, message: String) {
 }
 expect fun setPostHogProperty(key: String, value: String)
 expect fun isDebug(): Boolean
+
+expect val versionCode: Int
+expect val versionName: String
+
 expect fun posthogIdentify(
     distinctId: String,
     userProperties: Map<String, Any>?,

@@ -3,34 +3,35 @@ package plus.vplan.app.domain.source
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.stateIn
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMap
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
 import plus.vplan.app.domain.repository.LessonTimeRepository
 
-class LessonTimeSource(
-    private val lessonTimeRepository: LessonTimeRepository
-) {
-    private val flows = hashMapOf<String, MutableSharedFlow<CacheState<LessonTime>>>()
-    private val cacheItems = hashMapOf<String, CacheState<LessonTime>>()
-    fun getById(id: String): Flow<CacheState<LessonTime>> {
-        return flows.getOrPut(id) {
-            val flow = MutableSharedFlow<CacheState<LessonTime>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            CoroutineScope(Dispatchers.IO).launch {
-                lessonTimeRepository.getById(id).map { if (it == null) return@map CacheState.NotExisting(id) else CacheState.Done(it) }
-                    .collectLatest { flow.tryEmit(it) }
-            }
-            flow
-        }
-    }
+class LessonTimeSource : KoinComponent {
+    private val lessonTimeRepository: LessonTimeRepository by inject()
+    private val concurrentHashMapFactory: ConcurrentHashMapFactory by inject()
 
-    suspend fun getSingleById(id: String): LessonTime? {
-        return (cacheItems[id] as? CacheState.Done<LessonTime>)?.data ?: getById(id).getFirstValueOld()
+    private val flows: ConcurrentHashMap<String, StateFlow<CacheState<LessonTime>>> = concurrentHashMapFactory.create()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    fun getById(id: String): StateFlow<CacheState<LessonTime>> {
+        return flows.getOrPut(id) {
+            lessonTimeRepository.getById(id)
+                .map { if (it == null) CacheState.NotExisting(id) else CacheState.Done(it) }
+                .stateIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+                    initialValue = CacheState.Loading(id)
+                )
+        }
     }
 }

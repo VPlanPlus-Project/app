@@ -39,10 +39,10 @@ kotlin {
 
     compilerOptions {
         optIn.add("kotlin.uuid.ExperimentalUuidApi")
-        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
         freeCompilerArgs.add("-Xcontext-parameters")
         freeCompilerArgs.add("-Xnested-type-aliases")
         freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
+        optIn.add("kotlin.time.ExperimentalTime")
     }
     
     listOf(
@@ -57,35 +57,44 @@ kotlin {
     }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
+        androidMain {
+            buildConfig {
+                buildConfigField("APP_VERSION_CODE", ApplicationConfig.APP_VERSION_CODE)
+                buildConfigField("APP_VERSION", ApplicationConfig.APP_VERSION_NAME)
+                buildConfigField("APP_DEBUG", localProperties.getProperty("app.debug")?.toBoolean()!!)
+            }
 
-            implementation(libs.koin.android)
-            implementation(libs.koin.androidx.compose)
-            implementation(libs.koin.androidx.workmanager)
-            implementation(libs.ktor.client.okhttp)
-            implementation(libs.kotlinx.coroutines.android)
+            dependencies {
+                implementation(compose.preview)
+                implementation(libs.androidx.activity.compose)
 
-            implementation(libs.androidx.browser)
-            implementation(libs.androidx.biometric)
+                implementation(libs.koin.android)
+                implementation(libs.koin.androidx.compose)
+                implementation(libs.koin.androidx.workmanager)
+                implementation(libs.ktor.client.okhttp)
+                implementation(libs.kotlinx.coroutines.android)
 
-            implementation(libs.androidx.material)
-            implementation(libs.androidx.icons.extended)
-            implementation(libs.androidx.sqlite.framework)
-            implementation(libs.androidx.work.runtime.ktx)
+                implementation(libs.androidx.browser)
+                implementation(libs.androidx.biometric)
 
-            implementation(project.dependencies.platform(libs.firebase.bom))
-            implementation(libs.firebase.messaging)
-            implementation(libs.firebase.analytics)
-            implementation(libs.firebase.crashlytics)
+                implementation(libs.androidx.icons.extended)
+                implementation(libs.androidx.sqlite.framework)
+                implementation(libs.androidx.work.runtime.ktx)
 
-            implementation(libs.posthog.android)
+                implementation(project.dependencies.platform(libs.firebase.bom))
+                implementation(libs.firebase.messaging)
+                implementation(libs.firebase.analytics)
+                implementation(libs.firebase.crashlytics)
+
+                implementation(libs.posthog.android)
+            }
         }
         commonMain.dependencies {
+            implementation(libs.androidx.material)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
@@ -93,7 +102,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.navigation.compose)
 
-            implementation(libs.cmp.easy.permission)
+            implementation(libs.moko.permissions.core)
+            implementation(libs.moko.permissions.compose)
+            implementation(libs.moko.permissions.notifications)
 
             implementation(libs.filekit.compose)
 
@@ -176,7 +187,7 @@ dependencies {
     implementation(libs.androidx.activity)
     debugImplementation(compose.uiTooling)
 
-    add("kspAndroid", libs.androidx.room.compiler)
+//    add("kspAndroid", libs.androidx.room.compiler)
     add("kspIosSimulatorArm64", libs.androidx.room.compiler)
     add("kspIosX64", libs.androidx.room.compiler)
     add("kspIosArm64", libs.androidx.room.compiler)
@@ -190,10 +201,6 @@ buildConfig {
 
     className("BuildConfig")
     packageName("plus.vplan.app")
-
-    buildConfigField("APP_VERSION_CODE", ApplicationConfig.APP_VERSION_CODE)
-    buildConfigField("APP_VERSION", ApplicationConfig.APP_VERSION_NAME)
-    buildConfigField("APP_DEBUG", localProperties.getProperty("app.debug")?.toBoolean()!!)
 
     buildConfigField("POSTHOG_API_KEY", localProperties.getProperty("posthog.api.key") ?: throw MissingFieldException("posthog.api.key not found in local.properties", String::class.java))
 

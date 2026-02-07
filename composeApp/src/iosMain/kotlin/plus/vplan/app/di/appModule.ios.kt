@@ -14,15 +14,22 @@ import plus.vplan.app.data.repository.LocalFileRepositoryImpl
 import plus.vplan.app.data.repository.PlatformNotificationRepositoryImpl
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.VppDatabaseConstructor
+import plus.vplan.app.domain.model.data_structure.AppleConcurrentHashMapFactory
+import plus.vplan.app.domain.model.data_structure.ConcurrentHashMapFactory
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
+import plus.vplan.app.feature.onboarding.ui.ApplePlatformOnboardingController
+import plus.vplan.app.feature.onboarding.ui.PlatformOnboardingController
 import plus.vplan.app.ui.platform.RunBiometricAuthentication
 import plus.vplan.app.ui.platform.RunBiometricAuthenticationImpl
 
 actual val platformModule: Module = module {
+    single<ConcurrentHashMapFactory> { AppleConcurrentHashMapFactory() }
+
     single<LocalFileRepository> { LocalFileRepositoryImpl() }
     single<PlatformNotificationRepository> { PlatformNotificationRepositoryImpl() }
     single<RunBiometricAuthentication> { RunBiometricAuthenticationImpl() }
+    single<PlatformOnboardingController> { ApplePlatformOnboardingController() }
     single<VppDatabase> {
         val dbFilePath = documentDirectory() + "/vpp.db"
         Room.databaseBuilder<VppDatabase>(
