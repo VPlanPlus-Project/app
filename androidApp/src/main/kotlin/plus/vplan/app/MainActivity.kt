@@ -36,7 +36,9 @@ class MainActivity : FragmentActivity() {
         PostHog.capture("App.Start")
 
         setContent {
-            ActivityProviderImpl.currentActivity = LocalActivity.current as FragmentActivity
+            (LocalActivity.current as? FragmentActivity)?.let {
+                ActivityProviderImpl.currentActivity = it
+            }
             if (canStart) App(task)
         }
 
