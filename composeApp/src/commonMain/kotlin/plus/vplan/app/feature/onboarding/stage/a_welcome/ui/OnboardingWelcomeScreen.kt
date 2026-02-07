@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import plus.vplan.app.BuildConfig
+import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.ui.theme.displayFontFamily
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_right
@@ -90,7 +90,7 @@ private fun OnboardingWelcomeScreenContent(
 ) {
     Box(Modifier.fillMaxSize()) {
         Text(
-            text = "${BuildConfig.APP_VERSION} (${BuildConfig.APP_VERSION_CODE})",
+            text = "${AppBuildConfig.APP_VERSION} (${AppBuildConfig.APP_VERSION_CODE})",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = .5f),
             modifier = Modifier

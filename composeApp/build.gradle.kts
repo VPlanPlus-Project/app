@@ -124,7 +124,6 @@ android {
 
     defaultConfig {
         minSdk = 24
-        targetSdk = 36
     }
     buildFeatures {
         compose = true
@@ -152,7 +151,7 @@ buildConfig {
         internalVisibility = false
     }
 
-    className("BuildConfig")
+    className("AppBuildConfig")
     packageName("plus.vplan.app")
 
     buildConfigField("APP_VERSION_CODE", 297)

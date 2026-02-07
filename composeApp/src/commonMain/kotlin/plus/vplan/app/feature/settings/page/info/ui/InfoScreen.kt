@@ -42,7 +42,7 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.BuildConfig
+import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.Platform
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
@@ -143,7 +143,7 @@ private fun InfoContent(
                         clickCounter = 0
                     }
                     Text(
-                        text = "${BuildConfig.APP_VERSION} (${BuildConfig.APP_VERSION_CODE})",
+                        text = "${AppBuildConfig.APP_VERSION} (${AppBuildConfig.APP_VERSION_CODE})",
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier
                             .noRippleClickable { clickCounter++ }

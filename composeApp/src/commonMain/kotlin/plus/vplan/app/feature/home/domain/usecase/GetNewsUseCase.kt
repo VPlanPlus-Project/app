@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.BuildConfig
+import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.Profile
@@ -26,8 +26,8 @@ class GetNewsUseCase(
                 (news.schoolIds.isEmpty() || school.id in news.schoolIds) &&
                         LocalDate.now() >= news.dateFrom.toLocalDateTime(TimeZone.currentSystemDefault()).date &&
                         LocalDate.now() <= news.dateTo.toLocalDateTime(TimeZone.currentSystemDefault()).date &&
-                        news.versionFrom?.let { BuildConfig.APP_VERSION_CODE >= news.versionFrom } ?: true &&
-                        news.versionTo?.let { BuildConfig.APP_VERSION_CODE <= news.versionTo } ?: true
+                        news.versionFrom?.let { AppBuildConfig.APP_VERSION_CODE >= news.versionFrom } ?: true &&
+                        news.versionTo?.let { AppBuildConfig.APP_VERSION_CODE <= news.versionTo } ?: true
             }
         }.distinctUntilChanged()
     }

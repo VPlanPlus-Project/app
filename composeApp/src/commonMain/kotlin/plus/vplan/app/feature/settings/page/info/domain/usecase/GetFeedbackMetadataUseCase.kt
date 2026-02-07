@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.BuildConfig
+import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.getByProvider
@@ -23,9 +23,9 @@ class GetFeedbackMetadataUseCase(
             return@map FeedbackMetadata(
                 systemInfo,
                 appInfo = AppInfo(
-                    versionCode = BuildConfig.APP_VERSION_CODE,
-                    versionName = BuildConfig.APP_VERSION,
-                    buildType = if (BuildConfig.APP_DEBUG) "Debug" else "Release"
+                    versionCode = AppBuildConfig.APP_VERSION_CODE,
+                    versionName = AppBuildConfig.APP_VERSION,
+                    buildType = if (AppBuildConfig.APP_DEBUG) "Debug" else "Release"
                 ),
                 profileInfo = FeedbackProfileInfo(
                     schoolId = school?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toIntOrNull(),
