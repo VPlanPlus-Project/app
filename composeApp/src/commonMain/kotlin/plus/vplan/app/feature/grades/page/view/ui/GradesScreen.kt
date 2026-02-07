@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
@@ -61,6 +62,7 @@ import plus.vplan.app.feature.grades.page.view.ui.components.latest.LatestGrades
 import plus.vplan.app.feature.grades.page.view.ui.components.subject.Subjects
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.ui.components.Switcher
+import plus.vplan.app.utils.now
 
 @Composable
 fun GradesScreen(
@@ -109,8 +111,18 @@ private fun GradesContent(
 
     if (state.gradeLockState == null) return
 
-    val pagerState = rememberPagerState(initialPage = 0) { state.intervalsForSelectedYear.size }
+    val initialPage = remember(state.intervalsForSelectedYear) {
+        val today = LocalDate.now()
+        state.intervalsForSelectedYear
+            .toList()
+            .indexOfFirst { (interval, _) -> today in interval.from..interval.to }
+            .let { if (it == -1) 0 else it }
+    }
+
+    val pagerState = rememberPagerState(initialPage = initialPage) { state.intervalsForSelectedYear.size }
     val selectedInterval = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }.getOrNull(pagerState.currentPage)?.key
+
+    LaunchedEffect(initialPage) { pagerState.scrollToPage(initialPage) }
 
     Scaffold(
         topBar = {
