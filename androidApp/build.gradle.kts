@@ -9,6 +9,13 @@ val localProperties = Properties().apply {
     }
 }
 
+val appProperties = Properties().apply {
+    val file = rootProject.file("app.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
@@ -42,8 +49,8 @@ android {
         applicationId = "plus.vplan.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 297
-        versionName = "0.2.24-production"
+        versionCode = appProperties["version.code"].toString().toInt()
+        versionName = appProperties["version.name"].toString()
     }
     packaging {
         resources {

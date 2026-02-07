@@ -1,9 +1,15 @@
 import groovy.lang.MissingFieldException
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+
+val appProperties = Properties().apply {
+    val file = rootProject.file("app.properties")
     if (file.exists()) {
         file.inputStream().use { load(it) }
     }
@@ -135,8 +141,8 @@ buildConfig {
     className("AppBuildConfig")
     packageName("plus.vplan.app")
 
-    buildConfigField("APP_VERSION_CODE", 297)
-    buildConfigField("APP_VERSION", "0.2.24-production")
+    buildConfigField("APP_VERSION_CODE", appProperties["version.code"].toString().toInt())
+    buildConfigField("APP_VERSION", appProperties["version.name"].toString())
     buildConfigField("APP_DEBUG", localProperties.getProperty("app.debug")?.toBoolean()!!)
 
     buildConfigField("POSTHOG_API_KEY", localProperties.getProperty("posthog.api.key") ?: throw MissingFieldException("posthog.api.key not found in local.properties", String::class.java))
