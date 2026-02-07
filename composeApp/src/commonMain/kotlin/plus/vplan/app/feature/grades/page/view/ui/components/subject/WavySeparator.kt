@@ -24,7 +24,7 @@ fun WavySeparator(
         val width = size.width
         val height = size.height
         val amplitude = height / 2  // peak of the wave
-        val frequency = width / 100  // number of cycles across the canvas
+        val frequency = width / 50  // number of cycles across the canvas
 
         val path = Path().apply {
             moveTo(0f, height / 2)  // start at middle-left
