@@ -110,16 +110,7 @@ private fun GradesContent(
     if (state.gradeLockState == null) return
 
     val pagerState = rememberPagerState(initialPage = 0) { state.intervalsForSelectedYear.size }
-    val selectedIntervalAndData by remember {
-        androidx.compose.runtime.derivedStateOf {
-            state.intervalsForSelectedYear.entries.sortedBy { it.key.from }
-                .let {
-                    val data = it.getOrNull(pagerState.currentPage) ?: return@let null to null
-                    data.key to data.value
-                }
-        }
-    }
-    val (selectedInterval, selectedIntervalData) = selectedIntervalAndData
+    val selectedInterval = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }.getOrNull(pagerState.currentPage)?.key
 
     Scaffold(
         topBar = {
@@ -253,7 +244,7 @@ private fun GradesContent(
 
                                         if (intervalData.subjects.isNotEmpty()) Column {
                                             Subjects(
-                                                intervalType = selectedInterval?.type ?: BesteSchuleInterval.Type.Sek1,
+                                                intervalType = interval.type,
                                                 subjects = intervalData.subjects,
                                                 onOpenGrade = { gradeDrawerId = it }
                                             )
