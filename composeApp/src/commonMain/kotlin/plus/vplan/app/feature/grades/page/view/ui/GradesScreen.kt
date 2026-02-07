@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.compose.viewmodel.koinViewModel
@@ -124,6 +125,7 @@ private fun GradesContent(
 
     LaunchedEffect(initialPage) { pagerState.scrollToPage(initialPage) }
 
+    Logger.d { "Is analytics enabled: ${state.isGradeAnalyticsEnabled}" }
     Scaffold(
         topBar = {
             TopBar(
@@ -133,7 +135,8 @@ private fun GradesContent(
                 onBack = onBack,
                 onRequestGradeLock = { onEvent(GradeDetailEvent.RequestGradeLock) },
                 onOpenGradesAnalytics = onOpenAnalytics,
-                onOpenYearSelector = { showIntervalFilterDrawer = true }
+                onOpenYearSelector = { showIntervalFilterDrawer = true },
+                showGradesAnalytics = state.isGradeAnalyticsEnabled
             )
         }
     ) { contentPadding ->

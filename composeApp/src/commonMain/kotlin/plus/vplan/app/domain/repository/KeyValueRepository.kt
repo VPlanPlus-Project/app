@@ -38,7 +38,10 @@ object Keys {
      * This view is also used if there are not enough lesson times.
      */
     const val DS_FORCE_REDUCED_CALENDAR_VIEW = "ds_force_reduced_calendar_view"
-    val forceReducedCalendarView = DeveloperFlag.Boolean(DS_FORCE_REDUCED_CALENDAR_VIEW, false)
+    val forceReducedCalendarView = DeveloperFlag.Boolean(
+        key = DS_FORCE_REDUCED_CALENDAR_VIEW,
+        default = false
+    )
 
     /**
      * If true, the timetable on the homescreen will always show all the lessons instead of featuring the current/next lesson
@@ -46,18 +49,39 @@ object Keys {
      * lesson times to determine the current/next lesson.
      */
     const val DS_FORCE_STATIC_TIMETABLE_HOMESCREEN = "ds_force_static_timetable_homescreen"
-    val forceStaticTimetableHomescreen = DeveloperFlag.Boolean(DS_FORCE_STATIC_TIMETABLE_HOMESCREEN, false)
+    val forceStaticTimetableHomescreen = DeveloperFlag.Boolean(
+        key = DS_FORCE_STATIC_TIMETABLE_HOMESCREEN,
+        default = false
+    )
+
+    /**
+     * This toggles the grade analytics feature. It has been moved to a developer settings while
+     * rebuilding the grades screen.
+     */
+    const val DS_ENABLE_GRADE_ANALYTICS = "ds_enable_grade_analytics"
+    val enableGradeAnalytics = DeveloperFlag.Boolean(
+        key = DS_ENABLE_GRADE_ANALYTICS,
+        default = false,
+        description = "Aktiviert die Notenanalyse in der Notenansicht."
+    )
 
     /**
      * A collection if all developer settings to easily show them in the developer settings UI.
      */
     val developerSettings = listOf(
         forceReducedCalendarView,
-        forceStaticTimetableHomescreen
+        forceStaticTimetableHomescreen,
+        enableGradeAnalytics
     )
 
     sealed class DeveloperFlag {
         abstract val key: String
-        data class Boolean(override val key: String, val default: kotlin.Boolean) : DeveloperFlag()
+        abstract val description: String?
+
+        data class Boolean(
+            override val key: String,
+            override val description: String? = null,
+            val default: kotlin.Boolean
+        ) : DeveloperFlag()
     }
 }

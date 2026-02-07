@@ -83,6 +83,7 @@ private fun DeveloperFlagsContent(
                     is Keys.DeveloperFlag.Boolean -> {
                         SettingsRecordCheckbox(
                             title = developerFlag.key,
+                            subtitle = developerFlag.description,
                             checked = state.booleans[developerFlag.key] ?: developerFlag.default,
                             onCheckedChange = remember(developerFlag.key) { { onEvent(DeveloperFlagsEvent.Toggle(developerFlag.key)) } }
                         )
