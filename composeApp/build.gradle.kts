@@ -4,11 +4,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Base64
 import java.util.Properties
 
-object ApplicationConfig {
-    const val APP_VERSION_NAME = "0.2.24-production"
-    const val APP_VERSION_CODE = 297
-}
-
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) {
@@ -18,14 +13,12 @@ val localProperties = Properties().apply {
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
     alias(libs.plugins.serialization)
-    alias(libs.plugins.google.gms)
-    alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.stability.analyzer)
 }
@@ -82,6 +75,7 @@ kotlin {
 
             implementation(libs.posthog.android)
         }
+
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -125,42 +119,15 @@ kotlin {
 }
 
 android {
-    if (listOf("signing.default.file", "signing.default.storepassword", "signing.default.keyalias", "signing.default.keypassword").all { localProperties.containsKey(it) }) {
-        signingConfigs {
-            create("default") {
-                storeFile = file(localProperties["signing.default.file"]!!)
-                storePassword = Base64.getDecoder().decode(localProperties["signing.default.storepassword"]!!.toString()).toString(Charsets.US_ASCII)
-                keyAlias = localProperties["signing.default.keyalias"]!!.toString()
-                keyPassword = Base64.getDecoder().decode(localProperties["signing.default.keypassword"]!!.toString()).toString(Charsets.US_ASCII)
-            }
-        }
-    }
     namespace = "plus.vplan.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "plus.vplan.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = ApplicationConfig.APP_VERSION_CODE
-        versionName = ApplicationConfig.APP_VERSION_NAME
     }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    buildTypes {
-        getByName("debug") {
-            signingConfig = signingConfigs.getByName("debug")
-        }
-        getByName("release") {
-            isMinifyEnabled = false
-            signingConfig = signingConfigs.findByName("default") ?: run {
-                println("No default signing config found, using debug signing config")
-                signingConfigs.getByName("debug")
-            }
-        }
+    buildFeatures {
+        compose = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -173,9 +140,6 @@ room {
 }
 
 dependencies {
-    implementation(libs.androidx.activity)
-    debugImplementation(compose.uiTooling)
-
     add("kspAndroid", libs.androidx.room.compiler)
     add("kspIosSimulatorArm64", libs.androidx.room.compiler)
     add("kspIosX64", libs.androidx.room.compiler)
@@ -191,17 +155,11 @@ buildConfig {
     className("BuildConfig")
     packageName("plus.vplan.app")
 
-    buildConfigField("APP_VERSION_CODE", ApplicationConfig.APP_VERSION_CODE)
-    buildConfigField("APP_VERSION", ApplicationConfig.APP_VERSION_NAME)
+    buildConfigField("APP_VERSION_CODE", 297)
+    buildConfigField("APP_VERSION", "0.2.24-production")
     buildConfigField("APP_DEBUG", localProperties.getProperty("app.debug")?.toBoolean()!!)
 
     buildConfigField("POSTHOG_API_KEY", localProperties.getProperty("posthog.api.key") ?: throw MissingFieldException("posthog.api.key not found in local.properties", String::class.java))
 
     generateAtSync = true
-}
-
-tasks.withType<KotlinCompile>().configureEach {
-    compilerOptions {
-        freeCompilerArgs.add("-Xopt-in=kotlin.time.ExperimentalTime")
-    }
 }

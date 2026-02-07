@@ -14,7 +14,6 @@ import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import co.touchlab.kermit.Logger
-import io.github.vinceglb.filekit.core.FileKit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import plus.vplan.app.ui.theme.AppTheme
@@ -27,7 +26,6 @@ class ErrorActivity : FragmentActivity() {
 
         onNewIntent(intent)
 
-        FileKit.init(this)
         enableEdgeToEdge()
 
         val logLines = mutableStateListOf<String>()

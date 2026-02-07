@@ -16,6 +16,7 @@ import com.google.firebase.crashlytics.crashlytics
 import com.posthog.PostHog
 import io.github.vinceglb.filekit.core.FileKit
 import io.ktor.http.URLBuilder
+import plus.vplan.app.di.ActivityProviderImpl
 import kotlin.system.exitProcess
 
 class MainActivity : FragmentActivity() {
@@ -28,14 +29,14 @@ class MainActivity : FragmentActivity() {
 
         onNewIntent(intent)
 
-        activity = this
+        ActivityProviderImpl.currentActivity = this
         FileKit.init(this)
         enableEdgeToEdge()
 
         PostHog.capture("App.Start")
 
         setContent {
-            fragmentActivity = LocalActivity.current as FragmentActivity
+            ActivityProviderImpl.currentActivity = LocalActivity.current as FragmentActivity
             if (canStart) App(task)
         }
 
@@ -87,7 +88,11 @@ class MainActivity : FragmentActivity() {
 
         canStart = true
     }
-}
 
-lateinit var activity: MainActivity
-lateinit var fragmentActivity: FragmentActivity
+    override fun onDestroy() {
+        super.onDestroy()
+        if (ActivityProviderImpl.currentActivity == this) {
+            ActivityProviderImpl.currentActivity = null
+        }
+    }
+}

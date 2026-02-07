@@ -14,10 +14,13 @@ import com.posthog.PostHog
 import com.posthog.android.PostHogAndroid
 import com.posthog.android.PostHogAndroidConfig
 import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.androidx.workmanager.koin.workManagerFactory
+import org.koin.core.logger.Level
 import org.koin.dsl.module
 import plus.vplan.app.android.worker.SyncWorker
+import plus.vplan.app.di.ActivityProviderImpl
 import plus.vplan.app.di.initKoin
 import java.util.concurrent.TimeUnit
 
@@ -54,7 +57,12 @@ class MainApplication : Application() {
 
         initKoin {
             androidContext(this@MainApplication)
+            //androidLogger(if (isDebug()) Level.DEBUG else Level.NONE)
             workManagerFactory()
+            properties(mapOf(
+                "notification_small_icon" to R.drawable.app_icon_full,
+                "activity_provider" to ActivityProviderImpl
+            ))
             module {
                 single { WorkManager.getInstance(androidContext()) }
                 workerOf(::SyncWorker)

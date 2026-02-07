@@ -2,9 +2,12 @@ package plus.vplan.app.domain.model
 
 import android.content.Intent
 import androidx.core.content.FileProvider
-import plus.vplan.app.activity
+import org.koin.core.context.GlobalContext
+import plus.vplan.app.domain.repository.ActivityProvider
 
 actual fun openFile(file: File) {
+    val activityProvider = GlobalContext.get().get<ActivityProvider>()
+    val activity = activityProvider.currentActivity ?: return
     val intent = Intent(Intent.ACTION_VIEW)
     val storedFile = activity.filesDir.resolve("files" + "/" + file.id.toString())
 
