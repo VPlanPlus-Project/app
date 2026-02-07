@@ -12,12 +12,11 @@ import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import plus.vplan.app.MainActivity
-import plus.vplan.app.R
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 
 class PlatformNotificationImpl(
-    private val context: Context
+    private val context: Context,
+    private val smallIconResId: Int = android.R.drawable.ic_dialog_info
 ) : PlatformNotificationRepository {
     companion object {
         const val VPLANPLUS = "VPlanPlus"
@@ -45,7 +44,7 @@ class PlatformNotificationImpl(
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
 
         val builder = NotificationCompat.Builder(context, VPLANPLUS)
-            .setSmallIcon(R.drawable.app_icon_full)
+            .setSmallIcon(smallIconResId)
             .setContentTitle(title)
             .setContentText(message)
             .setAutoCancel(true)
@@ -56,7 +55,8 @@ class PlatformNotificationImpl(
             }
 
         if (onClickData != null) {
-            val intent = Intent(context, MainActivity::class.java).apply {
+            val intent = Intent().apply {
+                setClassName(context.packageName, "plus.vplan.app.MainActivity")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 putExtra("onClickData", onClickData)
             }

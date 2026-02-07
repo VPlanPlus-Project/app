@@ -21,7 +21,7 @@ actual fun capture(event: String, properties: Map<String, Any>?) {
     PostHog.capture(event, userProperties = properties)
 }
 
-actual fun isDebug(): Boolean = BuildConfig.APP_DEBUG
+actual fun isDebug(): Boolean = AppBuildConfig.APP_DEBUG
 actual fun setPostHogProperty(key: String, value: String) {
     if (isDebug()) {
         Log.i("PostHog", "POSTHOG PROPERTY: $key would have been set to $value. This is a debug build, so the property was not set.")

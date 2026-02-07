@@ -1,44 +1,49 @@
 [versions]
-agp = "8.13.2"
-androidx-activityCompose = "1.12.1"
+agp = "9.0.0"
+androidx-activityCompose = "1.12.3"
 androidx-lifecycle = "2.9.6"
 cmpEasyPermission = "1.0.3"
-compose-multiplatform = "1.9.3"
+compose-multiplatform = "1.10.0"
 filekitCompose = "0.8.8"
 kermit = "2.0.8"
-kotlin = "2.2.21"
+kotlin = "2.3.10"
 kotlinxDatetime = "0.7.1"
-gradle-buildconfig-plugin = "6.0.6"
+gradle-buildconfig-plugin = "6.0.7"
 biometric = "1.1.0"
 
-ksp = "2.3.2"
+ksp = "2.3.4"
 androidx-room = "2.8.4"
 androidx-sqlite = "2.6.2"
 navigationCompose = "2.9.1"
-posthogAndroid = "3.27.2"
+posthogAndroid = "3.31.0"
 
 androidx-material = "1.10.0-alpha05"
 androidx-icons = "1.7.8"
 
 koin = "4.1.1"
 
-kotlinSerialization = "1.9.0"
+kotlinSerialization = "1.10.0"
 
 coroutines = "1.10.2"
 
 google-gms = "4.4.4"
-firebase-bom = "34.7.0"
+firebase-bom = "34.9.0"
 
-ktor = "3.3.3"
+ktor = "3.4.0"
 
 androidBrowser = "1.9.0"
-workRuntimeKtx = "2.11.0"
+workRuntimeKtx = "2.11.1"
 
 sp24-kt = "v2025.10.2"
-activity = "1.12.1"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.15.0" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version = "2024.02.00" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 
@@ -85,14 +90,13 @@ androidx-browser = { module = "androidx.browser:browser", version.ref = "android
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 
 vpp-sp24 = { module = "plus.vplan.lib:sp24-kt", version.ref = "sp24-kt" }
-androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 
 room = { id = "androidx.room", version.ref = "androidx-room" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
@@ -101,4 +105,4 @@ firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.
 google-gms = { id = "com.google.gms.google-services", version.ref = "google-gms" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "gradle-buildconfig-plugin" }
 
-stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version = "0.6.1" }
+stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version = "0.6.6" }

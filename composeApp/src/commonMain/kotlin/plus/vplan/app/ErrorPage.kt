@@ -22,7 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.ui.components.Button
@@ -115,18 +114,6 @@ fun ErrorPage(
             )
         }
     }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-private fun ErrorPagePreview() {
-    ErrorPage(error = Error(stacktrace = Throwable("Beispiel Fehler für die Vorschau").also {
-        it.stackTrace = arrayOf(
-            StackTraceElement("plus.vplan.app.ErrorPage", "ErrorPage", "ErrorPage.kt", 12),
-            StackTraceElement("plus.vplan.app.ui.main.MainScreen", "MainScreen", "MainScreen.kt", 34),
-            StackTraceElement("androidx.compose.runtime.Composer", "compose", "Composer.kt", 567),
-        )
-    }.stackTraceToString()))
 }
 
 data class Error(
