@@ -47,6 +47,7 @@ fun TopBar(
     onRequestGradeLock: () -> Unit,
     onOpenGradesAnalytics: () -> Unit,
     onOpenYearSelector: () -> Unit,
+    showGradesAnalytics: Boolean
 ) {
     TopAppBar(
         title = { Text("Noten") },
@@ -77,7 +78,7 @@ fun TopBar(
                 onRequestGradeLock = onRequestGradeLock
             )
             androidx.compose.animation.AnimatedVisibility(
-                visible = gradesLockState.canAccess,
+                visible = gradesLockState.canAccess && showGradesAnalytics,
                 enter = expandHorizontally(expandFrom = Alignment.CenterHorizontally) + fadeIn(),
                 exit = shrinkHorizontally(shrinkTowards = Alignment.CenterHorizontally) + fadeOut(),
             ) {
@@ -140,6 +141,7 @@ private fun TopBarPreview() {
         onBack = {},
         onRequestGradeLock = {},
         onOpenGradesAnalytics = {},
-        onOpenYearSelector = {}
+        onOpenYearSelector = {},
+        showGradesAnalytics = true,
     )
 }

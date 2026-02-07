@@ -26,6 +26,8 @@ import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.domain.model.besteschule.BesteSchuleYear
+import plus.vplan.app.domain.repository.KeyValueRepository
+import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
@@ -49,7 +51,7 @@ class GradesViewModel(
     private val syncGradesUseCase: SyncGradesUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
     private val lockUseCase: LockGradesUseCase,
-    private val vppIdRepository: VppIdRepository
+    private val vppIdRepository: VppIdRepository,
 ) : ViewModel(), KoinComponent {
     private val gradeState = MutableStateFlow(GradesState())
     val state = gradeState.asStateFlow()
@@ -60,6 +62,8 @@ class GradesViewModel(
     private val besteSchuleYearsRepository by inject<BesteSchuleYearsRepository>()
 
     private val getGradeLockStateUseCase by inject<GetGradeLockStateUseCase>()
+
+    private val keyValueRepository by inject<KeyValueRepository>()
 
     private val currentSchulverwalterUser =
         MutableStateFlow<VppId.Active.SchulverwalterConnection?>(null)
@@ -173,9 +177,15 @@ class GradesViewModel(
                     }
                 }
         }
+
+        viewModelScope.launch subscribeToAnalyticsState@{
+            keyValueRepository
+                .getBooleanOrDefault(Keys.enableGradeAnalytics.key, Keys.enableGradeAnalytics.default)
+                .collectLatest { isEnabled ->
+                    gradeState.update { it.copy(isGradeAnalyticsEnabled = isEnabled) }
+                }
+        }
     }
-
-
 
     private suspend fun calculateIntervalData(
         interval: BesteSchuleInterval,
@@ -501,6 +511,8 @@ data class GradesState(
     val isInEditMode: Boolean = false,
     val isUpdating: Boolean = false,
     val gradeLockState: GradeLockState? = null,
+
+    val isGradeAnalyticsEnabled: Boolean = false,
 )
 
 data class IntervalData(
