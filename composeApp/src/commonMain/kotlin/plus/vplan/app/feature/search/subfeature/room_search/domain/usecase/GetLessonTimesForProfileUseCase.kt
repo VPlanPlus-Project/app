@@ -11,6 +11,6 @@ class GetLessonTimesForProfileUseCase(
 ) {
     operator fun invoke(profile: Profile): Flow<List<LessonTime>> {
         if (profile !is Profile.StudentProfile) return flowOf(emptyList())
-        return lessonTimeRepository.getByGroup(profile.groupId)
+        return lessonTimeRepository.getByGroup(profile.group.id)
     }
 }

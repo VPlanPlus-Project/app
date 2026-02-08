@@ -6,11 +6,9 @@ import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
@@ -25,14 +23,14 @@ class AddFileUseCase(
 ) {
     suspend operator fun invoke(homework: Homework, file: PlatformFile, profile: Profile.StudentProfile): Boolean {
         val fileId: Int
-        if (homework.id > 0 && profile.getVppIdItem() != null) {
+        if (homework.id > 0 && profile.vppId != null) {
             val fileUploadResponse = fileRepository.uploadFile(
-                vppId = profile.vppId!!.getFirstValueOld() as VppId.Active,
+                vppId = profile.vppId,
                 document = AttachedFile.fromFile(file)
             )
             if (fileUploadResponse !is Response.Success) return false
             val response = homeworkRepository.linkHomeworkFile(
-                vppId = profile.vppId!!.getFirstValueOld() as VppId.Active,
+                vppId = profile.vppId,
                 homeworkId = homework.id,
                 fileId = fileUploadResponse.data
             )

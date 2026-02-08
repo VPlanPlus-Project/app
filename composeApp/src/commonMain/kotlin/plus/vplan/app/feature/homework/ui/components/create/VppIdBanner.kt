@@ -41,8 +41,7 @@ fun VppIdBanner(
             buttonAction1 = onHide,
             buttonText2 = "Anmelden",
             buttonAction2 = { openUrl(VPP_ID_AUTH_URL) },
-            backgroundColor = customColors[ColorToken.YellowContainer]!!.get(),
-            textColor = customColors[ColorToken.OnYellowContainer]!!.get()
+            color = customColors[ColorToken.Yellow]!!.get()
         )
     }
 }

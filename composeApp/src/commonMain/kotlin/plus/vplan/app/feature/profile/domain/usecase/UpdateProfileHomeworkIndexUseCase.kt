@@ -18,8 +18,8 @@ class UpdateProfileHomeworkIndexUseCase(
             .mapNotNull{ (it as? CacheState.Done<Homework>)?.data }
             .filter { homework ->
                 (homework.creator is AppEntity.Profile && homework.creator.id == profile.id) ||
-                        (homework.creator is AppEntity.VppId && homework.creator.id == (profile as? Profile.StudentProfile)?.vppIdId) ||
-                        (homework.group?.getFirstValue()?.id == (profile as? Profile.StudentProfile)?.groupId && profile is Profile.StudentProfile) ||
+                        (homework.creator is AppEntity.VppId && homework.creator.id == (profile as? Profile.StudentProfile)?.vppId?.id) ||
+                        (homework.group?.getFirstValue()?.id == (profile as? Profile.StudentProfile)?.group?.id && profile is Profile.StudentProfile) ||
                         (homework.subjectInstance?.getFirstValue()?.id in (profile as? Profile.StudentProfile)?.subjectInstanceConfiguration.orEmpty().filterValues { it }.keys && profile is Profile.StudentProfile)
             }
             .let { relevantHomework ->

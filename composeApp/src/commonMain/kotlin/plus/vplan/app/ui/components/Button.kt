@@ -46,7 +46,7 @@ fun Button(
         when (size) {
             ButtonSize.Big -> Modifier.defaultMinSize(minHeight = 56.dp).fillMaxWidth()
             ButtonSize.Normal -> Modifier.defaultMinSize(minHeight = 48.dp).fillMaxWidth()
-            ButtonSize.Small -> Modifier.defaultMinSize(minHeight = 48.dp).animateContentSize(tween())
+            ButtonSize.Small -> Modifier.defaultMinSize(minHeight = 32.dp).animateContentSize(tween())
         }
     )
     val content: @Composable () -> Unit = {
@@ -71,17 +71,17 @@ fun Button(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        if (icon != null && center) Spacer(Modifier.width(24.dp))
+                        if (icon != null && center) Spacer(Modifier.width(if (size == ButtonSize.Small) 12.dp else 24.dp))
                         Text(
                             text = text,
                             style = MaterialTheme.typography.labelLarge,
                             textAlign = if (center) TextAlign.Center else TextAlign.Start,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f, size != ButtonSize.Small)
                         )
                         if (icon != null) Icon(
                             painter = painterResource(icon),
                             contentDescription = null,
-                            modifier = Modifier.size(24.dp).padding(2.dp)
+                            modifier = Modifier.size(if (size == ButtonSize.Small) 12.dp else 24.dp).padding(2.dp)
                         )
                     }
                 }

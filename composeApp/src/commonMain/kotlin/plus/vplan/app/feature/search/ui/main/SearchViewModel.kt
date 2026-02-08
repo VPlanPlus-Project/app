@@ -15,7 +15,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
@@ -109,12 +108,11 @@ class SearchViewModel(
 
     private suspend fun restartSearch() {
         searchJob?.cancel()
-        val schoolId = state.currentProfile?.getSchool()?.getFirstValue()?.id
-        if (state.currentProfile == null || schoolId == null) {
+        if (state.currentProfile == null || state.currentProfile?.school?.id == null) {
             state = state.copy(results = emptyMap())
             return
         }
-        val day = App.daySource.getById(Day.buildId(schoolId, state.query.date)).getFirstValueOld()
+        val day = App.daySource.getById(Day.buildId(state.currentProfile!!.school.id, state.query.date)).getFirstValueOld()
         searchJob = viewModelScope.launch {
             state = state.copy(isLoading = true)
             searchUseCase(state.query).collectLatest {

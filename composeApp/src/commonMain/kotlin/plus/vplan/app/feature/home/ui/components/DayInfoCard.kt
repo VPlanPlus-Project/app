@@ -16,6 +16,5 @@ fun DayInfoCard(
         title = "Informationen deiner Schule",
         text = info,
         imageVector = Res.drawable.info,
-        shadow = true
     )
 }

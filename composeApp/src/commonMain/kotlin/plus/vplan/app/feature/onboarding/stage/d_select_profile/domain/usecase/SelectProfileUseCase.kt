@@ -4,8 +4,6 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.capture
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
@@ -50,17 +48,15 @@ class SelectProfileUseCase(
                 profileRepository.upsert(teacher)
             }
         }
-        capture("CreateProfile", mapOf("school_id" to profile.getSchool().getFirstValue()!!.id, "profile_type" to profile.profileType.name, "entity_id" to onboardingProfile.alias))
+        capture("CreateProfile", mapOf("school_id" to profile.school.id, "profile_type" to profile.profileType.name, "entity_id" to onboardingProfile.alias))
         keyValueRepository.set(Keys.CURRENT_PROFILE, profile.id.toHexString())
 
         sendSp24CredentialsToServerUseCase()
 
         if (onboardingRepository.getNeedToDownloadLessonData()) {
-            (profile.getSchool().getFirstValue() as? School.AppSchool)?.let {
-                val client = onboardingRepository.getSp24Client()!!
-                updateTimetableUseCase(it, client, true)
-                updateSubstitutionPlanUseCase(it, listOf(LocalDate.now()), client, allowNotification = false)
-            }
+            val client = onboardingRepository.getSp24Client()!!
+            updateTimetableUseCase(profile.school, client, true)
+            updateSubstitutionPlanUseCase(profile.school, listOf(LocalDate.now()), client, allowNotification = false)
         } else {
             Logger.i { "Skipping lesson data download as it is not needed." }
         }

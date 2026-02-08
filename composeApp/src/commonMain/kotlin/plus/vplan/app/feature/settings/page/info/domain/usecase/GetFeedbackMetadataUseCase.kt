@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.AppBuildConfig
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.getByProvider
 import plus.vplan.app.domain.model.ProfileType
@@ -19,7 +18,6 @@ class GetFeedbackMetadataUseCase(
     suspend operator fun invoke(): Flow<FeedbackMetadata> {
         val systemInfo = getSystemInfo()
         val currentProfile = (if (hasProfileUseCase().first()) getCurrentProfileUseCase() else flowOf(null)).map { currentProfile ->
-            val school = currentProfile?.getSchool()?.getFirstValue()
             return@map FeedbackMetadata(
                 systemInfo,
                 appInfo = AppInfo(
@@ -28,8 +26,8 @@ class GetFeedbackMetadataUseCase(
                     buildType = if (AppBuildConfig.APP_DEBUG) "Debug" else "Release"
                 ),
                 profileInfo = FeedbackProfileInfo(
-                    schoolId = school?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toIntOrNull(),
-                    school = school?.name,
+                    schoolId = currentProfile?.school?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toIntOrNull(),
+                    school = currentProfile?.school?.name,
                     profileName = currentProfile?.name,
                     profileType = currentProfile?.profileType
                 )
