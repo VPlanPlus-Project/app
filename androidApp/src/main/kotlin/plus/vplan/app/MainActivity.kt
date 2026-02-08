@@ -54,9 +54,7 @@ class MainActivity : FragmentActivity() {
                 Firebase.crashlytics.recordException(throwable)
                 captureError("UncaughtException", throwable.stackTraceToString())
 
-                Thread.sleep(500)
-                Process.killProcess(Process.myPid())
-                exitProcess(10)
+                this.runOnUiThread { this.finish() }
             }.start()
         }
     }
