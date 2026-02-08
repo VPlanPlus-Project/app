@@ -13,7 +13,7 @@ class DeleteFileUseCase(
     private val localFileRepository: LocalFileRepository
 ) {
     suspend operator fun invoke(file: File, assessment: Assessment, profile: Profile.StudentProfile): Boolean {
-        if (fileRepository.deleteFile(file, profile.getVppIdItem()) != null) return false
+        if (fileRepository.deleteFile(file, profile.vppId) != null) return false
         if (file.isOfflineReady) {
             localFileRepository.deleteFile("./files/" + file.id)
         }

@@ -2,7 +2,6 @@ package plus.vplan.app.feature.system.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 
@@ -17,7 +16,7 @@ class SendSp24CredentialsToServerUseCase(
     suspend operator fun invoke() {
         profileRepository
             .getAll().first()
-            .mapNotNull { it.getSchool().getFirstValue() }
+            .map { it.school }
             .distinctBy { it.id }
             .filter { it.credentialsValid }
             .also { logger.i { "Logging credentials for ${it.size} school${if (it.size != 1) "s" else ""}" } }

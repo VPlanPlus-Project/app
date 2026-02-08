@@ -24,7 +24,7 @@ class LogoutVppIdUseCase(
             .first()
             .filterIsInstance<Profile.StudentProfile>()
             .forEach {
-                if (it.vppIdId == vppId.id) profileRepository.updateVppId(it.id, null)
+                if (it.vppId?.id == vppId.id) profileRepository.updateVppId(it.id, null)
             }
         val schulverwalterUserId = vppId.schulverwalterConnection?.userId
         if (schulverwalterUserId != null) {

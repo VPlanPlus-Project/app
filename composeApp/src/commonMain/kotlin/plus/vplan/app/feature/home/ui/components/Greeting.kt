@@ -6,27 +6,35 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import plus.vplan.app.ui.theme.displayFontFamily
 
 @Composable
 fun Greeting(
     modifier: Modifier = Modifier,
-    displayName: String
+    displayName: String?
 ) {
     Row(
         modifier = modifier
     ) {
         Text(
-            text = "Hallo",
+            text = buildString {
+                append("Hallo")
+                if (displayName != null) append(",")
+            },
             fontFamily = displayFontFamily(),
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.alignByBaseline()
         )
         Text(
-            text = " $displayName 👋",
+            text = " ${displayName?.plus("!").orEmpty()} 👋",
             fontFamily = displayFontFamily(),
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Medium),
-            modifier = Modifier.alignByBaseline()
         )
     }
+}
+
+@Preview
+@Composable
+fun GreetingPreview() {
+    Greeting(displayName = "Max Mustermann")
 }

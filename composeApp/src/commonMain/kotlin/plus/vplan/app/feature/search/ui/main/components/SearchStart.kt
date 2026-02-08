@@ -93,9 +93,8 @@ fun SearchStart(
                     text = buildString {
                         append("Neu in deiner Gruppe")
                         if (profile is Profile.StudentProfile) {
-                            val group = profile.group.collectAsResultingFlow().value?.name ?: return@buildString
                             append(" ")
-                            append(group)
+                            append(profile.group.name)
                         }
                     },
                     style = sectionTitleFont()
