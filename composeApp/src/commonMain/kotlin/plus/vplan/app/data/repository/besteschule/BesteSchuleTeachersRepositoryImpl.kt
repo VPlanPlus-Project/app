@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
@@ -19,7 +20,13 @@ import plus.vplan.app.data.source.database.model.database.besteschule.DbBestesch
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.besteschule.BesteSchuleTeacher
 import plus.vplan.app.domain.model.besteschule.api.ApiStudentGradesData
+import plus.vplan.app.domain.repository.base.PrefetchError
+import plus.vplan.app.domain.repository.base.PrefetchHandler
+import plus.vplan.app.domain.repository.base.PrefetchInstruction
+import plus.vplan.app.domain.repository.base.PrefetchRegistry
+import plus.vplan.app.domain.repository.base.PrefetchResult
 import plus.vplan.app.domain.repository.base.ResponsePreference
+import plus.vplan.app.domain.repository.base.nestedInstructions
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleTeachersRepository
 import kotlin.time.Clock
@@ -30,6 +37,33 @@ class BesteSchuleTeachersRepositoryImpl : BesteSchuleTeachersRepository, KoinCom
     private val vppDatabase by inject<VppDatabase>()
 
     private val cacheFlows = mutableMapOf<Int, Flow<BesteSchuleTeacher?>>()
+
+    // Cache flows for prefetching - stores MutableStateFlow for direct value updates
+    private val prefetchCacheFlows = mutableMapOf<Int, MutableStateFlow<BesteSchuleTeacher?>>()
+
+    private fun getOrCreatePrefetchFlow(id: Int, initialValue: BesteSchuleTeacher? = null): MutableStateFlow<BesteSchuleTeacher?> {
+        return prefetchCacheFlows.getOrPut(id) {
+            MutableStateFlow(initialValue)
+        }
+    }
+
+    override val entityName: String = "teacher"
+
+    init {
+        registerForPrefetching()
+    }
+
+    override fun registerForPrefetching() {
+        PrefetchRegistry.register(entityName, object : PrefetchHandler {
+            override suspend fun prefetch(ids: List<Int>, includes: Map<String, PrefetchInstruction>): PrefetchResult {
+                return this@BesteSchuleTeachersRepositoryImpl.prefetchByIds(ids, includes)
+            }
+        })
+    }
+
+    override fun unregisterFromPrefetching() {
+        PrefetchRegistry.unregister(entityName)
+    }
 
     override suspend fun getTeachersFromApi(schulverwalterAccessToken: String): Response<List<ApiStudentGradesData.Teacher>> {
         val response = besteschuleApiRepository.getStudentGradeData(schulverwalterAccessToken)
@@ -75,6 +109,7 @@ class BesteSchuleTeachersRepositoryImpl : BesteSchuleTeachersRepository, KoinCom
     override fun getTeachers(
         responsePreference: ResponsePreference,
         contextBesteschuleAccessToken: String?,
+        includes: Map<String, PrefetchInstruction>
     ): Flow<Response<List<BesteSchuleTeacher>>> {
         val key = responsePreference.hashCode() + contextBesteschuleAccessToken.hashCode()
         val constructFlow = { flow {
@@ -198,5 +233,41 @@ class BesteSchuleTeachersRepositoryImpl : BesteSchuleTeachersRepository, KoinCom
 
         // Return the new cached model
         return@withContext Response.Success(teachers)
+    }
+
+    override suspend fun prefetchByIds(ids: List<Int>, includes: Map<String, PrefetchInstruction>): PrefetchResult {
+        if (ids.isEmpty()) return PrefetchResult(0, emptyList())
+
+        val errors = mutableListOf<PrefetchError>()
+        var successCount = 0
+
+        try {
+            // Batch fetch from DB
+            val teachers = vppDatabase.besteSchuleTeacherDao.getByIds(ids)
+
+            // Populate cache flows
+            teachers.forEach { dbTeacher ->
+                try {
+                    val model = dbTeacher.toModel()
+                    getOrCreatePrefetchFlow(dbTeacher.id, model).value = model
+                    successCount++
+                } catch (e: Exception) {
+                    errors.add(PrefetchError(entityName, dbTeacher.id, e))
+                }
+            }
+
+            // Track missing IDs as errors
+            val foundIds = teachers.map { it.id }.toSet()
+            ids.filter { it !in foundIds }.forEach { missingId ->
+                errors.add(PrefetchError(entityName, missingId, Exception("Teacher not found in database")))
+            }
+
+        } catch (e: Exception) {
+            ids.forEach { id ->
+                errors.add(PrefetchError(entityName, id, e))
+            }
+        }
+
+        return PrefetchResult(successCount, errors)
     }
 }

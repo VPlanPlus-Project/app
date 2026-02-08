@@ -17,4 +17,7 @@ interface BesteschuleTeacherDao {
     @Query("SELECT * FROM besteschule_teacher WHERE id = :teacherId")
     fun getTeacher(teacherId: Int): Flow<DbBesteschuleTeacher?>
 
+    @Query("SELECT * FROM besteschule_teacher WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<Int>): List<DbBesteschuleTeacher>
+
 }

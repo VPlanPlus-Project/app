@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
@@ -21,7 +22,13 @@ import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteSch
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.besteschule.BesteSchuleCollection
 import plus.vplan.app.domain.model.besteschule.api.ApiStudentGradesData
+import plus.vplan.app.domain.repository.base.PrefetchError
+import plus.vplan.app.domain.repository.base.PrefetchHandler
+import plus.vplan.app.domain.repository.base.PrefetchInstruction
+import plus.vplan.app.domain.repository.base.PrefetchRegistry
+import plus.vplan.app.domain.repository.base.PrefetchResult
 import plus.vplan.app.domain.repository.base.ResponsePreference
+import plus.vplan.app.domain.repository.base.nestedInstructions
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import kotlin.time.Clock
@@ -32,6 +39,33 @@ class BesteSchuleCollectionsRepositoryImpl : BesteSchuleCollectionsRepository, K
     private val vppDatabase by inject<VppDatabase>()
 
     private val cacheFlows = mutableMapOf<Int, Flow<BesteSchuleCollection?>>()
+
+    // Cache flows for prefetching - stores MutableStateFlow for direct value updates
+    private val prefetchCacheFlows = mutableMapOf<Int, MutableStateFlow<BesteSchuleCollection?>>()
+
+    private fun getOrCreatePrefetchFlow(id: Int, initialValue: BesteSchuleCollection? = null): MutableStateFlow<BesteSchuleCollection?> {
+        return prefetchCacheFlows.getOrPut(id) {
+            MutableStateFlow(initialValue)
+        }
+    }
+
+    override val entityName: String = "collection"
+
+    init {
+        registerForPrefetching()
+    }
+
+    override fun registerForPrefetching() {
+        PrefetchRegistry.register(entityName, object : PrefetchHandler {
+            override suspend fun prefetch(ids: List<Int>, includes: Map<String, PrefetchInstruction>): PrefetchResult {
+                return this@BesteSchuleCollectionsRepositoryImpl.prefetchByIds(ids, includes)
+            }
+        })
+    }
+
+    override fun unregisterFromPrefetching() {
+        PrefetchRegistry.unregister(entityName)
+    }
 
     override suspend fun getCollectionsFromApi(schulverwalterAccessToken: String): Response<List<ApiStudentGradesData.Collection>> {
         val response = besteschuleApiRepository.getStudentGradeData(schulverwalterAccessToken)
@@ -89,6 +123,7 @@ class BesteSchuleCollectionsRepositoryImpl : BesteSchuleCollectionsRepository, K
     override fun getCollections(
         responsePreference: ResponsePreference,
         contextBesteschuleAccessToken: String?,
+        includes: Map<String, PrefetchInstruction>
     ): Flow<Response<List<BesteSchuleCollection>>> {
         val key = responsePreference.hashCode() + contextBesteschuleAccessToken.hashCode()
         val constructFlow = { flow {
@@ -215,5 +250,86 @@ class BesteSchuleCollectionsRepositoryImpl : BesteSchuleCollectionsRepository, K
 
         // Return the new cached model
         return@withContext Response.Success(collection.toList())
+    }
+
+    override suspend fun prefetchByIds(ids: List<Int>, includes: Map<String, PrefetchInstruction>): PrefetchResult {
+        if (ids.isEmpty()) return PrefetchResult(0, emptyList())
+
+        val errors = mutableListOf<PrefetchError>()
+        var successCount = 0
+
+        try {
+            // Batch fetch from DB
+            val collections = vppDatabase.besteSchuleCollectionDao.getByIds(ids)
+
+            // Populate cache flows
+            collections.forEach { dbCollection ->
+                try {
+                    val model = dbCollection.toModel()
+                    getOrCreatePrefetchFlow(dbCollection.id, model).value = model
+                    successCount++
+                } catch (e: Exception) {
+                    errors.add(PrefetchError(entityName, dbCollection.id, e))
+                }
+            }
+
+            // Track missing IDs as errors
+            val foundIds = collections.map { it.id }.toSet()
+            ids.filter { it !in foundIds }.forEach { missingId ->
+                errors.add(PrefetchError(entityName, missingId, Exception("Collection not found in database")))
+            }
+
+            // Prefetch related entities if includes are specified
+            if (includes.isNotEmpty() && collections.isNotEmpty()) {
+                prefetchRelatedEntities(collections, includes, errors)
+            }
+
+        } catch (e: Exception) {
+            ids.forEach { id ->
+                errors.add(PrefetchError(entityName, id, e))
+            }
+        }
+
+        return PrefetchResult(successCount, errors)
+    }
+
+    private suspend fun prefetchRelatedEntities(
+        collections: List<DbBesteSchuleCollection>,
+        includes: Map<String, PrefetchInstruction>,
+        errors: MutableList<PrefetchError>
+    ) {
+        // Collect IDs for each relationship type
+        val intervalIds = if (includes.containsKey("interval")) {
+            collections.map { it.intervalId }.distinct()
+        } else emptyList()
+
+        val teacherIds = if (includes.containsKey("teacher")) {
+            collections.map { it.teacherId }.distinct()
+        } else emptyList()
+
+        val subjectIds = if (includes.containsKey("subject")) {
+            collections.map { it.subjectId }.distinct()
+        } else emptyList()
+
+        // Get nested includes using the extension property
+        val intervalIncludes = includes["interval"]?.nestedInstructions ?: emptyMap()
+        val teacherIncludes = includes["teacher"]?.nestedInstructions ?: emptyMap()
+        val subjectIncludes = includes["subject"]?.nestedInstructions ?: emptyMap()
+
+        // Prefetch related entities
+        if (intervalIds.isNotEmpty()) {
+            val intervalResult = PrefetchRegistry.prefetch("interval", intervalIds, intervalIncludes)
+            errors.addAll(intervalResult.errors)
+        }
+
+        if (teacherIds.isNotEmpty()) {
+            val teacherResult = PrefetchRegistry.prefetch("teacher", teacherIds, teacherIncludes)
+            errors.addAll(teacherResult.errors)
+        }
+
+        if (subjectIds.isNotEmpty()) {
+            val subjectResult = PrefetchRegistry.prefetch("subject", subjectIds, subjectIncludes)
+            errors.addAll(subjectResult.errors)
+        }
     }
 }

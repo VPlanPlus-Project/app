@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
@@ -19,7 +20,13 @@ import plus.vplan.app.data.source.database.model.database.besteschule.DbBestesch
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.besteschule.BesteSchuleSubject
 import plus.vplan.app.domain.model.besteschule.api.ApiStudentData
+import plus.vplan.app.domain.repository.base.PrefetchError
+import plus.vplan.app.domain.repository.base.PrefetchHandler
+import plus.vplan.app.domain.repository.base.PrefetchInstruction
+import plus.vplan.app.domain.repository.base.PrefetchRegistry
+import plus.vplan.app.domain.repository.base.PrefetchResult
 import plus.vplan.app.domain.repository.base.ResponsePreference
+import plus.vplan.app.domain.repository.base.nestedInstructions
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import kotlin.time.Clock
@@ -30,6 +37,33 @@ class BesteSchuleSubjectsRepositoryImpl : BesteSchuleSubjectsRepository, KoinCom
     private val vppDatabase by inject<VppDatabase>()
 
     private val cacheFlows = mutableMapOf<Int, Flow<BesteSchuleSubject?>>()
+
+    // Cache flows for prefetching - stores MutableStateFlow for direct value updates
+    private val prefetchCacheFlows = mutableMapOf<Int, MutableStateFlow<BesteSchuleSubject?>>()
+
+    private fun getOrCreatePrefetchFlow(id: Int, initialValue: BesteSchuleSubject? = null): MutableStateFlow<BesteSchuleSubject?> {
+        return prefetchCacheFlows.getOrPut(id) {
+            MutableStateFlow(initialValue)
+        }
+    }
+
+    override val entityName: String = "subject"
+
+    init {
+        registerForPrefetching()
+    }
+
+    override fun registerForPrefetching() {
+        PrefetchRegistry.register(entityName, object : PrefetchHandler {
+            override suspend fun prefetch(ids: List<Int>, includes: Map<String, PrefetchInstruction>): PrefetchResult {
+                return this@BesteSchuleSubjectsRepositoryImpl.prefetchByIds(ids, includes)
+            }
+        })
+    }
+
+    override fun unregisterFromPrefetching() {
+        PrefetchRegistry.unregister(entityName)
+    }
 
     override suspend fun getSubjectsFromApi(schulverwalterAccessToken: String): Response<List<ApiStudentData.Subject>> {
         val response = besteschuleApiRepository.getStudentData(schulverwalterAccessToken)
@@ -197,5 +231,41 @@ class BesteSchuleSubjectsRepositoryImpl : BesteSchuleSubjectsRepository, KoinCom
 
         // Return the new cached model
         return Response.Success(subjects.toList())
+    }
+
+    override suspend fun prefetchByIds(ids: List<Int>, includes: Map<String, PrefetchInstruction>): PrefetchResult {
+        if (ids.isEmpty()) return PrefetchResult(0, emptyList())
+
+        val errors = mutableListOf<PrefetchError>()
+        var successCount = 0
+
+        try {
+            // Batch fetch from DB
+            val subjects = vppDatabase.besteSchuleSubjectDao.getByIds(ids)
+
+            // Populate cache flows
+            subjects.forEach { dbSubject ->
+                try {
+                    val model = dbSubject.toModel()
+                    getOrCreatePrefetchFlow(dbSubject.id, model).value = model
+                    successCount++
+                } catch (e: Exception) {
+                    errors.add(PrefetchError(entityName, dbSubject.id, e))
+                }
+            }
+
+            // Track missing IDs as errors
+            val foundIds = subjects.map { it.id }.toSet()
+            ids.filter { it !in foundIds }.forEach { missingId ->
+                errors.add(PrefetchError(entityName, missingId, Exception("Subject not found in database")))
+            }
+
+        } catch (e: Exception) {
+            ids.forEach { id ->
+                errors.add(PrefetchError(entityName, id, e))
+            }
+        }
+
+        return PrefetchResult(successCount, errors)
     }
 }

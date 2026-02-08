@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
@@ -22,7 +23,13 @@ import plus.vplan.app.data.source.database.model.database.besteschule.DbBestesch
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.domain.model.besteschule.api.ApiStudentData
+import plus.vplan.app.domain.repository.base.PrefetchError
+import plus.vplan.app.domain.repository.base.PrefetchHandler
+import plus.vplan.app.domain.repository.base.PrefetchInstruction
+import plus.vplan.app.domain.repository.base.PrefetchRegistry
+import plus.vplan.app.domain.repository.base.PrefetchResult
 import plus.vplan.app.domain.repository.base.ResponsePreference
+import plus.vplan.app.domain.repository.base.nestedInstructions
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import kotlin.time.Clock
@@ -33,6 +40,33 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
     private val vppDatabase by inject<VppDatabase>()
 
     private val cacheFlows = mutableMapOf<Int, Flow<BesteSchuleInterval?>>()
+
+    // Cache flows for prefetching - stores MutableStateFlow for direct value updates
+    private val prefetchCacheFlows = mutableMapOf<Int, MutableStateFlow<BesteSchuleInterval?>>()
+
+    private fun getOrCreatePrefetchFlow(id: Int, initialValue: BesteSchuleInterval? = null): MutableStateFlow<BesteSchuleInterval?> {
+        return prefetchCacheFlows.getOrPut(id) {
+            MutableStateFlow(initialValue)
+        }
+    }
+
+    override val entityName: String = "interval"
+
+    init {
+        registerForPrefetching()
+    }
+
+    override fun registerForPrefetching() {
+        PrefetchRegistry.register(entityName, object : PrefetchHandler {
+            override suspend fun prefetch(ids: List<Int>, includes: Map<String, PrefetchInstruction>): PrefetchResult {
+                return this@BesteSchuleIntervalsRepositoryImpl.prefetchByIds(ids, includes)
+            }
+        })
+    }
+
+    override fun unregisterFromPrefetching() {
+        PrefetchRegistry.unregister(entityName)
+    }
 
     override suspend fun getIntervalsFromApi(schulverwalterAccessToken: String, withCache: Boolean): Response<List<ApiStudentData.Interval>> {
         val response = besteschuleApiRepository.getStudentData(schulverwalterAccessToken, withCache)
@@ -99,7 +133,8 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
         responsePreference: ResponsePreference,
         contextBesteschuleAccessToken: String?,
         contextBesteschuleUserId: Int?,
-        withCache: Boolean
+        withCache: Boolean,
+        includes: Map<String, PrefetchInstruction>
     ): Flow<Response<List<BesteSchuleInterval>>> {
         val key = responsePreference.hashCode() + contextBesteschuleAccessToken.hashCode() + (contextBesteschuleUserId ?: 0)
         val constructFlow = { flow {
@@ -239,4 +274,74 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
         return@withContext Response.Success(intervals.toList())
     }
 
+    override suspend fun prefetchByIds(ids: List<Int>, includes: Map<String, PrefetchInstruction>): PrefetchResult {
+        if (ids.isEmpty()) return PrefetchResult(0, emptyList())
+
+        val errors = mutableListOf<PrefetchError>()
+        var successCount = 0
+
+        try {
+            // Batch fetch from DB
+            val intervals = vppDatabase.besteSchuleIntervalDao.getByIds(ids)
+
+            // Populate cache flows
+            intervals.forEach { embeddedInterval ->
+                try {
+                    val model = embeddedInterval.toModel()
+                    getOrCreatePrefetchFlow(embeddedInterval.interval.id, model).value = model
+                    successCount++
+                } catch (e: Exception) {
+                    errors.add(PrefetchError(entityName, embeddedInterval.interval.id, e))
+                }
+            }
+
+            // Track missing IDs as errors
+            val foundIds = intervals.map { it.interval.id }.toSet()
+            ids.filter { it !in foundIds }.forEach { missingId ->
+                errors.add(PrefetchError(entityName, missingId, Exception("Interval not found in database")))
+            }
+
+            // Prefetch related entities if includes are specified
+            if (includes.isNotEmpty() && intervals.isNotEmpty()) {
+                prefetchRelatedEntities(intervals, includes, errors)
+            }
+
+        } catch (e: Exception) {
+            ids.forEach { id ->
+                errors.add(PrefetchError(entityName, id, e))
+            }
+        }
+
+        return PrefetchResult(successCount, errors)
+    }
+
+    private suspend fun prefetchRelatedEntities(
+        intervals: List<plus.vplan.app.data.source.database.model.embedded.besteschule.EmbeddedBesteschuleInterval>,
+        includes: Map<String, PrefetchInstruction>,
+        errors: MutableList<PrefetchError>
+    ) {
+        // Collect IDs for each relationship type
+        val yearIds = if (includes.containsKey("year")) {
+            intervals.map { it.interval.yearId }.distinct()
+        } else emptyList()
+
+        val includedIntervalIds = if (includes.containsKey("includedInterval")) {
+            intervals.mapNotNull { it.interval.includedIntervalId }.distinct()
+        } else emptyList()
+
+        // Get nested includes
+        val yearIncludes = includes["year"]?.nestedInstructions ?: emptyMap()
+        val includedIntervalIncludes = includes["includedInterval"]?.nestedInstructions ?: emptyMap()
+
+        // Prefetch related entities
+        if (yearIds.isNotEmpty()) {
+            val yearResult = PrefetchRegistry.prefetch("year", yearIds, yearIncludes)
+            errors.addAll(yearResult.errors)
+        }
+
+        if (includedIntervalIds.isNotEmpty()) {
+            val intervalResult = PrefetchRegistry.prefetch("interval", includedIntervalIds, includedIntervalIncludes)
+            errors.addAll(intervalResult.errors)
+        }
+    }
 }

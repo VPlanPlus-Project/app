@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
@@ -31,6 +33,12 @@ import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.besteschule.api.ApiStudentGradesData
+import plus.vplan.app.domain.repository.besteschule.GradeFilter
+import plus.vplan.app.domain.repository.base.PrefetchError
+import plus.vplan.app.domain.repository.base.PrefetchHandler
+import plus.vplan.app.domain.repository.base.PrefetchInstruction
+import plus.vplan.app.domain.repository.base.PrefetchRegistry
+import plus.vplan.app.domain.repository.base.PrefetchResult
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
@@ -44,6 +52,33 @@ class BesteSchuleGradesRepositoryImpl : BesteSchuleGradesRepository, KoinCompone
     private val httpClient by inject<HttpClient>()
 
     private val cacheFlows = mutableMapOf<Int, Flow<BesteSchuleGrade?>>()
+
+    // Cache flows for prefetching - stores MutableStateFlow for direct value updates
+    private val prefetchCacheFlows = mutableMapOf<Int, MutableStateFlow<BesteSchuleGrade?>>()
+
+    private fun getOrCreatePrefetchFlow(id: Int, initialValue: BesteSchuleGrade? = null): MutableStateFlow<BesteSchuleGrade?> {
+        return prefetchCacheFlows.getOrPut(id) {
+            MutableStateFlow(initialValue)
+        }
+    }
+
+    override val entityName: String = "grade"
+
+    init {
+        registerForPrefetching()
+    }
+
+    override fun registerForPrefetching() {
+        PrefetchRegistry.register(entityName, object : PrefetchHandler {
+            override suspend fun prefetch(ids: List<Int>, includes: Map<String, PrefetchInstruction>): PrefetchResult {
+                return this@BesteSchuleGradesRepositoryImpl.prefetchByIds(ids, includes)
+            }
+        })
+    }
+
+    override fun unregisterFromPrefetching() {
+        PrefetchRegistry.unregister(entityName)
+    }
 
     override suspend fun getGradesFromApi(schulverwalterAccessToken: String): Response<List<ApiStudentGradesData>> {
         val response = besteschuleApiRepository.getStudentGradeData(schulverwalterAccessToken)
@@ -119,75 +154,74 @@ class BesteSchuleGradesRepositoryImpl : BesteSchuleGradesRepository, KoinCompone
     override fun getGrades(
         responsePreference: ResponsePreference,
         contextBesteschuleAccessToken: String?,
-        contextBesteschuleUserId: Int?
+        contextBesteschuleUserId: Int?,
+        filter: GradeFilter,
+        includes: Map<String, PrefetchInstruction>
     ): Flow<Response<List<BesteSchuleGrade>>> {
-        val key = responsePreference.hashCode() + contextBesteschuleAccessToken.hashCode() + (contextBesteschuleUserId ?: 0)
+        val key = responsePreference.hashCode() + contextBesteschuleAccessToken.hashCode() + (contextBesteschuleUserId ?: 0) + filter.hashCode()
         val constructFlow = { flow {
-            val dbFlow = if (contextBesteschuleUserId != null) {
-                vppDatabase.besteSchuleGradesDao.getAllForUser(contextBesteschuleUserId)
-            } else {
-                vppDatabase.besteSchuleGradesDao.getAll()
-            }.map { db -> db.map { it.toModel() } }
+            val dbFlow = getFilteredGradesFlow(filter, contextBesteschuleUserId)
+                .map { db -> db.map { it.toModel() } }
 
             dbFlow.collect { cached ->
-            val now = Clock.System.now()
-            val cacheIsEmpty = cached.isEmpty()
-            val cacheIsStale = cached.all { now - it.cachedAt > 1.days }
+                val now = Clock.System.now()
+                val cacheIsEmpty = cached.isEmpty()
+                val cacheIsStale = cached.all { now - it.cachedAt > 1.days }
 
-            when (responsePreference) {
-                ResponsePreference.Fast -> {
-                    emit(Response.Success(cached))
-
-                    if ((cacheIsEmpty || cacheIsStale) && contextBesteschuleAccessToken != null && contextBesteschuleUserId != null) {
-                        try {
-                            refreshGrades(contextBesteschuleAccessToken, contextBesteschuleUserId)
-                        } catch (_: Exception) {
-                        }
-                    }
-                }
-
-                ResponsePreference.Secure -> {
-                    if ((cacheIsEmpty || cacheIsStale) && contextBesteschuleAccessToken != null && contextBesteschuleUserId != null) {
-                        val refreshed = try {
-                            refreshGrades(contextBesteschuleAccessToken, contextBesteschuleUserId)
-                        } catch (_: Exception) {
-                            null
-                        }
-
-                        if (refreshed != null) {
-                            emit(refreshed)
-                        } else if (cached.isNotEmpty()) {
-                            emit(Response.Success(cached))
-                        } else {
-                            emit(Response.Error.Other("Failed to refresh grades and cache is empty"))
-                        }
-                    } else {
+                when (responsePreference) {
+                    ResponsePreference.Fast -> {
                         emit(Response.Success(cached))
-                    }
-                }
 
-                ResponsePreference.Fresh -> {
-                    if (contextBesteschuleAccessToken == null) {
-                        throw IllegalStateException("When fresh values are requested, a token is required.")
-                    } else if (contextBesteschuleUserId == null) {
-                        throw IllegalStateException("When fresh values are requested, the user id is required.")
-                    } else {
-                        val refreshed = try {
-                            refreshGrades(contextBesteschuleAccessToken, contextBesteschuleUserId)
-                        } catch (e: Exception) {
-                            Logger.e { "Failed to refresh grades: $e" }
-                            null
+                        if ((cacheIsEmpty || cacheIsStale) && contextBesteschuleAccessToken != null && contextBesteschuleUserId != null) {
+                            try {
+                                refreshGrades(contextBesteschuleAccessToken, contextBesteschuleUserId)
+                            } catch (_: Exception) {
+                            }
                         }
+                    }
 
-                        if (refreshed != null) {
-                            emit(refreshed)
+                    ResponsePreference.Secure -> {
+                        if ((cacheIsEmpty || cacheIsStale) && contextBesteschuleAccessToken != null && contextBesteschuleUserId != null) {
+                            val refreshed = try {
+                                refreshGrades(contextBesteschuleAccessToken, contextBesteschuleUserId)
+                            } catch (_: Exception) {
+                                null
+                            }
+
+                            if (refreshed != null) {
+                                emit(refreshed)
+                            } else if (cached.isNotEmpty()) {
+                                emit(Response.Success(cached))
+                            } else {
+                                emit(Response.Error.Other("Failed to refresh grades and cache is empty"))
+                            }
                         } else {
-                            emit(Response.Error.Other("Failed to refresh grades: $refreshed"))
+                            emit(Response.Success(cached))
+                        }
+                    }
+
+                    ResponsePreference.Fresh -> {
+                        if (contextBesteschuleAccessToken == null) {
+                            throw IllegalStateException("When fresh values are requested, a token is required.")
+                        } else if (contextBesteschuleUserId == null) {
+                            throw IllegalStateException("When fresh values are requested, the user id is required.")
+                        } else {
+                            val refreshed = try {
+                                refreshGrades(contextBesteschuleAccessToken, contextBesteschuleUserId)
+                            } catch (e: Exception) {
+                                Logger.e { "Failed to refresh grades: $e" }
+                                null
+                            }
+
+                            if (refreshed != null) {
+                                emit(refreshed)
+                            } else {
+                                emit(Response.Error.Other("Failed to refresh grades: $refreshed"))
+                            }
                         }
                     }
                 }
             }
-                }
         } }
 
         if (responsePreference != ResponsePreference.Fresh) return constructFlow()
@@ -209,6 +243,44 @@ class BesteSchuleGradesRepositoryImpl : BesteSchuleGradesRepository, KoinCompone
             }
 
             shared
+        }
+    }
+
+    private fun getFilteredGradesFlow(
+        filter: GradeFilter,
+        contextBesteschuleUserId: Int?
+    ): Flow<List<DbBesteSchuleGrade>> {
+        return when {
+            filter.yearId != null -> {
+                // Need to join with collections and intervals to filter by year
+                // For now, fetch all and filter in memory (can be optimized with a custom query)
+                if (contextBesteschuleUserId != null) {
+                    vppDatabase.besteSchuleGradesDao.getAllForUser(contextBesteschuleUserId)
+                } else {
+                    vppDatabase.besteSchuleGradesDao.getAll()
+                }
+            }
+            filter.intervalId != null -> {
+                vppDatabase.besteSchuleGradesDao.getByIntervalId(filter.intervalId)
+            }
+            filter.collectionId != null -> {
+                vppDatabase.besteSchuleGradesDao.getByCollectionId(filter.collectionId)
+            }
+            filter.subjectId != null -> {
+                vppDatabase.besteSchuleGradesDao.getBySubjectId(filter.subjectId)
+            }
+            filter.teacherId != null -> {
+                vppDatabase.besteSchuleGradesDao.getByTeacherId(filter.teacherId)
+            }
+            filter.givenAt != null -> {
+                vppDatabase.besteSchuleGradesDao.getByGivenAt(filter.givenAt.toString())
+            }
+            contextBesteschuleUserId != null -> {
+                vppDatabase.besteSchuleGradesDao.getAllForUser(contextBesteschuleUserId)
+            }
+            else -> {
+                vppDatabase.besteSchuleGradesDao.getAll()
+            }
         }
     }
 
@@ -361,5 +433,41 @@ class BesteSchuleGradesRepositoryImpl : BesteSchuleGradesRepository, KoinCompone
 
     override suspend fun clearCacheForUser(schulverwalterUserId: Int) = withContext(Dispatchers.IO) {
         vppDatabase.besteSchuleGradesDao.clearCacheForUser(schulverwalterUserId)
+    }
+
+    override suspend fun prefetchByIds(ids: List<Int>, includes: Map<String, PrefetchInstruction>): PrefetchResult {
+        if (ids.isEmpty()) return PrefetchResult(0, emptyList())
+
+        val errors = mutableListOf<PrefetchError>()
+        var successCount = 0
+
+        try {
+            // Batch fetch from DB
+            val grades = vppDatabase.besteSchuleGradesDao.getByIds(ids)
+
+            // Populate cache flows
+            grades.forEach { dbGrade ->
+                try {
+                    val model = dbGrade.toModel()
+                    getOrCreatePrefetchFlow(dbGrade.id, model).value = model
+                    successCount++
+                } catch (e: Exception) {
+                    errors.add(PrefetchError(entityName, dbGrade.id, e))
+                }
+            }
+
+            // Track missing IDs as errors
+            val foundIds = grades.map { it.id }.toSet()
+            ids.filter { it !in foundIds }.forEach { missingId ->
+                errors.add(PrefetchError(entityName, missingId, Exception("Grade not found in database")))
+            }
+
+        } catch (e: Exception) {
+            ids.forEach { id ->
+                errors.add(PrefetchError(entityName, id, e))
+            }
+        }
+
+        return PrefetchResult(successCount, errors)
     }
 }

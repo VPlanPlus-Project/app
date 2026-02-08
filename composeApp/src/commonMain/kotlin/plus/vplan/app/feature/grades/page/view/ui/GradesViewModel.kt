@@ -32,6 +32,9 @@ import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
+import plus.vplan.app.domain.repository.besteschule.CollectionPrefetchRequest
+import plus.vplan.app.domain.repository.besteschule.GradePrefetchRequest
+import plus.vplan.app.domain.repository.besteschule.IntervalPrefetchRequest
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleYearsRepository
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
@@ -113,7 +116,8 @@ class GradesViewModel(
                     besteSchuleGradesRepository.getGrades(
                         responsePreference = ResponsePreference.Fast,
                         contextBesteschuleUserId = schulverwalterUser.userId,
-                        contextBesteschuleAccessToken = schulverwalterUser.accessToken
+                        contextBesteschuleAccessToken = schulverwalterUser.accessToken,
+                        includes = GradePrefetchRequest { collection { interval { year() }; teacher(); subject() } }
                     )
                         .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
                         .map { it.data }
@@ -449,7 +453,8 @@ class GradesViewModel(
         val allGrades = besteSchuleGradesRepository.getGrades(
             responsePreference = ResponsePreference.Fast,
             contextBesteschuleUserId = schulverwalterUser.userId,
-            contextBesteschuleAccessToken = schulverwalterUser.accessToken
+            contextBesteschuleAccessToken = schulverwalterUser.accessToken,
+            includes = GradePrefetchRequest { collection { interval { year() }; teacher(); subject() } }
         )
             .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
             .first()
@@ -475,7 +480,8 @@ class GradesViewModel(
             besteSchuleGradesRepository.getGrades(
                 responsePreference = ResponsePreference.Fast,
                 contextBesteschuleUserId = schulverwalterUser.userId,
-                contextBesteschuleAccessToken = schulverwalterUser.accessToken
+                contextBesteschuleAccessToken = schulverwalterUser.accessToken,
+                includes = GradePrefetchRequest { collection { interval { year() }; teacher(); subject() } }
             )
                 .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
                 .first()
