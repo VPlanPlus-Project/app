@@ -181,10 +181,9 @@ private fun getHeaderTextForRoomWithCurrentLessons(lessons: List<Lesson>): Strin
 
 @Composable
 private fun getHeaderTextForTeacherOrGroupWithCurrentLessons(lessons: List<Lesson>): String {
-    val roomIds = lessons.mapNotNull { it.roomIds }.flatten().distinct()
-    return if (roomIds.isEmpty()) "Aktuell keine Stunde"
+    val rooms = lessons.flatMap { it.rooms.orEmpty() }.distinct()
+    return if (rooms.isEmpty()) "Aktuell keine Stunde"
     else {
-        val rooms = roomIds.map { App.roomSource.getById(it) }.collectAsResultingFlow().value
         val until = lessons.mapNotNull { it.lessonTime }.collectAsResultingFlowOld().value.maxOfOrNull { it.end }
         buildString {
             append("Momentan in ${rooms.map { it.name }.sorted().joinToString()}")

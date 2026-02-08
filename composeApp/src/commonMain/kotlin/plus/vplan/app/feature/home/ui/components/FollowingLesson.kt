@@ -104,13 +104,11 @@ fun FollowingLesson(
                         if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface
                     )
-                    if (lesson.roomIds != null && !lesson.isCancelled) {
-                        val rooms by (if (lesson.roomIds.isNullOrEmpty()) flowOf(emptyList()) else combine(lesson.roomIds.orEmpty().map { App.roomSource.getById(it) }) { it.toList() }).collectAsState(null)
+                    if (lesson.rooms != null && !lesson.isCancelled) {
                         Text(
                             text = buildString {
-                                if (rooms == null) return@buildString
-                                append(rooms!!.filterIsInstance<AliasState.Done<Room>>().joinToString { it.data.name })
-                                if (rooms!!.isEmpty()) append("Kein Raum")
+                                if (lesson.rooms.orEmpty().isEmpty()) append("Kein Raum")
+                                else append(lesson.rooms.orEmpty().joinToString { it.name })
                             },
                             style = headerFont(),
                             color =
@@ -118,12 +116,10 @@ fun FollowingLesson(
                             else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    val teachers by (if (lesson.teacherIds.isEmpty()) flowOf(emptyList()) else combine(lesson.teacherIds.map { App.teacherSource.getById(it) }) { it.toList() }).collectAsState(null)
                     if (!lesson.isCancelled) Text(
                         text = buildString {
-                            if (teachers == null) return@buildString
-                            append(teachers!!.filterIsInstance<AliasState.Done<Teacher>>().joinToString { it.data.name })
-                            if (teachers!!.isEmpty()) append("Keine Lehrkraft")
+                            if (lesson.teachers.isEmpty()) append("Keine Lehrkraft")
+                            else append(lesson.teachers.joinToString { it.name })
                         },
                         style = headerFont(),
                         color =

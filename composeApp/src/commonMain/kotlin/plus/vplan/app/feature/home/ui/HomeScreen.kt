@@ -1,10 +1,6 @@
 package plus.vplan.app.feature.home.ui
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,15 +9,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -75,13 +73,14 @@ import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.ProfileType
-import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
+import plus.vplan.app.feature.home.ui.components.BesteSchuleAccessExpiredCard
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
 import plus.vplan.app.feature.home.ui.components.Greeting
+import plus.vplan.app.feature.home.ui.components.NewsSection
 import plus.vplan.app.feature.home.ui.components.QuickActions
+import plus.vplan.app.feature.home.ui.components.Stundenplan24CredentialsExpiredCard
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.news.ui.NewsDrawer
@@ -108,7 +107,6 @@ import vplanplus.composeapp.generated.resources.chart_no_axes_gantt
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.clock_fading
 import vplanplus.composeapp.generated.resources.info
-import vplanplus.composeapp.generated.resources.key_round
 import vplanplus.composeapp.generated.resources.megaphone
 import vplanplus.composeapp.generated.resources.minus
 import vplanplus.composeapp.generated.resources.notebook_text
@@ -118,6 +116,8 @@ import kotlin.uuid.Uuid
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp
 private val LESSON_NUMBER_SIZE = 32.dp
+
+private val HOMESCREEN_COMPONENTS_PADDING = 16.dp
 
 @Composable
 fun HomeScreen(
@@ -154,7 +154,7 @@ private fun HomeContent(
 
     var visibleNews by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    val vppId = remember(state.currentProfile) { (state.currentProfile as? Profile.StudentProfile)?.vppId }?.collectAsResultingFlowOld()?.value as? VppId.Active
+    val vppId = remember(state.currentProfile) { (state.currentProfile as? Profile.StudentProfile)?.vppId }
 
     PullToRefreshBox(
         state = pullToRefreshState,
@@ -176,11 +176,60 @@ private fun HomeContent(
     ) {
         Column(
             modifier = Modifier
-                .padding(top = 8.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(contentPadding)
                 .fillMaxWidth()
         ) {
+            Greeting(
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .padding(horizontal = 16.dp),
+                displayName = state.currentUserName
+            )
+
+            Spacer(Modifier.height(HOMESCREEN_COMPONENTS_PADDING))
+
+            QuickActions(
+                onNewHomeworkClicked = { isNewHomeworkDrawerVisible = true },
+                onNewAssessmentClicked = { isNewAssessmentDrawerVisible = true },
+                onRoomSearchClicked = onOpenRoomSearch,
+                onFeedbackClicked = { isFeedbackDrawerVisible = true }
+            )
+
+            Spacer(Modifier.height(HOMESCREEN_COMPONENTS_PADDING))
+
+            if (state.stundenplan24CredentialState != null) Stundenplan24CredentialsExpiredCard(
+                modifier = Modifier.padding(bottom = HOMESCREEN_COMPONENTS_PADDING),
+                credentialsInvalidState = state.stundenplan24CredentialState,
+                onOpenSchoolSettings = {
+                    if (state.stundenplan24CredentialState !is HomeState.Stundenplan24CredentialsInvalidState.Invalid) return@Stundenplan24CredentialsExpiredCard
+                    onOpenSchoolSettings(state.stundenplan24CredentialState.schoolId)
+                }
+            )
+
+            if ((state.currentProfile as? Profile.StudentProfile)?.vppId?.schulverwalterConnection != null) BesteSchuleAccessExpiredCard(
+                modifier = Modifier.padding(bottom = HOMESCREEN_COMPONENTS_PADDING),
+                isExpired = state.currentProfile.vppId?.schulverwalterConnection?.isValid == true,
+                onReauthenticate = { scope.launch {
+                    if (vppId == null) return@launch
+                    val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@launch
+                    openUrl(url)
+                } }
+            )
+
+            if (state.unreadNews.isNotEmpty()) NewsSection(
+                modifier = Modifier.padding(bottom = HOMESCREEN_COMPONENTS_PADDING),
+                news = state.unreadNews,
+                isUnread = true,
+                onNewsClicked = { visibleNews = it }
+            )
+
             AnimatedContent(
-                targetState = state.initDone
+                targetState = state.initDone,
+                modifier = Modifier
+                    .padding(bottom = HOMESCREEN_COMPONENTS_PADDING)
+                    .defaultMinSize(minHeight = 300.dp)
+                    .fillMaxWidth()
             ) { initDone ->
                 if (!initDone) {
                     Box(
@@ -192,482 +241,361 @@ private fun HomeContent(
                     return@AnimatedContent
                 }
 
-                val school = remember(state.currentProfile) { state.currentProfile?.getSchool() }?.collectAsResultingFlow()?.value
+                val isYourDayToday = state.day?.date == state.currentTime.date
+                val weekState = remember(state.day) { state.day?.week }?.collectAsLoadingStateOld("")?.value
+                if (state.day == null || weekState is CacheState.Loading) return@AnimatedContent
+                val week = (weekState as? CacheState.Done)?.data
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = contentPadding
-                ) {
-                    item {
-                        Greeting(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            displayName = vppId?.name?.split(" ")?.first() ?: ""
-                        )
-                    }
-                    item { Spacer(Modifier.size(8.dp)) }
-                    item quickActions@{
-                        QuickActions(
-                            onNewHomeworkClicked = { isNewHomeworkDrawerVisible = true },
-                            onNewAssessmentClicked = { isNewAssessmentDrawerVisible = true },
-                            onRoomSearchClicked = onOpenRoomSearch,
-                            onFeedbackClicked = { isFeedbackDrawerVisible = true }
-                        )
-                    }
-                    item schoolAccessInvalid@{
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = school is School.AppSchool && !school.credentialsValid,
-                            enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
-                            exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            var displaySchool by remember { mutableStateOf<School?>(null) }
-                            LaunchedEffect(school) {
-                                if (school is School.AppSchool && !school.credentialsValid) displaySchool = school
-                            }
-                            if (displaySchool != null) InfoCard(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                                title = "Schulzugangsdaten abgelaufen",
-                                text = "Die Schulzugangsdaten für ${displaySchool!!.name} sind abgelaufen. Bitte aktualisiere sie, um weiterhin auf dem neuesten Stand zu bleiben.",
-                                textColor = MaterialTheme.colorScheme.onErrorContainer,
-                                backgroundColor = MaterialTheme.colorScheme.errorContainer,
-                                shadow = true,
-                                buttonAction1 = { onOpenSchoolSettings(displaySchool!!.id) },
-                                buttonText1 = "Aktualisieren",
-                                imageVector = Res.drawable.key_round
-                            )
-                        }
-                    }
-                    item {
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = vppId?.schulverwalterConnection?.isValid == false,
-                            enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
-                            exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            InfoCard(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                                title = "beste.schule-Zugangsdaten abgelaufen",
-                                text = "Die Verbindung zu beste.schule ist nicht mehr gültig. Bitte melde dich erneut mit beste.schule an.",
-                                textColor = MaterialTheme.colorScheme.onErrorContainer,
-                                backgroundColor = MaterialTheme.colorScheme.errorContainer,
-                                shadow = true,
-                                buttonAction1 = { scope.launch {
-                                    if (vppId == null) return@launch
-                                    val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@launch
-                                    openUrl(url)
-                                } },
-                                buttonText1 = "Aktualisieren",
-                                imageVector = Res.drawable.key_round
-                            )
-                        }
-                    }
-                    item unreadNews@{
-                        val unreadNews = state.news.filter { !it.isRead }
-                        if (unreadNews.isEmpty()) return@unreadNews
-                        Column {
-                            FeedTitle(
-                                icon = Res.drawable.megaphone,
-                                title = "Ungelesene Meldungen"
-                            )
-                            Spacer(Modifier.size(8.dp))
-                            Column(
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp)),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                unreadNews.forEach { news ->
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                                            .clickable { visibleNews = news.id }
-                                            .padding(16.dp)
-                                    ) {
-                                        Text(
-                                            text = news.title,
-                                            style = MaterialTheme.typography.titleLarge,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = news.content,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            maxLines = 4,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
+                Column {
+                    FeedTitle(
+                        icon = Res.drawable.chart_no_axes_gantt,
+                        title = if (isYourDayToday) "Dein Tag" else "Nächster Schultag",
+                        endText = buildString {
+                            append(state.day.date.format(LocalDate.Format {
+                                dayOfWeek(longDayOfWeekNames)
+                                chars(", ")
+                                day(padding = Padding.ZERO)
+                                chars(". ")
+                                monthName(longMonthNames)
+                                char(' ')
+                                year()
+                            }))
+                            if (week != null) {
+                                append("\n")
+                                if (week.weekType != null) {
+                                    append(week.weekType)
+                                    append("-Woche ")
                                 }
+                                append("(KW")
+                                append(week.calendarWeek)
+                                append(", SW ")
+                                append(week.weekIndex)
+                                append(")")
                             }
                         }
-                    }
-                    item yourDay@{
-                        val isYourDayToday = state.day?.date == state.currentTime.date
-                        val weekState = remember(state.day) { state.day?.week }?.collectAsLoadingStateOld("")?.value
-                        if (state.day == null || weekState is CacheState.Loading) return@yourDay
-                        val week = (weekState as? CacheState.Done)?.data
+                    )
+                    if (state.day.info != null) DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = state.day.info)
+                    if (state.day.substitutionPlan.isEmpty()) InfoCard(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        imageVector = Res.drawable.triangle_alert,
+                        title = "Kein Vertretungsplan",
+                        text = buildString {
+                            append("Für ")
+                            append((state.currentTime.date untilRelativeText state.day.date) ?: "den ${state.day.date.format(regularDateFormatWithoutYear)}")
+                            append(" ist noch kein Vertretungsplan verfügbar. Es kann noch zu Änderungen kommen.")
+                        },
 
-                        Column {
-                            FeedTitle(
-                                icon = Res.drawable.chart_no_axes_gantt,
-                                title = if (isYourDayToday) "Dein Tag" else "Nächster Schultag",
-                                endText = buildString {
-                                    append(state.day.date.format(LocalDate.Format {
-                                        dayOfWeek(longDayOfWeekNames)
-                                        chars(", ")
-                                        day(padding = Padding.ZERO)
-                                        chars(". ")
-                                        monthName(longMonthNames)
-                                        char(' ')
-                                        year()
-                                    }))
-                                    if (week != null) {
-                                        append("\n")
-                                        if (week.weekType != null) {
-                                            append(week.weekType)
-                                            append("-Woche ")
-                                        }
-                                        append("(KW")
-                                        append(week.calendarWeek)
-                                        append(", SW ")
-                                        append(week.weekIndex)
-                                        append(")")
-                                    }
-                                }
-                            )
-                            if (state.day.info != null) DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = state.day.info)
-                            if (state.day.substitutionPlan.isEmpty()) InfoCard(
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                                imageVector = Res.drawable.triangle_alert,
-                                title = "Kein Vertretungsplan",
-                                text = buildString {
-                                    append("Für ")
-                                    append((state.currentTime.date untilRelativeText state.day.date) ?: "den ${state.day.date.format(regularDateFormatWithoutYear)}")
-                                    append(" ist noch kein Vertretungsplan verfügbar. Es kann noch zu Änderungen kommen.")
-                                },
-                                backgroundColor = colors[CustomColor.Yellow]!!.getGroup().container,
-                                textColor = colors[CustomColor.Yellow]!!.getGroup().onContainer,
-                            )
-                            val highlightedLessons = HighlightedLessons(state)
-                            Column(
-                                modifier = Modifier
-                                    .padding(vertical = 4.dp)
-                                    .fillMaxWidth()
-                            ) {
-                                val homework by remember(state.day.homeworkIds) { state.day.homework }.collectAsState(emptySet())
-                                val assessments by remember(state.day.assessmentIds) { state.day.assessments }.collectAsState(emptySet())
-                                if (highlightedLessons.hasLessons) AnimatedContent(
-                                    targetState = highlightedLessons
-                                ) { highlightConfig ->
-                                    Column {
-                                        if (highlightConfig.showCurrent) {
-                                            Text(
-                                                text = "Aktueller Unterricht",
-                                                style = MaterialTheme.typography.titleSmall,
-                                                modifier = Modifier.padding(horizontal = 16.dp)
-                                            )
-                                            Spacer(Modifier.size(4.dp))
-                                            Column(
-                                                modifier = Modifier
-                                                    .padding(horizontal = 16.dp)
-                                                    .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(8.dp)),
-                                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                                            ) {
-                                                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
-                                                    highlightedLessons.currentLessons.forEach { (currentLesson, continuing) ->
-                                                        val homeworkForLesson = remember { mutableListOf<Homework>() }
-                                                        LaunchedEffect(homework, currentLesson.subjectInstanceId) {
-                                                            homeworkForLesson.clear()
-                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == currentLesson.subjectInstanceId })
-                                                        }
-
-                                                        val assessmentsForLesson = remember { mutableListOf<Assessment>() }
-                                                        LaunchedEffect(assessments, currentLesson.subjectInstanceId) {
-                                                            assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == currentLesson.subjectInstanceId })
-                                                        }
-
-                                                        CurrentOrNextLesson(
-                                                            currentTime = state.currentTime,
-                                                            currentLesson = currentLesson,
-                                                            currentProfileType = state.currentProfile?.profileType,
-                                                            continuing = continuing,
-                                                            homework = homeworkForLesson.toList(),
-                                                            assessments = assessmentsForLesson,
-                                                            progressType = ProgressType.Regular
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        else {
-                                            Text(
-                                                text = "Nächster Unterricht",
-                                                style = MaterialTheme.typography.titleSmall,
-                                                modifier = Modifier.padding(horizontal = 16.dp)
-                                            )
-                                            Spacer(Modifier.size(4.dp))
-                                            Column(
-                                                modifier = Modifier
-                                                    .padding(horizontal = 16.dp)
-                                                    .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(8.dp)),
-                                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                                            ) {
-                                                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
-                                                    state.nextLessons.forEach { nextLesson ->
-                                                        CurrentOrNextLesson(
-                                                            currentTime = state.currentTime,
-                                                            currentLesson = nextLesson,
-                                                            currentProfileType = state.currentProfile?.profileType,
-                                                            continuing = null,
-                                                            homework = emptyList(),
-                                                            assessments = emptyList(),
-                                                            progressType = ProgressType.Disabled
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                if ((state.remainingLessons.values.flatten() - (if (!highlightedLessons.showCurrent) highlightedLessons.nextLesson.toSet() else emptySet())).isNotEmpty()) {
-                                    Spacer(Modifier.size(8.dp))
+                        color = colors[CustomColor.Yellow]!!.getGroup().color,
+                    )
+                    val highlightedLessons = HighlightedLessons(state)
+                    Column(
+                        modifier = Modifier
+                            .padding(vertical = 4.dp)
+                            .fillMaxWidth()
+                    ) {
+                        val homework by remember(state.day.homeworkIds) { state.day.homework }.collectAsState(emptySet())
+                        val assessments by remember(state.day.assessmentIds) { state.day.assessments }.collectAsState(emptySet())
+                        if (highlightedLessons.hasLessons) AnimatedContent(
+                            targetState = highlightedLessons
+                        ) { highlightConfig ->
+                            Column {
+                                if (highlightConfig.showCurrent) {
                                     Text(
-                                        text = if (isYourDayToday) "Weitere Stunden" else "Stundenplan",
+                                        text = "Aktueller Unterricht",
                                         style = MaterialTheme.typography.titleSmall,
                                         modifier = Modifier.padding(horizontal = 16.dp)
                                     )
+                                    Spacer(Modifier.size(4.dp))
                                     Column(
                                         modifier = Modifier
-                                            .padding(start = 16.dp)
+                                            .padding(horizontal = 16.dp)
                                             .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp)),
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
                                     ) {
-                                        state.remainingLessons.toList().forEachIndexed forEachLessonNumber@{ i, (lessonNumber, lessons) ->
-                                            var lessonsHeight by remember { mutableStateOf(0.dp) }
-                                            Row {
-                                                val colorScheme = MaterialTheme.colorScheme
-                                                Box(
-                                                    modifier = Modifier
-                                                        .width(32.dp)
-                                                        .height(lessonsHeight)
-                                                        .drawWithContent {
-                                                            if (!(state.currentLessons.isEmpty() && state.nextLessons.isEmpty() && i == 0)) drawLine(
-                                                                brush = Brush.verticalGradient(0f to if (i == 0) colorScheme.secondaryContainer.transparent() else colorScheme.secondaryContainer, 1f to colorScheme.secondaryContainer, startY = 0f, endY = 16.dp.toPx()),
-                                                                start = Offset(size.width/2, 0f),
-                                                                end = Offset(size.width/2, LESSON_NUMBER_TOP_PADDING.toPx()),
-                                                                strokeWidth = 1.dp.toPx()
-                                                            )
-                                                            if (i < state.remainingLessons.size - 1) drawLine(
-                                                                color = colorScheme.secondaryContainer,
-                                                                start = Offset(size.width/2, (LESSON_NUMBER_TOP_PADDING+LESSON_NUMBER_SIZE).toPx()),
-                                                                end = Offset(size.width/2, size.height),
-                                                                strokeWidth = 1.dp.toPx()
-                                                            )
-                                                            drawContent()
-                                                        }
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .align(Alignment.TopCenter)
-                                                            .padding(top = LESSON_NUMBER_TOP_PADDING)
-                                                            .size(LESSON_NUMBER_SIZE)
-                                                            .clip(CircleShape)
-                                                            .background(MaterialTheme.colorScheme.secondaryContainer)
-                                                    ) {
-                                                        Text(
-                                                            text = lessonNumber.toString(),
-                                                            modifier = Modifier.align(Alignment.Center),
-                                                            style = MaterialTheme.typography.bodyLarge,
-                                                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                                                        )
-                                                    }
+                                        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
+                                            highlightedLessons.currentLessons.forEach { (currentLesson, continuing) ->
+                                                val homeworkForLesson = remember { mutableListOf<Homework>() }
+                                                LaunchedEffect(homework, currentLesson.subjectInstanceId) {
+                                                    homeworkForLesson.clear()
+                                                    homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == currentLesson.subjectInstanceId })
                                                 }
-                                                Spacer(Modifier.size(8.dp))
-                                                Column(
-                                                    modifier = Modifier
-                                                        .onSizeChanged { with(localDensity) { lessonsHeight = it.height.toDp() } }
-                                                        .padding(end = 16.dp, top = LESSON_NUMBER_TOP_PADDING)
-                                                        .fillMaxWidth(),
-                                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                                ) {
-                                                    val headFont = MaterialTheme.typography.bodyLarge
-                                                    lessons.forEach forEachLesson@{ lesson ->
-                                                        val lessonTime = remember(lesson) { lesson.lessonTime }?.collectAsResultingFlowOld()?.value
-                                                        val rooms = remember(lesson.roomIds) { lesson.rooms }.collectAsSingleFlow().value
-                                                        val groups = remember(lesson.groupIds) { lesson.groups }.collectAsSingleFlow().value
-                                                        val teachers = remember(lesson.teacherIds) { lesson.teachers }.collectAsSingleFlow().value
-                                                        val homeworkForLesson = remember { mutableListOf<Homework>() }
-                                                        LaunchedEffect(homework, lesson.subjectInstanceId) {
-                                                            homeworkForLesson.clear()
-                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == lesson.subjectInstanceId })
-                                                        }
 
-                                                        val assessmentsForLesson = remember { mutableListOf<Assessment>() }
-                                                        LaunchedEffect(assessments, lesson.subjectInstanceId) {
-                                                            assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == lesson.subjectInstanceId })
-                                                        }
+                                                val assessmentsForLesson = remember { mutableListOf<Assessment>() }
+                                                LaunchedEffect(assessments, currentLesson.subjectInstanceId) {
+                                                    assessmentsForLesson.clear()
+                                                    assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == currentLesson.subjectInstanceId })
+                                                }
 
-                                                        val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
-                                                        Column(Modifier.fillMaxWidth()) {
-                                                            Row(
+                                                CurrentOrNextLesson(
+                                                    currentTime = state.currentTime,
+                                                    currentLesson = currentLesson,
+                                                    currentProfileType = state.currentProfile?.profileType,
+                                                    continuing = continuing,
+                                                    homework = homeworkForLesson.toList(),
+                                                    assessments = assessmentsForLesson,
+                                                    progressType = ProgressType.Regular
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                else {
+                                    Text(
+                                        text = "Nächster Unterricht",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                    )
+                                    Spacer(Modifier.size(4.dp))
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp)),
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    ) {
+                                        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
+                                            state.nextLessons.forEach { nextLesson ->
+                                                CurrentOrNextLesson(
+                                                    currentTime = state.currentTime,
+                                                    currentLesson = nextLesson,
+                                                    currentProfileType = state.currentProfile?.profileType,
+                                                    continuing = null,
+                                                    homework = emptyList(),
+                                                    assessments = emptyList(),
+                                                    progressType = ProgressType.Disabled
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if ((state.remainingLessons.values.flatten() - (if (!highlightedLessons.showCurrent) highlightedLessons.nextLesson.toSet() else emptySet())).isNotEmpty()) {
+                            Spacer(Modifier.size(8.dp))
+                            Text(
+                                text = if (isYourDayToday) "Weitere Stunden" else "Stundenplan",
+                                style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Column(
+                                modifier = Modifier
+                                    .padding(start = 16.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                state.remainingLessons.toList().forEachIndexed forEachLessonNumber@{ i, (lessonNumber, lessons) ->
+                                    var lessonsHeight by remember { mutableStateOf(0.dp) }
+                                    Row {
+                                        val colorScheme = MaterialTheme.colorScheme
+                                        Box(
+                                            modifier = Modifier
+                                                .width(32.dp)
+                                                .height(lessonsHeight)
+                                                .drawWithContent {
+                                                    if (!(state.currentLessons.isEmpty() && state.nextLessons.isEmpty() && i == 0)) drawLine(
+                                                        brush = Brush.verticalGradient(0f to if (i == 0) colorScheme.secondaryContainer.transparent() else colorScheme.secondaryContainer, 1f to colorScheme.secondaryContainer, startY = 0f, endY = 16.dp.toPx()),
+                                                        start = Offset(size.width/2, 0f),
+                                                        end = Offset(size.width/2, LESSON_NUMBER_TOP_PADDING.toPx()),
+                                                        strokeWidth = 1.dp.toPx()
+                                                    )
+                                                    if (i < state.remainingLessons.size - 1) drawLine(
+                                                        color = colorScheme.secondaryContainer,
+                                                        start = Offset(size.width/2, (LESSON_NUMBER_TOP_PADDING+LESSON_NUMBER_SIZE).toPx()),
+                                                        end = Offset(size.width/2, size.height),
+                                                        strokeWidth = 1.dp.toPx()
+                                                    )
+                                                    drawContent()
+                                                }
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .align(Alignment.TopCenter)
+                                                    .padding(top = LESSON_NUMBER_TOP_PADDING)
+                                                    .size(LESSON_NUMBER_SIZE)
+                                                    .clip(CircleShape)
+                                                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                                            ) {
+                                                Text(
+                                                    text = lessonNumber.toString(),
+                                                    modifier = Modifier.align(Alignment.Center),
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                                )
+                                            }
+                                        }
+                                        Spacer(Modifier.size(16.dp))
+                                        Column(
+                                            modifier = Modifier
+                                                .onSizeChanged { with(localDensity) { lessonsHeight = it.height.toDp() } }
+                                                .padding(end = 16.dp, top = LESSON_NUMBER_TOP_PADDING)
+                                                .fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            val headFont = MaterialTheme.typography.bodyLarge
+                                            lessons.forEach forEachLesson@{ lesson ->
+                                                val lessonTime = remember(lesson) { lesson.lessonTime }?.collectAsResultingFlowOld()?.value
+                                                val groups = remember(lesson.groupIds) { lesson.groups }.collectAsSingleFlow().value
+                                                val homeworkForLesson = remember { mutableListOf<Homework>() }
+                                                LaunchedEffect(homework, lesson.subjectInstanceId) {
+                                                    homeworkForLesson.clear()
+                                                    homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == lesson.subjectInstanceId })
+                                                }
+
+                                                val assessmentsForLesson = remember { mutableListOf<Assessment>() }
+                                                LaunchedEffect(assessments, lesson.subjectInstanceId) {
+                                                    assessmentsForLesson.clear()
+                                                    assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == lesson.subjectInstanceId })
+                                                }
+
+                                                val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
+                                                Column(Modifier.fillMaxWidth()) {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .height(LESSON_NUMBER_SIZE),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                    ) {
+                                                        SubjectIcon(
+                                                            subject = lesson.subject,
+                                                            modifier = Modifier
+                                                                .size(LESSON_NUMBER_SIZE)
+                                                                .padding(2.dp)
+                                                                .clip(RoundedCornerShape(8.dp))
+                                                        )
+                                                        Text(
+                                                            text = lesson.subject ?: "${subjectInstance?.subject?.plus(" ").orEmpty()}Entfall",
+                                                            style = headFont,
+                                                            color = if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                                                        )
+                                                        if (lesson.rooms.orEmpty().isNotEmpty()) Text(
+                                                            text = lesson.rooms.orEmpty().joinToString { it.name },
+                                                            style = headFont,
+                                                            color = if (lesson is Lesson.SubstitutionPlanLesson && lesson.isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                                                        )
+                                                        if (lesson.teachers.isNotEmpty() && state.currentProfile?.profileType != ProfileType.TEACHER) Text(
+                                                            text = lesson.teachers.joinToString { it.name },
+                                                            style = headFont,
+                                                            color = if (lesson is Lesson.SubstitutionPlanLesson && lesson.isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                                                        )
+                                                        if (groups.isNotEmpty() && state.currentProfile?.profileType != ProfileType.STUDENT) Text(
+                                                            text = groups.joinToString { it.name },
+                                                            style = headFont
+                                                        )
+                                                        if (lessonTime != null) {
+                                                            Spacer(Modifier.weight(1f))
+                                                            Text(
+                                                                text = buildString {
+                                                                    append(lessonTime.start.format(regularTimeFormat))
+                                                                    append(" - ")
+                                                                    append(lessonTime.end.format(regularTimeFormat))
+                                                                },
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = if (lessonTime.interpolated) MaterialTheme.colorScheme.primary
+                                                                else MaterialTheme.colorScheme.onSurfaceVariant
+                                                            )
+                                                        }
+                                                    }
+                                                    Column(
+                                                        modifier = Modifier.padding(top = 4.dp),
+                                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                                    ) {
+                                                        if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) Row {
+                                                            Icon(
+                                                                painter = painterResource(Res.drawable.info),
+                                                                contentDescription = "Information",
                                                                 modifier = Modifier
-                                                                    .fillMaxWidth()
-                                                                    .height(LESSON_NUMBER_SIZE),
-                                                                verticalAlignment = Alignment.CenterVertically,
-                                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                                            ) {
-                                                                SubjectIcon(
-                                                                    subject = lesson.subject,
+                                                                    .padding(end = 8.dp)
+                                                                    .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
+                                                            )
+                                                            Text(
+                                                                text = lesson.info,
+                                                                style = MaterialTheme.typography.bodyMedium
+                                                            )
+                                                        }
+                                                        if (lesson is Lesson.TimetableLesson && lesson.limitedToWeekIds != null) Row {
+                                                            val weeks = remember(lesson.limitedToWeekIds) {
+                                                                lesson.limitedToWeeks?.map { it.mapNotNull { week -> (week as? CacheState.Done)?.data?.weekIndex } }
+                                                            }?.collectAsState(null)?.value
+                                                            Icon(
+                                                                painter = painterResource(Res.drawable.info),
+                                                                contentDescription = "Information",
+                                                                modifier = Modifier
+                                                                    .padding(end = 8.dp)
+                                                                    .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
+                                                            )
+                                                            if (weeks != null && weeks.isNotEmpty()) Text(
+                                                                text = if (weeks.size == 1) "Nur in Schulwoche ${weeks.first()}"
+                                                                else "Nur in Schulwochen ${weeks.sorted().dropLast(1).joinToString()} und ${weeks.maxOf { it }}",
+                                                                style = MaterialTheme.typography.bodyMedium
+                                                            )
+                                                        }
+                                                        if (lessonTime?.interpolated == true) {
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth(),
+                                                                verticalAlignment = Alignment.Top,
+                                                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                                            ) info@{
+                                                                Icon(
+                                                                    painter = painterResource(Res.drawable.clock_fading),
                                                                     modifier = Modifier
-                                                                        .size(LESSON_NUMBER_SIZE)
-                                                                        .padding(2.dp)
-                                                                        .clip(RoundedCornerShape(8.dp))
+                                                                        .padding(end = 2.dp)
+                                                                        .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp()),
+                                                                    contentDescription = null,
+                                                                    tint = MaterialTheme.colorScheme.primary
                                                                 )
                                                                 Text(
-                                                                    text = lesson.subject ?: "${subjectInstance?.subject?.plus(" ").orEmpty()}Entfall",
-                                                                    style = headFont,
-                                                                    color = if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                                                                    text = "Stundenzeit automatisch berechnet",
+                                                                    style = MaterialTheme.typography.bodyMedium,
+                                                                    color = MaterialTheme.colorScheme.primary
                                                                 )
-                                                                if (rooms.isNotEmpty()) Text(
-                                                                    text = rooms.joinToString { it.name },
-                                                                    style = headFont,
-                                                                    color = if (lesson is Lesson.SubstitutionPlanLesson && lesson.isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
-                                                                )
-                                                                if (teachers.isNotEmpty() && state.currentProfile?.profileType != ProfileType.TEACHER) Text(
-                                                                    text = teachers.joinToString { it.name },
-                                                                    style = headFont,
-                                                                    color = if (lesson is Lesson.SubstitutionPlanLesson && lesson.isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
-                                                                )
-                                                                if (groups.isNotEmpty() && state.currentProfile?.profileType != ProfileType.STUDENT) Text(
-                                                                    text = groups.joinToString { it.name },
-                                                                    style = headFont
-                                                                )
-                                                                if (lessonTime != null) {
-                                                                    Spacer(Modifier.weight(1f))
-                                                                    Text(
-                                                                        text = buildString {
-                                                                            append(lessonTime.start.format(regularTimeFormat))
-                                                                            append(" - ")
-                                                                            append(lessonTime.end.format(regularTimeFormat))
-                                                                        },
-                                                                        style = MaterialTheme.typography.labelSmall,
-                                                                        color = if (lessonTime.interpolated) MaterialTheme.colorScheme.primary
-                                                                        else MaterialTheme.colorScheme.onSurfaceVariant
-                                                                    )
-                                                                }
                                                             }
-                                                            Column(
-                                                                modifier = Modifier.padding(top = 4.dp),
-                                                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                                                            ) {
-                                                                if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) Row {
-                                                                    Icon(
-                                                                        painter = painterResource(Res.drawable.info),
-                                                                        contentDescription = "Information",
-                                                                        modifier = Modifier
-                                                                            .padding(end = 8.dp)
-                                                                            .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
-                                                                    )
-                                                                    Text(
-                                                                        text = lesson.info,
-                                                                        style = MaterialTheme.typography.bodyMedium
-                                                                    )
-                                                                }
-                                                                if (lesson is Lesson.TimetableLesson && lesson.limitedToWeekIds != null) Row {
-                                                                    val weeks = remember(lesson.limitedToWeekIds) {
-                                                                        lesson.limitedToWeeks?.map { it.mapNotNull { week -> (week as? CacheState.Done)?.data?.weekIndex } }
-                                                                    }?.collectAsState(null)?.value
-                                                                    Icon(
-                                                                        painter = painterResource(Res.drawable.info),
-                                                                        contentDescription = "Information",
-                                                                        modifier = Modifier
-                                                                            .padding(end = 8.dp)
-                                                                            .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
-                                                                    )
-                                                                    if (weeks != null && weeks.isNotEmpty()) Text(
-                                                                        text = if (weeks.size == 1) "Nur in Schulwoche ${weeks.first()}"
-                                                                                else "Nur in Schulwochen ${weeks.sorted().dropLast(1).joinToString()} und ${weeks.maxOf { it }}",
-                                                                        style = MaterialTheme.typography.bodyMedium
-                                                                    )
-                                                                }
-                                                                if (lessonTime?.interpolated == true) {
-                                                                    Row(
-                                                                        modifier = Modifier.fillMaxWidth(),
-                                                                        verticalAlignment = Alignment.Top,
-                                                                        horizontalArrangement = Arrangement.spacedBy(3.dp)
-                                                                    ) info@{
-                                                                        Icon(
-                                                                            painter = painterResource(Res.drawable.clock_fading),
-                                                                            modifier = Modifier
-                                                                                .padding(end = 2.dp)
-                                                                                .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp()),
-                                                                            contentDescription = null,
-                                                                            tint = MaterialTheme.colorScheme.primary
-                                                                        )
-                                                                        Text(
-                                                                            text = "Stundenzeit automatisch berechnet",
-                                                                            style = MaterialTheme.typography.bodyMedium,
-                                                                            color = MaterialTheme.colorScheme.primary
-                                                                        )
-                                                                    }
-                                                                }
-                                                                if (assessmentsForLesson.isNotEmpty()) Row {
-                                                                    Icon(
-                                                                        painter = painterResource(Res.drawable.notebook_text),
-                                                                        contentDescription = "Leistungen",
-                                                                        modifier = Modifier
-                                                                            .padding(end = 8.dp)
-                                                                            .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
-                                                                    )
-                                                                    Text(
-                                                                        text = assessmentsForLesson.joinToString { it.description },
-                                                                        style = MaterialTheme.typography.bodyMedium
-                                                                    )
-                                                                }
-                                                                if (homeworkForLesson.isNotEmpty()) Row {
-                                                                    Icon(
-                                                                        painter = painterResource(Res.drawable.book_open),
-                                                                        contentDescription = "Aufgaben",
-                                                                        modifier = Modifier
-                                                                            .padding(end = 8.dp)
-                                                                            .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
-                                                                    )
-                                                                    Column {
-                                                                        homeworkForLesson.forEachIndexed forEachTask@{ i, homeworkItem ->
-                                                                            val tasks = remember(homeworkItem.taskIds) { homeworkItem.tasks }.collectAsState(emptyList()).value.ifEmpty { return@forEachTask }
-                                                                            if (i > 0) HorizontalDivider(Modifier.fillMaxWidth())
-                                                                            tasks.forEach { task ->
-                                                                                Row {
-                                                                                    Box(
-                                                                                        modifier = Modifier.height(MaterialTheme.typography.bodyMedium.lineHeight.toDp()),
-                                                                                        contentAlignment = Alignment.Center
-                                                                                    ) {
-                                                                                        Icon(
-                                                                                            painter = painterResource(
-                                                                                                if (state.currentProfile is Profile.StudentProfile && task.isDone(state.currentProfile)) Res.drawable.check
-                                                                                                else Res.drawable.minus
-                                                                                            ),
-                                                                                            contentDescription = null,
-                                                                                            modifier = Modifier.size(min(MaterialTheme.typography.bodyMedium.fontSize.toDp(), 12.dp))
-                                                                                        )
-                                                                                    }
-                                                                                    Spacer(Modifier.size(4.dp))
-                                                                                    Text(
-                                                                                        text = task.content,
-                                                                                        style = MaterialTheme.typography.bodyMedium
-                                                                                    )
-                                                                                }
+                                                        }
+                                                        if (assessmentsForLesson.isNotEmpty()) Row {
+                                                            Icon(
+                                                                painter = painterResource(Res.drawable.notebook_text),
+                                                                contentDescription = "Leistungen",
+                                                                modifier = Modifier
+                                                                    .padding(end = 8.dp)
+                                                                    .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
+                                                            )
+                                                            Text(
+                                                                text = assessmentsForLesson.joinToString { it.description },
+                                                                style = MaterialTheme.typography.bodyMedium
+                                                            )
+                                                        }
+                                                        if (homeworkForLesson.isNotEmpty()) Row {
+                                                            Icon(
+                                                                painter = painterResource(Res.drawable.book_open),
+                                                                contentDescription = "Aufgaben",
+                                                                modifier = Modifier
+                                                                    .padding(end = 8.dp)
+                                                                    .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
+                                                            )
+                                                            Column {
+                                                                homeworkForLesson.forEachIndexed forEachTask@{ i, homeworkItem ->
+                                                                    val tasks = remember(homeworkItem.taskIds) { homeworkItem.tasks }.collectAsState(emptyList()).value.ifEmpty { return@forEachTask }
+                                                                    if (i > 0) HorizontalDivider(Modifier.fillMaxWidth())
+                                                                    tasks.forEach { task ->
+                                                                        Row {
+                                                                            Box(
+                                                                                modifier = Modifier.height(MaterialTheme.typography.bodyMedium.lineHeight.toDp()),
+                                                                                contentAlignment = Alignment.Center
+                                                                            ) {
+                                                                                Icon(
+                                                                                    painter = painterResource(
+                                                                                        if (state.currentProfile is Profile.StudentProfile && task.isDone(state.currentProfile)) Res.drawable.check
+                                                                                        else Res.drawable.minus
+                                                                                    ),
+                                                                                    contentDescription = null,
+                                                                                    modifier = Modifier.size(min(MaterialTheme.typography.bodyMedium.fontSize.toDp(), 12.dp))
+                                                                                )
                                                                             }
+                                                                            Spacer(Modifier.size(4.dp))
+                                                                            Text(
+                                                                                text = task.content,
+                                                                                style = MaterialTheme.typography.bodyMedium
+                                                                            )
                                                                         }
                                                                     }
                                                                 }
@@ -678,67 +606,30 @@ private fun HomeContent(
                                             }
                                         }
                                     }
+                                }
+                            }
 
-                                    if (state.hasInterpolatedLessonTimes) {
-                                        Spacer(Modifier.size(8.dp))
-                                        InfoCard(
-                                            modifier = Modifier.padding(horizontal = 16.dp),
-                                            imageVector = Res.drawable.clock_fading,
-                                            title = "Ungültige Stundenzeiten",
-                                            text = "Deine Schule stellt nicht für alle Stunden gültige Stundenzeiten zur Verfügung. Einige Stundenzeiten wurden anhand der gegebenen berechnet und können daher falsch sein. Bald kannst du selber Stundenzeiten hinzufügen.",
-                                            backgroundColor = colors[CustomColor.Yellow]!!.getGroup().container,
-                                            textColor = colors[CustomColor.Yellow]!!.getGroup().onContainer
-                                        )
-                                    }
-                                }
+                            if (state.hasInterpolatedLessonTimes) {
+                                Spacer(Modifier.size(8.dp))
+                                InfoCard(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    imageVector = Res.drawable.clock_fading,
+                                    title = "Ungültige Stundenzeiten",
+                                    text = "Deine Schule stellt nicht für alle Stunden gültige Stundenzeiten zur Verfügung. Einige Stundenzeiten wurden anhand der gegebenen berechnet und können daher falsch sein. Bald kannst du selber Stundenzeiten hinzufügen.",
+                                    color = colors[CustomColor.Yellow]!!.getGroup().color,
+                                )
                             }
                         }
                     }
-                    item readNews@{
-                        val readNews = state.news.filter { it.isRead }
-                        if (readNews.isEmpty()) return@readNews
-                        Column {
-                            FeedTitle(
-                                icon = Res.drawable.megaphone,
-                                title = "Alle Meldungen"
-                            )
-                            Spacer(Modifier.size(8.dp))
-                            Column(
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp)),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                readNews.forEach { news ->
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                                            .clickable { visibleNews = news.id }
-                                            .padding(16.dp)
-                                    ) {
-                                        Text(
-                                            text = news.title,
-                                            style = MaterialTheme.typography.titleLarge,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = news.content,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            maxLines = 4,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    item bottomSpacer@{  }
                 }
             }
+
+            if (state.readNews.isNotEmpty()) NewsSection(
+                modifier = Modifier.padding(bottom = HOMESCREEN_COMPONENTS_PADDING),
+                news = state.readNews,
+                isUnread = false,
+                onNewsClicked = { visibleNews = it }
+            )
         }
     }
 
@@ -760,14 +651,10 @@ private fun CurrentOrNextLesson(
 ) {
     val iconSize = 32.dp
     val subject = remember(currentLesson.subjectInstanceId) { currentLesson.subjectInstance }?.collectAsResultingFlow()?.value
-    val rooms by remember(currentLesson.roomIds) { currentLesson.rooms }.collectAsSingleFlow()
     val groups by remember(currentLesson.groupIds) { currentLesson.groups }.collectAsSingleFlow()
-    val teachers by remember(currentLesson.teacherIds) { currentLesson.teachers }.collectAsSingleFlow()
     val lessonTime = remember(currentLesson) { currentLesson.lessonTime }?.collectAsResultingFlowOld()?.value
     if (
         (subject == null && currentLesson.subjectInstanceId != null) ||
-        (rooms.isEmpty() && currentLesson.roomIds.orEmpty().isNotEmpty()) ||
-        (teachers.isEmpty() && currentLesson.teacherIds.isNotEmpty()) ||
         (groups.isEmpty() && currentLesson.groupIds.isNotEmpty())
     ) return
     Column(
@@ -797,13 +684,13 @@ private fun CurrentOrNextLesson(
                         style = titleFont,
                         color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
                     )
-                    if (rooms.isNotEmpty()) Text(
-                        text = rooms.joinToString { it.name },
+                    if (currentLesson.rooms.orEmpty().isNotEmpty()) Text(
+                        text = currentLesson.rooms.orEmpty().joinToString { it.name },
                         style = MaterialTheme.typography.titleSmall,
                         color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
                     )
-                    if (teachers.isNotEmpty() && currentProfileType != ProfileType.TEACHER) Text(
-                        text = teachers.joinToString { it.name },
+                    if (currentLesson.teachers.isNotEmpty() && currentProfileType != ProfileType.TEACHER) Text(
+                        text = currentLesson.teachers.joinToString { it.name },
                         style = MaterialTheme.typography.titleSmall,
                         color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
                     )

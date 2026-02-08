@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.home.ui
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -29,7 +30,6 @@ import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.Stundenplan24Repository
@@ -50,6 +50,7 @@ import plus.vplan.lib.sp24.source.Authentication
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private val LOGGER = Logger.withTag("HomeViewModel")
 
@@ -72,6 +73,27 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch {
+            getCurrentProfileUseCase().collectLatest { currentProfile ->
+                var targetName: String? = null
+                run findDisplayName@{
+                    if (currentProfile !is Profile.StudentProfile) return@findDisplayName
+                    if (currentProfile.vppId == null) return@findDisplayName
+                    targetName = currentProfile.vppId.name.split(" ").firstOrNull()
+                }
+                state = state.copy(currentUserName = targetName)
+
+                var targetStundenplan24CredentialState =
+                    if (currentProfile.school.credentialsValid) HomeState.Stundenplan24CredentialsInvalidState.Valid
+                    else HomeState.Stundenplan24CredentialsInvalidState.Invalid(
+                        schoolName = currentProfile.school.name,
+                        schoolId = currentProfile.school.id
+                    )
+
+                state = state.copy(stundenplan24CredentialState = targetStundenplan24CredentialState)
+            }
+        }
+
+        viewModelScope.launch {
             var newsJob: Job? = null
             var specialLessonsUpdateJob: Job? = null
             getCurrentProfileUseCase().collectLatest { profile ->
@@ -81,7 +103,14 @@ class HomeViewModel(
                     initDone = false
                 )
                 newsJob?.cancel()
-                newsJob = launch { getNewsUseCase(profile).collectLatest { state = state.copy(news = it) } }
+                newsJob = launch {
+                    getNewsUseCase(profile).collectLatest { news ->
+                        state = state.copy(
+                            readNews = news.filter { it.isRead },
+                            unreadNews = news.filter { !it.isRead }
+                        )
+                    }
+                }
 
                 specialLessonsUpdateJob?.cancel()
                 specialLessonsUpdateJob = launch {
@@ -188,14 +217,14 @@ class HomeViewModel(
         state = state.copy(isUpdating = true)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val school = state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool
+                val school = state.currentProfile!!.school
                 try {
                     val client = stundenplan24Repository.getSp24Client(Authentication(school.sp24Id, school.username, school.password), true)
                     updateSubjectInstanceUseCase(school, client)
                     updateLessonTimesUseCase(school, client)
-                    updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, client)
-                    updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, forceUpdate = false, client = client)
-                    updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, setOfNotNull(LocalDate.now(), state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date).sorted(), allowNotification = false, providedClient = client)
+                    updateHolidaysUseCase(school, client)
+                    updateTimetableUseCase(school, forceUpdate = false, client = client)
+                    updateSubstitutionPlanUseCase(school, setOfNotNull(LocalDate.now(), state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date).sorted(), allowNotification = false, providedClient = client)
                 } catch (e: Exception) {
                     LOGGER.e { "Something went wrong on updating the data for Profile ${state.currentProfile!!.id} (${state.currentProfile!!.name}):\n${e.stackTraceToString()}" }
                     captureError("HomeViewModel.update", "Error on updating the data for school ${school.id}: ${e.stackTraceToString()}")
@@ -214,19 +243,33 @@ class HomeViewModel(
 }
 
 data class HomeState(
+    val currentUserName: String? = null,
+    val stundenplan24CredentialState: Stundenplan24CredentialsInvalidState? = null,
+
+    val unreadNews: List<News> = emptyList(),
+    val readNews: List<News> = emptyList(),
+
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = LocalDateTime.now(),
     val initDone: Boolean = false,
     val day: Day? = null,
     val isUpdating: Boolean = false,
 
-    val news: List<News> = emptyList(),
-
     val hasInterpolatedLessonTimes: Boolean = false,
     val currentLessons: List<CurrentLesson> = emptyList(),
     val nextLessons: List<Lesson> = emptyList(),
     val remainingLessons: Map<Int, List<Lesson>> = emptyMap()
-)
+) {
+    sealed class Stundenplan24CredentialsInvalidState {
+        data object Valid : Stundenplan24CredentialsInvalidState()
+
+        @Stable
+        data class Invalid(
+            val schoolName: String,
+            val schoolId: Uuid,
+        ) : Stundenplan24CredentialsInvalidState()
+    }
+}
 
 sealed class HomeEvent {
     data object OnRefresh : HomeEvent()

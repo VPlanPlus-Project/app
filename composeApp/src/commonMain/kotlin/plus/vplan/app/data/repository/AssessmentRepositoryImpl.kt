@@ -46,7 +46,6 @@ import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
@@ -210,8 +209,7 @@ class AssessmentRepositoryImpl(
         assessment: Assessment,
         profile: Profile.StudentProfile
     ): Response.Error? {
-        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
-        if (assessment.id < 0 || vppId == null) {
+        if (assessment.id < 0 || profile.vppId == null) {
             vppDatabase.assessmentDao.deleteById(listOf(assessment.id))
             return null
         }
@@ -219,7 +217,7 @@ class AssessmentRepositoryImpl(
             val response = httpClient.delete(URLBuilder(currentConfiguration.appApiUrl).apply {
                 appendPathSegments("assessment", "v1", assessment.id.toString())
             }.build()) {
-                vppId.buildVppSchoolAuthentication().authentication(this)
+                profile.vppId.buildVppSchoolAuthentication().authentication(this)
             }
             if (!response.status.isSuccess()) return response.toErrorResponse()
             vppDatabase.assessmentDao.deleteById(listOf(assessment.id))
@@ -268,12 +266,11 @@ class AssessmentRepositoryImpl(
         type: Assessment.Type,
         profile: Profile.StudentProfile
     ) {
-        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
         val oldType = assessment.type
         if (oldType == type) return
         vppDatabase.assessmentDao.updateType(assessment.id, type.ordinal)
 
-        if (assessment.id < 0 || vppId == null) return
+        if (assessment.id < 0 || profile.vppId == null) return
 
         onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Type }
         val request = OnlineChangeRequest.Type(assessment)
@@ -286,7 +283,7 @@ class AssessmentRepositoryImpl(
                 val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("assessment", "v1", assessment.id.toString())
                 }.build()) {
-                    vppId.buildVppSchoolAuthentication().authentication(this)
+                    profile.vppId.buildVppSchoolAuthentication().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateTypeRequest(type = type.name))
                 }
@@ -301,12 +298,11 @@ class AssessmentRepositoryImpl(
         date: LocalDate,
         profile: Profile.StudentProfile
     ) {
-        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
         val oldDate = assessment.date
         if (oldDate == date) return
         vppDatabase.assessmentDao.updateDate(assessment.id, date)
 
-        if (assessment.id < 0 || vppId == null) return
+        if (assessment.id < 0 || profile.vppId == null) return
 
         onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Date }
         val request = OnlineChangeRequest.Date(assessment)
@@ -321,7 +317,7 @@ class AssessmentRepositoryImpl(
                 val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("assessment", "v1", assessment.id.toString())
                 }.build()) {
-                    vppId.buildVppSchoolAuthentication().authentication(this)
+                    profile.vppId.buildVppSchoolAuthentication().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateDateRequest(date = date.toString()))
                 }
@@ -336,8 +332,7 @@ class AssessmentRepositoryImpl(
         isPublic: Boolean,
         profile: Profile.StudentProfile
     ) {
-        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
-        if (assessment.id < 0 || vppId == null) return
+        if (assessment.id < 0 || profile.vppId == null) return
         val oldIsPublic = assessment.isPublic
         if (oldIsPublic == isPublic) return
         vppDatabase.assessmentDao.updateVisibility(assessment.id, isPublic)
@@ -355,7 +350,7 @@ class AssessmentRepositoryImpl(
                 val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("assessment", "v1", assessment.id.toString())
                 }.build()) {
-                    vppId.buildVppSchoolAuthentication().authentication(this)
+                    profile.vppId.buildVppSchoolAuthentication().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateVisibilityRequest(isPublic = isPublic))
                 }
@@ -370,12 +365,11 @@ class AssessmentRepositoryImpl(
         profile: Profile.StudentProfile,
         content: String
     ) {
-        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
         val oldContent = assessment.description
         if (oldContent == content) return
         vppDatabase.assessmentDao.updateContent(assessment.id, content)
 
-        if (assessment.id < 0 || vppId == null) return
+        if (assessment.id < 0 || profile.vppId == null) return
 
         onlineChangeRequests.removeAll { it.assessment.id == assessment.id && it is OnlineChangeRequest.Content }
         val request = OnlineChangeRequest.Content(assessment)
@@ -390,7 +384,7 @@ class AssessmentRepositoryImpl(
                 val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("assessment", "v1", assessment.id.toString())
                 }.build()) {
-                    vppId.buildVppSchoolAuthentication().authentication(this)
+                    profile.vppId.buildVppSchoolAuthentication().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateContentRequest(content = content))
                 }

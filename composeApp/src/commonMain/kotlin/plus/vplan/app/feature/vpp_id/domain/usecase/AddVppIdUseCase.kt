@@ -80,7 +80,7 @@ class AddVppIdUseCase(
         } ?: profileRepository
             .getAll().first()
             .filterIsInstance<Profile.StudentProfile>()
-            .first { it.groupId == group.id }
+            .first { it.group.id == group.id }
         keyValueRepository.delete(Keys.VPP_ID_LOGIN_LINK_TO_PROFILE)
         profileRepository.updateVppId(profile.id, vppId.data.id)
         syncGradesUseCase(false)

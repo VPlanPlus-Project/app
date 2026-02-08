@@ -49,6 +49,7 @@ class NewsRepositoryImpl(
                 url(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("app", "v1", "news")
                     parameters.append("school_id", "sp24.${school.buildSp24AppAuthentication().sp24SchoolId}.1")
+                    parameters.append("include_schools", "true")
                 }.build())
                 school.buildSp24AppAuthentication().authentication(this)
             }
@@ -163,7 +164,7 @@ class NewsRepositoryImpl(
                     isRead = news.isRead
                 )
             ),
-            schools = news.schoolIds.map { FKNewsSchool(newsId = news.id, schoolId = it) }
+            schools = news.schools.map { FKNewsSchool(newsId = news.id, schoolId = it.id) }
         )
     }
 }

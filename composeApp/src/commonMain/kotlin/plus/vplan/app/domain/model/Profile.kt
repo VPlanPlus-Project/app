@@ -1,23 +1,15 @@
 package plus.vplan.app.domain.model
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import plus.vplan.app.App
 import plus.vplan.app.domain.cache.AliasState
 import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.Item
-import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.domain.repository.base.ResponsePreference
 import kotlin.uuid.Uuid
 
 abstract class Profile : Item<Uuid, DataTag>, KoinComponent {
@@ -25,27 +17,18 @@ abstract class Profile : Item<Uuid, DataTag>, KoinComponent {
     abstract val name: String
 
     override val tags: Set<DataTag> = emptySet()
-    abstract fun getSchool(): Flow<AliasState<School.AppSchool>>
+    abstract val school: School.AppSchool
 
     data class StudentProfile(
         override val id: Uuid,
         override val name: String,
-        val groupId: Uuid,
+        val group: Group,
         val subjectInstanceConfiguration: Map<Uuid, Boolean>,
-        val vppIdId: Int?
+        val vppId: VppId.Active?
     ) : Profile() {
         override val profileType = ProfileType.STUDENT
 
-        private val vppIdRepository by inject<VppIdRepository>()
-
-        var groupItem: Group? = null
-            private set
-
-        var vppIdItem: VppId.Active? = null
-            private set
-
-        val vppId by lazy { vppIdId?.let { vppIdRepository.getById(it, ResponsePreference.Fast) } }
-        fun vppId(responsePreference: ResponsePreference) = vppIdId?.let { vppIdRepository.getById(it, responsePreference) }
+        override val school: School.AppSchool = group.school
 
         val subjectInstances by lazy {
             if (subjectInstanceConfiguration.isEmpty()) flowOf(emptyList())
@@ -59,26 +42,11 @@ abstract class Profile : Item<Uuid, DataTag>, KoinComponent {
             return subjectInstanceCache.getOrPut(id) { App.subjectInstanceSource.getById(id).filterIsInstance<AliasState.Done<SubjectInstance>>().first().data }
         }
 
-        suspend fun getGroupItem(): Group {
-            return groupItem ?: App.groupSource.getById(groupId).getFirstValue()!!.also { groupItem = it }
-        }
-
-        @Deprecated("Use the flow instead")
-        suspend fun getVppIdItem(): VppId.Active? {
-            if (this.vppIdId == null) return null
-            return vppIdItem ?: vppIdRepository.getById(vppIdId, ResponsePreference.Fast).getFirstValueOld().let { it as? VppId.Active }.also { this.vppIdItem = it }
-        }
-
         suspend fun getSubjectInstances(): List<SubjectInstance> {
             return this.subjectInstanceConfiguration.keys.map { getSubjectInstance(it) }
         }
 
-        @OptIn(ExperimentalCoroutinesApi::class)
-        override fun getSchool(): Flow<AliasState<School.AppSchool>> {
-            return App.groupSource.getById(groupId).filterIsInstance<AliasState.Done<Group>>().flatMapLatest { App.schoolSource.getAppSchoolById(it.data.schoolId) }
-        }
 
-        val group by lazy { App.groupSource.getById(groupId) }
 
         override fun copyBase(id: Uuid, name: String, profileType: ProfileType): Profile {
             if (profileType != ProfileType.STUDENT) throw IllegalArgumentException("Cannot change type of profile")
@@ -92,14 +60,11 @@ abstract class Profile : Item<Uuid, DataTag>, KoinComponent {
     data class TeacherProfile(
         override val id: Uuid,
         override val name: String,
-        val teacher: Uuid
+        val teacher: Teacher
     ) : Profile() {
         override val profileType = ProfileType.TEACHER
 
-        @OptIn(ExperimentalCoroutinesApi::class)
-        override fun getSchool(): Flow<AliasState<School.AppSchool>> {
-            return App.teacherSource.getById(teacher).filterIsInstance<AliasState.Done<Teacher>>().flatMapLatest { App.schoolSource.getAppSchoolById(it.data.schoolId) }
-        }
+        override val school: School.AppSchool = teacher.school
 
         override fun copyBase(id: Uuid, name: String, profileType: ProfileType): Profile {
             if (profileType != ProfileType.TEACHER) throw IllegalStateException("Cannot change type of profile")

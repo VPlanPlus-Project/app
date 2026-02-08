@@ -9,11 +9,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.CreateAssessmentUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
@@ -33,11 +31,10 @@ class NewAssessmentViewModel(
     init {
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
-                val vppId = (profile as? Profile.StudentProfile)?.vppId?.getFirstValueOld() as? VppId.Active
+                val vppId = (profile as? Profile.StudentProfile)?.vppId
 
                 _state.value = _state.value.copy(
                     currentProfile = (profile as? Profile.StudentProfile).also {
-                        it?.getGroupItem()
                         it?.getSubjectInstances()?.onEach { subjectInstance ->
                             subjectInstance.getTeacherItem()
                             subjectInstance.getCourseItem()
