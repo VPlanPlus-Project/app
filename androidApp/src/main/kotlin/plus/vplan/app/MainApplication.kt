@@ -14,10 +14,8 @@ import com.posthog.PostHog
 import com.posthog.android.PostHogAndroid
 import com.posthog.android.PostHogAndroidConfig
 import org.koin.android.ext.koin.androidContext
-import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.androidx.workmanager.koin.workManagerFactory
-import org.koin.core.logger.Level
 import org.koin.dsl.module
 import plus.vplan.app.android.worker.SyncWorker
 import plus.vplan.app.di.ActivityProviderImpl
@@ -34,7 +32,7 @@ class MainApplication : Application() {
         super.onCreate()
 
         val config = PostHogAndroidConfig(
-            apiKey = BuildConfig.POSTHOG_API_KEY,
+            apiKey = PostHogConfig.API_KEY,
             host = POSTHOG_HOST
         ).apply {
             if (isDebug()) {
@@ -48,7 +46,7 @@ class MainApplication : Application() {
 
         // Setup PostHog with the given Context and Config
         PostHogAndroid.setup(this, config)
-        PostHog.register("\$app_build", BuildConfig.APP_VERSION_CODE)
+        PostHog.register("\$app_build", AppConfig.VERSION_CODE)
         PostHog.register("\$os_name", "Android")
         PostHog.register("debug_mode", isDebug().toString())
 

@@ -47,6 +47,14 @@ val VPP_ID_AUTH_URL = URLBuilder(currentConfiguration.authUrl).apply {
     parameters.append("device_name", getSystemInfo().deviceName)
 }.buildString()
 
+object PostHogConfig {
+    const val API_KEY = AppBuildConfig.POSTHOG_API_KEY
+}
+
+object AppConfig {
+    const val VERSION_CODE = AppBuildConfig.APP_VERSION_CODE
+}
+
 object App {
     lateinit var homeworkSource: HomeworkSource
     lateinit var homeworkTaskSource: HomeworkTaskSource

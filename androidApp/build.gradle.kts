@@ -79,7 +79,7 @@ android {
     }
     
     sourceSets["main"].apply {
-        java.srcDirs("src/main/kotlin")
+        java.directories.add("src/main/kotlin")
     }
 }
 
@@ -112,22 +112,4 @@ dependencies {
     implementation(libs.kermit)
     
     debugImplementation(libs.androidx.ui.tooling)
-}
-
-buildConfig {
-    useKotlinOutput {
-        topLevelConstants = false
-        internalVisibility = false
-    }
-
-    className("BuildConfig")
-    packageName("plus.vplan.app")
-
-    buildConfigField("APP_VERSION_CODE", 297)
-    buildConfigField("APP_VERSION", "0.2.24-production")
-    buildConfigField("APP_DEBUG", localProperties.getProperty("app.debug")?.toBoolean() ?: false)
-
-    buildConfigField("POSTHOG_API_KEY", localProperties.getProperty("posthog.api.key") ?: "")
-
-    generateAtSync = true
 }
