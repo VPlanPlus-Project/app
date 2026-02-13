@@ -18,6 +18,7 @@ import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.dsl.module
 import plus.vplan.app.android.worker.SyncWorker
+import plus.vplan.app.di.ActivityProviderImpl
 import plus.vplan.app.di.initKoin
 import java.util.concurrent.TimeUnit
 
@@ -31,7 +32,7 @@ class MainApplication : Application() {
         super.onCreate()
 
         val config = PostHogAndroidConfig(
-            apiKey = BuildConfig.POSTHOG_API_KEY,
+            apiKey = PostHogConfig.API_KEY,
             host = POSTHOG_HOST
         ).apply {
             if (isDebug()) {
@@ -45,7 +46,7 @@ class MainApplication : Application() {
 
         // Setup PostHog with the given Context and Config
         PostHogAndroid.setup(this, config)
-        PostHog.register("\$app_build", BuildConfig.APP_VERSION_CODE)
+        PostHog.register("\$app_build", AppConfig.VERSION_CODE)
         PostHog.register("\$os_name", "Android")
         PostHog.register("debug_mode", isDebug().toString())
 
@@ -54,7 +55,12 @@ class MainApplication : Application() {
 
         initKoin {
             androidContext(this@MainApplication)
+            //androidLogger(if (isDebug()) Level.DEBUG else Level.NONE)
             workManagerFactory()
+            properties(mapOf(
+                "notification_small_icon" to R.drawable.app_icon_full,
+                "activity_provider" to ActivityProviderImpl
+            ))
             module {
                 single { WorkManager.getInstance(androidContext()) }
                 workerOf(::SyncWorker)

@@ -33,7 +33,7 @@ jobs:
                 run: chmod +x ./gradlew
 
             -   name: Restore google-services.json
-                run: echo ${{ secrets.GOOGLE_SERVICES }} | base64 -d > ${GITHUB_WORKSPACE}/composeApp/google-services.json
+                run: echo ${{ secrets.GOOGLE_SERVICES }} | base64 -d > ${GITHUB_WORKSPACE}/androidApp/google-services.json
 
             -   name: Restore playstore.keystore.jks
                 run: echo ${{ secrets.KEYSTORE_FILE }} | base64 -d > ${GITHUB_WORKSPACE}/keystore.jks
@@ -61,9 +61,6 @@ jobs:
             -   name: Disable debug mode
                 run: echo "app.debug=false" >> local.properties
 
-            -   name: Create placeholder certificate
-                run: touch ${GITHUB_WORKSPACE}/composeApp/src/androidMain/res/raw/werkbankca.crt
-
             -   uses: actions/cache@v4
                 with:
                     path: |
@@ -74,15 +71,15 @@ jobs:
                         ${{ runner.os }}-gradle-
 
             -   name: Build APK
-                run: ./gradlew :composeApp:assembleRelease
+                run: ./gradlew :androidApp:assembleRelease
 
             -   name: Build App Bundle
-                run: ./gradlew :composeApp:bundleRelease
+                run: ./gradlew :androidApp:bundleRelease
 
             -   name: Rename output files
                 run: |
-                    mv composeApp/build/outputs/apk/release/composeApp-release.apk ${{ env.TAG_NAME }}.apk
-                    mv composeApp/build/outputs/bundle/release/composeApp-release.aab ${{ env.TAG_NAME }}.aab
+                    mv androidApp/build/outputs/apk/release/androidApp-release.apk ${{ env.TAG_NAME }}.apk
+                    mv androidApp/build/outputs/bundle/release/androidApp-release.aab ${{ env.TAG_NAME }}.aab
 
             -   name: Upload build artifacts
                 uses: actions/upload-artifact@v4
