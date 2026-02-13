@@ -36,6 +36,7 @@ kotlin {
 
     compilerOptions {
         optIn.add("kotlin.uuid.ExperimentalUuidApi")
+        freeCompilerArgs.add("-Xexplicit-backing-fields")
         freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
         freeCompilerArgs.add("-Xcontext-parameters")
         freeCompilerArgs.add("-Xnested-type-aliases")
@@ -77,6 +78,7 @@ kotlin {
             implementation(libs.firebase.crashlytics)
 
             implementation(libs.posthog.android)
+            implementation(compose.uiTooling)
         }
 
         commonMain.dependencies {
