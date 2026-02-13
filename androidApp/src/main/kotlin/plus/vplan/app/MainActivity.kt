@@ -43,19 +43,18 @@ class MainActivity : FragmentActivity() {
         }
 
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
-            Thread {
-                val intent = Intent(this, ErrorActivity::class.java).apply {
-                    putExtra("stacktrace", throwable.stackTraceToString())
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                }
+            val intent = Intent(this, ErrorActivity::class.java).apply {
+                putExtra("stacktrace", throwable.stackTraceToString())
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
 
-                Logger.e(throwable) { "Uncaught exception" }
-                startActivity(intent)
-                Firebase.crashlytics.recordException(throwable)
-                captureError("UncaughtException", throwable.stackTraceToString())
+            Logger.e(throwable) { "Uncaught exception" }
+            Firebase.crashlytics.recordException(throwable)
+            captureError("UncaughtException", throwable.stackTraceToString())
 
-                this.runOnUiThread { this.finish() }
-            }.start()
+            startActivity(intent)
+            Process.killProcess(Process.myPid())
+            exitProcess(2)
         }
     }
 
