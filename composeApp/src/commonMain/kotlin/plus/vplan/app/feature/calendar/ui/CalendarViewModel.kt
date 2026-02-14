@@ -67,10 +67,8 @@ class CalendarViewModel(
 
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
-            val currentProfile = _state.value.currentProfile
-            if (currentProfile == null) return@launch
-            val school = currentProfile.getSchool().getFirstValue() ?: return@launch
-            App.daySource.getById(Day.buildId(school.id, date), currentProfile)
+            val currentProfile = _state.value.currentProfile ?: return@launch
+            App.daySource.getById(Day.buildId(currentProfile.school.id, date), currentProfile)
                 .filterIsInstance<CacheState.Done<Day>>()
                 .map { it.data }
                 .collectLatest { day ->

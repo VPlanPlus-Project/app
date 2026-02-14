@@ -1,16 +1,11 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.domain.model
 
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
-import plus.vplan.app.App
+import androidx.compose.runtime.Stable
 import plus.vplan.app.domain.cache.DataTag
 import plus.vplan.app.domain.data.Item
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import kotlin.uuid.Uuid
 
+@Stable
 data class News(
     override val id: Int,
     val title: String,
@@ -20,11 +15,9 @@ data class News(
     val versionTo: Int?,
     val dateFrom: Instant,
     val dateTo: Instant,
-    val schoolIds: List<Uuid>,
+    val schools: List<School>,
     val author: String,
     val isRead: Boolean
 ) : Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
-
-    val schools by lazy { if (schoolIds.isEmpty()) flowOf(emptyList()) else combine(schoolIds.map { App.schoolSource.getById(it) }) { it.toList() } }
 }

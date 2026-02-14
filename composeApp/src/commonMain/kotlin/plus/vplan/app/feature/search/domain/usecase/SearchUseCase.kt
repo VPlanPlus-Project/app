@@ -29,6 +29,9 @@ import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.utils.now
+import plus.vplan.lib.sp24.source.NamedEntity
+import plus.vplan.lib.sp24.source.SchoolEntityType
+import plus.vplan.lib.sp24.source.ValueSource
 
 class SearchUseCase(
     private val groupRepository: GroupRepository,
@@ -45,10 +48,9 @@ class SearchUseCase(
         if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap())
         val query = searchRequest.query.lowercase().trim()
         val profile = getCurrentProfileUseCase().first()
-        val school = profile.getSchool().getFirstValue() ?: return@channelFlow send(emptyMap())
 
         launch {
-            substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, searchRequest.date).collectLatest { substitutionPlanLessonIds ->
+            substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, searchRequest.date).collectLatest { substitutionPlanLessonIds ->
                 val lessons = substitutionPlanLessonIds
                     .map { id -> App.substitutionPlanSource.getById(id).getFirstValueOld() }
                     .fastFilterNotNull()
@@ -59,31 +61,40 @@ class SearchUseCase(
 
                 if (searchRequest.query.isNotEmpty() && searchRequest.assessmentType == null) launch {
                     combine(
-                        groupRepository.getBySchool(school.id).map { it.filter { group -> query in group.name.lowercase() } },
-                        teacherRepository.getBySchool(school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
-                        roomRepository.getBySchool(school.id).map { it.filter { room -> query in room.name.lowercase() } },
+                        groupRepository.getBySchool(profile.school.id).map { it.filter { group -> query in group.name.lowercase() } },
+                        teacherRepository.getBySchool(profile.school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
+                        roomRepository.getBySchool(profile.school.id).map { it.filter { room -> query in room.name.lowercase() } },
                     ) { groups, teachers, rooms ->
                         results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->
-                            group.getSchoolItem()
                             SearchResult.SchoolEntity.Group(
                                 group = group,
                                 lessons = lessons.filter { group.id in it.groupIds }.calculateLayouting()
                             )
                         })
 
-                        results.value = results.value.plus(SearchResult.Type.Teacher to teachers.map { teacher ->
-                            teacher.getSchoolItem()
+                        results.value = results.value.plus(SearchResult.Type.Teacher to teachers.mapNotNull { teacher ->
+                            val namedEntity = NamedEntity(
+                                name = teacher.name,
+                                source = ValueSource.Found,
+                                type = SchoolEntityType.Teacher
+                            )
+                            if (!namedEntity.isCommon()) return@mapNotNull null
                             SearchResult.SchoolEntity.Teacher(
                                 teacher = teacher,
-                                lessons = lessons.filter { teacher.id in it.teacherIds }.calculateLayouting()
+                                lessons = lessons.filter { lesson -> teacher.id in lesson.teachers.map { it.id } }.calculateLayouting()
                             )
                         })
 
-                        results.value = results.value.plus(SearchResult.Type.Room to rooms.map { room ->
-                            room.getSchoolItem()
+                        results.value = results.value.plus(SearchResult.Type.Room to rooms.mapNotNull { room ->
+                            val namedEntity = NamedEntity(
+                                name = room.name,
+                                source = ValueSource.Found,
+                                type = SchoolEntityType.Room
+                            )
+                            if (!namedEntity.isCommon()) return@mapNotNull null
                             SearchResult.SchoolEntity.Room(
                                 room = room,
-                                lessons = lessons.filter { room.id in it.roomIds }.calculateLayouting()
+                                lessons = lessons.filter { lesson -> room.id in lesson.rooms.map { it.id } }.calculateLayouting()
                             )
                         })
                     }.collect()
@@ -111,7 +122,7 @@ class SearchUseCase(
                 if (searchRequest.assessmentType == null) launch {
                     besteSchuleGradesRepository.getGradesFromCache(userId = null)
                         .map { response ->
-                            response.filter { grade -> query.lowercase() in grade.collection.first()!!.name }
+                            response.data.filter { grade -> query.lowercase() in grade.collection.first()!!.name }
                         }
                         .collectLatest { grades ->
                             results.value = results.value.plus(SearchResult.Type.Grade to grades.map { SearchResult.Grade(it) })

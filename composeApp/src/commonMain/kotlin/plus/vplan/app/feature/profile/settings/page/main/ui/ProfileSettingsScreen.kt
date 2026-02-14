@@ -50,9 +50,7 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.VppIdConnectionState
@@ -104,8 +102,7 @@ private fun ProfileSettingsContent(
         if (state.profileDeletionState == UnoptimisticTaskState.Success) onBack()
     }
 
-    val vppId = remember((state.profile as? Profile.StudentProfile)?.vppIdId) { (state.profile as? Profile.StudentProfile)?.vppId }?.collectAsResultingFlowOld()?.value as? VppId.Active
-    val school = remember(state.profile?.id) { state.profile?.getSchool() }?.collectAsResultingFlow()?.value
+    val vppId = remember((state.profile as? Profile.StudentProfile)?.vppId) { (state.profile as? Profile.StudentProfile)?.vppId }
 
     Scaffold(
         topBar = {
@@ -218,7 +215,7 @@ private fun ProfileSettingsContent(
                     }
                     append(state.profile.name)
                     append(" $DOT ")
-                    append(school?.name ?: "")
+                    append(state.profile.school.name)
                 },
                 modifier = Modifier.padding(horizontal = 16.dp),
                 style = MaterialTheme.typography.labelMedium,
@@ -235,7 +232,7 @@ private fun ProfileSettingsContent(
                         .clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.surfaceContainer)
                         .clickable {
-                            if (state.profile.vppIdId == null || state.isVppIdStillConnected == VppIdConnectionState.DISCONNECTED) {
+                            if (state.profile.vppId == null || state.isVppIdStillConnected == VppIdConnectionState.DISCONNECTED) {
                                 onEvent(ProfileSettingsEvent.ConnectVppId)
                                 return@clickable
                             }
@@ -333,8 +330,7 @@ private fun ProfileSettingsContent(
             },
             text = {
                 if (state.isLastProfileOfSchool) {
-                    val school = remember(state.profile?.id) { state.profile?.getSchool() }?.collectAsResultingFlow()?.value ?: return@AlertDialog
-                    Text("Dies ist das letzte Profil der Schule ${school.name}. Wenn du dieses Profil löschst, musst du die Schule erneut hinzufügen.")
+                    Text("Dies ist das letzte Profil der Schule ${state.profile?.school?.name}. Wenn du dieses Profil löschst, musst du die Schule erneut hinzufügen.")
                 } else Text("Dieses Profil wird gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.")
             },
             confirmButton = {

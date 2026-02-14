@@ -13,7 +13,7 @@ class UpdateAssessmentIndicesUseCase(
         assessmentRepository.getAll().first()
             .filter {
                 (it.creator is AppEntity.Profile && it.creator.id == profile.id) ||
-                        (it.creator is AppEntity.VppId && it.creator.id == (profile as? Profile.StudentProfile)?.vppIdId) ||
+                        (it.creator is AppEntity.VppId && it.creator.id == (profile as? Profile.StudentProfile)?.vppId?.id) ||
                         (it.subjectInstance.getFirstValue()?.id in (profile as? Profile.StudentProfile)?.subjectInstanceConfiguration.orEmpty().filterValues { it }.keys && profile is Profile.StudentProfile)
             }
             .let { relevantAssessments ->

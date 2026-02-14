@@ -13,10 +13,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
@@ -63,7 +61,7 @@ class ProfileViewModel(
                 state = it
                 val profile = state.currentProfile
                 if (!it.areGradesLocked && profile is Profile.StudentProfile) {
-                    val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active ?: return@collectLatest
+                    val vppId = profile.vppId ?: return@collectLatest
 
                     if (vppId.schulverwalterConnection != null) {
                         val intervals = besteSchuleIntervalsRepository.getIntervalsFromCache(

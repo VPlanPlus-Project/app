@@ -8,6 +8,6 @@ class RenameFileUseCase(
     private val fileRepository: FileRepository
 ) {
     suspend operator fun invoke(file: File, newName: String, profile: Profile.StudentProfile) {
-        fileRepository.renameFile(file, newName, profile.getVppIdItem())
+        fileRepository.renameFile(file, newName, profile.vppId)
     }
 }

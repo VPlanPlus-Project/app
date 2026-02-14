@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -27,7 +26,6 @@ import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.overlaps
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class GetRoomOccupationMapUseCase(
     private val roomRepository: RoomRepository,
@@ -37,15 +35,14 @@ class GetRoomOccupationMapUseCase(
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> = channelFlow {
-        val schoolId = Uuid.parseHex(profile.getSchool().first().entityId)
-        weekRepository.getBySchool(schoolId).map { weeks ->
+        weekRepository.getBySchool(profile.school.id).map { weeks ->
             weeks.firstOrNull { LocalDate.now() in it.start..it.end }
         }.collectLatest { currentWeek ->
             combine(
-                substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date),
-                timetableRepository.getTimetableForSchool(schoolId).map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } },
-                weekRepository.getBySchool(schoolId),
-                roomRepository.getBySchool(schoolId)
+                substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, date),
+                timetableRepository.getTimetableForSchool(profile.school.id).map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } },
+                weekRepository.getBySchool(profile.school.id),
+                roomRepository.getBySchool(profile.school.id)
             ) { substitutionPlanLessonIds, timetableLessons, weeks, rooms ->
                 val substitution = substitutionPlanLessonIds
                     .map { id -> App.substitutionPlanSource.getById(id).getFirstValueOld() }
@@ -55,7 +52,7 @@ class GetRoomOccupationMapUseCase(
                 val lessons = substitution.ifEmpty { timetableLessons }
 
                 rooms.associateWith { room ->
-                    lessons.filter { room.id in it.roomIds.orEmpty() }.map {
+                    lessons.filter { lesson -> room.id in lesson.rooms.orEmpty().map { it.id } }.map {
                         when (it) {
                             is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson.fromLesson(it, date)
                             is Lesson.TimetableLesson -> Occupancy.Lesson.fromLesson(it, date)
