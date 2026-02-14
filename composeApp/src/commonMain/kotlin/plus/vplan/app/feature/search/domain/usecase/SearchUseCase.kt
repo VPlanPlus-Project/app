@@ -71,7 +71,6 @@ class SearchUseCase(
                         roomRepository.getBySchool(school.id).map { it.filter { room -> query in room.name.lowercase() } },
                     ) { groups, teachers, rooms ->
                         results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->
-                            group.getSchoolItem()
                             SearchResult.SchoolEntity.Group(
                                 group = group,
                                 lessons = lessons.filter { group.id in it.groupIds }.calculateLayouting()

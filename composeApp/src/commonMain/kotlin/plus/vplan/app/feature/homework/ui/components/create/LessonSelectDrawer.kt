@@ -36,7 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Group
+import plus.vplan.app.core.model.Group
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.thenIf

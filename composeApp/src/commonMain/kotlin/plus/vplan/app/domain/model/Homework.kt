@@ -22,6 +22,7 @@ import plus.vplan.app.core.model.DataTag
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Item
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
