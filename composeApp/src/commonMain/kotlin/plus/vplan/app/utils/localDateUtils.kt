@@ -10,7 +10,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
-import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
@@ -20,10 +19,6 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
-
-fun LocalDate.atStartOfWeek(): LocalDate {
-    return this.minus(this.dayOfWeek.isoDayNumber.minus(1), DateTimeUnit.DAY)
-}
 
 infix operator fun LocalDate.plus(duration: Duration): LocalDate {
     return this.plus(duration.inWholeDays, DateTimeUnit.DAY)

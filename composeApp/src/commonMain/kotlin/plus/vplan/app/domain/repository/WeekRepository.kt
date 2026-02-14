@@ -1,7 +1,7 @@
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.model.Week
+import plus.vplan.app.core.model.Week
 import kotlin.uuid.Uuid
 
 interface WeekRepository {

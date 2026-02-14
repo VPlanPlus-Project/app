@@ -29,14 +29,14 @@ import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.model.Week
+import plus.vplan.app.core.model.Week
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days

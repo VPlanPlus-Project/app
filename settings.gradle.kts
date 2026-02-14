@@ -58,6 +58,7 @@ include(":androidApp")
 
 // Core modules
 include(":core:model")
+include(":core:utils")
 // include(":core:common")
 // include(":core:domain")
 // include(":core:data")

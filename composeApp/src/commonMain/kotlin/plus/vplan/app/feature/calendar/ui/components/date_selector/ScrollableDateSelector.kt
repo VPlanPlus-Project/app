@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.Dp
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.feature.calendar.ui.DateSelectorDay
 import plus.vplan.app.utils.atStartOfMonth
-import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.utils.minus
 import kotlin.time.Duration.Companion.days
 

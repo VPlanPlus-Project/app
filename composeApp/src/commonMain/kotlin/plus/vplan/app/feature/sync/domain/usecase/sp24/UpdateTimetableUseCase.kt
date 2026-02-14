@@ -11,7 +11,7 @@ import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.model.Timetable
-import plus.vplan.app.domain.model.Week
+import plus.vplan.app.core.model.Week
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -19,7 +19,7 @@ import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.takeContinuousBy
 import plus.vplan.lib.sp24.source.Authentication

@@ -13,7 +13,7 @@ import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import plus.vplan.app.feature.calendar.ui.DateSelectorDay
-import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus

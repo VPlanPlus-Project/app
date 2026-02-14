@@ -6,7 +6,7 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "plus.vplan.app.core.model"
+        namespace = "plus.vplan.app.utils"
         compileSdk = applicationConfig.android.targetSdk
         minSdk = applicationConfig.android.minSdk
     }
@@ -15,11 +15,6 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
-            implementation(libs.ktor.client.core)
-            implementation(libs.kermit)
-            implementation(libs.vpp.sp24)
-
-            implementation(project(":core:utils"))
         }
     }
 }
