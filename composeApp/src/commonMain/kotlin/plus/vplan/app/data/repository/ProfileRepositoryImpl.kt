@@ -9,7 +9,7 @@ import plus.vplan.app.data.source.database.model.database.DbGroupProfile
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
-import plus.vplan.app.domain.model.Group
+import plus.vplan.app.core.model.Group
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.Teacher

@@ -16,7 +16,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.data.source.database.model.database.DbFcmLog
 import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.domain.model.Group
+import plus.vplan.app.core.model.Group
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.repository.FcmRepository

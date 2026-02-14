@@ -14,6 +14,7 @@ import plus.vplan.app.App
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.DataTag
+import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.Item

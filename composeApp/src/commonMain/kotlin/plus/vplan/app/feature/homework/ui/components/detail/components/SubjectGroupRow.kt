@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import plus.vplan.app.domain.model.Group
+import plus.vplan.app.core.model.Group
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectIcon
 

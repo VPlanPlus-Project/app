@@ -5,7 +5,7 @@ import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupAlias
 import plus.vplan.app.data.source.database.model.database.DbSchool
-import plus.vplan.app.domain.model.Group
+import plus.vplan.app.core.model.Group
 
 data class EmbeddedGroup(
     @Embedded val group: DbGroup,

@@ -25,7 +25,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.Padding
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Group
+import plus.vplan.app.core.model.Group
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.utils.DOT
