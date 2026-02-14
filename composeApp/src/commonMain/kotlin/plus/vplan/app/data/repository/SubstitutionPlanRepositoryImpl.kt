@@ -51,13 +51,13 @@ class SubstitutionPlanRepositoryImpl(
                 }
             },
             teachers = lessons.flatMap { lesson ->
-                lesson.teacherIds.map { teacher ->
-                    DbSubstitutionPlanTeacherCrossover(teacher, lesson.id)
+                lesson.teachers.map { teacher ->
+                    DbSubstitutionPlanTeacherCrossover(teacher.id, lesson.id)
                 }
             },
             rooms = lessons.flatMap { lesson ->
-                lesson.roomIds.map { room ->
-                    DbSubstitutionPlanRoomCrossover(room, lesson.id)
+                lesson.rooms.map { room ->
+                    DbSubstitutionPlanRoomCrossover(room.id, lesson.id)
                 }
             },
             profileIndex = profiles.flatMap { profile ->

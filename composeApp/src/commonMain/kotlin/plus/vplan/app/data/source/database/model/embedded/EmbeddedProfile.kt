@@ -7,6 +7,7 @@ import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbRoomProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.domain.model.VppId
 
 data class EmbeddedProfile(
     @Embedded val profile: DbProfile,
@@ -32,19 +33,19 @@ data class EmbeddedProfile(
             return Profile.StudentProfile(
                 id = profile.id,
                 name = profile.displayName ?: embeddedGroupProfile.group.group.name,
-                groupId = embeddedGroupProfile.group.group.id,
+                group = embeddedGroupProfile.group.toModel(),
                 subjectInstanceConfiguration =
                     embeddedGroupProfile.subjectInstances
                         .associateWith { disabledSubjectInstances.contains(it.subjectInstanceId).not() }
                         .mapKeys { it.key.subjectInstanceId },
-                vppIdId = embeddedGroupProfile.vppId?.vppId?.id
+                vppId = embeddedGroupProfile.vppId?.toModel() as? VppId.Active
             )
         }
         if (embeddedTeacherProfile != null) {
             return Profile.TeacherProfile(
                 id = profile.id,
-                name = profile.displayName ?: embeddedTeacherProfile.teacher.name,
-                teacher = embeddedTeacherProfile.teacher.id
+                name = profile.displayName ?: embeddedTeacherProfile.teacher.teacher.name,
+                teacher = embeddedTeacherProfile.teacher.toModel()
             )
         }
         return null

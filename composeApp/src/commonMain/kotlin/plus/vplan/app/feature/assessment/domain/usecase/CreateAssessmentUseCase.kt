@@ -1,11 +1,8 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.assessment.domain.usecase
 
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.AppEntity
@@ -13,7 +10,6 @@ import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
@@ -21,7 +17,6 @@ import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 class CreateAssessmentUseCase(
     private val assessmentRepository: AssessmentRepository,
@@ -40,7 +35,7 @@ class CreateAssessmentUseCase(
     ): CreateAssessmentResult {
         val profile = (profileService.getCurrentProfile().first() as? Profile.StudentProfile) ?: return CreateAssessmentResult.Error.UnknownError("No current profile found or profile is not a student profile")
 
-        val creator = (profile.vppId?.getFirstValueOld() as? VppId.Active)?.let { vppId ->
+        val creator = profile.vppId?.let { vppId ->
             AppEntity.VppId(vppId.id)
         } ?: AppEntity.Profile(profile.id)
 
@@ -57,10 +52,9 @@ class CreateAssessmentUseCase(
 
         val id: Int
         val files = mutableListOf<Assessment.AssessmentFile>()
-        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
-        if (vppId != null) {
+        if (profile.vppId != null) {
             val result = assessmentRepository.createAssessmentOnline(
-                vppId = vppId,
+                vppId = profile.vppId,
                 date = date,
                 type = type,
                 subjectInstanceId = subjectInstanceId,
@@ -71,12 +65,12 @@ class CreateAssessmentUseCase(
             id = result.data
             selectedFiles.forEach {
                 val fileId = fileRepository.uploadFile(
-                    vppId = vppId,
+                    vppId = profile.vppId,
                     document = it
                 )
                 if (fileId !is Response.Success) return@forEach
                 assessmentRepository.linkFileToAssessmentOnline(
-                    vppId = vppId,
+                    vppId = profile.vppId,
                     assessmentId = result.data,
                     fileId = fileId.data
                 )

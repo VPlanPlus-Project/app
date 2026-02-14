@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
@@ -62,9 +61,7 @@ class GradeDetailViewModel(
                     gradeUser = profileRepository.getAll()
                         .first()
                         .filterIsInstance<Profile.StudentProfile>()
-                        .filter { it.vppIdId != null }
-                        .map { it.vppId!!.getFirstValueOld() }
-                        .filterIsInstance<VppId.Active>()
+                        .mapNotNull { it.vppId }
                         .filter { it.schulverwalterConnection != null }
                         .firstOrNull { it.schulverwalterConnection?.userId == grade?.schulverwalterUserId },
                     profile = profile,
@@ -123,7 +120,6 @@ data class GradeDetailState(
 )
 
 private suspend fun Profile.StudentProfile.prefetch() {
-    this.getGroupItem()
     this.getSubjectInstances().onEach {
         it.getCourseItem()
         it.getTeacherItem()

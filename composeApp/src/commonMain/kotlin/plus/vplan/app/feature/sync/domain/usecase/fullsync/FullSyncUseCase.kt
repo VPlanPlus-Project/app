@@ -14,7 +14,6 @@ import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
 import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.data.Alias
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.model.Group
@@ -128,7 +127,7 @@ class FullSyncUseCase(
 
                 val schoolDataUpdate = CoroutineScope(Dispatchers.IO).launch {
                     profileRepository.getAll().first()
-                        .mapNotNull { it.getSchool().getFirstValue() }
+                        .map { it.school }
                         .distinctBy { it.id }
                         .filter { it.credentialsValid }
                         .forEach forEachSchool@{ school ->

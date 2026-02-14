@@ -113,7 +113,7 @@ class DeveloperSettingsViewModel(
                     if (state.isSubstitutionPlanUpdateRunning) return@launch
                     state = state.copy(isSubstitutionPlanUpdateRunning = true)
                     updateSubstitutionPlanUseCase(
-                        state.profile!!.getSchool().getFirstValue()!!, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
+                        state.profile!!.school, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
                         allowNotification = true
                     )
                     state = state.copy(isSubstitutionPlanUpdateRunning = false)
@@ -121,20 +121,20 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.UpdateTimetable -> {
                     if (state.isTimetableUpdateRunning) return@launch
                     state = state.copy(isTimetableUpdateRunning = true)
-                    updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!!, forceUpdate = true)
+                    updateTimetableUseCase(state.profile!!.school, forceUpdate = true)
                     state = state.copy(isTimetableUpdateRunning = false)
                 }
                 DeveloperSettingsEvent.UpdateWeeks -> {
                     if (state.isWeekUpdateRunning) return@launch
                     state = state.copy(isWeekUpdateRunning = true)
-                    updateWeeksUseCase(state.profile!!.getSchool().getFirstValue()!!)
+                    updateWeeksUseCase(state.profile!!.school)
                     state = state.copy(isWeekUpdateRunning = false)
                 }
                 DeveloperSettingsEvent.UpdateSubjectInstances -> {
                     if (state.isSubjectInstanceUpdateRunning) return@launch
                     state = state.copy(isSubjectInstanceUpdateRunning = true)
                     updateSubjectInstanceUseCase(
-                        school = state.profile!!.getSchool().getFirstValue()!!,
+                        school = state.profile!!.school,
                         providedClient = null
                     )
                     state = state.copy(isSubjectInstanceUpdateRunning = false)
@@ -143,7 +143,7 @@ class DeveloperSettingsViewModel(
                     if (state.isLessonTimesUpdateRunning) return@launch
                     state = state.copy(isLessonTimesUpdateRunning = true)
                     updateLessonTimesUseCase(
-                        state.profile!!.getSchool().getFirstValue()!!,
+                        state.profile!!.school,
                         null
                     )
                     state = state.copy(isLessonTimesUpdateRunning = false)

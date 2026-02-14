@@ -95,7 +95,7 @@ sealed class Homework(
             return homeworkItem ?: App.homeworkSource.getById(homework).getFirstValueOld().also { homeworkItem = it }
         }
 
-        fun isDone(profile: Profile.StudentProfile) = (profile.id in doneByProfiles && profile.vppIdId == null) || profile.vppIdId in doneByVppIds
+        fun isDone(profile: Profile.StudentProfile) = (profile.id in doneByProfiles && profile.vppId == null) || profile.vppId?.id in doneByVppIds
     }
 
     data class HomeworkFile(
@@ -154,7 +154,7 @@ sealed class Homework(
             App.profileSource.getById(createdByProfileId)
                 .filterIsInstance<CacheState.Done<Profile.StudentProfile>>()
                 .map { it.data }
-                .flatMapLatest { App.groupSource.getById(it.groupId) }
+                .flatMapLatest { App.groupSource.getById(it.group.id) }
         }
     }
 }

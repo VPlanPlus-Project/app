@@ -5,6 +5,7 @@ import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
+import plus.vplan.app.domain.model.Teacher
 
 data class EmbeddedTeacherProfile(
     @Embedded val profileLink: DbTeacherProfile,
@@ -17,5 +18,5 @@ data class EmbeddedTeacherProfile(
         parentColumn = "teacher_id",
         entityColumn = "id",
         entity = DbTeacher::class
-    ) val teacher: DbTeacher
+    ) val teacher: EmbeddedTeacher
 )

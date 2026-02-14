@@ -19,8 +19,8 @@ import kotlin.uuid.Uuid
 sealed interface Lesson : Item<Uuid, DataTag> {
     val weekId: String?
     val subject: String?
-    val teacherIds: List<Uuid>
-    val roomIds: List<Uuid>?
+    val teachers: List<Teacher>
+    val rooms: List<Room>?
     val groupIds: List<Uuid>
     val subjectInstanceId: Uuid?
     val lessonNumber: Int
@@ -32,9 +32,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
 
     val lessonTime: Flow<CacheState<LessonTime>>?
     val subjectInstance: Flow<AliasState<SubjectInstance>>?
-    val rooms: Flow<List<AliasState<Room>>>
     val groups: Flow<List<AliasState<Group>>>
-    val teachers: Flow<List<AliasState<Teacher>>>
 
     val isCancelled: Boolean
 
@@ -46,8 +44,8 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         val dayOfWeek: DayOfWeek,
         override val weekId: String,
         override val subject: String?,
-        override val teacherIds: List<Uuid>,
-        override val roomIds: List<Uuid>?,
+        override val teachers: List<Teacher>,
+        override val rooms: List<Room>?,
         override val groupIds: List<Uuid>,
         override val lessonNumber: Int,
         val timetableId: Uuid,
@@ -62,9 +60,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
                 .map { it?.let { CacheState.Done(it) } ?: CacheState.NotExisting() }
         }
         override val subjectInstance = null
-        override val rooms by lazy { if (roomIds.isNullOrEmpty()) flowOf(emptyList()) else combine(roomIds.map { App.roomSource.getById(it) }) { it.toList() } }
         override val groups by lazy { if (groupIds.isEmpty()) flowOf(emptyList()) else combine(groupIds.map { App.groupSource.getById(it) }) { it.toList() } }
-        override val teachers by lazy { if (teacherIds.isEmpty()) flowOf(emptyList()) else combine(teacherIds.map { App.teacherSource.getById(it) }) { it.toList() } }
 
         val limitedToWeeks by lazy { if (limitedToWeekIds.isNullOrEmpty()) null else combine(limitedToWeekIds.map { App.weekSource.getById(it) }) { it.toList() } }
 
@@ -72,7 +68,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         override val isCancelled: Boolean = false
 
         override fun getLessonSignature(): String {
-            return "$subject/$teacherIds/$roomIds/$groupIds/$lessonNumber/$dayOfWeek/$weekType"
+            return "$subject/${teachers.map { it.id }.sorted()}/${rooms.orEmpty().map { it.id }.sorted()}/$groupIds/$lessonNumber/$dayOfWeek/$weekType"
         }
     }
 
@@ -82,9 +78,9 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         override val weekId: String?,
         override val subject: String?,
         val isSubjectChanged: Boolean,
-        override val teacherIds: List<Uuid>,
+        override val teachers: List<Teacher>,
         val isTeacherChanged: Boolean,
-        override val roomIds: List<Uuid>,
+        override val rooms: List<Room>,
         val isRoomChanged: Boolean,
         override val groupIds: List<Uuid>,
         override val subjectInstanceId: Uuid?,
@@ -99,22 +95,20 @@ sealed interface Lesson : Item<Uuid, DataTag> {
                 .map { it?.let { CacheState.Done(it) } ?: CacheState.NotExisting() }
         }
         override val subjectInstance by lazy { if (subjectInstanceId == null) null else App.subjectInstanceSource.getById(subjectInstanceId) }
-        override val rooms by lazy { if (roomIds.isEmpty()) flowOf(emptyList()) else combine(roomIds.map { App.roomSource.getById(it) }) { it.toList() } }
         override val groups by lazy { if (groupIds.isEmpty()) flowOf(emptyList()) else combine(groupIds.map { App.groupSource.getById(it) }) { it.toList() } }
-        override val teachers by lazy { if (teacherIds.isEmpty()) flowOf(emptyList()) else combine(teacherIds.map { App.teacherSource.getById(it) }) { it.toList() } }
 
         override val isCancelled: Boolean
             get() = subject == null && subjectInstanceId != null
 
         override fun getLessonSignature(): String {
-            return "$subject/${teacherIds.sorted()}/${roomIds.sorted()}/${groupIds.sorted()}/$lessonNumber/$date/$subjectInstanceId"
+            return "$subject/${teachers.map { it.id }.sorted()}/${rooms.map { it.id }.sorted()}/${groupIds.sorted()}/$lessonNumber/$date/$subjectInstanceId"
         }
     }
 
     suspend fun isRelevantForProfile(profile: Profile): Boolean {
         when (profile) {
             is Profile.StudentProfile -> {
-                if (profile.groupId !in this.groupIds) return false
+                if (profile.group.id !in this.groupIds) return false
                 if (profile.subjectInstanceConfiguration.filterValues { false }.any { it.key == this.subjectInstanceId }) return false
                 if (this is TimetableLesson) {
                     val subjectInstances = profile.subjectInstanceConfiguration.mapKeys { profile.getSubjectInstance(it.key) }
@@ -126,7 +120,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
                 }
             }
             is Profile.TeacherProfile -> {
-                if (profile.teacher !in this.teacherIds) return false
+                if (profile.teacher.id !in this.teachers.map { it.id }) return false
             }
         }
         return true

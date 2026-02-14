@@ -42,7 +42,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.VPP_ID_AUTH_URL
-import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.feature.main.ui.MainScreen
@@ -69,7 +68,7 @@ fun ProfileScreen(
         contentPadding = contentPadding,
         onEvent = viewModel::onEvent,
         onOpenSettings = remember { { navHostController.navigate(MainScreen.Settings) } },
-        onOpenGrades = remember(state.currentProfile?.id) { { navHostController.navigate(MainScreen.Grades((state.currentProfile as Profile.StudentProfile).vppIdId!!)) } }
+        onOpenGrades = remember(state.currentProfile?.id) { { navHostController.navigate(MainScreen.Grades((state.currentProfile as Profile.StudentProfile).vppId!!.id)) } }
     )
 }
 
@@ -166,14 +165,13 @@ private fun ProfileContent(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        val vppId = state.currentProfile.vppId?.collectAsResultingFlowOld()?.value
-                        if (vppId is VppId.Active) {
+                        if (state.currentProfile.vppId is VppId.Active) {
                             val subjectInstances = state.currentProfile.subjectInstances
                                 .map { it.map { subjectInstance -> subjectInstance.subject }.toSet() }
                                 .distinctUntilChanged()
                                 .collectAsState(emptySet()).value
 
-                            if (vppId.schulverwalterConnection != null) {
+                            if (state.currentProfile.vppId.schulverwalterConnection != null) {
                                 GradesCard(
                                     modifier = Modifier
                                         .padding(horizontal = 16.dp),

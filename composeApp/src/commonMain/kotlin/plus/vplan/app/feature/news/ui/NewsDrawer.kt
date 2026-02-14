@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,19 +23,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.cache.collectAsSingleFlow
 import plus.vplan.app.ui.components.FullscreenDrawer
-import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
@@ -172,18 +166,10 @@ fun NewsDrawer(
                             modifier = Modifier.size(MaterialTheme.typography.labelLarge.lineHeight.toDp()),
                             tint = MaterialTheme.colorScheme.outline
                         )
-                        val schools by state.news.schools.collectAsSingleFlow()
-                        if (state.news.schoolIds.isNotEmpty() && schools.isEmpty()) {
-                            ShimmerLoader(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(MaterialTheme.typography.labelLarge.lineHeight.toDp())
-                                    .clip(RoundedCornerShape(50))
-                            )
-                        } else Text(
+                        Text(
                             text = buildString {
-                                if (state.news.schoolIds.isEmpty()) append("Alle Schulen")
-                                else append(schools.map { it.name }.sorted().joinToString())
+                                if (state.news.schools.isEmpty()) append("Alle Schulen")
+                                else append(state.news.schools.map { it.name }.sorted().joinToString())
                             },
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.outline

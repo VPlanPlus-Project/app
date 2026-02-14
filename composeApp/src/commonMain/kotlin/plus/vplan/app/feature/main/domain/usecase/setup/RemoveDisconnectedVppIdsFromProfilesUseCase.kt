@@ -1,10 +1,7 @@
 package plus.vplan.app.feature.main.domain.usecase.setup
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.ProfileRepository
 
 /**
@@ -18,10 +15,9 @@ class RemoveDisconnectedVppIdsFromProfilesUseCase(
     suspend operator fun invoke() {
         profileRepository.getAll().first()
             .filterIsInstance<Profile.StudentProfile>()
-            .filter { it.vppIdId != null }
+            .filter { it.vppId != null }
             .forEach { profile ->
-                val vppId = profile.vppId!!.getFirstValueOld()
-                if (vppId == null || vppId !is VppId.Active) profileRepository.updateVppId(profile.id, null)
+                if (profile.vppId == null) profileRepository.updateVppId(profile.id, null)
             }
     }
 }

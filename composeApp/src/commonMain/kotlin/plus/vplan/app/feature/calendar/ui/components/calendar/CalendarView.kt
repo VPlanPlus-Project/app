@@ -197,8 +197,6 @@ fun CalendarView(
                                         lessons.forEachIndexed { i, lesson ->
                                             val y = (lesson.lessonTime.start.inWholeMinutes().toFloat() - start.inWholeMinutes()) * minute
                                             val groups = remember(lesson.lesson.groupIds) { lesson.lesson.groups }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Group>>().map { it.data }
-                                            val rooms = remember(lesson.lesson.roomIds) { lesson.lesson.rooms }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Room>>().map { it.data }
-                                            val teachers = remember(lesson.lesson.teacherIds) { lesson.lesson.teachers }.collectAsState(emptyList()).value.filterIsInstance<AliasState.Done<Teacher>>().map { it.data }
                                             Box(
                                                 modifier = Modifier
                                                     .width(availableWidth / lesson.of)
@@ -261,21 +259,21 @@ fun CalendarView(
                                                                             style = MaterialTheme.typography.labelMedium
                                                                         )
                                                                     }
-                                                                    if (rooms.isNotEmpty()) Box(
+                                                                    if (lesson.lesson.rooms.orEmpty().isNotEmpty()) Box(
                                                                         modifier = Modifier.height(itemHeight),
                                                                         contentAlignment = Alignment.BottomStart
                                                                     ) {
                                                                         Text(
-                                                                            text = rooms.joinToString { it.name },
+                                                                            text = lesson.lesson.rooms.orEmpty().joinToString { it.name },
                                                                             style = MaterialTheme.typography.labelMedium
                                                                         )
                                                                     }
-                                                                    if (teachers.isNotEmpty()) Box(
+                                                                    if (lesson.lesson.teachers.isNotEmpty()) Box(
                                                                         modifier = Modifier.height(itemHeight),
                                                                         contentAlignment = Alignment.BottomStart
                                                                     ) {
                                                                         Text(
-                                                                            text = teachers.joinToString { it.name },
+                                                                            text = lesson.lesson.teachers.joinToString { it.name },
                                                                             style = MaterialTheme.typography.labelMedium
                                                                         )
                                                                     }
@@ -384,7 +382,6 @@ fun CalendarView(
                         imageVector = Res.drawable.info,
                         title = "Informationen deiner Schule",
                         text = info,
-                        shadow = false
                     )
                 }
 

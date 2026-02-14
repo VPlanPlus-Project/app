@@ -24,7 +24,7 @@ data class EmbeddedTimetableLesson(
             value = DbTimetableTeacherCrossover::class
         ),
         entity = DbTeacher::class
-    ) val teachers: List<DbTeacher>,
+    ) val teachers: List<EmbeddedTeacher>,
     @Relation(
         parentColumn = "id",
         entityColumn = "id",
@@ -34,7 +34,7 @@ data class EmbeddedTimetableLesson(
             value = DbTimetableRoomCrossover::class
         ),
         entity = DbRoom::class
-    ) val rooms: List<DbRoom>,
+    ) val rooms: List<EmbeddedRoom>,
     @Relation(
         parentColumn = "id",
         entityColumn = "timetable_lesson_id",
@@ -57,8 +57,8 @@ data class EmbeddedTimetableLesson(
             dayOfWeek = timetableLesson.dayOfWeek,
             weekId = timetable.weekId,
             subject = timetableLesson.subject,
-            teacherIds = teachers.map { it.id },
-            roomIds = rooms.map { it.id },
+            teachers = teachers.map { it.toModel() },
+            rooms = rooms.map { it.toModel() },
             groupIds = groups.map { it.groupId },
             timetableId = timetableLesson.timetableId,
             weekType = timetableLesson.weekType,

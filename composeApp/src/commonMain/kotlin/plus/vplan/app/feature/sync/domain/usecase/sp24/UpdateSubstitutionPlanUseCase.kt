@@ -12,7 +12,6 @@ import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
 import plus.vplan.app.domain.data.AliasProvider
 import plus.vplan.app.domain.data.Response
@@ -78,7 +77,7 @@ class UpdateSubstitutionPlanUseCase(
 
         val studentProfilesForSchool = profileRepository.getAll().first()
         .filterIsInstance<Profile.StudentProfile>()
-            .filter { it.getSchool().getFirstValue()?.id == sp24School.id }
+            .filter { it.school.id == sp24School.id }
 
         dates.forEach forEachDate@{ date ->
             val week = weekRepository.getBySchool(sp24School.id).first().firstOrNull { date in it.start..it.end } ?: run {
@@ -141,9 +140,9 @@ class UpdateSubstitutionPlanUseCase(
                     weekId = week?.id,
                     subject = lesson.subject,
                     isSubjectChanged = lesson.subjectChanged,
-                    teacherIds = teachers.filter { it.name in lesson.teachers }.map { it.id },
+                    teachers = teachers.filter { it.name in lesson.teachers },
                     isTeacherChanged = lesson.teachersChanged,
-                    roomIds = rooms.filter { it.name in lesson.rooms }.map { it.id },
+                    rooms = rooms.filter { it.name in lesson.rooms },
                     isRoomChanged = lesson.roomsChanged,
                     groupIds = groups.filter { it.name in lesson.classes }.map { it.id },
                     subjectInstanceId = lesson.subjectInstanceId?.let { subjectInstances.firstOrNull { it.aliases.any { alias -> alias.provider == AliasProvider.Sp24 && alias.version == 1 && alias.value.split("/").last() == lesson.subjectInstanceId.toString() } } }?.id,
@@ -167,7 +166,7 @@ class UpdateSubstitutionPlanUseCase(
 
             if (allowNotification) profileRepository.getAll().first()
                 .filterIsInstance<Profile.StudentProfile>()
-                .filter { it.getSchool().getFirstValue()?.id == sp24School.id }
+                .filter { it.school.id == sp24School.id }
                 .forEach forEachProfile@{ profile ->
                     val old = oldPlan[profile.id] ?: return@forEachProfile
                     val new = newPlan[profile.id] ?: return@forEachProfile
@@ -201,13 +200,13 @@ class UpdateSubstitutionPlanUseCase(
                                     append(lesson.lessonNumber)
                                     append(". ")
                                     append(lesson.subject ?: "Entfall")
-                                    if (lesson.teacherIds.isNotEmpty()) {
+                                    if (lesson.teachers.isNotEmpty()) {
                                         append(" mit ")
-                                        append(lesson.teachers.first().filterIsInstance<AliasState.Done<Teacher>>().joinToString(", ") { it.data.name })
+                                        append(lesson.teachers.joinToString(", ") { it.name })
                                     }
-                                    if (lesson.roomIds.isNotEmpty()) {
+                                    if (lesson.rooms.isNotEmpty()) {
                                         append(" in ")
-                                        append(lesson.rooms.first().filterIsInstance<AliasState.Done<Room>>().joinToString(", ") { it.data.name })
+                                        append(lesson.rooms.joinToString(", ") { it.name })
                                     }
                                 }
                                 if (newDay?.info != null) append("\n\nℹ\uFE0F ${newDay.info}")

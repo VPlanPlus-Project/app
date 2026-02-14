@@ -127,8 +127,8 @@ class UpdateTimetableUseCase(
                                 dayOfWeek = DayOfWeek(lesson.dayOfWeek.isoDayNumber),
                                 weekType = lesson.weekType,
                                 subject = lesson.subject,
-                                roomIds = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
-                                teacherIds = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
+                                rooms = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } },
+                                teachers = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } },
                                 groupIds = lessonGroups,
                                 timetableId = timetableMetadata.id,
                                 limitedToWeekIds = lesson.limitToWeekNumber

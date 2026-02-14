@@ -88,7 +88,7 @@ class HomeworkDetailViewModel(
                 state.copy(
                     homework = homework,
                     profile = profile,
-                    canEdit = (homework is Homework.CloudHomework && homework.createdById == profile.vppIdId) || (homework is Homework.LocalHomework && homework.createdByProfileId == profile.id),
+                    canEdit = (homework is Homework.CloudHomework && homework.createdById == profile.vppId?.id) || (homework is Homework.LocalHomework && homework.createdByProfileId == profile.id),
                     initDone = true
                 )
             }.filterNotNull().collectLatest { state = it }
@@ -187,7 +187,6 @@ sealed class HomeworkDetailEvent {
 }
 
 private suspend fun Profile.StudentProfile.prefetch() {
-    this.getGroupItem()
     this.getSubjectInstances().onEach {
         it.getCourseItem()
         it.getTeacherItem()

@@ -7,7 +7,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.captureError
-import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -69,8 +68,7 @@ class SetupApplicationUseCase(
             }
 
         if (isFeatureEnabled("core_anonymous-user-profiles", true)) try {
-            val profiles = profileRepository.getAll().first().groupBy { it.getSchool().getFirstValue() }.mapNotNull { (school, profiles) ->
-                if (school == null) return@mapNotNull null
+            val profiles = profileRepository.getAll().first().groupBy { it.school }.mapNotNull { (school, profiles) ->
                 FirebaseUserProfiles(
                     school = school.name,
                     profiles = profiles.map { "${it.profileType}/${it.name}" }

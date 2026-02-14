@@ -2,18 +2,23 @@ package plus.vplan.app.feature.home.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
@@ -33,64 +38,74 @@ fun QuickActions(
     Column {
         FeedTitle(Res.drawable.zap, "Schnellaktionen")
         LazyRow(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item { Spacer(Modifier.width(8.dp)) }
             item {
-                androidx.compose.material3.FilledTonalButton(
-                    onClick = onNewHomeworkClicked,
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.book_open),
-                        contentDescription = null,
-                        modifier = Modifier.size(LocalTextStyle.current.lineHeight.toDp())
-                    )
-                    Spacer(Modifier.size(4.dp))
-                    Text("Neue Aufgabe")
-                }
+                QuickAction(
+                    drawable = Res.drawable.book_open,
+                    text = "Neue Homework",
+                    onClick = onNewHomeworkClicked
+                )
             }
             item {
-                androidx.compose.material3.FilledTonalButton(
-                    onClick = onNewAssessmentClicked,
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.notebook_text),
-                        contentDescription = null,
-                        modifier = Modifier.size(LocalTextStyle.current.lineHeight.toDp())
-                    )
-                    Spacer(Modifier.size(4.dp))
-                    Text("Neue Leistung")
-                }
+                QuickAction(
+                    drawable = Res.drawable.notebook_text,
+                    text = "Neue Leistung",
+                    onClick = onNewAssessmentClicked
+                )
             }
             item {
-                androidx.compose.material3.FilledTonalButton(
-                    onClick = onRoomSearchClicked,
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.door_open),
-                        contentDescription = null,
-                        modifier = Modifier.size(LocalTextStyle.current.lineHeight.toDp())
-                    )
-                    Spacer(Modifier.size(4.dp))
-                    Text("Freie Räume")
-                }
+                QuickAction(
+                    drawable = Res.drawable.door_open,
+                    text = "Freie Räume",
+                    onClick = onRoomSearchClicked
+                )
             }
             item {
-                androidx.compose.material3.FilledTonalButton(
-                    onClick = onFeedbackClicked,
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.message_square),
-                        contentDescription = null,
-                        modifier = Modifier.size(LocalTextStyle.current.lineHeight.toDp())
-                    )
-                    Spacer(Modifier.size(4.dp))
-                    Text("Feedback senden")
-                }
+                QuickAction(
+                    drawable = Res.drawable.message_square,
+                    text = "Feedback senden",
+                    onClick = onFeedbackClicked
+                )
             }
-            item {}
         }
     }
+}
+
+@Composable
+private fun QuickAction(
+    drawable: DrawableResource,
+    text: String,
+    onClick: () -> Unit
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        contentPadding = PaddingValues(horizontal = 16.dp)
+    ) {
+        Icon(
+            painter = painterResource(drawable),
+            contentDescription = null,
+            modifier = Modifier.size(LocalTextStyle.current.lineHeight.toDp())
+        )
+        Spacer(Modifier.size(8.dp))
+        Text(
+            text = text,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun QuickActionPreview() {
+    QuickAction(
+        drawable = Res.drawable.message_square,
+        text = "Feedback senden",
+        onClick = {}
+    )
 }

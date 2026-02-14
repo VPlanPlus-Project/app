@@ -1,9 +1,12 @@
 package plus.vplan.app.data.source.database.model.embedded
 
 import androidx.room.Embedded
+import androidx.room.Junction
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbDay
+import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
+import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
@@ -13,14 +16,24 @@ data class EmbeddedSubstitutionPlanLesson(
     @Embedded val substitutionPlanLesson: DbSubstitutionPlanLesson,
     @Relation(
         parentColumn = "id",
-        entityColumn = "substitution_plan_lesson_id",
-        entity = DbSubstitutionPlanTeacherCrossover::class
-    ) val teachers: List<DbSubstitutionPlanTeacherCrossover>,
+        entityColumn = "id",
+        entity = DbTeacher::class,
+        associateBy = Junction(
+            value = DbSubstitutionPlanTeacherCrossover::class,
+            parentColumn = "teacher_id",
+            entityColumn = "substitution_plan_lesson_id"
+        ),
+    ) val teachers: List<EmbeddedTeacher>,
     @Relation(
         parentColumn = "id",
-        entityColumn = "substitution_plan_lesson_id",
-        entity = DbSubstitutionPlanRoomCrossover::class
-    ) val rooms: List<DbSubstitutionPlanRoomCrossover>,
+        entityColumn = "id",
+        entity = DbRoom::class,
+        associateBy = Junction(
+            value = DbSubstitutionPlanRoomCrossover::class,
+            parentColumn = "room_id",
+            entityColumn = "substitution_plan_lesson_id"
+        ),
+    ) val rooms: List<EmbeddedRoom>,
     @Relation(
         parentColumn = "id",
         entityColumn = "substitution_plan_lesson_id",
@@ -39,9 +52,9 @@ data class EmbeddedSubstitutionPlanLesson(
             weekId = day.weekId,
             subject = substitutionPlanLesson.subject,
             isSubjectChanged = substitutionPlanLesson.isSubjectChanged,
-            teacherIds = teachers.map { it.teacherId },
+            teachers = teachers.map { it.toModel() },
             isTeacherChanged = substitutionPlanLesson.isTeacherChanged,
-            roomIds = rooms.map { it.roomId },
+            rooms = rooms.map { it.toModel() },
             isRoomChanged = substitutionPlanLesson.isRoomChanged,
             groupIds = groups.map { it.groupId },
             subjectInstanceId = substitutionPlanLesson.subjectInstanceId,

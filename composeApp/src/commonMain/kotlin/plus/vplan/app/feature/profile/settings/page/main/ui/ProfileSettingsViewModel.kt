@@ -44,8 +44,8 @@ class ProfileSettingsViewModel(
             getProfileByIdUseCase(Uuid.parse(profileId)).collectLatest { profile ->
                 logger.d { "Got profile $profile" }
                 state = state.copy(profile = profile)
-                if (profile is Profile.StudentProfile && profile.vppIdId != null) {
-                    checkIfVppIdIsStillConnectedUseCase(vppIdRepository.getById(profile.vppIdId, ResponsePreference.Fast).getFirstValueOld() as VppId.Active).let {
+                if (profile is Profile.StudentProfile && profile.vppId != null) {
+                    checkIfVppIdIsStillConnectedUseCase(vppIdRepository.getById(profile.vppId.id, ResponsePreference.Fast).getFirstValueOld() as VppId.Active).let {
                         state = state.copy(isVppIdStillConnected = it)
                     }
                 }

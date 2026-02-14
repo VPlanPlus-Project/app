@@ -51,13 +51,12 @@ class NewHomeworkViewModel(
                 state.update { state ->
                     state.copy(
                         currentProfile = (currentProfile as? Profile.StudentProfile).also {
-                            it?.getGroupItem()
                             it?.getSubjectInstances()?.onEach { subjectInstance ->
                                 subjectInstance.getTeacherItem()
                                 subjectInstance.getCourseItem()
                             }
                         },
-                        isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppIdId == null) null else true,
+                        isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppId == null) null else true,
                         canShowVppIdBanner = canShowVppIdBanner
                     )
                 }
