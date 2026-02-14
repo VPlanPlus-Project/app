@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.domain.repository.LessonTimeRepository
 
 class LessonTimeSource(

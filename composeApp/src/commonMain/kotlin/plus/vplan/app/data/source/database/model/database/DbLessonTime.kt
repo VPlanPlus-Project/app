@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import kotlinx.datetime.LocalTime
-import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.core.model.LessonTime
 import kotlin.uuid.Uuid
 
 @Entity(
