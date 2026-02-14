@@ -1,8 +1,6 @@
-package plus.vplan.app.domain.model
+package plus.vplan.app.core.model
 
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.core.model.DataTag
-import plus.vplan.app.core.model.Item
 import kotlin.uuid.Uuid
 
 data class Holiday(

@@ -7,7 +7,7 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbDay
 import plus.vplan.app.data.source.database.model.database.DbHoliday
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Holiday
+import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.domain.repository.DayRepository
 import kotlin.uuid.Uuid
 
