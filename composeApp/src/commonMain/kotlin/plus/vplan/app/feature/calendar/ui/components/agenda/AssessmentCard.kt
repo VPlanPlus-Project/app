@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.format
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity

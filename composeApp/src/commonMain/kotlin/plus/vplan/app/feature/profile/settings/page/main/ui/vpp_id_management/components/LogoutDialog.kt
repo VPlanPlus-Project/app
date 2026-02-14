@@ -29,7 +29,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.VppIdManagementEvent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.logout

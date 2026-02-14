@@ -8,8 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherAlias
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedTeacher
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.core.model.AliasProvider
 import kotlin.uuid.Uuid
 
 @Dao

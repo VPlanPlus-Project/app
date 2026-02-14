@@ -9,10 +9,10 @@ import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.data.Item
+import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.DataTag
+import plus.vplan.app.core.model.Item
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import kotlin.uuid.Uuid
 

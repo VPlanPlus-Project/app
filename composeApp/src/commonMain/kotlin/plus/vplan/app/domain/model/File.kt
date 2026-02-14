@@ -3,8 +3,8 @@
 package plus.vplan.app.domain.model
 
 import androidx.compose.ui.graphics.ImageBitmap
-import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.data.Item
+import plus.vplan.app.core.model.DataTag
+import plus.vplan.app.core.model.Item
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 

@@ -3,8 +3,8 @@ package plus.vplan.app.feature.profile.page.domain.usecase
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Profile
 
 class GetProfilesUseCase {

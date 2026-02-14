@@ -9,7 +9,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.AppBuildConfig
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.NewsRepository

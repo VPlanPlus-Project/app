@@ -22,9 +22,9 @@ import plus.vplan.app.data.source.database.model.database.DbSchoolSp24Acess
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.SchoolDbDto
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.VppSchoolDto

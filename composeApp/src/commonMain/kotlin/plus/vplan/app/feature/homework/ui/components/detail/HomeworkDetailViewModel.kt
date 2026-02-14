@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile

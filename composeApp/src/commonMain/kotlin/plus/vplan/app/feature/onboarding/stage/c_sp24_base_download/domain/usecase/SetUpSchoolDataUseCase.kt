@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.model.Holiday
-import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupDbDto
 import plus.vplan.app.domain.repository.GroupRepository

@@ -1,6 +1,6 @@
 package plus.vplan.app.feature.settings.page.school.domain.usecase
 
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
 import plus.vplan.lib.sp24.source.Authentication

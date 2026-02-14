@@ -1,7 +1,7 @@
 package plus.vplan.app.utils
 
 import kotlinx.datetime.LocalTime
-import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Lesson
 
 suspend fun List<Lesson>.findCurrentLessons(atTime: LocalTime) = this

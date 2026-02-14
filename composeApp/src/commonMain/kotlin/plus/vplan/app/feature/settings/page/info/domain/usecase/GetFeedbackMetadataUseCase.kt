@@ -5,9 +5,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.AppBuildConfig
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.data.getByProvider
+import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.domain.model.ProfileType
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.host.domain.usecase.HasProfileUseCase

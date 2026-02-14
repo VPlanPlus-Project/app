@@ -3,7 +3,7 @@ package plus.vplan.app.feature.grades.domain.usecase
 import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository

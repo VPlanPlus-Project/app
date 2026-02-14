@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase
 
 import kotlinx.coroutines.runBlocking
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.model.Profile
 

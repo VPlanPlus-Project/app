@@ -62,8 +62,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day

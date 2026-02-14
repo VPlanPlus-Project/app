@@ -6,10 +6,10 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.captureError
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.model.Timetable
 import plus.vplan.app.domain.model.Week
 import plus.vplan.app.domain.repository.GroupRepository

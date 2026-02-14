@@ -1,7 +1,8 @@
 package plus.vplan.app.domain.model
 
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.getFirstValue
 import kotlin.uuid.Uuid
 
 data class Subject(

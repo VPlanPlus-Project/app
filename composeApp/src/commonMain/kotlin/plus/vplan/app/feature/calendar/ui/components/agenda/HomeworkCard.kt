@@ -43,8 +43,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework

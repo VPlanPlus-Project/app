@@ -40,7 +40,7 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.AliasState
+import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.ProfileType

@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState

@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.SchoolRepository
 import kotlin.uuid.Uuid
 

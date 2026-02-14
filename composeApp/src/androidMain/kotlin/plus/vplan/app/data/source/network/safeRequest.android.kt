@@ -1,6 +1,6 @@
 package plus.vplan.app.data.source.network
 
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException

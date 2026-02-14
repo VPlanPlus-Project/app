@@ -3,11 +3,11 @@ package plus.vplan.app.data.service
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.domain.cache.AliasState
+import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.SchoolDbDto
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.service.SchoolService

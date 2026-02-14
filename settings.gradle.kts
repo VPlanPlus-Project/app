@@ -55,3 +55,15 @@ dependencyResolutionManagement {
 
 include(":composeApp")
 include(":androidApp")
+
+// Core modules
+include(":core:model")
+// include(":core:common")
+// include(":core:domain")
+// include(":core:data")
+// include(":core:database")
+// include(":core:network")
+// include(":core:sync")
+// include(":core:di")
+// include(":core:ui")
+// include(":core:navigation")

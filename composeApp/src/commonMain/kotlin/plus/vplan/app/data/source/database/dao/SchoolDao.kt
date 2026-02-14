@@ -10,7 +10,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
 import plus.vplan.app.data.source.database.model.database.DbSchoolSp24Acess
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSchool
-import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.core.model.AliasProvider
 import kotlin.uuid.Uuid
 
 @Dao

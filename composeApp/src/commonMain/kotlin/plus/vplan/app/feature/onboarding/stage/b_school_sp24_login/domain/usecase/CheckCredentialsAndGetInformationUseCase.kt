@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.domain.usecase
 
 import plus.vplan.app.capture
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.domain.repository.Sp24CredentialsState

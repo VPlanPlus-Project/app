@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import plus.vplan.app.data.repository.FileDownloadProgress
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.FileRepository

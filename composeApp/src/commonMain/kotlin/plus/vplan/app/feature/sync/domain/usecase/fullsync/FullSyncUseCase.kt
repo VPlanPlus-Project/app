@@ -14,9 +14,9 @@ import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
 import plus.vplan.app.captureError
 import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupDbDto
@@ -139,8 +139,8 @@ class FullSyncUseCase(
 
                             logger.i { "Checking stundenplan24.de credentials for ${school.id} (${school.name})" }
                             val result = checkSp24CredentialsUseCase(client, Authentication(school.sp24Id, school.username, school.password))
-                            if (result !is plus.vplan.app.domain.data.Response.Success) {
-                                if (result is plus.vplan.app.domain.data.Response.Error.OnlineError.ConnectionError) {
+                            if (result !is plus.vplan.app.core.model.Response.Success) {
+                                if (result is plus.vplan.app.core.model.Response.Error.OnlineError.ConnectionError) {
                                     logger.w { "No internet connection: $result, aborting" }
                                     return@forEachSchool
                                 }

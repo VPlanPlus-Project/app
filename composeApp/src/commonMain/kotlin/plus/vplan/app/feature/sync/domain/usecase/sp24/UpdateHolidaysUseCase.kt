@@ -1,9 +1,9 @@
 package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Holiday
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.lib.sp24.source.Authentication

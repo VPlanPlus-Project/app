@@ -33,12 +33,12 @@ import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
 import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.SubjectInstanceDbDto

@@ -1,9 +1,7 @@
-package plus.vplan.app.domain.data
+package plus.vplan.app.core.model
 
 import io.ktor.http.decodeURLQueryComponent
 import io.ktor.http.encodeURLPath
-import plus.vplan.app.data.source.database.converters.AliasPrefixConverter
-import plus.vplan.app.domain.cache.DataTag
 import kotlin.uuid.Uuid
 
 /**

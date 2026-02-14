@@ -7,9 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.usecase.CheckEMailStructureUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.settings.page.info.domain.usecase.FeedbackMetadata

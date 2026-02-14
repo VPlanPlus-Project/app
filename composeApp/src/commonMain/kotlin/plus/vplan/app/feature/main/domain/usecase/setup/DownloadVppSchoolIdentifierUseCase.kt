@@ -2,8 +2,8 @@ package plus.vplan.app.feature.main.domain.usecase.setup
 
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.repository.SchoolDbDto
 import plus.vplan.app.domain.repository.SchoolRepository
 

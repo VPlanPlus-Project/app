@@ -1,6 +1,6 @@
 package plus.vplan.app.domain.repository
 
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.lib.sp24.model.splan.student.SPlanStudentData
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client

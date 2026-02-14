@@ -1,9 +1,9 @@
 package plus.vplan.app.data.source.network
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.SchoolRepository
 
 /**

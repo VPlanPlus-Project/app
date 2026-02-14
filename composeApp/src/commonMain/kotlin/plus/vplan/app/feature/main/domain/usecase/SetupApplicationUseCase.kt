@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.captureError
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys

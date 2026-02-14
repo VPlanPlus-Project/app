@@ -1,8 +1,8 @@
 package plus.vplan.app.data.source.network
 
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.VppSchoolAuthentication
 
 class GenericAuthenticationProvider(
     private val schoolAuthenticationProvider: SchoolAuthenticationProvider,

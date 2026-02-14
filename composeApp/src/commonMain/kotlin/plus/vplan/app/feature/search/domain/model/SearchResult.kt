@@ -1,6 +1,6 @@
 package plus.vplan.app.feature.search.domain.model
 
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import kotlin.uuid.Uuid

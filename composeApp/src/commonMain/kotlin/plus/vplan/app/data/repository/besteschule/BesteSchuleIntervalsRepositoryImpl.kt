@@ -18,7 +18,7 @@ import org.koin.core.component.inject
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteSchuleInterval
 import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteschuleIntervalUser
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.domain.model.besteschule.api.ApiStudentData
 import plus.vplan.app.domain.repository.base.ResponsePreference

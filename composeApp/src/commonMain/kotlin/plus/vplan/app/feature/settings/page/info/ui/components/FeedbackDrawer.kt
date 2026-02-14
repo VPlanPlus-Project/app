@@ -55,9 +55,9 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
