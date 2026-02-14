@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.model.Holiday
+import plus.vplan.app.core.model.Holiday
 import kotlin.uuid.Uuid
 
 @Entity(
