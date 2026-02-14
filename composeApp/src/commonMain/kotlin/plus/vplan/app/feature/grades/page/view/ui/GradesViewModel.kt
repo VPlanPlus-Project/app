@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.grades.page.view.ui
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
@@ -110,13 +111,7 @@ class GradesViewModel(
                         return@collectLatest
                     }
 
-                    besteSchuleGradesRepository.getGrades(
-                        responsePreference = ResponsePreference.Fast,
-                        contextBesteschuleUserId = schulverwalterUser.userId,
-                        contextBesteschuleAccessToken = schulverwalterUser.accessToken
-                    )
-                        .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
-                        .map { it.data }
+                    besteSchuleGradesRepository.getGradesFromCache(userId = schulverwalterUser.userId)
                         .collectLatest { allGrades ->
                             val intervalDataMap = intervalsForYear.associateWith { interval ->
                                 calculateIntervalData(interval, intervalsForYear, allGrades)
@@ -143,14 +138,11 @@ class GradesViewModel(
                         )
                             .filterIsInstance<Response.Success<List<BesteSchuleYear>>>()
                             .map { it.data },
-                        besteSchuleIntervalsRepository.getIntervals(
-                            responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleAccessToken = currentSchulverwalterUser.accessToken,
-                            contextBesteschuleUserId = currentSchulverwalterUser.userId
+                        besteSchuleIntervalsRepository.getIntervalsFromCache(
+                            userId = currentSchulverwalterUser.userId
                         )
                     ) { years, intervals ->
-                        val intervalIdsForUser =
-                            (intervals as? Response.Success)?.data?.map { it.id }.orEmpty()
+                        val intervalIdsForUser = intervals.map { it.id }
                         years.filter { year -> year.intervalIds.any { it in intervalIdsForUser } }
                     }.collectLatest { years ->
                         val allIntervals = withContext(Dispatchers.Default) {
@@ -446,14 +438,10 @@ class GradesViewModel(
         val allIntervalsInYear = currentState.intervalsForSelectedYear.keys.toList()
         val schulverwalterUser = currentSchulverwalterUser.value ?: return
 
-        val allGrades = besteSchuleGradesRepository.getGrades(
-            responsePreference = ResponsePreference.Fast,
-            contextBesteschuleUserId = schulverwalterUser.userId,
-            contextBesteschuleAccessToken = schulverwalterUser.accessToken
+        val allGrades = besteSchuleGradesRepository.getGradesFromCache(
+            userId = schulverwalterUser.userId,
         )
-            .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
             .first()
-            .data
 
         val newData = calculateIntervalData(interval, allIntervalsInYear, allGrades)
 
@@ -472,14 +460,10 @@ class GradesViewModel(
         val schulverwalterUser = currentSchulverwalterUser.value ?: return
 
         val allGrades = withContext(Dispatchers.IO) {
-            besteSchuleGradesRepository.getGrades(
-                responsePreference = ResponsePreference.Fast,
-                contextBesteschuleUserId = schulverwalterUser.userId,
-                contextBesteschuleAccessToken = schulverwalterUser.accessToken
+            besteSchuleGradesRepository.getGradesFromCache(
+                userId = schulverwalterUser.userId,
             )
-                .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
                 .first()
-                .data
         }
 
         val updatedIntervalsMap = withContext(Dispatchers.Default) {
@@ -521,6 +505,7 @@ data class IntervalData(
     val latestGrades: List<BesteSchuleGrade>
 )
 
+@Immutable
 data class Subject(
     val id: Int,
     val average: Double?,

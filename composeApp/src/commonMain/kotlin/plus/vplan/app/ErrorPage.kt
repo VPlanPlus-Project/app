@@ -61,7 +61,7 @@ fun ErrorPage(
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Text(
-            text = "Das tut uns leid. VPlanPlus muss neugestartet werden. Ein Fehlerbericht wurde erstellt und versant.",
+            text = "Das tut uns leid. VPlanPlus muss neu gestartet werden. Ein Fehlerbericht wurde erstellt und versendet.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )

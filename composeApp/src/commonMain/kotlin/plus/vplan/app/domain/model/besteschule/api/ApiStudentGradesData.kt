@@ -14,6 +14,25 @@ data class ApiStudentGradesData(
     @SerialName("id") val id: Int,
     @SerialName("given_at") val givenAt: String
 ) {
+    val isOptional: Boolean
+        get() = this.value.startsWith("(") && this.value.endsWith(")")
+
+    val cleanedValue: String?
+        get() {
+            val regexForGradeInParentheses = "\\((.*?)\\)".toRegex()
+            val matchResult = regexForGradeInParentheses.find(this.value)
+
+            val value =
+                if (matchResult != null) matchResult.groupValues[1]
+                else if (this.value == "-") null
+                else this.value
+
+            if (matchResult != null) matchResult.groupValues[1] else this.value
+
+            return value
+        }
+
+
     @Serializable
     data class Teacher(
         @SerialName("id") val id: Int,

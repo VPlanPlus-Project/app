@@ -10,6 +10,7 @@ interface BesteSchuleYearsRepository {
     suspend fun getYearsFromApi(schulverwalterAccessToken: String): Response<List<ApiYear>>
     suspend fun addYearsToCache(years: Set<BesteSchuleYear>)
     fun getYearFromCache(yearId: Int): Flow<BesteSchuleYear?>
+    fun getYearsFromCache(): Flow<List<BesteSchuleYear>>
 
 
     /**

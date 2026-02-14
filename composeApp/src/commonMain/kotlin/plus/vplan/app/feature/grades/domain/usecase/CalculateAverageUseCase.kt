@@ -8,7 +8,7 @@ import plus.vplan.app.domain.model.besteschule.BesteSchuleSubject
 class CalculateAverageUseCase {
     suspend operator fun invoke(grades: List<BesteSchuleGrade>, interval: BesteSchuleInterval, additionalGrades: List<CalculatorGrade> = emptyList()) = invoke(grades.map { CalculatorGrade.ActualGrade(it) } + additionalGrades, interval)
 
-    suspend operator fun invoke(grades: List<CalculatorGrade>, interval: BesteSchuleInterval): Double {
+    suspend operator fun invoke(grades: List<CalculatorGrade>, interval: BesteSchuleInterval): Double? = run {
         val gradesForInterval = grades.filter {
             val intervalForGrade = when (it) {
                 is CalculatorGrade.ActualGrade -> it.grade.collection.first()!!.interval.first()!!
@@ -57,8 +57,8 @@ class CalculateAverageUseCase {
             subjectAverages.add(categoryAverages.sum())
         }
 
-        return subjectAverages.average()
-    }
+        return@run subjectAverages.average()
+    }.let { if (it.isNaN()) return@let null else return@let it }
 }
 
 private data class Category(

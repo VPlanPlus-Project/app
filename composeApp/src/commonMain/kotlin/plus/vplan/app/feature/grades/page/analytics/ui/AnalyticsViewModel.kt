@@ -57,13 +57,9 @@ class AnalyticsViewModel(
                 }
                 .collectLatest { vppId ->
                     launch {
-                        besteSchuleIntervalsRepository.getIntervals(
-                            responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection.userId
+                        besteSchuleIntervalsRepository.getIntervalsFromCache(
+                            userId = vppId.schulverwalterConnection!!.userId
                         )
-                            .filterIsInstance<Response.Success<List<BesteSchuleInterval>>>()
-                            .map { it.data }
                             .collectLatest { intervals ->
                                 state = state.copy(
                                     intervals = intervals,
@@ -73,10 +69,8 @@ class AnalyticsViewModel(
                     }.let(activeJobs::add)
 
                     launch {
-                        besteSchuleGradesRepository.getGrades(
-                            responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection.userId
+                        besteSchuleGradesRepository.getGradesFromCache(
+                            userId = vppId.schulverwalterConnection!!.userId
                         )
                             .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
                             .map { it.data }

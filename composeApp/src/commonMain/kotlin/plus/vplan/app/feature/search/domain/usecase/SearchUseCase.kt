@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package plus.vplan.app.feature.search.domain.usecase
 
 import androidx.compose.ui.util.fastFilterNotNull
@@ -8,7 +6,6 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -19,23 +16,19 @@ import plus.vplan.app.App
 import plus.vplan.app.domain.cache.CacheState
 import plus.vplan.app.domain.cache.getFirstValue
 import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
-import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.utils.now
-import kotlin.uuid.ExperimentalUuidApi
 
 class SearchUseCase(
     private val groupRepository: GroupRepository,
@@ -116,14 +109,9 @@ class SearchUseCase(
                 }
 
                 if (searchRequest.assessmentType == null) launch {
-                    besteSchuleGradesRepository.getGrades(
-                        responsePreference = ResponsePreference.Fast,
-                        contextBesteschuleAccessToken = null,
-                        contextBesteschuleUserId = null
-                    )
-                        .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
+                    besteSchuleGradesRepository.getGradesFromCache(userId = null)
                         .map { response ->
-                            response.data.filter { grade -> query.lowercase() in grade.collection.first()!!.name }
+                            response.filter { grade -> query.lowercase() in grade.collection.first()!!.name }
                         }
                         .collectLatest { grades ->
                             results.value = results.value.plus(SearchResult.Type.Grade to grades.map { SearchResult.Grade(it) })

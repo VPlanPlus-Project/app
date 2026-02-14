@@ -72,6 +72,11 @@ class BesteSchuleYearsRepositoryImpl : BesteSchuleYearsRepository, KoinComponent
         }
     }
 
+    override fun getYearsFromCache(): Flow<List<BesteSchuleYear>> {
+        return vppDatabase.besteSchuleYearDao.getAll()
+            .map { it.map { it.toModel() } }
+    }
+
     override suspend fun getYearsFromApi(schulverwalterAccessToken: String): Response<List<ApiYear>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {

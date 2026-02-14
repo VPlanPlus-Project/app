@@ -1,7 +1,10 @@
 package plus.vplan.app.feature.sync.di
 
 import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
 import org.koin.dsl.module
+import plus.vplan.app.data.repository.besteschule.BesteSchuleSyncCoordinatorImpl
+import plus.vplan.app.domain.repository.besteschule.BesteSchuleSyncCoordinator
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
@@ -25,6 +28,7 @@ val syncModule = module {
 
     singleOf(::UpdateHomeworkUseCase)
     singleOf(::UpdateAssessmentsUseCase)
+    singleOf(::BesteSchuleSyncCoordinatorImpl).bind<BesteSchuleSyncCoordinator>()
     singleOf(::SyncGradesUseCase)
     singleOf(::FullSyncUseCase)
 }

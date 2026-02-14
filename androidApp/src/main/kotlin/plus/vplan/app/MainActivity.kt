@@ -67,10 +67,18 @@ class MainActivity : FragmentActivity() {
             val action = it.action
             val data = it.data
             Logger.d { "Action: $action, Data: $data" }
-            if (action == "android.intent.action.VIEW" && data.toString().startsWith("vpp://app/")) {
+
+            val vppAppUrlRegex = """^vpp://app(-dev)?/(?<path>.*)$""".toRegex()
+
+
+            if (action == "android.intent.action.VIEW" && vppAppUrlRegex.matches(data.toString())) {
                 val url = URLBuilder(data.toString())
-                if (data.toString().startsWith("vpp://app/auth/")) {
-                    val token = data.toString().substringAfter("vpp://app/auth/")
+                val regex = """^vpp://app(-dev)?/auth/(?<token>.*)$""".toRegex()
+                val matchResult = regex.find(data.toString())
+
+                if (matchResult != null) {
+                    val token = matchResult.groups["token"]!!.value
+
                     task = StartTask.VppIdLogin(token)
                 } else if (data.toString().startsWith("vpp://app/schulverwalter-reconnect")) {
                     val token = url.pathSegments.last()

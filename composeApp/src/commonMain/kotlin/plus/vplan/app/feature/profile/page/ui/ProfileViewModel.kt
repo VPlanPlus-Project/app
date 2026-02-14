@@ -9,19 +9,15 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.data.Response
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.School
 import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
-import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
@@ -70,27 +66,18 @@ class ProfileViewModel(
                     val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active ?: return@collectLatest
 
                     if (vppId.schulverwalterConnection != null) {
-                        val intervals = besteSchuleIntervalsRepository.getIntervals(
-                            responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection.userId,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection.accessToken
+                        val intervals = besteSchuleIntervalsRepository.getIntervalsFromCache(
+                            userId = vppId.schulverwalterConnection.userId,
                         )
-                            .filterIsInstance<Response.Success<List<BesteSchuleInterval>>>()
-                            .map { response -> response.data }
                             .first()
 
                         state = state.copy(
                             currentInterval = intervals.firstOrNull { interval -> LocalDate.now() in interval.from..interval.to }
                         )
 
-                        val grades = besteSchuleGradesRepository.getGrades(
-                            responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection.userId,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection.accessToken
-                        )
-                            .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
-                            .map { response -> response.data }
-                            .first()
+                        val grades = besteSchuleGradesRepository.getGradesFromCache(
+                            userId = vppId.schulverwalterConnection.userId,
+                        ).first()
 
                         state.currentInterval?.let { interval ->
                             state = state.copy(
