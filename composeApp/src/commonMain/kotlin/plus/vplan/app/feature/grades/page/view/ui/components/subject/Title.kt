@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.feature.grades.page.view.ui.components.GradeValue
 import plus.vplan.app.ui.components.SubjectIcon
