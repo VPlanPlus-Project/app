@@ -122,7 +122,7 @@ class SearchUseCase(
                 if (searchRequest.assessmentType == null) launch {
                     besteSchuleGradesRepository.getGradesFromCache(userId = null)
                         .map { response ->
-                            response.data.filter { grade -> query.lowercase() in grade.collection.first()!!.name }
+                            response.filter { grade -> query.lowercase() in grade.collection.first()!!.name }
                         }
                         .collectLatest { grades ->
                             results.value = results.value.plus(SearchResult.Type.Grade to grades.map { SearchResult.Grade(it) })

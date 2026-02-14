@@ -109,8 +109,7 @@ class SyncGradesUseCase(
                         val newGrade = gradesEligibleForNotification.first()
                         val gradeReceiverVppId = profileRepository.getAll().first()
                             .filterIsInstance<Profile.StudentProfile>()
-                            .map { it.vppId?.getFirstValueOld() }
-                            .filterIsInstance<VppId.Active>()
+                            .mapNotNull { it.vppId }
                             .firstOrNull { it.schulverwalterConnection?.userId == newGrade.schulverwalterUserId }
 
                         val collection = newGrade.collection.first()!!
