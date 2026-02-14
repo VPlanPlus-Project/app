@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.model.Teacher
+import plus.vplan.app.core.model.Teacher
 import kotlin.uuid.Uuid
 
 interface ProfileRepository {

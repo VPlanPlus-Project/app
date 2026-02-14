@@ -10,6 +10,7 @@ import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AliasedItem
 import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.model.Teacher
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
