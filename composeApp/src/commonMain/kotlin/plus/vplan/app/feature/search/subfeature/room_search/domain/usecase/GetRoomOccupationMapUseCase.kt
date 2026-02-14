@@ -19,7 +19,7 @@ import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.LessonTime
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.Room
+import plus.vplan.app.core.model.Room
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository

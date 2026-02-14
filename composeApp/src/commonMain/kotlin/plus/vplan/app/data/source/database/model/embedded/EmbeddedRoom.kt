@@ -4,7 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbRoomAlias
-import plus.vplan.app.domain.model.Room
+import plus.vplan.app.core.model.Room
 
 data class EmbeddedRoom(
     @Embedded val room: DbRoom,

@@ -36,7 +36,7 @@ import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.Room
+import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT
