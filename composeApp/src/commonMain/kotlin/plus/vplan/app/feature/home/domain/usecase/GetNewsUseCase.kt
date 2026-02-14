@@ -10,7 +10,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.domain.model.News
+import plus.vplan.app.core.model.News
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.utils.now
@@ -26,8 +26,8 @@ class GetNewsUseCase(
                 (news.schoolIds.isEmpty() || school.id in news.schoolIds) &&
                         LocalDate.now() >= news.dateFrom.toLocalDateTime(TimeZone.currentSystemDefault()).date &&
                         LocalDate.now() <= news.dateTo.toLocalDateTime(TimeZone.currentSystemDefault()).date &&
-                        news.versionFrom?.let { AppBuildConfig.APP_VERSION_CODE >= news.versionFrom } ?: true &&
-                        news.versionTo?.let { AppBuildConfig.APP_VERSION_CODE <= news.versionTo } ?: true
+                        news.versionFrom?.let { versionFrom -> AppBuildConfig.APP_VERSION_CODE >= versionFrom } ?: true &&
+                        news.versionTo?.let { versionTo -> AppBuildConfig.APP_VERSION_CODE <= versionTo } ?: true
             }
         }.distinctUntilChanged()
     }

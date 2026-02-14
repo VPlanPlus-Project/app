@@ -27,7 +27,7 @@ import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.News
+import plus.vplan.app.core.model.News
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.KeyValueRepository

@@ -95,7 +95,6 @@ import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
-import plus.vplan.app.domain.source.NewsSource
 import plus.vplan.app.domain.source.ProfileSource
 import plus.vplan.app.domain.source.RoomSource
 import plus.vplan.app.domain.source.SchoolSource
@@ -259,6 +258,5 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         App.substitutionPlanSource = SubstitutionPlanSource(koin.get())
         App.assessmentSource = AssessmentSource(koin.get())
         App.fileSource = FileSource(koin.get(), koin.get())
-        App.newsSource = NewsSource(koin.get())
     }
 }

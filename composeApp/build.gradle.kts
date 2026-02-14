@@ -33,6 +33,7 @@ kotlin {
         freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
         freeCompilerArgs.add("-Xcontext-parameters")
         freeCompilerArgs.add("-Xnested-type-aliases")
+        freeCompilerArgs.add("-Xexplicit-backing-fields")
         freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
     }
     
