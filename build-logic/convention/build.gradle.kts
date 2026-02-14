@@ -31,16 +31,8 @@ gradlePlugin {
             implementationClass = "ApplicationConfigPlugin"
         }
         register("kmpLibrary") {
-            id = "vplanplus.kmp.library"
+            id = libs.plugins.vplanplus.kmp.library.get().pluginId
             implementationClass = "KmpLibraryConventionPlugin"
-        }
-        register("kmpFeature") {
-            id = "vplanplus.kmp.feature"
-            implementationClass = "KmpFeatureConventionPlugin"
-        }
-        register("kmpRoom") {
-            id = "vplanplus.kmp.room"
-            implementationClass = "RoomConventionPlugin"
         }
     }
 }

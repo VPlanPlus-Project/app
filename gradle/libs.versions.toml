@@ -118,5 +118,3 @@ stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", ve
 
 vplanplus-build-applicationConfig = { id = "vplanplus.build.applicationConfig" }
 vplanplus-kmp-library = { id = "vplanplus.kmp.library" }
-vplanplus-kmp-feature = { id = "vplanplus.kmp.feature" }
-vplanplus-kmp-room = { id = "vplanplus.kmp.room" }
