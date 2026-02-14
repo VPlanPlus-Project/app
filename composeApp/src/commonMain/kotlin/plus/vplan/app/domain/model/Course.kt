@@ -3,10 +3,10 @@
 package plus.vplan.app.domain.model
 
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.data.AliasedItem
+import plus.vplan.app.core.model.DataTag
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.AliasedItem
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid

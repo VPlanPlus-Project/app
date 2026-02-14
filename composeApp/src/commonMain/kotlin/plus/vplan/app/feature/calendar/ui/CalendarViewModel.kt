@@ -22,9 +22,9 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Homework

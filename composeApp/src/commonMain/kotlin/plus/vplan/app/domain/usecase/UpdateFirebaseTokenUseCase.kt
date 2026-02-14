@@ -1,8 +1,8 @@
 package plus.vplan.app.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.GroupRepository

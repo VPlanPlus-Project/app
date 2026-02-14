@@ -1,8 +1,8 @@
 package plus.vplan.app.feature.settings.page.info.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.VppIdRepository
 
 class SendFeedbackWithSp24CredentialsUseCase(

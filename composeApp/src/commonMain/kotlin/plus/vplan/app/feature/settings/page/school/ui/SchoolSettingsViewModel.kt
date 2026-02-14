@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.School
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.domain.usecase.GetSchoolsUseCase
 

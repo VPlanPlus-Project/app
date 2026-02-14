@@ -2,8 +2,7 @@ package plus.vplan.app.feature.news.domain.usecase
 
 import plus.vplan.app.App
 import plus.vplan.app.capture
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.repository.NewsRepository
 
 class SetNewsAsReadUseCase(

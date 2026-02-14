@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbRoom
 import plus.vplan.app.data.source.database.model.database.DbRoomAlias
-import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.core.model.Alias
 import plus.vplan.app.domain.model.Room
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository

@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Group
 import plus.vplan.app.domain.repository.GroupRepository
 import kotlin.uuid.Uuid

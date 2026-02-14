@@ -3,7 +3,7 @@
 package plus.vplan.app.feature.profile.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository

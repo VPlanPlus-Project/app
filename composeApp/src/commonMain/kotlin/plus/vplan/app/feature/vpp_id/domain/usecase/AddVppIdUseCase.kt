@@ -3,10 +3,10 @@ package plus.vplan.app.feature.vpp_id.domain.usecase
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.GroupRepository

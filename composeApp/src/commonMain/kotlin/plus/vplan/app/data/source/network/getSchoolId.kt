@@ -7,8 +7,8 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.data.repository.ResponseDataWrapper
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.data.asSuccess
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.asSuccess
 
 suspend fun getAuthenticationOptionsForRestrictedEntity(
     httpClient: HttpClient,

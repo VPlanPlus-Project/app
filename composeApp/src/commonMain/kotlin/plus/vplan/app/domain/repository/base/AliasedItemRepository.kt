@@ -1,7 +1,7 @@
 package plus.vplan.app.domain.repository.base
 
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasedItem
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasedItem
 import kotlin.uuid.Uuid
 
 interface AliasedItemRepository<DBDTO, I: AliasedItem<*>>: ItemRepository<Uuid, I> {

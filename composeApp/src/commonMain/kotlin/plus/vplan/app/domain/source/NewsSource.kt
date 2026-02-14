@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.model.News
 import plus.vplan.app.domain.repository.NewsRepository
 

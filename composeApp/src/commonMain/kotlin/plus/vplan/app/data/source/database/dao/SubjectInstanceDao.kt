@@ -10,7 +10,7 @@ import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectInstanceGroup
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSubjectInstance
-import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.core.model.AliasProvider
 import kotlin.uuid.Uuid
 
 @Dao

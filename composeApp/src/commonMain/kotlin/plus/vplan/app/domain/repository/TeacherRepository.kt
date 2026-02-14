@@ -1,7 +1,7 @@
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.core.model.Alias
 import plus.vplan.app.domain.model.Teacher
 import plus.vplan.app.domain.repository.base.AliasedItemRepository
 import kotlin.uuid.Uuid

@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.profile.settings.page.main.domain.usecase
 
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.ProfileRepository
 

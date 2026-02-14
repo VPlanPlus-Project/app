@@ -1,8 +1,8 @@
 package plus.vplan.app.domain.model
 
 import kotlinx.datetime.LocalTime
-import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.data.Item
+import plus.vplan.app.core.model.DataTag
+import plus.vplan.app.core.model.Item
 import kotlin.uuid.Uuid
 
 data class LessonTime(

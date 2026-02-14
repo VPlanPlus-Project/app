@@ -4,12 +4,12 @@ package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid

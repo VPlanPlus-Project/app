@@ -1,18 +1,12 @@
-@file:OptIn(ExperimentalTime::class)
-
-package plus.vplan.app.domain.model
+package plus.vplan.app.core.model
 
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.basicAuth
 import io.ktor.client.request.bearerAuth
-import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasedItem
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-sealed class School(): AliasedItem<DataTag> {
+sealed class School: AliasedItem<DataTag> {
 
     abstract val name: String
     abstract val cachedAt: Instant
@@ -47,11 +41,11 @@ sealed class School(): AliasedItem<DataTag> {
     }
 }
 
-sealed class VppSchoolAuthentication() {
+sealed class VppSchoolAuthentication {
 
     abstract val identifier: String
     abstract fun authentication(builder: HttpRequestBuilder)
-    class Sp24(
+    data class Sp24(
         val sp24SchoolId: String,
         val username: String,
         val password: String,

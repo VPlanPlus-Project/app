@@ -14,10 +14,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.getFirstValueOld
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval

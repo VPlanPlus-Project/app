@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.repository.AssessmentRepository
 

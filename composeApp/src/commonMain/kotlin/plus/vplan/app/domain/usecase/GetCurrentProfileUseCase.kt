@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys

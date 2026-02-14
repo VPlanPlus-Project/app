@@ -12,10 +12,11 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.DataTag
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.data.Item
+import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.DataTag
+import plus.vplan.app.core.model.getFirstValueOld
+import plus.vplan.app.core.model.Item
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

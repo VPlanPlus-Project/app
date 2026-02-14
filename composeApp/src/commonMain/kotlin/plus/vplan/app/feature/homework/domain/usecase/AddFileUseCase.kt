@@ -5,9 +5,10 @@ package plus.vplan.app.feature.homework.domain.usecase
 import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.getFirstValueOld
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.VppId
@@ -56,7 +57,7 @@ class AddFileUseCase(
         }
 
         localFileRepository.writeFile("./files/$fileId", file.readBytes())
-        val fileItem = fileRepository.getById(fileId, false).filterIsInstance<CacheState.Done<plus.vplan.app.domain.model.File>>().first().data
+        val fileItem = fileRepository.getById(fileId, false).filterIsInstance<CacheState.Done<File>>().first().data
         fileRepository.setOfflineReady(fileItem, true)
         return true
     }

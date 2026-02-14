@@ -1,4 +1,4 @@
-package plus.vplan.app.domain.data
+package plus.vplan.app.core.model
 
 import co.touchlab.kermit.Logger
 

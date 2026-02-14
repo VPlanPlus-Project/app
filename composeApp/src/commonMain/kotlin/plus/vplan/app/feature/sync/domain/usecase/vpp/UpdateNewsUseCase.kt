@@ -2,8 +2,8 @@ package plus.vplan.app.feature.sync.domain.usecase.vpp
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 

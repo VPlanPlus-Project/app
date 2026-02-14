@@ -47,11 +47,11 @@ import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedE
 import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.model.VppSchoolAuthentication
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.ui.common.AttachedFile

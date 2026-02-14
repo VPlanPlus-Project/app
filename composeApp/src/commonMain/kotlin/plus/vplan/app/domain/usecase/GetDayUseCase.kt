@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Profile
 

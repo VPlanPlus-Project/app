@@ -8,7 +8,7 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbCourseAlias
 import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
-import plus.vplan.app.domain.data.Alias
+import plus.vplan.app.core.model.Alias
 import plus.vplan.app.domain.model.Course
 import plus.vplan.app.domain.repository.CourseDbDto
 import plus.vplan.app.domain.repository.CourseRepository

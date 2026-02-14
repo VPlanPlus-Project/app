@@ -5,9 +5,9 @@ package plus.vplan.app.feature.homework.domain.usecase
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.captureError
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile

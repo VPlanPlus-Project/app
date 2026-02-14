@@ -1,8 +1,8 @@
 package plus.vplan.app.data.source.database.converters
 
 import androidx.room.TypeConverter
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.data.InvalidAliasTypeException
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.InvalidAliasTypeException
 
 object AliasPrefixConverter {
     @TypeConverter

@@ -7,7 +7,7 @@ import plus.vplan.app.data.source.database.model.database.DbSchool
 import plus.vplan.app.data.source.database.model.database.DbSchoolAlias
 import plus.vplan.app.data.source.database.model.database.DbSchoolSp24Acess
 import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.School
 
 data class EmbeddedSchool(
     @Embedded val school: DbSchool,

@@ -1,7 +1,7 @@
 package plus.vplan.app.domain.repository.besteschule
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.besteschule.BesteSchuleYear
 import plus.vplan.app.domain.model.besteschule.api.ApiYear
 import plus.vplan.app.domain.repository.base.ResponsePreference

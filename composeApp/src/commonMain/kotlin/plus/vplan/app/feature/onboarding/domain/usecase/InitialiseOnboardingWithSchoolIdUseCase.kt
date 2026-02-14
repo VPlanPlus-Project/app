@@ -1,8 +1,8 @@
 package plus.vplan.app.feature.onboarding.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository

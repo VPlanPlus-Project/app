@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.source.database.model.database.DbGroup
 import plus.vplan.app.data.source.database.model.database.DbGroupAlias
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedGroup
-import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.core.model.AliasProvider
 import kotlin.uuid.Uuid
 
 @Dao

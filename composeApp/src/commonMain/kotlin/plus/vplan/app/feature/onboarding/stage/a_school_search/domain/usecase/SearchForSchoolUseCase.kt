@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase
 
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.utils.removeFollowingDuplicates
 

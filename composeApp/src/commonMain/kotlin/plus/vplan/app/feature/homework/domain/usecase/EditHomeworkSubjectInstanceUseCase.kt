@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.homework.domain.usecase
 
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance

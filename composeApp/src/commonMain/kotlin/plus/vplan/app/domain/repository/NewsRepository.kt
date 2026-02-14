@@ -1,9 +1,9 @@
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.News
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.School
 
 interface NewsRepository: WebEntityRepository<News> {
     suspend fun download(school: School.AppSchool): Response<List<Int>>

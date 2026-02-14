@@ -32,7 +32,7 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.AliasState
+import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Lesson

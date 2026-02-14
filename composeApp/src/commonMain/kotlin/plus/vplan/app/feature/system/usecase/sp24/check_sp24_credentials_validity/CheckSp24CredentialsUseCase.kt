@@ -1,10 +1,10 @@
 package plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.School
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.lib.sp24.source.Authentication

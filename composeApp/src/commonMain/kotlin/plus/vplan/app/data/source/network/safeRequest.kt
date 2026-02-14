@@ -5,7 +5,7 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.CancellationException
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 
 expect fun handleError(e: Exception): Response.Error?
 

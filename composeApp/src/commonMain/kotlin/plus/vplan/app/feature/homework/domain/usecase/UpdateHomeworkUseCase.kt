@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.homework.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult

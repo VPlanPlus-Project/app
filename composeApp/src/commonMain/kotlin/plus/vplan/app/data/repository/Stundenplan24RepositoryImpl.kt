@@ -1,7 +1,7 @@
 package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.lib.sp24.model.splan.student.SPlanStudentData
 import plus.vplan.lib.sp24.source.Authentication

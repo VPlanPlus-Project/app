@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.feature.onboarding.domain.repository.Sp24CredentialsState
 import plus.vplan.app.feature.onboarding.domain.usecase.GetOnboardingStateUseCase
 import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.domain.usecase.CheckCredentialsUseCase

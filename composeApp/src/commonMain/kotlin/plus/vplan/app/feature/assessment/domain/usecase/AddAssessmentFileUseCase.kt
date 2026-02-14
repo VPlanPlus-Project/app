@@ -3,8 +3,8 @@
 package plus.vplan.app.feature.assessment.domain.usecase
 
 import io.github.vinceglb.filekit.core.PlatformFile
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.getFirstValueOld
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Profile

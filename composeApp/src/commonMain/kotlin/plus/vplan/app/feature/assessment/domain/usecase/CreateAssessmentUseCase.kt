@@ -4,10 +4,10 @@ package plus.vplan.app.feature.assessment.domain.usecase
 
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.getFirstValueOld
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File

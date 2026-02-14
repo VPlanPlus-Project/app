@@ -2,8 +2,8 @@ package plus.vplan.app.data.source.network.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
 
 @Serializable
 enum class ApiAliasType {

@@ -3,7 +3,7 @@ package plus.vplan.app.domain.usecase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
+import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.model.Profile
 import kotlin.uuid.Uuid
 

@@ -1,6 +1,6 @@
 package plus.vplan.app.feature.homework.domain.usecase
 
-import plus.vplan.app.domain.cache.getFirstValueOld
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Profile

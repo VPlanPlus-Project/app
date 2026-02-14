@@ -25,7 +25,7 @@ import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteschuleYear
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.besteschule.BesteSchuleYear
 import plus.vplan.app.domain.model.besteschule.api.ApiYear
 import plus.vplan.app.domain.repository.base.ResponsePreference

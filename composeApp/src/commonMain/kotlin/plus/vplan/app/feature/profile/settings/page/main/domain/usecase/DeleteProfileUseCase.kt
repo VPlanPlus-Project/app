@@ -2,7 +2,7 @@ package plus.vplan.app.feature.profile.settings.page.main.domain.usecase
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.getFirstValue
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
