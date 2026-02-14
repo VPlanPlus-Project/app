@@ -9,13 +9,6 @@ val localProperties = Properties().apply {
     }
 }
 
-val appProperties = Properties().apply {
-    val file = rootProject.file("app.properties")
-    if (file.exists()) {
-        file.inputStream().use { load(it) }
-    }
-}
-
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
@@ -23,6 +16,7 @@ plugins {
     alias(libs.plugins.google.gms)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.buildconfig)
+    alias(libs.plugins.vplanplus.build.applicationConfig)
 }
 
 kotlin {
@@ -43,14 +37,14 @@ android {
         }
     }
     namespace = "plus.vplan.app"
-    compileSdk = 36
+    compileSdk = applicationConfig.android.targetSdk
 
     defaultConfig {
         applicationId = "plus.vplan.app"
-        minSdk = 24
-        targetSdk = 36
-        versionCode = appProperties["version.code"].toString().toInt()
-        versionName = appProperties["version.name"].toString()
+        minSdk = applicationConfig.android.minSdk
+        targetSdk = applicationConfig.android.targetSdk
+        versionCode = applicationConfig.versionCode
+        versionName = applicationConfig.versionName
     }
     packaging {
         resources {
