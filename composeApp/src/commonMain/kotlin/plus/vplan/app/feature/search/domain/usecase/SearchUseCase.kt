@@ -85,7 +85,6 @@ class SearchUseCase(
                         })
 
                         results.value = results.value.plus(SearchResult.Type.Room to rooms.map { room ->
-                            room.getSchoolItem()
                             SearchResult.SchoolEntity.Room(
                                 room = room,
                                 lessons = lessons.filter { room.id in it.roomIds }.calculateLayouting()

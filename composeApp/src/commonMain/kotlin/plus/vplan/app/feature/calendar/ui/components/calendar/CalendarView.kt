@@ -71,7 +71,7 @@ import plus.vplan.app.core.model.Group
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.Room
+import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.LessonRendering

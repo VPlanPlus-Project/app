@@ -25,7 +25,7 @@ sealed class SearchResult(val type: Type) {
         ) : SchoolEntity(Type.Teacher, teacher.id, teacher.name)
 
         data class Room(
-            val room: plus.vplan.app.domain.model.Room,
+            val room: plus.vplan.app.core.model.Room,
             override val lessons: List<LessonLayoutingInfo>
         ) : SchoolEntity(Type.Room, room.id, room.name)
     }
