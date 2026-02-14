@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbWeek
-import plus.vplan.app.domain.model.Week
+import plus.vplan.app.core.model.Week
 import plus.vplan.app.domain.repository.WeekRepository
 import kotlin.uuid.Uuid
 

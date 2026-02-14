@@ -1,11 +1,9 @@
-package plus.vplan.app.domain.model
+package plus.vplan.app.core.model
 
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
-import plus.vplan.app.core.model.DataTag
-import plus.vplan.app.core.model.Item
-import plus.vplan.app.utils.atStartOfWeek
+import plus.vplan.app.core.utils.date.atStartOfWeek
 import kotlin.uuid.Uuid
 
 /**

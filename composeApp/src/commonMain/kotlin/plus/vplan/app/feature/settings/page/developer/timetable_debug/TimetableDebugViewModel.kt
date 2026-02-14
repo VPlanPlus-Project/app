@@ -52,7 +52,7 @@ data class TimetableDebugState(
     val weeks: List<Week> = emptyList(),
 ) {
     data class Week(
-        val week: plus.vplan.app.domain.model.Week,
+        val week: plus.vplan.app.core.model.Week,
         val timetableMetadata: Timetable?
     )
 }

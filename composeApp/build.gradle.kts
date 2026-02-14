@@ -79,6 +79,8 @@ kotlin {
 
         commonMain.dependencies {
             implementation(project(":core:model"))
+            implementation(project(":core:utils"))
+
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
