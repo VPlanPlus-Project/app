@@ -8,13 +8,6 @@ val localProperties = Properties().apply {
     }
 }
 
-val appProperties = Properties().apply {
-    val file = rootProject.file("app.properties")
-    if (file.exists()) {
-        file.inputStream().use { load(it) }
-    }
-}
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinMultiplatformLibrary)
@@ -25,12 +18,13 @@ plugins {
     alias(libs.plugins.serialization)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.stability.analyzer)
+    alias(libs.plugins.vplanplus.build.applicationConfig)
 }
 
 kotlin {
     androidLibrary {
         namespace = "plus.vplan.app.composeapp"
-        compileSdk = 36
+        compileSdk = applicationConfig.android.targetSdk
         experimentalProperties["android.experimental.kmp.enableAndroidResources"] = true
     }
 
@@ -141,8 +135,8 @@ buildConfig {
     className("AppBuildConfig")
     packageName("plus.vplan.app")
 
-    buildConfigField("APP_VERSION_CODE", appProperties["version.code"].toString().toInt())
-    buildConfigField("APP_VERSION", appProperties["version.name"].toString())
+    buildConfigField("APP_VERSION_CODE", applicationConfig.versionCode)
+    buildConfigField("APP_VERSION", applicationConfig.versionName)
     buildConfigField("APP_DEBUG", localProperties.getProperty("app.debug")?.toBoolean()!!)
 
     buildConfigField("POSTHOG_API_KEY", localProperties.getProperty("posthog.api.key") ?: throw MissingFieldException("posthog.api.key not found in local.properties", String::class.java))
