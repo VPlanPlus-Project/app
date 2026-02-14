@@ -1,25 +1,26 @@
 package plus.vplan.app.feature.news.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import plus.vplan.app.App
-import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.domain.model.News
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import plus.vplan.app.feature.news.domain.usecase.GetNewsUseCase
+import plus.vplan.app.feature.news.domain.usecase.NewsState
 import plus.vplan.app.feature.news.domain.usecase.SetNewsAsReadUseCase
 
-class NewsViewModel(
-    private val setNewsAsReadUseCase: SetNewsAsReadUseCase
-) : ViewModel() {
-    var state by mutableStateOf(NewsState())
-        private set
+class NewsViewModel : ViewModel(), KoinComponent {
+    private val setNewsAsReadUseCase by inject<SetNewsAsReadUseCase>()
+    private val getNewsUseCase by inject<GetNewsUseCase>()
+
+    val state: StateFlow<NewsState?>
+        field = MutableStateFlow(null)
+
 
     private var uiSyncContext: Job? = null
 
@@ -27,13 +28,9 @@ class NewsViewModel(
         uiSyncContext?.cancel()
         uiSyncContext = viewModelScope.launch {
             setNewsAsReadUseCase(newsId)
-            App.newsSource.getById(newsId).filterIsInstance<CacheState.Done<News>>().map { it.data }.collectLatest {
-                state = state.copy(news = it)
+            getNewsUseCase(newsId).collectLatest { newsState ->
+                state.update { newsState }
             }
         }
     }
 }
-
-data class NewsState(
-    val news: News? = null
-)

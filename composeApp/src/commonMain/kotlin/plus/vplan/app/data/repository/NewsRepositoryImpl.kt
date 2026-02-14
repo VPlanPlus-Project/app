@@ -30,7 +30,7 @@ import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.News
+import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.domain.service.SchoolService

@@ -8,6 +8,8 @@ import kotlin.uuid.Uuid
 
 sealed class School: AliasedItem<DataTag> {
 
+    typealias Ids = Collection<Uuid>
+
     abstract val name: String
     abstract val cachedAt: Instant
     override val tags: Set<DataTag> = emptySet()

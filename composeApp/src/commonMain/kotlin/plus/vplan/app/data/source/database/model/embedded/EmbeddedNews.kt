@@ -4,7 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbNews
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsSchool
-import plus.vplan.app.domain.model.News
+import plus.vplan.app.core.model.News
 
 data class EmbeddedNews(
     @Embedded val news: DbNews,

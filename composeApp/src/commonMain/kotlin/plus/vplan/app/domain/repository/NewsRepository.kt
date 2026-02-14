@@ -2,7 +2,7 @@ package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.News
+import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.School
 
 interface NewsRepository: WebEntityRepository<News> {
