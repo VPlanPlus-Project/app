@@ -43,8 +43,8 @@ data class BesteSchuleInterval(
                         .replace(" ", "")
                         .replace(".", "")
                 ) {
-                    "sek1", "seki" -> Sek1
-                    "sek2", "sekii", "jg11", "jg12", "jg13" -> Sek2
+                    "sek1", "seki", "klassenstufe5-10" -> Sek1
+                    "sek2", "sekii", "jg11", "jg12", "jg13", "klassenstufe11-12", "klassenstufe11-13" -> Sek2
                     else -> {
                         captureError("Interval", "Unknown type: $type")
                         Other(type)
