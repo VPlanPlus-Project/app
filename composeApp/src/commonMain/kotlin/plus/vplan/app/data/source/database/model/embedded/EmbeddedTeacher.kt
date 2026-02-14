@@ -4,7 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbTeacher
 import plus.vplan.app.data.source.database.model.database.DbTeacherAlias
-import plus.vplan.app.domain.model.Teacher
+import plus.vplan.app.core.model.Teacher
 
 data class EmbeddedTeacher(
     @Embedded val teacher: DbTeacher,

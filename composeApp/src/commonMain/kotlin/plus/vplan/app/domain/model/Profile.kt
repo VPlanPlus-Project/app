@@ -18,6 +18,7 @@ import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.Item
+import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import kotlin.uuid.Uuid

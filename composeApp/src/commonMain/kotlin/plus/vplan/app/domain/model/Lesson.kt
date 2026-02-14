@@ -14,6 +14,7 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.DataTag
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Item
+import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import kotlin.uuid.Uuid
 

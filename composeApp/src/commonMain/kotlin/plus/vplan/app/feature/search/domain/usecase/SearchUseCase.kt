@@ -78,7 +78,6 @@ class SearchUseCase(
                         })
 
                         results.value = results.value.plus(SearchResult.Type.Teacher to teachers.map { teacher ->
-                            teacher.getSchoolItem()
                             SearchResult.SchoolEntity.Teacher(
                                 teacher = teacher,
                                 lessons = lessons.filter { teacher.id in it.teacherIds }.calculateLayouting()

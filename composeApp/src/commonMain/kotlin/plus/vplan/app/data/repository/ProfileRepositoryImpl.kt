@@ -12,7 +12,7 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupPro
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.model.Teacher
+import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.ProfileRepository
 import kotlin.uuid.Uuid
 
