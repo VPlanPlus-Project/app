@@ -3,7 +3,7 @@ package plus.vplan.app.feature.sync.domain.usecase.sp24
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository

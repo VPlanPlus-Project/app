@@ -17,7 +17,7 @@ import kotlinx.datetime.atDate
 import plus.vplan.app.App
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.core.model.Room
 import plus.vplan.app.domain.repository.RoomRepository

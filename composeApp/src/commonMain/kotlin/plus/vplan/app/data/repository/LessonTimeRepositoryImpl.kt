@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbLessonTime
-import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import kotlin.uuid.Uuid
 

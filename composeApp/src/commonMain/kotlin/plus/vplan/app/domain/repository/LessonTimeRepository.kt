@@ -1,7 +1,7 @@
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.core.model.LessonTime
 import kotlin.uuid.Uuid
 
 interface LessonTimeRepository {

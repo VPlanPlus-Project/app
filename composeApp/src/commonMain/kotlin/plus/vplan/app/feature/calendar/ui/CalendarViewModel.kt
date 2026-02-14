@@ -29,7 +29,7 @@ import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.domain.repository.KeyValueRepository

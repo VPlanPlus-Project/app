@@ -2,7 +2,7 @@ package plus.vplan.app.feature.search.subfeature.room_search.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import plus.vplan.app.domain.model.LessonTime
+import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.domain.repository.LessonTimeRepository
 
