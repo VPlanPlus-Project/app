@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.assessment.domain.usecase
 
 import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository
 
 class ChangeAssessmentVisibilityUseCase(

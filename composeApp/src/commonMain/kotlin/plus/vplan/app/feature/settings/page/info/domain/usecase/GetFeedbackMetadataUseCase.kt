@@ -5,10 +5,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.AppBuildConfig
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.getByProvider
-import plus.vplan.app.domain.model.ProfileType
+import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.host.domain.usecase.HasProfileUseCase
 
@@ -19,7 +18,7 @@ class GetFeedbackMetadataUseCase(
     suspend operator fun invoke(): Flow<FeedbackMetadata> {
         val systemInfo = getSystemInfo()
         val currentProfile = (if (hasProfileUseCase().first()) getCurrentProfileUseCase() else flowOf(null)).map { currentProfile ->
-            val school = currentProfile?.getSchool()?.getFirstValue()
+            val school = currentProfile?.school
             return@map FeedbackMetadata(
                 systemInfo,
                 appInfo = AppInfo(

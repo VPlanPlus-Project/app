@@ -17,7 +17,7 @@ class SendSp24CredentialsToServerUseCase(
     suspend operator fun invoke() {
         profileRepository
             .getAll().first()
-            .mapNotNull { it.getSchool().getFirstValue() }
+            .map { it.school }
             .distinctBy { it.id }
             .filter { it.credentialsValid }
             .also { logger.i { "Logging credentials for ${it.size} school${if (it.size != 1) "s" else ""}" } }

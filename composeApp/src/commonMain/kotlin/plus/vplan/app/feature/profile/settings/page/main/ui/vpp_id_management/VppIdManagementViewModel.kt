@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.VppIdDevice
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.GetVppIdDevicesUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.LogoutVppIdDeviceUseCase

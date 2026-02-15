@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.main.domain.usecase.setup
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.ProfileRepository

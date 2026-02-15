@@ -6,7 +6,7 @@ import plus.vplan.app.data.source.database.model.database.DbVppId
 import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
 import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.VppId
 
 data class EmbeddedVppId(
     @Embedded val vppId: DbVppId,

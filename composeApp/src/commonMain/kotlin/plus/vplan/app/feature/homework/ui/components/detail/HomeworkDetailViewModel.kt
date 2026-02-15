@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
@@ -19,10 +20,11 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.homework.domain.usecase.AddFileUseCase
@@ -56,7 +58,8 @@ class HomeworkDetailViewModel(
     private val renameFileUseCase: RenameFileUseCase,
     private val deleteFileUseCase: DeleteFileUseCase,
     private val addFileUseCase: AddFileUseCase,
-    private val keyValueRepository: KeyValueRepository
+    private val keyValueRepository: KeyValueRepository,
+    private val subjectInstanceRepository: SubjectInstanceRepository
 ) : ViewModel() {
     var state by mutableStateOf(HomeworkDetailState())
         private set
@@ -83,15 +86,28 @@ class HomeworkDetailViewModel(
                 val homework = homeworkData.data
 
                 homework.prefetch()
-                profile.prefetch()
 
                 state.copy(
                     homework = homework,
                     profile = profile,
-                    canEdit = (homework is Homework.CloudHomework && homework.createdById == profile.vppIdId) || (homework is Homework.LocalHomework && homework.createdByProfileId == profile.id),
+                    canEdit = (homework is Homework.CloudHomework && homework.createdById == profile.vppId?.id) || (homework is Homework.LocalHomework && homework.createdByProfileId == profile.id),
                     initDone = true
                 )
-            }.filterNotNull().collectLatest { state = it }
+            }.filterNotNull().collectLatest {
+                state = it
+
+                if (it.profile is Profile.StudentProfile) subjectInstanceRepository
+                    .getByGroup(it.profile.group.id)
+                    .map { subjectInstances ->
+                        subjectInstances.filter { subjectInstance ->
+                            it.profile.subjectInstanceConfiguration[subjectInstance.id] != false
+                        }
+                    }
+                    .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
+                    .collectLatest {
+                        state = state.copy(subjectInstances = it)
+                    }
+            }
         }
     }
 
@@ -159,6 +175,7 @@ class HomeworkDetailViewModel(
 data class HomeworkDetailState(
     val homework: Homework? = null,
     val profile: Profile.StudentProfile? = null,
+    val subjectInstances: List<SubjectInstance> = emptyList(),
     val canEdit: Boolean = false,
     val reloadingState: UnoptimisticTaskState? = null,
     val deleteState: UnoptimisticTaskState? = null,
@@ -184,14 +201,6 @@ sealed class HomeworkDetailEvent {
     data class DeleteFile(val file: File) : HomeworkDetailEvent()
     data class AddFile(val file: AttachedFile) : HomeworkDetailEvent()
     data object Reload : HomeworkDetailEvent()
-}
-
-private suspend fun Profile.StudentProfile.prefetch() {
-    this.getGroupItem()
-    this.getSubjectInstances().onEach {
-        it.getCourseItem()
-        it.getTeacherItem()
-    }
 }
 
 private suspend fun Homework.prefetch() {

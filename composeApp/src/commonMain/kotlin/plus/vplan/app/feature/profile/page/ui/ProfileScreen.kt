@@ -26,7 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,13 +37,10 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.VPP_ID_AUTH_URL
-import plus.vplan.app.domain.cache.collectAsResultingFlowOld
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.page.ui.components.GradesCard
 import plus.vplan.app.feature.profile.page.ui.components.GradesCardFeaturedGrade
@@ -69,7 +65,7 @@ fun ProfileScreen(
         contentPadding = contentPadding,
         onEvent = viewModel::onEvent,
         onOpenSettings = remember { { navHostController.navigate(MainScreen.Settings) } },
-        onOpenGrades = remember(state.currentProfile?.id) { { navHostController.navigate(MainScreen.Grades((state.currentProfile as Profile.StudentProfile).vppIdId!!)) } }
+        onOpenGrades = remember(state.currentProfile?.id) { { navHostController.navigate(MainScreen.Grades((state.currentProfile as Profile.StudentProfile).vppId!!.id)) } }
     )
 }
 
@@ -166,14 +162,10 @@ private fun ProfileContent(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        val vppId = state.currentProfile.vppId?.collectAsResultingFlowOld()?.value
-                        if (vppId is VppId.Active) {
-                            val subjectInstances = state.currentProfile.subjectInstances
-                                .map { it.map { subjectInstance -> subjectInstance.subject }.toSet() }
-                                .distinctUntilChanged()
-                                .collectAsState(emptySet()).value
+                        if (state.currentProfile.vppId is VppId.Active) {
+                            val subjectInstances = setOf("ast", "bio", "ch", "de", "en", "eth", "fr", "ge", "geo", "grw", "inf", "ku", "ma", "mu", "ph", "re", "sp")
 
-                            if (vppId.schulverwalterConnection != null) {
+                            if (state.currentProfile.vppId.schulverwalterConnection != null) {
                                 GradesCard(
                                     modifier = Modifier
                                         .padding(horizontal = 16.dp),

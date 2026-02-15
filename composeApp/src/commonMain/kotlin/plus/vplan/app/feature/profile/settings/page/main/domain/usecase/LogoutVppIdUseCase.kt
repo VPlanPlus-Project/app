@@ -4,8 +4,8 @@ import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
@@ -24,7 +24,7 @@ class LogoutVppIdUseCase(
             .first()
             .filterIsInstance<Profile.StudentProfile>()
             .forEach {
-                if (it.vppIdId == vppId.id) profileRepository.updateVppId(it.id, null)
+                if (it.vppId?.id == vppId.id) profileRepository.updateVppId(it.id, null)
             }
         val schulverwalterUserId = vppId.schulverwalterConnection?.userId
         if (schulverwalterUserId != null) {

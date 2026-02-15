@@ -41,7 +41,7 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.feature.search.ui.main.NewItem
 import plus.vplan.app.ui.components.Grid
 import plus.vplan.app.ui.components.ShimmerLoader
@@ -93,9 +93,8 @@ fun SearchStart(
                     text = buildString {
                         append("Neu in deiner Gruppe")
                         if (profile is Profile.StudentProfile) {
-                            val group = profile.group.collectAsResultingFlow().value?.name ?: return@buildString
                             append(" ")
-                            append(group)
+                            append(profile.group.name)
                         }
                     },
                     style = sectionTitleFont()

@@ -5,7 +5,7 @@ import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.base.ItemRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference

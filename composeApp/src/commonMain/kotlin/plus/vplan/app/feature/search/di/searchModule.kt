@@ -5,7 +5,7 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import plus.vplan.app.feature.search.domain.usecase.GetAssessmentsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
-import plus.vplan.app.feature.search.domain.usecase.GetSubjectsUseCase
+import plus.vplan.app.feature.search.domain.usecase.GetSubjectsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.GetLessonTimesForProfileUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.GetRoomOccupationMapUseCase
@@ -18,7 +18,7 @@ val searchModule = module {
     singleOf(::GetAssessmentsForProfileUseCase)
     singleOf(::GetRoomOccupationMapUseCase)
     singleOf(::GetLessonTimesForProfileUseCase)
-    singleOf(::GetSubjectsUseCase)
+    singleOf(::GetSubjectsForProfileUseCase)
 
     viewModelOf(::SearchViewModel)
     viewModelOf(::RoomSearchViewModel)

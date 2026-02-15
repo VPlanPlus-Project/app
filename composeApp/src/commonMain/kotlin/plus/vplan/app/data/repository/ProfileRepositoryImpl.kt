@@ -10,7 +10,7 @@ import plus.vplan.app.data.source.database.model.database.DbProfile
 import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.core.model.Group
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -35,7 +35,7 @@ class ProfileRepositoryImpl(
         vppDatabase.profileDao.upsert(
             DbProfile(
                 id = id,
-                schoolId = group.schoolId,
+                schoolId = group.school.id,
                 displayName = group.name
             )
         )
@@ -61,7 +61,7 @@ class ProfileRepositoryImpl(
         vppDatabase.profileDao.upsert(
             DbProfile(
                 id = id,
-                schoolId = teacher.schoolId,
+                schoolId = teacher.school.id,
                 displayName = teacher.name
             )
         )

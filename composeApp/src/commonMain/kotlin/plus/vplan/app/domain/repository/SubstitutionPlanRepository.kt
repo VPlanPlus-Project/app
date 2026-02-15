@@ -1,12 +1,9 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.Profile
-import kotlin.uuid.ExperimentalUuidApi
+import plus.vplan.app.core.model.Profile
 import kotlin.uuid.Uuid
 
 interface SubstitutionPlanRepository {
@@ -16,14 +13,15 @@ interface SubstitutionPlanRepository {
         schoolId: Uuid,
         date: LocalDate,
         lessons: List<Lesson.SubstitutionPlanLesson>,
-        profiles: List<Profile.StudentProfile>
+        version: Int,
     )
+    fun getCurrentVersion(): Flow<Int>
 
     suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>)
 
     suspend fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): Flow<Set<Uuid>>
-    suspend fun getForProfile(profile: Profile, date: LocalDate): Flow<Set<Uuid>>
+    suspend fun getForProfile(profile: Profile, date: LocalDate, version: Int?): Flow<List<Lesson>>
     suspend fun getAll(): Set<Uuid>
-    fun getSubstitutionPlanBySchool(schoolId: Uuid): Flow<Set<Lesson.SubstitutionPlanLesson>>
+    fun getSubstitutionPlanBySchool(schoolId: Uuid, version: Int): Flow<Set<Lesson.SubstitutionPlanLesson>>
     fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?>
 }

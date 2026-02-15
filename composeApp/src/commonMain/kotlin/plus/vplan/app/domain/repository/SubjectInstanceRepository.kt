@@ -9,6 +9,7 @@ import kotlin.uuid.Uuid
 
 interface SubjectInstanceRepository : AliasedItemRepository<SubjectInstanceDbDto, SubjectInstance> {
     fun getByGroup(groupId: Uuid): Flow<List<SubjectInstance>>
+    fun getByTeacher(teacherId: Uuid): Flow<List<SubjectInstance>>
     fun getBySchool(schoolId: Uuid): Flow<List<SubjectInstance>>
 
     suspend fun deleteById(id: Uuid)

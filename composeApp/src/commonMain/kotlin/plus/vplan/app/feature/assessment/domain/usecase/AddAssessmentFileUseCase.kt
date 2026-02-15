@@ -3,12 +3,11 @@
 package plus.vplan.app.feature.assessment.domain.usecase
 
 import io.github.vinceglb.filekit.core.PlatformFile
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
@@ -23,9 +22,8 @@ class AddAssessmentFileUseCase(
 ) {
     suspend operator fun invoke(assessment: Assessment, file: PlatformFile, profile: Profile.StudentProfile): Boolean {
         val id: Int
-        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
-        if (assessment.id > 0 && vppId != null) {
-            val response = fileRepository.uploadFile(vppId, AttachedFile.Other(
+        if (assessment.id > 0 && profile.vppId != null) {
+            val response = fileRepository.uploadFile(profile.vppId, AttachedFile.Other(
                 platformFile = file,
                 bitmap = null,
                 size = file.getSize() ?: 0L,
@@ -50,7 +48,7 @@ class AddAssessmentFileUseCase(
         )
 
         val fileItem = fileRepository.getById(id, forceReload = false).getFirstValueOld()!!
-        if (id > 0 && vppId != null) assessmentRepository.linkFileToAssessmentOnline(vppId, assessment.id, fileItem.id)
+        if (id > 0 && profile.vppId != null) assessmentRepository.linkFileToAssessmentOnline(profile.vppId, assessment.id, fileItem.id)
         assessmentRepository.linkFileToAssessment(assessment.id, fileItem.id)
         return true
     }

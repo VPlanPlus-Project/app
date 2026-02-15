@@ -306,9 +306,9 @@ fun DetailPage(
 
     if (showLessonSelectDrawer) {
         LessonSelectDrawer(
-            group = profile.groupItem!!,
+            group = profile.group,
             allowGroup = true,
-            subjectInstances = profile.subjectInstanceItems.filter { subjectInstance -> profile.subjectInstanceConfiguration.filterValues { !it }.none { it.key == subjectInstance.id } }.sortedBy { it.subject },
+            subjectInstances = state.subjectInstances,
             selectedSubjectInstance = homework.subjectInstance?.collectAsResultingFlow()?.value,
             onSelectSubjectInstance = { onEvent(HomeworkDetailEvent.UpdateSubjectInstance(it)) },
             onDismiss = { showLessonSelectDrawer = false }

@@ -65,18 +65,17 @@ import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.cache.collectAsSingleFlow
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.ProfileType
-import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
@@ -154,7 +153,7 @@ private fun HomeContent(
 
     var visibleNews by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    val vppId = remember(state.currentProfile) { (state.currentProfile as? Profile.StudentProfile)?.vppId }?.collectAsResultingFlowOld()?.value as? VppId.Active
+    val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppId
 
     PullToRefreshBox(
         state = pullToRefreshState,
@@ -192,8 +191,6 @@ private fun HomeContent(
                     return@AnimatedContent
                 }
 
-                val school = remember(state.currentProfile) { state.currentProfile?.getSchool() }?.collectAsResultingFlow()?.value
-
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -216,14 +213,14 @@ private fun HomeContent(
                     }
                     item schoolAccessInvalid@{
                         androidx.compose.animation.AnimatedVisibility(
-                            visible = school is School.AppSchool && !school.credentialsValid,
+                            visible = state.currentProfile?.school?.credentialsValid == false,
                             enter = expandVertically(expandFrom = Alignment.CenterVertically) + fadeIn(),
                             exit = shrinkVertically(shrinkTowards = Alignment.CenterVertically) + fadeOut(),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             var displaySchool by remember { mutableStateOf<School?>(null) }
-                            LaunchedEffect(school) {
-                                if (school is School.AppSchool && !school.credentialsValid) displaySchool = school
+                            LaunchedEffect(state.currentProfile?.school) {
+                                if (state.currentProfile?.school is School.AppSchool && !state.currentProfile.school.credentialsValid) displaySchool = state.currentProfile.school
                             }
                             if (displaySchool != null) InfoCard(
                                 modifier = Modifier

@@ -27,7 +27,7 @@ class TimetableDebugViewModel(
     fun loadData() {
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
-                val school = profile.getSchool().getFirstValue()!!
+                val school = profile.school
                 weekRepository.getBySchool(school.id).collectLatest collectWeek@{ weeks ->
                     weeks.forEach { week ->
                         launch {

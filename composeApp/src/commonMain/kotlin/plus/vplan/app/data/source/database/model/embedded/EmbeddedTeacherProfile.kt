@@ -17,5 +17,5 @@ data class EmbeddedTeacherProfile(
         parentColumn = "teacher_id",
         entityColumn = "id",
         entity = DbTeacher::class
-    ) val teacher: DbTeacher
+    ) val teacher: EmbeddedTeacher
 )

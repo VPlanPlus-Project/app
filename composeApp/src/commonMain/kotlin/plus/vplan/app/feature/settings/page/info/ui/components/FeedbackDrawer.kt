@@ -54,10 +54,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.core.model.VppSchoolAuthentication
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
@@ -232,7 +231,7 @@ private fun FeedbackDrawerContent(
                     }
                 )
                 Spacer(Modifier.height(8.dp))
-                if ((state.currentProfile as? Profile.StudentProfile)?.vppIdId == null) {
+                if ((state.currentProfile as? Profile.StudentProfile)?.vppId == null) {
                     TextField(
                         value = state.customEmail,
                         onValueChange = { onEvent(FeedbackEvent.UpdateEmail(it)) },
@@ -259,8 +258,7 @@ private fun FeedbackDrawerContent(
                         )
                     }
                 } else {
-                    val vppId = state.currentProfile.vppId?.collectAsResultingFlowOld()?.value
-                    if (vppId != null) {
+                    if (state.currentProfile.vppId != null) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth(),
@@ -273,7 +271,7 @@ private fun FeedbackDrawerContent(
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = "Verknüpft mit vpp.ID von ${vppId.name}.",
+                                text = "Verknüpft mit vpp.ID von ${state.currentProfile.vppId.name}.",
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }

@@ -14,9 +14,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
@@ -55,16 +54,12 @@ class GradeDetailViewModel(
             ) { profile, gradeLockState, grade ->
                 if (profile !is Profile.StudentProfile) return@combine null
 
-                profile.prefetch()
-
                 state.copy(
                     grade = grade,
                     gradeUser = profileRepository.getAll()
                         .first()
                         .filterIsInstance<Profile.StudentProfile>()
-                        .filter { it.vppIdId != null }
-                        .map { it.vppId!!.getFirstValueOld() }
-                        .filterIsInstance<VppId.Active>()
+                        .mapNotNull { it.vppId }
                         .filter { it.schulverwalterConnection != null }
                         .firstOrNull { it.schulverwalterConnection?.userId == grade?.schulverwalterUserId },
                     profile = profile,
@@ -121,14 +116,6 @@ data class GradeDetailState(
     val reloadingState: UnoptimisticTaskState? = null,
     val lockState: GradeLockState? = null,
 )
-
-private suspend fun Profile.StudentProfile.prefetch() {
-    this.getGroupItem()
-    this.getSubjectInstances().onEach {
-        it.getCourseItem()
-        it.getTeacherItem()
-    }
-}
 
 sealed class GradeDetailEvent {
     data object ToggleConsiderForFinalGrade : GradeDetailEvent()

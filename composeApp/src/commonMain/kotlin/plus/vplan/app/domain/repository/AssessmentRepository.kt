@@ -7,8 +7,8 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant

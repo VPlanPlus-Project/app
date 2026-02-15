@@ -4,16 +4,14 @@ package plus.vplan.app.feature.assessment.domain.usecase
 
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
@@ -40,27 +38,29 @@ class CreateAssessmentUseCase(
     ): CreateAssessmentResult {
         val profile = (profileService.getCurrentProfile().first() as? Profile.StudentProfile) ?: return CreateAssessmentResult.Error.UnknownError("No current profile found or profile is not a student profile")
 
-        val creator = (profile.vppId?.getFirstValueOld() as? VppId.Active)?.let { vppId ->
+        val creator = profile.vppId?.let { vppId ->
             AppEntity.VppId(vppId.id)
         } ?: AppEntity.Profile(profile.id)
 
         val subjectInstanceId = subjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
             val subjectInstanceAlias = subjectInstance.aliases.firstOrNull()
-            if (subjectInstanceAlias == null) return CreateAssessmentResult.Error.UnknownError("Subject instance $subjectInstance has no aliases")
-            val downloadedSubjectInstance = subjectInstanceRepository.findByAlias(subjectInstanceAlias, forceUpdate = true, preferCurrentState = true).getFirstValue()
-            if (downloadedSubjectInstance == null) return CreateAssessmentResult.Error.UnknownError("Subject instance $subjectInstance not found on VPP")
+                ?: return CreateAssessmentResult.Error.UnknownError("Subject instance $subjectInstance has no aliases")
+            val downloadedSubjectInstance = subjectInstanceRepository.findByAlias(
+                subjectInstanceAlias,
+                forceUpdate = true,
+                preferCurrentState = true
+            ).getFirstValue()
+                ?: return CreateAssessmentResult.Error.UnknownError("Subject instance $subjectInstance not found on VPP")
             val subjectInstanceId = downloadedSubjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
             if (subjectInstanceId == null) return CreateAssessmentResult.Error.UnknownError("Subject instance $subjectInstance not found on VPP")
             return@run subjectInstanceId
         }
-        subjectInstanceId
 
         val id: Int
         val files = mutableListOf<Assessment.AssessmentFile>()
-        val vppId = profile.vppId?.getFirstValueOld() as? VppId.Active
-        if (vppId != null) {
+        if (profile.vppId != null) {
             val result = assessmentRepository.createAssessmentOnline(
-                vppId = vppId,
+                vppId = profile.vppId,
                 date = date,
                 type = type,
                 subjectInstanceId = subjectInstanceId,
@@ -71,12 +71,12 @@ class CreateAssessmentUseCase(
             id = result.data
             selectedFiles.forEach {
                 val fileId = fileRepository.uploadFile(
-                    vppId = vppId,
+                    vppId = profile.vppId,
                     document = it
                 )
                 if (fileId !is Response.Success) return@forEach
                 assessmentRepository.linkFileToAssessmentOnline(
-                    vppId = vppId,
+                    vppId = profile.vppId,
                     assessmentId = result.data,
                     fileId = fileId.data
                 )

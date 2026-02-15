@@ -1,11 +1,5 @@
-@file:OptIn(ExperimentalTime::class)
+package plus.vplan.app.core.model
 
-package plus.vplan.app.domain.model
-
-import plus.vplan.app.core.model.VppSchoolAuthentication
-import plus.vplan.app.core.model.DataTag
-import plus.vplan.app.core.model.Item
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 sealed class VppId : Item<Int, DataTag> {

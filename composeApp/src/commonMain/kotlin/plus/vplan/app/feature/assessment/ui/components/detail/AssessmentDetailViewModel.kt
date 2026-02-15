@@ -17,7 +17,7 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.AddAssessmentFileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentContentUseCase
@@ -67,7 +67,7 @@ class AssessmentDetailViewModel(
                 state.copy(
                     assessment = assessment,
                     profile = profile,
-                    canEdit = (assessment.creator is AppEntity.VppId && profile.vppIdId == assessment.creator.id) || (assessment.creator is AppEntity.Profile && profile.id == assessment.creator.id),
+                    canEdit = (assessment.creator is AppEntity.VppId && profile.vppId?.id == assessment.creator.id) || (assessment.creator is AppEntity.Profile && profile.id == assessment.creator.id),
                     reloadingState = if (isOtherAssessment) null else state.reloadingState,
                     deleteState = if (isOtherAssessment) null else state.deleteState,
                     initDone = true

@@ -5,7 +5,7 @@ import kotlin.uuid.Uuid
 
 data class Teacher(
     override val id: Uuid,
-    val schoolId: Uuid,
+    val school: School.AppSchool,
     val name: String,
     val cachedAt: Instant,
     override val aliases: Set<Alias>

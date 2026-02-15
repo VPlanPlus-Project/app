@@ -23,13 +23,12 @@ import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.captureError
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.core.model.News
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.Stundenplan24Repository
@@ -188,14 +187,14 @@ class HomeViewModel(
         state = state.copy(isUpdating = true)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val school = state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool
+                val school = state.currentProfile!!.school
                 try {
                     val client = stundenplan24Repository.getSp24Client(Authentication(school.sp24Id, school.username, school.password), true)
                     updateSubjectInstanceUseCase(school, client)
                     updateLessonTimesUseCase(school, client)
-                    updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, client)
-                    updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, forceUpdate = false, client = client)
-                    updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, setOfNotNull(LocalDate.now(), state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date).sorted(), allowNotification = false, providedClient = client)
+                    updateHolidaysUseCase(school, client)
+                    updateTimetableUseCase(school, forceUpdate = false, client = client)
+                    updateSubstitutionPlanUseCase(school, setOfNotNull(LocalDate.now(), state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date).sorted(), allowNotification = false, providedClient = client)
                 } catch (e: Exception) {
                     LOGGER.e { "Something went wrong on updating the data for Profile ${state.currentProfile!!.id} (${state.currentProfile!!.name}):\n${e.stackTraceToString()}" }
                     captureError("HomeViewModel.update", "Error on updating the data for school ${school.id}: ${e.stackTraceToString()}")

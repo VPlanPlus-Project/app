@@ -233,7 +233,12 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectI
             from = 10,
             to = 11,
             spec = VppDatabase.Migration10to11::class
-        )
+        ),
+        AutoMigration( // Add Version to lessons
+            from = 11,
+            to = 12,
+            spec = VppDatabase.Migration11to12::class
+        ),
     ]
 )
 @TypeConverters(
@@ -280,7 +285,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val besteSchuleGradesDao: BesteschuleGradesDao
 
     companion object {
-        const val DATABASE_VERSION = 11
+        const val DATABASE_VERSION = 12
     }
 
     @RenameColumn(
@@ -616,6 +621,8 @@ abstract class VppDatabase : RoomDatabase() {
     @DeleteTable(tableName = "fk_schulverwalter_grade_schulverwalter_teacher")
     @DeleteTable(tableName = "fk_schulverwalter_subject_schulverwalter_final_grade")
     class Migration10to11: AutoMigrationSpec
+
+    class Migration11to12: AutoMigrationSpec
 }
 
 // Room compiler generates the `actual` implementations

@@ -20,7 +20,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.domain.model.besteschule.BesteSchuleSubject

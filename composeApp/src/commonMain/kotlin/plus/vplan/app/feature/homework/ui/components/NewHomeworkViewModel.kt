@@ -8,13 +8,15 @@ import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkResult
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
@@ -29,7 +31,8 @@ class NewHomeworkViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val isVppIdBannerAllowedUseCase: IsVppIdBannerAllowedUseCase,
     private val hideVppIdBannerUseCase: HideVppIdBannerUseCase,
-    private val createHomeworkUseCase: CreateHomeworkUseCase
+    private val createHomeworkUseCase: CreateHomeworkUseCase,
+    private val subjectInstanceRepository: SubjectInstanceRepository
 ) : ViewModel() {
     @OptIn(ExperimentalUuidApi::class)
     val state = MutableStateFlow(NewHomeworkState())
@@ -50,18 +53,26 @@ class NewHomeworkViewModel(
             ) { currentProfile, canShowVppIdBanner ->
                 state.update { state ->
                     state.copy(
-                        currentProfile = (currentProfile as? Profile.StudentProfile).also {
-                            it?.getGroupItem()
-                            it?.getSubjectInstances()?.onEach { subjectInstance ->
-                                subjectInstance.getTeacherItem()
-                                subjectInstance.getCourseItem()
-                            }
-                        },
-                        isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppIdId == null) null else true,
+                        currentProfile = (currentProfile as? Profile.StudentProfile),
+                        isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppId?.id == null) null else true,
                         canShowVppIdBanner = canShowVppIdBanner
                     )
                 }
-            }.collect()
+            }.collectLatest {
+                val profile = state.value.currentProfile ?: return@collectLatest
+
+                subjectInstanceRepository
+                    .getByGroup(profile.group.id)
+                    .map { subjectInstances ->
+                        subjectInstances.filter { subjectInstance ->
+                            profile.subjectInstanceConfiguration[subjectInstance.id] != false
+                        }
+                    }
+                    .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
+                    .collectLatest {
+                        state.update { state -> state.copy(subjectInstances = it) }
+                    }
+            }
         }
     }
 
@@ -120,6 +131,7 @@ class NewHomeworkViewModel(
 data class NewHomeworkState(
     val tasks: Map<Uuid, String> = emptyMap(),
     val currentProfile: Profile.StudentProfile? = null,
+    val subjectInstances: List<SubjectInstance> = emptyList(),
     val selectedSubjectInstance: SubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val isPublic: Boolean? = null,

@@ -30,7 +30,7 @@ import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.core.model.LessonTime
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -67,10 +67,8 @@ class CalendarViewModel(
 
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
-            val currentProfile = _state.value.currentProfile
-            if (currentProfile == null) return@launch
-            val school = currentProfile.getSchool().getFirstValue() ?: return@launch
-            App.daySource.getById(Day.buildId(school.id, date), currentProfile)
+            val currentProfile = _state.value.currentProfile ?: return@launch
+            App.daySource.getById(Day.buildId(currentProfile.school.id, date), currentProfile)
                 .filterIsInstance<CacheState.Done<Day>>()
                 .map { it.data }
                 .collectLatest { day ->

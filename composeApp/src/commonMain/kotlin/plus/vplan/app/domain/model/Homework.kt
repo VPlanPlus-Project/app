@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
@@ -16,14 +15,15 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.App
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.DataTag
-import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.core.model.Alias
-import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Item
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -96,7 +96,7 @@ sealed class Homework(
             return homeworkItem ?: App.homeworkSource.getById(homework).getFirstValueOld().also { homeworkItem = it }
         }
 
-        fun isDone(profile: Profile.StudentProfile) = (profile.id in doneByProfiles && profile.vppIdId == null) || profile.vppIdId in doneByVppIds
+        fun isDone(profile: Profile.StudentProfile) = (profile.id in doneByProfiles && profile.vppId == null) || profile.vppId?.id in doneByVppIds
     }
 
     data class HomeworkFile(
@@ -154,8 +154,7 @@ sealed class Homework(
         override val group: Flow<AliasState<Group>> by lazy {
             App.profileSource.getById(createdByProfileId)
                 .filterIsInstance<CacheState.Done<Profile.StudentProfile>>()
-                .map { it.data }
-                .flatMapLatest { App.groupSource.getById(it.groupId) }
+                .map { AliasState.Done(it.data.group) }
         }
     }
 }

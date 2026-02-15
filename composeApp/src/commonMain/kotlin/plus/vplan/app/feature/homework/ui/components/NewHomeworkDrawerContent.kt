@@ -217,7 +217,7 @@ fun NewHomeworkDrawerContent(
             SubjectAndDateTile(
                 selectedSubjectInstance = state.selectedSubjectInstance,
                 selectedDate = state.selectedDate,
-                group = state.currentProfile.groupItem!!,
+                group = state.currentProfile.group,
                 isAssessment = false,
                 onClickSubjectInstance = { showLessonSelectDrawer = true },
                 onClickDate = { showDateSelectDrawer = true }
@@ -241,7 +241,7 @@ fun NewHomeworkDrawerContent(
             if (state.isPublic != null) VisibilityTile(
                 isPublic = state.isPublic,
                 selectedSubjectInstance = state.selectedSubjectInstance,
-                group = state.currentProfile.groupItem!!,
+                group = state.currentProfile.group,
                 onSetVisibility = { isPublic -> viewModel.onEvent(NewHomeworkEvent.SetVisibility(isPublic)) }
             )
             else VppIdBanner(
@@ -311,9 +311,9 @@ fun NewHomeworkDrawerContent(
 
     if (showLessonSelectDrawer) {
         LessonSelectDrawer(
-            group = state.currentProfile.groupItem!!,
+            group = state.currentProfile.group,
             allowGroup = true,
-            subjectInstances = state.currentProfile.subjectInstanceItems.filter { subjectInstance -> state.currentProfile.subjectInstanceConfiguration.filterValues { !it }.none { it.key == subjectInstance.id } }.sortedBy { it.subject },
+            subjectInstances = state.subjectInstances,
             selectedSubjectInstance = state.selectedSubjectInstance,
             onSelectSubjectInstance = { viewModel.onEvent(NewHomeworkEvent.SelectSubjectInstance(it)) },
             onDismiss = { showLessonSelectDrawer = false }

@@ -43,7 +43,7 @@ import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.components.LogoutDialog
 import plus.vplan.app.ui.components.Badge
 import plus.vplan.app.ui.components.Button

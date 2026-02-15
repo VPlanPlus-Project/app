@@ -15,12 +15,11 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -30,7 +29,7 @@ import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.GetAssessmentsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
-import plus.vplan.app.feature.search.domain.usecase.GetSubjectsUseCase
+import plus.vplan.app.feature.search.domain.usecase.GetSubjectsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.SearchRequest
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
 import plus.vplan.app.utils.now
@@ -45,7 +44,7 @@ class SearchViewModel(
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val lockGradesUseCase: LockGradesUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
-    private val getSubjectsUseCase: GetSubjectsUseCase
+    private val getSubjectsForProfileUseCase: GetSubjectsForProfileUseCase
 ) : ViewModel() {
 
     var state by mutableStateOf(SearchState())
@@ -73,7 +72,7 @@ class SearchViewModel(
                     homeworkJob = launch { getHomeworkForProfileUseCase(currentProfile).collectLatest { state = state.copy(homework = it) } }
                     assessmentJob = launch { getAssessmentsForProfileUseCase(currentProfile).collectLatest { state = state.copy(assessments = it) } }
                 }
-                getSubjectsUseCase(currentProfile).let { state = state.copy(subjects = it) }
+                getSubjectsForProfileUseCase(currentProfile).let { state = state.copy(subjects = it) }
             }
         }
     }
@@ -109,7 +108,7 @@ class SearchViewModel(
 
     private suspend fun restartSearch() {
         searchJob?.cancel()
-        val schoolId = state.currentProfile?.getSchool()?.getFirstValue()?.id
+        val schoolId = state.currentProfile?.school?.id
         if (state.currentProfile == null || schoolId == null) {
             state = state.copy(results = emptyMap())
             return

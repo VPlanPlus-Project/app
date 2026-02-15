@@ -2,8 +2,7 @@ package plus.vplan.app.feature.profile.settings.page.main.domain.usecase
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -16,21 +15,19 @@ class DeleteProfileUseCase(
 ) {
     private val logger = Logger.withTag("DeleteProfileUseCase")
     suspend operator fun invoke(profile: Profile) {
-        val school = profile.getSchool().getFirstValue()!!
-
         val existingProfiles = profileRepository.getAll().first().filter { it.id != profile.id }
 
         if (existingProfiles.isEmpty()) {
             logger.i { "Need to go to onboarding after deletion" }
         }
 
-        (existingProfiles.firstOrNull { it.getSchool().getFirstValue()!!.id == school.id } ?: existingProfiles.firstOrNull())?.let { nextProfile ->
+        (existingProfiles.firstOrNull { it.school.id == profile.school.id } ?: existingProfiles.firstOrNull())?.let { nextProfile ->
             keyValueRepository.set(Keys.CURRENT_PROFILE, nextProfile.id.toHexString())
         } ?: keyValueRepository.delete(Keys.CURRENT_PROFILE)
 
-        if (existingProfiles.none { it.getSchool().getFirstValue()!!.id == school.id }) {
-            logger.i { "Deleting school ${school.name} (${school.id})" }
-            schoolRepository.deleteSchool(school.id) // deletes profile as well
+        if (existingProfiles.none { it.school.id == profile.school.id }) {
+            logger.i { "Deleting school ${profile.school.name} (${profile.school.id})" }
+            schoolRepository.deleteSchool(profile.school.id) // deletes profile as well
         } else {
             profileRepository.deleteProfile(profileId = profile.id)
         }

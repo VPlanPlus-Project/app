@@ -1,6 +1,6 @@
 package plus.vplan.app.domain.usecase
 
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import kotlin.uuid.Uuid

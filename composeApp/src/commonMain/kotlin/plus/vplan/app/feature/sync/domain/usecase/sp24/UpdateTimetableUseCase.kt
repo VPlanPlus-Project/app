@@ -7,19 +7,20 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.captureError
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.Profile
 import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.model.Timetable
 import plus.vplan.app.core.model.Week
+import plus.vplan.app.core.utils.date.atStartOfWeek
+import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.Timetable
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
+import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.core.utils.date.atStartOfWeek
+import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.takeContinuousBy
 import plus.vplan.lib.sp24.source.Authentication
@@ -37,7 +38,9 @@ class UpdateTimetableUseCase(
     private val teacherRepository: TeacherRepository,
     private val weekRepository: WeekRepository,
     private val timetableRepository: TimetableRepository,
-    private val profileRepository: ProfileRepository
+    private val substitutionPlanRepository: SubstitutionPlanRepository,
+    private val profileRepository: ProfileRepository,
+    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
 ) {
 
     /**
@@ -57,6 +60,8 @@ class UpdateTimetableUseCase(
         val rooms = roomRepository.getBySchool(sp24School.id).first()
         val teachers = teacherRepository.getBySchool(sp24School.id).first()
         val groups = groupRepository.getBySchool(sp24School.id).first()
+
+        val insertVersion = timetableRepository.getCurrentVersion().first() + 1
 
         val weeks = getWeekStates(sp24School)
             .let { weeks ->
@@ -145,14 +150,18 @@ class UpdateTimetableUseCase(
                         timetableRepository.upsertLessons(
                             timetableId = timetableMetadata.id,
                             lessons = lessons,
-                            profiles = profileRepository.getAll().first()
-                                .filterIsInstance<Profile.StudentProfile>()
+                            version = insertVersion,
                         )
                     }
 
                     else -> LOGGER.e { "Invalid timetable state: $timetableResponse" }
                 }
             }
+        }
+
+        val substitutionPlanVersion = substitutionPlanRepository.getCurrentVersion().first()
+        profileRepository.getAll().first().forEach { profile ->
+            updateProfileLessonIndexUseCase(profile, substitutionPlanVersion, insertVersion)
         }
 
         return null

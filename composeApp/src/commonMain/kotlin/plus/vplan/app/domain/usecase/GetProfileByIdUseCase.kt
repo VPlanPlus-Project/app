@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
 import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import kotlin.uuid.Uuid
 
 class GetProfileByIdUseCase {

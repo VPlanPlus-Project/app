@@ -3,7 +3,7 @@ package plus.vplan.app.feature.homework.domain.usecase
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -15,7 +15,7 @@ class EditHomeworkSubjectInstanceUseCase(
     private val groupRepository: GroupRepository
 ) {
     suspend operator fun invoke(homework: Homework, subjectInstance: SubjectInstance?, profile: Profile.StudentProfile) {
-        var group = if (subjectInstance == null) profile.group.getFirstValue() else null
+        var group = if (subjectInstance == null) profile.group else null
         var subjectInstance = subjectInstance
 
         if (subjectInstance != null && subjectInstance.aliases.none { it.provider == AliasProvider.Vpp }) {

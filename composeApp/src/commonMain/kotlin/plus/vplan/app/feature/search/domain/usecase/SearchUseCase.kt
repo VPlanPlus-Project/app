@@ -17,9 +17,9 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.App
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
@@ -52,10 +52,9 @@ class SearchUseCase(
         if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap())
         val query = searchRequest.query.lowercase().trim()
         val profile = getCurrentProfileUseCase().first()
-        val school = profile.getSchool().getFirstValue() ?: return@channelFlow send(emptyMap())
 
         launch {
-            substitutionPlanRepository.getSubstitutionPlanBySchool(school.id, searchRequest.date).collectLatest { substitutionPlanLessonIds ->
+            substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, searchRequest.date).collectLatest { substitutionPlanLessonIds ->
                 val lessons = substitutionPlanLessonIds
                     .map { id -> App.substitutionPlanSource.getById(id).getFirstValueOld() }
                     .fastFilterNotNull()
@@ -66,9 +65,9 @@ class SearchUseCase(
 
                 if (searchRequest.query.isNotEmpty() && searchRequest.assessmentType == null) launch {
                     combine(
-                        groupRepository.getBySchool(school.id).map { it.filter { group -> query in group.name.lowercase() } },
-                        teacherRepository.getBySchool(school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
-                        roomRepository.getBySchool(school.id).map { it.filter { room -> query in room.name.lowercase() } },
+                        groupRepository.getBySchool(profile.school.id).map { it.filter { group -> query in group.name.lowercase() } },
+                        teacherRepository.getBySchool(profile.school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
+                        roomRepository.getBySchool(profile.school.id).map { it.filter { room -> query in room.name.lowercase() } },
                     ) { groups, teachers, rooms ->
                         results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->
                             SearchResult.SchoolEntity.Group(

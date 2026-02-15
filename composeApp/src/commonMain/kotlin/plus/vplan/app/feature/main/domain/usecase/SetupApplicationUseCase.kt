@@ -7,15 +7,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.captureError
-import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
 import plus.vplan.app.feature.main.domain.usecase.setup.DownloadVppSchoolIdentifierUseCase
-import plus.vplan.app.feature.main.domain.usecase.setup.RemoveDisconnectedVppIdsFromProfilesUseCase
 import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
 import plus.vplan.app.firebaseIdentify
 import plus.vplan.app.isFeatureEnabled
@@ -28,13 +26,11 @@ class SetupApplicationUseCase(
     private val doAssessmentsAndHomeworkIndexMigrationUseCase: DoAssessmentsAndHomeworkIndexMigrationUseCase,
     private val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase,
     private val downloadVppSchoolIdentifierUseCase: DownloadVppSchoolIdentifierUseCase,
-    private val removeDisconnectedVppIdsFromProfilesUseCase: RemoveDisconnectedVppIdsFromProfilesUseCase,
     private val profileRepository: ProfileRepository,
     private val vppIdRepository: VppIdRepository
 ) {
     private val logger = Logger.withTag("SetupApplicationUseCase")
     suspend operator fun invoke() {
-        removeDisconnectedVppIdsFromProfilesUseCase()
         updateFirebaseTokenUseCase()
         if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != AppBuildConfig.APP_VERSION_CODE.toString()) {
             logger.i { "First run of VPlanPlus" }
@@ -69,8 +65,7 @@ class SetupApplicationUseCase(
             }
 
         if (isFeatureEnabled("core_anonymous-user-profiles", true)) try {
-            val profiles = profileRepository.getAll().first().groupBy { it.getSchool().getFirstValue() }.mapNotNull { (school, profiles) ->
-                if (school == null) return@mapNotNull null
+            val profiles = profileRepository.getAll().first().groupBy { it.school }.mapNotNull { (school, profiles) ->
                 FirebaseUserProfiles(
                     school = school.name,
                     profiles = profiles.map { "${it.profileType}/${it.name}" }

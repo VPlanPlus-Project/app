@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.profile.page.domain.usecase
 
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.VppIdRepository
 
 class HasVppIdLinkedUseCase(

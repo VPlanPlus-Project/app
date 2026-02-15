@@ -57,7 +57,6 @@ interface TimetableDao {
         groups: List<DbTimetableGroupCrossover>,
         teachers: List<DbTimetableTeacherCrossover>,
         rooms: List<DbTimetableRoomCrossover>,
-        profileIndex: List<DbProfileTimetableCache>,
         weekLimitations: List<DbTimetableWeekLimitation>
     ) {
         Logger.d { "Start replacing" }
@@ -67,8 +66,6 @@ interface TimetableDao {
         Logger.d { "Deleted old lessons" }
         upsert(lessons, groups, teachers, rooms)
         Logger.d { "Upserted new lessons" }
-        upsert(profileIndex)
-        Logger.d { "Upserted profile index" }
         upsertWeekLimitations(weekLimitations)
         Logger.d { "Upserted week limitations" }
     }
@@ -81,8 +78,8 @@ interface TimetableDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM timetable_lessons LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id WHERE school_groups.school_id = :schoolId")
-    fun getBySchool(schoolId: Uuid): Flow<List<EmbeddedTimetableLesson>>
+    @Query("SELECT * FROM timetable_lessons LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id WHERE school_groups.school_id = :schoolId AND version = :version")
+    fun getBySchool(schoolId: Uuid, version: Int): Flow<List<EmbeddedTimetableLesson>>
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
@@ -155,7 +152,7 @@ FROM profile_timetable_cache AS ptc
          JOIN latest_timetable lt
               ON tl.timetable_id = lt.id
 WHERE (w_main.week_index = :currentWeekIndex OR w_main.week_index IS NULL)
-  AND tl.day_of_week = :dayOfWeek
+  AND tl.day_of_week = :dayOfWeek AND p.id = :profileId
     """)
     fun getLessonsForProfile(profileId: Uuid, currentWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<Uuid>>
 
@@ -170,4 +167,7 @@ WHERE (w_main.week_index = :currentWeekIndex OR w_main.week_index IS NULL)
 
     @Upsert
     suspend fun upsertWeekLimitations(limitations: List<DbTimetableWeekLimitation>)
+
+    @Query("SELECT MAX(version) FROM timetable_lessons")
+    fun getCurrentVersion(): Flow<Int?>
 }

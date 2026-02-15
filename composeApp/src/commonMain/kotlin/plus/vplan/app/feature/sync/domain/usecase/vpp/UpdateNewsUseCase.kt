@@ -2,7 +2,6 @@ package plus.vplan.app.feature.sync.domain.usecase.vpp
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -16,7 +15,7 @@ class UpdateNewsUseCase(
         val existing = newsRepository.getAll().first()
         val downloadedNewsIds = mutableSetOf<Int>()
         profileRepository.getAll().first()
-            .mapNotNull { it.getSchool().getFirstValue() }
+            .map { it.school }
             .distinctBy { it.id }
             .forEach { school ->
                 val response = newsRepository.download(school)

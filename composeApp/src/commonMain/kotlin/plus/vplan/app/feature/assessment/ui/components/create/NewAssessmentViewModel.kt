@@ -6,14 +6,14 @@ import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.CreateAssessmentUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
@@ -25,7 +25,8 @@ class NewAssessmentViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val isVppIdBannerAllowedUseCase: IsVppIdBannerAllowedUseCase,
     private val hideVppIdBannerUseCase: HideVppIdBannerUseCase,
-    private val createAssessmentUseCase: CreateAssessmentUseCase
+    private val createAssessmentUseCase: CreateAssessmentUseCase,
+    private val subjectInstanceRepository: SubjectInstanceRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(NewAssessmentState())
     val state = _state.asStateFlow()
@@ -33,19 +34,28 @@ class NewAssessmentViewModel(
     init {
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
-                val vppId = (profile as? Profile.StudentProfile)?.vppId?.getFirstValueOld() as? VppId.Active
+                val vppId = (profile as? Profile.StudentProfile)?.vppId
 
                 _state.value = _state.value.copy(
-                    currentProfile = (profile as? Profile.StudentProfile).also {
-                        it?.getGroupItem()
-                        it?.getSubjectInstances()?.onEach { subjectInstance ->
-                            subjectInstance.getTeacherItem()
-                            subjectInstance.getCourseItem()
-                            subjectInstance.getGroupItems()
-                        }
-                    },
+                    currentProfile = profile as? Profile.StudentProfile,
                     isVisible = if (vppId != null) true else null
                 )
+
+                if (profile is Profile.StudentProfile) {
+                    subjectInstanceRepository
+                        .getByGroup(profile.group.id)
+                        .map { subjectInstances ->
+                            subjectInstances.filter { subjectInstance ->
+                                profile.subjectInstanceConfiguration[subjectInstance.id] != false
+                            }
+                        }
+                        .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
+                        .collectLatest {
+                            _state.value = _state.value.copy(
+                                subjectInstances = it
+                            )
+                        }
+                }
             }
         }
         viewModelScope.launch vppIdBanner@{
@@ -101,6 +111,7 @@ class NewAssessmentViewModel(
 data class NewAssessmentState(
     val currentProfile: Profile.StudentProfile? = null,
     val canShowVppIdBanner: Boolean = false,
+    val subjectInstances: List<SubjectInstance> = emptyList(),
     val selectedSubjectInstance: SubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val description: String = "",

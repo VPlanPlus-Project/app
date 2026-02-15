@@ -16,7 +16,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.Timetable
 import plus.vplan.app.domain.repository.TimetableRepository
 import kotlin.uuid.ExperimentalUuidApi
@@ -26,7 +26,11 @@ class TimetableRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : TimetableRepository {
 
-    override suspend fun upsertLessons(timetableId: Uuid, lessons: List<Lesson.TimetableLesson>, profiles: List<Profile.StudentProfile>) {
+    override suspend fun upsertLessons(
+        timetableId: Uuid,
+        lessons: List<Lesson.TimetableLesson>,
+        version: Int,
+    ) {
         vppDatabase.timetableDao.replaceForTimetable(
             timetableId = timetableId,
             lessons = lessons.map { lesson ->
@@ -36,7 +40,8 @@ class TimetableRepositoryImpl(
                     weekType = lesson.weekType,
                     lessonNumber = lesson.lessonNumber,
                     subject = lesson.subject,
-                    timetableId = lesson.timetableId
+                    timetableId = lesson.timetableId,
+                    version = version,
                 )
             },
             groups = lessons.flatMap { lesson ->
@@ -63,16 +68,6 @@ class TimetableRepositoryImpl(
                     )
                 }
             },
-            profileIndex = profiles.flatMap { profile ->
-                lessons
-                    .filter { lesson -> lesson.isRelevantForProfile(profile) }
-                    .map {
-                        DbProfileTimetableCache(
-                            profileId = profile.id,
-                            timetableLessonId = it.id
-                        )
-                    }
-            },
             weekLimitations = lessons.flatMap { lesson ->
                 lesson.limitedToWeekIds.orEmpty().map {
                     DbTimetableWeekLimitation(timetableLessonId = lesson.id, weekId = it)
@@ -81,6 +76,9 @@ class TimetableRepositoryImpl(
         )
     }
 
+    override fun getCurrentVersion(): Flow<Int> {
+        return vppDatabase.timetableDao.getCurrentVersion().map { it ?: 1 }
+    }
 
     override suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>) {
         vppDatabase.timetableDao.replaceIndex(lessonIds.map {
@@ -95,8 +93,8 @@ class TimetableRepositoryImpl(
         vppDatabase.timetableDao.deleteAll()
     }
 
-    override suspend fun getTimetableForSchool(schoolId: Uuid): Flow<List<Lesson.TimetableLesson>> {
-        return vppDatabase.timetableDao.getBySchool(schoolId).map { it.map { l -> l.toModel() } }
+    override suspend fun getTimetableForSchool(schoolId: Uuid, version: Int): Flow<List<Lesson.TimetableLesson>> {
+        return vppDatabase.timetableDao.getBySchool(schoolId, version).map { it.map { l -> l.toModel() } }
     }
 
     override fun getById(id: Uuid): Flow<Lesson.TimetableLesson?> {

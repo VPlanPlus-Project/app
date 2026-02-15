@@ -6,11 +6,11 @@ import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
+import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectInstanceGroup
 import plus.vplan.app.data.source.database.model.embedded.EmbeddedSubjectInstance
-import plus.vplan.app.core.model.AliasProvider
 import kotlin.uuid.Uuid
 
 @Dao
@@ -20,6 +20,11 @@ interface SubjectInstanceDao {
     @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM subject_instance LEFT JOIN fk_subject_instance_group ON subject_instance.id = fk_subject_instance_group.subject_instance_id WHERE group_id = :groupId")
     fun getByGroup(groupId: Uuid): Flow<List<EmbeddedSubjectInstance>>
+
+    @Transaction
+    @RewriteQueriesToDropUnusedColumns
+    @Query("SELECT * FROM subject_instance WHERE subject_instance.teacher_id = :teacherId")
+    fun getByTeacher(teacherId: Uuid): Flow<List<EmbeddedSubjectInstance>>
 
     @Transaction
     @Query("SELECT * FROM subject_instance")

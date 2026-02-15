@@ -16,13 +16,12 @@ import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -52,11 +51,7 @@ class UpdateAssessmentsUseCase(
             .filterIsInstance<Profile.StudentProfile>()
 
         profiles.forEach forEachProfile@{ profile ->
-            val apiAuthentication = (profile.vppId?.getFirstValueOld() as? VppId.Active)?.buildVppSchoolAuthentication() ?: profile.getSchool().getFirstValue()?.buildSp24AppAuthentication()
-            if (apiAuthentication == null) {
-                logger.e { "No api authentication found for profile ${profile.id} (${profile.name})" }
-                return@forEachProfile
-            }
+            val apiAuthentication = profile.vppId?.buildVppSchoolAuthentication() ?: profile.school.buildSp24AppAuthentication()
 
             val enabledSubjectInstanceIds = profile.subjectInstanceConfiguration.filterValues { it }.keys
             val subjectInstanceAliases = enabledSubjectInstanceIds
@@ -72,7 +67,7 @@ class UpdateAssessmentsUseCase(
                 .also { ids ->
                     if (ids.isEmpty() || !allowNotifications) return@forEachProfile
                     combine(ids.map { assessmentId -> App.assessmentSource.getById(assessmentId).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }.first()
-                        .filter { assessment -> assessment.creator is AppEntity.VppId && assessment.creator.id != profile.vppIdId && (assessment.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
+                        .filter { assessment -> assessment.creator is AppEntity.VppId && assessment.creator.id != profile.vppId?.id && (assessment.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
                         .filter { assessment -> assessment.subjectInstance.getFirstValue()!!.id in profile.subjectInstanceConfiguration.filterValues { it }.keys }
                         .let { newAssessments ->
                             if (newAssessments.isEmpty()) return@forEachProfile

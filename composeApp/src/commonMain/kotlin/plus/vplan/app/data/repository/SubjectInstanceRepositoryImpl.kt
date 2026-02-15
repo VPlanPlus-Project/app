@@ -24,6 +24,11 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
@@ -33,12 +38,7 @@ import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
 import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.core.model.AliasState
-import plus.vplan.app.core.model.Alias
-import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.SubjectInstanceDbDto
@@ -58,6 +58,13 @@ class SubjectInstanceRepositoryImpl(
     override fun getByGroup(groupId: Uuid): Flow<List<SubjectInstance>> {
         return getByGroupCache.getOrPut(groupId) {
             vppDatabase.subjectInstanceDao.getByGroup(groupId).map { it.map { dl -> dl.toModel() } }
+        }
+    }
+
+    private val getByTeacherCache = mutableMapOf<Uuid, Flow<List<SubjectInstance>>>()
+    override fun getByTeacher(teacherId: Uuid): Flow<List<SubjectInstance>> {
+        return getByTeacherCache.getOrPut(teacherId) {
+            vppDatabase.subjectInstanceDao.getByTeacher(teacherId).map { it.map { dl -> dl.toModel() } }
         }
     }
 

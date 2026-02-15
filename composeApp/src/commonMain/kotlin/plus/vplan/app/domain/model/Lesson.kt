@@ -114,25 +114,4 @@ sealed interface Lesson : Item<Uuid, DataTag> {
             return "$subject/${teacherIds.sorted()}/${roomIds.sorted()}/${groupIds.sorted()}/$lessonNumber/$date/$subjectInstanceId"
         }
     }
-
-    suspend fun isRelevantForProfile(profile: Profile): Boolean {
-        when (profile) {
-            is Profile.StudentProfile -> {
-                if (profile.groupId !in this.groupIds) return false
-                if (profile.subjectInstanceConfiguration.filterValues { false }.any { it.key == this.subjectInstanceId }) return false
-                if (this is TimetableLesson) {
-                    val subjectInstances = profile.subjectInstanceConfiguration.mapKeys { profile.getSubjectInstance(it.key) }
-                    if (subjectInstances.filterValues { !it }.any { it.key.getCourseItem()?.name == this.subject }) return false
-                    if (subjectInstances.filterValues { !it }.any { it.key.courseId == null && it.key.subject == this.subject }) return false
-                    subjectInstances.isEmpty()
-                } else if (this is SubstitutionPlanLesson) {
-                    if (this.subjectInstanceId != null && this.subjectInstanceId in profile.subjectInstanceConfiguration.filterValues { !it }) return false
-                }
-            }
-            is Profile.TeacherProfile -> {
-                if (profile.teacher !in this.teacherIds) return false
-            }
-        }
-        return true
-    }
 }

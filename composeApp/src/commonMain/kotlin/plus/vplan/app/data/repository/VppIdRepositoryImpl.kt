@@ -57,7 +57,7 @@ import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.domain.cache.CreationReason
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.VppDbDto
 import plus.vplan.app.domain.repository.VppIdDevice

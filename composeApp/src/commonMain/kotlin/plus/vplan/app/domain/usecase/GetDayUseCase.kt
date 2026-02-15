@@ -9,13 +9,12 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 
 class GetDayUseCase {
-    suspend operator fun invoke(profile: Profile, date: LocalDate): Flow<Day> {
-        val schoolId = profile.getSchool().getFirstValue()!!.id
+    operator fun invoke(profile: Profile, date: LocalDate): Flow<Day> {
+        val schoolId = profile.school.id
         return App.daySource.getById("${schoolId}/$date", contextProfile = profile)
             .filterIsInstance<CacheState.Done<Day>>()
             .filter { Day.DayTags.HAS_LESSONS in it.data.tags }

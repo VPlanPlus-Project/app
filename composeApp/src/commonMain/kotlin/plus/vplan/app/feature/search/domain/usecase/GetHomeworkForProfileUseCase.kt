@@ -2,7 +2,7 @@ package plus.vplan.app.feature.search.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.HomeworkRepository
 
 class GetHomeworkForProfileUseCase(

@@ -1,13 +1,22 @@
 package plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase
 
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Course
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 
-class GetCourseConfigurationUseCase {
+class GetCourseConfigurationUseCase: KoinComponent {
+    private val subjectInstanceRepository by inject<SubjectInstanceRepository>()
+
+
     suspend operator fun invoke(profile: Profile.StudentProfile): Map<Course, Boolean?> {
-        return profile.getSubjectInstances()
+        val subjectInstances = subjectInstanceRepository.getByGroup(profile.group.id).first()
+        return subjectInstances
+            .filter { subjectInstance -> profile.subjectInstanceConfiguration[subjectInstance.id] != false }
             .groupBy { it.getCourseItem() }
             .map { (course, subjectInstances) ->
                 val selections = subjectInstances.map { profile.subjectInstanceConfiguration[it.id] == true }

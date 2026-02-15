@@ -40,5 +40,6 @@ data class DbSubstitutionPlanLesson(
     @ColumnInfo("info") val info: String?,
     @ColumnInfo("subject_instance_id") val subjectInstanceId: Uuid?,
     @ColumnInfo("is_room_changed") val isRoomChanged: Boolean,
-    @ColumnInfo("is_teacher_changed") val isTeacherChanged: Boolean
+    @ColumnInfo("is_teacher_changed") val isTeacherChanged: Boolean,
+    @ColumnInfo("version", defaultValue = "1") val version: Int,
 )

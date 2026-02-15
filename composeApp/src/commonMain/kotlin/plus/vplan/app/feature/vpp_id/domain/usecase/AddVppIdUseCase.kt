@@ -7,8 +7,8 @@ import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -80,7 +80,7 @@ class AddVppIdUseCase(
         } ?: profileRepository
             .getAll().first()
             .filterIsInstance<Profile.StudentProfile>()
-            .first { it.groupId == group.id }
+            .first { it.group.id == group.id }
         keyValueRepository.delete(Keys.VPP_ID_LOGIN_LINK_TO_PROFILE)
         profileRepository.updateVppId(profile.id, vppId.data.id)
         syncGradesUseCase(false)

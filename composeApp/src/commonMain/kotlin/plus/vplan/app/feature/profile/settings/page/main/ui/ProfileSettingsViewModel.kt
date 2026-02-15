@@ -9,8 +9,8 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
@@ -44,8 +44,8 @@ class ProfileSettingsViewModel(
             getProfileByIdUseCase(Uuid.parse(profileId)).collectLatest { profile ->
                 logger.d { "Got profile $profile" }
                 state = state.copy(profile = profile)
-                if (profile is Profile.StudentProfile && profile.vppIdId != null) {
-                    checkIfVppIdIsStillConnectedUseCase(vppIdRepository.getById(profile.vppIdId, ResponsePreference.Fast).getFirstValueOld() as VppId.Active).let {
+                if (profile is Profile.StudentProfile && profile.vppId != null) {
+                    checkIfVppIdIsStillConnectedUseCase(vppIdRepository.getById(profile.vppId.id, ResponsePreference.Fast).getFirstValueOld() as VppId.Active).let {
                         state = state.copy(isVppIdStillConnected = it)
                     }
                 }

@@ -15,15 +15,14 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
-import plus.vplan.app.capture
-import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -52,22 +51,12 @@ class UpdateHomeworkUseCase(
         val profiles = profileRepository.getAll().first().filterIsInstance<Profile.StudentProfile>()
         val existingIds = mutableSetOf<Int>()
         profiles.forEach forEachProfile@{ studentProfile ->
-            val group = studentProfile.group.getFirstValue() ?: run {
-                val errorMessage = "Group not found for profile ${studentProfile.name} (${studentProfile.id})"
-                capture("error", mapOf(
-                    "location" to "UpdateHomeworkUseCase",
-                    "message" to errorMessage
-                ))
-                logger.e { errorMessage }
-                return@forEachProfile
-            }
-            val existingHomeworkIds = homeworkRepository.getByGroup(group).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
+            val existingHomeworkIds = homeworkRepository.getByGroup(studentProfile.group).first().filterIsInstance<Homework.CloudHomework>().map { it.id }.toSet()
             existingIds.addAll(existingHomeworkIds)
-            val school = studentProfile.getSchool().getFirstValue()
 
             // require vpp provider for school
-            school?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toInt() ?: run {
-                logger.e { "No vpp provider for school $school" }
+            studentProfile.school.aliases.getByProvider(AliasProvider.Vpp)?.value?.toInt() ?: run {
+                logger.e { "No vpp provider for school ${studentProfile.school}" }
                 return@forEachProfile
             }
 
@@ -76,8 +65,8 @@ class UpdateHomeworkUseCase(
                 .mapNotNull { subjectInstanceRepository.getByLocalId(it).first() }
                 .flatMap { it.aliases }
 
-            logger.d { "Downloading homework for ${group.name}" }
-            val downloaded = homeworkRepository.download(school.buildSp24AppAuthentication(), group.aliases.toList(), subjectInstanceAliases)
+            logger.d { "Downloading homework for ${studentProfile.group.name}" }
+            val downloaded = homeworkRepository.download(studentProfile.school.buildSp24AppAuthentication(), studentProfile.group.aliases.toList(), subjectInstanceAliases)
             if (downloaded !is Response.Success) {
                 logger.e { "Failed to download homework for profile ${studentProfile.name} (${studentProfile.id}): $downloaded" }
                 return@forEachProfile
@@ -108,7 +97,7 @@ class UpdateHomeworkUseCase(
                         .map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
                         .filterIsInstance<Homework.CloudHomework>()
                         .filter { homework ->
-                            homework.createdById != studentProfile.vppIdId && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now()
+                            homework.createdById != studentProfile.vppId?.id && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now()
                                 .toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days
                         }
                         .filter { it.subjectInstanceId == null || it.subjectInstanceId in allowedSubjectInstanceVppIds }

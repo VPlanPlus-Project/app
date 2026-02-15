@@ -9,10 +9,10 @@ import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.StartTaskJson
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.getFirstValueOld
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -202,8 +202,7 @@ class SyncGradesUseCase(
                 val newGrade = gradesEligibleForNotification.first()
                 val gradeReceiverVppId = profileRepository.getAll().first()
                     .filterIsInstance<Profile.StudentProfile>()
-                    .map { it.vppId?.getFirstValueOld() }
-                    .filterIsInstance<VppId.Active>()
+                    .mapNotNull { it.vppId }
                     .firstOrNull { it.schulverwalterConnection?.userId == newGrade.schulverwalterUserId }
 
                 val collection = newGrade.collection.first()!!
@@ -245,8 +244,7 @@ class SyncGradesUseCase(
                 val schulverwalterUserIdsThatGotNewGrades = gradesEligibleForNotification.map { it.schulverwalterUserId }.toSet()
                 val gradeReceiverVppIds = profileRepository.getAll().first()
                     .filterIsInstance<Profile.StudentProfile>()
-                    .map { it.vppId?.getFirstValueOld() }
-                    .filterIsInstance<VppId.Active>()
+                    .mapNotNull { it.vppId }
                     .filter { it.schulverwalterConnection?.userId in schulverwalterUserIdsThatGotNewGrades }
 
                 platformNotificationRepository.sendNotification(
