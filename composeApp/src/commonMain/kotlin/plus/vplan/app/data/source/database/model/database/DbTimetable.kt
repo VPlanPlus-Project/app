@@ -4,8 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import plus.vplan.app.domain.model.Timetable
-import plus.vplan.app.domain.repository.Stundenplan24Repository
+import plus.vplan.app.core.model.Timetable
 import kotlin.uuid.Uuid
 
 @Entity(
@@ -37,7 +36,7 @@ data class DbTimetable(
     @ColumnInfo(name = "id") val id: Uuid,
     @ColumnInfo(name = "school_id") val schoolId: Uuid,
     @ColumnInfo(name = "week_id") val weekId: String,
-    @ColumnInfo(name = "data_state") val dataState: Stundenplan24Repository.HasData
+    @ColumnInfo(name = "data_state") val dataState: Timetable.HasData
 ) {
     fun toModel() = Timetable(
         id = id,

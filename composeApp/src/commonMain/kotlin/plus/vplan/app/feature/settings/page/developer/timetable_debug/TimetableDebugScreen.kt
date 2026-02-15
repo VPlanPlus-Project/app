@@ -29,7 +29,7 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.model.Timetable
+import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.core.utils.date.atStartOfWeek
@@ -158,7 +158,7 @@ private fun TimetableDebugContentPreview() {
                         id = Uuid.random(),
                         weekId = "2",
                         schoolId = Uuid.random(),
-                        dataState = Stundenplan24Repository.HasData.No
+                        dataState = Timetable.HasData.No
                     )
                 )
             )

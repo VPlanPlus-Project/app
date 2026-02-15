@@ -11,7 +11,7 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.Timetable
+import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -67,12 +67,12 @@ class UpdateTimetableUseCase(
             .let { weeks ->
                 if (forceUpdate) weeks
                 else weeks
-                    .filter { weekState -> weekState.relativeTime == WeekState.RelativeTime.CurrentOrFuture || (weekState.relativeTime == WeekState.RelativeTime.Past && weekState.hasData == Stundenplan24Repository.HasData.Unknown) }
+                    .filter { weekState -> weekState.relativeTime == WeekState.RelativeTime.CurrentOrFuture || (weekState.relativeTime == WeekState.RelativeTime.Past && weekState.hasData == Timetable.HasData.Unknown) }
                     .groupBy { it.hasData }
                     .let {
-                        val unknown = it[Stundenplan24Repository.HasData.Unknown].orEmpty()
+                        val unknown = it[Timetable.HasData.Unknown].orEmpty()
 
-                        val other = (it[Stundenplan24Repository.HasData.Yes].orEmpty() + it[Stundenplan24Repository.HasData.No].orEmpty())
+                        val other = (it[Timetable.HasData.Yes].orEmpty() + it[Timetable.HasData.No].orEmpty())
                             .sortedBy { week -> week.weekEntity.weekIndex }
                             .take(3)
 
@@ -82,8 +82,8 @@ class UpdateTimetableUseCase(
             }
 
         weeks.forEach forEachWeek@{ week ->
-            if ((week.relativeTime == WeekState.RelativeTime.Past && week.hasData != Stundenplan24Repository.HasData.Unknown) && !forceUpdate) return@forEachWeek
-            if (week.hasData != Stundenplan24Repository.HasData.Yes || forceUpdate) {
+            if ((week.relativeTime == WeekState.RelativeTime.Past && week.hasData != Timetable.HasData.Unknown) && !forceUpdate) return@forEachWeek
+            if (week.hasData != Timetable.HasData.Yes || forceUpdate) {
                 LOGGER.d {
                     buildString {
                         append("Downloading timetable for week ${week.weekEntity.weekIndex}, starting at ${week.weekEntity.start}")
@@ -96,19 +96,19 @@ class UpdateTimetableUseCase(
                         id = Uuid.random(),
                         schoolId = sp24School.id,
                         weekId = week.weekEntity.id,
-                        dataState = Stundenplan24Repository.HasData.Unknown
+                        dataState = Timetable.HasData.Unknown
                     ).also { timetableRepository.upsertTimetable(it) }
 
                 when (timetableResponse) {
                     is Sp24Response.Error.OnlineError.NotFound -> {
                         LOGGER.i { "Timetable not found for sp24 school ${sp24School.id} and week CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)" }
-                        timetableRepository.upsertTimetable(timetableMetadata.copy(dataState = Stundenplan24Repository.HasData.No))
+                        timetableRepository.upsertTimetable(timetableMetadata.copy(dataState = Timetable.HasData.No))
                         return@forEachWeek
                     }
                     is Sp24Response.Success -> {
                         LOGGER.i { "Timetable found for indiware school ${sp24School.id} in week CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)" }
 
-                        timetableRepository.upsertTimetable(timetableMetadata.copy(dataState = Stundenplan24Repository.HasData.Yes))
+                        timetableRepository.upsertTimetable(timetableMetadata.copy(dataState = Timetable.HasData.Yes))
 
                         val downloadedTimetable = timetableResponse.data
                         val lessons = downloadedTimetable.lessons.mapNotNull { lesson ->
@@ -216,7 +216,7 @@ class UpdateTimetableUseCase(
             .map { week ->
                 WeekState(
                     weekEntity = week,
-                    hasData = timetableRepository.getTimetableData(school.id, week.id).first()?.dataState ?: Stundenplan24Repository.HasData.Unknown,
+                    hasData = timetableRepository.getTimetableData(school.id, week.id).first()?.dataState ?: Timetable.HasData.Unknown,
                     relativeTime = if (week.start < today) WeekState.RelativeTime.Past else WeekState.RelativeTime.CurrentOrFuture
                 )
             }
@@ -226,7 +226,7 @@ class UpdateTimetableUseCase(
 }
 
 private data class WeekState(
-    val hasData: Stundenplan24Repository.HasData,
+    val hasData: Timetable.HasData,
     val relativeTime: RelativeTime,
     val weekEntity: Week
 ) {

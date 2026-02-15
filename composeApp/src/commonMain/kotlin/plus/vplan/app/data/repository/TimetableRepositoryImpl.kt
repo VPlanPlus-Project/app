@@ -17,7 +17,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetable
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.Timetable
+import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.domain.repository.TimetableRepository
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

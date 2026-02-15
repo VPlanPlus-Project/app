@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.Timetable
+import plus.vplan.app.core.model.Timetable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

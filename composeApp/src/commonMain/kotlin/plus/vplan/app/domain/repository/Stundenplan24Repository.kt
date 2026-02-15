@@ -13,8 +13,4 @@ interface Stundenplan24Repository {
     suspend fun getWPlanSplan(authentication: Authentication, weekIndex: Int): plus.vplan.lib.sp24.source.Response<SPlanStudentData>
 
     suspend fun getSp24Client(authentication: Authentication, withCache: Boolean): Stundenplan24Client
-
-    enum class HasData {
-        Yes, No, Unknown
-    }
 }
