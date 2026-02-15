@@ -12,7 +12,7 @@ class SendFeedbackWithProfileUseCase(
     suspend operator fun invoke(profile: Profile, email: String?, message: String?): Response<Unit> {
         return vppIdRepository.sendFeedback(
             access =
-                if (profile is Profile.StudentProfile && profile.vppId != null) profile.vppId.buildVppSchoolAuthentication()
+                if (profile is Profile.StudentProfile && profile.vppId != null) profile.vppId!!.buildVppSchoolAuthentication()
                 else profile.school.buildSp24AppAuthentication(),
             content = message + "\n\n" + getFeedbackMetadataUseCase().first().toString(),
             email = email

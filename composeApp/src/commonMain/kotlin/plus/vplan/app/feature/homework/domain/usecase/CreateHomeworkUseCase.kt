@@ -86,7 +86,7 @@ class CreateHomeworkUseCase(
 
         if (profile.vppId is VppId.Active) {
             val result = homeworkRepository.createHomeworkOnline(
-                vppId = profile.vppId,
+                vppId = profile.vppId!!,
                 until = date,
                 groupId = vppGroupId,
                 subjectInstanceId = vppSubjectInstanceId,
@@ -103,7 +103,7 @@ class CreateHomeworkUseCase(
                 subjectInstanceId = vppSubjectInstanceId,
                 groupId = vppGroupId,
                 createdAt = Clock.System.now(),
-                createdById = profile.vppId.id,
+                createdById = profile.vppId!!.id,
                 isPublic = isPublic == true,
                 dueTo = date,
                 files = emptyList(),
@@ -114,7 +114,7 @@ class CreateHomeworkUseCase(
 
             files = selectedFiles.mapNotNull {
                 val documentId = fileRepository.uploadFile(
-                    vppId = profile.vppId,
+                    vppId = profile.vppId!!,
                     document = it
                 )
 

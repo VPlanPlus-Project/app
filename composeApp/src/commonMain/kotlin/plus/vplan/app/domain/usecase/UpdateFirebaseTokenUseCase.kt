@@ -21,7 +21,7 @@ class UpdateFirebaseTokenUseCase(
         profiles.forEach { profile ->
             if (profile is Profile.StudentProfile) {
                 if (profile.vppId != null) {
-                    vppIdRepository.updateFirebaseToken(profile.vppId, token).let {
+                    vppIdRepository.updateFirebaseToken(profile.vppId!!, token).let {
                         if (it != null) success = false
                     }
                 } else {

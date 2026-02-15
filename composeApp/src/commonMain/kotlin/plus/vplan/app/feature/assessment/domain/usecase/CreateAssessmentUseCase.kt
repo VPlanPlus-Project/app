@@ -60,7 +60,7 @@ class CreateAssessmentUseCase(
         val files = mutableListOf<Assessment.AssessmentFile>()
         if (profile.vppId != null) {
             val result = assessmentRepository.createAssessmentOnline(
-                vppId = profile.vppId,
+                vppId = profile.vppId!!,
                 date = date,
                 type = type,
                 subjectInstanceId = subjectInstanceId,
@@ -71,12 +71,12 @@ class CreateAssessmentUseCase(
             id = result.data
             selectedFiles.forEach {
                 val fileId = fileRepository.uploadFile(
-                    vppId = profile.vppId,
+                    vppId = profile.vppId!!,
                     document = it
                 )
                 if (fileId !is Response.Success) return@forEach
                 assessmentRepository.linkFileToAssessmentOnline(
-                    vppId = profile.vppId,
+                    vppId = profile.vppId!!,
                     assessmentId = result.data,
                     fileId = fileId.data
                 )

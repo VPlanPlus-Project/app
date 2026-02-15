@@ -217,7 +217,7 @@ class AssessmentRepositoryImpl(
             val response = httpClient.delete(URLBuilder(currentConfiguration.appApiUrl).apply {
                 appendPathSegments("assessment", "v1", assessment.id.toString())
             }.build()) {
-                profile.vppId.buildVppSchoolAuthentication().authentication(this)
+                profile.vppId!!.buildVppSchoolAuthentication().authentication(this)
             }
             if (!response.status.isSuccess()) return response.toErrorResponse()
             vppDatabase.assessmentDao.deleteById(listOf(assessment.id))
@@ -283,7 +283,7 @@ class AssessmentRepositoryImpl(
                 val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("assessment", "v1", assessment.id.toString())
                 }.build()) {
-                    profile.vppId.buildVppSchoolAuthentication().authentication(this)
+                    profile.vppId!!.buildVppSchoolAuthentication().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateTypeRequest(type = type.name))
                 }
@@ -317,7 +317,7 @@ class AssessmentRepositoryImpl(
                 val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("assessment", "v1", assessment.id.toString())
                 }.build()) {
-                    profile.vppId.buildVppSchoolAuthentication().authentication(this)
+                    profile.vppId!!.buildVppSchoolAuthentication().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateDateRequest(date = date.toString()))
                 }
@@ -350,7 +350,7 @@ class AssessmentRepositoryImpl(
                 val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("assessment", "v1", assessment.id.toString())
                 }.build()) {
-                    profile.vppId.buildVppSchoolAuthentication().authentication(this)
+                    profile.vppId!!.buildVppSchoolAuthentication().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateVisibilityRequest(isPublic = isPublic))
                 }
@@ -384,7 +384,7 @@ class AssessmentRepositoryImpl(
                 val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("assessment", "v1", assessment.id.toString())
                 }.build()) {
-                    profile.vppId.buildVppSchoolAuthentication().authentication(this)
+                    profile.vppId!!.buildVppSchoolAuthentication().authentication(this)
                     contentType(ContentType.Application.Json)
                     setBody(AssessmentUpdateContentRequest(content = content))
                 }

@@ -23,7 +23,7 @@ class AddAssessmentFileUseCase(
     suspend operator fun invoke(assessment: Assessment, file: PlatformFile, profile: Profile.StudentProfile): Boolean {
         val id: Int
         if (assessment.id > 0 && profile.vppId != null) {
-            val response = fileRepository.uploadFile(profile.vppId, AttachedFile.Other(
+            val response = fileRepository.uploadFile(profile.vppId!!, AttachedFile.Other(
                 platformFile = file,
                 bitmap = null,
                 size = file.getSize() ?: 0L,
@@ -48,7 +48,7 @@ class AddAssessmentFileUseCase(
         )
 
         val fileItem = fileRepository.getById(id, forceReload = false).getFirstValueOld()!!
-        if (id > 0 && profile.vppId != null) assessmentRepository.linkFileToAssessmentOnline(profile.vppId, assessment.id, fileItem.id)
+        if (id > 0 && profile.vppId != null) assessmentRepository.linkFileToAssessmentOnline(profile.vppId!!, assessment.id, fileItem.id)
         assessmentRepository.linkFileToAssessment(assessment.id, fileItem.id)
         return true
     }

@@ -60,7 +60,7 @@ class AnalyticsViewModel(
                         besteSchuleIntervalsRepository.getIntervals(
                             responsePreference = ResponsePreference.Fast,
                             contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection.userId
+                            contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId
                         )
                             .filterIsInstance<Response.Success<List<BesteSchuleInterval>>>()
                             .map { it.data }
@@ -76,7 +76,7 @@ class AnalyticsViewModel(
                         besteSchuleGradesRepository.getGrades(
                             responsePreference = ResponsePreference.Fast,
                             contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection.userId
+                            contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId
                         )
                             .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
                             .map { it.data }

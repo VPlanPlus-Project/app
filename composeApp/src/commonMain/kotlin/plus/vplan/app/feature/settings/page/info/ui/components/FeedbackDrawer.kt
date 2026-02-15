@@ -271,7 +271,7 @@ private fun FeedbackDrawerContent(
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = "Verknüpft mit vpp.ID von ${state.currentProfile.vppId.name}.",
+                                text = "Verknüpft mit vpp.ID von ${state.currentProfile.vppId!!.name}.",
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }

@@ -26,7 +26,7 @@ class AddFileUseCase(
         val fileId: Int
         if (homework.id > 0 && profile.vppId != null) {
             val fileUploadResponse = fileRepository.uploadFile(
-                vppId = profile.vppId,
+                vppId = profile.vppId!!,
                 document = AttachedFile.fromFile(file)
             )
             if (fileUploadResponse !is Response.Success) return false

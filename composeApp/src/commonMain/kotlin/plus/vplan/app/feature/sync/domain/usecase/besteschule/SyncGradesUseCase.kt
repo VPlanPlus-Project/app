@@ -62,7 +62,7 @@ class SyncGradesUseCase(
             invalidVppIdsAfterTokenReload.forEach { stillInvalidVppId ->
                 val vppId = vppIdRepository.getById(stillInvalidVppId, ResponsePreference.Fast).getFirstValueOld() as? VppId.Active ?: return@forEach
                 if (vppId.schulverwalterConnection!!.isValid == false) return@forEach
-                schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection.accessToken, false)
+                schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection!!.accessToken, false)
                 platformNotificationRepository.sendNotification(
                     title = "beste.schule-Zugang ungültig",
                     message = "Wir können keine Daten von beste.schule mehr abrufen. Tippe hier, um dich erneut in beste.schule anzumelden",
@@ -99,7 +99,7 @@ class SyncGradesUseCase(
 
         vppIds.forEach forEachUser@{ user ->
             val schulverwalterUserId = user.schulverwalterConnection!!.userId
-            val schulverwalterAccessToken = user.schulverwalterConnection.accessToken
+            val schulverwalterAccessToken = user.schulverwalterConnection!!.accessToken
 
             val yearsResponse = besteSchuleYearsRepository
                 .getYears(

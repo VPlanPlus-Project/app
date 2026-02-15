@@ -165,7 +165,7 @@ private fun ProfileContent(
                         if (state.currentProfile.vppId is VppId.Active) {
                             val subjectInstances = setOf("ast", "bio", "ch", "de", "en", "eth", "fr", "ge", "geo", "grw", "inf", "ku", "ma", "mu", "ph", "re", "sp")
 
-                            if (state.currentProfile.vppId.schulverwalterConnection != null) {
+                            if (state.currentProfile.vppId!!.schulverwalterConnection != null) {
                                 GradesCard(
                                     modifier = Modifier
                                         .padding(horizontal = 16.dp),

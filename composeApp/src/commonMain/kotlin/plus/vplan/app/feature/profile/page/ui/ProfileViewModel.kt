@@ -70,8 +70,8 @@ class ProfileViewModel(
                     if (vppId.schulverwalterConnection != null) {
                         val intervals = besteSchuleIntervalsRepository.getIntervals(
                             responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection.userId,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection.accessToken
+                            contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId,
+                            contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken
                         )
                             .filterIsInstance<Response.Success<List<BesteSchuleInterval>>>()
                             .map { response -> response.data }
@@ -83,8 +83,8 @@ class ProfileViewModel(
 
                         val grades = besteSchuleGradesRepository.getGrades(
                             responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection.userId,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection.accessToken
+                            contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId,
+                            contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken
                         )
                             .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
                             .map { response -> response.data }

@@ -131,7 +131,7 @@ class GradesViewModel(
                         besteSchuleIntervalsRepository.getIntervals(
                             responsePreference = ResponsePreference.Fast,
                             contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection.userId
+                            contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId
                         )
                             .filterIsInstance<Response.Success<List<BesteSchuleInterval>>>()
                             .map { it.data.sortedByDescending { interval -> interval.from } }
@@ -161,7 +161,7 @@ class GradesViewModel(
                             besteSchuleGradesRepository.getGrades(
                                 responsePreference = ResponsePreference.Fast,
                                 contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId,
-                                contextBesteschuleAccessToken = vppId.schulverwalterConnection.accessToken
+                                contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken
                             )
                                 .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
                                 .map { it.data }
