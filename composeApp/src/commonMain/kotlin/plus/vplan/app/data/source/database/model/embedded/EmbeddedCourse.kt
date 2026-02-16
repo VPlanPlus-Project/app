@@ -5,7 +5,7 @@ import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbCourseAlias
 import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
-import plus.vplan.app.domain.model.Course
+import plus.vplan.app.core.model.Course
 
 data class EmbeddedCourse(
     @Embedded val course: DbCourse,
@@ -25,7 +25,7 @@ data class EmbeddedCourse(
             id = course.id,
             name = course.name,
             teacherId = course.teacherId,
-            groups = groups.map { it.groupId },
+            groupIds = groups.map { it.groupId },
             cachedAt = course.cachedAt,
             aliases = aliases.map { it.toModel() }.toSet()
         )

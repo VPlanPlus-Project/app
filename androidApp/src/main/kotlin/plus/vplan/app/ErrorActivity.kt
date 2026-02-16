@@ -29,9 +29,6 @@ class ErrorActivity : FragmentActivity() {
         enableEdgeToEdge()
 
         val logLines = mutableStateListOf<String>()
-        lifecycleScope.launch(Dispatchers.IO) {
-
-        }
 
         setContent {
             AppTheme(darkTheme = isSystemInDarkTheme()) {

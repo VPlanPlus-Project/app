@@ -6,16 +6,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.core.PlatformFile
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
+import plus.vplan.app.domain.model.populated.PopulationContext
+import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkResult
@@ -32,7 +37,8 @@ class NewHomeworkViewModel(
     private val isVppIdBannerAllowedUseCase: IsVppIdBannerAllowedUseCase,
     private val hideVppIdBannerUseCase: HideVppIdBannerUseCase,
     private val createHomeworkUseCase: CreateHomeworkUseCase,
-    private val subjectInstanceRepository: SubjectInstanceRepository
+    private val subjectInstanceRepository: SubjectInstanceRepository,
+    private val subjectInstancePopulator: SubjectInstancePopulator,
 ) : ViewModel() {
     @OptIn(ExperimentalUuidApi::class)
     val state = MutableStateFlow(NewHomeworkState())
@@ -44,6 +50,7 @@ class NewHomeworkViewModel(
      */
     private var dataJob: Job? = null
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun init() {
         state.value = NewHomeworkState()
         dataJob = viewModelScope.launch {
@@ -69,6 +76,7 @@ class NewHomeworkViewModel(
                         }
                     }
                     .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
+                    .flatMapLatest { subjectInstancePopulator.populateMultiple(it, PopulationContext.Profile(profile)) }
                     .collectLatest {
                         state.update { state -> state.copy(subjectInstances = it) }
                     }
@@ -83,7 +91,6 @@ class NewHomeworkViewModel(
                 is NewHomeworkEvent.UpdateTask -> state.update { state -> state.copy(tasks = state.tasks.plus(event.taskId to event.task), showTasksError = state.showTasksError && state.tasks.all { it.value.isBlank() }) }
                 is NewHomeworkEvent.RemoveTask -> state.update { state -> state.copy(tasks = state.tasks.minus(event.taskId)) }
                 is NewHomeworkEvent.SelectSubjectInstance -> state.update { state -> state.copy(selectedSubjectInstance = event.subjectInstance.also {
-                    it?.getCourseItem()
                     it?.getTeacherItem()
                     it?.getGroupItems()
                 }) }
@@ -131,7 +138,7 @@ class NewHomeworkViewModel(
 data class NewHomeworkState(
     val tasks: Map<Uuid, String> = emptyMap(),
     val currentProfile: Profile.StudentProfile? = null,
-    val subjectInstances: List<SubjectInstance> = emptyList(),
+    val subjectInstances: List<PopulatedSubjectInstance> = emptyList(),
     val selectedSubjectInstance: SubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val isPublic: Boolean? = null,

@@ -1,19 +1,11 @@
-@file:OptIn(ExperimentalTime::class)
+package plus.vplan.app.core.model
 
-package plus.vplan.app.domain.model
-
-import plus.vplan.app.App
-import plus.vplan.app.core.model.DataTag
-import plus.vplan.app.core.model.Alias
-import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.AliasedItem
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 data class Course(
     override val id: Uuid,
-    val groups: List<Uuid>,
+    val groupIds: List<Uuid>,
     val name: String,
     val teacherId: Uuid?,
     val cachedAt: Instant,
@@ -33,6 +25,4 @@ data class Course(
             version = 1
         )
     }
-
-    val teacher by lazy { teacherId?.let { App.teacherSource.getById(it) } }
 }

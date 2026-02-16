@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.AliasState
-import plus.vplan.app.domain.model.Course
+import plus.vplan.app.core.model.Course
 import plus.vplan.app.domain.repository.CourseRepository
 import kotlin.uuid.Uuid
 

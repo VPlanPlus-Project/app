@@ -238,7 +238,7 @@ class SubjectInstanceRepositoryImpl(
                 upsert(SubjectInstanceDbDto(
                     subject = existing.subject,
                     course = existing.courseId,
-                    teacher = existing.teacher,
+                    teacher = existing.teacherId,
                     groups = existing.groupIds,
                     aliases = (existing.aliases + item.data.aliases).distinctBy { it.toString() }
                 ))

@@ -12,16 +12,20 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
+import plus.vplan.app.domain.model.populated.PopulationContext
+import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
@@ -59,7 +63,8 @@ class HomeworkDetailViewModel(
     private val deleteFileUseCase: DeleteFileUseCase,
     private val addFileUseCase: AddFileUseCase,
     private val keyValueRepository: KeyValueRepository,
-    private val subjectInstanceRepository: SubjectInstanceRepository
+    private val subjectInstanceRepository: SubjectInstanceRepository,
+    private val subjectInstancePopulator: SubjectInstancePopulator,
 ) : ViewModel() {
     var state by mutableStateOf(HomeworkDetailState())
         private set
@@ -104,6 +109,7 @@ class HomeworkDetailViewModel(
                         }
                     }
                     .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
+                    .flatMapLatest { subjectInstancePopulator.populateMultiple(it, PopulationContext.Profile(state.profile!!)) }
                     .collectLatest {
                         state = state.copy(subjectInstances = it)
                     }
@@ -175,7 +181,7 @@ class HomeworkDetailViewModel(
 data class HomeworkDetailState(
     val homework: Homework? = null,
     val profile: Profile.StudentProfile? = null,
-    val subjectInstances: List<SubjectInstance> = emptyList(),
+    val subjectInstances: List<PopulatedSubjectInstance> = emptyList(),
     val canEdit: Boolean = false,
     val reloadingState: UnoptimisticTaskState? = null,
     val deleteState: UnoptimisticTaskState? = null,

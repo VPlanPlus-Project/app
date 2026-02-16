@@ -22,8 +22,8 @@ interface TeacherDao {
     @Query("SELECT * FROM school_teachers WHERE id = :id")
     fun findById(id: Uuid): Flow<EmbeddedTeacher?>
 
-    @Query("SELECT id FROM school_teachers")
-    fun getAll(): Flow<List<Uuid>>
+    @Query("SELECT * FROM school_teachers")
+    fun getAll(): Flow<List<EmbeddedTeacher>>
 
     @Query("DELETE FROM school_teachers WHERE id IN (:ids)")
     suspend fun deleteById(ids: List<Uuid>)

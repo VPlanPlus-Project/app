@@ -38,8 +38,12 @@ class TeacherRepositoryImpl(
         return vppDatabase.teacherDao.getBySchool(schoolId).map { result -> result.map { it.toModel() } }
     }
 
+    override fun getAll(): Flow<List<Teacher>> {
+        return vppDatabase.teacherDao.getAll().map { it.map { it.toModel() } }
+    }
+
     override fun getAllLocalIds(): Flow<List<Uuid>> {
-        return vppDatabase.teacherDao.getAll()
+        return vppDatabase.teacherDao.getAll().map { it.map { it.teacher.id } }
     }
 
     override fun getByLocalId(id: Uuid): Flow<Teacher?> {

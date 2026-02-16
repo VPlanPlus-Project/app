@@ -24,7 +24,7 @@ data class EmbeddedSubjectInstance(
         return SubjectInstance(
             id = subjectInstance.id,
             subject = subjectInstance.subject,
-            teacher = subjectInstance.teacherId,
+            teacherId = subjectInstance.teacherId,
             groupIds = groups.map { it.groupId },
             courseId = subjectInstance.courseId,
             cachedAt = subjectInstance.cachedAt,

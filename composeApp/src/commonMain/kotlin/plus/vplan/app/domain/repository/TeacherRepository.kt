@@ -8,6 +8,7 @@ import kotlin.uuid.Uuid
 
 interface TeacherRepository: AliasedItemRepository<TeacherDbDto, Teacher> {
     fun getBySchool(schoolId: Uuid): Flow<List<Teacher>>
+    fun getAll(): Flow<List<Teacher>>
 }
 
 data class TeacherDbDto(

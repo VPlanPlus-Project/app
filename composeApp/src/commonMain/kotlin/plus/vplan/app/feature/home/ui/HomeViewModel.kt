@@ -24,14 +24,15 @@ import plus.vplan.app.App
 import plus.vplan.app.captureError
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.News
-import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.core.model.Profile
+import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.Stundenplan24Repository
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetCurrentProfileUseCase
@@ -64,7 +65,9 @@ class HomeViewModel(
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val getNewsUseCase: GetNewsUseCase,
     private val stundenplan24Repository: Stundenplan24Repository,
-    private val keyValueRepository: KeyValueRepository
+    private val keyValueRepository: KeyValueRepository,
+    private val subjectInstancePopulator: SubjectInstancePopulator,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
 ) : ViewModel() {
     var state by mutableStateOf(HomeState())
         private set
@@ -115,7 +118,12 @@ class HomeViewModel(
                                             }
                                         )
                                     }
-                                    .sortedBySuspending { it.lesson.subject + it.lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name }
+                                    .sortedBySuspending {
+                                        val subjectInstance = it.lesson.subjectInstanceId
+                                            ?.let { id -> subjectInstanceRepository.getByLocalId(id).first() }
+                                            ?.let { subjectInstance -> subjectInstancePopulator.populateSingle(subjectInstance).first() }
+                                        it.lesson.subject + subjectInstance?.course?.name
+                                    }
 
                                 val nextLessons = if (!canShowCurrentAndNextLesson) null else allLessons
                                     .filter { lesson ->
@@ -136,7 +144,10 @@ class HomeViewModel(
                                     }
                                     .sortedBySuspending { lesson ->
                                         val subject = lesson.subject ?: ""
-                                        val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
+                                        val subjectInstance = lesson.subjectInstanceId
+                                            ?.let { subjectInstanceId -> subjectInstanceRepository.getByLocalId(subjectInstanceId).first() }
+                                            ?.let { subjectInstancePopulator.populateSingle(it).first() }
+                                        val courseName = subjectInstance?.course?.name ?: ""
                                         lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
                                     }
                                     .groupBy { it.lessonNumber }
@@ -155,7 +166,10 @@ class HomeViewModel(
                                     remainingLessons = state.day?.lessons?.first().orEmpty()
                                         .sortedBySuspending { lesson ->
                                             val subject = lesson.subject ?: ""
-                                            val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
+                                            val subjectInstance = lesson.subjectInstanceId
+                                                ?.let { subjectInstanceId -> subjectInstanceRepository.getByLocalId(subjectInstanceId).first() }
+                                                ?.let { subjectInstancePopulator.populateSingle(it).first() }
+                                            val courseName = subjectInstance?.course?.name ?: ""
                                             lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
                                         }
                                         .groupBy { it.lessonNumber },

@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.safeBottomPadding
@@ -49,7 +50,7 @@ import vplanplus.composeapp.generated.resources.users
 @Composable fun LessonSelectDrawer(
     group: Group,
     allowGroup: Boolean,
-    subjectInstances: List<SubjectInstance>,
+    subjectInstances: List<PopulatedSubjectInstance>,
     selectedSubjectInstance: SubjectInstance?,
     onSelectSubjectInstance: (SubjectInstance?) -> Unit,
     onDismiss: () -> Unit
@@ -76,7 +77,7 @@ import vplanplus.composeapp.generated.resources.users
 private fun LessonSelectContent(
     group: Group,
     allowGroup: Boolean,
-    subjectInstances: List<SubjectInstance>,
+    subjectInstances: List<PopulatedSubjectInstance>,
     selectedSubjectInstance: SubjectInstance?,
     onSelectSubjectInstance: (SubjectInstance?) -> Unit
 ) {
@@ -138,24 +139,24 @@ private fun LessonSelectContent(
                         .fillMaxWidth()
                         .thenIf(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) { selectedSubjectInstance == subjectInstance }
                         .border(0.5.dp, MaterialTheme.colorScheme.outline)
-                        .clickable { onSelectSubjectInstance(subjectInstance) }
+                        .clickable { onSelectSubjectInstance(subjectInstance.subjectInstance) }
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (selectedSubjectInstance == subjectInstance) SubjectIcon(Modifier.size(24.dp), subjectInstance.subject, containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
-                    else SubjectIcon(Modifier.size(24.dp), subjectInstance.subject)
+                    if (selectedSubjectInstance == subjectInstance) SubjectIcon(Modifier.size(24.dp), subjectInstance.subjectInstance.subject, containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+                    else SubjectIcon(Modifier.size(24.dp), subjectInstance.subjectInstance.subject)
                     Column {
                         Text(
                             text = buildString {
-                                append(subjectInstance.subject)
-                                if (subjectInstance.courseId != null) append(" (${subjectInstance.courseItem!!.name})")
+                                append(subjectInstance.subjectInstance.subject)
+                                if (subjectInstance.course != null) append(" (${subjectInstance.course.name})")
                             },
                             style = MaterialTheme.typography.titleSmall,
                             color = if (selectedSubjectInstance == subjectInstance) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text = subjectInstance.teacherItem?.name ?: "Kein Lehrer",
+                            text = subjectInstance.teacher?.name ?: "Kein Lehrer",
                             style = MaterialTheme.typography.bodySmall,
                             color = if (selectedSubjectInstance == subjectInstance) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )

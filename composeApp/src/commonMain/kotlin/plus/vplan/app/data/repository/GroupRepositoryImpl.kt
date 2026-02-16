@@ -60,6 +60,10 @@ class GroupRepositoryImpl(
             .map { result -> result.map { it.toModel() } }
     }
 
+    override fun getAll(): Flow<List<Group>> {
+        return vppDatabase.groupDao.getAll().map { it.map { it.toModel() } }
+    }
+
     private var allLocalIdsFlowCache: Flow<List<Uuid>>? = null
     override fun getAllLocalIds(): Flow<List<Uuid>> {
         allLocalIdsFlowCache?.let { return it }

@@ -3,9 +3,11 @@ package plus.vplan.app.feature.assessment.ui.components.create
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.vinceglb.filekit.core.PlatformFile
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -13,6 +15,9 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
+import plus.vplan.app.domain.model.populated.PopulationContext
+import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.CreateAssessmentUseCase
@@ -21,12 +26,14 @@ import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCas
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class NewAssessmentViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val isVppIdBannerAllowedUseCase: IsVppIdBannerAllowedUseCase,
     private val hideVppIdBannerUseCase: HideVppIdBannerUseCase,
     private val createAssessmentUseCase: CreateAssessmentUseCase,
-    private val subjectInstanceRepository: SubjectInstanceRepository
+    private val subjectInstanceRepository: SubjectInstanceRepository,
+    private val subjectInstancePopulator: SubjectInstancePopulator,
 ) : ViewModel() {
     private val _state = MutableStateFlow(NewAssessmentState())
     val state = _state.asStateFlow()
@@ -50,6 +57,7 @@ class NewAssessmentViewModel(
                             }
                         }
                         .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
+                        .flatMapLatest { subjectInstances -> subjectInstancePopulator.populateMultiple(subjectInstances, PopulationContext.Profile(profile)) }
                         .collectLatest {
                             _state.value = _state.value.copy(
                                 subjectInstances = it
@@ -111,7 +119,7 @@ class NewAssessmentViewModel(
 data class NewAssessmentState(
     val currentProfile: Profile.StudentProfile? = null,
     val canShowVppIdBanner: Boolean = false,
-    val subjectInstances: List<SubjectInstance> = emptyList(),
+    val subjectInstances: List<PopulatedSubjectInstance> = emptyList(),
     val selectedSubjectInstance: SubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val description: String = "",

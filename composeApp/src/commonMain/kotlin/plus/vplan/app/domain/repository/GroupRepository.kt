@@ -11,6 +11,7 @@ import kotlin.uuid.Uuid
 
 interface GroupRepository: AliasedItemRepository<GroupDbDto, Group> {
     fun getBySchool(schoolId: Uuid): Flow<List<Group>>
+    fun getAll(): Flow<List<Group>>
 
     suspend fun updateFirebaseToken(group: Group, token: String): Response.Error?
 

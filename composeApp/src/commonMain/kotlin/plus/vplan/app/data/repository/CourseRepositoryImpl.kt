@@ -9,7 +9,7 @@ import plus.vplan.app.data.source.database.model.database.DbCourse
 import plus.vplan.app.data.source.database.model.database.DbCourseAlias
 import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
 import plus.vplan.app.core.model.Alias
-import plus.vplan.app.domain.model.Course
+import plus.vplan.app.core.model.Course
 import plus.vplan.app.domain.repository.CourseDbDto
 import plus.vplan.app.domain.repository.CourseRepository
 import kotlin.time.Clock
@@ -34,6 +34,10 @@ class CourseRepositoryImpl(
 
     override fun getBySchool(schoolId: Uuid): Flow<List<Course>> {
         return vppDatabase.courseDao.getBySchool(schoolId).map { it.map { course -> course.toModel() } }
+    }
+
+    override fun getAll(): Flow<List<Course>> {
+        return vppDatabase.courseDao.getAll().map { it.map { it.toModel() } }
     }
 
     override suspend fun deleteById(id: Uuid) {

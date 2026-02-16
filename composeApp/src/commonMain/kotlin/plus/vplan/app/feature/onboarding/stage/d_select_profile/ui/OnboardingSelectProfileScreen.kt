@@ -154,7 +154,7 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                     if (course.teacherId == null) return@detailsRow
-                                                    val teacherState by App.teacherSource.getById(course.teacherId).collectAsLoadingState(course.teacherId.toString())
+                                                    val teacherState by App.teacherSource.getById(course.teacherId!!).collectAsLoadingState(course.teacherId.toString())
                                                     if (teacherState !is AliasState.Done) return@detailsRow
                                                     Text(
                                                         text = (teacherState as? AliasState.Done)?.data?.name ?: "-",
@@ -216,8 +216,8 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
                                                 }
-                                                if (subjectInstance.teacher == null) return@dataRow
-                                                val teacherState by App.teacherSource.getById(subjectInstance.teacher).collectAsLoadingState(subjectInstance.teacher.toString())
+                                                if (subjectInstance.teacherId == null) return@dataRow
+                                                val teacherState by App.teacherSource.getById(subjectInstance.teacherId).collectAsLoadingState(subjectInstance.teacherId.toString())
                                                 if (teacherState is AliasState.Done) Text(
                                                     text = (teacherState as AliasState.Done).data.name,
                                                     style = MaterialTheme.typography.bodySmall,

@@ -28,17 +28,17 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.core.model.AliasState
-import plus.vplan.app.domain.cache.collectAsLoadingState
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import kotlin.uuid.Uuid
@@ -49,7 +49,7 @@ fun ProfileSubjectInstanceScreen(
     navHostController: NavHostController,
 ) {
     val viewModel = koinViewModel<ProfileSubjectInstanceViewModel>()
-    val state = viewModel.state
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(profileId) {
         viewModel.init(profileId)
@@ -126,7 +126,7 @@ private fun ProfileSubjectInstanceContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { onEvent(ProfileSubjectInstanceEvent.ToggleCourseSelection(course, isSelected?.not() ?: false)) }
+                            .clickable { onEvent(ProfileSubjectInstanceEvent.ToggleCourseSelection(course.course, isSelected?.not() ?: false)) }
                             .padding(start = 8.dp, end = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -137,7 +137,7 @@ private fun ProfileSubjectInstanceContent(
                                 false -> ToggleableState.Off
                                 null -> ToggleableState.Indeterminate
                             },
-                            onClick = { onEvent(ProfileSubjectInstanceEvent.ToggleCourseSelection(course, isSelected?.not() ?: false)) }
+                            onClick = { onEvent(ProfileSubjectInstanceEvent.ToggleCourseSelection(course.course, isSelected?.not() ?: false)) }
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -145,13 +145,12 @@ private fun ProfileSubjectInstanceContent(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = course.name,
+                                text = course.course.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            val teacher = course.teacher?.collectAsLoadingState(course.teacherId.toString())?.value
-                            if (teacher is AliasState.Done) Text(
-                                text = teacher.data.name,
+                            if (course.teacher != null) Text(
+                                text = course.teacher.name,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -172,19 +171,19 @@ private fun ProfileSubjectInstanceContent(
                         )
                     }
                 }
-                items(state.subjectInstance.toList()) { (subjectInstance, isSelected) ->
+                items(state.subjectInstances.toList()) { (subjectInstance, isSelected) ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { onEvent(ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection(subjectInstance, !isSelected)) }
+                            .clickable { onEvent(ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection(subjectInstance.subjectInstance, !isSelected)) }
                             .padding(start = 8.dp, end = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Checkbox(
                             checked = isSelected,
-                            onCheckedChange = { onEvent(ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection(subjectInstance, !isSelected)) }
+                            onCheckedChange = { onEvent(ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection(subjectInstance.subjectInstance, !isSelected)) }
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -193,18 +192,18 @@ private fun ProfileSubjectInstanceContent(
                         ) {
                             Column {
                                 Text(
-                                    text = subjectInstance.subject,
+                                    text = subjectInstance.subjectInstance.subject,
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                if (subjectInstance.courseItem != null) Text(
-                                    text = subjectInstance.courseItem!!.name,
+                                if (subjectInstance.course != null) Text(
+                                    text = subjectInstance.course.name,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            if (subjectInstance.teacherItem != null) Text(
-                                text = subjectInstance.teacherItem!!.name,
+                            if (subjectInstance.teacher != null) Text(
+                                text = subjectInstance.teacher.name,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
