@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import kotlin.uuid.Uuid
 

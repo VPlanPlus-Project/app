@@ -5,7 +5,7 @@ import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
 import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectInstanceGroup
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 
 data class EmbeddedSubjectInstance(
     @Embedded val subjectInstance: DbSubjectInstance,

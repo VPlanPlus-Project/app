@@ -10,7 +10,7 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import kotlin.time.ExperimentalTime

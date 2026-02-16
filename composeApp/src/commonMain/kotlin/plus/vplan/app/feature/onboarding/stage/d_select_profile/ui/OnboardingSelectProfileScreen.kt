@@ -209,7 +209,7 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                     if (subjectInstance.courseId == null) return@subjectAndCourse
-                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.courseId).collectAsLoadingState(subjectInstance.courseId.toString())
+                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.courseId!!).collectAsLoadingState(subjectInstance.courseId.toString())
                                                     if (subjectInstanceState is AliasState.Done) Text(
                                                         text = (subjectInstanceState as AliasState.Done).data.name,
                                                         style = MaterialTheme.typography.bodySmall,
@@ -217,7 +217,7 @@ private fun OnboardingSelectProfileScreen(
                                                     )
                                                 }
                                                 if (subjectInstance.teacherId == null) return@dataRow
-                                                val teacherState by App.teacherSource.getById(subjectInstance.teacherId).collectAsLoadingState(subjectInstance.teacherId.toString())
+                                                val teacherState by App.teacherSource.getById(subjectInstance.teacherId!!).collectAsLoadingState(subjectInstance.teacherId.toString())
                                                 if (teacherState is AliasState.Done) Text(
                                                     text = (teacherState as AliasState.Done).data.name,
                                                     style = MaterialTheme.typography.bodySmall,

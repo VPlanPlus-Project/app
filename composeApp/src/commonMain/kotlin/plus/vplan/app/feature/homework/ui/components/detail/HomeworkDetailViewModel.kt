@@ -1,28 +1,36 @@
-@file:OptIn(ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package plus.vplan.app.feature.homework.ui.components.detail
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
@@ -45,7 +53,6 @@ import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
 import plus.vplan.app.ui.common.AttachedFile
-import kotlin.uuid.ExperimentalUuidApi
 
 class HomeworkDetailViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
@@ -66,21 +73,28 @@ class HomeworkDetailViewModel(
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val subjectInstancePopulator: SubjectInstancePopulator,
 ) : ViewModel() {
-    var state by mutableStateOf(HomeworkDetailState())
-        private set
+    val state: StateFlow<HomeworkDetailState>
+        field = MutableStateFlow(HomeworkDetailState())
 
     private var mainJob: Job? = null
 
     init {
         viewModelScope.launch {
-            keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).collectLatest {
-                state = state.copy(isDeveloperMode = it == "true")
+            keyValueRepository.get(Keys.DEVELOPER_SETTINGS_ACTIVE).collectLatest { value ->
+                val isDeveloperMode = value == "true"
+                state.update { state -> state.copy(isDeveloperMode = isDeveloperMode) }
             }
         }
     }
 
     fun init(homeworkId: Int) {
-        state = HomeworkDetailState()
+        state.update { state -> state.copy(
+            homework = null,
+            homeworkSubjectInstance = null,
+            profile = null,
+            subjectInstances = emptyList(),
+            canEdit = false
+        ) }
         mainJob?.cancel()
         mainJob = viewModelScope.launch {
             combine(
@@ -92,87 +106,112 @@ class HomeworkDetailViewModel(
 
                 homework.prefetch()
 
-                state.copy(
-                    homework = homework,
-                    profile = profile,
-                    canEdit = (homework is Homework.CloudHomework && homework.createdById == profile.vppId?.id) || (homework is Homework.LocalHomework && homework.createdByProfileId == profile.id),
-                    initDone = true
-                )
-            }.filterNotNull().collectLatest {
-                state = it
+                state.update { state ->
+                    state.copy(
+                        homework = homework,
+                        profile = profile,
+                        canEdit = (homework is Homework.CloudHomework && homework.createdById == profile.vppId?.id) || (homework is Homework.LocalHomework && homework.createdByProfileId == profile.id),
+                        initDone = true
+                    )
+                }
 
-                if (it.profile is Profile.StudentProfile) subjectInstanceRepository
-                    .getByGroup(it.profile.group.id)
-                    .map { subjectInstances ->
-                        subjectInstances.filter { subjectInstance ->
-                            it.profile.subjectInstanceConfiguration[subjectInstance.id] != false
+                coroutineScope {
+                    homework.subjectInstanceId.let evaluateSubjectInstance@{ subjectInstanceId ->
+                        if (subjectInstanceId == null) {
+                            state.update { state -> state.copy(homeworkSubjectInstance = null) }
+                            return@evaluateSubjectInstance
                         }
+
+                        subjectInstanceRepository
+                            .findByAlias(Alias(AliasProvider.Vpp, subjectInstanceId.toString(), 1), false, true)
+                            .filterIsInstance<AliasState.Done<SubjectInstance>>().map { it.data }
+                            .flatMapLatest { subjectInstance -> subjectInstancePopulator.populateSingle(subjectInstance) }
+                            .onEach { state.update { state -> state.copy(homeworkSubjectInstance = it) } }
+                            .launchIn(this)
                     }
-                    .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
-                    .flatMapLatest { subjectInstancePopulator.populateMultiple(it, PopulationContext.Profile(state.profile!!)) }
-                    .collectLatest {
-                        state = state.copy(subjectInstances = it)
-                    }
-            }
+
+                    subjectInstanceRepository
+                        .getByGroup(profile.group.id)
+                        .map { subjectInstances ->
+                            subjectInstances.filter { subjectInstance ->
+                                profile.subjectInstanceConfiguration[subjectInstance.id] != false
+                            }
+                        }
+                        .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
+                        .flatMapLatest { subjectInstancePopulator.populateMultiple(it, PopulationContext.Profile(state.value.profile!!)) }
+                        .onEach { state.update { state -> state.copy(subjectInstances = it) } }
+                        .launchIn(this)
+                }
+
+            }.collect()
         }
     }
 
     fun onEvent(event: HomeworkDetailEvent) {
         viewModelScope.launch {
             when (event) {
-                is HomeworkDetailEvent.ToggleTaskDone -> toggleTaskDoneUseCase(event.task, state.profile!!)
-                is HomeworkDetailEvent.UpdateSubjectInstance -> editHomeworkSubjectInstanceUseCase(state.homework!!, event.subjectInstance, state.profile!!)
-                is HomeworkDetailEvent.UpdateDueTo -> editHomeworkDueToUseCase(state.homework!!, event.dueTo, state.profile!!)
-                is HomeworkDetailEvent.UpdateVisibility -> editHomeworkVisibilityUseCase(state.homework as Homework.CloudHomework, event.isPublic, state.profile!!)
+                is HomeworkDetailEvent.ToggleTaskDone -> toggleTaskDoneUseCase(event.task, state.value.profile!!)
+                is HomeworkDetailEvent.UpdateSubjectInstance -> editHomeworkSubjectInstanceUseCase(state.value.homework!!, event.subjectInstance?.subjectInstance, state.value.profile!!)
+                is HomeworkDetailEvent.UpdateDueTo -> editHomeworkDueToUseCase(state.value.homework!!, event.dueTo, state.value.profile!!)
+                is HomeworkDetailEvent.UpdateVisibility -> editHomeworkVisibilityUseCase(state.value.homework as Homework.CloudHomework, event.isPublic, state.value.profile!!)
                 is HomeworkDetailEvent.Reload -> {
-                    state = state.copy(reloadingState = UnoptimisticTaskState.InProgress)
-                    val result = updateHomeworkUseCase(state.homework!!.id)
+                    state.update { state -> state.copy(reloadingState = UnoptimisticTaskState.InProgress) }
+                    val result = updateHomeworkUseCase(state.value.homework!!.id)
                     when (result) {
                         UpdateResult.SUCCESS -> {
-                            state = state.copy(reloadingState = UnoptimisticTaskState.Success)
+                            state.update { state -> state.copy(reloadingState = UnoptimisticTaskState.Success) }
                             viewModelScope.launch {
                                 delay(2000)
-                                if (state.reloadingState == UnoptimisticTaskState.Success) state = state.copy(reloadingState = null)
+                                if (state.value.reloadingState == UnoptimisticTaskState.Success) {
+                                    state.update { state -> state.copy(reloadingState = null) }
+                                }
                             }
                         }
-                        UpdateResult.ERROR -> state = state.copy(reloadingState = UnoptimisticTaskState.Error)
-                        UpdateResult.DOES_NOT_EXIST -> state = state.copy(reloadingState = UnoptimisticTaskState.Success, deleteState = UnoptimisticTaskState.Success)
+                        UpdateResult.ERROR -> state.update { state -> state.copy(reloadingState = UnoptimisticTaskState.Error) }
+                        UpdateResult.DOES_NOT_EXIST -> state.update { state -> state.copy(reloadingState = UnoptimisticTaskState.Success, deleteState = UnoptimisticTaskState.Success) }
                     }
                 }
                 is HomeworkDetailEvent.DeleteHomework -> {
-                    state = state.copy(deleteState = UnoptimisticTaskState.InProgress)
-                    val result = deleteHomeworkUseCase(state.homework!!, state.profile!!)
-                    state = if (result) {
-                        state.copy(deleteState = UnoptimisticTaskState.Success)
-                    } else {
-                        state.copy(deleteState = UnoptimisticTaskState.Error)
+                    state.update { state -> state.copy(deleteState = UnoptimisticTaskState.InProgress) }
+                    val result = deleteHomeworkUseCase(state.value.homework!!, state.value.profile!!)
+                    state.update { state ->
+                        state.copy(
+                            deleteState = if (result) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error
+                        )
                     }
                 }
                 is HomeworkDetailEvent.AddTask -> {
-                    state = state.copy(newTaskState = UnoptimisticTaskState.InProgress)
-                    val result = addTaskUseCase(state.homework!!, event.task, state.profile!!)
-                    state = if (result) state.copy(newTaskState = UnoptimisticTaskState.Success) else state.copy(newTaskState = UnoptimisticTaskState.Error)
+                    state.update { state -> state.copy(newTaskState = UnoptimisticTaskState.InProgress) }
+                    val result = addTaskUseCase(state.value.homework!!, event.task, state.value.profile!!)
+                    state.update { state ->
+                        state.copy(
+                            newTaskState = if (result) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error
+                        )
+                    }
                 }
-                is HomeworkDetailEvent.UpdateTask -> updateTaskUseCase(event.task, event.newContent, state.profile!!)
+                is HomeworkDetailEvent.UpdateTask -> updateTaskUseCase(event.task, event.newContent, state.value.profile!!)
                 is HomeworkDetailEvent.DeleteTask -> {
-                    if (state.homework!!.taskIds.size == 1) return@launch onEvent(HomeworkDetailEvent.DeleteHomework)
-                    state = state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.InProgress))
-                    val result = deleteTaskUseCase(event.task, state.profile!!)
-                    state = if (result) {
-                        state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.Success))
-                    } else {
-                        state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.Error))
+                    if (state.value.homework!!.taskIds.size == 1) return@launch onEvent(HomeworkDetailEvent.DeleteHomework)
+                    state.update { state -> state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.InProgress)) }
+                    val result = deleteTaskUseCase(event.task, state.value.profile!!)
+                    state.update { state ->
+                        state.copy(
+                            taskDeleteState = state.taskDeleteState.plus(event.task.id to if (result) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error)
+                        )
                     }
                 }
                 is HomeworkDetailEvent.DownloadFile -> {
-                    downloadFileUseCase(event.file, state.profile!!).collectLatest {
-                        state = state.copy(fileDownloadState = state.fileDownloadState.plus(event.file.id to it))
+                    downloadFileUseCase(event.file, state.value.profile!!).collectLatest {
+                        state.update { state ->
+                            state.copy(
+                                fileDownloadState = state.fileDownloadState.plus(event.file.id to it)
+                            )
+                        }
                     }
-                    state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
                 }
-                is HomeworkDetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
-                is HomeworkDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.homework!!, state.profile!!)
-                is HomeworkDetailEvent.AddFile -> addFileUseCase(state.homework!!, event.file.platformFile, state.profile!!)
+                is HomeworkDetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.value.profile!!)
+                is HomeworkDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.value.homework!!, state.value.profile!!)
+                is HomeworkDetailEvent.AddFile -> addFileUseCase(state.value.homework!!, event.file.platformFile, state.value.profile!!)
             }
         }
     }
@@ -180,6 +219,8 @@ class HomeworkDetailViewModel(
 
 data class HomeworkDetailState(
     val homework: Homework? = null,
+    val homeworkSubjectInstance: PopulatedSubjectInstance? = null,
+
     val profile: Profile.StudentProfile? = null,
     val subjectInstances: List<PopulatedSubjectInstance> = emptyList(),
     val canEdit: Boolean = false,
@@ -194,7 +235,7 @@ data class HomeworkDetailState(
 
 sealed class HomeworkDetailEvent {
     data class ToggleTaskDone(val task: Homework.HomeworkTask) : HomeworkDetailEvent()
-    data class UpdateSubjectInstance(val subjectInstance: SubjectInstance?) : HomeworkDetailEvent()
+    data class UpdateSubjectInstance(val subjectInstance: PopulatedSubjectInstance?) : HomeworkDetailEvent()
     data class UpdateDueTo(val dueTo: LocalDate) : HomeworkDetailEvent()
     data class UpdateVisibility(val isPublic: Boolean) : HomeworkDetailEvent()
     data class AddTask(val task: String) : HomeworkDetailEvent()

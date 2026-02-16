@@ -1,5 +1,6 @@
 package plus.vplan.app.domain.model.populated
 
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
@@ -9,11 +10,12 @@ import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.Course
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 
+@Immutable
 data class PopulatedSubjectInstance(
     val subjectInstance: SubjectInstance,
     val course: Course?,

@@ -1,6 +1,6 @@
 package plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase
 
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.ProfileRepository
 

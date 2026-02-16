@@ -26,7 +26,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.Padding
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Group
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.mediumDayOfWeekNames
@@ -39,7 +39,7 @@ import vplanplus.composeapp.generated.resources.users
 
 @Composable
 fun SubjectAndDateTile(
-    selectedSubjectInstance: SubjectInstance?,
+    selectedSubjectInstance: PopulatedSubjectInstance?,
     group: Group,
     selectedDate: LocalDate?,
     isAssessment: Boolean,
@@ -71,7 +71,7 @@ fun SubjectAndDateTile(
                 ) {
                     Icon(
                         if (selectedSubjectInstance == null) painterResource(Res.drawable.users)
-                        else painterResource(selectedSubjectInstance.subject.subjectIcon()),
+                        else painterResource(selectedSubjectInstance.subjectInstance.subject.subjectIcon()),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.onSurface
@@ -84,7 +84,7 @@ fun SubjectAndDateTile(
                         )
                         Text(
                             text = selectedSubjectInstance?.let { subjectInstance ->
-                                "${subjectInstance.subject} $DOT ${subjectInstance.teacherItem?.name ?: "Kein Lehrer"}"
+                                "${subjectInstance.subjectInstance.subject} $DOT ${subjectInstance.teacher?.name ?: "Kein Lehrer"}"
                             } ?: "Klasse ${group.name}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,

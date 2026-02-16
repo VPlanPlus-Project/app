@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model
 
 import plus.vplan.app.core.model.Alias
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.ProfileType
 
 sealed interface OnboardingProfile {

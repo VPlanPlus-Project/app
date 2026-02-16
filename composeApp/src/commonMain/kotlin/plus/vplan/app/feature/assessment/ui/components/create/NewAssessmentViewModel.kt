@@ -12,9 +12,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
@@ -102,7 +101,7 @@ class NewAssessmentViewModel(
                                 text = newState.description.trim().ifBlank { return@save false },
                                 isPublic = newState.isVisible,
                                 date = newState.selectedDate ?: return@save false,
-                                subjectInstance = newState.selectedSubjectInstance ?: return@save false,
+                                subjectInstance = newState.selectedSubjectInstance?.subjectInstance ?: return@save false,
                                 type = newState.type ?: return@save false,
                                 selectedFiles = newState.files
                             )
@@ -120,7 +119,7 @@ data class NewAssessmentState(
     val currentProfile: Profile.StudentProfile? = null,
     val canShowVppIdBanner: Boolean = false,
     val subjectInstances: List<PopulatedSubjectInstance> = emptyList(),
-    val selectedSubjectInstance: SubjectInstance? = null,
+    val selectedSubjectInstance: PopulatedSubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val description: String = "",
     val isVisible: Boolean? = null,
@@ -139,7 +138,7 @@ data class NewAssessmentState(
 
 sealed class NewAssessmentEvent {
     data object HideVppIdBanner : NewAssessmentEvent()
-    data class SelectSubjectInstance(val subjectInstance: SubjectInstance) : NewAssessmentEvent()
+    data class SelectSubjectInstance(val subjectInstance: PopulatedSubjectInstance) : NewAssessmentEvent()
     data class SelectDate(val date: LocalDate) : NewAssessmentEvent()
     data class SetVisibility(val isVisible: Boolean) : NewAssessmentEvent()
     data class UpdateDescription(val description: String) : NewAssessmentEvent()

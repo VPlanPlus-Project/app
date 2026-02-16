@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Group
-import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.thenIf
@@ -51,8 +50,8 @@ import vplanplus.composeapp.generated.resources.users
     group: Group,
     allowGroup: Boolean,
     subjectInstances: List<PopulatedSubjectInstance>,
-    selectedSubjectInstance: SubjectInstance?,
-    onSelectSubjectInstance: (SubjectInstance?) -> Unit,
+    selectedSubjectInstance: PopulatedSubjectInstance?,
+    onSelectSubjectInstance: (PopulatedSubjectInstance?) -> Unit,
     onDismiss: () -> Unit
 ) {
     val modalState = rememberModalBottomSheetState()
@@ -78,8 +77,8 @@ private fun LessonSelectContent(
     group: Group,
     allowGroup: Boolean,
     subjectInstances: List<PopulatedSubjectInstance>,
-    selectedSubjectInstance: SubjectInstance?,
-    onSelectSubjectInstance: (SubjectInstance?) -> Unit
+    selectedSubjectInstance: PopulatedSubjectInstance?,
+    onSelectSubjectInstance: (PopulatedSubjectInstance?) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -139,7 +138,7 @@ private fun LessonSelectContent(
                         .fillMaxWidth()
                         .thenIf(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) { selectedSubjectInstance == subjectInstance }
                         .border(0.5.dp, MaterialTheme.colorScheme.outline)
-                        .clickable { onSelectSubjectInstance(subjectInstance.subjectInstance) }
+                        .clickable { onSelectSubjectInstance(subjectInstance) }
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)

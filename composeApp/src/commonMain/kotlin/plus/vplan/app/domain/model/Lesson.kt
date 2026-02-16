@@ -16,6 +16,7 @@ import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Item
 import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.core.model.Room
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import kotlin.uuid.Uuid

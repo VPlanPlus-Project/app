@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.SubjectInstance
 import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
@@ -90,10 +89,7 @@ class NewHomeworkViewModel(
                 is NewHomeworkEvent.AddTask -> state.update { state -> state.copy(tasks = state.tasks.plus(Uuid.random() to event.task), showTasksError = state.showTasksError && state.tasks.all { it.value.isBlank() }) }
                 is NewHomeworkEvent.UpdateTask -> state.update { state -> state.copy(tasks = state.tasks.plus(event.taskId to event.task), showTasksError = state.showTasksError && state.tasks.all { it.value.isBlank() }) }
                 is NewHomeworkEvent.RemoveTask -> state.update { state -> state.copy(tasks = state.tasks.minus(event.taskId)) }
-                is NewHomeworkEvent.SelectSubjectInstance -> state.update { state -> state.copy(selectedSubjectInstance = event.subjectInstance.also {
-                    it?.getTeacherItem()
-                    it?.getGroupItems()
-                }) }
+                is NewHomeworkEvent.SelectSubjectInstance -> state.update { state -> state.copy(selectedSubjectInstance = event.subjectInstance) }
                 is NewHomeworkEvent.SelectDate -> state.update { state -> state.copy(selectedDate = event.date, showDateError = false) }
                 is NewHomeworkEvent.SetVisibility -> state.update { state -> state.copy(isPublic = event.isPublic) }
                 is NewHomeworkEvent.AddFile -> {
@@ -119,7 +115,7 @@ class NewHomeworkViewModel(
                             tasks = currentState.tasks.values.mapNotNull { it.ifBlank { null } }.toList().ifEmpty { return@save false },
                             isPublic = currentState.isPublic,
                             date = currentState.selectedDate ?: return@save false,
-                            subjectInstance = currentState.selectedSubjectInstance,
+                            subjectInstance = currentState.selectedSubjectInstance?.subjectInstance,
                             selectedFiles = currentState.files
                         )
                     }
@@ -139,7 +135,7 @@ data class NewHomeworkState(
     val tasks: Map<Uuid, String> = emptyMap(),
     val currentProfile: Profile.StudentProfile? = null,
     val subjectInstances: List<PopulatedSubjectInstance> = emptyList(),
-    val selectedSubjectInstance: SubjectInstance? = null,
+    val selectedSubjectInstance: PopulatedSubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val isPublic: Boolean? = null,
     val files: List<AttachedFile> = emptyList(),
@@ -159,7 +155,7 @@ sealed class NewHomeworkEvent {
     data class UpdateTask(val taskId: Uuid, val task: String) : NewHomeworkEvent()
     data class RemoveTask(val taskId: Uuid) : NewHomeworkEvent()
 
-    data class SelectSubjectInstance(val subjectInstance: SubjectInstance?) : NewHomeworkEvent()
+    data class SelectSubjectInstance(val subjectInstance: PopulatedSubjectInstance?) : NewHomeworkEvent()
     data class SelectDate(val date: LocalDate) : NewHomeworkEvent()
 
     data class SetVisibility(val isPublic: Boolean) : NewHomeworkEvent()

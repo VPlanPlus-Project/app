@@ -3,7 +3,7 @@ package plus.vplan.app.domain.repository
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import kotlin.uuid.Uuid
 

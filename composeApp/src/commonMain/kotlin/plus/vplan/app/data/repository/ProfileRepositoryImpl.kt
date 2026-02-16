@@ -11,7 +11,7 @@ import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.ProfileRepository
 import kotlin.uuid.Uuid

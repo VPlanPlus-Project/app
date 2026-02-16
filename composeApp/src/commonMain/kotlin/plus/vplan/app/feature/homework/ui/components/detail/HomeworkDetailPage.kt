@@ -309,7 +309,7 @@ fun DetailPage(
             group = profile.group,
             allowGroup = true,
             subjectInstances = state.subjectInstances,
-            selectedSubjectInstance = homework.subjectInstance?.collectAsResultingFlow()?.value,
+            selectedSubjectInstance = state.homeworkSubjectInstance,
             onSelectSubjectInstance = { onEvent(HomeworkDetailEvent.UpdateSubjectInstance(it)) },
             onDismiss = { showLessonSelectDrawer = false }
         )

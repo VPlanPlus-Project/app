@@ -8,7 +8,7 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.Course
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.CourseDbDto
 import plus.vplan.app.domain.repository.CourseRepository

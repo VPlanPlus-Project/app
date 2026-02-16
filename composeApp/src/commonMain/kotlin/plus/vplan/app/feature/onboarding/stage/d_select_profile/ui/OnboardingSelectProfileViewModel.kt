@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.Course
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.feature.onboarding.domain.usecase.GetOnboardingStateUseCase
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
