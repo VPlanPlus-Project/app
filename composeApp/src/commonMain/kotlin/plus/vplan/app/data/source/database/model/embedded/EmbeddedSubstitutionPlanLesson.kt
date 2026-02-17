@@ -46,7 +46,8 @@ data class EmbeddedSubstitutionPlanLesson(
             groupIds = groups.map { it.groupId },
             subjectInstanceId = substitutionPlanLesson.subjectInstanceId,
             lessonNumber = substitutionPlanLesson.lessonNumber,
-            info = substitutionPlanLesson.info
+            info = substitutionPlanLesson.info,
+            lessonTimeId = substitutionPlanLesson.lessonTimeId
         )
     }
 }

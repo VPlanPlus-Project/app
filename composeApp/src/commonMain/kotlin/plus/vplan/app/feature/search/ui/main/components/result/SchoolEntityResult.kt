@@ -157,8 +157,8 @@ private fun rememberLessonLoadResult(
     LaunchedEffect(result.lessons) {
         currentLessons.clear()
         if (contextDate == LocalDate.now()) {
-            currentLessons.addAll(result.lessons.map { it.lesson }.findCurrentLessons(LocalTime.now()).toMutableStateList())
-            nextLesson = result.lessons.map { it.lesson }.getNextLessonStart(LocalTime.now())
+            currentLessons.addAll(result.lessons.map { it.lesson.lesson }.findCurrentLessons(LocalTime.now()).toMutableStateList())
+            nextLesson = result.lessons.map { it.lesson.lesson }.getNextLessonStart(LocalTime.now())
         }
         hasLessonsLoaded = true
     }

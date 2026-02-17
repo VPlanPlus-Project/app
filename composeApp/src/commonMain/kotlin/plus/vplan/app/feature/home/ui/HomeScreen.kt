@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -65,17 +66,16 @@ import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.cache.collectAsResultingFlowOld
-import plus.vplan.app.domain.cache.collectAsSingleFlow
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.ProfileType
+import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
@@ -125,7 +125,7 @@ fun HomeScreen(
     homeViewModel: HomeViewModel
 ) {
     HomeContent(
-        state = homeViewModel.state,
+        state = homeViewModel.state.collectAsStateWithLifecycle().value,
         contentPadding = contentPadding,
         onOpenRoomSearch = remember { { navHostController.navigate(MainScreen.RoomSearch) } },
         onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings(openIndiwareSettingsSchoolId = it.toHexString())) } },
@@ -381,15 +381,15 @@ private fun HomeContent(
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
                                                     highlightedLessons.currentLessons.forEach { (currentLesson, continuing) ->
                                                         val homeworkForLesson = remember { mutableListOf<Homework>() }
-                                                        LaunchedEffect(homework, currentLesson.subjectInstanceId) {
+                                                        LaunchedEffect(homework, currentLesson.lesson.subjectInstanceId) {
                                                             homeworkForLesson.clear()
-                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == currentLesson.subjectInstanceId })
+                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == currentLesson.lesson.subjectInstanceId })
                                                         }
 
                                                         val assessmentsForLesson = remember { mutableListOf<Assessment>() }
-                                                        LaunchedEffect(assessments, currentLesson.subjectInstanceId) {
+                                                        LaunchedEffect(assessments, currentLesson.lesson.subjectInstanceId) {
                                                             assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == currentLesson.subjectInstanceId })
+                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == currentLesson.lesson.subjectInstanceId })
                                                         }
 
                                                         CurrentOrNextLesson(
@@ -497,13 +497,14 @@ private fun HomeContent(
                                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                                 ) {
                                                     val headFont = MaterialTheme.typography.bodyLarge
-                                                    lessons.forEach forEachLesson@{ lesson ->
-                                                        val lessonTime = remember(lesson) { lesson.lessonTime }?.collectAsResultingFlowOld()?.value
-                                                        val rooms = remember(lesson.roomIds) { lesson.rooms }.collectAsSingleFlow().value
-                                                        val groups = remember(lesson.groupIds) { lesson.groups }.collectAsSingleFlow().value
-                                                        val teachers = remember(lesson.teacherIds) { lesson.teachers }.collectAsSingleFlow().value
+                                                    lessons.forEach forEachLesson@{ populatedLesson ->
+                                                        val lesson = populatedLesson.lesson
+                                                        val lessonTime = populatedLesson.lessonTime
+                                                        val rooms = populatedLesson.rooms
+                                                        val groups = populatedLesson.groups
+                                                        val teachers = populatedLesson.teachers
                                                         val homeworkForLesson = remember { mutableListOf<Homework>() }
-                                                        LaunchedEffect(homework, lesson.subjectInstanceId) {
+                                                        LaunchedEffect(homework, (lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId) {
                                                             homeworkForLesson.clear()
                                                             homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == lesson.subjectInstanceId })
                                                         }
@@ -748,25 +749,19 @@ private fun HomeContent(
 @Composable
 private fun CurrentOrNextLesson(
     currentTime: LocalDateTime,
-    currentLesson: Lesson,
+    currentLesson: PopulatedLesson,
     currentProfileType: ProfileType?,
     homework: List<Homework>,
     assessments: List<Assessment>,
-    continuing: Lesson?,
+    continuing: PopulatedLesson?,
     progressType: ProgressType
 ) {
     val iconSize = 32.dp
-    val subject = remember(currentLesson.subjectInstanceId) { currentLesson.subjectInstance }?.collectAsResultingFlow()?.value
-    val rooms by remember(currentLesson.roomIds) { currentLesson.rooms }.collectAsSingleFlow()
-    val groups by remember(currentLesson.groupIds) { currentLesson.groups }.collectAsSingleFlow()
-    val teachers by remember(currentLesson.teacherIds) { currentLesson.teachers }.collectAsSingleFlow()
-    val lessonTime = remember(currentLesson) { currentLesson.lessonTime }?.collectAsResultingFlowOld()?.value
-    if (
-        (subject == null && currentLesson.subjectInstanceId != null) ||
-        (rooms.isEmpty() && currentLesson.roomIds.orEmpty().isNotEmpty()) ||
-        (teachers.isEmpty() && currentLesson.teacherIds.isNotEmpty()) ||
-        (groups.isEmpty() && currentLesson.groupIds.isNotEmpty())
-    ) return
+    val subject = (currentLesson as? PopulatedLesson.SubstitutionPlanLesson)?.subjectInstance
+    val rooms = currentLesson.rooms
+    val groups = currentLesson.groups
+    val teachers = currentLesson.teachers
+    val lessonTime = currentLesson.lessonTime
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -790,19 +785,19 @@ private fun CurrentOrNextLesson(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = currentLesson.subject ?: "Entfall",
+                        text = currentLesson.lesson.subject ?: "Entfall",
                         style = titleFont,
-                        color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                        color = if (currentLesson.lesson is Lesson.SubstitutionPlanLesson && (currentLesson.lesson as Lesson.SubstitutionPlanLesson).isSubjectChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
                     )
                     if (rooms.isNotEmpty()) Text(
                         text = rooms.joinToString { it.name },
                         style = MaterialTheme.typography.titleSmall,
-                        color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                        color = if (currentLesson.lesson is Lesson.SubstitutionPlanLesson && (currentLesson.lesson as Lesson.SubstitutionPlanLesson).isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
                     )
                     if (teachers.isNotEmpty() && currentProfileType != ProfileType.TEACHER) Text(
                         text = teachers.joinToString { it.name },
                         style = MaterialTheme.typography.titleSmall,
-                        color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                        color = if (currentLesson.lesson is Lesson.SubstitutionPlanLesson && (currentLesson.lesson as Lesson.SubstitutionPlanLesson).isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
                     )
                     if (groups.isNotEmpty() && currentProfileType != ProfileType.STUDENT) Text(
                         text = groups.joinToString { it.name },
@@ -811,7 +806,7 @@ private fun CurrentOrNextLesson(
                 }
                 Text(
                     text = buildString {
-                        append(currentLesson.lessonNumber)
+                        append(currentLesson.lesson.lessonNumber)
                         append(". Stunde")
                         if (lessonTime != null) {
                             append(" $DOT ")
@@ -841,7 +836,7 @@ private fun CurrentOrNextLesson(
                         .size(bodyFont.lineHeight.toDp())
                 )
                 Text(
-                    text = "Weiter in ${currentLesson.lessonNumber + 1}. Stunde",
+                    text = "Weiter in ${currentLesson.lesson.lessonNumber + 1}. Stunde",
                     style = bodyFont
                 )
             }
@@ -926,7 +921,7 @@ enum class ProgressType {
 
 private data class HighlightedLessons(
     val currentLessons: List<CurrentLesson>,
-    val nextLesson: List<Lesson>,
+    val nextLesson: List<PopulatedLesson>,
     val showCurrent: Boolean
 ) {
     constructor(state: HomeState): this(state.currentLessons, state.nextLessons, state.currentLessons.isNotEmpty())

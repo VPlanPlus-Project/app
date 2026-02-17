@@ -13,6 +13,7 @@ import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.School
@@ -20,7 +21,6 @@ import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
@@ -156,6 +156,7 @@ class UpdateSubstitutionPlanUseCase(
                     groupIds = groups.filter { it.name in lesson.classes }.map { it.id },
                     subjectInstanceId = lesson.subjectInstanceId?.let { subjectInstances.firstOrNull { it.aliases.any { alias -> alias.provider == AliasProvider.Sp24 && alias.version == 1 && alias.value.split("/").last() == lesson.subjectInstanceId.toString() } } }?.id,
                     lessonNumber = lesson.lessonNumber,
+                    lessonTimeId = lessonTimes.first().id,
                     info = lesson.info
                 )
             }.let { lessonsForDay.addAll(it) }

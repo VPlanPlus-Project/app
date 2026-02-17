@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.utils.transparent
 
 @Composable
@@ -23,7 +24,7 @@ fun FollowingLessons(
     showFirstGradient: Boolean,
     date: LocalDate,
     paddingStart: Dp = 32.dp,
-    lessons: Map<Int, List<Lesson>>
+    lessons: Map<Int, List<PopulatedLesson>>
 ) {
     lessons
         .entries

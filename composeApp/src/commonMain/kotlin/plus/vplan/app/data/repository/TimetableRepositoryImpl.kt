@@ -41,6 +41,7 @@ class TimetableRepositoryImpl(
                     lessonNumber = lesson.lessonNumber,
                     subject = lesson.subject,
                     timetableId = lesson.timetableId,
+                    lessonTimeId = lesson.lessonTimeId,
                     version = version,
                 )
             },

@@ -3,6 +3,7 @@ package plus.vplan.app.domain.di
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import plus.vplan.app.domain.model.populated.CoursePopulator
+import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
 import plus.vplan.app.domain.usecase.CheckEMailStructureUseCase
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
@@ -23,4 +24,5 @@ val domainModule = module {
 
     singleOf(::SubjectInstancePopulator)
     singleOf(::CoursePopulator)
+    singleOf(::LessonPopulator)
 }

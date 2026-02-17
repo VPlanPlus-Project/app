@@ -1,8 +1,5 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package plus.vplan.app.feature.search.domain.usecase
 
-import androidx.compose.ui.util.fastFilterNotNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
@@ -15,14 +12,14 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.App
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.domain.model.populated.LessonPopulator
+import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -35,7 +32,6 @@ import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.utils.now
-import kotlin.uuid.ExperimentalUuidApi
 
 class SearchUseCase(
     private val groupRepository: GroupRepository,
@@ -47,6 +43,7 @@ class SearchUseCase(
     private val assessmentRepository: AssessmentRepository
 ): KoinComponent {
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
+    private val lessonPopulator by inject<LessonPopulator>()
 
     operator fun invoke(searchRequest: SearchRequest) = channelFlow {
         if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap())
@@ -56,9 +53,9 @@ class SearchUseCase(
         launch {
             substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, searchRequest.date).collectLatest { substitutionPlanLessonIds ->
                 val lessons = substitutionPlanLessonIds
-                    .map { id -> App.substitutionPlanSource.getById(id).getFirstValueOld() }
-                    .fastFilterNotNull()
-                    .filter { lesson -> lesson.subject != null }
+                    .mapNotNull { id -> substitutionPlanRepository.getById(id).first() }
+                    .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
+                    .filter { lesson -> lesson.lesson.subject != null }
 
                 val results = MutableStateFlow(emptyMap<SearchResult.Type, List<SearchResult>>())
                 launch { results.collect { send(it) } }
@@ -72,21 +69,21 @@ class SearchUseCase(
                         results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->
                             SearchResult.SchoolEntity.Group(
                                 group = group,
-                                lessons = lessons.filter { group.id in it.groupIds }.calculateLayouting()
+                                lessons = lessons.filter { group.id in it.lesson.groupIds }.calculateLayouting()
                             )
                         })
 
                         results.value = results.value.plus(SearchResult.Type.Teacher to teachers.map { teacher ->
                             SearchResult.SchoolEntity.Teacher(
                                 teacher = teacher,
-                                lessons = lessons.filter { teacher.id in it.teacherIds }.calculateLayouting()
+                                lessons = lessons.filter { teacher.id in it.lesson.teacherIds }.calculateLayouting()
                             )
                         })
 
                         results.value = results.value.plus(SearchResult.Type.Room to rooms.map { room ->
                             SearchResult.SchoolEntity.Room(
                                 room = room,
-                                lessons = lessons.filter { room.id in it.roomIds }.calculateLayouting()
+                                lessons = lessons.filter { room.id in it.lesson.roomIds.orEmpty() }.calculateLayouting()
                             )
                         })
                     }.collect()

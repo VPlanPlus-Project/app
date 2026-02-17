@@ -239,6 +239,10 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectI
             to = 12,
             spec = VppDatabase.Migration11to12::class
         ),
+        AutoMigration( // Add substitution plan/timetable lessonTimeId
+            from = 12,
+            to = 13,
+        )
     ]
 )
 @TypeConverters(
@@ -285,7 +289,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val besteSchuleGradesDao: BesteschuleGradesDao
 
     companion object {
-        const val DATABASE_VERSION = 12
+        const val DATABASE_VERSION = 13
     }
 
     @RenameColumn(

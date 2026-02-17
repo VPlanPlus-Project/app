@@ -2,6 +2,7 @@ package plus.vplan.app.feature.home.domain.usecase
 
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.App
@@ -19,6 +20,7 @@ class GetCurrentProfileUseCase(
             if (currentProfileId != null) App.profileSource.getById(Uuid.parseHex(currentProfileId))
                 .filterIsInstance<CacheState.Done<Profile>>()
                 .map { it.data }
+                .distinctUntilChanged()
                 .collectLatest { send(it) }
         }
     }

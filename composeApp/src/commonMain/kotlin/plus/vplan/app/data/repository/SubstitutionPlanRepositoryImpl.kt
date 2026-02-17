@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -8,6 +6,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbProfileSubstitutionPlanCache
 import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLesson
@@ -16,9 +15,7 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitut
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class SubstitutionPlanRepositoryImpl(
@@ -48,6 +45,7 @@ class SubstitutionPlanRepositoryImpl(
                     subjectInstanceId = lesson.subjectInstanceId,
                     isRoomChanged = lesson.isRoomChanged,
                     isTeacherChanged = lesson.isTeacherChanged,
+                    lessonTimeId = lesson.lessonTimeId,
                     version = version
                 )
             },

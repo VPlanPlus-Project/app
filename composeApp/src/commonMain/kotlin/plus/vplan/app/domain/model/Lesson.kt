@@ -29,6 +29,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
     val groupIds: List<Uuid>
     val subjectInstanceId: Uuid?
     val lessonNumber: Int
+    val lessonTimeId: String?
 
     fun getLessonSignature(): String
 
@@ -55,6 +56,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         override val roomIds: List<Uuid>?,
         override val groupIds: List<Uuid>,
         override val lessonNumber: Int,
+        override val lessonTimeId: String?,
         val timetableId: Uuid,
         val weekType: String?,
         val limitedToWeekIds: Set<String>?
@@ -94,6 +96,7 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         override val groupIds: List<Uuid>,
         override val subjectInstanceId: Uuid?,
         override val lessonNumber: Int,
+        override val lessonTimeId: String?,
         val info: String?
     ) : Lesson, KoinComponent {
         private val lessonTimeRepository by inject<LessonTimeRepository>()

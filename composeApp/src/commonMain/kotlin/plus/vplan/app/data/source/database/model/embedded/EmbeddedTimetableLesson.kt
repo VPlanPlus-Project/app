@@ -63,7 +63,8 @@ data class EmbeddedTimetableLesson(
             timetableId = timetableLesson.timetableId,
             weekType = timetableLesson.weekType,
             lessonNumber = timetableLesson.lessonNumber,
-            limitedToWeekIds = weekLimitations.map { it.weekId }.toSet().ifEmpty { null }
+            limitedToWeekIds = weekLimitations.map { it.weekId }.toSet().ifEmpty { null },
+            lessonTimeId = timetableLesson.lessonTimeId
         )
     }
 }

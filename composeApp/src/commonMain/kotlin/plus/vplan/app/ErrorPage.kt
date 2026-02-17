@@ -41,7 +41,6 @@ fun ErrorPage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(WindowInsets.safeDrawing.asPaddingValues())
             .padding(horizontal = 16.dp)
     ) {
@@ -76,8 +75,10 @@ fun ErrorPage(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .weight(1f, true)
                 .clip(RoundedCornerShape(16.dp))
                 .horizontalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState())
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(16.dp)
         ) {

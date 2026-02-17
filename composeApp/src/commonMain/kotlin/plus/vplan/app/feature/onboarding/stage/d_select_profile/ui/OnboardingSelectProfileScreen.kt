@@ -41,9 +41,9 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
 import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.domain.cache.collectAsLoadingState
 import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.SubjectInstanceTitle

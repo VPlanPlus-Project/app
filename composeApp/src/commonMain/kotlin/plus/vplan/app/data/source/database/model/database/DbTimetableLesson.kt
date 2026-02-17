@@ -21,6 +21,13 @@ import kotlin.uuid.Uuid
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
         ),
+        ForeignKey(
+            entity = DbLessonTime::class,
+            parentColumns = ["id"],
+            childColumns = ["lesson_time_id"],
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE
+        )
     ]
 )
 data class DbTimetableLesson(
@@ -30,5 +37,6 @@ data class DbTimetableLesson(
     @ColumnInfo(name = "lesson_number") val lessonNumber: Int,
     @ColumnInfo(name = "subject") val subject: String?,
     @ColumnInfo(name = "week_type") val weekType: String?,
-    @ColumnInfo(name = "version", defaultValue = "1") val version: Int,
+    @ColumnInfo(name = "lesson_time_id", defaultValue = "NULL") val lessonTimeId: String?,
+    @ColumnInfo(name = "version", defaultValue = "1") val version: Int
 )

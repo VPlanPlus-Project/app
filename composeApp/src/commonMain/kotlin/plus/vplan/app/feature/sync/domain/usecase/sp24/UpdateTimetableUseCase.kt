@@ -2,17 +2,19 @@ package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.captureError
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.domain.repository.GroupRepository
+import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
@@ -41,6 +43,7 @@ class UpdateTimetableUseCase(
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val profileRepository: ProfileRepository,
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
+    private val lessonTimeRepository: LessonTimeRepository,
 ) {
 
     /**
@@ -128,6 +131,11 @@ class UpdateTimetableUseCase(
                                 return@mapNotNull null
                             }
 
+                            val lessonTimeId = if (lessonGroups.isEmpty()) null
+                            else lessonTimeRepository.get(lessonGroups.first(), lesson.lessonNumber)
+                                .map { it?.id }
+                                .first()
+
                             Lesson.TimetableLesson(
                                 dayOfWeek = DayOfWeek(lesson.dayOfWeek.isoDayNumber),
                                 weekType = lesson.weekType,
@@ -142,7 +150,8 @@ class UpdateTimetableUseCase(
                                     ?.toSet(),
                                 lessonNumber = lesson.lessonNumber,
                                 weekId = week.weekEntity.id,
-                                id = Uuid.random()
+                                id = Uuid.random(),
+                                lessonTimeId = lessonTimeId
                             )
                         }
 

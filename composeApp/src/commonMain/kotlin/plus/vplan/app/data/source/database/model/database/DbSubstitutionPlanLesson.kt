@@ -29,6 +29,13 @@ import kotlin.uuid.Uuid
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
         ),
+        ForeignKey(
+            entity = DbLessonTime::class,
+            parentColumns = ["id"],
+            childColumns = ["lesson_time_id"],
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE
+        ),
     ]
 )
 data class DbSubstitutionPlanLesson(
@@ -41,5 +48,6 @@ data class DbSubstitutionPlanLesson(
     @ColumnInfo("subject_instance_id") val subjectInstanceId: Uuid?,
     @ColumnInfo("is_room_changed") val isRoomChanged: Boolean,
     @ColumnInfo("is_teacher_changed") val isTeacherChanged: Boolean,
+    @ColumnInfo("lesson_time_id", defaultValue = "NULL") val lessonTimeId: String?,
     @ColumnInfo("version", defaultValue = "1") val version: Int,
 )
