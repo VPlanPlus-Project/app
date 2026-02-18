@@ -26,6 +26,7 @@ kotlin {
         namespace = "plus.vplan.app.composeapp"
         compileSdk = applicationConfig.android.targetSdk
         experimentalProperties["android.experimental.kmp.enableAndroidResources"] = true
+        androidResources.enable = true
     }
 
     compilerOptions {
@@ -71,6 +72,9 @@ kotlin {
             implementation(libs.firebase.crashlytics)
 
             implementation(libs.posthog.android)
+
+            implementation(libs.compose.ui.tooling.preview)
+            implementation(libs.compose.ui.tooling)
         }
 
         commonMain.dependencies {
@@ -79,7 +83,6 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.navigation.compose)
@@ -87,6 +90,7 @@ kotlin {
             implementation(libs.cmp.easy.permission)
 
             implementation(libs.filekit.compose)
+            implementation(libs.compose.ui.tooling.preview)
 
             implementation(libs.kermit)
 
