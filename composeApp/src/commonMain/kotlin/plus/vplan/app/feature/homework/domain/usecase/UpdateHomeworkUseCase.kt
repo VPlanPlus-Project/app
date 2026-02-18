@@ -13,7 +13,7 @@ class UpdateHomeworkUseCase(
     suspend operator fun invoke(homeworkId: Int): UpdateResult {
         return when (homeworkRepository.getById(homeworkId, forceReload = true).first { it !is CacheState.Loading }.also {
             if (it is CacheState.Done) {
-                it.data.files.forEach { fileId ->
+                it.data.fileIds.forEach { fileId ->
                     fileRepository.getById(fileId, forceReload = true).first()
                 }
             }

@@ -12,7 +12,7 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.ProfileRepository

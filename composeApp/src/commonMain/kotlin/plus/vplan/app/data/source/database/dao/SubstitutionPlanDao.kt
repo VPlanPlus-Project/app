@@ -73,8 +73,8 @@ interface SubstitutionPlanDao {
     @Query("DELETE FROM substitution_plan_lesson WHERE id IN (:ids)")
     suspend fun deleteSubstitutionPlanByIds(ids: List<Uuid>)
     
-    @Query("SELECT substitution_plan_lesson.id FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id LEFT JOIN day ON day.id = day_id WHERE school_groups.school_id = :schoolId AND day.date = :date")
-    fun getTimetableLessons(schoolId: Uuid, date: LocalDate): Flow<List<Uuid>>
+    @Query("SELECT * FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id LEFT JOIN day ON day.id = day_id WHERE school_groups.school_id = :schoolId AND day.date = :date")
+    fun getTimetableLessons(schoolId: Uuid, date: LocalDate): Flow<List<EmbeddedSubstitutionPlanLesson>>
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns

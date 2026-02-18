@@ -17,6 +17,7 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.DataTag
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.Item
+import plus.vplan.app.core.model.Lesson
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

@@ -12,15 +12,14 @@ import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.School
-import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.core.model.Lesson
+import plus.vplan.app.domain.model.populated.LessonPopulator
+import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
@@ -57,7 +56,8 @@ class UpdateSubstitutionPlanUseCase(
     private val lessonTimeRepository: LessonTimeRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val platformNotificationRepository: PlatformNotificationRepository,
-    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase
+    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
+    private val lessonPopulator: LessonPopulator,
 ) {
     suspend operator fun invoke(
         sp24School: School.AppSchool,
@@ -178,17 +178,19 @@ class UpdateSubstitutionPlanUseCase(
             dates.forEach forEachDate@{ date ->
                 val oldLessons = oldLessonsMaps
                     .firstOrNull { it.date == date }?.oldLessons.orEmpty()
-                    .associateWith { it.getLessonSignature() }
+                    .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
+                    .associateWith { it.lesson.getLessonSignature() }
 
                 val newLessons = substitutionPlanRepository.getForProfile(
                     profile = profile,
                     date = date,
                     version = insertVersion
                 ).first()
-                    .associateWith { it.getLessonSignature() }
+                    .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
+                    .associateWith { it.lesson.getLessonSignature() }
 
                 // Skip if last lesson ends in past (notification is not important anymore)
-                if ((oldLessons + newLessons).keys.mapNotNull { it.lessonTime?.getFirstValueOld()?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachDate
+                if ((oldLessons + newLessons).keys.mapNotNull { it.lessonTime?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachDate
 
                 val changedOrNewLessons = newLessons
                     .filter { (lesson, signature) -> signature !in oldLessons.values }
@@ -200,7 +202,7 @@ class UpdateSubstitutionPlanUseCase(
                 val newDay = App.daySource.getById("${sp24School.id}/$date", profile).getFirstValueOld()
 
                 val changedLessons = changedOrNewLessons
-                    .associateWith { it.lessonNumber }
+                    .associateWith { it.lesson.lessonNumber }
                     .toList()
                     .sortedBy { it.second }
                     .map { it.first }
@@ -213,16 +215,16 @@ class UpdateSubstitutionPlanUseCase(
                         largeText = buildString {
                             changedLessons.forEachIndexed { i, lesson ->
                                 if (i > 0) append("\n")
-                                append(lesson.lessonNumber)
+                                append(lesson.lesson.lessonNumber)
                                 append(". ")
-                                append(lesson.subject ?: "Entfall")
-                                if (lesson.teacherIds.isNotEmpty()) {
+                                append(lesson.lesson.subject ?: "Entfall")
+                                if (lesson.teachers.isNotEmpty()) {
                                     append(" mit ")
-                                    append(lesson.teachers.first().filterIsInstance<AliasState.Done<Teacher>>().joinToString(", ") { it.data.name })
+                                    append(lesson.teachers.joinToString(", ") { it.name })
                                 }
-                                if (lesson.roomIds.orEmpty().isNotEmpty()) {
+                                if (lesson.rooms.isNotEmpty()) {
                                     append(" in ")
-                                    append(lesson.rooms.first().filterIsInstance<AliasState.Done<Room>>().joinToString(", ") { it.data.name })
+                                    append(lesson.rooms.joinToString(", ") { it.name })
                                 }
                             }
                             if (newDay?.info != null) append("\n\nℹ\uFE0F ${newDay.info}")

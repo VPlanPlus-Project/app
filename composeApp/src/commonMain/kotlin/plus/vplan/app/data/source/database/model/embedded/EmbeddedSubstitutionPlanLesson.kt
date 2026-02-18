@@ -7,7 +7,7 @@ import plus.vplan.app.data.source.database.model.database.DbSubstitutionPlanLess
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.core.model.Lesson
 
 data class EmbeddedSubstitutionPlanLesson(
     @Embedded val substitutionPlanLesson: DbSubstitutionPlanLesson,

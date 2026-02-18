@@ -11,7 +11,7 @@ import plus.vplan.app.data.source.database.model.database.DbTimetableWeekLimitat
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbTimetableTeacherCrossover
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.core.model.Lesson
 
 data class EmbeddedTimetableLesson(
     @Embedded val timetableLesson: DbTimetableLesson,

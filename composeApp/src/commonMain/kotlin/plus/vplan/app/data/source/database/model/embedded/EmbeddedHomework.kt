@@ -30,7 +30,7 @@ data class EmbeddedHomework(
                 createdAt = homework.createdAt,
                 createdByProfileId = homework.createdByProfileId!!,
                 subjectInstanceId = homework.subjectInstanceId,
-                files = files.map { it.fileId },
+                fileIds = files.map { it.fileId },
                 taskIds = tasks.map { it.id },
                 cachedAt = homework.cachedAt,
                 groupId = homework.groupId
@@ -44,7 +44,7 @@ data class EmbeddedHomework(
             subjectInstanceId = homework.subjectInstanceId,
             groupId = homework.groupId,
             isPublic = homework.isPublic,
-            files = files.map { it.fileId },
+            fileIds = files.map { it.fileId },
             taskIds = tasks.map { it.id },
             cachedAt = homework.cachedAt
         )

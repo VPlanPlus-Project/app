@@ -51,9 +51,8 @@ class SearchUseCase(
         val profile = getCurrentProfileUseCase().first()
 
         launch {
-            substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, searchRequest.date).collectLatest { substitutionPlanLessonIds ->
-                val lessons = substitutionPlanLessonIds
-                    .mapNotNull { id -> substitutionPlanRepository.getById(id).first() }
+            substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, searchRequest.date).collectLatest { substitutionPlanLessons ->
+                val lessons = substitutionPlanLessons
                     .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
                     .filter { lesson -> lesson.lesson.subject != null }
 

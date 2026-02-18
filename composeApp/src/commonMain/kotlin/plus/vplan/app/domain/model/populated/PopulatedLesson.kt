@@ -14,7 +14,7 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.Week
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -125,7 +125,7 @@ class LessonPopulator : KoinComponent {
                         groups = groups.filter { it.id in lesson.groupIds },
                         rooms = rooms.filter { it.id in lesson.roomIds.orEmpty() },
                         teachers = teachers.filter { it.id in lesson.teacherIds },
-                        weeks = lesson.limitedToWeekIds?.let { weeks.filter { it.id in lesson.limitedToWeekIds } }
+                        weeks = lesson.limitedToWeekIds?.let { weeks.filter { it.id in lesson.limitedToWeekIds!! } }
                     )
                 }
             }
@@ -169,7 +169,7 @@ class LessonPopulator : KoinComponent {
                     groups = groups.filter { it.id in lesson.groupIds },
                     rooms = rooms.filter { it.id in lesson.roomIds.orEmpty() },
                     teachers = teachers.filter { it.id in lesson.teacherIds },
-                    weeks = lesson.limitedToWeekIds?.let { weeks.filter { it.id in lesson.limitedToWeekIds } }
+                    weeks = lesson.limitedToWeekIds?.let { weeks.filter { it.id in lesson.limitedToWeekIds!! } }
                 )
             }
         }.distinctUntilChanged()

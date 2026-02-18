@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -71,10 +70,9 @@ import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
-import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
@@ -499,6 +497,7 @@ private fun HomeContent(
                                                     val headFont = MaterialTheme.typography.bodyLarge
                                                     lessons.forEach forEachLesson@{ populatedLesson ->
                                                         val lesson = populatedLesson.lesson
+                                                        val subjectInstance = (populatedLesson as? PopulatedLesson.SubstitutionPlanLesson)?.subjectInstance
                                                         val lessonTime = populatedLesson.lessonTime
                                                         val rooms = populatedLesson.rooms
                                                         val groups = populatedLesson.groups
@@ -515,7 +514,6 @@ private fun HomeContent(
                                                             assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == lesson.subjectInstanceId })
                                                         }
 
-                                                        val subjectInstance = remember(lesson.subjectInstanceId) { lesson.subjectInstance }?.collectAsResultingFlow()?.value
                                                         Column(Modifier.fillMaxWidth()) {
                                                             Row(
                                                                 modifier = Modifier
@@ -577,14 +575,11 @@ private fun HomeContent(
                                                                             .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
                                                                     )
                                                                     Text(
-                                                                        text = lesson.info,
+                                                                        text = lesson.info!!,
                                                                         style = MaterialTheme.typography.bodyMedium
                                                                     )
                                                                 }
-                                                                if (lesson is Lesson.TimetableLesson && lesson.limitedToWeekIds != null) Row {
-                                                                    val weeks = remember(lesson.limitedToWeekIds) {
-                                                                        lesson.limitedToWeeks?.map { it.mapNotNull { week -> (week as? CacheState.Done)?.data?.weekIndex } }
-                                                                    }?.collectAsState(null)?.value
+                                                                if (populatedLesson is PopulatedLesson.TimetableLesson && populatedLesson.weeks != null) Row {
                                                                     Icon(
                                                                         painter = painterResource(Res.drawable.info),
                                                                         contentDescription = "Information",
@@ -592,9 +587,9 @@ private fun HomeContent(
                                                                             .padding(end = 8.dp)
                                                                             .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
                                                                     )
-                                                                    if (weeks != null && weeks.isNotEmpty()) Text(
-                                                                        text = if (weeks.size == 1) "Nur in Schulwoche ${weeks.first()}"
-                                                                                else "Nur in Schulwochen ${weeks.sorted().dropLast(1).joinToString()} und ${weeks.maxOf { it }}",
+                                                                    if (populatedLesson.weeks.isNotEmpty()) Text(
+                                                                        text = if (populatedLesson.weeks.size == 1) "Nur in Schulwoche ${populatedLesson.weeks.first()}"
+                                                                                else "Nur in Schulwochen ${populatedLesson.weeks.map { it.weekIndex }.sorted().dropLast(1).joinToString()} und ${populatedLesson.weeks.map { it.weekIndex }.maxOf { it }}",
                                                                         style = MaterialTheme.typography.bodyMedium
                                                                     )
                                                                 }
@@ -840,7 +835,7 @@ private fun CurrentOrNextLesson(
                     style = bodyFont
                 )
             }
-            if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.info != null) Row {
+            if (currentLesson.lesson is Lesson.SubstitutionPlanLesson && (currentLesson.lesson as Lesson.SubstitutionPlanLesson).info != null) Row {
                 Icon(
                     painter = painterResource(Res.drawable.info),
                     contentDescription = null,
@@ -849,7 +844,7 @@ private fun CurrentOrNextLesson(
                         .size(bodyFont.lineHeight.toDp())
                 )
                 Text(
-                    text = currentLesson.info,
+                    text = (currentLesson.lesson as Lesson.SubstitutionPlanLesson).info!!,
                     style = bodyFont
                 )
             }

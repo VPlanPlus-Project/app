@@ -64,7 +64,7 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.LessonRendering

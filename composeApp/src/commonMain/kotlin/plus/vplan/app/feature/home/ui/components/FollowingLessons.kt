@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.utils.transparent
 

@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,7 +27,6 @@ import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -41,7 +38,7 @@ sealed class Homework(
     abstract val dueTo: LocalDate
     abstract val taskIds: List<Int>
     abstract val subjectInstanceId: Int?
-    abstract val files: List<Int>
+    abstract val fileIds: List<Int>
     abstract val cachedAt: Instant
 
     private val subjectInstanceRepository by inject<SubjectInstanceRepository>()
@@ -68,15 +65,15 @@ sealed class Homework(
         else HomeworkStatus.PENDING
     }
 
-    fun getFilesFlow() = if (files.isEmpty()) flowOf(emptyList()) else combine(files.map { App.fileSource.getById(it).filterIsInstance<CacheState.Done<File>>() }) { it.toList().map { it.data } }
+    fun getFilesFlow() = if (fileIds.isEmpty()) flowOf(emptyList()) else combine(fileIds.map { App.fileSource.getById(it).filterIsInstance<CacheState.Done<File>>() }) { it.toList().map { it.data } }
 
     suspend fun getTaskItems(): List<HomeworkTask> {
         return taskItems ?: taskIds.mapNotNull { App.homeworkTaskSource.getSingleById(it) }.also { taskItems = it }
     }
 
     suspend fun getFileItems(): List<File> {
-        if (files.isEmpty()) return emptyList()
-        return fileItems ?: combine(files.map { App.fileSource.getById(it) }) { it.toList().mapNotNull { (it as? CacheState.Done<File>)?.data } }.first().also { fileItems = it }
+        if (fileIds.isEmpty()) return emptyList()
+        return fileItems ?: combine(fileIds.map { App.fileSource.getById(it) }) { it.toList().mapNotNull { (it as? CacheState.Done<File>)?.data } }.first().also { fileItems = it }
     }
 
     data class HomeworkTask(
@@ -114,7 +111,7 @@ sealed class Homework(
         override val dueTo: LocalDate,
         override val taskIds: List<Int>,
         override val subjectInstanceId: Int?,
-        override val files: List<Int>,
+        override val fileIds: List<Int>,
         override val cachedAt: Instant,
         override val groupId: Int?,
         val isPublic: Boolean,
@@ -144,7 +141,7 @@ sealed class Homework(
         override val taskIds: List<Int>,
         override val subjectInstanceId: Int?,
         override val groupId: Int?,
-        override val files: List<Int>,
+        override val fileIds: List<Int>,
         override val cachedAt: Instant,
         val createdByProfileId: Uuid
     ) : Homework(

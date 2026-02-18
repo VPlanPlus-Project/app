@@ -25,12 +25,12 @@ import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.App
 import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -135,10 +135,10 @@ class DaySource(
 
                 launch {
                     (if (contextProfile == null) substitutionPlanRepository.getSubstitutionPlanBySchool(schoolId, date)
-                    else substitutionPlanRepository.getForProfile(contextProfile, date, null).map { it.map { it.id }.toSet() }).collectLatest { substitutionPlanLessonIds ->
+                    else substitutionPlanRepository.getForProfile(contextProfile, date, null)).collectLatest { substitutionPlanLessons ->
                         day.update {
                             it.copy(
-                                substitutionPlan = substitutionPlanLessonIds,
+                                substitutionPlan = substitutionPlanLessons.map { it.id }.toSet(),
                                 tags = it.tags + Day.DayTags.HAS_LESSONS
                             )
                         }

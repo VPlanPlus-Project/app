@@ -28,7 +28,7 @@ import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext

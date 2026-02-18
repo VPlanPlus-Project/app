@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbProfileSubstitutionPlanCache
@@ -14,7 +15,6 @@ import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitut
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanRoomCrossover
 import plus.vplan.app.data.source.database.model.database.crossovers.DbSubstitutionPlanTeacherCrossover
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Lesson
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import kotlin.uuid.Uuid
 
@@ -80,11 +80,11 @@ class SubstitutionPlanRepositoryImpl(
         })
     }
 
-    override suspend fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): Flow<Set<Uuid>> {
-        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date).map { it.toSet() }.distinctUntilChanged()
+    override suspend fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): Flow<List<Lesson.SubstitutionPlanLesson>> {
+        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date).map { it.map { it.toModel() } }.distinctUntilChanged()
     }
 
-    override suspend fun getForProfile(profile: Profile, date: LocalDate, version: Int?): Flow<List<Lesson>> {
+    override suspend fun getForProfile(profile: Profile, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>> {
         return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date, version).map { it.map { it.toModel() } }
     }
 

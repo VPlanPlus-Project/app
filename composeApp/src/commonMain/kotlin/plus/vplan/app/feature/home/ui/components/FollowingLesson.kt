@@ -26,7 +26,7 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT

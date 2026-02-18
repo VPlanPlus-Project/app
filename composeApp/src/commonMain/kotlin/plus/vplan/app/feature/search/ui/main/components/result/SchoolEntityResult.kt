@@ -20,7 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,11 +27,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.cache.collectAsResultingFlowOld
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Lesson
+import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLessons
 import plus.vplan.app.feature.search.domain.model.SearchResult
@@ -140,7 +136,7 @@ fun SchoolEntityResults(
 }
 
 data class LessonLoadResult(
-    val currentLessons: SnapshotStateList<Lesson>,
+    val currentLessons: SnapshotStateList<PopulatedLesson>,
     val nextLesson: LocalTime?,
     val hasLessonsLoaded: Boolean
 )
@@ -150,15 +146,15 @@ private fun rememberLessonLoadResult(
     result: SearchResult.SchoolEntity,
     contextDate: LocalDate
 ): LessonLoadResult {
-    val currentLessons = remember { mutableStateListOf<Lesson>() }
+    val currentLessons = remember { mutableStateListOf<PopulatedLesson>() }
     var nextLesson by remember { mutableStateOf<LocalTime?>(null) }
     var hasLessonsLoaded by remember { mutableStateOf(false) }
 
     LaunchedEffect(result.lessons) {
         currentLessons.clear()
         if (contextDate == LocalDate.now()) {
-            currentLessons.addAll(result.lessons.map { it.lesson.lesson }.findCurrentLessons(LocalTime.now()).toMutableStateList())
-            nextLesson = result.lessons.map { it.lesson.lesson }.getNextLessonStart(LocalTime.now())
+            currentLessons.addAll(result.lessons.map { it.lesson }.findCurrentLessons(LocalTime.now()))
+            nextLesson = result.lessons.map { it.lesson }.getNextLessonStart(LocalTime.now())
         }
         hasLessonsLoaded = true
     }
@@ -173,19 +169,18 @@ private fun getHeaderTextForTodayWithLessons(lessons: Int) = when (lessons) {
 }
 
 @Composable
-private fun getHeaderTextForRoomWithCurrentLessons(lessons: List<Lesson>): String {
-    val groups = lessons.map { it.groupIds }.flatten().distinct()
+private fun getHeaderTextForRoomWithCurrentLessons(lessons: List<PopulatedLesson>): String {
+    val groups = lessons.flatMap { it.groups }.distinct()
     return if (groups.isEmpty()) "Momentan nicht belegt (Keine Gruppen zugeteilt)"
-    else "Momentan belegt von ${groups.map { App.groupSource.getById(it) }.collectAsResultingFlow().value.map { it.name }.sorted().joinToString()}"
+    else "Momentan belegt von ${groups.map { it.name }.sorted().joinToString()}"
 }
 
 @Composable
-private fun getHeaderTextForTeacherOrGroupWithCurrentLessons(lessons: List<Lesson>): String {
-    val roomIds = lessons.mapNotNull { it.roomIds }.flatten().distinct()
-    return if (roomIds.isEmpty()) "Aktuell keine Stunde"
+private fun getHeaderTextForTeacherOrGroupWithCurrentLessons(lessons: List<PopulatedLesson>): String {
+    val rooms = lessons.flatMap { it.rooms }.distinct()
+    return if (rooms.isEmpty()) "Aktuell keine Stunde"
     else {
-        val rooms = roomIds.map { App.roomSource.getById(it) }.collectAsResultingFlow().value
-        val until = lessons.mapNotNull { it.lessonTime }.collectAsResultingFlowOld().value.maxOfOrNull { it.end }
+        val until = lessons.mapNotNull { it.lessonTime }.maxOfOrNull { it.end }
         buildString {
             append("Momentan in ${rooms.map { it.name }.sorted().joinToString()}")
             if (until != null) append(" (bis $until)")
