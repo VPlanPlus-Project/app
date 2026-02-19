@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.model.populated.SubjectInstancePopulator

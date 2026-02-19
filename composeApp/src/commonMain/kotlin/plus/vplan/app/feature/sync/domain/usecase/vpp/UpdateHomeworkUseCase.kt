@@ -22,7 +22,7 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.repository.GroupDbDto

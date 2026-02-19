@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.homework.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.HomeworkRepository
 

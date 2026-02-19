@@ -57,7 +57,6 @@ import androidx.compose.ui.unit.min
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -70,12 +69,11 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.School
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
-import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.core.model.Lesson
+import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
+import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
@@ -362,8 +360,9 @@ private fun HomeContent(
                                     .fillMaxWidth()
                             ) {
                                 val homeworkPopulator = koinInject<HomeworkPopulator>()
+                                val assessmentPopulator = koinInject<AssessmentPopulator>()
                                 val homework by remember(state.day.homeworkIds) { state.day.homework.flatMapLatest { homeworkPopulator.populateMultiple(it.toList(), PopulationContext.Profile(state.currentProfile!!)) } }.collectAsState(emptyList())
-                                val assessments by remember(state.day.assessmentIds) { state.day.assessments }.collectAsState(emptySet())
+                                val assessments by remember(state.day.assessmentIds) { state.day.assessments.flatMapLatest { assessmentPopulator.populateMultiple(it.toList(), PopulationContext.Profile(state.currentProfile!!)) } }.collectAsState(emptyList())
                                 if (highlightedLessons.hasLessons) AnimatedContent(
                                     targetState = highlightedLessons
                                 ) { highlightConfig ->
@@ -390,10 +389,10 @@ private fun HomeContent(
                                                             homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.id == currentLesson.lesson.subjectInstanceId })
                                                         }
 
-                                                        val assessmentsForLesson = remember { mutableListOf<Assessment>() }
+                                                        val assessmentsForLesson = remember { mutableListOf<PopulatedAssessment>() }
                                                         LaunchedEffect(assessments, currentLesson.lesson.subjectInstanceId) {
                                                             assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == currentLesson.lesson.subjectInstanceId })
+                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.id == currentLesson.lesson.subjectInstanceId })
                                                         }
 
                                                         CurrentOrNextLesson(
@@ -514,10 +513,10 @@ private fun HomeContent(
                                                             homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.id == lesson.subjectInstanceId })
                                                         }
 
-                                                        val assessmentsForLesson = remember { mutableListOf<Assessment>() }
+                                                        val assessmentsForLesson = remember { mutableListOf<PopulatedAssessment>() }
                                                         LaunchedEffect(assessments, lesson.subjectInstanceId) {
                                                             assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.getFirstValue()?.id == lesson.subjectInstanceId })
+                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.id == lesson.subjectInstanceId })
                                                         }
 
                                                         Column(Modifier.fillMaxWidth()) {
@@ -629,7 +628,7 @@ private fun HomeContent(
                                                                             .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
                                                                     )
                                                                     Text(
-                                                                        text = assessmentsForLesson.joinToString { it.description },
+                                                                        text = assessmentsForLesson.joinToString { it.assessment.description },
                                                                         style = MaterialTheme.typography.bodyMedium
                                                                     )
                                                                 }
@@ -752,7 +751,7 @@ private fun CurrentOrNextLesson(
     currentLesson: PopulatedLesson,
     currentProfileType: ProfileType?,
     homework: List<PopulatedHomework>,
-    assessments: List<Assessment>,
+    assessments: List<PopulatedAssessment>,
     continuing: PopulatedLesson?,
     progressType: ProgressType
 ) {

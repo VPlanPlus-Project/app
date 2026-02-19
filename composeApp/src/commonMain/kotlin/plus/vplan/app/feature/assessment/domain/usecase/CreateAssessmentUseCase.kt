@@ -7,8 +7,8 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance

@@ -5,7 +5,7 @@ package plus.vplan.app.feature.assessment.domain.usecase
 import io.github.vinceglb.filekit.core.PlatformFile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository

@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.domain.repository.HomeworkRepository
 
 class HomeworkSource(

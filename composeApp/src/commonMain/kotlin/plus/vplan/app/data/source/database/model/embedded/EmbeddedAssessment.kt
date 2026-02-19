@@ -8,8 +8,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.data.source.database.model.database.DbAssessment
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
-import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.Assessment
 import kotlin.time.ExperimentalTime
 
 data class EmbeddedAssessment(

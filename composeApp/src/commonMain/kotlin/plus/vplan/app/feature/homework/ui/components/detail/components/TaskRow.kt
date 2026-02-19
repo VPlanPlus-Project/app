@@ -38,7 +38,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.components.BackHandler
 import plus.vplan.app.utils.tryNoCatch

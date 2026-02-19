@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.sync.domain.usecase.vpp
 
 import co.touchlab.kermit.Logger
@@ -21,10 +19,10 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getByProvider
-import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.Assessment
+import plus.vplan.app.domain.model.populated.AssessmentPopulator
+import plus.vplan.app.domain.model.populated.PopulatedAssessment
+import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -40,7 +38,6 @@ import plus.vplan.app.utils.until
 import plus.vplan.app.utils.untilRelativeText
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 class UpdateAssessmentsUseCase(
@@ -50,6 +47,7 @@ class UpdateAssessmentsUseCase(
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateProfileAssessmentIndexUseCase: UpdateProfileAssessmentIndexUseCase,
     private val vppIdRepository: VppIdRepository,
+    private val assessmentPopulator: AssessmentPopulator
 ) {
     private val logger = Logger.withTag("UpdateAssessmentUseCase")
 
@@ -178,21 +176,32 @@ class UpdateAssessmentsUseCase(
                         .filterValues { it }
                         .keys
 
-                    val newAssessments = combine((downloadedIds - existingIds).ifEmpty { return@buildAndSendNotifications }
-                        .map { id -> assessmentRepository.getById(id, false).filterIsInstance<CacheState.Done<Assessment>>().map { assessment -> assessment.data } }) { list -> list.toList() }.first()
-                        .filter { assessment -> assessment.creator is AppEntity.VppId && assessment.creator.id != studentProfile.vppId?.id && (assessment.createdAt until Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days }
-                        .filter { assessment -> allowedSubjectInstanceIds.contains(assessment.subjectInstance.getFirstValue()?.id) }
+                    val newAssessments = combine(
+                        (downloadedIds - existingIds).ifEmpty { return@buildAndSendNotifications }
+                            .map { id ->
+                                assessmentRepository.getById(id, false)
+                                    .filterIsInstance<CacheState.Done<Assessment>>()
+                                    .map { assessment -> assessment.data }
+                            })
+                    { list ->
+                        assessmentPopulator.populateMultiple(list.toList(), PopulationContext.Profile(studentProfile)).first()
+                    }.first()
+                        .filter { assessment ->
+                            assessment is PopulatedAssessment.CloudAssessment && assessment.createdByUser.id != studentProfile.vppId?.id && (assessment.assessment.createdAt until Clock.System.now()
+                                .toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days
+                        }
+                        .filter { assessment -> allowedSubjectInstanceIds.contains(assessment.subjectInstance.id) }
 
                     if (newAssessments.isEmpty()) return@buildAndSendNotifications
 
                     if (newAssessments.size == 1) {
                         val message = buildString {
                             newAssessments.first().let { assessment ->
-                                append((assessment.creator as AppEntity.VppId).vppId.getFirstValueOld()?.name ?: "Unbekannter Nutzer")
+                                append((assessment as PopulatedAssessment.CloudAssessment).createdByUser.name)
                                 append(" hat eine neue Leistungserhebung in ")
-                                append(assessment.subjectInstance.getFirstValue()?.subject ?: "einem Fach")
+                                append(assessment.subjectInstance.subject ?: "wined Fach")
                                 append(" für ")
-                                (assessment.date untilRelativeText LocalDate.now())?.let { append(it) } ?: append(assessment.date.format(LocalDate.Format {
+                                (assessment.assessment.date untilRelativeText LocalDate.now())?.let { append(it) } ?: append(assessment.assessment.date.format(LocalDate.Format {
                                     dayOfWeek(shortDayOfWeekNames)
                                     chars(", ")
                                     day(padding = Padding.ZERO)
@@ -206,7 +215,7 @@ class UpdateAssessmentsUseCase(
                             title = "Neue Leistungserhebung",
                             category = studentProfile.name,
                             message = message,
-                            largeText = "$message\n${newAssessments.first().description}",
+                            largeText = "$message\n${newAssessments.first().assessment.description}",
                             isLarge = true,
                             onClickData = Json.encodeToString(
                                 StartTaskJson(
@@ -217,7 +226,7 @@ class UpdateAssessmentsUseCase(
                                             type = "assessment",
                                             value = Json.encodeToString(
                                                 StartTaskJson.StartTaskOpen.Assessment(
-                                                    assessmentId = newAssessments.first().id
+                                                    assessmentId = newAssessments.first().assessment.id
                                                 )
                                             )
                                         )

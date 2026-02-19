@@ -52,7 +52,7 @@ import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository

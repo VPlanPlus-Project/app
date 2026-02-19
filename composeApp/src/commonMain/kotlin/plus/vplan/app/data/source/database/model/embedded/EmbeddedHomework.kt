@@ -5,7 +5,7 @@ import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbHomework
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.foreign_key.FKHomeworkFile
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.core.model.Homework
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)

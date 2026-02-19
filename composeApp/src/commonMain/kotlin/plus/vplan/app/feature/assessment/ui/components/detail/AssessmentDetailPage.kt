@@ -221,7 +221,7 @@ fun DetailPage(
                     HorizontalDivider()
                 }
             }
-            if (assessment is PopulatedAssessment.CloudAssessment) CreatedByRow(createdBy = assessment.createdBy)
+            if (assessment is PopulatedAssessment.CloudAssessment) CreatedByRow(createdBy = assessment.createdByUser)
             else SavedLocalRow()
 
             CreatedAtRow(createdAt = assessment.assessment.createdAt.toInstant(TimeZone.UTC))

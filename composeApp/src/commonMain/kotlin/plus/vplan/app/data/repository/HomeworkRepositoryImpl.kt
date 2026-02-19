@@ -55,7 +55,7 @@ import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedE
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.repository.CreateHomeworkResponse

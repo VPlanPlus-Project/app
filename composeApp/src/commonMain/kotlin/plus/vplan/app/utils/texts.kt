@@ -1,6 +1,6 @@
 package plus.vplan.app.utils
 
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.feature.search.domain.model.SearchResult
 
 fun Assessment.Type.toName() = when (this) {

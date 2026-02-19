@@ -4,7 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import plus.vplan.app.domain.model.HomeworkStatus
+import plus.vplan.app.core.model.HomeworkStatus
 import plus.vplan.app.ui.components.Badge
 import plus.vplan.app.ui.theme.ColorToken
 import plus.vplan.app.ui.theme.customColors

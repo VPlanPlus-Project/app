@@ -17,7 +17,7 @@ import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator

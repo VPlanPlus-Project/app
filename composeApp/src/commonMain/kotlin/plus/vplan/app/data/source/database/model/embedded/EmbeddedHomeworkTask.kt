@@ -5,7 +5,7 @@ import androidx.room.Relation
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTask
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.data.source.database.model.database.DbHomeworkTaskDoneProfile
-import plus.vplan.app.domain.model.Homework.HomeworkTask
+import plus.vplan.app.core.model.Homework.HomeworkTask
 
 data class EmbeddedHomeworkTask(
     @Embedded val homeworkTask: DbHomeworkTask,

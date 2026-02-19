@@ -36,7 +36,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.feature.search.ui.main.NewItem

@@ -31,7 +31,7 @@ import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.utils.date.atStartOfWeek
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator

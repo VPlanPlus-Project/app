@@ -1,9 +1,6 @@
-package plus.vplan.app.domain.model
+package plus.vplan.app.core.model
 
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.core.model.DataTag
-import plus.vplan.app.core.model.Item
-import plus.vplan.app.core.model.Profile
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 

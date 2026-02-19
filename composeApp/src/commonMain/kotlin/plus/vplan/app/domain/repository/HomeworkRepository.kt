@@ -8,7 +8,7 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.Group
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
