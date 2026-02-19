@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package plus.vplan.app.feature.assessment.ui.components.detail
 
 import androidx.compose.runtime.getValue
@@ -5,19 +7,23 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.File
-import plus.vplan.app.core.model.Profile
+import plus.vplan.app.domain.model.populated.AssessmentPopulator
+import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.AddAssessmentFileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentContentUseCase
@@ -44,7 +50,8 @@ class AssessmentDetailViewModel(
     private val addAssessmentFileUseCase: AddAssessmentFileUseCase,
     private val downloadFileUseCase: DownloadFileUseCase,
     private val renameFileUseCase: RenameFileUseCase,
-    private val deleteFileUseCase: DeleteFileUseCase
+    private val deleteFileUseCase: DeleteFileUseCase,
+    private val assessmentPopulator: AssessmentPopulator,
 ) : ViewModel() {
     var state by mutableStateOf(AssessmentDetailState())
         private set
@@ -58,16 +65,17 @@ class AssessmentDetailViewModel(
             combine(
                 getCurrentProfileUseCase(),
                 App.assessmentSource.getById(assessmentId)
-            ) { profile, assessmentData ->
-                if (assessmentData !is CacheState.Done || profile !is Profile.StudentProfile) return@combine null
-                val assessment = assessmentData.data
+                    .filterIsInstance<CacheState.Done<Assessment>>()
+                    .flatMapLatest { assessmentPopulator.populateSingle(it.data) }
+            ) { profile, assessment ->
+                if (profile !is Profile.StudentProfile) return@combine null
 
-                val isOtherAssessment = state.assessment?.id != assessmentId
+                val isOtherAssessment = state.assessment?.assessment?.id != assessmentId
 
                 state.copy(
                     assessment = assessment,
                     profile = profile,
-                    canEdit = (assessment.creator is AppEntity.VppId && profile.vppId?.id == assessment.creator.id) || (assessment.creator is AppEntity.Profile && profile.id == assessment.creator.id),
+                    canEdit = (assessment is PopulatedAssessment.CloudAssessment && profile.vppId?.id == assessment.createdByUser.id) || (assessment is PopulatedAssessment.LocalAssessment && profile.id == assessment.createdByProfile.id),
                     reloadingState = if (isOtherAssessment) null else state.reloadingState,
                     deleteState = if (isOtherAssessment) null else state.deleteState,
                     initDone = true
@@ -81,7 +89,7 @@ class AssessmentDetailViewModel(
             when (event) {
                 is AssessmentDetailEvent.Reload -> {
                     state = state.copy(reloadingState = UnoptimisticTaskState.InProgress)
-                    val result = updateAssessmentUseCase(state.assessment!!.id)
+                    val result = updateAssessmentUseCase(state.assessment!!.assessment.id)
                     when (result) {
                         UpdateResult.SUCCESS -> {
                             state = state.copy(reloadingState = UnoptimisticTaskState.Success)
@@ -96,14 +104,14 @@ class AssessmentDetailViewModel(
                 }
                 is AssessmentDetailEvent.Delete -> {
                     state = state.copy(deleteState = UnoptimisticTaskState.InProgress)
-                    val result = deleteAssessmentUseCase(state.assessment!!, state.profile!!)
+                    val result = deleteAssessmentUseCase(state.assessment!!.assessment, state.profile!!)
                     state = state.copy(deleteState = if (result) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error)
                 }
-                is AssessmentDetailEvent.UpdateType -> changeAssessmentTypeUseCase(state.assessment!!, event.type, state.profile!!)
-                is AssessmentDetailEvent.UpdateDate -> changeAssessmentDateUseCase(state.assessment!!, event.date, state.profile!!)
-                is AssessmentDetailEvent.UpdateVisibility -> changeAssessmentVisibilityUseCase(state.assessment!!, event.isPublic, state.profile!!)
-                is AssessmentDetailEvent.UpdateContent -> changeAssessmentContentUseCase(state.assessment!!, event.content, state.profile!!)
-                is AssessmentDetailEvent.AddFile -> addAssessmentFileUseCase(state.assessment!!, event.file.platformFile, state.profile!!)
+                is AssessmentDetailEvent.UpdateType -> changeAssessmentTypeUseCase(state.assessment!!.assessment, event.type, state.profile!!)
+                is AssessmentDetailEvent.UpdateDate -> changeAssessmentDateUseCase(state.assessment!!.assessment, event.date, state.profile!!)
+                is AssessmentDetailEvent.UpdateVisibility -> changeAssessmentVisibilityUseCase(state.assessment!!.assessment, event.isPublic, state.profile!!)
+                is AssessmentDetailEvent.UpdateContent -> changeAssessmentContentUseCase(state.assessment!!.assessment, event.content, state.profile!!)
+                is AssessmentDetailEvent.AddFile -> addAssessmentFileUseCase(state.assessment!!.assessment, event.file.platformFile, state.profile!!)
                 is AssessmentDetailEvent.DownloadFile -> {
                     downloadFileUseCase(event.file, state.profile!!).collectLatest {
                         state = state.copy(fileDownloadState = state.fileDownloadState.plus(event.file.id to it))
@@ -111,14 +119,14 @@ class AssessmentDetailViewModel(
                     state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
                 }
                 is AssessmentDetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
-                is AssessmentDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.assessment!!, state.profile!!)
+                is AssessmentDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.assessment!!.assessment, state.profile!!)
             }
         }
     }
 }
 
 data class AssessmentDetailState(
-    val assessment: Assessment? = null,
+    val assessment: PopulatedAssessment? = null,
     val profile: Profile.StudentProfile? = null,
     val canEdit: Boolean = false,
     val reloadingState: UnoptimisticTaskState? = UnoptimisticTaskState.Success,

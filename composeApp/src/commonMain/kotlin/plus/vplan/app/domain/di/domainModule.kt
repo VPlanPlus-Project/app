@@ -2,6 +2,7 @@ package plus.vplan.app.domain.di
 
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
+import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.CoursePopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
@@ -27,4 +28,5 @@ val domainModule = module {
     singleOf(::CoursePopulator)
     singleOf(::LessonPopulator)
     singleOf(::HomeworkPopulator)
+    singleOf(::AssessmentPopulator)
 }

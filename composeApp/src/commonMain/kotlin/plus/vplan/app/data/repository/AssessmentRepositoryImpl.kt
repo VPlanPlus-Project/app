@@ -232,7 +232,7 @@ class AssessmentRepositoryImpl(
 
     override suspend fun upsertLocally(
         assessmentId: Int,
-        subjectInstanceId: Int,
+        subjectInstanceId: Uuid,
         date: LocalDate,
         isPublic: Boolean?,
         createdAt: Instant,

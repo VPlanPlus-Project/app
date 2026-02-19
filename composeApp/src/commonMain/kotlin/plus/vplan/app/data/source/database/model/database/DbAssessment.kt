@@ -34,7 +34,7 @@ data class DbAssessment(
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "date") val date: LocalDate,
     @ColumnInfo(name = "is_public") val isPublic: Boolean,
-    @ColumnInfo(name = "subject_instance_id") val subjectInstanceId: Int,
+    @ColumnInfo(name = "subject_instance_id") val subjectInstanceId: Uuid,
     @ColumnInfo(name = "description") val description: String,
     @ColumnInfo(name = "type") val type: Int,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant

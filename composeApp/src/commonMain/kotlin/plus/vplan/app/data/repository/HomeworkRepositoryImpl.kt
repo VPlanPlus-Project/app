@@ -376,6 +376,7 @@ class HomeworkRepositoryImpl(
                     parameters.append("filter_subject_instances", subjectInstanceAliases.joinToString(","))
                     parameters.append("include_tasks", "true")
                     parameters.append("include_files", "true")
+                    parameters.append("include_subject_instances", "true")
                 }.build())
                 schoolApiAccess.authentication(this)
             }

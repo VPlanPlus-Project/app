@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.domain.model
 
 import kotlinx.coroutines.flow.combine
@@ -9,13 +7,13 @@ import kotlinx.datetime.LocalDateTime
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.App
-import plus.vplan.app.core.model.DataTag
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.DataTag
 import plus.vplan.app.core.model.Item
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 data class Assessment(
     override val id: Int,
@@ -23,7 +21,7 @@ data class Assessment(
     val createdAt: LocalDateTime,
     val date: LocalDate,
     val isPublic: Boolean,
-    val subjectInstanceId: Int,
+    val subjectInstanceId: Uuid,
     val description: String,
     val type: Type,
     val fileIds: List<Int>,

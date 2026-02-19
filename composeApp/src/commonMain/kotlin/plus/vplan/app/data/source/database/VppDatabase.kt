@@ -243,11 +243,16 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectI
             from = 12,
             to = 13,
         ),
-        AutoMigration( // Change substitui
+        AutoMigration( // Change homework groups/subject instances to local uuid
             from = 13,
             to = 14,
             spec = VppDatabase.Migration13to14::class
-        )
+        ),
+        AutoMigration( // Change assessments subject instances to local uuid
+            from = 14,
+            to = 15,
+            spec = VppDatabase.Migration14to15::class
+        ),
     ]
 )
 @TypeConverters(
@@ -294,7 +299,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val besteSchuleGradesDao: BesteschuleGradesDao
 
     companion object {
-        const val DATABASE_VERSION = 14
+        const val DATABASE_VERSION = 15
     }
 
     @RenameColumn(
@@ -638,6 +643,14 @@ abstract class VppDatabase : RoomDatabase() {
             connection.execSQL("""
                 UPDATE homework SET subject_instance_id = (SELECT subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = homework.subject_instance_id);
                 UPDATE homework SET group_id = (SELECT group_id FROM groups_aliases WHERE groups_aliases.alias_type = 'vpp' AND groups_aliases.alias = homework.group_id);
+            """.trimIndent())
+        }
+    }
+
+    class Migration14to15: AutoMigrationSpec {
+        override fun onPostMigrate(connection: SQLiteConnection) {
+            connection.execSQL("""
+                UPDATE assessments SET subject_instance_id = (SELECT subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = assessments.subject_instance_id);
             """.trimIndent())
         }
     }
