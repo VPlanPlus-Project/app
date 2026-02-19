@@ -148,7 +148,52 @@ class HomeworkDetailViewModel(
     fun onEvent(event: HomeworkDetailEvent) {
         viewModelScope.launch {
             when (event) {
-                is HomeworkDetailEvent.ToggleTaskDone -> toggleTaskDoneUseCase(event.task, state.value.profile!!)
+                is HomeworkDetailEvent.ToggleTaskDone -> {
+                    val currentHomework = state.value.homework ?: return@launch
+                    val profile = state.value.profile ?: return@launch
+                    val oldTask = event.task
+                    val wasDone = oldTask.isDone(profile)
+                    
+                    // Optimistic update - immediately toggle in UI
+                    val updatedTasks = currentHomework.tasks.map { task ->
+                        if (task.id == oldTask.id) {
+                            val newDoneByProfiles = if (wasDone) {
+                                task.doneByProfiles - profile.id
+                            } else {
+                                task.doneByProfiles + profile.id
+                            }
+                            val newDoneByVppIds = if (profile.vppId != null) {
+                                if (wasDone) {
+                                    task.doneByVppIds - profile.vppId!!.id
+                                } else {
+                                    task.doneByVppIds + profile.vppId!!.id
+                                }
+                            } else {
+                                task.doneByVppIds
+                            }
+                            task.copy(doneByProfiles = newDoneByProfiles, doneByVppIds = newDoneByVppIds)
+                        } else task
+                    }
+                    
+                    // Update state optimistically
+                    val updatedHomework = when (currentHomework) {
+                        is PopulatedHomework.CloudHomework -> currentHomework.copy(tasks = updatedTasks)
+                        is PopulatedHomework.LocalHomework -> currentHomework.copy(tasks = updatedTasks)
+                    }
+                    state.update { it.copy(homework = updatedHomework) }
+                    
+                    // Perform actual toggle
+                    val success = toggleTaskDoneUseCase(event.task, profile)
+                    
+                    // If failed, revert the optimistic update
+                    if (!success) {
+                        val revertedHomework = when (currentHomework) {
+                            is PopulatedHomework.CloudHomework -> currentHomework.copy(tasks = currentHomework.tasks)
+                            is PopulatedHomework.LocalHomework -> currentHomework.copy(tasks = currentHomework.tasks)
+                        }
+                        state.update { it.copy(homework = revertedHomework) }
+                    }
+                }
                 is HomeworkDetailEvent.UpdateSubjectInstance -> editHomeworkSubjectInstanceUseCase(state.value.homework!!, event.subjectInstance?.subjectInstance, state.value.profile!!)
                 is HomeworkDetailEvent.UpdateDueTo -> editHomeworkDueToUseCase(state.value.homework!!.homework, event.dueTo, state.value.profile!!)
                 is HomeworkDetailEvent.UpdateVisibility -> editHomeworkVisibilityUseCase(state.value.homework?.homework as Homework.CloudHomework, event.isPublic, state.value.profile!!)

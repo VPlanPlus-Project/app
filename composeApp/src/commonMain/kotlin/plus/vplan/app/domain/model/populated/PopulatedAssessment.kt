@@ -13,18 +13,17 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.AppEntity
-import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.utils.combine6
 
 @Immutable
 @Stable
@@ -141,19 +140,19 @@ class AssessmentPopulator : KoinComponent {
             vppId,
             files,
         ) { subjectInstance, profile, vppId, files ->
-            when (assessment.creator) {
+            when (val creator = assessment.creator) {
                 is AppEntity.VppId -> PopulatedAssessment.CloudAssessment(
                     assessment = assessment,
                     subjectInstance = subjectInstance!!,
                     files = files,
-                    createdBy = AppEntity.VppId(assessment.creator.id),
+                    createdBy = AppEntity.VppId(creator.id),
                     createdByUser = vppId!!
                 )
                 is AppEntity.Profile -> PopulatedAssessment.LocalAssessment(
                     assessment = assessment,
                     subjectInstance = subjectInstance!!,
                     files = files,
-                    createdBy = AppEntity.Profile(assessment.creator.id),
+                    createdBy = AppEntity.Profile(creator.id),
                     createdByProfile = profile as Profile.StudentProfile
                 )
             }

@@ -8,7 +8,7 @@ class ToggleTaskDoneUseCase(
     private val homeworkRepository: HomeworkRepository
 ) {
 
-    suspend operator fun invoke(task: Homework.HomeworkTask, profile: Profile.StudentProfile) {
-        homeworkRepository.toggleHomeworkTaskDone(task, profile)
+    suspend operator fun invoke(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Boolean {
+        return homeworkRepository.toggleHomeworkTaskDone(task, profile)
     }
 }

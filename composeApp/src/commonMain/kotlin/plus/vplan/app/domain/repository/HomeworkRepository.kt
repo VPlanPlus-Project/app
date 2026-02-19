@@ -41,7 +41,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun getIdForNewLocalHomeworkTask(): Int
     suspend fun getIdForNewLocalHomeworkFile(): Int
 
-    suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile)
+    suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Boolean
     suspend fun editHomeworkSubjectInstance(homework: PopulatedHomework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile)
     suspend fun editHomeworkDueTo(homework: Homework, dueTo: LocalDate, profile: Profile.StudentProfile)
     suspend fun editHomeworkVisibility(homework: Homework.CloudHomework, isPublic: Boolean, profile: Profile.StudentProfile)

@@ -186,16 +186,30 @@ class HomeworkRepositoryImpl(
         return (vppDatabase.homeworkDao.getMinFileId().first() ?: 0).coerceAtMost(-1)
     }
 
-    override suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile) {
+    override suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Boolean {
         val oldState = task.isDone(profile)
         val newState = !oldState
 
-        if (profile.vppId == null || task.id < 0) {
+        // If not logged in, only save locally to profile table
+        if (profile.vppId == null) {
             vppDatabase.homeworkDao.upsertTaskDoneProfile(DbHomeworkTaskDoneProfile(task.id, profile.id, newState))
-            return
+            return true
         }
+
+        // If local task (task.id < 0), only save locally - local tasks don't exist on server
+        if (task.id < 0) {
+            vppDatabase.homeworkDao.upsertTaskDoneProfile(DbHomeworkTaskDoneProfile(task.id, profile.id, newState))
+            return true
+        }
+
+        // For cloud tasks with logged in user, save to account table and sync to API
         vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId!!.id, newState))
-        safeRequest(onError = { vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId!!.id, oldState)) }) {
+        
+        var success = true
+        safeRequest(onError = { 
+            vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId!!.id, oldState))
+            success = false
+        }) {
             val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
                 appendPathSegments("homework", "v1", task.homeworkId.toString(), "task", task.id.toString())
             }.build()) {
@@ -203,8 +217,13 @@ class HomeworkRepositoryImpl(
                 contentType(ContentType.Application.Json)
                 setBody(HomeworkTaskUpdateDoneStateRequest(isDone = newState))
             }
-            if (!response.status.isSuccess()) vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId!!.id, oldState))
+            if (!response.status.isSuccess()) {
+                vppDatabase.homeworkDao.upsertTaskDoneAccount(DbHomeworkTaskDoneAccount(task.id, profile.vppId!!.id, oldState))
+                success = false
+            }
         }
+        
+        return success
     }
 
     override suspend fun editHomeworkSubjectInstance(homework: PopulatedHomework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile) {

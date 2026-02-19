@@ -160,6 +160,8 @@ class CreateHomeworkUseCase(
             localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
         }
 
+        val creator = homework.creator
+
         homeworkRepository.upsert(HomeworkEntity(
             id = homework.id,
             subjectInstanceId = homework.subjectInstanceId,
@@ -167,8 +169,8 @@ class CreateHomeworkUseCase(
             dueTo = homework.dueTo,
             isPublic = isPublic ?: false,
             createdAt = Clock.System.now(),
-            createdByVppId = if (homework.creator is AppEntity.VppId) homework.creator.id else null,
-            createdByProfileId = if (homework.creator is AppEntity.Profile) homework.creator.id else null,
+            createdByVppId = if (creator is AppEntity.VppId) creator.id else null,
+            createdByProfileId = if (creator is AppEntity.Profile) creator.id else null,
             cachedAt = Clock.System.now(),
             tasks = homeworkTasks.map { homeworkTask ->
                 HomeworkEntity.TaskEntity(
