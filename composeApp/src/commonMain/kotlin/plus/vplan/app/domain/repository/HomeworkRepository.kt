@@ -13,31 +13,24 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
+import plus.vplan.app.data.repository.HomeworkDto
+import plus.vplan.app.domain.model.populated.PopulatedHomework
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 interface HomeworkRepository: WebEntityRepository<Homework> {
 
-    suspend fun upsertLocally(
-        homeworkId: Int,
-        subjectInstanceId: Int?,
-        groupId: Int?,
-        dueTo: LocalDate,
-        isPublic: Boolean?,
-        createdAt: Instant,
-        createdBy: Int?,
-        createdByProfileId: Uuid?,
-        tasks: List<HomeworkTaskDbDto>,
-        tasksDoneAccount: List<HomeworkTaskDoneAccountDbDto>,
-        tasksDoneProfile: List<HomeworkTaskDoneProfileDbDto>,
-        associatedFileIds: List<Int>,
-    )
+    suspend fun upsert(homeworkEntity: HomeworkEntity)
+    fun getByLocalId(id: Int): Flow<Homework?>
+    fun getTaskByLocalId(id: Int): Flow<Homework.HomeworkTask?>
+
+    fun getAll(): Flow<List<Homework>>
+
     fun getByGroup(group: Group): Flow<List<Homework>>
 
     fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>>
 
-    fun getAll(): Flow<List<CacheState<Homework>>>
     fun getByDate(date: LocalDate): Flow<List<Homework>>
     fun getByProfile(profileId: Uuid, date: LocalDate? = null): Flow<List<Homework>>
 
@@ -49,7 +42,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun getIdForNewLocalHomeworkFile(): Int
 
     suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile)
-    suspend fun editHomeworkSubjectInstance(homework: Homework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile)
+    suspend fun editHomeworkSubjectInstance(homework: PopulatedHomework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile)
     suspend fun editHomeworkDueTo(homework: Homework, dueTo: LocalDate, profile: Profile.StudentProfile)
     suspend fun editHomeworkVisibility(homework: Homework.CloudHomework, isPublic: Boolean, profile: Profile.StudentProfile)
 
@@ -63,7 +56,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
         schoolApiAccess: VppSchoolAuthentication,
         groups: List<Alias>,
         subjectInstanceAliases: List<Alias>
-    ): Response<List<Int>>
+    ): Response<List<HomeworkDto>>
 
     suspend fun clearCache()
 
@@ -110,6 +103,27 @@ data class CreateHomeworkResponse(
     val id: Int,
     val taskIds: Map<String, Int>
 )
+
+data class HomeworkEntity(
+    val id: Int,
+    val createdAt: Instant,
+    val dueTo: LocalDate,
+    val tasks: List<TaskEntity>,
+    val subjectInstanceId: Uuid?,
+    val groupId: Uuid?,
+    val cachedAt: Instant,
+    val createdByProfileId: Uuid?,
+    val createdByVppId: Int?,
+    val isPublic: Boolean,
+) {
+    data class TaskEntity(
+        val id: Int,
+        val homeworkId: Int,
+        val createdAt: Instant,
+        val content: String,
+        val cachedAt: Instant,
+    )
+}
 
 data class HomeworkTaskDbDto(
     val id: Int,

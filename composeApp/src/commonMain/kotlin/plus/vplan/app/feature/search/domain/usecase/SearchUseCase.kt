@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package plus.vplan.app.feature.search.domain.usecase
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
@@ -7,17 +10,17 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.AssessmentRepository
@@ -40,6 +43,7 @@ class SearchUseCase(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val homeworkRepository: HomeworkRepository,
+    private val homeworkPopulator: HomeworkPopulator,
     private val assessmentRepository: AssessmentRepository
 ): KoinComponent {
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
@@ -89,13 +93,14 @@ class SearchUseCase(
                 }
 
                 if (searchRequest.assessmentType == null) launch {
-                    homeworkRepository.getAll().map { it.filterIsInstance<CacheState.Done<Homework>>().map { item -> item.data } }.collectLatest { homeworkList ->
-                        val homework = homeworkList.onEach { it.getTaskItems() }
-                        results.value = results.value.plus(
-                            SearchResult.Type.Homework to homework
-                                .filter { (query.isEmpty() || it.taskItems!!.any { task -> query in task.content.lowercase() }) && (searchRequest.subject == null || it.subjectInstance?.getFirstValue()?.subject == searchRequest.subject) }
-                                .map { SearchResult.Homework(it) })
-                    }
+                    homeworkRepository.getAll()
+                        .flatMapLatest { homeworkPopulator.populateMultiple(it, PopulationContext.Profile(profile)) }
+                        .collectLatest { homework ->
+                            results.value = results.value.plus(
+                                SearchResult.Type.Homework to homework
+                                    .filter { (query.isEmpty() || it.tasks.any { task -> query in task.content.lowercase() }) && (searchRequest.subject == null || it.subjectInstance?.subject == searchRequest.subject) }
+                                    .map { SearchResult.Homework(it) })
+                        }
                 }
 
                 launch {

@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalTime::class)
+@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package plus.vplan.app.feature.search.ui.main
 
@@ -7,19 +7,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.core.model.Profile
+import plus.vplan.app.domain.model.populated.HomeworkPopulator
+import plus.vplan.app.domain.model.populated.PopulatedHomework
+import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -33,13 +39,13 @@ import plus.vplan.app.feature.search.domain.usecase.GetSubjectsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.SearchRequest
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
 import plus.vplan.app.utils.now
-import kotlin.time.ExperimentalTime
 
 class SearchViewModel(
     private val searchUseCase: SearchUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getHomeworkForProfileUseCase: GetHomeworkForProfileUseCase,
+    private val homeworkPopulator: HomeworkPopulator,
     private val getAssessmentsForProfileUseCase: GetAssessmentsForProfileUseCase,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val lockGradesUseCase: LockGradesUseCase,
@@ -69,7 +75,12 @@ class SearchViewModel(
                 homeworkJob?.cancel()
                 assessmentJob?.cancel()
                 if (currentProfile is Profile.StudentProfile) {
-                    homeworkJob = launch { getHomeworkForProfileUseCase(currentProfile).collectLatest { state = state.copy(homework = it) } }
+                    homeworkJob = launch {
+                        getHomeworkForProfileUseCase(currentProfile)
+                            .onEach { Logger.d { "WE HAVE HOMEWORK: $it" } }
+                            .flatMapLatest { homeworkPopulator.populateMultiple(it, PopulationContext.Profile(currentProfile)) }
+                            .collectLatest { state = state.copy(homework = it) }
+                    }
                     assessmentJob = launch { getAssessmentsForProfileUseCase(currentProfile).collectLatest { state = state.copy(assessments = it) } }
                 }
                 getSubjectsForProfileUseCase(currentProfile).let { state = state.copy(subjects = it) }
@@ -128,7 +139,7 @@ data class SearchState(
     val isLoading: Boolean = false,
     val selectedDateType: Day.DayType = Day.DayType.UNKNOWN,
     val results: Map<SearchResult.Type, List<SearchResult>> = emptyMap(),
-    val homework: List<Homework> = emptyList(),
+    val homework: List<PopulatedHomework> = emptyList(),
     val assessments: List<Assessment> = emptyList(),
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = LocalDateTime.now(),
@@ -152,5 +163,5 @@ sealed class SearchEvent {
 
 sealed class NewItem(val createdAt: LocalDate) {
     data class Assessment(val assessment: plus.vplan.app.domain.model.Assessment): NewItem(assessment.createdAt.date)
-    data class Homework(val homework: plus.vplan.app.domain.model.Homework): NewItem(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date)
+    data class Homework(val homework: PopulatedHomework): NewItem(homework.homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date)
 }

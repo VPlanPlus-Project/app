@@ -2,6 +2,7 @@ package plus.vplan.app.feature.search.domain.model
 
 import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import kotlin.uuid.Uuid
 
@@ -30,7 +31,7 @@ sealed class SearchResult(val type: Type) {
         ) : SchoolEntity(Type.Room, room.id, room.name)
     }
 
-    data class Homework(val homework: plus.vplan.app.domain.model.Homework): SearchResult(Type.Homework)
+    data class Homework(val homework: PopulatedHomework): SearchResult(Type.Homework)
     data class Assessment(val assessment: plus.vplan.app.domain.model.Assessment): SearchResult(Type.Assessment)
     data class Grade(val grade: BesteSchuleGrade): SearchResult(Type.Grade)
 

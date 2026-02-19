@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -34,8 +33,9 @@ import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
+import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.KeyValueRepository
@@ -62,7 +62,8 @@ class CalendarViewModel(
     private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase,
     private val getHolidaysUseCase: GetHolidaysUseCase,
     private val keyValueRepository: KeyValueRepository,
-    private val lessonPopulator: LessonPopulator
+    private val lessonPopulator: LessonPopulator,
+    private val homeworkPopulator: HomeworkPopulator
 ) : ViewModel() {
     private val _state = MutableStateFlow(CalendarState())
     val state = _state.asStateFlow()
@@ -139,19 +140,22 @@ class CalendarViewModel(
                             }
                         }
                         launch {
-                            day.homework.collectLatest { dayHomework ->
-                                calendarDay = calendarDay.copy(homework = dayHomework.toList())
-                                dayHomework
-                                    .map {
-                                        DateSelectorDay.HomeworkItem(
-                                            subject = it.subjectInstance?.getFirstValue()?.subject ?: it.group?.getFirstValue()?.name ?: "?",
-                                            isDone = _state.value.currentProfile is Profile.StudentProfile && it.tasks.first()
-                                                .all { task -> task.isDone(_state.value.currentProfile as Profile.StudentProfile) })
-                                    }
-                                    .sortedBy { it.subject }
-                                    .let { selectorDay = selectorDay.copy(homework = it) }
-                                updateState()
-                            }
+                            day.homework
+                                .flatMapLatest { homeworkPopulator.populateMultiple(it.toList(), PopulationContext.Profile(state.value.currentProfile!!)) }
+                                .collectLatest { dayHomework ->
+                                    calendarDay = calendarDay.copy(homework = dayHomework)
+                                    dayHomework
+                                        .map {
+                                            DateSelectorDay.HomeworkItem(
+                                                subject = it.subjectInstance?.subject
+                                                    ?: it.group?.name ?: "?",
+                                                isDone = _state.value.currentProfile is Profile.StudentProfile && it.tasks
+                                                    .all { task -> task.isDone(_state.value.currentProfile as Profile.StudentProfile) })
+                                        }
+                                        .sortedBy { it.subject }
+                                        .let { selectorDay = selectorDay.copy(homework = it) }
+                                    updateState()
+                                }
                         }
                     }
             }
@@ -269,7 +273,7 @@ data class CalendarDay(
     val dayType: Day.DayType = Day.DayType.UNKNOWN,
     val week: Week? = null,
     val assessments: List<Assessment> = emptyList(),
-    val homework: List<Homework> = emptyList(),
+    val homework: List<PopulatedHomework> = emptyList(),
     val lessons: LessonRendering? = null
 )
 

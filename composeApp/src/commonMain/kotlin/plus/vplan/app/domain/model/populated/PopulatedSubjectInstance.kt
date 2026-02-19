@@ -65,7 +65,9 @@ class SubjectInstancePopulator: KoinComponent {
     fun populateSingle(subjectInstance: SubjectInstance): Flow<PopulatedSubjectInstance> {
         val teacher = subjectInstance.teacherId?.let { teacherId -> teacherRepository.getByLocalId(teacherId) } ?: flowOf(null)
         val course = subjectInstance.courseId?.let { courseId -> courseRepository.getByLocalId(courseId) } ?: flowOf(null)
-        val groups = combine(subjectInstance.groupIds.map { groupId -> groupRepository.getByLocalId(groupId) }) { it.filterNotNull() }
+        val groups =
+            if (subjectInstance.groupIds.isEmpty()) flowOf(emptyList())
+            else combine(subjectInstance.groupIds.map { groupId -> groupRepository.getByLocalId(groupId) }) { it.filterNotNull() }
 
         return combine(teacher, course, groups) { teacher, course, groups ->
             PopulatedSubjectInstance(

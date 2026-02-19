@@ -167,7 +167,7 @@ class FullSyncUseCase(
                                 groups.orEmpty().associateWith { group ->
                                     Group.buildSp24Alias(school.sp24Id.toInt(), group.name)
                                 }.forEach { (group, aliases) ->
-                                    groupRepository.upsert(GroupDbDto(school.id, group.name, aliases = listOf(aliases), creationReason = CreationReason.Cached))
+                                    groupRepository.upsert(GroupDbDto(null, school.id, group.name, aliases = listOf(aliases), creationReason = CreationReason.Cached))
                                 }
                             }
 

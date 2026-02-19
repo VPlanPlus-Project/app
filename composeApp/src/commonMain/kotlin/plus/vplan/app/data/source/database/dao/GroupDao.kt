@@ -35,6 +35,8 @@ interface GroupDao {
     @Query("DELETE FROM school_groups WHERE id IN (:ids)")
     suspend fun deleteById(ids: List<Int>)
 
-    @Query("SELECT group_id FROM groups_aliases WHERE alias = :value AND alias_type = :provider AND version = :version")
-    suspend fun getIdByAlias(value: String, provider: AliasProvider, version: Int): Uuid?
+    @Transaction
+    @RewriteQueriesToDropUnusedColumns
+    @Query("SELECT * FROM groups_aliases LEFT JOIN school_groups ON school_groups.id = groups_aliases.group_id WHERE alias = :value AND alias_type = :provider AND version = :version")
+    fun getByAlias(value: String, provider: AliasProvider, version: Int): Flow<EmbeddedGroup?>
 }

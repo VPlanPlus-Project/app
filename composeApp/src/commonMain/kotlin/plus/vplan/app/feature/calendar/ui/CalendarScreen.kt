@@ -547,7 +547,7 @@ private fun CalendarScreenContent(
                                                     HomeworkCard(
                                                         homework = homework,
                                                         profile = state.currentProfile,
-                                                        onClick = { displayHomeworkId = homework.id }
+                                                        onClick = { displayHomeworkId = homework.homework.id }
                                                     )
                                                 }
                                             }

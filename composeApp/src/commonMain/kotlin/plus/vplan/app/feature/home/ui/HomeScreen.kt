@@ -56,6 +56,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -73,7 +75,10 @@ import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.core.model.Lesson
+import plus.vplan.app.domain.model.populated.HomeworkPopulator
+import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.model.populated.PopulatedLesson
+import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
@@ -356,7 +361,8 @@ private fun HomeContent(
                                     .padding(vertical = 4.dp)
                                     .fillMaxWidth()
                             ) {
-                                val homework by remember(state.day.homeworkIds) { state.day.homework }.collectAsState(emptySet())
+                                val homeworkPopulator = koinInject<HomeworkPopulator>()
+                                val homework by remember(state.day.homeworkIds) { state.day.homework.flatMapLatest { homeworkPopulator.populateMultiple(it.toList(), PopulationContext.Profile(state.currentProfile!!)) } }.collectAsState(emptyList())
                                 val assessments by remember(state.day.assessmentIds) { state.day.assessments }.collectAsState(emptySet())
                                 if (highlightedLessons.hasLessons) AnimatedContent(
                                     targetState = highlightedLessons
@@ -378,10 +384,10 @@ private fun HomeContent(
                                             ) {
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
                                                     highlightedLessons.currentLessons.forEach { (currentLesson, continuing) ->
-                                                        val homeworkForLesson = remember { mutableListOf<Homework>() }
+                                                        val homeworkForLesson = remember { mutableListOf<PopulatedHomework>() }
                                                         LaunchedEffect(homework, currentLesson.lesson.subjectInstanceId) {
                                                             homeworkForLesson.clear()
-                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == currentLesson.lesson.subjectInstanceId })
+                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.id == currentLesson.lesson.subjectInstanceId })
                                                         }
 
                                                         val assessmentsForLesson = remember { mutableListOf<Assessment>() }
@@ -395,7 +401,7 @@ private fun HomeContent(
                                                             currentLesson = currentLesson,
                                                             currentProfileType = state.currentProfile?.profileType,
                                                             continuing = continuing,
-                                                            homework = homeworkForLesson.toList(),
+                                                            homework = homeworkForLesson,
                                                             assessments = assessmentsForLesson,
                                                             progressType = ProgressType.Regular
                                                         )
@@ -502,10 +508,10 @@ private fun HomeContent(
                                                         val rooms = populatedLesson.rooms
                                                         val groups = populatedLesson.groups
                                                         val teachers = populatedLesson.teachers
-                                                        val homeworkForLesson = remember { mutableListOf<Homework>() }
+                                                        val homeworkForLesson = remember { mutableListOf<PopulatedHomework>() }
                                                         LaunchedEffect(homework, (lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId) {
                                                             homeworkForLesson.clear()
-                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.getFirstValue()?.id == lesson.subjectInstanceId })
+                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.id == lesson.subjectInstanceId })
                                                         }
 
                                                         val assessmentsForLesson = remember { mutableListOf<Assessment>() }
@@ -637,9 +643,8 @@ private fun HomeContent(
                                                                     )
                                                                     Column {
                                                                         homeworkForLesson.forEachIndexed forEachTask@{ i, homeworkItem ->
-                                                                            val tasks = remember(homeworkItem.taskIds) { homeworkItem.tasks }.collectAsState(emptyList()).value.ifEmpty { return@forEachTask }
                                                                             if (i > 0) HorizontalDivider(Modifier.fillMaxWidth())
-                                                                            tasks.forEach { task ->
+                                                                            homeworkItem.tasks.forEach { task ->
                                                                                 Row {
                                                                                     Box(
                                                                                         modifier = Modifier.height(MaterialTheme.typography.bodyMedium.lineHeight.toDp()),
@@ -746,7 +751,7 @@ private fun CurrentOrNextLesson(
     currentTime: LocalDateTime,
     currentLesson: PopulatedLesson,
     currentProfileType: ProfileType?,
-    homework: List<Homework>,
+    homework: List<PopulatedHomework>,
     assessments: List<Assessment>,
     continuing: PopulatedLesson?,
     progressType: ProgressType

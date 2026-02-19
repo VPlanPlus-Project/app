@@ -15,6 +15,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -60,6 +61,20 @@ class SubjectInstanceRepositoryImpl(
             vppDatabase.subjectInstanceDao.getByGroup(groupId).map { it.map { dl -> dl.toModel() } }
         }
     }
+
+    override fun getByAlias(aliases: Collection<Alias>): Flow<SubjectInstance?> {
+        return combine(aliases.map { vppDatabase.subjectInstanceDao.getByAlias(it.value, it.provider, it.version)}) {
+            it.firstOrNull { it != null }?.toModel()
+        }
+    }
+
+    override suspend fun downloadByAlias(
+        alias: Alias,
+        authentication: VppSchoolAuthentication
+    ): Response<VppSubjectInstanceDto> = downloadById(
+        schoolAuthentication = authentication,
+        identifier = alias.toUrlString()
+    )
 
     private val getByTeacherCache = mutableMapOf<Uuid, Flow<List<SubjectInstance>>>()
     override fun getByTeacher(teacherId: Uuid): Flow<List<SubjectInstance>> {
@@ -107,7 +122,7 @@ class SubjectInstanceRepositoryImpl(
     }
 
     override suspend fun resolveAliasToLocalId(alias: Alias): Uuid? {
-        return vppDatabase.subjectInstanceDao.getIdByAlias(alias.value, alias.provider, alias.version)
+        return vppDatabase.subjectInstanceDao.getByAlias(alias.value, alias.provider, alias.version).map { it?.subjectInstance?.id }.first()
     }
 
     override suspend fun upsert(item: SubjectInstanceDbDto): Uuid {
@@ -128,7 +143,7 @@ class SubjectInstanceRepositoryImpl(
         return subjectInstanceId
     }
 
-    private suspend fun downloadById(schoolAuthentication: VppSchoolAuthentication, identifier: String): Response<VppSubjectInstanceDto> {
+    suspend fun downloadById(schoolAuthentication: VppSchoolAuthentication, identifier: String): Response<VppSubjectInstanceDto> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url(URLBuilder(currentConfiguration.appApiUrl).apply {
@@ -261,7 +276,7 @@ data class SubjectInstanceVppItemResponse(
     fun buildAliases(): List<Alias> = aliases.map { it.toModel() }
 }
 
-private data class VppSubjectInstanceDto(
+data class VppSubjectInstanceDto(
     val id: Int,
     val aliases: List<Alias>
 )

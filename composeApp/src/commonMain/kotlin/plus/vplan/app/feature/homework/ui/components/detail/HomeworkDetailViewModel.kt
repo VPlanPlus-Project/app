@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -22,15 +23,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
-import plus.vplan.app.core.model.Alias
-import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.File
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.domain.model.populated.HomeworkPopulator
+import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
@@ -72,6 +70,7 @@ class HomeworkDetailViewModel(
     private val keyValueRepository: KeyValueRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val subjectInstancePopulator: SubjectInstancePopulator,
+    private val homeworkPopulator: HomeworkPopulator,
 ) : ViewModel() {
     val state: StateFlow<HomeworkDetailState>
         field = MutableStateFlow(HomeworkDetailState())
@@ -99,32 +98,31 @@ class HomeworkDetailViewModel(
         mainJob = viewModelScope.launch {
             combine(
                 getCurrentProfileUseCase(),
-                App.homeworkSource.getById(homeworkId)
-            ) { profile, homeworkData ->
-                if (homeworkData !is CacheState.Done || profile !is Profile.StudentProfile) return@combine null
-                val homework = homeworkData.data
-
-                homework.prefetch()
+                App.homeworkSource.getById(homeworkId).filterIsInstance<CacheState.Done<Homework>>().flatMapLatest {
+                    homeworkPopulator.populateSingle(it.data)
+                }
+            ) { profile, homework ->
+                if (profile !is Profile.StudentProfile) return@combine null
 
                 state.update { state ->
                     state.copy(
                         homework = homework,
                         profile = profile,
-                        canEdit = (homework is Homework.CloudHomework && homework.createdById == profile.vppId?.id) || (homework is Homework.LocalHomework && homework.createdByProfileId == profile.id),
+                        canEdit = (homework is PopulatedHomework.CloudHomework && homework.createdByUser.id == profile.vppId?.id) || (homework is PopulatedHomework.LocalHomework && homework.createdByProfile.id == profile.id),
                         initDone = true
                     )
                 }
 
                 coroutineScope {
-                    homework.subjectInstanceId.let evaluateSubjectInstance@{ subjectInstanceId ->
+                    homework.subjectInstance?.id.let evaluateSubjectInstance@{ subjectInstanceId ->
                         if (subjectInstanceId == null) {
                             state.update { state -> state.copy(homeworkSubjectInstance = null) }
                             return@evaluateSubjectInstance
                         }
 
                         subjectInstanceRepository
-                            .findByAlias(Alias(AliasProvider.Vpp, subjectInstanceId.toString(), 1), false, true)
-                            .filterIsInstance<AliasState.Done<SubjectInstance>>().map { it.data }
+                            .getByLocalId(subjectInstanceId)
+                            .filterNotNull()
                             .flatMapLatest { subjectInstance -> subjectInstancePopulator.populateSingle(subjectInstance) }
                             .onEach { state.update { state -> state.copy(homeworkSubjectInstance = it) } }
                             .launchIn(this)
@@ -152,11 +150,11 @@ class HomeworkDetailViewModel(
             when (event) {
                 is HomeworkDetailEvent.ToggleTaskDone -> toggleTaskDoneUseCase(event.task, state.value.profile!!)
                 is HomeworkDetailEvent.UpdateSubjectInstance -> editHomeworkSubjectInstanceUseCase(state.value.homework!!, event.subjectInstance?.subjectInstance, state.value.profile!!)
-                is HomeworkDetailEvent.UpdateDueTo -> editHomeworkDueToUseCase(state.value.homework!!, event.dueTo, state.value.profile!!)
-                is HomeworkDetailEvent.UpdateVisibility -> editHomeworkVisibilityUseCase(state.value.homework as Homework.CloudHomework, event.isPublic, state.value.profile!!)
+                is HomeworkDetailEvent.UpdateDueTo -> editHomeworkDueToUseCase(state.value.homework!!.homework, event.dueTo, state.value.profile!!)
+                is HomeworkDetailEvent.UpdateVisibility -> editHomeworkVisibilityUseCase(state.value.homework?.homework as Homework.CloudHomework, event.isPublic, state.value.profile!!)
                 is HomeworkDetailEvent.Reload -> {
                     state.update { state -> state.copy(reloadingState = UnoptimisticTaskState.InProgress) }
-                    val result = updateHomeworkUseCase(state.value.homework!!.id)
+                    val result = updateHomeworkUseCase(state.value.homework!!.homework.id)
                     when (result) {
                         UpdateResult.SUCCESS -> {
                             state.update { state -> state.copy(reloadingState = UnoptimisticTaskState.Success) }
@@ -173,7 +171,7 @@ class HomeworkDetailViewModel(
                 }
                 is HomeworkDetailEvent.DeleteHomework -> {
                     state.update { state -> state.copy(deleteState = UnoptimisticTaskState.InProgress) }
-                    val result = deleteHomeworkUseCase(state.value.homework!!, state.value.profile!!)
+                    val result = deleteHomeworkUseCase(state.value.homework!!.homework, state.value.profile!!)
                     state.update { state ->
                         state.copy(
                             deleteState = if (result) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error
@@ -182,7 +180,7 @@ class HomeworkDetailViewModel(
                 }
                 is HomeworkDetailEvent.AddTask -> {
                     state.update { state -> state.copy(newTaskState = UnoptimisticTaskState.InProgress) }
-                    val result = addTaskUseCase(state.value.homework!!, event.task, state.value.profile!!)
+                    val result = addTaskUseCase(state.value.homework!!.homework, event.task, state.value.profile!!)
                     state.update { state ->
                         state.copy(
                             newTaskState = if (result) UnoptimisticTaskState.Success else UnoptimisticTaskState.Error
@@ -191,7 +189,7 @@ class HomeworkDetailViewModel(
                 }
                 is HomeworkDetailEvent.UpdateTask -> updateTaskUseCase(event.task, event.newContent, state.value.profile!!)
                 is HomeworkDetailEvent.DeleteTask -> {
-                    if (state.value.homework!!.taskIds.size == 1) return@launch onEvent(HomeworkDetailEvent.DeleteHomework)
+                    if (state.value.homework!!.tasks.size == 1) return@launch onEvent(HomeworkDetailEvent.DeleteHomework)
                     state.update { state -> state.copy(taskDeleteState = state.taskDeleteState.plus(event.task.id to UnoptimisticTaskState.InProgress)) }
                     val result = deleteTaskUseCase(event.task, state.value.profile!!)
                     state.update { state ->
@@ -210,15 +208,15 @@ class HomeworkDetailViewModel(
                     }
                 }
                 is HomeworkDetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.value.profile!!)
-                is HomeworkDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.value.homework!!, state.value.profile!!)
-                is HomeworkDetailEvent.AddFile -> addFileUseCase(state.value.homework!!, event.file.platformFile, state.value.profile!!)
+                is HomeworkDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.value.homework!!.homework, state.value.profile!!)
+                is HomeworkDetailEvent.AddFile -> addFileUseCase(state.value.homework!!.homework, event.file.platformFile, state.value.profile!!)
             }
         }
     }
 }
 
 data class HomeworkDetailState(
-    val homework: Homework? = null,
+    val homework: PopulatedHomework? = null,
     val homeworkSubjectInstance: PopulatedSubjectInstance? = null,
 
     val profile: Profile.StudentProfile? = null,
@@ -248,11 +246,6 @@ sealed class HomeworkDetailEvent {
     data class DeleteFile(val file: File) : HomeworkDetailEvent()
     data class AddFile(val file: AttachedFile) : HomeworkDetailEvent()
     data object Reload : HomeworkDetailEvent()
-}
-
-private suspend fun Homework.prefetch() {
-    this.subjectInstance?.getFirstValue()
-    this.getFileItems()
 }
 
 enum class UnoptimisticTaskState {

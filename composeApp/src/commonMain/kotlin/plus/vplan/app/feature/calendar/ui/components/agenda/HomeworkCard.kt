@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,18 +37,14 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.AliasState
-import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.domain.cache.collectAsLoadingStateOld
-import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
@@ -63,17 +58,17 @@ import kotlin.time.ExperimentalTime
 
 @Composable
 fun HomeworkCard(
-    homework: Homework,
+    homework: PopulatedHomework,
     profile: Profile?,
     onClick: () -> Unit
 ) {
     val localDensity = LocalDensity.current
 
-    val subject = homework.subjectInstance?.collectAsState(AliasState.Loading(""))?.value
+    val subject = homework.subjectInstance
 
     var boxHeight by remember { mutableStateOf(0.dp) }
-    val tasks by homework.tasks.collectAsState(emptyList())
-    if (tasks.isEmpty() || subject is AliasState.Loading) return
+    val tasks = homework.tasks
+    if (tasks.isEmpty()) return
     Box(
         modifier = Modifier
             .padding(end = 8.dp)
@@ -125,8 +120,8 @@ fun HomeworkCard(
                 Column {
                     Text(
                         text = buildString {
-                            if (homework.subjectInstanceId != null) {
-                                append((subject as? AliasState.Done<SubjectInstance>)?.data?.subject ?: "Unbekanntes Fach")
+                            if (homework.subjectInstance != null) {
+                                append(homework.subjectInstance?.subject ?: "Unbekanntes Fach")
                                 append(": ")
                             }
                             append("Hausaufgabe")
@@ -187,50 +182,24 @@ fun HomeworkCard(
                 } }
 
                 Row {
-                    when (homework.creator) {
-                        is AppEntity.Profile -> {
-                            val profileState by homework.creator.profile.map { profile -> profile?.let { CacheState.Done(it) } ?: CacheState.NotExisting("") }.collectAsState(CacheState.Loading(""))
-                            when (val profile = profileState) {
-                                is CacheState.Loading -> shimmerLoader()
-                                is CacheState.Done -> {
-                                    Text(
-                                        text = "Profil " + profile.data.name,
-                                        style = createdByFont
-                                    )
-                                }
-                                else -> {
-                                    Text(
-                                        text = "Unbekannt",
-                                        style = createdByFont,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
+                    when (homework) {
+                        is PopulatedHomework.LocalHomework -> {
+                            Text(
+                                text = "Profil " + homework.createdByProfile.name,
+                                style = createdByFont
+                            )
                         }
-                        is AppEntity.VppId -> {
-                            val vppIdState by homework.creator.vppId.collectAsLoadingStateOld()
-                            when (val vppId = vppIdState) {
-                                is CacheState.Loading -> shimmerLoader()
-                                is CacheState.Done -> {
-                                    Text(
-                                        text = vppId.data.name,
-                                        style = createdByFont
-                                    )
-                                }
-                                else -> {
-                                    Text(
-                                        text = "Unbekannt",
-                                        style = createdByFont,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
+                        is PopulatedHomework.CloudHomework -> {
+                            Text(
+                                text = homework.createdByUser.name,
+                                style = createdByFont
+                            )
                         }
                     }
                     Text(
                         text = buildString {
                             append(", am ")
-                            append(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date.format(regularDateFormat))
+                            append(homework.homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date.format(regularDateFormat))
                             append(" erstellt")
                         },
                         style = createdByFont,

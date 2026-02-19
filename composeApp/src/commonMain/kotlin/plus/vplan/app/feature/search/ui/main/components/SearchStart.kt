@@ -38,10 +38,10 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.cache.collectAsLoadingStateOld
 import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.core.model.Profile
 import plus.vplan.app.feature.search.ui.main.NewItem
 import plus.vplan.app.ui.components.Grid
 import plus.vplan.app.ui.components.ShimmerLoader
@@ -115,7 +115,7 @@ fun SearchStart(
                             .clickable {
                                 when (item) {
                                     is NewItem.Assessment -> onAssessmentClicked(item.assessment.id)
-                                    is NewItem.Homework -> onHomeworkClicked(item.homework.id)
+                                    is NewItem.Homework -> onHomeworkClicked(item.homework.homework.id)
                                 }
                             }
                             .padding(8.dp),
@@ -131,7 +131,7 @@ fun SearchStart(
                         ) {
                             if (item is NewItem.Homework && item.homework.subjectInstance == null) {
                                 Text(
-                                    text = item.homework.group!!.collectAsResultingFlow().value?.name ?: "?",
+                                    text = item.homework.group?.name ?: "",
                                     color = MaterialTheme.colorScheme.onPrimary,
                                     style = MaterialTheme.typography.bodySmall,
                                     modifier = Modifier
@@ -141,28 +141,41 @@ fun SearchStart(
                                         .padding(6.dp)
                                 )
                             } else {
-                                val subject = when (item) {
-                                    is NewItem.Assessment -> item.assessment.subjectInstance
-                                    is NewItem.Homework -> item.homework.subjectInstance
-                                }?.collectAsResultingFlow()?.value?.subject
-                                SubjectIcon(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clip(RoundedCornerShape(8.dp)),
-                                    subject = subject
-                                )
-                                Text(
-                                    text = subject.orEmpty(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.outline
-                                )
+                                if (item is NewItem.Assessment) {
+                                    val subject = item.assessment.subjectInstance.collectAsResultingFlow().value?.subject
+                                    SubjectIcon(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(RoundedCornerShape(8.dp)),
+                                        subject = subject
+                                    )
+
+                                    Text(
+                                        text = subject.orEmpty(),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.outline
+                                    )
+                                } else if (item is NewItem.Homework) {
+                                    SubjectIcon(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(RoundedCornerShape(8.dp)),
+                                        subject = item.homework.subjectInstance?.subject
+                                    )
+
+                                    Text(
+                                        text = item.homework.subjectInstance?.subject.orEmpty(),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.outline
+                                    )
+                                }
                             }
                         }
                         Column(Modifier.weight(1f)) {
                             Text(
                                 text = when (item) {
                                     is NewItem.Assessment -> "${item.assessment.type.toName()} (${item.assessment.date.format(regularDateFormatWithoutYear)})"
-                                    is NewItem.Homework -> "Hausaufgabe (${item.homework.dueTo.format(regularDateFormatWithoutYear)})"
+                                    is NewItem.Homework -> "Hausaufgabe (${item.homework.homework.dueTo.format(regularDateFormatWithoutYear)})"
                                 },
                                 style = MaterialTheme.typography.labelMedium
                             )
@@ -174,18 +187,17 @@ fun SearchStart(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 is NewItem.Homework -> Row(Modifier.fillMaxWidth()) {
-                                    val tasks = item.homework.tasks.collectAsState(emptyList()).value
                                     Text(
-                                        text = if (tasks.isEmpty()) "Keine Aufgaben"
-                                        else tasks.first().content,
+                                        text = if (item.homework.tasks.isEmpty()) "Keine Aufgaben"
+                                        else item.homework.tasks.first().content,
                                         maxLines = 1,
                                         style = MaterialTheme.typography.bodySmall,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    if (tasks.size > 1) {
+                                    if (item.homework.tasks.size > 1) {
                                         Spacer(Modifier.size(4.dp))
                                         Text(
-                                            text = "+" + (tasks.size - 1),
+                                            text = "+" + (item.homework.tasks.size - 1),
                                             maxLines = 1,
                                             style = MaterialTheme.typography.labelMedium,
                                             overflow = TextOverflow.Ellipsis
@@ -212,7 +224,7 @@ fun SearchStart(
 
                             val creator = when (item) {
                                 is NewItem.Assessment -> item.assessment.creator
-                                is NewItem.Homework -> item.homework.creator
+                                is NewItem.Homework -> item.homework.createdBy
                             }
 
                             Row {

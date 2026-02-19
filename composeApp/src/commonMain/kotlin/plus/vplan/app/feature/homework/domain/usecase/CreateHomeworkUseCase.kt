@@ -6,17 +6,17 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.captureError
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.AppEntity
 import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.GroupRepository
+import plus.vplan.app.domain.repository.HomeworkEntity
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.domain.repository.HomeworkTaskDbDto
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.service.ProfileService
@@ -100,8 +100,8 @@ class CreateHomeworkUseCase(
             taskIds = idMapping.taskIds
             homework = Homework.CloudHomework(
                 id = id,
-                subjectInstanceId = vppSubjectInstanceId,
-                groupId = vppGroupId,
+                subjectInstanceId = subjectInstance?.id,
+                groupId = if (subjectInstance == null) profile.group.id else null,
                 createdAt = Clock.System.now(),
                 createdById = profile.vppId!!.id,
                 isPublic = isPublic == true,
@@ -110,7 +110,7 @@ class CreateHomeworkUseCase(
                 taskIds = taskIds.map { it.value },
                 cachedAt = Clock.System.now()
             )
-            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
+            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homeworkId = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
 
             files = selectedFiles.mapNotNull {
                 val documentId = fileRepository.uploadFile(
@@ -135,8 +135,8 @@ class CreateHomeworkUseCase(
             files = selectedFiles.mapIndexed { index, file -> Homework.HomeworkFile(fileIdStart - index, file.name, id, file.size) }
             homework = Homework.LocalHomework(
                 id = id,
-                subjectInstanceId = vppSubjectInstanceId,
-                groupId = vppGroupId,
+                subjectInstanceId = subjectInstance?.id,
+                groupId = if (subjectInstance == null) profile.group.id else null,
                 createdAt = Clock.System.now(),
                 createdByProfileId = profile.id,
                 dueTo = date,
@@ -144,7 +144,7 @@ class CreateHomeworkUseCase(
                 fileIds = files.map { it.id },
                 cachedAt = Clock.System.now()
             )
-            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homework = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
+            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homeworkId = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
         }
 
         files.forEach { file ->
@@ -160,27 +160,27 @@ class CreateHomeworkUseCase(
             localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
         }
 
-        homeworkRepository.upsertLocally(
-            homeworkId = homework.id,
-            subjectInstanceId = vppSubjectInstanceId,
-            groupId = vppGroupId,
+        homeworkRepository.upsert(HomeworkEntity(
+            id = homework.id,
+            subjectInstanceId = homework.subjectInstanceId,
+            groupId = if (subjectInstance == null) profile.group.id else null,
             dueTo = homework.dueTo,
-            isPublic = isPublic,
+            isPublic = isPublic ?: false,
             createdAt = Clock.System.now(),
-            createdBy = if (homework.creator is AppEntity.VppId) homework.creator.id else null,
+            createdByVppId = if (homework.creator is AppEntity.VppId) homework.creator.id else null,
             createdByProfileId = if (homework.creator is AppEntity.Profile) homework.creator.id else null,
-            tasks = homeworkTasks.map {
-                HomeworkTaskDbDto(
-                    id = it.id,
-                    content = it.content,
-                    homeworkId = it.homework,
-                    createdAt = Clock.System.now()
+            cachedAt = Clock.System.now(),
+            tasks = homeworkTasks.map { homeworkTask ->
+                HomeworkEntity.TaskEntity(
+                    id = homeworkTask.id,
+                    homeworkId = homework.id,
+                    createdAt = Clock.System.now(),
+                    content = homeworkTask.content,
+                    cachedAt = Clock.System.now()
                 )
-            },
-            tasksDoneAccount = emptyList(),
-            tasksDoneProfile = emptyList(),
-            associatedFileIds = files.map { it.id }
-        )
+            }
+        ))
+
         files.forEach { file ->
             homeworkRepository.linkHomeworkFile(
                 vppId = if (homework.id > 0) profile.vppId else null,

@@ -15,6 +15,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -23,6 +24,11 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.database.model.database.DbGroup
@@ -32,13 +38,7 @@ import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedE
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.core.model.Alias
-import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.Response
-import plus.vplan.app.core.model.Group
-import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.GroupDbDto
 import plus.vplan.app.domain.repository.GroupRepository
@@ -91,7 +91,7 @@ class GroupRepositoryImpl(
 
     override suspend fun upsert(item: GroupDbDto): Uuid {
         val resolvedId = resolveAliasesToLocalId(item.aliases)
-        val groupId = resolvedId ?: Uuid.random()
+        val groupId = item.id ?: resolvedId ?: Uuid.random()
         val existing = resolvedId?.let { vppDatabase.groupDao.findById(it) }?.first()
         vppDatabase.groupDao.upsertGroup(
             group = DbGroup(
@@ -109,7 +109,7 @@ class GroupRepositoryImpl(
     }
 
     override suspend fun resolveAliasToLocalId(alias: Alias): Uuid? {
-        return vppDatabase.groupDao.getIdByAlias(alias.value, alias.provider, alias.version)
+        return vppDatabase.groupDao.getByAlias(alias.value, alias.provider, alias.version).map { it?.group?.id }.first()
     }
 
     suspend fun downloadById(schoolAuthentication: VppSchoolAuthentication, identifier: String): Response<VppGroupDto> {
@@ -128,7 +128,8 @@ class GroupRepositoryImpl(
                 VppGroupDto(
                     id = groupItemResponse.id,
                     name = groupItemResponse.name,
-                    aliases = groupItemResponse.buildAliases()
+                    aliases = groupItemResponse.buildAliases(),
+                    schoolId = groupItemResponse.school.id
                 )
             })
         }
@@ -137,6 +138,14 @@ class GroupRepositoryImpl(
 
     override suspend fun updateFirebaseToken(group: Group, token: String): Response.Error? {
         return null // TODO
+    }
+
+    override fun getByAlias(aliases: Collection<Alias>): Flow<Group?> {
+        if (aliases.isEmpty()) throw IllegalArgumentException("At least one alias is required")
+
+        return combine(aliases.map { alias -> vppDatabase.groupDao.getByAlias(alias.value, alias.provider, alias.version) }) { embeddedGroups ->
+            embeddedGroups.firstOrNull { it != null }?.toModel()
+        }
     }
 
     private val aliasFlowCache = mutableMapOf<String, Flow<AliasState<Group>>>()
@@ -174,7 +183,7 @@ class GroupRepositoryImpl(
 
             if (emitLocalEntity(forceUpdate, preferCurrentState)) return@flow
 
-            val downloadError = downloadByAlias(aliases.first())
+            val downloadError = downloadByAlias(aliases.first()) as? Response.Error
             if (downloadError != null) {
                 emit(AliasState.Error(aliases.first().toString(), downloadError))
                 return@flow
@@ -190,8 +199,8 @@ class GroupRepositoryImpl(
         return flow
     }
 
-    private val runningDownloads = ConcurrentMutableMap<Alias, Deferred<Response.Error?>>()
-    suspend fun downloadByAlias(alias: Alias): Response.Error? {
+    private val runningDownloads = ConcurrentMutableMap<Alias, Deferred<Response<VppGroupDto>>>()
+    override suspend fun downloadByAlias(alias: Alias): Response<VppGroupDto> {
         runningDownloads[alias]?.let { return it.await() }
 
         val deferred = CoroutineScope(Dispatchers.IO).async download@{
@@ -202,30 +211,12 @@ class GroupRepositoryImpl(
                 if (options !is Response.Success) return@download options as Response.Error
 
                 val authentication = genericAuthenticationProvider.getAuthentication(options.data)
-
-                if (authentication == null) {
-                    return@download Response.Error.Other("No authentication found for school ${options.data}")
-                }
-
-                val schoolAliases = options.data.schoolIds.orEmpty()
-                    .map { Alias(AliasProvider.Vpp, it.toString(), 1) }
-                val localSchoolId = schoolAliases
-                    .firstNotNullOfOrNull { schoolRepository.resolveAliasToLocalId(it) }
-                if (localSchoolId == null) {
-                    return@download Response.Error.Other("No school found for aliases $schoolAliases")
-                }
+                    ?: return@download Response.Error.Other("No authentication found for school ${options.data}")
 
                 val item = downloadById(authentication, alias.toUrlString())
                 if (item !is Response.Success) return@download item as Response.Error
 
-                upsert(GroupDbDto(
-                    schoolId = localSchoolId,
-                    name = item.data.name,
-                    aliases = item.data.aliases,
-                    creationReason = CreationReason.Cached
-                ))
-
-                return@download null
+                return@download Response.Success(item.data)
             } finally {
                 runningDownloads.remove(alias)
             }

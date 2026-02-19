@@ -50,6 +50,8 @@ interface SubjectInstanceDao {
         ids.forEach { deleteById(it) }
     }
 
-    @Query("SELECT subject_instance_id FROM subject_instances_aliases WHERE alias = :value AND alias_type = :provider AND version = :version")
-    suspend fun getIdByAlias(value: String, provider: AliasProvider, version: Int): Uuid?
+    @Transaction
+    @RewriteQueriesToDropUnusedColumns
+    @Query("SELECT * FROM subject_instances_aliases LEFT JOIN subject_instance ON subject_instance_id = subject_instance.id WHERE alias = :value AND alias_type = :provider AND version = :version")
+    fun getByAlias(value: String, provider: AliasProvider, version: Int): Flow<EmbeddedSubjectInstance?>
 }

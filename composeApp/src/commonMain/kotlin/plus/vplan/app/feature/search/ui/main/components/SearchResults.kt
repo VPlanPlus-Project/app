@@ -162,7 +162,7 @@ fun SearchResults(
                                 plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard(
                                     homework = result.homework,
                                     profile = profile,
-                                    onClick = { onHomeworkClicked(result.homework.id) }
+                                    onClick = { onHomeworkClicked(result.homework.homework.id) }
                                 )
                             }
                         }

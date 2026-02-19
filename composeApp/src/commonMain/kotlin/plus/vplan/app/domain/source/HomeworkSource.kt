@@ -1,17 +1,13 @@
 package plus.vplan.app.domain.source
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.CacheState
@@ -35,12 +31,9 @@ class HomeworkSource(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getAll(updateRemote: Boolean = false): Flow<List<CacheState<Homework>>> {
+    fun getAll(updateRemote: Boolean = false): Flow<List<Homework>> {
         if (updateRemote) TODO("Not yet implemented")
-        return homeworkRepository.getAll().map { it.map { it.entityId.toInt() } }.flatMapLatest { ids ->
-            if (ids.isEmpty()) flowOf(emptyList())
-            else combine(ids.map { getById(it) }) { it.toList() }
-        }
+        return homeworkRepository.getAll()
     }
 }
 

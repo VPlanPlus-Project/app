@@ -242,6 +242,11 @@ import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectI
         AutoMigration( // Add substitution plan/timetable lessonTimeId
             from = 12,
             to = 13,
+        ),
+        AutoMigration( // Change substitui
+            from = 13,
+            to = 14,
+            spec = VppDatabase.Migration13to14::class
         )
     ]
 )
@@ -289,7 +294,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val besteSchuleGradesDao: BesteschuleGradesDao
 
     companion object {
-        const val DATABASE_VERSION = 13
+        const val DATABASE_VERSION = 14
     }
 
     @RenameColumn(
@@ -627,6 +632,15 @@ abstract class VppDatabase : RoomDatabase() {
     class Migration10to11: AutoMigrationSpec
 
     class Migration11to12: AutoMigrationSpec
+
+    class Migration13to14: AutoMigrationSpec {
+        override fun onPostMigrate(connection: SQLiteConnection) {
+            connection.execSQL("""
+                UPDATE homework SET subject_instance_id = (SELECT subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = homework.subject_instance_id);
+                UPDATE homework SET group_id = (SELECT group_id FROM groups_aliases WHERE groups_aliases.alias_type = 'vpp' AND groups_aliases.alias = homework.group_id);
+            """.trimIndent())
+        }
+    }
 }
 
 // Room compiler generates the `actual` implementations

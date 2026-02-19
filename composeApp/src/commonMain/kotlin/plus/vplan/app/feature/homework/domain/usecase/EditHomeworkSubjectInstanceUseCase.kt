@@ -5,6 +5,7 @@ import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.domain.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
@@ -14,7 +15,7 @@ class EditHomeworkSubjectInstanceUseCase(
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val groupRepository: GroupRepository
 ) {
-    suspend operator fun invoke(homework: Homework, subjectInstance: SubjectInstance?, profile: Profile.StudentProfile) {
+    suspend operator fun invoke(homework: PopulatedHomework, subjectInstance: SubjectInstance?, profile: Profile.StudentProfile) {
         var group = if (subjectInstance == null) profile.group else null
         var subjectInstance = subjectInstance
 

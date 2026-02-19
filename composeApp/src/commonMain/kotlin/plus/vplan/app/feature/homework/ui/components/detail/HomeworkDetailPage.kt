@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.homework.ui.components.detail
 
 import androidx.compose.animation.AnimatedContent
@@ -23,9 +21,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,11 +34,12 @@ import co.touchlab.kermit.Logger
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
-import kotlinx.coroutines.flow.onEach
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.domain.model.HomeworkStatus
+import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
@@ -70,7 +69,7 @@ import vplanplus.composeapp.generated.resources.image
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.trash_2
-import kotlin.time.ExperimentalTime
+import kotlin.time.Clock
 
 @Composable
 fun DetailPage(
@@ -195,19 +194,19 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = state.canEdit,
                 allowGroup = true,
-                subject = homework.subjectInstance?.collectAsResultingFlow()?.value?.subject,
-                group = homework.group?.collectAsResultingFlow()?.value,
+                subject = state.homeworkSubjectInstance?.subjectInstance?.subject,
+                group = homework.group,
                 onClick = { showLessonSelectDrawer = true },
             )
             DueToRow(
                 canEdit = state.canEdit,
                 isHomework = true,
-                dueTo = homework.dueTo,
+                dueTo = homework.homework.dueTo,
                 onClick = { showDateSelectDrawer = true },
             )
-            if (homework is Homework.CloudHomework) ShareStatusRow(
+            if (homework is PopulatedHomework.CloudHomework) ShareStatusRow(
                 canEdit = state.canEdit,
-                isPublic = homework.isPublic,
+                isPublic = homework.homework.isPublic,
                 onSelect = { isPublic -> onEvent(HomeworkDetailEvent.UpdateVisibility(isPublic)) }
             )
 
@@ -225,20 +224,26 @@ fun DetailPage(
                     HorizontalDivider()
                 }
             }
-            StatusRow(status = homework.getStatusFlow(state.profile).collectAsState(null).value)
-            if (homework.creator is AppEntity.VppId) CreatedByRow(createdBy = homework.creator)
+            val status = remember(homework.tasks) {
+                val tasksUndone = homework.tasks.any { !it.isDone(state.profile) }
+                if (!tasksUndone) HomeworkStatus.DONE
+                if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date > homework.homework.dueTo) HomeworkStatus.OVERDUE
+                else HomeworkStatus.PENDING
+            }
+            StatusRow(status = status)
+            if (homework.createdBy is AppEntity.VppId) CreatedByRow(createdBy = homework.createdBy as AppEntity.VppId)
             else SavedLocalRow()
 
-            CreatedAtRow(createdAt = homework.createdAt)
+            CreatedAtRow(createdAt = homework.homework.createdAt)
 
             if (state.isDeveloperMode) MetadataRow(
                 key = { Text(text = "ID", style = tableNameStyle()) },
-                value = { Text(text = state.homework.id.toString(), style = tableValueStyle()) }
+                value = { Text(text = state.homework.homework.id.toString(), style = tableValueStyle()) }
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            homework.getTasksFlow().collectAsState(emptyList()).value.forEach { task ->
+            homework.tasks.forEach { task ->
                 TaskRow(
                     task = task,
                     isDone = task.isDone(state.profile),
@@ -249,7 +254,7 @@ fun DetailPage(
                     onToggleTaskDone = { onEvent(HomeworkDetailEvent.ToggleTaskDone(task)) },
                     onUpdateTask = { onEvent(HomeworkDetailEvent.UpdateTask(task, it)) },
                     onDeleteTask = {
-                        if (homework.taskIds.size == 1) showDeleteDialog = true
+                        if (homework.tasks.size == 1) showDeleteDialog = true
                         else onEvent(HomeworkDetailEvent.DeleteTask(task))
                     }
                 )
@@ -265,7 +270,7 @@ fun DetailPage(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                homework.getFilesFlow().onEach { it.onEach { file -> if (file.isOfflineReady) file.getPreview() } }.collectAsState(emptyList()).value.forEach { file ->
+                homework.files.forEach { file ->
                     FileRow(
                         file = file,
                         canEdit = state.canEdit,
@@ -320,7 +325,7 @@ fun DetailPage(
             configuration = DateSelectConfiguration(
                 allowDatesInPast = false
             ),
-            selectedDate = homework.dueTo,
+            selectedDate = homework.homework.dueTo,
             onSelectDate = { onEvent(HomeworkDetailEvent.UpdateDueTo(it)) },
             onDismiss = { showDateSelectDrawer = false }
         )
