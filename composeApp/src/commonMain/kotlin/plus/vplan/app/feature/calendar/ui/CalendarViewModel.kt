@@ -33,8 +33,10 @@ import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
+import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
+import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
@@ -63,7 +65,8 @@ class CalendarViewModel(
     private val getHolidaysUseCase: GetHolidaysUseCase,
     private val keyValueRepository: KeyValueRepository,
     private val lessonPopulator: LessonPopulator,
-    private val homeworkPopulator: HomeworkPopulator
+    private val homeworkPopulator: HomeworkPopulator,
+    private val assessmentPopulator: AssessmentPopulator,
 ) : ViewModel() {
     private val _state = MutableStateFlow(CalendarState())
     val state = _state.asStateFlow()
@@ -130,14 +133,23 @@ class CalendarViewModel(
                             }
                         }
                         launch {
-                            day.assessments.collectLatest { assessments ->
-                                calendarDay = calendarDay.copy(assessments = assessments.toList())
-                                assessments
-                                    .map { assessment -> assessment.subjectInstance.getFirstValue()?.subject ?: "?" }
-                                    .sorted()
-                                    .let { assessments -> selectorDay = selectorDay.copy(assessments = assessments) }
-                                updateState()
-                            }
+                            day.assessments
+                                .flatMapLatest {
+                                    assessmentPopulator.populateMultiple(
+                                        it.toList(),
+                                        PopulationContext.Profile(state.value.currentProfile!!)
+                                    )
+                                }
+                                .collectLatest { assessments ->
+                                    calendarDay =
+                                        calendarDay.copy(assessments = assessments.toList())
+                                    assessments
+                                        .map { assessment -> assessment.subjectInstance.subject }
+                                        .sorted()
+                                        .let { assessments -> selectorDay = selectorDay.copy(assessments = assessments) }
+
+                                    updateState()
+                                }
                         }
                         launch {
                             day.homework
@@ -272,7 +284,7 @@ data class CalendarDay(
     val info: String? = null,
     val dayType: Day.DayType = Day.DayType.UNKNOWN,
     val week: Week? = null,
-    val assessments: List<Assessment> = emptyList(),
+    val assessments: List<PopulatedAssessment> = emptyList(),
     val homework: List<PopulatedHomework> = emptyList(),
     val lessons: LessonRendering? = null
 )

@@ -17,9 +17,9 @@ import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulationContext
@@ -44,7 +44,8 @@ class SearchUseCase(
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val homeworkRepository: HomeworkRepository,
     private val homeworkPopulator: HomeworkPopulator,
-    private val assessmentRepository: AssessmentRepository
+    private val assessmentRepository: AssessmentRepository,
+    private val assessmentPopulator: AssessmentPopulator
 ): KoinComponent {
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val lessonPopulator by inject<LessonPopulator>()
@@ -104,10 +105,12 @@ class SearchUseCase(
                 }
 
                 launch {
-                    assessmentRepository.getAll().collectLatest { assessmentList ->
+                    assessmentRepository.getAll()
+                        .flatMapLatest { assessmentPopulator.populateMultiple(it, PopulationContext.Profile(profile)) }
+                        .collectLatest { assessmentList ->
                         val assessments = assessmentList
-                            .filter { (query.isEmpty() || query in it.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.getFirstValue()?.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.type == searchRequest.assessmentType) }
-                            .sortedByDescending { (if (it.date < LocalDate.now()) "" else "_") + it.date.toString() }
+                            .filter { (query.isEmpty() || query in it.assessment.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.assessment.type == searchRequest.assessmentType) }
+                            .sortedByDescending { (if (it.assessment.date < LocalDate.now()) "" else "_") + it.assessment.date.toString() }
                         results.value = results.value.plus(SearchResult.Type.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
                     }
                 }

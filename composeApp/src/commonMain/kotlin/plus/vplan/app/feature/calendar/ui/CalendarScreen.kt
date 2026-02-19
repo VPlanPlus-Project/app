@@ -90,8 +90,8 @@ import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Day
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.domain.model.Day
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.components.DisplaySelectType
@@ -539,7 +539,7 @@ private fun CalendarScreenContent(
                                                 day.assessments.forEach forEachAssessment@{ assessment ->
                                                     AssessmentCard(
                                                         assessment = assessment,
-                                                        onClick = { displayAssessmentId = assessment.id }
+                                                        onClick = { displayAssessmentId = assessment.assessment.id }
                                                     )
                                                 }
                                                 if (state.currentProfile == null) return@items

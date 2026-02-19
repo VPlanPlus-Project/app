@@ -26,7 +26,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,9 +39,7 @@ import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.cache.collectAsSingleFlowOld
-import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
@@ -190,23 +187,23 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = false,
                 allowGroup = false,
-                subject = assessment.subjectInstance.collectAsResultingFlow().value?.subject,
+                subject = assessment.subjectInstance.subject,
                 onClick = {}
             )
             TypeRow(
                 canEdit = state.canEdit,
-                type = assessment.type,
+                type = assessment.assessment.type,
                 onClick = { showTypeSelectDrawer = true }
             )
             DueToRow(
                 canEdit = state.canEdit,
                 isHomework = false,
-                dueTo = assessment.date,
+                dueTo = assessment.assessment.date,
                 onClick = { showDateSelectDrawer = true },
             )
-            if (assessment.creator is AppEntity.VppId) ShareStatusRow(
+            if (assessment is PopulatedAssessment.CloudAssessment) ShareStatusRow(
                 canEdit = state.canEdit,
-                isPublic = assessment.isPublic,
+                isPublic = assessment.assessment.isPublic,
                 onSelect = { isPublic -> onEvent(AssessmentDetailEvent.UpdateVisibility(isPublic)) }
             )
 
@@ -224,14 +221,14 @@ fun DetailPage(
                     HorizontalDivider()
                 }
             }
-            if (assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = assessment.creator)
+            if (assessment is PopulatedAssessment.CloudAssessment) CreatedByRow(createdBy = assessment.createdBy)
             else SavedLocalRow()
 
-            CreatedAtRow(createdAt = assessment.createdAt.toInstant(TimeZone.UTC))
+            CreatedAtRow(createdAt = assessment.assessment.createdAt.toInstant(TimeZone.UTC))
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             if (state.canEdit) {
-                var text by rememberSaveable(assessment.id, state.reloadingState == UnoptimisticTaskState.Success) { mutableStateOf(assessment.description) }
+                var text by rememberSaveable(assessment.assessment.id, state.reloadingState == UnoptimisticTaskState.Success) { mutableStateOf(assessment.assessment.description) }
                 TextField(
                     value = text,
                     enabled = state.canEdit,
@@ -240,7 +237,7 @@ fun DetailPage(
                     modifier = Modifier.fillMaxWidth(),
                 )
             } else Text(
-                text = assessment.description
+                text = assessment.assessment.description
             )
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
@@ -248,7 +245,7 @@ fun DetailPage(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                remember(assessment.fileIds) { assessment.files }.collectAsSingleFlowOld().value.forEach { file ->
+                assessment.files.forEach { file ->
                     FileRow(
                         file = file,
                         canEdit = state.canEdit,
@@ -292,14 +289,14 @@ fun DetailPage(
             configuration = DateSelectConfiguration(
                 allowDatesInPast = false
             ),
-            selectedDate = assessment.date,
+            selectedDate = assessment.assessment.date,
             onSelectDate = { onEvent(AssessmentDetailEvent.UpdateDate(it)) },
             onDismiss = { showDateSelectDrawer = false }
         )
     }
 
     if (showTypeSelectDrawer) TypeDrawer(
-        selectedType = assessment.type,
+        selectedType = assessment.assessment.type,
         onSelectType = { onEvent(AssessmentDetailEvent.UpdateType(it)) },
         onDismiss = { showTypeSelectDrawer = false }
     )

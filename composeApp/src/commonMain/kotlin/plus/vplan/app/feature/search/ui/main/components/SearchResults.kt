@@ -34,6 +34,7 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.domain.model.Day
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
+import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
 import plus.vplan.app.feature.calendar.ui.components.agenda.GradeCard
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLessons
@@ -174,9 +175,9 @@ fun SearchResults(
                                 .fillMaxWidth()
                         ) {
                             results.filterIsInstance<SearchResult.Assessment>().forEach { result ->
-                                plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard(
+                                AssessmentCard(
                                     assessment = result.assessment,
-                                    onClick = { onAssessmentClicked(result.assessment.id) }
+                                    onClick = { onAssessmentClicked(result.assessment.assessment.id) }
                                 )
                             }
                         }

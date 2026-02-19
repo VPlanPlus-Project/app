@@ -26,6 +26,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
@@ -35,6 +37,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppSchoolAuthentication
@@ -53,6 +56,8 @@ import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository
+import plus.vplan.app.domain.repository.SubjectInstanceDbDto
+import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -64,11 +69,12 @@ class AssessmentRepositoryImpl(
     private val httpClient: HttpClient,
     private val vppDatabase: VppDatabase,
     private val genericAuthenticationProvider: GenericAuthenticationProvider,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
 ) : AssessmentRepository {
 
     private val onlineChangeRequests = mutableListOf<OnlineChangeRequest>()
 
-    override suspend fun download(schoolApiAccess: VppSchoolAuthentication, subjectInstanceAliases: List<Alias>): Response<List<Int>> {
+    override suspend fun download(schoolApiAccess: VppSchoolAuthentication, subjectInstanceAliases: List<Alias>): Response<List<AssessmentGetResponse>> {
         safeRequest(onError = { return it }) {
             val response = httpClient.get {
                 url(URLBuilder(currentConfiguration.appApiUrl).apply {
@@ -85,11 +91,7 @@ class AssessmentRepositoryImpl(
 
             val data = response.body<ResponseDataWrapper<List<AssessmentGetResponse>>>().data
 
-            data.forEach { item ->
-                upsertApiResponse(item)
-            }
-
-            return Response.Success(data.map { it.id })
+            return Response.Success(data)
         }
         return Response.Error.Cancelled
     }
@@ -228,6 +230,10 @@ class AssessmentRepositoryImpl(
 
     override suspend fun getIdForNewLocalAssessment(): Int {
         return (vppDatabase.assessmentDao.getSmallestId() ?: -1).coerceAtMost(-1)
+    }
+
+    override suspend fun deleteById(id: Int) {
+        vppDatabase.assessmentDao.deleteById(listOf(id))
     }
 
     override suspend fun upsertLocally(
@@ -433,8 +439,32 @@ class AssessmentRepositoryImpl(
                     return@download response.toErrorResponse()
                 }
 
-                val assessment = response.body<ResponseDataWrapper<AssessmentGetResponse>>().data
-                upsertApiResponse(assessment)
+                val assessmentDto = response.body<ResponseDataWrapper<AssessmentGetResponse>>().data
+
+                val vppSubjectInstanceId = assessmentDto.subject.id
+                val subjectInstance = subjectInstanceRepository.getByAlias(Alias(
+                    provider = AliasProvider.Vpp,
+                    value = vppSubjectInstanceId.toString(),
+                    version = 1
+                )).first()
+
+                if (subjectInstance == null) {
+                    logger.w { "Subject instance $vppSubjectInstanceId not found for assessment $id, skipping" }
+                    return@download null
+                }
+
+                upsertLocally(
+                    assessmentId = assessmentDto.id,
+                    subjectInstanceId = subjectInstance.id,
+                    date = LocalDate.parse(assessmentDto.date),
+                    isPublic = assessmentDto.isPublic,
+                    createdAt = Instant.fromEpochSeconds(assessmentDto.createdAt),
+                    createdBy = assessmentDto.createdBy.id,
+                    createdByProfile = null,
+                    description = assessmentDto.description,
+                    type = Assessment.Type.valueOf(assessmentDto.type),
+                    associatedFileIds = assessmentDto.files.map { it.id }
+                )
 
                 return@download null
             } finally {
@@ -444,25 +474,10 @@ class AssessmentRepositoryImpl(
         runningDownloads[id] = deferred
         return deferred.await()
     }
-
-    private suspend fun upsertApiResponse(item: AssessmentGetResponse) {
-        upsertLocally(
-            assessmentId = item.id,
-            subjectInstanceId = item.subject.id,
-            date = LocalDate.parse(item.date),
-            isPublic = item.isPublic,
-            createdAt = Instant.fromEpochSeconds(item.createdAt),
-            createdBy = item.createdBy.id,
-            createdByProfile = null,
-            description = item.description,
-            type = Assessment.Type.valueOf(item.type),
-            associatedFileIds = item.files.map { it.id }
-        )
-    }
 }
 
 @Serializable
-private data class AssessmentGetResponse(
+data class AssessmentGetResponse(
     @SerialName("id") val id: Int,
     @SerialName("subject_instance") val subject: IncludedModel,
     @SerialName("content") val description: String = "",

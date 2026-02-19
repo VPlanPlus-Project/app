@@ -21,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,18 +32,15 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.cache.collectAsLoadingStateOld
-import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.domain.model.populated.PopulatedAssessment
+import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.feature.search.ui.main.NewItem
 import plus.vplan.app.ui.components.Grid
-import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.utils.blendColor
@@ -114,7 +110,7 @@ fun SearchStart(
                             .clip(RoundedCornerShape(8.dp))
                             .clickable {
                                 when (item) {
-                                    is NewItem.Assessment -> onAssessmentClicked(item.assessment.id)
+                                    is NewItem.Assessment -> onAssessmentClicked(item.assessment.assessment.id)
                                     is NewItem.Homework -> onHomeworkClicked(item.homework.homework.id)
                                 }
                             }
@@ -141,47 +137,35 @@ fun SearchStart(
                                         .padding(6.dp)
                                 )
                             } else {
-                                if (item is NewItem.Assessment) {
-                                    val subject = item.assessment.subjectInstance.collectAsResultingFlow().value?.subject
-                                    SubjectIcon(
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .clip(RoundedCornerShape(8.dp)),
-                                        subject = subject
-                                    )
-
-                                    Text(
-                                        text = subject.orEmpty(),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.outline
-                                    )
-                                } else if (item is NewItem.Homework) {
-                                    SubjectIcon(
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .clip(RoundedCornerShape(8.dp)),
-                                        subject = item.homework.subjectInstance?.subject
-                                    )
-
-                                    Text(
-                                        text = item.homework.subjectInstance?.subject.orEmpty(),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.outline
-                                    )
+                                val subject = when (item) {
+                                    is NewItem.Assessment -> item.assessment.subjectInstance.subject
+                                    is NewItem.Homework -> item.homework.subjectInstance?.subject
                                 }
+                                SubjectIcon(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    subject = subject
+                                )
+
+                                Text(
+                                    text = subject.orEmpty(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
                             }
                         }
                         Column(Modifier.weight(1f)) {
                             Text(
                                 text = when (item) {
-                                    is NewItem.Assessment -> "${item.assessment.type.toName()} (${item.assessment.date.format(regularDateFormatWithoutYear)})"
+                                    is NewItem.Assessment -> "${item.assessment.assessment.type.toName()} (${item.assessment.assessment.date.format(regularDateFormatWithoutYear)})"
                                     is NewItem.Homework -> "Hausaufgabe (${item.homework.homework.dueTo.format(regularDateFormatWithoutYear)})"
                                 },
                                 style = MaterialTheme.typography.labelMedium
                             )
                             when (item) {
                                 is NewItem.Assessment -> Text(
-                                    text = item.assessment.description.lines().firstOrNull() ?: "Keine Details",
+                                    text = item.assessment.assessment.description.lines().firstOrNull() ?: "Keine Details",
                                     maxLines = 1,
                                     style = MaterialTheme.typography.bodySmall,
                                     overflow = TextOverflow.Ellipsis
@@ -213,59 +197,33 @@ fun SearchStart(
                             horizontalAlignment = Alignment.End
                         ) {
                             val createdByFont = MaterialTheme.typography.labelMedium
-                            val shimmerLoader = remember<@Composable () -> Unit> { {
-                                ShimmerLoader(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .fillMaxWidth(.3f)
-                                        .height(createdByFont.lineHeight.toDp())
-                                )
-                            } }
 
                             val creator = when (item) {
-                                is NewItem.Assessment -> item.assessment.creator
+                                is NewItem.Assessment -> item.assessment.createdBy
                                 is NewItem.Homework -> item.homework.createdBy
                             }
 
                             Row {
                                 when (creator) {
                                     is AppEntity.Profile -> {
-                                        val profileState by creator.profile.map { profile -> profile?.let { CacheState.Done(it) } ?: CacheState.NotExisting("") }.collectAsState(CacheState.Loading(""))
-                                        when (val profile = profileState) {
-                                            is CacheState.Loading -> shimmerLoader()
-                                            is CacheState.Done -> {
-                                                Text(
-                                                    text = "Profil " + profile.data.name,
-                                                    style = createdByFont
-                                                )
-                                            }
-                                            else -> {
-                                                Text(
-                                                    text = "Unbekannt",
-                                                    style = createdByFont,
-                                                    color = MaterialTheme.colorScheme.error
-                                                )
-                                            }
+                                        val profile = when (item) {
+                                            is NewItem.Assessment -> (item.assessment as PopulatedAssessment.LocalAssessment).createdByProfile
+                                            is NewItem.Homework -> (item.homework as PopulatedHomework.LocalHomework).createdByProfile
                                         }
+                                        Text(
+                                            text = "Profil " + profile.name,
+                                            style = createdByFont
+                                        )
                                     }
                                     is AppEntity.VppId -> {
-                                        val vppIdState by creator.vppId.collectAsLoadingStateOld()
-                                        when (val vppId = vppIdState) {
-                                            is CacheState.Loading -> shimmerLoader()
-                                            is CacheState.Done -> {
-                                                Text(
-                                                    text = vppId.data.name,
-                                                    style = createdByFont
-                                                )
-                                            }
-                                            else -> {
-                                                Text(
-                                                    text = "Unbekannt",
-                                                    style = createdByFont,
-                                                    color = MaterialTheme.colorScheme.error
-                                                )
-                                            }
+                                        val vppId = when (item) {
+                                            is NewItem.Assessment -> (item.assessment as PopulatedAssessment.CloudAssessment).createdByUser
+                                            is NewItem.Homework -> (item.homework as PopulatedHomework.CloudHomework).createdByUser
                                         }
+                                        Text(
+                                            text = vppId.name,
+                                            style = createdByFont
+                                        )
                                     }
                                 }
                             }

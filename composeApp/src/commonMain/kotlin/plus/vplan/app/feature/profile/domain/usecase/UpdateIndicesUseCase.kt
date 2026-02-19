@@ -7,7 +7,7 @@ import plus.vplan.app.domain.repository.TimetableRepository
 
 class UpdateIndicesUseCase(
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
-    private val updateAssessmentIndicesUseCase: UpdateAssessmentIndicesUseCase,
+    private val updateProfileAssessmentIndexUseCase: UpdateProfileAssessmentIndexUseCase,
     private val updateProfileHomeworkIndexUseCase: UpdateProfileHomeworkIndexUseCase,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val timetableRepository: TimetableRepository
@@ -18,6 +18,6 @@ class UpdateIndicesUseCase(
 
         updateProfileLessonIndexUseCase(profile, substitutionPlanVersion, timetableVersion)
         updateProfileHomeworkIndexUseCase(profile)
-        updateAssessmentIndicesUseCase(profile)
+        updateProfileAssessmentIndexUseCase(profile)
     }
 }

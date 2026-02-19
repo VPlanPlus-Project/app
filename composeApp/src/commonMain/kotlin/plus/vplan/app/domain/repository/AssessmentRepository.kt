@@ -7,6 +7,7 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.data.repository.AssessmentGetResponse
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
@@ -17,12 +18,12 @@ import kotlin.uuid.Uuid
 interface AssessmentRepository: WebEntityRepository<Assessment> {
 
     /**
-     * @return List of ids of the created assessments
+     * @return List of assessment DTOs
      */
     suspend fun download(
         schoolApiAccess: VppSchoolAuthentication,
         subjectInstanceAliases: List<Alias>
-    ): Response<List<Int>>
+    ): Response<List<AssessmentGetResponse>>
 
     suspend fun createAssessmentOnline(
         vppId: VppId.Active,
@@ -96,4 +97,6 @@ interface AssessmentRepository: WebEntityRepository<Assessment> {
 
     suspend fun dropIndicesForProfile(profileId: Uuid)
     suspend fun createCacheForProfile(profileId: Uuid, assessmentIds: Collection<Int>)
+
+    suspend fun deleteById(id: Int)
 }

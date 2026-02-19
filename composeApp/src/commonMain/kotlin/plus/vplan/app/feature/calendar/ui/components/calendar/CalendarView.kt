@@ -62,8 +62,8 @@ import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.Assessment
 import plus.vplan.app.domain.model.Day
+import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
@@ -98,7 +98,7 @@ fun CalendarView(
     date: LocalDate,
     dayType: Day.DayType,
     lessons: CalendarViewLessons,
-    assessments: List<Assessment>,
+    assessments: List<PopulatedAssessment>,
     homework: List<PopulatedHomework>,
     bottomIslandPadding: PaddingValues = PaddingValues(0.dp),
     autoLimitTimeSpanToLessons: Boolean = false,
@@ -451,7 +451,7 @@ fun CalendarView(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 assessments.forEach { assessment ->
-                                    AssessmentCard(assessment) { onAssessmentClicked(assessment.id) }
+                                    AssessmentCard(assessment) { onAssessmentClicked(assessment.assessment.id) }
                                 }
                                 homework.forEach { homeworkItem ->
                                     HomeworkCard(homeworkItem, profile) { onHomeworkClicked(homeworkItem.homework.id) }

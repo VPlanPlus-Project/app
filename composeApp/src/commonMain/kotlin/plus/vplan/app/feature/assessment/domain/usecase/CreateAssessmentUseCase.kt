@@ -112,7 +112,7 @@ class CreateAssessmentUseCase(
         }
         assessmentRepository.upsertLocally(
             assessmentId = id,
-            subjectInstanceId = subjectInstanceId,
+            subjectInstanceId = subjectInstance.id,
             date = date,
             isPublic = isPublic,
             createdAt = Clock.System.now(),
