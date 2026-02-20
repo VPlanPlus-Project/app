@@ -31,10 +31,10 @@ import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.currentConfiguration
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbSubjectInstance
-import plus.vplan.app.data.source.database.model.database.DbSubjectInstanceAlias
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKSubjectInstanceGroup
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbSubjectInstance
+import plus.vplan.app.core.database.model.database.DbSubjectInstanceAlias
+import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstanceGroup
 import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
 import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.model.ApiAlias

@@ -14,7 +14,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.data.source.database.model.database.DbFcmLog
+import plus.vplan.app.core.database.model.database.DbFcmLog
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile

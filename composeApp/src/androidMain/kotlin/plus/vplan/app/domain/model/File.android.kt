@@ -3,6 +3,7 @@ package plus.vplan.app.domain.model
 import android.content.Intent
 import androidx.core.content.FileProvider
 import org.koin.core.context.GlobalContext
+import plus.vplan.app.core.model.File
 import plus.vplan.app.domain.repository.ActivityProvider
 
 actual fun openFile(file: File) {

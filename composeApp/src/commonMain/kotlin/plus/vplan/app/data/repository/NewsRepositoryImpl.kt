@@ -19,9 +19,9 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.currentConfiguration
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbNews
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKNewsSchool
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbNews
+import plus.vplan.app.core.database.model.database.foreign_key.FKNewsSchool
 import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse

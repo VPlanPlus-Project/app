@@ -91,7 +91,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.Day
+import plus.vplan.app.core.model.Day
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.components.DisplaySelectType

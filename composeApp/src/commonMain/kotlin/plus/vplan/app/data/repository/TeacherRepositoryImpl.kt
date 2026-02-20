@@ -4,9 +4,9 @@ package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbTeacher
-import plus.vplan.app.data.source.database.model.database.DbTeacherAlias
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbTeacher
+import plus.vplan.app.core.database.model.database.DbTeacherAlias
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.TeacherDbDto

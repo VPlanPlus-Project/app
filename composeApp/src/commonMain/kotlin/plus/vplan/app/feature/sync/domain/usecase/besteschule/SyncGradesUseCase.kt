@@ -13,7 +13,8 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -44,6 +45,8 @@ class SyncGradesUseCase(
     private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val besteSchuleApiRepository by inject<BesteSchuleApiRepository>()
+
+    private val gradesPopulator by inject<GradesPopulator>()
 
     private val profileRepository by inject<ProfileRepository>()
     private val platformNotificationRepository by inject<PlatformNotificationRepository>()
@@ -196,6 +199,7 @@ class SyncGradesUseCase(
             .filter { it.id !in existingGradeIdsBeforeUpdate }
             .filter { it.value != null }
             .filter { it.givenAt.atStartOfDay() until LocalDate.now().atStartOfDay() <= 2.days }
+            .let { grades -> gradesPopulator.populateMultiple(grades).first() }
 
         if (yearId == null && allowNotifications && gradesEligibleForNotification.isNotEmpty()) {
             if (gradesEligibleForNotification.size == 1) {
@@ -203,24 +207,23 @@ class SyncGradesUseCase(
                 val gradeReceiverVppId = profileRepository.getAll().first()
                     .filterIsInstance<Profile.StudentProfile>()
                     .mapNotNull { it.vppId }
-                    .firstOrNull { it.schulverwalterConnection?.userId == newGrade.schulverwalterUserId }
+                    .firstOrNull { it.schulverwalterConnection?.userId == newGrade.grade.schulverwalterUserId }
 
-                val collection = newGrade.collection.first()!!
-                val subject = collection.subject.first()
+                val subject = besteSchuleSubjectsRepository.getSubjectFromCache(newGrade.collection.subjectId).first()
 
                 platformNotificationRepository.sendNotification(
                     title = "Neue Note",
                     category = gradeReceiverVppId?.name ?: "Unbekannter Nutzer",
                     message = buildString {
                         append("Du hast eine ")
-                        if (getGradeLockStateUseCase().first().canAccess) append(newGrade.value)
+                        if (getGradeLockStateUseCase().first().canAccess) append(newGrade.grade.value)
                         else append("neue Note")
                         append(" in ")
                         append(subject?.fullName ?: "Unbekanntes Fach")
                         append(" für ")
-                        append(collection.name)
+                        append(newGrade.collection.name)
                         append(" (")
-                        append(collection.type)
+                        append(newGrade.collection.type)
                         append(") erhalten.")
                     },
                     isLarge = false,
@@ -232,7 +235,7 @@ class SyncGradesUseCase(
                                     type = "grade",
                                     value = Json.encodeToString(
                                         StartTaskJson.StartTaskOpen.Grade(
-                                            gradeId = newGrade.id
+                                            gradeId = newGrade.grade.id
                                         )
                                     )
                                 )
@@ -241,7 +244,10 @@ class SyncGradesUseCase(
                     )
                 )
             } else if (gradesEligibleForNotification.size > 1) {
-                val schulverwalterUserIdsThatGotNewGrades = gradesEligibleForNotification.map { it.schulverwalterUserId }.toSet()
+                val schulverwalterUserIdsThatGotNewGrades = gradesEligibleForNotification
+                    .map { it.grade.schulverwalterUserId }
+                    .toSet()
+
                 val gradeReceiverVppIds = profileRepository.getAll().first()
                     .filterIsInstance<Profile.StudentProfile>()
                     .mapNotNull { it.vppId }

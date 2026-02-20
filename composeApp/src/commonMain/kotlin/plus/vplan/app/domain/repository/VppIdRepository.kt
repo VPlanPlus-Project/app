@@ -3,7 +3,7 @@ package plus.vplan.app.domain.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.domain.cache.CreationReason
+import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication

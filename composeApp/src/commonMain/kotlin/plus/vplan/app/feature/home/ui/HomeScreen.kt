@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package plus.vplan.app.feature.home.ui
 
 import androidx.compose.animation.AnimatedContent
@@ -56,7 +58,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -65,18 +72,22 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Homework
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.cache.collectAsLoadingStateOld
-import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
+import plus.vplan.app.domain.repository.AssessmentRepository
+import plus.vplan.app.domain.repository.HomeworkRepository
+import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
@@ -307,10 +318,15 @@ private fun HomeContent(
                         }
                     }
                     item yourDay@{
+                        // Fixme: Dirty
+                        val weekRepository = koinInject<WeekRepository>()
                         val isYourDayToday = state.day?.date == state.currentTime.date
-                        val weekState = remember(state.day) { state.day?.week }?.collectAsLoadingStateOld("")?.value
-                        if (state.day == null || weekState is CacheState.Loading) return@yourDay
-                        val week = (weekState as? CacheState.Done)?.data
+                        val week = remember(state.day?.weekId) {
+                            val weekId = state.day?.weekId
+                            if (weekId == null) flowOf(null)
+                            else weekRepository.getById(weekId)
+                        }.collectAsState(null).value
+                        if (state.day == null) return@yourDay
 
                         Column {
                             FeedTitle(
@@ -340,7 +356,8 @@ private fun HomeContent(
                                     }
                                 }
                             )
-                            if (state.day.info != null) DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = state.day.info)
+                            val info = state.day.info
+                            if (info != null) DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = info)
                             if (state.day.substitutionPlan.isEmpty()) InfoCard(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                                 imageVector = Res.drawable.triangle_alert,
@@ -359,10 +376,39 @@ private fun HomeContent(
                                     .padding(vertical = 4.dp)
                                     .fillMaxWidth()
                             ) {
+                                // Very dirty but will be refactored later (hopefully) fixme
                                 val homeworkPopulator = koinInject<HomeworkPopulator>()
+                                val homeworkRepository = koinInject<HomeworkRepository>()
                                 val assessmentPopulator = koinInject<AssessmentPopulator>()
-                                val homework by remember(state.day.homeworkIds) { state.day.homework.flatMapLatest { homeworkPopulator.populateMultiple(it.toList(), PopulationContext.Profile(state.currentProfile!!)) } }.collectAsState(emptyList())
-                                val assessments by remember(state.day.assessmentIds) { state.day.assessments.flatMapLatest { assessmentPopulator.populateMultiple(it.toList(), PopulationContext.Profile(state.currentProfile!!)) } }.collectAsState(emptyList())
+                                val assessmentRepository = koinInject<AssessmentRepository>()
+                                val homework by remember(state.day.homeworkIds) {
+                                    state.day.homeworkIds
+                                        .let {
+                                            if (it.isEmpty()) flowOf(emptyList())
+                                            else combine(it.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { it.data } }) { it.toList() }
+                                        }
+                                        .flatMapLatest {
+                                            homeworkPopulator.populateMultiple(
+                                                it.toList(),
+                                                PopulationContext.Profile(state.currentProfile!!)
+                                            )
+                                        }
+                                }.collectAsState(emptyList())
+
+                                val assessments by remember(state.day.assessmentIds) {
+                                    state.day.assessmentIds
+                                        .let {
+                                            if (it.isEmpty()) flowOf(emptyList())
+                                            else combine(it.map { id -> assessmentRepository.getById(id, false).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }
+                                        }
+                                        .flatMapLatest {
+                                            assessmentPopulator.populateMultiple(
+                                                it.toList(),
+                                                PopulationContext.Profile(state.currentProfile!!)
+                                            )
+                                        }
+                                }.collectAsState(emptyList())
+
                                 if (highlightedLessons.hasLessons) AnimatedContent(
                                     targetState = highlightedLessons
                                 ) { highlightConfig ->
@@ -383,14 +429,22 @@ private fun HomeContent(
                                             ) {
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
                                                     highlightedLessons.currentLessons.forEach { (currentLesson, continuing) ->
-                                                        val homeworkForLesson = remember { mutableListOf<PopulatedHomework>() }
-                                                        LaunchedEffect(homework, currentLesson.lesson.subjectInstanceId) {
+                                                        val homeworkForLesson =
+                                                            remember { mutableListOf<PopulatedHomework>() }
+                                                        LaunchedEffect(
+                                                            homework,
+                                                            currentLesson.lesson.subjectInstanceId
+                                                        ) {
                                                             homeworkForLesson.clear()
                                                             homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.id == currentLesson.lesson.subjectInstanceId })
                                                         }
 
-                                                        val assessmentsForLesson = remember { mutableListOf<PopulatedAssessment>() }
-                                                        LaunchedEffect(assessments, currentLesson.lesson.subjectInstanceId) {
+                                                        val assessmentsForLesson =
+                                                            remember { mutableListOf<PopulatedAssessment>() }
+                                                        LaunchedEffect(
+                                                            assessments,
+                                                            currentLesson.lesson.subjectInstanceId
+                                                        ) {
                                                             assessmentsForLesson.clear()
                                                             assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.id == currentLesson.lesson.subjectInstanceId })
                                                         }
@@ -407,8 +461,7 @@ private fun HomeContent(
                                                     }
                                                 }
                                             }
-                                        }
-                                        else {
+                                        } else {
                                             Text(
                                                 text = "Nächster Unterricht",
                                                 style = MaterialTheme.typography.titleSmall,

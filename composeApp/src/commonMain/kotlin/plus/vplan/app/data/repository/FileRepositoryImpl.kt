@@ -40,8 +40,8 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.currentConfiguration
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbFile
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbFile
 import plus.vplan.app.data.source.network.GenericAuthenticationProvider
 import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.model.IncludedModel
@@ -49,7 +49,7 @@ import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.File
+import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap

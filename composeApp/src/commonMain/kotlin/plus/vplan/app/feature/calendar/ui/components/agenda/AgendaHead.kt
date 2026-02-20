@@ -30,7 +30,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Day
+import plus.vplan.app.core.model.Day
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.grayScale
 import plus.vplan.app.ui.thenIf

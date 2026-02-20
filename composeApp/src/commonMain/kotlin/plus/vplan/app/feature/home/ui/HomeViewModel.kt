@@ -27,7 +27,7 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.domain.model.Day
+import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulatedLesson
@@ -102,12 +102,12 @@ class HomeViewModel(
                         .collect { time ->
                             if (lastSpecialLessonUpdate until time < 5.seconds) return@collect
 
-                            val hasInterpolatedLessonTimes = state.value.day?.lessons?.first().orEmpty().toList()
+                            val hasInterpolatedLessonTimes = state.value.day?.let { App.daySource.getLessons(it) }?.first().orEmpty().toList()
                                 .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(state.value.currentProfile!!)).first() }
                                 .any { lesson -> lesson.lessonTime?.interpolated == true }
 
                             if (state.value.day?.date == time.date) {
-                                val allLessons = state.value.day?.lessons?.first().orEmpty().toList()
+                                val allLessons = state.value.day?.let { App.daySource.getLessons(it) }?.first().orEmpty().toList()
                                     .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(state.value.currentProfile!!)).first() }
 
                                 /**
@@ -177,7 +177,7 @@ class HomeViewModel(
                                     state.copy(
                                         currentLessons = emptyList(),
                                         nextLessons = emptyList(),
-                                        remainingLessons = state.day?.lessons?.first().orEmpty().toList()
+                                        remainingLessons = state.day?.let { App.daySource.getLessons(it) }?.first().orEmpty().toList()
                                             .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(state.currentProfile!!)).first() }
                                             .sortedBySuspending { lesson ->
                                                 val subject = lesson.lesson.subject ?: ""
@@ -200,17 +200,17 @@ class HomeViewModel(
                     .collectLatest { day ->
                         state.update { state -> state.copy(initDone = true) }
 
-                        val hasDayMissingLessonTimes = day.lessons.first().any { it.lessonTimeId == null }
+                        val hasDayMissingLessonTimes = App.daySource.getLessons(day).first().any { it.lessonTimeId == null }
                         if (hasDayMissingLessonTimes) state.update { state -> state.copy(day = day) }
 
-                        val lessons = day.lessons.first().toList()
+                        val lessons = App.daySource.getLessons(day).first().toList()
                             .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
 
                         if (lessons.filter { it.lessonTime != null }.any { it.lessonTime!!.end >= state.value.currentTime.time }) {
                             state.update { state -> state.copy(day = day) }
                         } else if (day.nextSchoolDayId != null) {
                             App.daySource.getById(
-                                day.nextSchoolDayId,
+                                day.nextSchoolDayId!!,
                                 profile
                             ).filterIsInstance<CacheState.Done<Day>>().map { it.data }
                                 .collectLatest { nextDay ->
@@ -233,7 +233,7 @@ class HomeViewModel(
                     updateLessonTimesUseCase(school, client)
                     updateHolidaysUseCase(school, client)
                     updateTimetableUseCase(school, forceUpdate = false, client = client)
-                    updateSubstitutionPlanUseCase(school, setOfNotNull(LocalDate.now(), state.value.day?.date, state.value.day?.nextSchoolDay?.getFirstValueOld()?.date).sorted(), allowNotification = false, providedClient = client)
+                    updateSubstitutionPlanUseCase(school, setOfNotNull(LocalDate.now(), state.value.day?.date, (if (state.value.day?.nextSchoolDayId == null) null else App.daySource.getById(state.value.day!!.nextSchoolDayId!!))?.getFirstValueOld()?.date).sorted(), allowNotification = false, providedClient = client)
                 } catch (e: Exception) {
                     LOGGER.e { "Something went wrong on updating the data for Profile ${state.value.currentProfile!!.id} (${state.value.currentProfile!!.name}):\n${e.stackTraceToString()}" }
                     captureError("HomeViewModel.update", "Error on updating the data for school ${school.id}: ${e.stackTraceToString()}")

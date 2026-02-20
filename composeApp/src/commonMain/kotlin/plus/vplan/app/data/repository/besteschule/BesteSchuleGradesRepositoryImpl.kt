@@ -23,12 +23,12 @@ import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.data.repository.ResponseDataWrapper
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteSchuleGrade
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleGrade
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.besteschule.api.ApiStudentGradesData
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository

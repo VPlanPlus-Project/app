@@ -14,9 +14,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -25,14 +28,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import plus.vplan.app.App
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Week
-import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.utils.date.atStartOfWeek
-import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.domain.model.Day
+import plus.vplan.app.core.model.Day
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
@@ -40,8 +42,11 @@ import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
+import plus.vplan.app.domain.repository.AssessmentRepository
+import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetFirstLessonStartUseCase
@@ -64,9 +69,12 @@ class CalendarViewModel(
     private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase,
     private val getHolidaysUseCase: GetHolidaysUseCase,
     private val keyValueRepository: KeyValueRepository,
+    private val weekRepository: WeekRepository,
     private val lessonPopulator: LessonPopulator,
     private val homeworkPopulator: HomeworkPopulator,
+    private val homeworkRepository: HomeworkRepository,
     private val assessmentPopulator: AssessmentPopulator,
+    private val assessmentRepository: AssessmentRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(CalendarState())
     val state = _state.asStateFlow()
@@ -92,7 +100,7 @@ class CalendarViewModel(
                         date = date,
                         info = day.info,
                         dayType = day.dayType,
-                        week = day.week?.getFirstValueOld(),
+                        week = day.weekId?.let { weekRepository.getById(it).first() },
                         lessons = null
                     )
 
@@ -108,7 +116,7 @@ class CalendarViewModel(
 
                     coroutineScope {
                         launch {
-                            day.lessons
+                            App.daySource.getLessons(day)
                                 .map { lessons -> lessons.toList() }
                                 .flatMapLatest { lessons -> lessonPopulator.populateMultiple(lessons, PopulationContext.Profile(state.value.currentProfile!!)) }
                                 .collectLatest { populatedLessons ->
@@ -133,7 +141,11 @@ class CalendarViewModel(
                             }
                         }
                         launch {
-                            day.assessments
+                            day.assessmentIds
+                                .let {
+                                    if (it.isEmpty()) flowOf(emptyList())
+                                    else combine(it.map { id -> assessmentRepository.getById(id, false).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }
+                                }
                                 .flatMapLatest {
                                     assessmentPopulator.populateMultiple(
                                         it.toList(),
@@ -152,7 +164,11 @@ class CalendarViewModel(
                                 }
                         }
                         launch {
-                            day.homework
+                            day.homeworkIds
+                                .let {
+                                    if (it.isEmpty()) flowOf(emptyList())
+                                    else combine(it.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { it.data } }) { it.toList() }
+                                }
                                 .flatMapLatest { homeworkPopulator.populateMultiple(it.toList(), PopulationContext.Profile(state.value.currentProfile!!)) }
                                 .collectLatest { dayHomework ->
                                     calendarDay = calendarDay.copy(homework = dayHomework)

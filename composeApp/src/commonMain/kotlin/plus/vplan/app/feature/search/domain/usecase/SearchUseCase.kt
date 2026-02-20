@@ -16,13 +16,15 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulationContext
+import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
+import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -33,6 +35,7 @@ import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
+import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.utils.now
 
@@ -49,6 +52,8 @@ class SearchUseCase(
 ): KoinComponent {
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val lessonPopulator by inject<LessonPopulator>()
+    private val gradesPopulator by inject<GradesPopulator>()
+    private val collectionPopulator by inject<CollectionPopulator>()
 
     operator fun invoke(searchRequest: SearchRequest) = channelFlow {
         if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap())
@@ -122,8 +127,16 @@ class SearchUseCase(
                         contextBesteschuleUserId = null
                     )
                         .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
-                        .map { response ->
-                            response.data.filter { grade -> query.lowercase() in grade.collection.first()!!.name }
+                        .map { it.data }
+                        .flatMapLatest { gradesPopulator.populateMultiple(it) }
+                        .map { response -> response.filter { grade -> query.lowercase() in grade.collection.name } }
+                        .map { grades ->
+                            grades.map { grade ->
+                                GradesItem(
+                                    grade = grade,
+                                    collection = collectionPopulator.populateSingle(grade.collection).first()
+                                )
+                            }
                         }
                         .collectLatest { grades ->
                             results.value = results.value.plus(SearchResult.Type.Grade to grades.map { SearchResult.Grade(it) })

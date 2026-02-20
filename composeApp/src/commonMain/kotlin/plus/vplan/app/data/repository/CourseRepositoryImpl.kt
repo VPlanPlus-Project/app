@@ -4,10 +4,10 @@ package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbCourse
-import plus.vplan.app.data.source.database.model.database.DbCourseAlias
-import plus.vplan.app.data.source.database.model.database.crossovers.DbCourseGroupCrossover
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbCourse
+import plus.vplan.app.core.database.model.database.DbCourseAlias
+import plus.vplan.app.core.database.model.database.crossovers.DbCourseGroupCrossover
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.Course
 import plus.vplan.app.domain.repository.CourseDbDto

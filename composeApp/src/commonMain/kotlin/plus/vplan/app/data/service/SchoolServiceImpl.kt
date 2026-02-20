@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.core.model.AliasState
-import plus.vplan.app.domain.cache.CreationReason
+import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School

@@ -2,7 +2,7 @@ package plus.vplan.app.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.model.Day
+import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Holiday
 import kotlin.uuid.Uuid
 

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package plus.vplan.app.feature.profile.page.ui
 
 import androidx.compose.runtime.getValue
@@ -5,20 +7,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
-import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
-import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
+import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
@@ -26,6 +32,7 @@ import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
+import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.feature.profile.page.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
@@ -45,6 +52,9 @@ class ProfileViewModel(
 
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val besteSchuleIntervalsRepository by inject<BesteSchuleIntervalsRepository>()
+
+    private val gradesPopulator by inject<GradesPopulator>()
+    private val collectionPopulator by inject<CollectionPopulator>()
 
     init {
         viewModelScope.launch {
@@ -88,16 +98,23 @@ class ProfileViewModel(
                         )
                             .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
                             .map { response -> response.data }
+                            .flatMapLatest { gradesPopulator.populateMultiple(it) }
                             .first()
+                            .map { grade ->
+                                GradesItem(
+                                    grade = grade,
+                                    collection = collectionPopulator.populateSingle(grade.collection).first()
+                                )
+                            }
 
                         state.currentInterval?.let { interval ->
                             state = state.copy(
                                 averageGrade = calculateAverageUseCase(grades, interval),
                                 latestGrade = grades
-                                    .filter { grade -> grade.collection.first()!!.intervalId == interval.id }
-                                    .filterNot { grade -> grade.value == null }
-                                    .maxByOrNull { grade -> grade.givenAt }
-                                    ?.let { grade -> LatestGrade.Value(grade.value!!) }
+                                    .filter { grade -> grade.collection.interval.id == interval.id }
+                                    .filterNot { grade -> grade.grade.grade.value == null }
+                                    .maxByOrNull { grade -> grade.grade.grade.givenAt }
+                                    ?.let { grade -> LatestGrade.Value(grade.grade.grade.value!!) }
                                     ?: LatestGrade.NotExisting
                             )
                         }

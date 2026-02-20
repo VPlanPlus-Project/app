@@ -16,7 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.ui.components.Grid
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors

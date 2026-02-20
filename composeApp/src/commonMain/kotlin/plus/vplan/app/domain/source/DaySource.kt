@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -25,12 +26,13 @@ import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.App
 import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.utils.date.atStartOfWeek
-import plus.vplan.app.domain.model.Day
+import plus.vplan.app.core.model.Day
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -39,6 +41,7 @@ import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.plus
+import kotlin.collections.map
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -146,7 +149,7 @@ class DaySource(
                 }
 
                 launch {
-                    val week = day.value.week?.getFirstValueOld()
+                    val week = day.value.weekId?.let { weekRepository.getById(it).first() }
                     val weekIndex = week?.weekIndex ?: -1
 
                     (if (contextProfile == null) timetableRepository.getForSchool(schoolId, weekIndex, dayOfWeek = date.dayOfWeek)
@@ -197,6 +200,19 @@ class DaySource(
                 }
             }
             flow
+        }
+    }
+
+    fun getLessons(day: Day): Flow<Set<Lesson>> {
+        return if (day.timetable.isEmpty() && day.substitutionPlan.isEmpty()) flowOf(emptySet())
+        else {
+            (if (day.substitutionPlan.isEmpty()) combine(day.timetable.map { App.timetableSource.getById(it).filterIsInstance<CacheState.Done<Lesson.TimetableLesson>>().map { it.data } }) { it.toSet() }
+            else combine(day.substitutionPlan.map { App.substitutionPlanSource.getById(it).filterIsInstance<CacheState.Done<Lesson.SubstitutionPlanLesson>>().map { it.data } }) { it.toSet() })
+                .map { lessons ->
+                    val week = day.weekId?.let { weekRepository.getById(it).first() }
+                    lessons.filter { lesson ->
+                        lesson is Lesson.SubstitutionPlanLesson || (lesson is Lesson.TimetableLesson && (lesson.weekType == null || week?.weekType == lesson.weekType))
+                    }.toSet() }
         }
     }
 }

@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.job
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteschuleSubject
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleSubject
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.besteschule.BesteSchuleSubject
+import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
 import plus.vplan.app.domain.model.besteschule.api.ApiStudentData
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
@@ -67,6 +67,10 @@ class BesteSchuleSubjectsRepositoryImpl : BesteSchuleSubjectsRepository, KoinCom
 
             shared
         }
+    }
+
+    override fun getAllFromCache(): Flow<List<BesteSchuleSubject>> {
+        return vppDatabase.besteSchuleSubjectDao.getAll().map { it.map { item -> item.toModel() } }
     }
 
     private val getSubjectsHotFlows = mutableMapOf<Int, SharedFlow<Response<List<BesteSchuleSubject>>>>()

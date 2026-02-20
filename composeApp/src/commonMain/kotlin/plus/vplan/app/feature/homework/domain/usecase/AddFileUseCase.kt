@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.File
+import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.FileRepository
@@ -45,7 +45,6 @@ class AddFileUseCase(
                     name = file.name,
                     size = file.getSize() ?: 0L,
                     isOfflineReady = true,
-                    getBitmap = { null },
                     cachedAt = Clock.System.now()
                 )
             )

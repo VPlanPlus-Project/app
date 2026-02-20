@@ -1,10 +1,9 @@
 package plus.vplan.app.feature.search.domain.model
 
-import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
+import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import kotlin.uuid.Uuid
 
 sealed class SearchResult(val type: Type) {
@@ -34,7 +33,9 @@ sealed class SearchResult(val type: Type) {
 
     data class Homework(val homework: PopulatedHomework): SearchResult(Type.Homework)
     data class Assessment(val assessment: PopulatedAssessment): SearchResult(Type.Assessment)
-    data class Grade(val grade: BesteSchuleGrade): SearchResult(Type.Grade)
+    data class Grade(
+        val grade: GradesItem
+    ): SearchResult(Type.Grade)
 
     enum class Type {
         Group, Teacher, Room, Homework, Assessment, Grade

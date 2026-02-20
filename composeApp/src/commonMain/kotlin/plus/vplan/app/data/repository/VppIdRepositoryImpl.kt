@@ -42,11 +42,11 @@ import plus.vplan.app.APP_REDIRECT_URI
 import plus.vplan.app.APP_SECRET
 import plus.vplan.app.captureError
 import plus.vplan.app.currentConfiguration
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbVppId
-import plus.vplan.app.data.source.database.model.database.DbVppIdAccess
-import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
-import plus.vplan.app.data.source.database.model.database.crossovers.DbVppIdGroupCrossover
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbVppId
+import plus.vplan.app.core.database.model.database.DbVppIdAccess
+import plus.vplan.app.core.database.model.database.DbVppIdSchulverwalter
+import plus.vplan.app.core.database.model.database.crossovers.DbVppIdGroupCrossover
 import plus.vplan.app.data.source.network.GenericAuthenticationProvider
 import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.isResponseFromBackend
@@ -55,7 +55,7 @@ import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.domain.cache.CreationReason
+import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication

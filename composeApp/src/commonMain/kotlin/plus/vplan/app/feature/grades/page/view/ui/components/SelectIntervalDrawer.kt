@@ -13,12 +13,11 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.ui.components.SelectContainer
 import plus.vplan.app.ui.components.SelectItem
 import plus.vplan.app.utils.DOT
@@ -26,33 +25,31 @@ import plus.vplan.app.utils.safeBottomPadding
 
 @Composable
 private fun SelectIntervalDrawerContent(
-    intervals: List<BesteSchuleInterval>,
-    selectedInterval: BesteSchuleInterval?,
-    onClickInterval: (BesteSchuleInterval) -> Unit
+    intervals: List<PopulatedInterval>,
+    selectedInterval: PopulatedInterval?,
+    onClickInterval: (PopulatedInterval) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         intervals
-            .groupBy { it.yearId }
+            .groupBy { it.year.id }
             .forEach { (_, intervals) ->
                 SelectContainer {
                     intervals.forEach { interval ->
-                        val includedInterval = interval.includedInterval?.collectAsState(null)?.value
-                        val intervalYear = interval.year.collectAsState(null).value
                         SelectItem(
                             icon = null,
                             title = buildString {
-                                append(interval.name)
-                                if (intervalYear != null) append(" $DOT ${intervalYear.name}")
+                                append(interval.interval.name)
+                                append(" $DOT ${interval.year.name}")
                             },
                             subtitle = buildString {
                                 val parts = mutableListOf<String>()
-                                includedInterval?.let { includedIntervalInstance ->
+                                interval.includedInterval?.let { includedIntervalInstance ->
                                     parts.add("Inklusive ${includedIntervalInstance.name}")
                                 }
-                                (interval.collectionIds.toSet() + includedInterval?.collectionIds.orEmpty()
+                                (interval.interval.collectionIds.toSet() + interval.includedInterval?.collectionIds.orEmpty()
                                     .toSet()).size.let { collectionCount ->
                                     if (collectionCount > 1) parts.add("$collectionCount Leistungserhebungen")
                                     else if (collectionCount == 1) parts.add("eine Leistungserhebung")
@@ -72,9 +69,9 @@ private fun SelectIntervalDrawerContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectIntervalDrawer(
-    intervals: List<BesteSchuleInterval>,
-    selectedInterval: BesteSchuleInterval?,
-    onClickInterval: (BesteSchuleInterval) -> Unit,
+    intervals: List<PopulatedInterval>,
+    selectedInterval: PopulatedInterval?,
+    onClickInterval: (PopulatedInterval) -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(true)

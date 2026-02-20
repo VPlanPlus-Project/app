@@ -1,24 +1,36 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package plus.vplan.app.feature.grades.page.detail.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
+import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
+import plus.vplan.app.domain.model.populated.besteschule.PopulatedCollection
+import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.ProfileRepository
+import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
+import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -33,40 +45,86 @@ class GradeDetailViewModel(
     private val updateGradeUseCase: UpdateGradeUseCase,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
-    private val lockGradesUseCase: LockGradesUseCase
+    private val besteSchuleCollectionsRepository: BesteSchuleCollectionsRepository,
+    private val besteSchuleIntervalsRepository: BesteSchuleIntervalsRepository,
+    private val lockGradesUseCase: LockGradesUseCase,
+    private val intervalPopulator: IntervalPopulator,
+    private val collectionPopulator: CollectionPopulator,
 ) : ViewModel(), KoinComponent {
-    var state by mutableStateOf(GradeDetailState())
-        private set
+    val state: StateFlow<GradeDetailState>
+        field = MutableStateFlow(GradeDetailState())
 
     private val profileRepository by inject<ProfileRepository>()
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
 
     private var mainJob: Job? = null
 
+    init {
+        viewModelScope.launch gradeLock@{
+            getGradeLockStateUseCase().collectLatest { lockState ->
+                state.update { state ->
+                    state.copy(lockState = lockState)
+                }
+            }
+        }
+    }
+
     fun init(gradeId: Int) {
-        state = GradeDetailState()
+        state.update { state ->
+            state.copy(
+                grade = null,
+                gradeCollection = null,
+                gradeInterval = null,
+                gradeUser = null,
+            )
+        }
         mainJob?.cancel()
         mainJob = viewModelScope.launch {
-            combine(
-                getCurrentProfileUseCase(),
-                getGradeLockStateUseCase(),
-                besteSchuleGradesRepository.getGradeFromCache(gradeId)
-            ) { profile, gradeLockState, grade ->
-                if (profile !is Profile.StudentProfile) return@combine null
+            getCurrentProfileUseCase().collectLatest { profile ->
+                if (profile !is Profile.StudentProfile) return@collectLatest
 
-                state.copy(
-                    grade = grade,
-                    gradeUser = profileRepository.getAll()
-                        .first()
-                        .filterIsInstance<Profile.StudentProfile>()
-                        .mapNotNull { it.vppId }
-                        .filter { it.schulverwalterConnection != null }
-                        .firstOrNull { it.schulverwalterConnection?.userId == grade?.schulverwalterUserId },
-                    profile = profile,
-                    lockState = gradeLockState,
-                    initDone = true
-                )
-            }.filterNotNull().collectLatest { state = it }
+                besteSchuleGradesRepository.getGradeFromCache(gradeId)
+                    .collectLatest { grade ->
+                        if (grade == null) return@collectLatest
+
+                        coroutineScope {
+                            profileRepository.getAll()
+                                .first()
+                                .filterIsInstance<Profile.StudentProfile>()
+                                .mapNotNull { it.vppId }
+                                .filter { it.schulverwalterConnection != null }
+                                .firstOrNull { it.schulverwalterConnection?.userId == grade.schulverwalterUserId }
+                                ?.let { user ->
+                                    state.update { state ->
+                                        state.copy(
+                                            grade = grade,
+                                            gradeUser = user,
+                                            initDone = true,
+                                        )
+                                    }
+                                }
+
+                            besteSchuleCollectionsRepository.getFromCache(grade.collectionId)
+                                .filterNotNull()
+                                .flatMapLatest { collectionPopulator.populateSingle(it) }
+                                .collectLatest { collection ->
+                                    state.update { state ->
+                                        state.copy(gradeCollection = collection)
+                                    }
+
+                                    coroutineScope {
+                                        intervalPopulator.populateSingle(collection.interval)
+                                            .onEach { interval ->
+                                                state.update { state ->
+                                                    state.copy(gradeInterval = interval)
+                                                }
+                                            }
+                                            .launchIn(this)
+                                    }
+                                }
+                        }
+                    }
+            }
         }
     }
 
@@ -76,28 +134,38 @@ class GradeDetailViewModel(
                 is GradeDetailEvent.ToggleConsiderForFinalGrade -> {
                     besteSchuleGradesRepository.addGradesToCache(
                         listOf(
-                            state.grade!!.copy(
-                                isSelectedForFinalGrade = !state.grade!!.isSelectedForFinalGrade
+                            state.value.grade!!.copy(
+                                isSelectedForFinalGrade = !state.value.grade!!.isSelectedForFinalGrade
                             )
                         )
                     )
                 }
                 is GradeDetailEvent.Reload -> {
-                    state = state.copy(reloadingState = UnoptimisticTaskState.InProgress)
+                    state.update { state ->
+                        state.copy(reloadingState = UnoptimisticTaskState.InProgress)
+                    }
                     val result = updateGradeUseCase(
-                        gradeId = state.grade!!.id,
-                        schulverwalterAccessToken = state.gradeUser!!.schulverwalterConnection!!.accessToken,
-                        schulverwalterUserId = state.gradeUser!!.schulverwalterConnection!!.userId
+                        gradeId = state.value.grade!!.id,
+                        schulverwalterAccessToken = state.value.gradeUser!!.schulverwalterConnection!!.accessToken,
+                        schulverwalterUserId = state.value.gradeUser!!.schulverwalterConnection!!.userId
                     )
                     when (result) {
                         UpdateResult.SUCCESS -> {
-                            state = state.copy(reloadingState = UnoptimisticTaskState.Success)
+                            state.update { state ->
+                                state.copy(reloadingState = UnoptimisticTaskState.Success)
+                            }
                             viewModelScope.launch {
                                 delay(2000)
-                                if (state.reloadingState == UnoptimisticTaskState.Success) state = state.copy(reloadingState = null)
+                                if (state.value.reloadingState == UnoptimisticTaskState.Success) {
+                                    state.update { state -> state.copy(reloadingState = null) }
+                                }
                             }
                         }
-                        UpdateResult.ERROR -> state = state.copy(reloadingState = UnoptimisticTaskState.Error)
+                        UpdateResult.ERROR -> {
+                            state.update { state ->
+                                state.copy(reloadingState = UnoptimisticTaskState.Error)
+                            }
+                        }
                         else -> Unit
                     }
                 }
@@ -110,6 +178,8 @@ class GradeDetailViewModel(
 
 data class GradeDetailState(
     val grade: BesteSchuleGrade? = null,
+    val gradeCollection: PopulatedCollection? = null,
+    val gradeInterval: PopulatedInterval? = null,
     val gradeUser: VppId.Active? = null,
     val profile: Profile.StudentProfile? = null,
     val initDone: Boolean = false,

@@ -27,7 +27,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
@@ -42,10 +41,10 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.currentConfiguration
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbAssessment
-import plus.vplan.app.data.source.database.model.database.DbProfileAssessmentIndex
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKAssessmentFile
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbAssessment
+import plus.vplan.app.core.database.model.database.DbProfileAssessmentIndex
+import plus.vplan.app.core.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.data.source.network.GenericAuthenticationProvider
 import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.model.IncludedModel
@@ -56,7 +55,6 @@ import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository
-import plus.vplan.app.domain.repository.SubjectInstanceDbDto
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

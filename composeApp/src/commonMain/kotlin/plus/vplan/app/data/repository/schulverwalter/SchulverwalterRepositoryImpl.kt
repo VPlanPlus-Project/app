@@ -7,8 +7,8 @@ import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbVppIdSchulverwalter
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 

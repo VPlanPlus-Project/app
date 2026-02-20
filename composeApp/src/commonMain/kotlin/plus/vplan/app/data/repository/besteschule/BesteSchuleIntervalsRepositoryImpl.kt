@@ -15,11 +15,11 @@ import kotlinx.coroutines.job
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteSchuleInterval
-import plus.vplan.app.data.source.database.model.database.besteschule.DbBesteschuleIntervalUser
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleInterval
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleIntervalUser
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.domain.model.besteschule.api.ApiStudentData
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
@@ -75,7 +75,8 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
     override fun getIntervalFromCache(intervalId: Int): Flow<BesteSchuleInterval?> {
         return cacheFlows.getOrPut(intervalId) {
             val upstreamScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-            val shared = vppDatabase.besteSchuleIntervalDao.getById(intervalId).map { it?.toModel() }
+            val shared = vppDatabase.besteSchuleIntervalDao.getById(intervalId)
+                .map { it?.toModel() }
                 .shareIn(
                     upstreamScope,
                     started = SharingStarted.WhileSubscribed(
@@ -91,6 +92,10 @@ class BesteSchuleIntervalsRepositoryImpl : BesteSchuleIntervalsRepository, KoinC
 
             shared
         }
+    }
+
+    override fun getAllFromCache(): Flow<List<BesteSchuleInterval>> {
+        return vppDatabase.besteSchuleIntervalDao.getAll().map { it.map { it.toModel() } }
     }
 
     private val getIntervalsHotFlows = mutableMapOf<Int, SharedFlow<Response<List<BesteSchuleInterval>>>>()

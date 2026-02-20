@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Day
+import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
@@ -191,7 +191,7 @@ fun SearchResults(
                             results.filterIsInstance<SearchResult.Grade>().forEach { result ->
                                 GradeCard(
                                     grade = result.grade,
-                                    onClick = { onGradeClicked(result.grade.id) }
+                                    onClick = { onGradeClicked(result.grade.grade.grade.id) }
                                 )
                             }
                         }

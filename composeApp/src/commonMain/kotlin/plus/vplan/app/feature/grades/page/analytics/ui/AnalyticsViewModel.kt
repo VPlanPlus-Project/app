@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package plus.vplan.app.feature.grades.page.analytics.ui
 
 import androidx.compose.runtime.getValue
@@ -5,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.collectLatest
@@ -12,6 +15,7 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -21,13 +25,18 @@ import org.koin.core.component.inject
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
-import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
-import plus.vplan.app.domain.model.besteschule.BesteSchuleSubject
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
+import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
+import plus.vplan.app.domain.model.populated.besteschule.PopulatedGrade
+import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
+import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.utils.now
 
 class AnalyticsViewModel(
@@ -38,6 +47,10 @@ class AnalyticsViewModel(
 
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val besteSchuleIntervalsRepository by inject<BesteSchuleIntervalsRepository>()
+    private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
+
+    private val gradesPopulator by inject<GradesPopulator>()
+    private val intervalPopulator by inject<IntervalPopulator>()
 
     private var mainJob: Job? = null
     fun init(vppIdId: Int) {
@@ -64,10 +77,11 @@ class AnalyticsViewModel(
                         )
                             .filterIsInstance<Response.Success<List<BesteSchuleInterval>>>()
                             .map { it.data }
+                            .flatMapLatest { intervalPopulator.populateMultiple(it) }
                             .collectLatest { intervals ->
                                 state = state.copy(
                                     intervals = intervals,
-                                    interval = if (state.intervals.isEmpty()) intervals.firstOrNull { LocalDate.now() in it.from..it.to } else state.interval
+                                    interval = if (state.intervals.isEmpty()) intervals.firstOrNull { LocalDate.now() in it.interval.from..it.interval.to } else state.interval
                                 )
                             }
                     }.let(activeJobs::add)
@@ -80,11 +94,17 @@ class AnalyticsViewModel(
                         )
                             .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
                             .map { it.data }
+                            .flatMapLatest { grades -> gradesPopulator.populateMultiple(grades) }
                             .collectLatest { grades ->
+                                val subjects = besteSchuleSubjectsRepository.getAllFromCache().first()
                                 state = state.copy(
                                     grades = grades,
                                     filteredGrades = emptyList(),
-                                    availableSubjectFilters = grades.map { it.collection.first()!!.subject.first()!! }.distinctBy { subject -> subject.id }.sortedBy { it.shortName },
+                                    availableSubjectFilters = grades
+                                        .map { it.collection.subjectId }
+                                        .distinct()
+                                        .let { subjects.filter { subject -> subject.id in it } }
+                                        .sortedBy { it.shortName },
                                     filteredSubjects = emptyList()
                                 )
                                 updateFiltered()
@@ -111,22 +131,22 @@ class AnalyticsViewModel(
         }
     }
 
-    private suspend fun updateFiltered() {
+    private fun updateFiltered() {
         state = state.copy(filteredGrades = state.grades
             .filter { grade ->
-                state.filteredSubjects.any { subject -> grade.collection.first()!!.subjectId == subject.id } || state.filteredSubjects.isEmpty()
+                state.filteredSubjects.any { subject -> grade.collection.subjectId == subject.id } || state.filteredSubjects.isEmpty()
             }
-            .filter { it.collection.first()!!.intervalId in listOfNotNull(state.interval?.id, state.interval?.includedIntervalId) }
+            .filter { it.collection.intervalId in listOfNotNull(state.interval?.interval?.id, state.interval?.includedInterval?.id) }
         )
     }
 }
 
 data class AnalyticsState(
     val vppId: VppId? = null,
-    val interval: BesteSchuleInterval? = null,
-    val intervals: List<BesteSchuleInterval> = emptyList(),
-    val grades: List<BesteSchuleGrade> = emptyList(),
-    val filteredGrades: List<BesteSchuleGrade> = emptyList(),
+    val interval: PopulatedInterval? = null,
+    val intervals: List<PopulatedInterval> = emptyList(),
+    val grades: List<PopulatedGrade> = emptyList(),
+    val filteredGrades: List<PopulatedGrade> = emptyList(),
 
     val availableSubjectFilters: List<BesteSchuleSubject> = emptyList(),
     val filteredSubjects: List<BesteSchuleSubject> = emptyList(),
@@ -135,5 +155,5 @@ data class AnalyticsState(
 sealed class AnalyticsAction {
     data class ToggleSubjectFilter(val subject: BesteSchuleSubject) : AnalyticsAction()
 
-    data class SetInterval(val interval: BesteSchuleInterval) : AnalyticsAction()
+    data class SetInterval(val interval: PopulatedInterval) : AnalyticsAction()
 }

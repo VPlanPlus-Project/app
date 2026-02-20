@@ -1,17 +1,18 @@
 package plus.vplan.app.feature.grades.domain.usecase
 
-import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
-import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
-import plus.vplan.app.domain.model.besteschule.BesteSchuleSubject
+import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.domain.model.populated.besteschule.PopulatedCollection
+import plus.vplan.app.domain.model.populated.besteschule.PopulatedGrade
+import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 
 class CalculateAverageUseCase {
-    suspend operator fun invoke(grades: List<BesteSchuleGrade>, interval: BesteSchuleInterval, additionalGrades: List<CalculatorGrade> = emptyList()) = invoke(grades.map { CalculatorGrade.ActualGrade(it) } + additionalGrades, interval)
+    suspend operator fun invoke(grades: List<GradesItem>, interval: BesteSchuleInterval, additionalGrades: List<CalculatorGrade> = emptyList()) = invoke(grades.map { CalculatorGrade.ActualGrade(it.grade, it.collection) } + additionalGrades, interval)
 
     suspend operator fun invoke(grades: List<CalculatorGrade>, interval: BesteSchuleInterval): Double {
         val gradesForInterval = grades.filter {
             val intervalForGrade = when (it) {
-                is CalculatorGrade.ActualGrade -> it.grade.collection.first()!!.interval.first()!!
+                is CalculatorGrade.ActualGrade -> it.collection.interval
                 else -> interval
             }
             intervalForGrade.id == interval.id || intervalForGrade.includedIntervalId == interval.id
@@ -28,7 +29,7 @@ class CalculateAverageUseCase {
 
             val categories = gradesForIntervalByType.mapNotNull { (categoryType, gradesForCategory) ->
                 val gradesToConsider = gradesForCategory
-                    .filter { (it is CalculatorGrade.ActualGrade && it.grade.isSelectedForFinalGrade) || it is CalculatorGrade.CustomGrade }
+                    .filter { (it is CalculatorGrade.ActualGrade && it.grade.grade.isSelectedForFinalGrade) || it is CalculatorGrade.CustomGrade }
                     .filter { it.getValue() != null }
                     .mapNotNull { it.getValue() }
 
@@ -74,10 +75,10 @@ sealed class CalculatorGrade {
     abstract suspend fun getType(): String
     abstract fun getValue(): Int?
 
-    data class ActualGrade(val grade: BesteSchuleGrade): CalculatorGrade() {
-        override suspend fun getSubject(): BesteSchuleSubject = grade.collection.first()!!.subject.first()!!
-        override suspend fun getType(): String = grade.collection.first()!!.type
-        override fun getValue(): Int? = grade.numericValue
+    data class ActualGrade(val grade: PopulatedGrade, val collection: PopulatedCollection): CalculatorGrade() {
+        override suspend fun getSubject(): BesteSchuleSubject = collection.subject
+        override suspend fun getType(): String = grade.collection.type
+        override fun getValue(): Int? = grade.grade.numericValue
     }
     data class CustomGrade(val grade: Int, val subject: BesteSchuleSubject, val type: String): CalculatorGrade() {
         override suspend fun getSubject(): BesteSchuleSubject = subject

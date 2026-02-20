@@ -1,6 +1,6 @@
 package plus.vplan.app.domain.repository
 
-import plus.vplan.app.domain.cache.CreationReason
+import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School

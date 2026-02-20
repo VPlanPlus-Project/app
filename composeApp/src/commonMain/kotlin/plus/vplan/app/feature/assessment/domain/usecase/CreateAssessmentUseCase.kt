@@ -9,7 +9,7 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.domain.model.File
+import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.repository.AssessmentRepository
@@ -106,7 +106,6 @@ class CreateAssessmentUseCase(
                 id = file.id,
                 isOfflineReady = true,
                 size = file.size,
-                getBitmap = { null },
                 cachedAt = Clock.System.now()
             ))
         }

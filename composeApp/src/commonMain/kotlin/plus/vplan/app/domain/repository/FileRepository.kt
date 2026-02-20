@@ -5,7 +5,7 @@ package plus.vplan.app.domain.repository
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.data.repository.FileDownloadProgress
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.File
+import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.ui.common.AttachedFile

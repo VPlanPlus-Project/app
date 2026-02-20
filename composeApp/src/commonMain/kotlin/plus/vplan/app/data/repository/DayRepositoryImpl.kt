@@ -3,10 +3,10 @@ package plus.vplan.app.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbDay
-import plus.vplan.app.data.source.database.model.database.DbHoliday
-import plus.vplan.app.domain.model.Day
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbDay
+import plus.vplan.app.core.database.model.database.DbHoliday
+import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.domain.repository.DayRepository
 import kotlin.uuid.Uuid

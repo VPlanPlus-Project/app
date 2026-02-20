@@ -8,13 +8,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.domain.model.File
+import plus.vplan.app.core.model.File
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
-import plus.vplan.app.utils.getBitmapFromBytes
 
 class FileSource(
     private val fileRepository: FileRepository,
@@ -25,21 +23,7 @@ class FileSource(
 
     fun getById(id: Int): Flow<CacheState<File>> {
         return flows.getOrPut(id) {
-            val fileFlow = fileRepository.getById(id, forceReload = false).map {
-                if (it is CacheState.Done<File>) {
-                    it.copy(
-                        data = it.data.copy(
-                            getBitmap = {
-                                bitmapCache[it.data.id] ?: localFileRepository.getFile("./files/${it.data.id}")?.let { bytes ->
-                                    val bitmap = getBitmapFromBytes(bytes)
-                                    bitmapCache[it.data.id] = bitmap
-                                    bitmap
-                                }
-                            }
-                        )
-                    )
-                } else it
-            }
+            val fileFlow = fileRepository.getById(id, forceReload = false)
             val flow = MutableSharedFlow<CacheState<File>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             CoroutineScope(Dispatchers.IO).launch {
                 fileFlow.collectLatest { flow.tryEmit(it) }

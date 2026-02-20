@@ -8,7 +8,7 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.Day
+import plus.vplan.app.core.model.Day
 
 class GetDayUseCase {
     operator fun invoke(profile: Profile, date: LocalDate): Flow<Day> {

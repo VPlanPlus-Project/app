@@ -4,11 +4,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbGroupProfile
-import plus.vplan.app.data.source.database.model.database.DbProfile
-import plus.vplan.app.data.source.database.model.database.DbTeacherProfile
-import plus.vplan.app.data.source.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbGroupProfile
+import plus.vplan.app.core.database.model.database.DbProfile
+import plus.vplan.app.core.database.model.database.DbTeacherProfile
+import plus.vplan.app.core.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance

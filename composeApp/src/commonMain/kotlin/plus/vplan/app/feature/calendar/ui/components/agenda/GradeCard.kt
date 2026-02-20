@@ -14,12 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,8 +31,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
-import plus.vplan.app.domain.model.besteschule.BesteSchuleGrade
-import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.ui.theme.CustomColor
@@ -45,15 +43,10 @@ import plus.vplan.app.utils.toDp
 
 @Composable
 fun GradeCard(
-    grade: BesteSchuleGrade,
+    grade: GradesItem,
     onClick: () -> Unit
 ) {
     val localDensity = LocalDensity.current
-
-    val collection = grade.collection.collectAsState(null).value ?: return
-    val subject = collection.subject.collectAsState(null).value ?: return
-    val interval = collection.interval.collectAsState(null).value ?: return
-    val teacher = collection.teacher.collectAsState(null).value
 
     var boxHeight by remember { mutableStateOf(0.dp) }
     Box(
@@ -70,7 +63,7 @@ fun GradeCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background(subject.shortName.subjectColor().getGroup().color)
+                .background(grade.collection.subject.shortName.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -82,37 +75,38 @@ fun GradeCard(
             ) {
                 SubjectIcon(
                     modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
-                    subject = subject.shortName
+                    subject = grade.collection.subject.shortName
                 )
                 Column(Modifier.weight(1f, true)) {
                     Text(
                         text = buildString {
                             append("Note in ")
-                            append(subject.shortName)
+                            append(grade.collection.subject.shortName)
                         },
                         style = MaterialTheme.typography.titleLarge
                     )
                     Text(
-                        text = collection.name,
+                        text = grade.grade.collection.name,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
 
                 val red = colors[CustomColor.Red]!!.getGroup()
                 val green = colors[CustomColor.Green]!!.getGroup()
+                val value = grade.grade.grade.value
                 val backgroundColor by animateColorAsState(
-                    if (!grade.isSelectedForFinalGrade || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.Gray
-                    else when (interval.type) {
-                        is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
-                        else -> blendColor(blendColor(green.container, red.container, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                    if (!grade.grade.grade.isSelectedForFinalGrade || value == null || value.startsWith('+') || value.startsWith('-')) Color.Gray
+                    else when (grade.collection.interval.type) {
+                        is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (grade.grade.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                        else -> blendColor(blendColor(green.container, red.container, ((grade.grade.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                     }
                 )
 
                 val textColor by animateColorAsState(
-                    if (!grade.isSelectedForFinalGrade || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.White
-                    else when (interval.type) {
-                        is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
-                        else -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                    if (!grade.grade.grade.isSelectedForFinalGrade || value == null || value.startsWith('+') || value.startsWith('-')) Color.White
+                    else when (grade.collection.interval.type) {
+                        is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.grade.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                        else -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.grade.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                     }
                 )
 
@@ -128,10 +122,10 @@ fun GradeCard(
                 ) {
                     Text(
                         text = buildString {
-                            if (grade.isOptional) append("(")
-                            if (grade.value != null) append(grade.value)
+                            if (grade.grade.grade.isOptional) append("(")
+                            if (grade.grade.grade.value != null) append(grade.grade.grade.value)
                             else append("-")
-                            if (grade.isOptional) append(")")
+                            if (grade.grade.grade.isOptional) append(")")
                         },
                         style = MaterialTheme.typography.bodyLarge,
                         color = textColor
@@ -146,16 +140,15 @@ fun GradeCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                if (teacher == null) CircularProgressIndicator(Modifier.size(MaterialTheme.typography.labelMedium.lineHeight.toDp()))
-                else Text(
+                Text(
                     text = buildString {
-                        append("${teacher.forename} ${teacher.surname}")
+                        append("${grade.collection.teacher.forename} ${grade.collection.teacher.surname}")
                     },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.outline
                 )
                 Text(
-                    text = grade.givenAt.format(regularDateFormat),
+                    text = grade.grade.grade.givenAt.format(regularDateFormat),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.outline
                 )

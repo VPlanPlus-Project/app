@@ -3,8 +3,8 @@ package plus.vplan.app.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDateTime
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.model.database.DbFcmLog
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbFcmLog
 import plus.vplan.app.domain.repository.FcmRepository
 
 class FcmRepositoryImpl(

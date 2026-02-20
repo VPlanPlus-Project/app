@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.assessment.domain.usecase
 
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.domain.model.File
+import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.FileRepository

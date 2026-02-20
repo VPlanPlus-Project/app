@@ -25,7 +25,7 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.File
+import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedHomework

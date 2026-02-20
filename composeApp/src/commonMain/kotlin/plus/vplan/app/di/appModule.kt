@@ -1,6 +1,5 @@
 package plus.vplan.app.di
 
-import androidx.room.RoomDatabase
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpRequestRetry
@@ -24,6 +23,7 @@ import org.koin.dsl.module
 import plus.vplan.app.App
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
+import plus.vplan.app.core.database.di.databaseModule
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
 import plus.vplan.app.data.repository.DayRepositoryImpl
@@ -53,7 +53,6 @@ import plus.vplan.app.data.repository.besteschule.BesteSchuleTeachersRepositoryI
 import plus.vplan.app.data.repository.besteschule.BesteSchuleYearsRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.data.service.SchoolServiceImpl
-import plus.vplan.app.data.source.database.VppDatabase
 import plus.vplan.app.data.source.network.GenericAuthenticationProvider
 import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
 import plus.vplan.app.data.source.network.VppIdAuthenticationProvider
@@ -124,10 +123,6 @@ import plus.vplan.app.feature.system.di.systemModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
 
 expect val platformModule: Module
-
-fun RoomDatabase.Builder<VppDatabase>.config(): RoomDatabase.Builder<VppDatabase> = this
-    .addMigrations(VppDatabase.Migration8to9)
-    .addMigrations(VppDatabase.Migration9to10)
 
 val appModule = module(createdAtStart = true) {
     single<HttpClient> {
@@ -218,7 +213,7 @@ val appModule = module(createdAtStart = true) {
 fun initKoin(configuration: KoinAppDeclaration? = null) {
     startKoin {
         configuration?.invoke(this)
-        modules(platformModule)
+        modules(platformModule, databaseModule)
         modules(domainModule)
         modules(
             appModule,

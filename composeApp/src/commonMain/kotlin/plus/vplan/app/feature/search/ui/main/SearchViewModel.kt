@@ -20,7 +20,7 @@ import plus.vplan.app.App
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.domain.model.Day
+import plus.vplan.app.core.model.Day
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedAssessment

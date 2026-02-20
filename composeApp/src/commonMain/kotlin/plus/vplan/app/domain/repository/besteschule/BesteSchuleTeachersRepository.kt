@@ -2,7 +2,7 @@ package plus.vplan.app.domain.repository.besteschule
 
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.model.besteschule.BesteSchuleTeacher
+import plus.vplan.app.core.model.besteschule.BesteSchuleTeacher
 import plus.vplan.app.domain.model.besteschule.api.ApiStudentGradesData
 import plus.vplan.app.domain.repository.base.ResponsePreference
 
