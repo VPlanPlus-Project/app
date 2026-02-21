@@ -10,6 +10,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
+import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
@@ -24,7 +25,6 @@ import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.atStartOfDay
@@ -40,7 +40,7 @@ class SyncGradesUseCase(
     private val besteSchuleCollectionsRepository by inject<BesteSchuleCollectionsRepository>()
     private val besteSchuleYearsRepository by inject<YearsRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
-    private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
+    private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val besteSchuleApiRepository by inject<BesteSchuleApiRepository>()
 
@@ -133,16 +133,6 @@ class SyncGradesUseCase(
                     return@forEachUser
                 }
 
-                val subjectError = besteSchuleSubjectsRepository.getSubjects(
-                    responsePreference = ResponsePreference.Fresh,
-                    contextBesteschuleAccessToken = schulverwalterAccessToken,
-                    contextBesteschuleUserId = schulverwalterUserId
-                ).first() as? Response.Error
-                if (subjectError != null) {
-                    Logger.e { "Failed to get subjects from beste.schule: $subjectError" }
-                    return@forEachUser
-                }
-
                 val gradesError = besteSchuleGradesRepository.getGrades(
                     responsePreference = ResponsePreference.Fresh,
                     contextBesteschuleAccessToken = schulverwalterAccessToken,
@@ -183,7 +173,7 @@ class SyncGradesUseCase(
                     .mapNotNull { it.vppId }
                     .firstOrNull { it.schulverwalterConnection?.userId == newGrade.grade.schulverwalterUserId }
 
-                val subject = besteSchuleSubjectsRepository.getSubjectFromCache(newGrade.collection.subjectId).first()
+                val subject = besteSchuleSubjectsRepository.getById(newGrade.collection.subjectId).first()
 
                 platformNotificationRepository.sendNotification(
                     title = "Neue Note",

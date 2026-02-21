@@ -23,6 +23,7 @@ import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
+import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
@@ -35,7 +36,6 @@ import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.utils.now
 
 class AnalyticsViewModel(
@@ -46,7 +46,7 @@ class AnalyticsViewModel(
 
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
-    private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
+    private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
 
     private val gradesPopulator by inject<GradesPopulator>()
     private val intervalPopulator by inject<IntervalPopulator>()
@@ -89,7 +89,7 @@ class AnalyticsViewModel(
                             .map { it.data }
                             .flatMapLatest { grades -> gradesPopulator.populateMultiple(grades) }
                             .collectLatest { grades ->
-                                val subjects = besteSchuleSubjectsRepository.getAllFromCache().first()
+                                val subjects = besteSchuleSubjectsRepository.getAll().first()
                                 state = state.copy(
                                     grades = grades,
                                     filteredGrades = emptyList(),

@@ -25,6 +25,8 @@ import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepositoryImpl
+import plus.vplan.app.core.data.besteschule.SubjectsRepository
+import plus.vplan.app.core.data.besteschule.SubjectsRepositoryImpl
 import plus.vplan.app.core.data.besteschule.TeachersRepository
 import plus.vplan.app.core.data.besteschule.TeachersRepositoryImpl
 import plus.vplan.app.core.data.besteschule.YearsRepository
@@ -53,7 +55,6 @@ import plus.vplan.app.data.repository.WeekRepositoryImpl
 import plus.vplan.app.data.repository.besteschule.BesteSchuleApiRepositoryImpl
 import plus.vplan.app.data.repository.besteschule.BesteSchuleCollectionsRepositoryImpl
 import plus.vplan.app.data.repository.besteschule.BesteSchuleGradesRepositoryImpl
-import plus.vplan.app.data.repository.besteschule.BesteSchuleSubjectsRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.data.service.SchoolServiceImpl
 import plus.vplan.app.data.source.network.GenericAuthenticationProvider
@@ -83,7 +84,6 @@ import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.domain.source.AssessmentSource
@@ -196,6 +196,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::YearsRepositoryImpl).bind<YearsRepository>()
     singleOf(::IntervalsRepositoryImpl).bind<IntervalsRepository>()
     singleOf(::TeachersRepositoryImpl).bind<TeachersRepository>()
+    singleOf(::SubjectsRepositoryImpl).bind<SubjectsRepository>()
 
     singleOf(::SchoolAuthenticationProvider)
     singleOf(::VppIdAuthenticationProvider)
@@ -223,7 +224,6 @@ val appModule = module(createdAtStart = true) {
     singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
 
     singleOf(::BesteSchuleApiRepositoryImpl) bind BesteSchuleApiRepository::class
-    singleOf(::BesteSchuleSubjectsRepositoryImpl) bind BesteSchuleSubjectsRepository::class
     singleOf(::BesteSchuleCollectionsRepositoryImpl) bind BesteSchuleCollectionsRepository::class
     singleOf(::BesteSchuleGradesRepositoryImpl) bind BesteSchuleGradesRepository::class
 

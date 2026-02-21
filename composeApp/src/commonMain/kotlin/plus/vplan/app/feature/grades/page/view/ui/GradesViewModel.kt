@@ -23,6 +23,7 @@ import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
+import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
@@ -36,7 +37,6 @@ import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculatorGrade
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -62,7 +62,7 @@ class GradesViewModel(
 
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
-    private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
+    private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
 
     private var updateFullAverageJob: Job? = null
     private val updateAverageForSubjectJobs = mutableMapOf<Int, Job>()
@@ -80,7 +80,7 @@ class GradesViewModel(
             }
             .groupBy { grade -> grade.collection.subjectId }
             .map { (subjectId, gradesForSubject) ->
-                val subject = besteSchuleSubjectsRepository.getSubjectFromCache(subjectId).first()!!
+                val subject = besteSchuleSubjectsRepository.getById(subjectId).first()!!
                 val calculationRule = null // fixme subject.finalGrade?.first()?.calculationRule
                 Subject(
                     id = subjectId,
