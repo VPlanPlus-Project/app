@@ -6,6 +6,7 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -34,6 +35,8 @@ class YearApiImpl(
 
             if (response.status == HttpStatusCode.NotFound) return null
 
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+
             return response.body< ResponseDataWrapper<YearApiResponse>>().data.toDto()
         }
 
@@ -57,6 +60,8 @@ class YearApiImpl(
             if (response.status == HttpStatusCode.Unauthorized || response.status == HttpStatusCode.Forbidden) {
                 continue
             }
+
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
 
             items.addAll(response.body< ResponseDataWrapper<List<YearApiResponse>>>().data.map { it.toDto() })
         }
