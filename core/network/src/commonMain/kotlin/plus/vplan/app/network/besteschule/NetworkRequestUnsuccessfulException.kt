@@ -9,6 +9,11 @@ class NetworkRequestUnsuccessfulException(response: HttpResponse): RuntimeExcept
     appendLine("A request failed.")
     appendLine("To: ${response.request.url}")
     appendLine("Status: ${response.status}")
+    appendLine("Method: ${response.request.method}")
+    appendLine("Response-Headers:")
+    response.headers.forEach { key, value ->
+        appendLine("- $key ${value.joinToString()}")
+    }
     runBlocking {
         appendLine("Body: ${response.bodyAsText()}")
     }

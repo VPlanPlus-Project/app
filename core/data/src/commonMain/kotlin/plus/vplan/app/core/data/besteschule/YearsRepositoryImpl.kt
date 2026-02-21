@@ -30,7 +30,7 @@ class YearsRepositoryImpl(
 
     override fun getAll(forceRefresh: Boolean): Flow<List<BesteSchuleYear>> {
         return besteschuleYearDao.getAll().map { items ->
-            if (items.isNotEmpty() || forceRefresh) {
+            if (items.isEmpty() || forceRefresh) {
                 val apiItems = yearApi.getAll().map { it.toEntity() }
                 besteschuleYearDao.upsert(apiItems)
                 items.map { it.toModel() }

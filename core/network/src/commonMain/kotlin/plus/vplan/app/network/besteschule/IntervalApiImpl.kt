@@ -15,7 +15,7 @@ import plus.vplan.app.core.database.dao.VppIdDao
 class IntervalApiImpl(
     private val httpClient: HttpClient,
     private val vppIdDao: VppIdDao,
-): IntervalApi {
+) : IntervalApi {
     override suspend fun getById(id: Int): IntervalDto? {
         val accesses = vppIdDao.getSchulverwalterAccess().first()
 
@@ -36,7 +36,7 @@ class IntervalApiImpl(
             if (response.status == HttpStatusCode.NotFound) return null
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
 
-            return response.body<ResponseDataWrapper<IntervalApiResponse>>().data.toDto()
+            return response.body<ResponseDataWrapper<ApiIntervalResponse>>().data.toDto()
         }
 
         throw Exception("No valid access token found")
@@ -47,11 +47,17 @@ class IntervalApiImpl(
         val items = mutableListOf<IntervalDto>()
 
         for (access in accesses) {
+            /**
+            Using the students endpoint instead of the intervals endpoint to only
+            get intervals that are relevant for the user. This endpoint however only returns
+            intervals that are connected to the selected year.
+             */
             val response = httpClient.get {
                 url {
                     protocol = URLProtocol.HTTPS
                     host = "beste.schule"
-                    pathSegments = listOf("api", "intervals")
+                    pathSegments = listOf("api", "students")
+                    parameters.append("include", "intervals")
                 }
                 bearerAuth(access.schulverwalterAccessToken)
             }
@@ -62,7 +68,9 @@ class IntervalApiImpl(
 
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
 
-            items.addAll(response.body<ResponseDataWrapper<List<IntervalApiResponse>>>().data.map { it.toDto() })
+            response.body<ResponseDataWrapper<List<ApiStudentsResponseInterval>>>().data
+                .flatMap { it.intervals.map { intervalResponse -> intervalResponse.toDto() } }
+                .let(items::addAll)
         }
 
         return items.distinctBy { it.id }
@@ -70,7 +78,12 @@ class IntervalApiImpl(
 }
 
 @Serializable
-data class IntervalApiResponse(
+private data class ApiStudentsResponseInterval(
+    @SerialName("intervals") val intervals: List<ApiIntervalResponse>
+)
+
+@Serializable
+private data class ApiIntervalResponse(
     @SerialName("id") val id: Int,
     @SerialName("name") val name: String,
     @SerialName("type") val type: String,

@@ -102,10 +102,6 @@ class SyncGradesUseCase(
             .getAll(forceRefresh = true)
             .first()
 
-        besteSchuleIntervalsRepository
-            .getAll(forceRefresh = true)
-            .first()
-
         vppIds.forEach forEachUser@{ user ->
             val schulverwalterUserId = user.schulverwalterConnection!!.userId
             val schulverwalterAccessToken = user.schulverwalterConnection!!.accessToken
@@ -122,6 +118,10 @@ class SyncGradesUseCase(
                     Logger.e { "Failed to change year in beste.schule: $yearChangeError" }
                     return@forEachUser
                 }
+
+                besteSchuleIntervalsRepository
+                    .getAll(forceRefresh = true)
+                    .first()
 
                 val collectionsError = besteSchuleCollectionsRepository.getCollections(
                     responsePreference = ResponsePreference.Fresh,
