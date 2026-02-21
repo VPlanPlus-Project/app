@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapLatest
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.data.besteschule.IntervalRepository
+import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.model.besteschule.BesteSchuleCollection
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
@@ -25,7 +25,7 @@ data class PopulatedGrade(
 
 class GradesPopulator : KoinComponent {
 
-    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleCollectionsRepository by inject<BesteSchuleCollectionsRepository>()
 
     fun populateMultiple(grades: List<BesteSchuleGrade>): Flow<List<PopulatedGrade>> {

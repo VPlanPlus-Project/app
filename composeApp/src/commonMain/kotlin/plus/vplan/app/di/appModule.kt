@@ -23,8 +23,8 @@ import org.koin.dsl.module
 import plus.vplan.app.App
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
-import plus.vplan.app.core.data.besteschule.IntervalRepository
-import plus.vplan.app.core.data.besteschule.IntervalRepositoryImpl
+import plus.vplan.app.core.data.besteschule.IntervalsRepository
+import plus.vplan.app.core.data.besteschule.IntervalsRepositoryImpl
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepositoryImpl
 import plus.vplan.app.core.database.di.databaseModule
@@ -177,7 +177,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::YearApiImpl).bind<YearApi>()
     singleOf(::IntervalApiImpl).bind<IntervalApi>()
     singleOf(::YearsRepositoryImpl).bind<YearsRepository>()
-    singleOf(::IntervalRepositoryImpl).bind<IntervalRepository>()
+    singleOf(::IntervalsRepositoryImpl).bind<IntervalsRepository>()
 
     singleOf(::SchoolAuthenticationProvider)
     singleOf(::VppIdAuthenticationProvider)

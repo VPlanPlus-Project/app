@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.data.besteschule.IntervalRepository
+import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
@@ -51,7 +51,7 @@ class ProfileViewModel(
         private set
 
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
-    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
 
     private val gradesPopulator by inject<GradesPopulator>()
     private val collectionPopulator by inject<CollectionPopulator>()

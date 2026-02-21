@@ -11,12 +11,11 @@ import plus.vplan.app.network.besteschule.IntervalApi
 import plus.vplan.app.network.besteschule.IntervalDto
 import kotlin.time.Clock
 
-class IntervalRepositoryImpl(
+class IntervalsRepositoryImpl(
     private val yearsRepository: YearsRepository,
     private val intervalApi: IntervalApi,
     private val besteschuleIntervalDao: BesteschuleIntervalDao,
-
-    ) : IntervalRepository {
+) : IntervalsRepository {
     override fun getById(
         id: Int,
         forceRefresh: Boolean

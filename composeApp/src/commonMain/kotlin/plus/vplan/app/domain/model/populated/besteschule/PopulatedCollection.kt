@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.data.besteschule.IntervalRepository
+import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.model.besteschule.BesteSchuleCollection
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
@@ -22,7 +22,7 @@ data class PopulatedCollection(
 
 class CollectionPopulator: KoinComponent {
 
-    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
     private val besteSchuleTeachersRepository by inject<BesteSchuleTeachersRepository>()
 

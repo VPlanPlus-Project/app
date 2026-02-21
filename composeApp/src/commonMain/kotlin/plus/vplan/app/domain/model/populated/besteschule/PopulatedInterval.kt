@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.data.besteschule.IntervalRepository
+import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.model.besteschule.BesteSchuleYear
@@ -20,7 +20,7 @@ data class PopulatedInterval(
 class IntervalPopulator: KoinComponent {
 
     private val besteSchuleYearsRepository by inject<YearsRepository>()
-    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
 
     fun populateMultiple(intervals: List<BesteSchuleInterval>): Flow<List<PopulatedInterval>> {
         val years = besteSchuleYearsRepository.getAll()

@@ -9,7 +9,7 @@ import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.StartTaskJson
-import plus.vplan.app.core.data.besteschule.IntervalRepository
+import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
@@ -41,7 +41,7 @@ class SyncGradesUseCase(
     private val besteSchuleTeachersRepository by inject<BesteSchuleTeachersRepository>()
     private val besteSchuleCollectionsRepository by inject<BesteSchuleCollectionsRepository>()
     private val besteSchuleYearsRepository by inject<YearsRepository>()
-    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val besteSchuleApiRepository by inject<BesteSchuleApiRepository>()

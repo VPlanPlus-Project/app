@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.data.besteschule.IntervalRepository
+import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
@@ -60,7 +60,7 @@ class GradesViewModel(
     private val gradeState = MutableStateFlow(GradesState())
     val state = gradeState.asStateFlow()
 
-    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
 
