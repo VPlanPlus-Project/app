@@ -125,6 +125,8 @@ import plus.vplan.app.network.besteschule.IntervalApi
 import plus.vplan.app.network.besteschule.IntervalApiImpl
 import plus.vplan.app.network.besteschule.YearApi
 import plus.vplan.app.network.besteschule.YearApiImpl
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 expect val platformModule: Module
 
@@ -147,6 +149,21 @@ val appModule = module(createdAtStart = true) {
                 retryOnException(2, retryOnTimeout = true)
 
                 retryIf { request, response ->
+                    val isRequestToBesteSchule = request.url.host == "beste.schule"
+
+                    if (isRequestToBesteSchule && response.status == HttpStatusCode.TooManyRequests) {
+                        appLogger.w { "Too many requests to beste.schule" }
+                        val rateLimitReset = response.headers["x-ratelimit-reset"]?.toLongOrNull()
+                            ?: return@retryIf false
+
+                        val rateLimitResetTimestamp = Instant.fromEpochSeconds(rateLimitReset)
+                        val now = Clock.System.now()
+                        if (now > rateLimitResetTimestamp) return@retryIf false
+
+                        delayMillis { (rateLimitResetTimestamp - now).inWholeMilliseconds }
+                        return@retryIf true
+                    }
+
                     val isResponseFromVPPServer = response.headers["X-Backend-Family"] == "vpp.ID"
                     val isResponseSuccess = response.status.isSuccess()
                     if (isResponseFromVPPServer && response.status == HttpStatusCode.InternalServerError) {
