@@ -25,7 +25,6 @@ import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleTeachersRepository
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.atStartOfDay
@@ -38,7 +37,6 @@ class SyncGradesUseCase(
     private val schulverwalterRepository: SchulverwalterRepository,
     private val vppIdRepository: VppIdRepository
 ): KoinComponent {
-    private val besteSchuleTeachersRepository by inject<BesteSchuleTeachersRepository>()
     private val besteSchuleCollectionsRepository by inject<BesteSchuleCollectionsRepository>()
     private val besteSchuleYearsRepository by inject<YearsRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
@@ -122,16 +120,6 @@ class SyncGradesUseCase(
 
                 if (yearChangeError != null) {
                     Logger.e { "Failed to change year in beste.schule: $yearChangeError" }
-                    return@forEachUser
-                }
-
-                val teacherError = besteSchuleTeachersRepository
-                    .getTeachers(
-                        responsePreference = ResponsePreference.Fresh,
-                        contextBesteschuleAccessToken = schulverwalterAccessToken,
-                    ).first() as? Response.Error
-                if (teacherError != null) {
-                    Logger.e { "Failed to get teachers from beste.schule: $teacherError" }
                     return@forEachUser
                 }
 
