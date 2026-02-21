@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.besteschule.CollectionsRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
@@ -28,7 +29,6 @@ import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedCollection
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.ProfileRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
@@ -44,7 +44,7 @@ class GradeDetailViewModel(
     private val updateGradeUseCase: UpdateGradeUseCase,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
-    private val besteSchuleCollectionsRepository: BesteSchuleCollectionsRepository,
+    private val besteSchuleCollectionsRepository: CollectionsRepository,
     private val lockGradesUseCase: LockGradesUseCase,
     private val intervalPopulator: IntervalPopulator,
     private val collectionPopulator: CollectionPopulator,
@@ -102,7 +102,7 @@ class GradeDetailViewModel(
                                     }
                                 }
 
-                            besteSchuleCollectionsRepository.getFromCache(grade.collectionId)
+                            besteSchuleCollectionsRepository.getById(grade.collectionId)
                                 .filterNotNull()
                                 .flatMapLatest { collectionPopulator.populateSingle(it) }
                                 .collectLatest { collection ->

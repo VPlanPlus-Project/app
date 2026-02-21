@@ -24,7 +24,7 @@ class IntervalApiImpl(
                 url {
                     protocol = URLProtocol.HTTPS
                     host = "beste.schule"
-                    pathSegments = listOf("api", "intervals", id.toString())
+                    pathSegments = listOf("api", "intervals")
                 }
                 bearerAuth(access.schulverwalterAccessToken)
             }
@@ -36,7 +36,9 @@ class IntervalApiImpl(
             if (response.status == HttpStatusCode.NotFound) return null
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
 
-            return response.body<ResponseDataWrapper<ApiIntervalResponse>>().data.toDto()
+            return response.body<ResponseDataWrapper<List<ApiIntervalResponse>>>().data
+                .first { it.id == id }
+                .toDto()
         }
 
         throw Exception("No valid access token found")
@@ -78,12 +80,12 @@ class IntervalApiImpl(
 }
 
 @Serializable
-private data class ApiStudentsResponseInterval(
+internal data class ApiStudentsResponseInterval(
     @SerialName("intervals") val intervals: List<ApiIntervalResponse>
 )
 
 @Serializable
-private data class ApiIntervalResponse(
+internal data class ApiIntervalResponse(
     @SerialName("id") val id: Int,
     @SerialName("name") val name: String,
     @SerialName("type") val type: String,

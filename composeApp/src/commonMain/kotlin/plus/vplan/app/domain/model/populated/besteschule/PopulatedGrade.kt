@@ -11,11 +11,11 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapLatest
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.besteschule.CollectionsRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.model.besteschule.BesteSchuleCollection
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 
 data class PopulatedGrade(
     val grade: BesteSchuleGrade,
@@ -26,11 +26,11 @@ data class PopulatedGrade(
 class GradesPopulator : KoinComponent {
 
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
-    private val besteSchuleCollectionsRepository by inject<BesteSchuleCollectionsRepository>()
+    private val besteSchuleCollectionsRepository by inject<CollectionsRepository>()
 
     fun populateMultiple(grades: List<BesteSchuleGrade>): Flow<List<PopulatedGrade>> {
         if (grades.isEmpty()) return flowOf(emptyList())
-        val collections = besteSchuleCollectionsRepository.getAllFromCache()
+        val collections = besteSchuleCollectionsRepository.getAll()
         val intervals = besteSchuleIntervalsRepository.getAll()
 
         return combine(collections, intervals) { collections, intervals ->
@@ -48,7 +48,7 @@ class GradesPopulator : KoinComponent {
 
     fun populateSingle(grade: BesteSchuleGrade): Flow<PopulatedGrade> {
         val collection =
-            besteSchuleCollectionsRepository.getFromCache(grade.collectionId).filterNotNull()
+            besteSchuleCollectionsRepository.getById(grade.collectionId).filterNotNull()
 
         return collection.flatMapLatest { collection ->
             besteSchuleIntervalsRepository

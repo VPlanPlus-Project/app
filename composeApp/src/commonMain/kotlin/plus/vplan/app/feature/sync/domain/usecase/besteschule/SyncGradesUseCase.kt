@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.core.data.besteschule.CollectionsRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepository
@@ -23,7 +24,6 @@ import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -37,7 +37,7 @@ class SyncGradesUseCase(
     private val schulverwalterRepository: SchulverwalterRepository,
     private val vppIdRepository: VppIdRepository
 ): KoinComponent {
-    private val besteSchuleCollectionsRepository by inject<BesteSchuleCollectionsRepository>()
+    private val besteSchuleCollectionsRepository by inject<CollectionsRepository>()
     private val besteSchuleYearsRepository by inject<YearsRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
@@ -123,15 +123,9 @@ class SyncGradesUseCase(
                     .getAll(forceRefresh = true)
                     .first()
 
-                val collectionsError = besteSchuleCollectionsRepository.getCollections(
-                    responsePreference = ResponsePreference.Fresh,
-                    contextBesteschuleAccessToken = schulverwalterAccessToken,
-                ).first() as? Response.Error
-
-                if (collectionsError != null) {
-                    Logger.e { "Failed to get collections from beste.schule: $collectionsError" }
-                    return@forEachUser
-                }
+                besteSchuleCollectionsRepository
+                    .getAll(forceRefresh = true)
+                    .first()
 
                 val gradesError = besteSchuleGradesRepository.getGrades(
                     responsePreference = ResponsePreference.Fresh,
