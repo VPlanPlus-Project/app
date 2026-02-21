@@ -22,12 +22,12 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.besteschule.IntervalRepository
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
-import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedGrade
@@ -35,7 +35,6 @@ import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.utils.now
 
@@ -46,7 +45,7 @@ class AnalyticsViewModel(
         private set
 
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
-    private val besteSchuleIntervalsRepository by inject<BesteSchuleIntervalsRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
     private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
 
     private val gradesPopulator by inject<GradesPopulator>()
@@ -70,13 +69,7 @@ class AnalyticsViewModel(
                 }
                 .collectLatest { vppId ->
                     launch {
-                        besteSchuleIntervalsRepository.getIntervals(
-                            responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId
-                        )
-                            .filterIsInstance<Response.Success<List<BesteSchuleInterval>>>()
-                            .map { it.data }
+                        besteSchuleIntervalsRepository.getAll()
                             .flatMapLatest { intervalPopulator.populateMultiple(it) }
                             .collectLatest { intervals ->
                                 state = state.copy(

@@ -11,11 +11,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.database.dao.VppIdDao
 
-class YearApiImpl(
+class IntervalApiImpl(
     private val httpClient: HttpClient,
-    private val vppIdDao: VppIdDao
-): YearApi {
-    override suspend fun getById(id: Int): YearDto? {
+    private val vppIdDao: VppIdDao,
+): IntervalApi {
+    override suspend fun getById(id: Int): IntervalDto? {
         val accesses = vppIdDao.getSchulverwalterAccess().first()
 
         for (access in accesses) {
@@ -23,7 +23,7 @@ class YearApiImpl(
                 url {
                     protocol = URLProtocol.HTTPS
                     host = "beste.schule"
-                    pathSegments = listOf("api", "years", id.toString())
+                    pathSegments = listOf("api", "intervals", id.toString())
                 }
                 bearerAuth(access.schulverwalterAccessToken)
             }
@@ -34,22 +34,22 @@ class YearApiImpl(
 
             if (response.status == HttpStatusCode.NotFound) return null
 
-            return response.body< ResponseDataWrapper<YearApiResponse>>().data.toDto()
+            return response.body<ResponseDataWrapper<IntervalApiResponse>>().data.toDto()
         }
 
         throw Exception("No valid access token found")
     }
 
-    override suspend fun getAll(): List<YearDto> {
+    override suspend fun getAll(): List<IntervalDto> {
         val accesses = vppIdDao.getSchulverwalterAccess().first()
-        val items = mutableListOf<YearDto>()
+        val items = mutableListOf<IntervalDto>()
 
         for (access in accesses) {
             val response = httpClient.get {
                 url {
                     protocol = URLProtocol.HTTPS
                     host = "beste.schule"
-                    pathSegments = listOf("api", "years")
+                    pathSegments = listOf("api", "intervals")
                 }
                 bearerAuth(access.schulverwalterAccessToken)
             }
@@ -58,7 +58,7 @@ class YearApiImpl(
                 continue
             }
 
-            items.addAll(response.body< ResponseDataWrapper<List<YearApiResponse>>>().data.map { it.toDto() })
+            items.addAll(response.body<ResponseDataWrapper<List<IntervalApiResponse>>>().data.map { it.toDto() })
         }
 
         return items.distinctBy { it.id }
@@ -66,16 +66,22 @@ class YearApiImpl(
 }
 
 @Serializable
-private data class YearApiResponse(
+data class IntervalApiResponse(
     @SerialName("id") val id: Int,
     @SerialName("name") val name: String,
+    @SerialName("type") val type: String,
     @SerialName("from") val from: String,
     @SerialName("to") val to: String,
+    @SerialName("included_interval_id") val includedIntervalId: Int?,
+    @SerialName("year_id") val yearId: Int,
 ) {
-    fun toDto() = YearDto(
+    fun toDto() = IntervalDto(
         id = this.id,
         name = this.name,
+        type = this.type,
         from = this.from,
         to = this.to,
+        includedIntervalId = this.includedIntervalId,
+        yearId = this.yearId,
     )
 }

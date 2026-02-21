@@ -22,10 +22,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.besteschule.IntervalRepository
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
@@ -36,7 +36,6 @@ import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculatorGrade
@@ -61,7 +60,7 @@ class GradesViewModel(
     private val gradeState = MutableStateFlow(GradesState())
     val state = gradeState.asStateFlow()
 
-    private val besteSchuleIntervalsRepository by inject<BesteSchuleIntervalsRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
 
@@ -148,13 +147,8 @@ class GradesViewModel(
                 }
                 .collectLatest { vppId ->
                     launch {
-                        besteSchuleIntervalsRepository.getIntervals(
-                            responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId
-                        )
-                            .filterIsInstance<Response.Success<List<BesteSchuleInterval>>>()
-                            .map { it.data.sortedByDescending { interval -> interval.from } }
+                        besteSchuleIntervalsRepository.getAll()
+                            .map { it.sortedByDescending { interval -> interval.from } }
                             .flatMapLatest { intervalPopulator.populateMultiple(it) }
                             .collectLatest { intervals ->
                                 val currentInterval =

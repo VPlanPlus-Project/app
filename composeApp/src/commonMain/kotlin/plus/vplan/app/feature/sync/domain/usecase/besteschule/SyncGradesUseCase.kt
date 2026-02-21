@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.core.data.besteschule.IntervalRepository
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
@@ -23,7 +24,6 @@ import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleTeachersRepository
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
@@ -41,7 +41,7 @@ class SyncGradesUseCase(
     private val besteSchuleTeachersRepository by inject<BesteSchuleTeachersRepository>()
     private val besteSchuleCollectionsRepository by inject<BesteSchuleCollectionsRepository>()
     private val besteSchuleYearsRepository by inject<YearsRepository>()
-    private val besteSchuleIntervalsRepository by inject<BesteSchuleIntervalsRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
     private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
     private val besteSchuleApiRepository by inject<BesteSchuleApiRepository>()
@@ -104,6 +104,10 @@ class SyncGradesUseCase(
             .getAll(forceRefresh = true)
             .first()
 
+        besteSchuleIntervalsRepository
+            .getAll(forceRefresh = true)
+            .first()
+
         vppIds.forEach forEachUser@{ user ->
             val schulverwalterUserId = user.schulverwalterConnection!!.userId
             val schulverwalterAccessToken = user.schulverwalterConnection!!.accessToken
@@ -118,17 +122,6 @@ class SyncGradesUseCase(
 
                 if (yearChangeError != null) {
                     Logger.e { "Failed to change year in beste.schule: $yearChangeError" }
-                    return@forEachUser
-                }
-
-                val intervalError = besteSchuleIntervalsRepository.getIntervals(
-                    responsePreference = ResponsePreference.Fresh,
-                    contextBesteschuleAccessToken = schulverwalterAccessToken,
-                    contextBesteschuleUserId = schulverwalterUserId,
-                    withCache = yearId != null
-                ).first() as? Response.Error
-                if (intervalError != null) {
-                    Logger.e { "Failed to get intervals from beste.schule: $intervalError" }
                     return@forEachUser
                 }
 

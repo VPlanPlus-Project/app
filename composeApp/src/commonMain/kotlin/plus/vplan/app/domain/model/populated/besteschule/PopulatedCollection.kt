@@ -5,11 +5,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
-import plus.vplan.app.core.model.besteschule.BesteSchuleTeacher
+import plus.vplan.app.core.data.besteschule.IntervalRepository
 import plus.vplan.app.core.model.besteschule.BesteSchuleCollection
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
+import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
+import plus.vplan.app.core.model.besteschule.BesteSchuleTeacher
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleTeachersRepository
 
@@ -22,12 +22,12 @@ data class PopulatedCollection(
 
 class CollectionPopulator: KoinComponent {
 
-    private val besteSchuleIntervalsRepository by inject<BesteSchuleIntervalsRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
     private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
     private val besteSchuleTeachersRepository by inject<BesteSchuleTeachersRepository>()
 
     fun populateSingle(collection: BesteSchuleCollection): Flow<PopulatedCollection> {
-        val intervals = besteSchuleIntervalsRepository.getIntervalFromCache(collection.intervalId).filterNotNull()
+        val intervals = besteSchuleIntervalsRepository.getById(collection.intervalId).filterNotNull()
         val subject = besteSchuleSubjectsRepository.getSubjectFromCache(collection.subjectId).filterNotNull()
         val teacher = besteSchuleTeachersRepository.getTeacherFromCache(collection.teacherId).filterNotNull()
 

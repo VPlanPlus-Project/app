@@ -18,16 +18,16 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.besteschule.IntervalRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
-import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -51,7 +51,7 @@ class ProfileViewModel(
         private set
 
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
-    private val besteSchuleIntervalsRepository by inject<BesteSchuleIntervalsRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalRepository>()
 
     private val gradesPopulator by inject<GradesPopulator>()
     private val collectionPopulator by inject<CollectionPopulator>()
@@ -78,14 +78,7 @@ class ProfileViewModel(
                     val vppId = profile.vppId ?: return@collectLatest
 
                     if (vppId.schulverwalterConnection != null) {
-                        val intervals = besteSchuleIntervalsRepository.getIntervals(
-                            responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken
-                        )
-                            .filterIsInstance<Response.Success<List<BesteSchuleInterval>>>()
-                            .map { response -> response.data }
-                            .first()
+                        val intervals = besteSchuleIntervalsRepository.getAll().first()
 
                         state = state.copy(
                             currentInterval = intervals.firstOrNull { interval -> LocalDate.now() in interval.from..interval.to }

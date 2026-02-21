@@ -9,6 +9,7 @@ val databaseModule = module {
     includes(roomModule)
 
     single { get<VppDatabase>().besteSchuleYearDao }
+    single { get<VppDatabase>().besteSchuleIntervalDao }
     single { get<VppDatabase>().vppIdDao }
 }
 

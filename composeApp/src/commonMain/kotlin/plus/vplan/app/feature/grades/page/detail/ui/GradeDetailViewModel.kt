@@ -30,7 +30,6 @@ import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -46,7 +45,6 @@ class GradeDetailViewModel(
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
     private val besteSchuleCollectionsRepository: BesteSchuleCollectionsRepository,
-    private val besteSchuleIntervalsRepository: BesteSchuleIntervalsRepository,
     private val lockGradesUseCase: LockGradesUseCase,
     private val intervalPopulator: IntervalPopulator,
     private val collectionPopulator: CollectionPopulator,

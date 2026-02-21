@@ -154,7 +154,7 @@ class DeveloperSettingsViewModel(
                     try {
                         syncGradesUseCase(false)
                     } catch (e: Exception) {
-                        Logger.e { "Failed to sync grades: $e" }
+                        Logger.e { "Failed to sync grades: ${e.stackTraceToString()}" }
                     } finally {
                         state = state.copy(isGradeUpdateRunning = false)
                     }

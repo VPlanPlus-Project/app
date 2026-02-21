@@ -23,6 +23,8 @@ import org.koin.dsl.module
 import plus.vplan.app.App
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
+import plus.vplan.app.core.data.besteschule.IntervalRepository
+import plus.vplan.app.core.data.besteschule.IntervalRepositoryImpl
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepositoryImpl
 import plus.vplan.app.core.database.di.databaseModule
@@ -49,7 +51,6 @@ import plus.vplan.app.data.repository.WeekRepositoryImpl
 import plus.vplan.app.data.repository.besteschule.BesteSchuleApiRepositoryImpl
 import plus.vplan.app.data.repository.besteschule.BesteSchuleCollectionsRepositoryImpl
 import plus.vplan.app.data.repository.besteschule.BesteSchuleGradesRepositoryImpl
-import plus.vplan.app.data.repository.besteschule.BesteSchuleIntervalsRepositoryImpl
 import plus.vplan.app.data.repository.besteschule.BesteSchuleSubjectsRepositoryImpl
 import plus.vplan.app.data.repository.besteschule.BesteSchuleTeachersRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
@@ -81,7 +82,6 @@ import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleCollectionsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleTeachersRepository
 import plus.vplan.app.domain.service.ProfileService
@@ -121,6 +121,8 @@ import plus.vplan.app.feature.settings.di.settingsModule
 import plus.vplan.app.feature.sync.di.syncModule
 import plus.vplan.app.feature.system.di.systemModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
+import plus.vplan.app.network.besteschule.IntervalApi
+import plus.vplan.app.network.besteschule.IntervalApiImpl
 import plus.vplan.app.network.besteschule.YearApi
 import plus.vplan.app.network.besteschule.YearApiImpl
 
@@ -173,7 +175,9 @@ val appModule = module(createdAtStart = true) {
     }
 
     singleOf(::YearApiImpl).bind<YearApi>()
+    singleOf(::IntervalApiImpl).bind<IntervalApi>()
     singleOf(::YearsRepositoryImpl).bind<YearsRepository>()
+    singleOf(::IntervalRepositoryImpl).bind<IntervalRepository>()
 
     singleOf(::SchoolAuthenticationProvider)
     singleOf(::VppIdAuthenticationProvider)
@@ -202,7 +206,6 @@ val appModule = module(createdAtStart = true) {
 
     singleOf(::BesteSchuleApiRepositoryImpl) bind BesteSchuleApiRepository::class
     singleOf(::BesteSchuleSubjectsRepositoryImpl) bind BesteSchuleSubjectsRepository::class
-    singleOf(::BesteSchuleIntervalsRepositoryImpl) bind BesteSchuleIntervalsRepository::class
     singleOf(::BesteSchuleCollectionsRepositoryImpl) bind BesteSchuleCollectionsRepository::class
     singleOf(::BesteSchuleTeachersRepositoryImpl) bind BesteSchuleTeachersRepository::class
     singleOf(::BesteSchuleGradesRepositoryImpl) bind BesteSchuleGradesRepository::class
