@@ -12,7 +12,7 @@ import platform.Foundation.NSUserDomainMask
 import plus.vplan.app.core.database.VppDatabase
 import plus.vplan.app.core.database.VppDatabaseConstructor
 
-actual val databaseModule: Module = module {
+actual val roomModule: Module = module {
     single<VppDatabase> {
         val dbFilePath = documentDirectory() + "/vpp.db"
         Room.databaseBuilder<VppDatabase>(

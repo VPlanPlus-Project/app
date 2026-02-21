@@ -23,6 +23,8 @@ import org.koin.dsl.module
 import plus.vplan.app.App
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
+import plus.vplan.app.core.data.besteschule.YearsRepository
+import plus.vplan.app.core.data.besteschule.YearsRepositoryImpl
 import plus.vplan.app.core.database.di.databaseModule
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
@@ -50,7 +52,6 @@ import plus.vplan.app.data.repository.besteschule.BesteSchuleGradesRepositoryImp
 import plus.vplan.app.data.repository.besteschule.BesteSchuleIntervalsRepositoryImpl
 import plus.vplan.app.data.repository.besteschule.BesteSchuleSubjectsRepositoryImpl
 import plus.vplan.app.data.repository.besteschule.BesteSchuleTeachersRepositoryImpl
-import plus.vplan.app.data.repository.besteschule.BesteSchuleYearsRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.data.service.SchoolServiceImpl
 import plus.vplan.app.data.source.network.GenericAuthenticationProvider
@@ -83,7 +84,6 @@ import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleTeachersRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleYearsRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.domain.source.AssessmentSource
@@ -121,6 +121,8 @@ import plus.vplan.app.feature.settings.di.settingsModule
 import plus.vplan.app.feature.sync.di.syncModule
 import plus.vplan.app.feature.system.di.systemModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
+import plus.vplan.app.network.besteschule.YearApi
+import plus.vplan.app.network.besteschule.YearApiImpl
 
 expect val platformModule: Module
 
@@ -170,6 +172,9 @@ val appModule = module(createdAtStart = true) {
         }
     }
 
+    singleOf(::YearApiImpl).bind<YearApi>()
+    singleOf(::YearsRepositoryImpl).bind<YearsRepository>()
+
     singleOf(::SchoolAuthenticationProvider)
     singleOf(::VppIdAuthenticationProvider)
     singleOf(::GenericAuthenticationProvider)
@@ -197,7 +202,6 @@ val appModule = module(createdAtStart = true) {
 
     singleOf(::BesteSchuleApiRepositoryImpl) bind BesteSchuleApiRepository::class
     singleOf(::BesteSchuleSubjectsRepositoryImpl) bind BesteSchuleSubjectsRepository::class
-    singleOf(::BesteSchuleYearsRepositoryImpl) bind BesteSchuleYearsRepository::class
     singleOf(::BesteSchuleIntervalsRepositoryImpl) bind BesteSchuleIntervalsRepository::class
     singleOf(::BesteSchuleCollectionsRepositoryImpl) bind BesteSchuleCollectionsRepository::class
     singleOf(::BesteSchuleTeachersRepositoryImpl) bind BesteSchuleTeachersRepository::class

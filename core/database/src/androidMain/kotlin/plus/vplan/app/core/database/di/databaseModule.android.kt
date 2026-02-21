@@ -15,7 +15,7 @@ import java.util.concurrent.Executors
  */
 const val LOG_DATABASE_QUERIES: Boolean = false
 
-actual val databaseModule: Module = module {
+actual val roomModule: Module = module {
     single<VppDatabase>(createdAtStart = true) {
         Room.databaseBuilder<VppDatabase>(
             context = get(),

@@ -80,6 +80,8 @@ kotlin {
             implementation(project(":core:model"))
             implementation(project(":core:utils"))
             implementation(project(":core:database"))
+            implementation(project(":core:data"))
+            implementation(project(":core:network"))
 
             implementation(compose.runtime)
             implementation(libs.compose.foundation)

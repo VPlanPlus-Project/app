@@ -11,11 +11,11 @@ kotlinxDatetime = "0.7.1"
 gradle-buildconfig-plugin = "6.0.7"
 biometric = "1.1.0"
 
-ksp = "2.3.4"
+ksp = "2.3.6"
 androidx-room = "2.8.4"
 androidx-sqlite = "2.6.2"
 navigationCompose = "2.9.2"
-posthogAndroid = "3.32.0"
+posthogAndroid = "3.32.2"
 
 androidx-material = "1.10.0-alpha05"
 androidx-icons = "1.7.8"
@@ -110,7 +110,7 @@ kotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", 
 
 room = { id = "androidx.room", version.ref = "androidx-room" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref="kotlin" }
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.6" }
 google-gms = { id = "com.google.gms.google-services", version.ref = "google-gms" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "gradle-buildconfig-plugin" }

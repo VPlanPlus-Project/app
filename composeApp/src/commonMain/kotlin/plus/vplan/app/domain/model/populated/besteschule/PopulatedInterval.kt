@@ -6,10 +6,10 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.model.besteschule.BesteSchuleYear
+import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleYear
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleYearsRepository
 
 data class PopulatedInterval(
     val interval: BesteSchuleInterval,
@@ -19,11 +19,11 @@ data class PopulatedInterval(
 
 class IntervalPopulator: KoinComponent {
 
-    private val besteSchuleYearsRepository by inject<BesteSchuleYearsRepository>()
+    private val besteSchuleYearsRepository by inject<YearsRepository>()
     private val besteSchuleIntervalsRepository by inject<BesteSchuleIntervalsRepository>()
 
     fun populateMultiple(intervals: List<BesteSchuleInterval>): Flow<List<PopulatedInterval>> {
-        val years = besteSchuleYearsRepository.getAllFromCache()
+        val years = besteSchuleYearsRepository.getAll()
         val intervalsFlow = besteSchuleIntervalsRepository.getAllFromCache()
 
         return combine(years, intervalsFlow) { years, intervalItems ->
@@ -39,7 +39,7 @@ class IntervalPopulator: KoinComponent {
 
     fun populateSingle(interval: BesteSchuleInterval): Flow<PopulatedInterval> {
         val year = besteSchuleYearsRepository
-            .getYearFromCache(interval.yearId)
+            .getById(interval.yearId)
             .filterNotNull()
         val includedInterval = interval.includedIntervalId?.let {
             besteSchuleIntervalsRepository.getIntervalFromCache(it)

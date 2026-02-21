@@ -9,11 +9,12 @@ import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.StartTaskJson
-import plus.vplan.app.core.model.Response
-import plus.vplan.app.core.model.getFirstValueOld
+import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
@@ -25,7 +26,6 @@ import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleIntervalsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleSubjectsRepository
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleTeachersRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleYearsRepository
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.atStartOfDay
@@ -40,7 +40,7 @@ class SyncGradesUseCase(
 ): KoinComponent {
     private val besteSchuleTeachersRepository by inject<BesteSchuleTeachersRepository>()
     private val besteSchuleCollectionsRepository by inject<BesteSchuleCollectionsRepository>()
-    private val besteSchuleYearsRepository by inject<BesteSchuleYearsRepository>()
+    private val besteSchuleYearsRepository by inject<YearsRepository>()
     private val besteSchuleIntervalsRepository by inject<BesteSchuleIntervalsRepository>()
     private val besteSchuleSubjectsRepository by inject<BesteSchuleSubjectsRepository>()
     private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
@@ -100,22 +100,15 @@ class SyncGradesUseCase(
 
         val existingGradeIdsBeforeUpdate = getCachedGrades().map { grade -> grade.id }
 
+        val years = besteSchuleYearsRepository
+            .getAll(forceRefresh = true)
+            .first()
+
         vppIds.forEach forEachUser@{ user ->
             val schulverwalterUserId = user.schulverwalterConnection!!.userId
             val schulverwalterAccessToken = user.schulverwalterConnection!!.accessToken
 
-            val yearsResponse = besteSchuleYearsRepository
-                .getYears(
-                    responsePreference = ResponsePreference.Fresh,
-                    contextBesteschuleAccessToken = schulverwalterAccessToken
-                )
-                .first()
-            if (yearsResponse is Response.Error) {
-                Logger.e { "Failed to get years from beste.schule: $yearsResponse" }
-                return@forEachUser
-            }
-
-            (if (yearId == null) (yearsResponse as Response.Success).data.map { it.id }
+            (if (yearId == null) years.map { it.id }
                 else listOf(yearId)).forEach { year ->
                 besteSchuleApiRepository.clearApiCache()
                 val yearChangeError = besteSchuleApiRepository.setYearForUser(
