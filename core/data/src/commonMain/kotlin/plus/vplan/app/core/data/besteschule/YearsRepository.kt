@@ -6,4 +6,5 @@ import plus.vplan.app.core.model.besteschule.BesteSchuleYear
 interface YearsRepository {
     fun getById(id: Int, forceRefresh: Boolean = false): Flow<BesteSchuleYear?>
     fun getAll(forceRefresh: Boolean = false): Flow<List<BesteSchuleYear>>
+    suspend fun setYear(userId: Int, yearId: Int?): Boolean
 }

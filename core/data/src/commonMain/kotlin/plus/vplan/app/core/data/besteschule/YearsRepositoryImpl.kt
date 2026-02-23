@@ -11,7 +11,7 @@ import plus.vplan.app.network.besteschule.YearDto
 import kotlin.time.Clock
 
 class YearsRepositoryImpl(
-    private val besteschuleYearDao: BesteschuleYearDao,
+    private val yearDao: BesteschuleYearDao,
     private val yearApi: YearApi,
 ): YearsRepository {
 
@@ -19,25 +19,29 @@ class YearsRepositoryImpl(
         id: Int,
         forceRefresh: Boolean,
     ): Flow<BesteSchuleYear?> {
-        return besteschuleYearDao.getById(id).map {
+        return yearDao.getById(id).map {
             if (it == null || forceRefresh) {
                 val item = yearApi.getById(id)?.toEntity()
-                if (item != null) besteschuleYearDao.upsert(listOf(item))
+                if (item != null) yearDao.upsert(listOf(item))
                 item?.toModel()
             } else it.toModel()
         }
     }
 
     override fun getAll(forceRefresh: Boolean): Flow<List<BesteSchuleYear>> {
-        return besteschuleYearDao.getAll().map { items ->
+        return yearDao.getAll().map { items ->
             if (items.isEmpty() || forceRefresh) {
                 val apiItems = yearApi.getAll().map { it.toEntity() }
-                besteschuleYearDao.upsert(apiItems)
+                yearDao.upsert(apiItems)
                 items.map { it.toModel() }
             } else {
                 items.map { it.toModel() }
             }
         }
+    }
+
+    override suspend fun setYear(userId: Int, yearId: Int?): Boolean {
+        return yearApi.setYear(userId, yearId)
     }
 }
 

@@ -13,7 +13,6 @@ import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
@@ -21,7 +20,6 @@ import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.atStartOfDay
@@ -39,7 +37,6 @@ class SyncGradesUseCase(
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
     private val besteSchuleGradesRepository by inject<GradesRepository>()
-    private val besteSchuleApiRepository by inject<BesteSchuleApiRepository>()
 
     private val gradesPopulator by inject<GradesPopulator>()
 
@@ -106,14 +103,13 @@ class SyncGradesUseCase(
 
             (if (yearId == null) years.map { it.id }
                 else listOf(yearId)).forEach { year ->
-                besteSchuleApiRepository.clearApiCache()
-                val yearChangeError = besteSchuleApiRepository.setYearForUser(
-                    schulverwalterAccessToken = schulverwalterAccessToken,
+                val yearChangeSuccess = besteSchuleYearsRepository.setYear(
+                    userId = schulverwalterUserId,
                     yearId = year
-                ) as? Response.Error
+                )
 
-                if (yearChangeError != null) {
-                    Logger.e { "Failed to change year in beste.schule: $yearChangeError" }
+                if (!yearChangeSuccess) {
+                    Logger.e { "Failed to change year in beste.schule" }
                     return@forEachUser
                 }
 
@@ -133,13 +129,13 @@ class SyncGradesUseCase(
             }
 
             if (yearId != null) {
-                val yearChangeBackError = besteSchuleApiRepository.setYearForUser(
-                    schulverwalterAccessToken = schulverwalterAccessToken,
+                val yearChangeBackSuccess = besteSchuleYearsRepository.setYear(
+                    userId = schulverwalterUserId,
                     yearId = null
-                ) as? Response.Error
+                )
 
-                if (yearChangeBackError != null) {
-                    Logger.e { "Failed to change year in beste.schule: $yearChangeBackError" }
+                if (!yearChangeBackSuccess) {
+                    Logger.e { "Failed to change year in beste.schule" }
                     return@forEachUser
                 }
             }

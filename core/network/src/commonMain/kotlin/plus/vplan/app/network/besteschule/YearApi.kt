@@ -3,6 +3,7 @@ package plus.vplan.app.network.besteschule
 interface YearApi {
     suspend fun getById(id: Int): YearDto?
     suspend fun getAll(): List<YearDto>
+    suspend fun setYear(userId: Int, yearId: Int?): Boolean
 }
 
 data class YearDto(

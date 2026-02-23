@@ -56,7 +56,6 @@ import plus.vplan.app.data.repository.TeacherRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
-import plus.vplan.app.data.repository.besteschule.BesteSchuleApiRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.data.service.SchoolServiceImpl
 import plus.vplan.app.data.source.network.GenericAuthenticationProvider
@@ -83,7 +82,6 @@ import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.domain.source.AssessmentSource
@@ -230,8 +228,6 @@ val appModule = module(createdAtStart = true) {
     singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
     singleOf(::NewsRepositoryImpl).bind<NewsRepository>()
     singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
-
-    singleOf(::BesteSchuleApiRepositoryImpl) bind BesteSchuleApiRepository::class
 
     singleOf(::SchoolServiceImpl).bind<SchoolService>()
     singleOf(::ProfileServiceImpl).bind<ProfileService>()

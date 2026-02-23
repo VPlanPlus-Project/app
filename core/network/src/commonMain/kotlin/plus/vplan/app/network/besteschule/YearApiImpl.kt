@@ -4,8 +4,12 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
@@ -68,6 +72,26 @@ class YearApiImpl(
 
         return items.distinctBy { it.id }
     }
+
+    override suspend fun setYear(userId: Int, yearId: Int?): Boolean {
+        val access = vppIdDao.getSchulverwalterAccess().first().find { it.schulverwalterUserId == userId }
+            ?: return false
+
+        val response = httpClient.post {
+            url {
+                protocol = URLProtocol.HTTPS
+                host = "beste.schule"
+                port = 443
+                pathSegments = listOf("api", "years", "current")
+            }
+            bearerAuth(access.schulverwalterAccessToken)
+
+            contentType(ContentType.Application.Json)
+            setBody(SetYearRequest(yearId))
+        }
+
+        return response.status.isSuccess()
+    }
 }
 
 @Serializable
@@ -84,3 +108,8 @@ private data class YearApiResponse(
         to = this.to,
     )
 }
+
+@Serializable
+private data class SetYearRequest(
+    @SerialName("id") val yearId: Int?
+)
