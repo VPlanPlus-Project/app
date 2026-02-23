@@ -10,24 +10,19 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
-import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
-import plus.vplan.app.domain.repository.base.ResponsePreference
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -50,7 +45,7 @@ class ProfileViewModel(
     var state by mutableStateOf(ProfileState())
         private set
 
-    private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
+    private val besteSchuleGradesRepository by inject<GradesRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
 
     private val gradesPopulator by inject<GradesPopulator>()
@@ -84,14 +79,8 @@ class ProfileViewModel(
                             currentInterval = intervals.firstOrNull { interval -> LocalDate.now() in interval.from..interval.to }
                         )
 
-                        val grades = besteSchuleGradesRepository.getGrades(
-                            responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken
-                        )
-                            .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
-                            .map { response -> response.data }
-                            .flatMapLatest { gradesPopulator.populateMultiple(it) }
+                        val grades = besteSchuleGradesRepository.getAllForUser(schulverwalterUserId = vppId.schulverwalterConnection!!.userId)
+                            .flatMapLatest { grades -> gradesPopulator.populateMultiple(grades) }
                             .first()
                             .map { grade ->
                                 GradesItem(

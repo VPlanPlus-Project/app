@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -16,9 +15,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.core.model.Response
-import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
@@ -31,8 +29,6 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
-import plus.vplan.app.domain.repository.base.ResponsePreference
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem
@@ -50,7 +46,7 @@ class SearchUseCase(
     private val assessmentRepository: AssessmentRepository,
     private val assessmentPopulator: AssessmentPopulator
 ): KoinComponent {
-    private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
+    private val besteSchuleGradesRepository by inject<GradesRepository>()
     private val lessonPopulator by inject<LessonPopulator>()
     private val gradesPopulator by inject<GradesPopulator>()
     private val collectionPopulator by inject<CollectionPopulator>()
@@ -121,13 +117,7 @@ class SearchUseCase(
                 }
 
                 if (searchRequest.assessmentType == null) launch {
-                    besteSchuleGradesRepository.getGrades(
-                        responsePreference = ResponsePreference.Fast,
-                        contextBesteschuleAccessToken = null,
-                        contextBesteschuleUserId = null
-                    )
-                        .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
-                        .map { it.data }
+                    besteSchuleGradesRepository.getAll()
                         .flatMapLatest { gradesPopulator.populateMultiple(it) }
                         .map { response -> response.filter { grade -> query.lowercase() in grade.collection.name } }
                         .map { grades ->

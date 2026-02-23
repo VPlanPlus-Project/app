@@ -22,12 +22,11 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
@@ -36,7 +35,6 @@ import plus.vplan.app.domain.model.populated.besteschule.PopulatedGrade
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculatorGrade
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -61,7 +59,7 @@ class GradesViewModel(
     val state = gradeState.asStateFlow()
 
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
-    private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
+    private val besteSchuleGradesRepository by inject<GradesRepository>()
     private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
 
     private var updateFullAverageJob: Job? = null
@@ -173,13 +171,7 @@ class GradesViewModel(
                             gradeState.update { it.copy(gradeLockState = areGradesLocked) }
                             if (!areGradesLocked.canAccess) return@collectLatest
 
-                            besteSchuleGradesRepository.getGrades(
-                                responsePreference = ResponsePreference.Fast,
-                                contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId,
-                                contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken
-                            )
-                                .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
-                                .map { it.data }
+                            besteSchuleGradesRepository.getAllForUser(schulverwalterUserId = vppId.schulverwalterConnection!!.userId)
                                 .flatMapLatest { gradesPopulator.populateMultiple(it) }
                                 .collectLatest {
                                     grades = it

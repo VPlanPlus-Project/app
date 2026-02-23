@@ -1,22 +1,20 @@
 package plus.vplan.app.feature.sync.domain.usecase.besteschule
 
 import co.touchlab.kermit.Logger
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.data.besteschule.CollectionsRepository
+import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
@@ -24,7 +22,6 @@ import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.domain.repository.besteschule.BesteSchuleApiRepository
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.atStartOfDay
@@ -41,7 +38,7 @@ class SyncGradesUseCase(
     private val besteSchuleYearsRepository by inject<YearsRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
-    private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
+    private val besteSchuleGradesRepository by inject<GradesRepository>()
     private val besteSchuleApiRepository by inject<BesteSchuleApiRepository>()
 
     private val gradesPopulator by inject<GradesPopulator>()
@@ -96,7 +93,8 @@ class SyncGradesUseCase(
             .filterIsInstance<VppId.Active>()
             .filter { it.schulverwalterConnection?.accessToken != null }
 
-        val existingGradeIdsBeforeUpdate = getCachedGrades().map { grade -> grade.id }
+        val existingGradeIdsBeforeUpdate = besteSchuleGradesRepository.getAll().first()
+            .map { grade -> grade.id }
 
         val years = besteSchuleYearsRepository
             .getAll(forceRefresh = true)
@@ -127,15 +125,11 @@ class SyncGradesUseCase(
                     .getAll(forceRefresh = true)
                     .first()
 
-                val gradesError = besteSchuleGradesRepository.getGrades(
-                    responsePreference = ResponsePreference.Fresh,
-                    contextBesteschuleAccessToken = schulverwalterAccessToken,
-                    contextBesteschuleUserId = schulverwalterUserId
-                ).first() as? Response.Error
-                if (gradesError != null) {
-                    Logger.e { "Failed to get grades from beste.schule: $gradesError" }
-                    return@forEachUser
-                }
+                besteSchuleGradesRepository.getAllForUser(
+                    schulverwalterUserId = schulverwalterUserId,
+                    forceRefresh = true,
+                ).first()
+
             }
 
             if (yearId != null) {
@@ -151,7 +145,7 @@ class SyncGradesUseCase(
             }
         }
 
-        val existingGradesAfterUpdate = getCachedGrades()
+        val existingGradesAfterUpdate = besteSchuleGradesRepository.getAll().first()
 
         val gradesEligibleForNotification = existingGradesAfterUpdate
             .filter { it.id !in existingGradeIdsBeforeUpdate }
@@ -241,14 +235,4 @@ class SyncGradesUseCase(
             }
         }
     }
-
-    private suspend fun getCachedGrades() = besteSchuleGradesRepository.getGrades(
-        responsePreference = ResponsePreference.Fast,
-        contextBesteschuleUserId = null,
-        contextBesteschuleAccessToken = null
-    )
-        .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
-        .map { it.data }
-        .first()
-        .toSet()
 }

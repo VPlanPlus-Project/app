@@ -22,12 +22,11 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
@@ -35,7 +34,6 @@ import plus.vplan.app.domain.model.populated.besteschule.PopulatedGrade
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
-import plus.vplan.app.domain.repository.besteschule.BesteSchuleGradesRepository
 import plus.vplan.app.utils.now
 
 class AnalyticsViewModel(
@@ -44,7 +42,7 @@ class AnalyticsViewModel(
     var state by mutableStateOf(AnalyticsState())
         private set
 
-    private val besteSchuleGradesRepository by inject<BesteSchuleGradesRepository>()
+    private val besteSchuleGradesRepository by inject<GradesRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
 
@@ -80,13 +78,7 @@ class AnalyticsViewModel(
                     }.let(activeJobs::add)
 
                     launch {
-                        besteSchuleGradesRepository.getGrades(
-                            responsePreference = ResponsePreference.Fast,
-                            contextBesteschuleAccessToken = vppId.schulverwalterConnection!!.accessToken,
-                            contextBesteschuleUserId = vppId.schulverwalterConnection!!.userId
-                        )
-                            .filterIsInstance<Response.Success<List<BesteSchuleGrade>>>()
-                            .map { it.data }
+                        besteSchuleGradesRepository.getAllForUser(vppId.schulverwalterConnection!!.userId)
                             .flatMapLatest { grades -> gradesPopulator.populateMultiple(grades) }
                             .collectLatest { grades ->
                                 val subjects = besteSchuleSubjectsRepository.getAll().first()
