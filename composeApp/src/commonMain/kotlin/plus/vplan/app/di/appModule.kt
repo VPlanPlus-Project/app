@@ -23,6 +23,8 @@ import org.koin.dsl.module
 import plus.vplan.app.App
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
+import plus.vplan.app.core.data.besteschule.BesteSchuleRepository
+import plus.vplan.app.core.data.besteschule.BesteSchuleRepositoryImpl
 import plus.vplan.app.core.data.besteschule.CollectionsRepository
 import plus.vplan.app.core.data.besteschule.CollectionsRepositoryImpl
 import plus.vplan.app.core.data.besteschule.GradesRepository
@@ -119,6 +121,8 @@ import plus.vplan.app.feature.settings.di.settingsModule
 import plus.vplan.app.feature.sync.di.syncModule
 import plus.vplan.app.feature.system.di.systemModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
+import plus.vplan.app.network.besteschule.BesteSchuleApi
+import plus.vplan.app.network.besteschule.BesteSchuleApiImpl
 import plus.vplan.app.network.besteschule.CollectionApi
 import plus.vplan.app.network.besteschule.CollectionApiImpl
 import plus.vplan.app.network.besteschule.GradesApi
@@ -197,12 +201,14 @@ val appModule = module(createdAtStart = true) {
     singleOf(::IntervalApiImpl).bind<IntervalApi>()
     singleOf(::CollectionApiImpl).bind<CollectionApi>()
     singleOf(::GradesApiImpl).bind<GradesApi>()
+    singleOf(::BesteSchuleApiImpl).bind<BesteSchuleApi>()
     singleOf(::YearsRepositoryImpl).bind<YearsRepository>()
     singleOf(::IntervalsRepositoryImpl).bind<IntervalsRepository>()
     singleOf(::TeachersRepositoryImpl).bind<TeachersRepository>()
     singleOf(::SubjectsRepositoryImpl).bind<SubjectsRepository>()
     singleOf(::CollectionsRepositoryImpl).bind<CollectionsRepository>()
     singleOf(::GradesRepositoryImpl).bind<GradesRepository>()
+    singleOf(::BesteSchuleRepositoryImpl).bind<BesteSchuleRepository>()
 
     singleOf(::SchoolAuthenticationProvider)
     singleOf(::VppIdAuthenticationProvider)

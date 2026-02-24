@@ -7,6 +7,7 @@ import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.core.data.besteschule.BesteSchuleRepository
 import plus.vplan.app.core.data.besteschule.CollectionsRepository
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
@@ -20,7 +21,6 @@ import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
-import plus.vplan.app.domain.repository.schulverwalter.SchulverwalterRepository
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.atStartOfDay
 import plus.vplan.app.utils.now
@@ -29,7 +29,6 @@ import kotlin.time.Duration.Companion.days
 
 class SyncGradesUseCase(
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
-    private val schulverwalterRepository: SchulverwalterRepository,
     private val vppIdRepository: VppIdRepository
 ): KoinComponent {
     private val besteSchuleCollectionsRepository by inject<CollectionsRepository>()
@@ -38,6 +37,8 @@ class SyncGradesUseCase(
     private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
     private val besteSchuleGradesRepository by inject<GradesRepository>()
 
+    private val besteSchuleRepository by inject<BesteSchuleRepository>()
+
     private val gradesPopulator by inject<GradesPopulator>()
 
     private val profileRepository by inject<ProfileRepository>()
@@ -45,19 +46,32 @@ class SyncGradesUseCase(
 
     suspend operator fun invoke(allowNotifications: Boolean, yearId: Int? = null) {
         run schulverwalterConnectionRefresh@{
-            val invalidVppIds = schulverwalterRepository.checkAccess()
-            vppIdRepository
-                .getVppIds().first().filterIsInstance<VppId.Active>()
-                .filter { it.id in invalidVppIds }.forEach { vppId ->
+            val invalidVppIds = vppIdRepository
+                .getVppIds().first()
+                .filterIsInstance<VppId.Active>()
+                .mapNotNull { vppId ->
+                    val isValid = besteSchuleRepository.checkValidity(vppId.id)
+                    if (isValid) return@mapNotNull null
                     vppIdRepository.getUserByToken(vppId.accessToken)
                     // fixme actually reload the user
+                    return@mapNotNull vppId.id
                 }
+                .toSet()
 
-            val invalidVppIdsAfterTokenReload = schulverwalterRepository.checkAccess()
+            val invalidVppIdsAfterTokenReload = vppIdRepository
+                .getVppIds().first()
+                .filterIsInstance<VppId.Active>()
+                .mapNotNull { vppId ->
+                    val isValid = besteSchuleRepository.checkValidity(vppId.id)
+                    if (isValid) return@mapNotNull null
+                    return@mapNotNull vppId.id
+                }
+                .toSet()
+
             invalidVppIdsAfterTokenReload.forEach { stillInvalidVppId ->
                 val vppId = vppIdRepository.getById(stillInvalidVppId, ResponsePreference.Fast).getFirstValueOld() as? VppId.Active ?: return@forEach
                 if (vppId.schulverwalterConnection!!.isValid == false) return@forEach
-                schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection!!.accessToken, false)
+                besteSchuleRepository.saveBesteSchuleAccessValidity(vppId.schulverwalterConnection!!.userId, false)
                 platformNotificationRepository.sendNotification(
                     title = "beste.schule-Zugang ungültig",
                     message = "Wir können keine Daten von beste.schule mehr abrufen. Tippe hier, um dich erneut in beste.schule anzumelden",
@@ -82,7 +96,7 @@ class SyncGradesUseCase(
             }
             (invalidVppIds - invalidVppIdsAfterTokenReload).forEach { nowValidVppId ->
                 val vppId = vppIdRepository.getById(nowValidVppId, ResponsePreference.Fast).getFirstValueOld() as? VppId.Active ?: return@forEach
-                schulverwalterRepository.setSchulverwalterAccessValidity(vppId.schulverwalterConnection!!.accessToken, true)
+                besteSchuleRepository.saveBesteSchuleAccessValidity(vppId.schulverwalterConnection!!.userId, true)
             }
         }
 
@@ -99,7 +113,6 @@ class SyncGradesUseCase(
 
         vppIds.forEach forEachUser@{ user ->
             val schulverwalterUserId = user.schulverwalterConnection!!.userId
-            val schulverwalterAccessToken = user.schulverwalterConnection!!.accessToken
 
             (if (yearId == null) years.map { it.id }
                 else listOf(yearId)).forEach { year ->
