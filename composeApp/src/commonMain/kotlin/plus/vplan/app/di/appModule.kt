@@ -37,6 +37,8 @@ import plus.vplan.app.core.data.besteschule.TeachersRepository
 import plus.vplan.app.core.data.besteschule.TeachersRepositoryImpl
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepositoryImpl
+import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.profile.ProfileRepositoryImpl
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.school.SchoolRepositoryImpl
 import plus.vplan.app.core.database.di.databaseModule
@@ -50,7 +52,6 @@ import plus.vplan.app.data.repository.HomeworkRepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
 import plus.vplan.app.data.repository.LessonTimeRepositoryImpl
 import plus.vplan.app.data.repository.NewsRepositoryImpl
-import plus.vplan.app.data.repository.ProfileRepositoryImpl
 import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.SubjectInstanceRepositoryImpl
@@ -74,7 +75,6 @@ import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.NewsRepository
-import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
@@ -92,7 +92,6 @@ import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
-import plus.vplan.app.domain.source.ProfileSource
 import plus.vplan.app.domain.source.RoomSource
 import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
@@ -271,7 +270,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
 
         App.homeworkSource = HomeworkSource(koin.get())
         App.homeworkTaskSource = HomeworkTaskSource(koin.get())
-        App.profileSource = ProfileSource(koin.get())
         App.groupSource = GroupSource(koin.get())
         App.subjectInstanceSource = SubjectInstanceSource(koin.get())
         App.daySource = DaySource(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())

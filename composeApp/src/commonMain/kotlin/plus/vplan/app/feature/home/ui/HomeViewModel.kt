@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -80,7 +81,7 @@ class HomeViewModel(
         viewModelScope.launch {
             var newsJob: Job? = null
             var specialLessonsUpdateJob: Job? = null
-            getCurrentProfileUseCase().collectLatest { profile ->
+            getCurrentProfileUseCase().filterNotNull().collectLatest { profile ->
                 LOGGER.d { "Current Profile: $profile" }
                 state.update { state ->
                     state.copy(

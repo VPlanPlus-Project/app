@@ -2,13 +2,13 @@ package plus.vplan.app.feature.sync.domain.usecase.vpp
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.repository.NewsRepository
-import plus.vplan.app.domain.repository.ProfileRepository
 
 class UpdateNewsUseCase(
     private val newsRepository: NewsRepository,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
 ) {
     private val logger = Logger.withTag("UpdateNewsUseCase")
     suspend operator fun invoke() {

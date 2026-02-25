@@ -13,12 +13,12 @@ import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepository
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase

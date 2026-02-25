@@ -11,20 +11,20 @@ import kotlinx.datetime.format
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Day
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.core.model.Day
-import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
@@ -80,7 +80,7 @@ class UpdateSubstitutionPlanUseCase(
         var error: Response.Error? = null
 
         val studentProfilesForSchool = profileRepository.getAll().first()
-        .filterIsInstance<Profile.StudentProfile>()
+            .filterIsInstance<Profile.StudentProfile>()
             .filter { it.school.id == sp24School.id }
 
         val insertVersion = substitutionPlanRepository.getCurrentVersion().first() + 1

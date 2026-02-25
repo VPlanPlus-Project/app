@@ -1,8 +1,8 @@
 package plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase
 
-import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.ProfileRepository
+import plus.vplan.app.core.model.SubjectInstance
 
 class SetProfileSubjectInstanceEnabledUseCase(
     private val profileRepository: ProfileRepository
@@ -12,7 +12,11 @@ class SetProfileSubjectInstanceEnabledUseCase(
         subjectInstances: List<SubjectInstance>,
         enabled: Boolean
     ) {
-        profileRepository.setSubjectInstancesEnabled(profile.id, subjectInstances.map { it.id }, enabled)
+        profileRepository.save(profile.copy(
+            subjectInstanceConfiguration = subjectInstances
+                .associateWith { enabled }
+                .mapKeys { it.key.id }
+        ))
     }
 
     suspend operator fun invoke(

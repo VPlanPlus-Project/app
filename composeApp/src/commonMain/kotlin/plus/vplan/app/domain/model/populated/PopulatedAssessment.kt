@@ -13,15 +13,15 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.File
 import plus.vplan.app.domain.repository.FileRepository
-import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 

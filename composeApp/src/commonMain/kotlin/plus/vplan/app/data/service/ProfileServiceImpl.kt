@@ -4,10 +4,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.service.ProfileService
 import kotlin.uuid.Uuid
 

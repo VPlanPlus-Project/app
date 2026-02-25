@@ -22,6 +22,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.CollectionsRepository
 import plus.vplan.app.core.data.besteschule.GradesRepository
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
@@ -29,7 +30,6 @@ import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedCollection
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
-import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase

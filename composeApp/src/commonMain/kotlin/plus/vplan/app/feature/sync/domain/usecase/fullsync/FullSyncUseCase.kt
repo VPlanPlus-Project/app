@@ -11,6 +11,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
 import plus.vplan.app.captureError
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
@@ -22,7 +23,6 @@ import plus.vplan.app.domain.repository.GroupDbDto
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository

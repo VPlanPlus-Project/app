@@ -7,12 +7,14 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.database.model.database.DbGroupProfile
 import plus.vplan.app.core.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.core.database.model.database.DbProfile
 import plus.vplan.app.core.database.model.database.DbRoomProfile
 import plus.vplan.app.core.database.model.database.DbTeacherProfile
 import plus.vplan.app.core.database.model.embedded.EmbeddedProfile
+import plus.vplan.app.core.model.Profile
 import kotlin.uuid.Uuid
 
 @Dao
@@ -49,11 +51,21 @@ interface ProfileDao {
     @Query("DELETE FROM fk_group_profile_disabled_subject_instances WHERE subject_instance_id IN (:subjectInstanceIds) AND profile_id = :profileId")
     suspend fun deleteDisabledSubjectInstances(profileId: Uuid, subjectInstanceIds: List<Uuid>)
 
-    @Query("UPDATE profiles SET display_name = :displayName WHERE id = :id")
-    suspend fun updateDisplayName(id: Uuid, displayName: String?)
+    @Transaction
+    suspend fun replaceSubjectInstanceConfiguration(profile: Profile.StudentProfile) {
+        val existing = getById(profile.id).first()?.toModel() as? Profile.StudentProfile
+        val subjectInstanceConfigurationsToBeDeleted = existing
+            ?.subjectInstanceConfiguration.orEmpty()
+            .filter { (sid, active) ->
+                val newActive = profile.subjectInstanceConfiguration[sid] ?: true
+                active != newActive
+            }
 
-    @Query("UPDATE profiles_group SET vpp_id = :vppId WHERE profile_id = :id")
-    suspend fun updateVppId(id: Uuid, vppId: Int?)
+        deleteDisabledSubjectInstances(profile.id, subjectInstanceConfigurationsToBeDeleted.keys.toList())
+        profile.subjectInstanceConfiguration.forEach { (sid, active) ->
+            if (!active) insertDisabledSubjectInstances(profile.id, sid)
+        }
+    }
 
     @Query("DELETE FROM profiles WHERE id = :id")
     suspend fun deleteById(id: Uuid)

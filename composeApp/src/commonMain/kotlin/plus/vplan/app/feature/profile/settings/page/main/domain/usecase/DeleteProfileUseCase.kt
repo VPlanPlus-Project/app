@@ -2,10 +2,10 @@ package plus.vplan.app.feature.profile.settings.page.main.domain.usecase
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.ProfileRepository
 
 class DeleteProfileUseCase(
     private val profileRepository: ProfileRepository,
@@ -23,6 +23,6 @@ class DeleteProfileUseCase(
             keyValueRepository.set(Keys.CURRENT_PROFILE, nextProfile.id.toHexString())
         } ?: keyValueRepository.delete(Keys.CURRENT_PROFILE)
 
-        profileRepository.deleteProfile(profileId = profile.id)
+        profileRepository.delete(profile)
     }
 }

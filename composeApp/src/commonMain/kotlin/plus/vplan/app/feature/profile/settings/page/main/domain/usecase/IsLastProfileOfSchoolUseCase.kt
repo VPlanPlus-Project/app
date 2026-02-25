@@ -1,8 +1,8 @@
 package plus.vplan.app.feature.profile.settings.page.main.domain.usecase
 
 import kotlinx.coroutines.flow.map
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.ProfileRepository
 
 class IsLastProfileOfSchoolUseCase(
     private val profileRepository: ProfileRepository

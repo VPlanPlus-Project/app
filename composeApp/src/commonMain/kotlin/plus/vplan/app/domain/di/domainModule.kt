@@ -13,7 +13,6 @@ import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.usecase.CheckEMailStructureUseCase
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
-import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
 import plus.vplan.app.domain.usecase.OnNotificationGrantedUseCase
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.UpdateFirebaseTokenUseCase
@@ -22,7 +21,6 @@ val domainModule = module {
     singleOf(::GetCurrentDateTimeUseCase)
     singleOf(::SetCurrentProfileUseCase)
     singleOf(::GetDayUseCase)
-    singleOf(::GetProfileByIdUseCase)
     singleOf(::OnNotificationGrantedUseCase)
     singleOf(::CheckEMailStructureUseCase)
     singleOf(::UpdateFirebaseTokenUseCase)

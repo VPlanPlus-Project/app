@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Course
 import plus.vplan.app.core.model.SubjectInstance
@@ -19,7 +20,6 @@ import plus.vplan.app.domain.model.populated.PopulatedCourse
 import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
 import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
-import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
 import plus.vplan.app.feature.profile.domain.usecase.UpdateIndicesUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.GetCourseConfigurationUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileSubjectInstanceEnabledUseCase
@@ -27,7 +27,7 @@ import plus.vplan.app.utils.filterKeysNotNull
 import kotlin.uuid.Uuid
 
 class ProfileSubjectInstanceViewModel(
-    private val getProfileByIdUseCase: GetProfileByIdUseCase,
+    private val profileRepository: ProfileRepository,
     private val getCourseConfigurationUseCase: GetCourseConfigurationUseCase,
     private val setProfileSubjectInstanceEnabledUseCase: SetProfileSubjectInstanceEnabledUseCase,
     private val updateIndicesUseCase: UpdateIndicesUseCase,
@@ -44,7 +44,7 @@ class ProfileSubjectInstanceViewModel(
     fun init(profileId: Uuid) {
         state.update { ProfileSubjectInstanceState() }
         viewModelScope.launch {
-            getProfileByIdUseCase(profileId).collectLatest { profile ->
+            profileRepository.getById(profileId).collectLatest { profile ->
                 if (profile !is Profile.StudentProfile) return@collectLatest
                 if (shouldRebuildIndicesOnProfileReload) {
                     shouldRebuildIndicesOnProfileReload = false

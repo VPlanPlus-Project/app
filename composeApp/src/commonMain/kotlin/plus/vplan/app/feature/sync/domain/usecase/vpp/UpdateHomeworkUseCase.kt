@@ -13,6 +13,7 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
@@ -29,7 +30,6 @@ import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkEntity
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.SubjectInstanceDbDto
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.VppIdRepository

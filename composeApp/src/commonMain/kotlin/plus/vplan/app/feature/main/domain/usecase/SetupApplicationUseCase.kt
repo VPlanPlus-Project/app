@@ -7,10 +7,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.captureError
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
 import plus.vplan.app.feature.main.domain.usecase.setup.DownloadVppSchoolIdentifierUseCase

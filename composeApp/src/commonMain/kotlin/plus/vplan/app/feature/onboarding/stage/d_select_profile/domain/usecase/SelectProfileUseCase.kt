@@ -4,11 +4,12 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.capture
+import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
@@ -20,6 +21,7 @@ import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUse
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
 import plus.vplan.app.utils.now
+import kotlin.uuid.Uuid
 
 class SelectProfileUseCase(
     private val onboardingRepository: OnboardingRepository,
@@ -42,14 +44,24 @@ class SelectProfileUseCase(
         val profile = when (onboardingProfile) {
             is OnboardingProfile.StudentProfile -> {
                 val group = groupRepository.getByLocalId(groupRepository.resolveAliasToLocalId(onboardingProfile.alias)!!).first()!!
-                profileRepository.upsert(
+                Profile.StudentProfile(
+                    id = Uuid.random(),
+                    name = group.name,
                     group = group,
-                    disabledSubjectInstances = subjectInstances.filterValues { !it }.keys.toList()
-                )
+                    subjectInstanceConfiguration = subjectInstances
+                        .mapKeys { it.key.id }
+                        .mapValues { it.value },
+                    vppId = null,
+                ).also { profileRepository.save(it) }
             }
             is OnboardingProfile.TeacherProfile -> {
                 val teacher = teacherRepository.getByLocalId(teacherRepository.resolveAliasToLocalId(onboardingProfile.alias)!!).first()!!
-                profileRepository.upsert(teacher)
+
+                Profile.TeacherProfile(
+                    id = Uuid.random(),
+                    name = teacher.name,
+                    teacher = teacher,
+                ).also { profileRepository.save(it) }
             }
         }
         capture(
