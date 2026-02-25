@@ -3,19 +3,19 @@ package plus.vplan.app.feature.vpp_id.domain.usecase
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
-import plus.vplan.app.core.model.getFirstValue
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.VppDbDto
 import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import kotlin.uuid.Uuid
 
@@ -25,7 +25,7 @@ class AddVppIdUseCase(
     private val profileRepository: ProfileRepository,
     private val syncGradesUseCase: SyncGradesUseCase,
     private val groupRepository: GroupRepository,
-    private val schoolService: SchoolService,
+    private val schoolRepository: SchoolRepository,
 ) {
     private val logger = Logger.withTag("AddVppIdUseCase")
 
@@ -46,8 +46,8 @@ class AddVppIdUseCase(
 
         logger.i { "Resolved token to user ${vppId.data.id} (${vppId.data.username})" }
 
-        schoolService.getSchoolFromAlias(Alias(AliasProvider.Vpp, vppId.data.schoolId.toString(), 1)).getFirstValue()
-            ?: return Response.Error.Other("School not found for VPP ID: ${vppId.data.id}")
+        schoolRepository.getById(Alias(AliasProvider.Vpp, vppId.data.schoolId.toString(), 1))
+            .first() ?: return Response.Error.Other("School not found for VPP ID: ${vppId.data.id}")
 
         logger.d { "Loaded school by vpp school id ${vppId.data.schoolId}" }
 

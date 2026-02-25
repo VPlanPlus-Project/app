@@ -18,6 +18,15 @@ kotlin {
             implementation(libs.ktor.client.core)
 
             implementation(project(":core:database"))
+            implementation(project(":core:model"))
+        }
+
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.koin.test)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.serialization.json)
         }
     }
 }

@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
@@ -25,27 +23,26 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.core.model.Alias
-import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.AliasState
-import plus.vplan.app.core.model.Response
-import plus.vplan.app.core.model.VppSchoolAuthentication
-import plus.vplan.app.currentConfiguration
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.database.VppDatabase
 import plus.vplan.app.core.database.model.database.DbSubjectInstance
 import plus.vplan.app.core.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstanceGroup
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.model.VppSchoolAuthentication
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
 import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
-import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.SubjectInstanceDbDto
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlin.uuid.Uuid
 
 class SubjectInstanceRepositoryImpl(
@@ -234,10 +231,8 @@ class SubjectInstanceRepositoryImpl(
 
                 val (authentication, vppSchoolAlias) = authenticationPair
 
-                val localSchoolId = schoolRepository.resolveAliasToLocalId(vppSchoolAlias)
-                if (localSchoolId == null) {
-                    return@download Response.Error.Other("No school found for alias $vppSchoolAlias")
-                }
+                schoolRepository.getById(vppSchoolAlias).first()
+                    ?: return@download Response.Error.Other("No school found for alias $vppSchoolAlias")
 
                 val item = downloadById(authentication, alias.toUrlString())
                 if (item !is Response.Success) return@download item as Response.Error

@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.sync.domain.usecase.vpp
 
 import co.touchlab.kermit.Logger
@@ -15,14 +13,15 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.CreationReason
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getByProvider
-import plus.vplan.app.core.model.CreationReason
-import plus.vplan.app.core.model.Homework
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.repository.GroupDbDto
@@ -31,7 +30,6 @@ import plus.vplan.app.domain.repository.HomeworkEntity
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.ProfileRepository
-import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.SubjectInstanceDbDto
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -44,7 +42,6 @@ import plus.vplan.app.utils.until
 import plus.vplan.app.utils.untilRelativeText
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 class UpdateHomeworkUseCase(
@@ -117,11 +114,11 @@ class UpdateHomeworkUseCase(
 
                 groupRepository.upsert(GroupDbDto(
                     id = item?.id,
-                    schoolId = schoolRepository.resolveAliasToLocalId(Alias(
+                    schoolId = schoolRepository.getById(Alias(
                         provider = AliasProvider.Vpp,
                         value = response.data.schoolId.toString(),
                         version = 1
-                    ))!!,
+                    )).first()!!.id,
                     name = item?.name ?: response.data.name,
                     aliases = (item?.aliases ?: response.data.aliases) + vppIdAlias,
                     creationReason = if (item == null) CreationReason.Cached else CreationReason.Persisted

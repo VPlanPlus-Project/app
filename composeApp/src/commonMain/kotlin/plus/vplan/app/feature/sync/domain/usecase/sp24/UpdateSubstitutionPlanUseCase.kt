@@ -127,7 +127,7 @@ class UpdateSubstitutionPlanUseCase(
                 timetable = emptySet(),
                 assessmentIds = emptySet(),
                 homeworkIds = emptySet(),
-                nextSchoolDayId = null,
+                 nextSchoolDay = null,
                 tags = emptySet()
             )
 
@@ -199,7 +199,7 @@ class UpdateSubstitutionPlanUseCase(
 
                 Logger.d { "Sending notification for ${profile.name}" }
 
-                val newDay = App.daySource.getById("${sp24School.id}/$date", profile).getFirstValueOld()
+                val newDay = App.daySource.getForDay(date, sp24School, profile).getFirstValueOld()
 
                 val changedLessons = changedOrNewLessons
                     .associateWith { it.lesson.lessonNumber }

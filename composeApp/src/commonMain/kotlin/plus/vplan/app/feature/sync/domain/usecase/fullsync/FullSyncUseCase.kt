@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.sync.domain.usecase.fullsync
 
 import co.touchlab.kermit.Logger
@@ -13,10 +11,12 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
 import plus.vplan.app.captureError
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.CreationReason
+import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.GroupDbDto
 import plus.vplan.app.domain.repository.GroupRepository
@@ -25,8 +25,6 @@ import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.ProfileRepository
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
-import plus.vplan.app.domain.repository.SchoolDbDto
-import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.TeacherDbDto
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -49,7 +47,6 @@ import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Response
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
-import kotlin.time.ExperimentalTime
 
 class FullSyncUseCase(
     private val schoolRepository: SchoolRepository,
@@ -149,8 +146,8 @@ class FullSyncUseCase(
 
                             if (result.data is Sp24CredentialsValidity.Invalid.InvalidFirstTime) {
                                 logger.w { "stundenplan24.de-access for school ${school.id} (${school.name}) expired, sending notification" }
-                                schoolRepository.setSp24CredentialValidity(school.id, false)
-                                sendInvalidSp24CredentialsNotification(school.name, school.id)
+                                schoolRepository.save(school.copy(credentialsValid = false))
+                                sendInvalidSp24CredentialsNotification(school.name, school.aliases.getByProvider(AliasProvider.Sp24)!!)
                                 return@forEachSchool
                             }
 
@@ -158,7 +155,7 @@ class FullSyncUseCase(
                             run updateSchoolName@{
                                 val schoolNameResponse = (client.getSchoolName() as? Response.Success)
                                 val schoolName = schoolNameResponse?.data ?: return@updateSchoolName
-                                schoolRepository.upsert(SchoolDbDto.fromModel(school.copy(name = schoolName), CreationReason.Persisted))
+                                schoolRepository.save(school.copy(name = schoolName))
                             }
 
                             logger.i { "Updating groups" }

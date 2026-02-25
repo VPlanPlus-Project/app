@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.data.repository
 
 import io.ktor.client.HttpClient
@@ -18,30 +16,28 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.currentConfiguration
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.database.VppDatabase
 import plus.vplan.app.core.database.model.database.DbNews
-import plus.vplan.app.core.database.model.database.foreign_key.FKNewsSchool
+import plus.vplan.app.core.database.model.database.DbNewsSchools
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.News
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.School
+import plus.vplan.app.currentConfiguration
 import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
-import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.core.model.Alias
-import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.Response
-import plus.vplan.app.core.model.News
-import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.NewsRepository
-import plus.vplan.app.domain.service.SchoolService
 import plus.vplan.app.utils.sendAll
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 class NewsRepositoryImpl(
     private val vppDatabase: VppDatabase,
     private val httpClient: HttpClient,
-    private val schoolService: SchoolService
+    private val schoolRepository: SchoolRepository,
 ) : NewsRepository {
     override suspend fun download(school: School.AppSchool): Response<List<Int>> {
         safeRequest(onError = { return it }) {
@@ -57,28 +53,37 @@ class NewsRepositoryImpl(
             val data = ResponseDataWrapper.fromJson<List<NewsResponse>>(response.bodyAsText())
                 ?: return Response.Error.ParsingError(response.bodyAsText())
 
-            data.map { it.schoolIds.map { school ->
-                schoolService.getSchoolFromAlias(Alias(provider = AliasProvider.Vpp, school.id.toString(), 1))
-            } }
+            // Prefetch schools
+            val news = data.associateWith {
+                it.schoolIds.map { school ->
+                    val alias = Alias(provider = AliasProvider.Vpp, school.id.toString(), 1)
+                    schoolRepository.getById(alias).first()
+                    alias
+                }
+            }
 
             vppDatabase.newsDao.upsert(
-                news = data.map { DbNews(
-                    id = it.id,
-                    author = it.author,
-                    title = it.title,
-                    content = it.content,
-                    createdAt = Instant.fromEpochSeconds(it.createdAt),
-                    notBefore = Instant.fromEpochSeconds(it.dateFrom),
-                    notAfter = Instant.fromEpochSeconds(it.dateTo),
-                    notBeforeVersion = it.versionFrom,
-                    notAfterVersion = it.versionTo,
-                    isRead = vppDatabase.newsDao.getById(it.id).first()?.news?.isRead ?: false
+                news = news.map { (news, _) ->
+                    DbNews(
+                    id = news.id,
+                    author = news.author,
+                    title = news.title,
+                    content = news.content,
+                    createdAt = Instant.fromEpochSeconds(news.createdAt),
+                    notBefore = Instant.fromEpochSeconds(news.dateFrom),
+                    notAfter = Instant.fromEpochSeconds(news.dateTo),
+                    notBeforeVersion = news.versionFrom,
+                    notAfterVersion = news.versionTo,
+                    isRead = vppDatabase.newsDao.getById(news.id).first()?.news?.isRead ?: false
                 ) },
-                schools = data.flatMap { news ->
-                    news.schoolIds.mapNotNull {
-                        FKNewsSchool(newsId = news.id, schoolId = schoolService.getSchoolFromAlias(
-                            Alias(AliasProvider.Vpp, it.id.toString(), 1)
-                        ).getFirstValue()?.id ?: return@mapNotNull null)
+                schools = news.flatMap { (news, aliases) ->
+                    aliases.map { alias ->
+                        DbNewsSchools(
+                            newsId = news.id,
+                            value = alias.value,
+                            aliasType = alias.provider,
+                            version = alias.version,
+                        )
                     }
                 }
             )
@@ -163,7 +168,14 @@ class NewsRepositoryImpl(
                     isRead = news.isRead
                 )
             ),
-            schools = news.schoolIds.map { FKNewsSchool(newsId = news.id, schoolId = it) }
+            schools = news.schools.map {  alias ->
+                DbNewsSchools(
+                    newsId = news.id,
+                    value = alias.value,
+                    aliasType = alias.provider,
+                    version = alias.version,
+                )
+            }
         )
     }
 }

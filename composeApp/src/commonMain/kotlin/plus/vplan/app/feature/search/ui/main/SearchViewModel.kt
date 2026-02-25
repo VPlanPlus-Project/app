@@ -17,10 +17,10 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.App
-import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Day
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
@@ -123,12 +123,12 @@ class SearchViewModel(
 
     private suspend fun restartSearch() {
         searchJob?.cancel()
-        val schoolId = state.currentProfile?.school?.id
-        if (state.currentProfile == null || schoolId == null) {
+        val school = state.currentProfile?.school
+        if (state.currentProfile == null || school == null) {
             state = state.copy(results = emptyMap())
             return
         }
-        val day = App.daySource.getById(Day.buildId(schoolId, state.query.date)).getFirstValueOld()
+        val day = App.daySource.getForDay(state.query.date, school).getFirstValueOld()
         searchJob = viewModelScope.launch {
             state = state.copy(isLoading = true)
             searchUseCase(state.query).collectLatest {

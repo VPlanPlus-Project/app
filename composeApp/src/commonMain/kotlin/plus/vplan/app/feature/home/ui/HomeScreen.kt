@@ -72,6 +72,8 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Homework
@@ -79,6 +81,7 @@ import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
@@ -125,7 +128,6 @@ import vplanplus.composeapp.generated.resources.minus
 import vplanplus.composeapp.generated.resources.notebook_text
 import vplanplus.composeapp.generated.resources.triangle_alert
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp
 private val LESSON_NUMBER_SIZE = 32.dp
@@ -140,7 +142,7 @@ fun HomeScreen(
         state = homeViewModel.state.collectAsStateWithLifecycle().value,
         contentPadding = contentPadding,
         onOpenRoomSearch = remember { { navHostController.navigate(MainScreen.RoomSearch) } },
-        onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings(openIndiwareSettingsSchoolId = it.toHexString())) } },
+        onOpenSchoolSettings = remember { { navHostController.navigate(MainScreen.SchoolSettings(openIndiwareSettingsSchool = it.toString())) } },
         onEvent = homeViewModel::onEvent
     )
 }
@@ -151,7 +153,7 @@ private fun HomeContent(
     state: HomeState,
     contentPadding: PaddingValues,
     onOpenRoomSearch: () -> Unit,
-    onOpenSchoolSettings: (schoolId: Uuid) -> Unit,
+    onOpenSchoolSettings: (schoolId: Alias) -> Unit,
     onEvent: (event: HomeEvent) -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -243,7 +245,7 @@ private fun HomeContent(
                                 textColor = MaterialTheme.colorScheme.onErrorContainer,
                                 backgroundColor = MaterialTheme.colorScheme.errorContainer,
                                 shadow = true,
-                                buttonAction1 = { onOpenSchoolSettings(displaySchool!!.id) },
+                                buttonAction1 = { onOpenSchoolSettings(displaySchool!!.aliases.getByProvider(AliasProvider.Sp24)!!) },
                                 buttonText1 = "Aktualisieren",
                                 imageVector = Res.drawable.key_round
                             )

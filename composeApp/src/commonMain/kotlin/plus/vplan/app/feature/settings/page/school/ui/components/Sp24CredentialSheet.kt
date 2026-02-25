@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.model.Alias
 import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.component.PasswordField
 import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.component.UsernameField
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
@@ -35,12 +36,11 @@ import plus.vplan.app.utils.safeBottomPadding
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.school
-import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Sp24CredentialSheet(
-    schoolId: Uuid,
+    schoolIdentifier: Alias,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -48,7 +48,7 @@ fun Sp24CredentialSheet(
     val state = viewModel.state
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(schoolId) { viewModel.init(schoolId) }
+    LaunchedEffect(schoolIdentifier) { viewModel.init(schoolIdentifier) }
 
     if (state != null) ModalBottomSheet(
         onDismissRequest = onDismiss,

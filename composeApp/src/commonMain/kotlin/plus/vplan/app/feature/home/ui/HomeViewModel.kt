@@ -208,9 +208,10 @@ class HomeViewModel(
 
                         if (lessons.filter { it.lessonTime != null }.any { it.lessonTime!!.end >= state.value.currentTime.time }) {
                             state.update { state -> state.copy(day = day) }
-                        } else if (day.nextSchoolDayId != null) {
-                            App.daySource.getById(
-                                day.nextSchoolDayId!!,
+                        } else if (day.nextSchoolDay != null) {
+                            App.daySource.getForDay(
+                                date = day.nextSchoolDay!!,
+                                school = profile.school,
                                 profile
                             ).filterIsInstance<CacheState.Done<Day>>().map { it.data }
                                 .collectLatest { nextDay ->
@@ -233,7 +234,7 @@ class HomeViewModel(
                     updateLessonTimesUseCase(school, client)
                     updateHolidaysUseCase(school, client)
                     updateTimetableUseCase(school, forceUpdate = false, client = client)
-                    updateSubstitutionPlanUseCase(school, setOfNotNull(LocalDate.now(), state.value.day?.date, (if (state.value.day?.nextSchoolDayId == null) null else App.daySource.getById(state.value.day!!.nextSchoolDayId!!))?.getFirstValueOld()?.date).sorted(), allowNotification = false, providedClient = client)
+                    updateSubstitutionPlanUseCase(school, setOfNotNull(LocalDate.now(), state.value.day?.date, (if (state.value.day?.nextSchoolDay == null) null else App.daySource.getForDay(state.value.day!!.nextSchoolDay!!, state.value.currentProfile!!.school, state.value.currentProfile))?.getFirstValueOld()?.date).sorted(), allowNotification = false, providedClient = client)
                 } catch (e: Exception) {
                     LOGGER.e { "Something went wrong on updating the data for Profile ${state.value.currentProfile!!.id} (${state.value.currentProfile!!.name}):\n${e.stackTraceToString()}" }
                     captureError("HomeViewModel.update", "Error on updating the data for school ${school.id}: ${e.stackTraceToString()}")

@@ -3,7 +3,7 @@ package plus.vplan.app.core.database.model.embedded
 import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.core.database.model.database.DbNews
-import plus.vplan.app.core.database.model.database.foreign_key.FKNewsSchool
+import plus.vplan.app.core.database.model.database.DbNewsSchools
 import plus.vplan.app.core.model.News
 
 data class EmbeddedNews(
@@ -11,8 +11,8 @@ data class EmbeddedNews(
     @Relation(
         parentColumn = "id",
         entityColumn = "news_id",
-        entity = FKNewsSchool::class
-    ) val schools: List<FKNewsSchool>
+        entity = DbNewsSchools::class
+    ) val schools: List<DbNewsSchools>
 ) {
     fun toModel(): News {
         return News(
@@ -24,7 +24,7 @@ data class EmbeddedNews(
             versionTo = news.notAfterVersion,
             dateFrom = news.notBefore,
             dateTo = news.notAfter,
-            schoolIds = schools.map { it.schoolId },
+            schools = schools.map { it.toModel() }.toSet(),
             author = news.author,
             isRead = news.isRead
         )

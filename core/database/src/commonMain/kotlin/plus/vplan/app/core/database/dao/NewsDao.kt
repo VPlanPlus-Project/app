@@ -6,13 +6,13 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.core.database.model.database.DbNews
-import plus.vplan.app.core.database.model.database.foreign_key.FKNewsSchool
+import plus.vplan.app.core.database.model.database.DbNewsSchools
 import plus.vplan.app.core.database.model.embedded.EmbeddedNews
 
 @Dao
 interface NewsDao {
     @Upsert
-    suspend fun upsert(news: List<DbNews>, schools: List<FKNewsSchool>)
+    suspend fun upsert(news: List<DbNews>, schools: List<DbNewsSchools>)
 
     @Transaction
     @Query("SELECT * FROM news")

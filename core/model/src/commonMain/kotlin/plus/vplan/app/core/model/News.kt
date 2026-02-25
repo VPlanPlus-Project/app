@@ -11,7 +11,7 @@ data class News(
     val versionTo: Int?,
     val dateFrom: Instant,
     val dateTo: Instant,
-    val schoolIds: School.Ids,
+    val schools: Set<Alias>,
     val author: String,
     val isRead: Boolean
 ) : Item<Int, DataTag> {

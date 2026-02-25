@@ -1,10 +1,10 @@
 package plus.vplan.app.data.source.network
 
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.VppSchoolAuthentication
-import plus.vplan.app.domain.repository.SchoolRepository
 
 /**
  * This class is used to get the authentication for a school based on its aliases. For example, when updating a protected
@@ -13,12 +13,12 @@ import plus.vplan.app.domain.repository.SchoolRepository
  * and use it to update the item in a second request.
  */
 class SchoolAuthenticationProvider(
-    private val schoolRepository: SchoolRepository
+    private val schoolRepository: SchoolRepository,
 ) {
     suspend fun getAuthenticationForSchool(schoolAliases: Set<Alias>): VppSchoolAuthentication? {
-        val localSchoolId = schoolRepository.resolveAliasesToLocalId(schoolAliases.toList()) ?: return null
-        val localSchool = schoolRepository.getByLocalId(localSchoolId).first() ?: return null
-        if (localSchool !is School.AppSchool) return null
-        return localSchool.buildSp24AppAuthentication()
+        val school = schoolRepository.getByIds(schoolAliases).first() as? School.AppSchool
+            ?: return null
+
+        return school.buildSp24AppAuthentication()
     }
 }

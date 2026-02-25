@@ -39,7 +39,11 @@ class OnboardingSchoolSearchViewModel(
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             _state.update { it.copy(results = Response.Loading) }
-            val response = searchForSchoolUseCase(_state.value.searchQuery)
+            val response = try {
+                Response.Success(searchForSchoolUseCase(_state.value.searchQuery))
+            } catch (_: Exception) {
+                Response.Error.Other("Something went wrong")
+            }
             _state.update {
                 it.copy(
                     results = response,

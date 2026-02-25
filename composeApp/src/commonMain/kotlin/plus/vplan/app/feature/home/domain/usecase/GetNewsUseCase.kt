@@ -20,7 +20,7 @@ class GetNewsUseCase(
     suspend operator fun invoke(profile: Profile): Flow<List<News>> {
         return newsRepository.getAll().mapLatest {
             it.filter { news ->
-                (news.schoolIds.isEmpty() || profile.school.id in news.schoolIds) &&
+                (news.schools.isEmpty() || profile.school.aliases.intersect(news.schools).isNotEmpty()) &&
                         LocalDate.now() >= news.dateFrom.toLocalDateTime(TimeZone.currentSystemDefault()).date &&
                         LocalDate.now() <= news.dateTo.toLocalDateTime(TimeZone.currentSystemDefault()).date &&
                         news.versionFrom?.let { versionFrom -> AppBuildConfig.APP_VERSION_CODE >= versionFrom } ?: true &&

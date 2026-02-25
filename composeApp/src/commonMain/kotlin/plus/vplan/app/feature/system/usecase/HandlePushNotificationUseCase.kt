@@ -8,9 +8,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.capture
-import plus.vplan.app.core.model.getFirstValueOld
+import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 
@@ -38,10 +40,9 @@ class HandlePushNotificationUseCase(
             }
             "INDIWARE_UPDATE" -> {
                 val data = json.decodeFromString<IndiwareUpdate>(payload)
-                val school = schoolRepository.getAllLocalIds().first()
-                    .map { schoolRepository.getByLocalId(it).first() }
-                    .filterIsInstance<School.AppSchool>()
-                    .firstOrNull { it.sp24Id == data.indiwareSchoolId }
+                val school = schoolRepository
+                    .getById(Alias(AliasProvider.Sp24, data.indiwareSchoolId, 1))
+                    .first() as? School.AppSchool
 
                 if (school == null) {
                     logger.w { "Indiware school ${data.indiwareSchoolId} not found" }

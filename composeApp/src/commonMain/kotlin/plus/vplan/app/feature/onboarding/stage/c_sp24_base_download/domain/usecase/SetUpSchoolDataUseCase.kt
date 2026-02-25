@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase
 
 import co.touchlab.kermit.Logger
@@ -7,9 +5,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
-import plus.vplan.app.core.model.CreationReason
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.core.model.School
@@ -19,8 +18,6 @@ import plus.vplan.app.domain.repository.GroupDbDto
 import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
-import plus.vplan.app.domain.repository.SchoolDbDto
-import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.TeacherDbDto
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -30,7 +27,8 @@ import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.lib.sp24.source.Authentication
-import kotlin.time.ExperimentalTime
+import kotlin.time.Clock
+import kotlin.uuid.Uuid
 
 class SetUpSchoolDataUseCase(
     private val onboardingRepository: OnboardingRepository,
@@ -85,28 +83,27 @@ class SetUpSchoolDataUseCase(
                 version = 1
             )
 
-            val schoolId = schoolRepository.upsert(SchoolDbDto(
+            val school = School.AppSchool(
+                id = Uuid.random(),
                 name = schoolName?.data ?: "Unbekannte Schule",
-                aliases = listOf(sp24Alias),
-                creationReason = CreationReason.Persisted
-            ))
-
-            schoolRepository.setSp24Access(
-                schoolId = schoolId,
-                sp24Id = state.sp24Id,
+                aliases = setOf(sp24Alias),
+                cachedAt = Clock.System.now(),
+                groupIds = emptyList(),
+                sp24Id = state.sp24Id.toString(),
                 username = state.username,
                 password = state.password,
                 daysPerWeek = 5,
+                credentialsValid = true
             )
 
-            val school = schoolRepository.getByLocalId(schoolId).first() as School.AppSchool
+            schoolRepository.save(school)
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_HOLIDAYS] = SetUpSchoolDataState.IN_PROGRESS
 
             val holidays = (client.holiday.getHolidays() as? plus.vplan.lib.sp24.source.Response.Success)?.data
 
-            dayRepository.upsert(holidays.orEmpty().map { Holiday(it, schoolId) })
+            dayRepository.upsert(holidays.orEmpty().map { Holiday(it, school.id) })
             result[SetUpSchoolDataStep.GET_HOLIDAYS] = SetUpSchoolDataState.DONE
 
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.IN_PROGRESS
@@ -117,7 +114,7 @@ class SetUpSchoolDataUseCase(
                 Group.buildSp24Alias(school.sp24Id.toInt(), group.name)
             }.map { (group, aliases) ->
                 groupRepository.upsert(GroupDbDto(
-                    schoolId = schoolId,
+                    schoolId = school.id,
                     name = group.name,
                     aliases = listOf(aliases),
                     creationReason = CreationReason.Persisted
@@ -137,7 +134,7 @@ class SetUpSchoolDataUseCase(
                 )
             }.onEach { (teacher, aliases) ->
                 teacherRepository.upsert(TeacherDbDto(
-                    schoolId = schoolId,
+                    schoolId = school.id,
                     name = teacher.name,
                     aliases = listOf(aliases)
                 ))
@@ -160,7 +157,7 @@ class SetUpSchoolDataUseCase(
                 )
             }.forEach { (room, aliases) ->
                 roomRepository.upsert(RoomDbDto(
-                    schoolId = schoolId,
+                    schoolId = school.id,
                     name = room.name,
                     aliases = listOf(aliases)
                 ))

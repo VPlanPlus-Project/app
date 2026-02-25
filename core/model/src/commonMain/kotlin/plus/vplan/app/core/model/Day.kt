@@ -14,7 +14,7 @@ data class Day(
     val substitutionPlan: Set<Uuid>,
     val assessmentIds: Set<Int>,
     val homeworkIds: Set<Int>,
-    val nextSchoolDayId: String?,
+    val nextSchoolDay: LocalDate?,
     override val tags: Set<DayTags>
 ): Item<String, Day.DayTags> {
     enum class DayType {
@@ -22,7 +22,7 @@ data class Day(
     }
 
     companion object {
-        fun buildId(school: School, date: LocalDate) = "${school.id}/$date"
+        fun buildId(school: School, date: LocalDate) = "${school.aliases}/$date"
         fun buildId(schoolId: Uuid, date: LocalDate) = "$schoolId/$date"
     }
 

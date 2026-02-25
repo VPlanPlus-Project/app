@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.News
 import plus.vplan.app.domain.repository.NewsRepository
-import plus.vplan.app.domain.repository.SchoolRepository
 
 class GetNewsUseCase : KoinComponent {
     private val newsRepository by inject<NewsRepository>()
@@ -35,9 +35,10 @@ class GetNewsUseCase : KoinComponent {
                         if (newsState !is CacheState.Done) return@collectLatest // This should not happen as a news item can only be opened if it is already loaded
 
                         val schoolNames =
-                            if (newsState.data.schoolIds.isEmpty()) NewsSchoolsState.All
-                            else newsState.data.schoolIds
-                                .mapNotNull { schoolId -> schoolRepository.getByLocalId(schoolId).first()?.name }
+                            if (newsState.data.schools.isEmpty()) NewsSchoolsState.All
+                            else newsState.data.schools
+                                .mapNotNull { schoolId -> schoolRepository.getById(schoolId).first()?.name }
+                                .distinct()
                                 .let { NewsSchoolsState.Ready(it) }
 
                         flowState.update {

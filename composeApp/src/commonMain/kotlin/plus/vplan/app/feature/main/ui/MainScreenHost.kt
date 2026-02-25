@@ -54,6 +54,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
 import plus.vplan.app.VPP_ID_AUTH_URL
+import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.School
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.CalendarEvent
@@ -288,7 +289,7 @@ fun MainScreenHost(
                 val args = it.toRoute<MainScreen.SchoolSettings>()
                 SchoolSettingsScreen(
                     navHostController = navController,
-                    openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchoolId?.let { hexString -> Uuid.parseHex(hexString) }
+                    openIndiwareSettingsSchoolId = args.openIndiwareSettingsSchool?.let(Alias::fromString)
                 )
             }
             composable<MainScreen.SecuritySettings>(
@@ -393,7 +394,7 @@ fun MainScreenHost(
                 navController.navigate(MainScreen.MainCalendar)
             }
             is StartTask.NavigateTo.SchoolSettings -> {
-                navController.navigate(MainScreen.SchoolSettings(navigationTask.openSp24SettingsSchoolId?.toHexString()))
+                navController.navigate(MainScreen.SchoolSettings(navigationTask.openSp24SettingsSchoolId?.toString()))
             }
             is StartTask.NavigateTo.Grades -> navController.navigate(MainScreen.Grades(navigationTask.vppId))
             is StartTask.Open.Homework -> homeworkSheetHomeworkId = navigationTask.homeworkId
@@ -436,7 +437,7 @@ sealed class MainScreen(open val name: String) {
     @Serializable data object RoomSearch : MainScreen("RoomSearch")
 
     @Serializable data object Settings : MainScreen("Settings")
-    @Serializable data class SchoolSettings(val openIndiwareSettingsSchoolId: String? = null) : MainScreen("SchoolSettings")
+    @Serializable data class SchoolSettings(val openIndiwareSettingsSchool: String? = null) : MainScreen("SchoolSettings")
     @Serializable data object SecuritySettings : MainScreen("SecuritySettings")
     @Serializable sealed class DeveloperSettings(@SerialName("developer_subpath") override val name: String) : MainScreen("DeveloperSettings/$name") {
         @Serializable data object Home : DeveloperSettings("Home")

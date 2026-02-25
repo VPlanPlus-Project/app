@@ -30,11 +30,11 @@ import kotlinx.datetime.LocalTime
 import plus.vplan.app.App
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
-import plus.vplan.app.core.model.Day
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
@@ -85,7 +85,7 @@ class CalendarViewModel(
     private fun launchSyncJob(date: LocalDate): Job {
         return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
             val currentProfile = _state.value.currentProfile ?: return@launch
-            App.daySource.getById(Day.buildId(currentProfile.school.id, date), currentProfile)
+            App.daySource.getForDay(date, currentProfile.school, currentProfile)
                 .filterIsInstance<CacheState.Done<Day>>()
                 .map { it.data }
                 .collectLatest { day ->

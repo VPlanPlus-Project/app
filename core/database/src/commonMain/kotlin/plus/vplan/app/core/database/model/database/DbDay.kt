@@ -51,7 +51,7 @@ data class DbDay(
             timetable = emptySet(),
             assessmentIds = emptySet(),
             homeworkIds = emptySet(),
-            nextSchoolDayId = null,
+            nextSchoolDay = null,
             tags = emptySet()
         )
     }

@@ -63,6 +63,7 @@ import plus.vplan.app.core.database.model.database.DbHomeworkTaskDoneProfile
 import plus.vplan.app.core.database.model.database.DbKeyValue
 import plus.vplan.app.core.database.model.database.DbLessonTime
 import plus.vplan.app.core.database.model.database.DbNews
+import plus.vplan.app.core.database.model.database.DbNewsSchools
 import plus.vplan.app.core.database.model.database.DbProfile
 import plus.vplan.app.core.database.model.database.DbProfileAssessmentIndex
 import plus.vplan.app.core.database.model.database.DbProfileHomeworkIndex
@@ -105,7 +106,6 @@ import plus.vplan.app.core.database.model.database.crossovers.DbVppIdGroupCrosso
 import plus.vplan.app.core.database.model.database.foreign_key.FKAssessmentFile
 import plus.vplan.app.core.database.model.database.foreign_key.FKGroupProfileDisabledSubjectInstances
 import plus.vplan.app.core.database.model.database.foreign_key.FKHomeworkFile
-import plus.vplan.app.core.database.model.database.foreign_key.FKNewsSchool
 import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstanceGroup
 
 @Database(
@@ -182,7 +182,7 @@ import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstance
         DbProfileSubstitutionPlanCache::class,
 
         DbNews::class,
-        FKNewsSchool::class,
+        DbNewsSchools::class,
 
         DbBesteschuleSubject::class,
         DbBesteschuleYear::class,
@@ -253,6 +253,11 @@ import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstance
             to = 15,
             spec = VppDatabase.Migration14to15::class
         ),
+        AutoMigration(
+            from = 15,
+            to = 16,
+            spec = VppDatabase.Migration15to16::class
+        )
     ]
 )
 @TypeConverters(
@@ -299,7 +304,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val besteSchuleGradesDao: BesteschuleGradesDao
 
     companion object {
-        const val DATABASE_VERSION = 15
+        const val DATABASE_VERSION = 16
     }
 
     @RenameColumn(
@@ -654,6 +659,9 @@ abstract class VppDatabase : RoomDatabase() {
             """.trimIndent())
         }
     }
+
+    @DeleteTable(tableName = "fk_news_school")
+    class Migration15to16: AutoMigrationSpec
 }
 
 // Room compiler generates the `actual` implementations

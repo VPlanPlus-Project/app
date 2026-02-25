@@ -46,19 +46,21 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.feature.settings.page.school.ui.components.Sp24CredentialSheet
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.cloud_alert
 import vplanplus.composeapp.generated.resources.x
-import kotlin.uuid.Uuid
 
 @Composable
 fun SchoolSettingsScreen(
     navHostController: NavHostController,
-    openIndiwareSettingsSchoolId: Uuid? = null
+    openIndiwareSettingsSchoolId: Alias? = null
 ) {
     val viewModel = koinViewModel<SchoolSettingsViewModel>()
     val state = viewModel.state
@@ -74,7 +76,7 @@ fun SchoolSettingsScreen(
 @Composable
 private fun SchoolSettingsContent(
     state: SchoolSettingsState,
-    openIndiwareSettingsSchoolId: Uuid?,
+    openIndiwareSettingsSchoolId: Alias?,
     onBack: () -> Unit
 ) {
     val scrollBehaviour = TopAppBarDefaults.pinnedScrollBehavior()
@@ -126,7 +128,7 @@ private fun SchoolSettingsContent(
                     Column(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { visibleIndiwareCredentialSchoolId = school.school.id }
+                            .clickable { visibleIndiwareCredentialSchoolId = school.school.aliases.getByProvider(AliasProvider.Sp24) }
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                             .fillMaxWidth()
                     ) {
@@ -209,7 +211,7 @@ private fun SchoolSettingsContent(
 
     visibleIndiwareCredentialSchoolId?.let { selectedSchoolId ->
         Sp24CredentialSheet(
-            schoolId = selectedSchoolId,
+            schoolIdentifier = selectedSchoolId,
             onDismiss = { visibleIndiwareCredentialSchoolId = null }
         )
     }

@@ -2,6 +2,7 @@ package plus.vplan.app.core.model
 
 import io.ktor.http.decodeURLQueryComponent
 import io.ktor.http.encodeURLPath
+import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
 
 /**
@@ -35,6 +36,7 @@ fun Set<Alias>.getByProvider(provider: AliasProvider): Alias? {
     return this.firstOrNull { it.provider == provider }
 }
 
+@Serializable
 data class Alias(
     val provider: AliasProvider,
     val value: String,
@@ -73,6 +75,13 @@ data class Alias(
         }
     }
 }
+
+fun Collection<Alias>.toStableKey() = this
+    .sortedWith(
+        compareBy(Alias::provider)
+            .then(compareBy(Alias::value))
+            .then(compareBy(Alias::version))
+    ).joinToString("|")
 
 enum class AliasProvider(val prefix: String) {
     Sp24("sp24"),

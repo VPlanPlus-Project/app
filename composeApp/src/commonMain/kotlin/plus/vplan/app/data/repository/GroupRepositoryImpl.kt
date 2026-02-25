@@ -24,25 +24,24 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbGroup
+import plus.vplan.app.core.database.model.database.DbGroupAlias
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasState
+import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.currentConfiguration
-import plus.vplan.app.core.database.VppDatabase
-import plus.vplan.app.core.database.model.database.DbGroup
-import plus.vplan.app.core.database.model.database.DbGroupAlias
 import plus.vplan.app.data.source.network.GenericAuthenticationProvider
 import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.model.ApiAlias
 import plus.vplan.app.data.source.network.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
-import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.GroupDbDto
 import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.SchoolRepository
 import plus.vplan.app.domain.repository.VppGroupDto
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -52,7 +51,6 @@ class GroupRepositoryImpl(
     private val httpClient: HttpClient,
     private val genericAuthenticationProvider: GenericAuthenticationProvider,
     private val vppDatabase: VppDatabase,
-    private val schoolRepository: SchoolRepository
 ) : GroupRepository {
 
     override fun getBySchool(schoolId: Uuid): Flow<List<Group>> {

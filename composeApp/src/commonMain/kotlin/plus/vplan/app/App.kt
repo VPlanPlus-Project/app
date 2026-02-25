@@ -14,6 +14,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import plus.vplan.app.core.model.Alias
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
@@ -24,7 +25,6 @@ import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.ProfileSource
 import plus.vplan.app.domain.source.RoomSource
-import plus.vplan.app.domain.source.SchoolSource
 import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TeacherSource
@@ -59,7 +59,6 @@ object App {
     lateinit var homeworkTaskSource: HomeworkTaskSource
     lateinit var profileSource: ProfileSource
     lateinit var groupSource: GroupSource
-    lateinit var schoolSource: SchoolSource
     lateinit var subjectInstanceSource: SubjectInstanceSource
     lateinit var daySource: DaySource
     lateinit var timetableSource: TimetableSource
@@ -97,7 +96,7 @@ sealed class StartTask(val profileId: Uuid? = null) {
     data class OpenUrl(val url: String): StartTask()
     sealed class NavigateTo(profileId: Uuid?): StartTask(profileId) {
         class Calendar(profileId: Uuid?, val date: LocalDate): NavigateTo(profileId)
-        class SchoolSettings(profileId: Uuid?, val openSp24SettingsSchoolId: Uuid? = null): NavigateTo(profileId)
+        class SchoolSettings(profileId: Uuid?, val openSp24SettingsSchoolId: Alias? = null): NavigateTo(profileId)
         class Grades(profileId: Uuid?, val vppId: Int): NavigateTo(profileId)
     }
 
@@ -152,7 +151,7 @@ data class StartTaskJson(
 
         @Serializable
         data class SchoolSettings(
-            @SerialName("open_indiware_settings_school_id") val openIndiwareSettingsSchoolId: Uuid? = null,
+            @SerialName("open_school_alias") val openIndiwareSettingsSchool: Alias? = null,
         )
 
         @Serializable
@@ -175,7 +174,7 @@ fun getTaskFromNotificationString(data: String): StartTask? {
                 }
                 "settings/school" -> {
                     val payload = json.decodeFromString<StartTaskJson.StartTaskNavigateTo.SchoolSettings>(navigationJson.value!!)
-                    return StartTask.NavigateTo.SchoolSettings(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.openIndiwareSettingsSchoolId)
+                    return StartTask.NavigateTo.SchoolSettings(taskJson.profileId?.let { profileId -> Uuid.parse(profileId) }, payload.openIndiwareSettingsSchool)
                 }
                 "grades" -> {
                     val payload = json.decodeFromString<StartTaskJson.StartTaskNavigateTo.Grades>(navigationJson.value!!)
