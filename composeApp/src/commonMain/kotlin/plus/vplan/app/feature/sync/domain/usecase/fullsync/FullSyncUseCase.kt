@@ -11,16 +11,14 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
 import plus.vplan.app.captureError
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.GroupDbDto
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.RoomDbDto
@@ -47,6 +45,7 @@ import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Response
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.uuid.Uuid
 
 class FullSyncUseCase(
     private val schoolRepository: SchoolRepository,
@@ -163,8 +162,23 @@ class FullSyncUseCase(
                                 val groups = (client.getAllClassesIntelligent() as? Response.Success)?.data
                                 groups.orEmpty().associateWith { group ->
                                     Group.buildSp24Alias(school.sp24Id.toInt(), group.name)
-                                }.forEach { (group, aliases) ->
-                                    groupRepository.upsert(GroupDbDto(null, school.id, group.name, aliases = listOf(aliases), creationReason = CreationReason.Cached))
+                                }.forEach { (group, alias) ->
+                                    val existing = groupRepository.getById(
+                                        identifier = Group.buildSp24Alias(school.sp24Id.toInt(), group.name),
+                                        forceUpdate = true
+                                    ).first()
+
+                                    if (existing == null) {
+                                        groupRepository.save(Group(
+                                            id = Uuid.random(),
+                                            school = school,
+                                            name = group.name,
+                                            aliases = setOf(alias),
+                                            cachedAt = Clock.System.now(),
+                                        ))
+                                    } else {
+                                        groupRepository.save(existing)
+                                    }
                                 }
                             }
 

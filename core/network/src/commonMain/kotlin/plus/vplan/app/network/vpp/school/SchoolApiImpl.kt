@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.network.besteschule.NetworkRequestUnsuccessfulException
 import plus.vplan.app.network.besteschule.ResponseDataWrapper
+import plus.vplan.app.network.vpp.model.ApiAlias
 
 class SchoolApiImpl(
     private val httpClient: HttpClient,
@@ -50,21 +51,8 @@ class SchoolApiImpl(
 private data class ApiSchoolResponse(
     @SerialName("school_id") val id: Int,
     @SerialName("name") val name: String,
-    @SerialName("aliases") val aliases: List<Alias>
+    @SerialName("aliases") val aliases: List<ApiAlias>
 ) {
-    @Serializable
-    data class Alias(
-        @SerialName("type") val type: String,
-        @SerialName("value") val value: String,
-        @SerialName("version") val version: Int,
-    ) {
-        fun toDto() = SchoolDto.Alias(
-            type = type,
-            value = value,
-            version = version,
-        )
-    }
-
     fun toDto() = SchoolDto(
         id = id,
         name = name,

@@ -1,7 +1,7 @@
-package plus.vplan.app.data.source.network
+package plus.vplan.app.network.vpp
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.database.dao.SchoolDao
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.VppSchoolAuthentication
@@ -13,11 +13,15 @@ import plus.vplan.app.core.model.VppSchoolAuthentication
  * and use it to update the item in a second request.
  */
 class SchoolAuthenticationProvider(
-    private val schoolRepository: SchoolRepository,
+    private val schoolDao: SchoolDao,
 ) {
     suspend fun getAuthenticationForSchool(schoolAliases: Set<Alias>): VppSchoolAuthentication? {
-        val school = schoolRepository.getByIds(schoolAliases).first() as? School.AppSchool
-            ?: return null
+        val localId = schoolAliases
+            .firstNotNullOfOrNull { alias ->
+                schoolDao.getIdByAlias(value = alias.value, provider = alias.provider, version = alias.version).first()
+            } ?: return null
+
+        val school = schoolDao.findById(localId).first()?.toModel() as? School.AppSchool ?: return null
 
         return school.buildSp24AppAuthentication()
     }

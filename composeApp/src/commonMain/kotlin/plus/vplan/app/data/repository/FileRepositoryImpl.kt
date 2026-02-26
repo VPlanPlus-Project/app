@@ -42,9 +42,9 @@ import kotlinx.serialization.Serializable
 import plus.vplan.app.currentConfiguration
 import plus.vplan.app.core.database.VppDatabase
 import plus.vplan.app.core.database.model.database.DbFile
-import plus.vplan.app.data.source.network.GenericAuthenticationProvider
-import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
-import plus.vplan.app.data.source.network.model.IncludedModel
+import plus.vplan.app.network.vpp.GenericAuthenticationProvider
+import plus.vplan.app.network.vpp.getAuthenticationOptionsForRestrictedEntity
+import plus.vplan.app.network.vpp.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.core.model.CacheState
@@ -112,16 +112,14 @@ class FileRepositoryImpl(
                     }.buildString()
                 )
 
-                if (authenticationOptions is Response.Error.OnlineError.NotFound) {
+                if (authenticationOptions == null) {
                     vppDatabase.fileDao.deleteById(listOf(id))
+                    return@download Response.Error.OnlineError.NotFound
                 }
 
-                if (authenticationOptions !is Response.Success) return@download authenticationOptions as Response.Error
-                val authentication = genericAuthenticationProvider.getAuthentication(authenticationOptions.data)
-
-                if (authentication == null) {
-                    return@download Response.Error.Other("No authentication found for file $id")
-                }
+                val authentication =
+                    genericAuthenticationProvider.getAuthentication(authenticationOptions)
+                        ?: return@download Response.Error.Other("No authentication found for file $id")
 
                 val response = httpClient.get {
                     url(URLBuilder(currentConfiguration.appApiUrl).apply {
@@ -148,6 +146,9 @@ class FileRepositoryImpl(
                 )
 
                 return@download null
+            } catch (e: Exception) {
+                logger.e(e) { "Error downloading file data with id $id" }
+                return@download Response.Error.Other(e.message ?: "Unknown error")
             } finally {
                 runningDownloads.remove(id)
             }

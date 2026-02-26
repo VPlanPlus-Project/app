@@ -5,16 +5,16 @@ package plus.vplan.app.feature.homework.domain.usecase
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.captureError
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.getFirstValue
-import plus.vplan.app.core.model.AppEntity
-import plus.vplan.app.core.model.Homework
 import plus.vplan.app.domain.repository.FileRepository
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkEntity
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
@@ -51,11 +51,10 @@ class CreateHomeworkUseCase(
             val groupId = profile.group.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
                 val groupAlias = profile.group.aliases.firstOrNull()
                     ?: return CreateHomeworkResult.Error.UnknownError("Group ${profile.group} has no aliases")
-                val downloadedGroup = groupRepository.findByAlias(
-                    groupAlias,
+                val downloadedGroup = groupRepository.getById(
+                    identifier = groupAlias,
                     forceUpdate = true,
-                    preferCurrentState = true
-                ).getFirstValue() ?: return CreateHomeworkResult.Error.GroupNotFound
+                ).first() ?: return CreateHomeworkResult.Error.GroupNotFound
                 val groupId = downloadedGroup.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
                 if (groupId == null) return CreateHomeworkResult.Error.UnknownError("Group ${profile.group} not found on VPP")
                 return@run groupId

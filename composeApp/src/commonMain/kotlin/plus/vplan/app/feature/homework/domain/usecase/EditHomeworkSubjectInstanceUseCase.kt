@@ -1,18 +1,19 @@
 package plus.vplan.app.feature.homework.domain.usecase
 
-import plus.vplan.app.core.model.getFirstValue
+import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.model.populated.PopulatedHomework
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 
 class EditHomeworkSubjectInstanceUseCase(
     private val homeworkRepository: HomeworkRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
-    private val groupRepository: GroupRepository
+    private val groupRepository: GroupRepository,
 ) {
     suspend operator fun invoke(homework: PopulatedHomework, subjectInstance: SubjectInstance?, profile: Profile.StudentProfile) {
         var group = if (subjectInstance == null) profile.group else null
@@ -24,7 +25,7 @@ class EditHomeworkSubjectInstanceUseCase(
         }
 
         if (group != null && group.aliases.none { it.provider == AliasProvider.Vpp }) {
-            group = groupRepository.findByAlias(group.aliases.first(), forceUpdate = true, preferCurrentState = true).getFirstValue() ?: return
+            group = groupRepository.getById(group.aliases.first(), forceUpdate = true).first() ?: return
             if (group.aliases.none { it.provider == AliasProvider.Vpp }) return
         }
         homeworkRepository.editHomeworkSubjectInstance(homework, subjectInstance, group, profile)

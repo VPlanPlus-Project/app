@@ -13,20 +13,17 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
-import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedHomework
-import plus.vplan.app.domain.repository.GroupDbDto
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkEntity
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
@@ -52,7 +49,6 @@ class UpdateHomeworkUseCase(
     private val updateProfileHomeworkIndexUseCase: UpdateProfileHomeworkIndexUseCase,
     private val vppIdRepository: VppIdRepository,
     private val groupRepository: GroupRepository,
-    private val schoolRepository: SchoolRepository,
     private val homeworkPopulator: HomeworkPopulator,
 ) {
     private val logger = Logger.withTag("UpdateHomeworkUseCase")
@@ -84,46 +80,17 @@ class UpdateHomeworkUseCase(
                 return@forEachProfile
             }
 
-            val missingGroups = downloaded.data
+            downloaded.data
                 .mapNotNull { it.group?.id }
                 .toSet()
-                .filter { groupId ->
-                    groupRepository.getByAlias(
-                    setOf(
-                        Alias(
-                            provider = AliasProvider.Vpp,
-                            value = groupId.toString(),
-                            version = 1
-                        )
-                    )).first() == null
+                .forEach ensureEachGroupIsCached@{ groupId ->
+                    groupRepository.getById(Alias(
+                        provider = AliasProvider.Vpp,
+                        value = groupId.toString(),
+                        version = 1
+                    )).first()
                 }
 
-            missingGroups.forEach { vppGroupId ->
-                val vppIdAlias = Alias(
-                    provider = AliasProvider.Vpp,
-                    value = vppGroupId.toString(),
-                    version = 1
-                )
-                val response = groupRepository.downloadByAlias(vppIdAlias)
-
-                if (response !is Response.Success) throw IllegalStateException("Failed to download group $vppGroupId: $response")
-
-                val sp24Alias = response.data.aliases.firstOrNull { it.provider == AliasProvider.Sp24 } ?: return@forEach
-
-                val item = groupRepository.getByAlias(setOf(sp24Alias)).first()
-
-                groupRepository.upsert(GroupDbDto(
-                    id = item?.id,
-                    schoolId = schoolRepository.getById(Alias(
-                        provider = AliasProvider.Vpp,
-                        value = response.data.schoolId.toString(),
-                        version = 1
-                    )).first()!!.id,
-                    name = item?.name ?: response.data.name,
-                    aliases = (item?.aliases ?: response.data.aliases) + vppIdAlias,
-                    creationReason = if (item == null) CreationReason.Cached else CreationReason.Persisted
-                ))
-            }
 
             val missingSubjectInstances = downloaded.data
                 .mapNotNull { it.subjectInstance?.id }
@@ -178,11 +145,11 @@ class UpdateHomeworkUseCase(
             downloaded.data.forEach { homeworkDto ->
                 homeworkRepository.upsert(HomeworkEntity(
                     id = homeworkDto.id,
-                    groupId = homeworkDto.group?.id?.let { groupRepository.getByAlias(setOf(Alias(
+                    groupId = homeworkDto.group?.id?.let { groupRepository.getById(Alias(
                         provider = AliasProvider.Vpp,
                         value = homeworkDto.group.id.toString(),
                         version = 1
-                    ))).first()?.id },
+                    )).first()?.id },
                     createdAt = Instant.fromEpochSeconds(homeworkDto.createdAt),
                     subjectInstanceId = homeworkDto.subjectInstance?.id?.let {
                         subjectInstanceRepository.getByAlias(Alias(

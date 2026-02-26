@@ -3,9 +3,9 @@ package plus.vplan.app.feature.sync.domain.usecase.sp24
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.utils.isContinuous
 import plus.vplan.app.utils.lastContinuousBy
@@ -29,7 +29,7 @@ class UpdateLessonTimesUseCase(
         ))
         val lessonTimes = (client.lessonTime.getLessonTime(contextSchoolWeek = null) as? plus.vplan.lib.sp24.source.Response.Success)?.data
 
-        val groups = groupRepository.getBySchool(schoolId = school.id).first()
+        val groups = groupRepository.getBySchool(school).first()
         val existingLessonTimes = lessonTimeRepository.getBySchool(schoolId = school.id)
             .map { it.filter { lessonTime -> !lessonTime.interpolated } }
 

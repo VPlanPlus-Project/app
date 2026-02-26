@@ -1,9 +1,9 @@
 package plus.vplan.app.feature.onboarding.domain.usecase
 
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.TeacherRepository
@@ -22,7 +22,7 @@ class InitialiseOnboardingWithSchoolIdUseCase(
         onboardingRepository.reset()
         onboardingRepository.startSp24Onboarding(school.sp24Id.toInt())
 
-        val groups = groupRepository.getBySchool(school.id).first()
+        val groups = groupRepository.getBySchool(school).first()
             .mapNotNull { group ->
                 val groupAlias = group.aliases.firstOrNull { it.provider == AliasProvider.Sp24 }
                 if (groupAlias == null) return@mapNotNull null

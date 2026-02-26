@@ -5,17 +5,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.GroupDbDto
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
@@ -110,15 +108,19 @@ class SetUpSchoolDataUseCase(
             trySendResult()
 
             val classes = (client.getAllClassesIntelligent() as? plus.vplan.lib.sp24.source.Response.Success)?.data
-            val classIds = classes.orEmpty().associateWith { group ->
+            val groups = classes.orEmpty().associateWith { group ->
                 Group.buildSp24Alias(school.sp24Id.toInt(), group.name)
-            }.map { (group, aliases) ->
-                groupRepository.upsert(GroupDbDto(
-                    schoolId = school.id,
+            }.map { (group, alias) ->
+                val group = Group(
+                    id = Uuid.random(),
+                    school = school,
                     name = group.name,
-                    aliases = listOf(aliases),
-                    creationReason = CreationReason.Persisted
-                ))
+                    cachedAt = Clock.System.now(),
+                    aliases = setOf(alias)
+                )
+                groupRepository.save(group)
+
+                group
             }
 
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.DONE
@@ -180,9 +182,8 @@ class SetUpSchoolDataUseCase(
             require(updateWeeksUseCase(school, client) == null) { "Couldn't update weeks" }
             require(updateSubjectInstanceUseCase(school, client) == null) { "Couldn't update subject instances" }
 
-            onboardingRepository.addProfileOptions(classIds.map { classId ->
-                val group = groupRepository.getByLocalId(classId).first()!!
-                val subjectInstances = subjectInstanceRepository.getByGroup(classId).first()
+            onboardingRepository.addProfileOptions(groups.map { group ->
+                val subjectInstances = subjectInstanceRepository.getByGroup(group.id).first()
 
                 Logger.d { "${group.name}: ${subjectInstances.joinToString { "${it.subject} ${it.courseId}" }}" }
 

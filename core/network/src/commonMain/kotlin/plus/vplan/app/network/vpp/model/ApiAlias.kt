@@ -1,9 +1,10 @@
-package plus.vplan.app.data.source.network.model
+package plus.vplan.app.network.vpp.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.network.vpp.AliasDto
 
 @Serializable
 enum class ApiAliasType {
@@ -18,8 +19,8 @@ data class ApiAlias(
     @SerialName("value") val alias: String,
     @SerialName("version") val version: Int
 ) {
-    fun toModel() = Alias(
-        provider = AliasProvider.valueOf(type.name),
+    fun toDto() = AliasDto(
+        type = type.name,
         value = alias,
         version = version
     )

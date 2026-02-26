@@ -7,6 +7,7 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.captureError
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Response
@@ -14,7 +15,6 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
@@ -62,7 +62,7 @@ class UpdateTimetableUseCase(
         LOGGER.i { "Updating timetable for indiware school ${sp24School.id}" }
         val rooms = roomRepository.getBySchool(sp24School.id).first()
         val teachers = teacherRepository.getBySchool(sp24School.id).first()
-        val groups = groupRepository.getBySchool(sp24School.id).first()
+        val groups = groupRepository.getBySchool(sp24School).first()
 
         val insertVersion = timetableRepository.getCurrentVersion().first() + 1
 

@@ -3,7 +3,6 @@ package plus.vplan.app.domain.usecase
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -11,7 +10,6 @@ import plus.vplan.app.domain.repository.VppIdRepository
 class UpdateFirebaseTokenUseCase(
     private val profileRepository: ProfileRepository,
     private val vppIdRepository: VppIdRepository,
-    private val groupRepository: GroupRepository,
     private val keyVppIdRepository: KeyValueRepository
 ) {
     suspend operator fun invoke(token: String) {
@@ -25,9 +23,10 @@ class UpdateFirebaseTokenUseCase(
                         if (it != null) success = false
                     }
                 } else {
-                    groupRepository.updateFirebaseToken(profile.group, token).let {
-                        if (it != null) success = false
-                    }
+                    // TODO
+//                    legacyGroupRepository.updateFirebaseToken(profile.group, token).let {
+//                        if (it != null) success = false
+//                    }
                 }
             }
         }

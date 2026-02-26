@@ -45,9 +45,9 @@ import plus.vplan.app.core.database.VppDatabase
 import plus.vplan.app.core.database.model.database.DbAssessment
 import plus.vplan.app.core.database.model.database.DbProfileAssessmentIndex
 import plus.vplan.app.core.database.model.database.foreign_key.FKAssessmentFile
-import plus.vplan.app.data.source.network.GenericAuthenticationProvider
-import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
-import plus.vplan.app.data.source.network.model.IncludedModel
+import plus.vplan.app.network.vpp.GenericAuthenticationProvider
+import plus.vplan.app.network.vpp.getAuthenticationOptionsForRestrictedEntity
+import plus.vplan.app.network.vpp.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
@@ -417,14 +417,17 @@ class AssessmentRepositoryImpl(
             try {
                 val authenticationOptions = getAuthenticationOptionsForRestrictedEntity(
                     httpClient,
-                    URLBuilder(currentConfiguration.appApiUrl).apply { appendPathSegments("assessment", "v1", id.toString()) }.buildString()
-                )
-                if (authenticationOptions !is Response.Success) return@download authenticationOptions as Response.Error
-
-                val authentication = genericAuthenticationProvider.getAuthentication(authenticationOptions.data)
-                if (authentication == null) {
-                    return@download Response.Error.Other("No authentication found for school with id ${authenticationOptions.data}")
-                }
+                    URLBuilder(currentConfiguration.appApiUrl).apply {
+                        appendPathSegments(
+                            "assessment",
+                            "v1",
+                            id.toString()
+                        )
+                    }.buildString()
+                ) ?: return@download Response.Error.OnlineError.NotFound
+                val authentication =
+                    genericAuthenticationProvider.getAuthentication(authenticationOptions)
+                        ?: return@download Response.Error.Other("No authentication found for school with id ${authenticationOptions}")
 
                 val response = httpClient.get(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("assessment", "v1", id.toString())
@@ -440,11 +443,13 @@ class AssessmentRepositoryImpl(
                 val assessmentDto = response.body<ResponseDataWrapper<AssessmentGetResponse>>().data
 
                 val vppSubjectInstanceId = assessmentDto.subject.id
-                val subjectInstance = subjectInstanceRepository.getByAlias(Alias(
-                    provider = AliasProvider.Vpp,
-                    value = vppSubjectInstanceId.toString(),
-                    version = 1
-                )).first()
+                val subjectInstance = subjectInstanceRepository.getByAlias(
+                    Alias(
+                        provider = AliasProvider.Vpp,
+                        value = vppSubjectInstanceId.toString(),
+                        version = 1
+                    )
+                ).first()
 
                 if (subjectInstance == null) {
                     logger.w { "Subject instance $vppSubjectInstanceId not found for assessment $id, skipping" }
@@ -465,6 +470,9 @@ class AssessmentRepositoryImpl(
                 )
 
                 return@download null
+            } catch (e: Exception) {
+                logger.e(e) { "Error downloading assessment with id $id" }
+                return@download Response.Error.Other(e.message ?: "Unknown error")
             } finally {
                 runningDownloads.remove(id)
             }

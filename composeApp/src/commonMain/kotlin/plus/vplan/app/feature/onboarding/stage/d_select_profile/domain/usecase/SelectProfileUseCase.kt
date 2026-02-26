@@ -4,10 +4,10 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.capture
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
@@ -43,7 +43,7 @@ class SelectProfileUseCase(
         onboardingRepository.setSelectedProfile(onboardingProfile)
         val profile = when (onboardingProfile) {
             is OnboardingProfile.StudentProfile -> {
-                val group = groupRepository.getByLocalId(groupRepository.resolveAliasToLocalId(onboardingProfile.alias)!!).first()!!
+                val group = groupRepository.getById(onboardingProfile.alias).first()!!
                 Profile.StudentProfile(
                     id = Uuid.random(),
                     name = group.name,

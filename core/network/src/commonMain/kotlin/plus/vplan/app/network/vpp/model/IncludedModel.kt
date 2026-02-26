@@ -1,4 +1,4 @@
-package plus.vplan.app.data.source.network.model
+package plus.vplan.app.network.vpp.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

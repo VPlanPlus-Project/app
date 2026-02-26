@@ -124,19 +124,4 @@ class SchoolRepositoryImpl(
             credentialsValid = school.credentialsValid,
         ))
     }
-
-    companion object {
-        private fun SchoolDto.Alias.toModel(): Alias? {
-            return Alias(
-                provider = when (this.type) {
-                    "vpp" -> AliasProvider.Vpp
-                    "sp24" -> AliasProvider.Sp24
-                    "schulverwalter" -> AliasProvider.Schulverwalter
-                    else -> return null
-                },
-                value = this.value,
-                version = this.version
-            )
-        }
-    }
 }

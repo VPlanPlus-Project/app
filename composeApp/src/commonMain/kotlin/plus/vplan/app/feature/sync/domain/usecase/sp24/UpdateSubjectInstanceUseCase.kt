@@ -2,25 +2,25 @@ package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.Course
 import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.CourseDbDto
 import plus.vplan.app.domain.repository.CourseRepository
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubjectInstanceDbDto
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.lib.sp24.source.Authentication
-import plus.vplan.lib.sp24.source.Response as Sp24Response
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import plus.vplan.lib.sp24.source.extension.SubjectInstanceResponse
+import plus.vplan.lib.sp24.source.Response as Sp24Response
 
 private val LOGGER = Logger.withTag("UpdateSubjectInstanceUseCase")
 
@@ -41,7 +41,7 @@ class UpdateSubjectInstanceUseCase(
         )
 
         val teachers = teacherRepository.getBySchool(schoolId = school.id).first()
-        val groups = groupRepository.getBySchool(school.id).first()
+        val groups = groupRepository.getBySchool(school).first()
         val existingCourses = courseRepository.getBySchool(school.id)
         val existingSubjectInstances = subjectInstanceRepository.getBySchool(schoolId = school.id)
 
@@ -138,8 +138,7 @@ class UpdateSubjectInstanceUseCase(
         updatedSubjectInstances
             .mapNotNull { (subjectInstance, sp24Alias) ->
                 val firstGroup = subjectInstance.classes.firstNotNullOfOrNull { groupName ->
-                    val id = groupRepository.resolveAliasToLocalId(Group.buildSp24Alias(sp24SchoolId.toInt(), groupName)) ?: return@firstNotNullOfOrNull null
-                    groupRepository.getByLocalId(id).first()
+                    groupRepository.getById(identifier = Group.buildSp24Alias(sp24SchoolId.toInt(), groupName)).first() ?: return@firstNotNullOfOrNull null
                 } ?: return@mapNotNull null
 
                 val courses = courseRepository.getByGroup(firstGroup.id).first()

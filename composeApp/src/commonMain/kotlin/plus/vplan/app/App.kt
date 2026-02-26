@@ -19,7 +19,6 @@ import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.CourseSource
 import plus.vplan.app.domain.source.DaySource
 import plus.vplan.app.domain.source.FileSource
-import plus.vplan.app.domain.source.GroupSource
 import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
@@ -56,7 +55,6 @@ object AppConfig {
 object App {
     lateinit var homeworkSource: HomeworkSource
     lateinit var homeworkTaskSource: HomeworkTaskSource
-    lateinit var groupSource: GroupSource
     lateinit var subjectInstanceSource: SubjectInstanceSource
     lateinit var daySource: DaySource
     lateinit var timetableSource: TimetableSource

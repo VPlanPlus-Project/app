@@ -27,7 +27,7 @@ import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.currentConfiguration
-import plus.vplan.app.data.source.network.model.IncludedModel
+import plus.vplan.app.network.vpp.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.domain.repository.NewsRepository

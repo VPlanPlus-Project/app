@@ -14,13 +14,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.database.model.database.DbFcmLog
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.repository.FcmRepository
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
@@ -54,7 +54,7 @@ class DeveloperSettingsViewModel(
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val updateAssessmentsUseCase: UpdateAssessmentsUseCase,
     private val subjectInstanceRepository: SubjectInstanceRepository,
-    private val groupRepository: GroupRepository
+    private val groupRepository: GroupRepository,
 ) : ViewModel(), KoinComponent {
 
     var state by mutableStateOf(DeveloperSettingsState())
@@ -168,8 +168,8 @@ class DeveloperSettingsViewModel(
                     }
                 }
                 is DeveloperSettingsEvent.UpdateGroup -> {
-                    groupRepository.findByAliases(event.group.aliases, forceUpdate = true, preferCurrentState = false).getFirstValue().also {
-                        Logger.i { "Updated group.\nWas: ${event.group}\nIs:  $it" }
+                    groupRepository.getByIds(event.group.aliases, forceUpdate = true).first().also {
+                        Logger.i { "Updated group.\nWas: ${event.group}\nIs: $it" }
                     }
                 }
                 DeveloperSettingsEvent.UpdateHomework -> {

@@ -5,10 +5,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.model.Course
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Teacher
-import plus.vplan.app.core.model.Course
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.TeacherRepository
 
 data class PopulatedCourse(
@@ -31,8 +31,8 @@ class CoursePopulator: KoinComponent {
 
         val groups =
             when (context) {
-                is PopulationContext.School -> groupRepository.getBySchool(context.school.id)
-                is PopulationContext.Profile -> groupRepository.getBySchool(context.profile.school.id)
+                is PopulationContext.School -> groupRepository.getBySchool(context.school)
+                is PopulationContext.Profile -> groupRepository.getBySchool(context.profile.school)
                 else -> groupRepository.getAll()
             }
 

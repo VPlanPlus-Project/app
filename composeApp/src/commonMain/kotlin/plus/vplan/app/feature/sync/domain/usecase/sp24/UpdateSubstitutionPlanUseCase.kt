@@ -11,6 +11,7 @@ import kotlinx.datetime.format
 import kotlinx.serialization.json.Json
 import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Day
@@ -22,7 +23,6 @@ import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.RoomRepository
@@ -75,7 +75,7 @@ class UpdateSubstitutionPlanUseCase(
         )
         val teachers = teacherRepository.getBySchool(sp24School.id).first()
         val rooms = roomRepository.getBySchool(sp24School.id).first()
-        val groups = groupRepository.getBySchool(sp24School.id).first()
+        val groups = groupRepository.getBySchool(sp24School).first()
         val subjectInstances = subjectInstanceRepository.getBySchool(sp24School.id).first()
         var error: Response.Error? = null
 

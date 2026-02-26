@@ -50,8 +50,8 @@ import plus.vplan.app.core.database.model.database.DbHomeworkTaskDoneAccount
 import plus.vplan.app.core.database.model.database.DbHomeworkTaskDoneProfile
 import plus.vplan.app.core.database.model.database.DbProfileHomeworkIndex
 import plus.vplan.app.core.database.model.database.foreign_key.FKHomeworkFile
-import plus.vplan.app.data.source.network.GenericAuthenticationProvider
-import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
+import plus.vplan.app.network.vpp.GenericAuthenticationProvider
+import plus.vplan.app.network.vpp.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
@@ -415,14 +415,16 @@ class HomeworkRepositoryImpl(
 
         val deferred = CoroutineScope(Dispatchers.IO).async download@{
             try {
-                val authenticationOptions = getAuthenticationOptionsForRestrictedEntity(httpClient, URLBuilder(currentConfiguration.appApiUrl).apply {
-                    appendPathSegments("homework", "v1", id.toString())
-                }.buildString())
-                if (authenticationOptions !is Response.Success) return@download authenticationOptions as Response.Error
+                val authenticationOptions = getAuthenticationOptionsForRestrictedEntity(
+                    httpClient,
+                    URLBuilder(currentConfiguration.appApiUrl).apply {
+                        appendPathSegments("homework", "v1", id.toString())
+                    }.buildString()
+                ) ?: return@download Response.Error.OnlineError.NotFound
 
                 val authentication =
-                    genericAuthenticationProvider.getAuthentication(authenticationOptions.data)
-                        ?: return@download Response.Error.Other("No authentication found for school with id ${authenticationOptions.data}")
+                    genericAuthenticationProvider.getAuthentication(authenticationOptions)
+                        ?: return@download Response.Error.Other("No authentication found for school with id ${authenticationOptions}")
 
                 val response = httpClient.get(URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("homework", "v1", id.toString())
@@ -438,6 +440,9 @@ class HomeworkRepositoryImpl(
                 }
 
                 return@download Response.Error.Other("This is paused")
+            } catch (e: Exception) {
+                logger.e(e) { "Error downloading homework with id $id" }
+                return@download Response.Error.Other(e.message ?: "Unknown error")
             } finally {
                 runningDownloads.remove(id)
             }

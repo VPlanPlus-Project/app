@@ -3,6 +3,7 @@ package plus.vplan.app.feature.vpp_id.domain.usecase
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
@@ -10,9 +11,7 @@ import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.VppDbDto
@@ -53,11 +52,10 @@ class AddVppIdUseCase(
 
         logger.d { "Loaded school by vpp school id ${vppIdDto.data.schoolId}" }
 
-        val group = groupRepository.findByAlias(
-            alias = Alias(AliasProvider.Vpp, vppIdDto.data.groupId.toString(), 1),
+        val group = groupRepository.getById(
+            identifier = Alias(AliasProvider.Vpp, vppIdDto.data.groupId.toString(), 1),
             forceUpdate = false,
-            preferCurrentState = false
-        ).getFirstValue()
+        ).first()
 
         if (group == null) {
             val errorMessage = "Group not found for VPP ID: ${vppIdDto.data.id}, group alias: ${vppIdDto.data.groupId}"

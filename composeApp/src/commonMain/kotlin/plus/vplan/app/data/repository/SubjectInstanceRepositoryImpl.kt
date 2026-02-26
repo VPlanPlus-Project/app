@@ -1,5 +1,6 @@
 package plus.vplan.app.data.repository
 
+import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -35,9 +36,9 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.currentConfiguration
-import plus.vplan.app.data.source.network.SchoolAuthenticationProvider
-import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
-import plus.vplan.app.data.source.network.model.ApiAlias
+import plus.vplan.app.network.vpp.SchoolAuthenticationProvider
+import plus.vplan.app.network.vpp.getAuthenticationOptionsForRestrictedEntity
+import plus.vplan.app.network.vpp.model.ApiAlias
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
 import plus.vplan.app.domain.repository.SubjectInstanceDbDto
@@ -214,19 +215,25 @@ class SubjectInstanceRepositoryImpl(
 
         val deferred = CoroutineScope(Dispatchers.IO).async download@{
             try {
-                val vppSchoolIdResponse = getAuthenticationOptionsForRestrictedEntity(httpClient, URLBuilder(currentConfiguration.appApiUrl).apply {
-                    appendPathSegments("subject-instance", "v1", alias.toUrlString())
-                }.buildString())
-                if (vppSchoolIdResponse !is Response.Success) return@download vppSchoolIdResponse as Response.Error
+                val vppSchoolIdResponse = getAuthenticationOptionsForRestrictedEntity(
+                    httpClient,
+                    URLBuilder(currentConfiguration.appApiUrl).apply {
+                        appendPathSegments("subject-instance", "v1", alias.toUrlString())
+                    }.buildString()
+                ) ?: return@download Response.Error.OnlineError.NotFound
 
-                val authenticationPair = vppSchoolIdResponse.data.schoolIds.orEmpty().firstNotNullOfOrNull { schoolId ->
-                    val vppSchoolAlias = Alias(AliasProvider.Vpp, schoolId.toString(), 1)
-                    val authentication = schoolAuthenticationProvider.getAuthenticationForSchool(setOf(vppSchoolAlias)) ?: return@firstNotNullOfOrNull null
-                    authentication to vppSchoolAlias
-                }
+                val authenticationPair =
+                    vppSchoolIdResponse.schoolIds.orEmpty().firstNotNullOfOrNull { schoolId ->
+                        val vppSchoolAlias = Alias(AliasProvider.Vpp, schoolId.toString(), 1)
+                        val authentication =
+                            schoolAuthenticationProvider.getAuthenticationForSchool(
+                                setOf(vppSchoolAlias)
+                            ) ?: return@firstNotNullOfOrNull null
+                        authentication to vppSchoolAlias
+                    }
 
                 if (authenticationPair == null) {
-                    return@download Response.Error.Other("No authentication found for school with id ${vppSchoolIdResponse.data}")
+                    return@download Response.Error.Other("No authentication found for school with id $vppSchoolIdResponse")
                 }
 
                 val (authentication, vppSchoolAlias) = authenticationPair
@@ -245,7 +252,8 @@ class SubjectInstanceRepositoryImpl(
                     return@download Response.Error.Other("Subject instance with alias $alias is not indexed on vpp server")
                 }
 
-                upsert(SubjectInstanceDbDto(
+                upsert(
+                    SubjectInstanceDbDto(
                     subject = existing.subject,
                     course = existing.courseId,
                     teacher = existing.teacherId,
@@ -254,6 +262,9 @@ class SubjectInstanceRepositoryImpl(
                 ))
 
                 return@download null
+            } catch (e: Exception) {
+                Logger.e { "Error downloading subject instance with alias $alias" }
+                return@download Response.Error.Other(e.message ?: "Unknown error")
             } finally {
                 runningDownloads.remove(alias)
             }
@@ -268,7 +279,7 @@ data class SubjectInstanceVppItemResponse(
     @SerialName("id") val id: Int,
     @SerialName("aliases") val aliases: List<ApiAlias>
 ) {
-    fun buildAliases(): List<Alias> = aliases.map { it.toModel() }
+    fun buildAliases(): List<Alias> = aliases.mapNotNull { it.toDto().toModel() }
 }
 
 data class VppSubjectInstanceDto(

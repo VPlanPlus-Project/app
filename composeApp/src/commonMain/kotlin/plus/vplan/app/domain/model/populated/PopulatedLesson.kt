@@ -6,7 +6,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Room
@@ -14,8 +16,6 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.Week
-import plus.vplan.app.core.model.Lesson
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
@@ -81,8 +81,8 @@ class LessonPopulator : KoinComponent {
         }
 
         val groups = when (context) {
-            is PopulationContext.Profile -> groupRepository.getBySchool(context.profile.school.id)
-            is PopulationContext.School -> groupRepository.getBySchool(context.school.id)
+            is PopulationContext.Profile -> groupRepository.getBySchool(context.profile.school)
+            is PopulationContext.School -> groupRepository.getBySchool(context.school)
         }
 
         val rooms = when (context) {
@@ -141,7 +141,7 @@ class LessonPopulator : KoinComponent {
                 null
             )
 
-        val groups = groupRepository.getBySchool(contextSchool.id)
+        val groups = groupRepository.getBySchool(contextSchool)
         val rooms = roomRepository.getBySchool(contextSchool.id)
         val teachers = teacherRepository.getBySchool(contextSchool.id)
         val weeks = weekRepository.getBySchool(contextSchool.id)

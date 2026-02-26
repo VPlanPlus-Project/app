@@ -16,6 +16,7 @@ import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.GradesRepository
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
@@ -24,7 +25,6 @@ import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.repository.AssessmentRepository
-import plus.vplan.app.domain.repository.GroupRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
@@ -67,7 +67,7 @@ class SearchUseCase(
 
                 if (searchRequest.query.isNotEmpty() && searchRequest.assessmentType == null) launch {
                     combine(
-                        groupRepository.getBySchool(profile.school.id).map { it.filter { group -> query in group.name.lowercase() } },
+                        groupRepository.getBySchool(profile.school).map { it.filter { group -> query in group.name.lowercase() } },
                         teacherRepository.getBySchool(profile.school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
                         roomRepository.getBySchool(profile.school.id).map { it.filter { room -> query in room.name.lowercase() } },
                     ) { groups, teachers, rooms ->

@@ -47,10 +47,10 @@ import plus.vplan.app.core.database.model.database.DbVppId
 import plus.vplan.app.core.database.model.database.DbVppIdAccess
 import plus.vplan.app.core.database.model.database.DbVppIdSchulverwalter
 import plus.vplan.app.core.database.model.database.crossovers.DbVppIdGroupCrossover
-import plus.vplan.app.data.source.network.GenericAuthenticationProvider
-import plus.vplan.app.data.source.network.getAuthenticationOptionsForRestrictedEntity
+import plus.vplan.app.network.vpp.GenericAuthenticationProvider
+import plus.vplan.app.network.vpp.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.data.source.network.isResponseFromBackend
-import plus.vplan.app.data.source.network.model.IncludedModel
+import plus.vplan.app.network.vpp.model.IncludedModel
 import plus.vplan.app.data.source.network.safeRequest
 import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
@@ -201,11 +201,9 @@ class VppIdRepositoryImpl(
                 url = URLBuilder(currentConfiguration.appApiUrl).apply {
                     appendPathSegments("user", "v1", id.toString())
                 }.buildString()
-            )
+            ) ?: return Response.Error.OnlineError.NotFound
 
-            if (authenticationResponse !is Response.Success) return authenticationResponse as Response.Error
-
-            val authentication = genericAuthenticationProvider.getAuthentication(authenticationResponse.data)
+            val authentication = genericAuthenticationProvider.getAuthentication(authenticationResponse)
             if (authentication == null) {
                 logger.e { "No authentication found for vppId $id" }
                 captureError("VppIdRepositoryImpl.downloadById", "No authentication found for vppId $id")
