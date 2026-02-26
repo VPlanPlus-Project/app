@@ -15,6 +15,7 @@ import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.CacheState
@@ -27,8 +28,6 @@ import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.repository.HomeworkEntity
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.domain.repository.SubjectInstanceDbDto
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileHomeworkIndexUseCase
@@ -96,41 +95,13 @@ class UpdateHomeworkUseCase(
                 .mapNotNull { it.subjectInstance?.id }
                 .toSet()
                 .filter { subjectInstanceId ->
-                    subjectInstanceRepository.getByAlias(Alias(
+                    subjectInstanceRepository.getById(Alias(
                         provider = AliasProvider.Vpp,
                         value = subjectInstanceId.toString(),
                         version = 1
                     )).first() == null
                 }
             logger.d { "Missing subject instances: ${missingSubjectInstances.size}: $missingSubjectInstances" }
-
-            missingSubjectInstances.forEach { vppSubjectInstanceId ->
-                val vppAlias = Alias(
-                    provider = AliasProvider.Vpp,
-                    value = vppSubjectInstanceId.toString(),
-                    version = 1
-                )
-                val response = subjectInstanceRepository.downloadByAlias(
-                    vppAlias,
-                    studentProfile.school.buildSp24AppAuthentication()
-                )
-
-                if (response !is Response.Success) throw IllegalStateException("Failed to download subject instance $vppSubjectInstanceId: $response")
-
-                val sp24Alias = response.data.aliases.firstOrNull { it.provider == AliasProvider.Sp24 } ?: return@forEach
-                val item = subjectInstanceRepository.getByAlias(setOf(sp24Alias)).first() ?: return@forEach
-
-                subjectInstanceRepository.upsert(
-                    SubjectInstanceDbDto(
-                        id = item.id,
-                        subject = item.subject,
-                        course = item.courseId,
-                        teacher = item.teacherId,
-                        groups = item.groups.mapNotNull { groupRepository.getById(it).first()?.id }.distinct(),
-                        aliases = item.aliases.toList() + vppAlias
-                    )
-                )
-            }
 
             val missingVppIds = downloaded.data
                 .map { it.createdBy.id }
@@ -152,7 +123,7 @@ class UpdateHomeworkUseCase(
                     )).first()?.id },
                     createdAt = Instant.fromEpochSeconds(homeworkDto.createdAt),
                     subjectInstanceId = homeworkDto.subjectInstance?.id?.let {
-                        subjectInstanceRepository.getByAlias(Alias(
+                        subjectInstanceRepository.getById(Alias(
                             provider = AliasProvider.Vpp,
                             value = homeworkDto.subjectInstance.id.toString(),
                             version = 1

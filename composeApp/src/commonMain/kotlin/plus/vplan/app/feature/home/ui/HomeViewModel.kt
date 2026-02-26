@@ -24,20 +24,19 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.App
 import plus.vplan.app.captureError
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.model.Day
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.core.model.Day
-import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
-import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetCurrentProfileUseCase
@@ -70,7 +69,6 @@ class HomeViewModel(
     private val getNewsUseCase: GetNewsUseCase,
     private val stundenplan24Repository: Stundenplan24Repository,
     private val keyValueRepository: KeyValueRepository,
-    private val subjectInstancePopulator: SubjectInstancePopulator,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val lessonPopulator: LessonPopulator,
 ) : ViewModel() {
@@ -133,7 +131,6 @@ class HomeViewModel(
                                     .sortedBySuspending {
                                         val subjectInstance = (it.lesson.lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId
                                             ?.let { id -> subjectInstanceRepository.getByLocalId(id).first() }
-                                            ?.let { subjectInstance -> subjectInstancePopulator.populateSingle(subjectInstance).first() }
                                         it.lesson.lesson.subject + subjectInstance?.course?.name
                                     }
 
@@ -158,7 +155,6 @@ class HomeViewModel(
                                         val subject = lesson.lesson.subject ?: ""
                                         val subjectInstance = (lesson.lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId
                                             ?.let { subjectInstanceId -> subjectInstanceRepository.getByLocalId(subjectInstanceId).first() }
-                                            ?.let { subjectInstancePopulator.populateSingle(it).first() }
                                         val courseName = subjectInstance?.course?.name ?: ""
                                         lesson.lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
                                     }
@@ -184,7 +180,6 @@ class HomeViewModel(
                                                 val subject = lesson.lesson.subject ?: ""
                                                 val subjectInstance = (lesson.lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId
                                                     ?.let { subjectInstanceId -> subjectInstanceRepository.getByLocalId(subjectInstanceId).first() }
-                                                    ?.let { subjectInstancePopulator.populateSingle(it).first() }
                                                 val courseName = subjectInstance?.course?.name ?: ""
                                                 lesson.lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
                                             }

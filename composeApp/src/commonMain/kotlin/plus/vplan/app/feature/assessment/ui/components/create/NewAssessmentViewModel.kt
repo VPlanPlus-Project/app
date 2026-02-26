@@ -7,17 +7,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
-import plus.vplan.app.domain.model.populated.PopulationContext
-import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.CreateAssessmentUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
@@ -32,7 +29,6 @@ class NewAssessmentViewModel(
     private val hideVppIdBannerUseCase: HideVppIdBannerUseCase,
     private val createAssessmentUseCase: CreateAssessmentUseCase,
     private val subjectInstanceRepository: SubjectInstanceRepository,
-    private val subjectInstancePopulator: SubjectInstancePopulator,
 ) : ViewModel() {
     private val _state = MutableStateFlow(NewAssessmentState())
     val state = _state.asStateFlow()
@@ -49,14 +45,13 @@ class NewAssessmentViewModel(
 
                 if (profile is Profile.StudentProfile) {
                     subjectInstanceRepository
-                        .getByGroup(profile.group.id)
+                        .getByGroup(profile.group)
                         .map { subjectInstances ->
                             subjectInstances.filter { subjectInstance ->
                                 profile.subjectInstanceConfiguration[subjectInstance.id] != false
                             }
                         }
                         .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
-                        .flatMapLatest { subjectInstances -> subjectInstancePopulator.populateMultiple(subjectInstances, PopulationContext.Profile(profile)) }
                         .collectLatest {
                             _state.value = _state.value.copy(
                                 subjectInstances = it
@@ -101,7 +96,7 @@ class NewAssessmentViewModel(
                                 text = newState.description.trim().ifBlank { return@save false },
                                 isPublic = newState.isVisible,
                                 date = newState.selectedDate ?: return@save false,
-                                subjectInstance = newState.selectedSubjectInstance?.subjectInstance ?: return@save false,
+                                subjectInstance = newState.selectedSubjectInstance ?: return@save false,
                                 type = newState.type ?: return@save false,
                                 selectedFiles = newState.files
                             )
@@ -118,8 +113,8 @@ class NewAssessmentViewModel(
 data class NewAssessmentState(
     val currentProfile: Profile.StudentProfile? = null,
     val canShowVppIdBanner: Boolean = false,
-    val subjectInstances: List<PopulatedSubjectInstance> = emptyList(),
-    val selectedSubjectInstance: PopulatedSubjectInstance? = null,
+    val subjectInstances: List<SubjectInstance> = emptyList(),
+    val selectedSubjectInstance: SubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val description: String = "",
     val isVisible: Boolean? = null,
@@ -138,7 +133,7 @@ data class NewAssessmentState(
 
 sealed class NewAssessmentEvent {
     data object HideVppIdBanner : NewAssessmentEvent()
-    data class SelectSubjectInstance(val subjectInstance: PopulatedSubjectInstance) : NewAssessmentEvent()
+    data class SelectSubjectInstance(val subjectInstance: SubjectInstance) : NewAssessmentEvent()
     data class SelectDate(val date: LocalDate) : NewAssessmentEvent()
     data class SetVisibility(val isVisible: Boolean) : NewAssessmentEvent()
     data class UpdateDescription(val description: String) : NewAssessmentEvent()

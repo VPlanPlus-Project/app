@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.CacheState
@@ -55,7 +56,6 @@ import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.AssessmentRepository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -443,7 +443,7 @@ class AssessmentRepositoryImpl(
                 val assessmentDto = response.body<ResponseDataWrapper<AssessmentGetResponse>>().data
 
                 val vppSubjectInstanceId = assessmentDto.subject.id
-                val subjectInstance = subjectInstanceRepository.getByAlias(
+                val subjectInstance = subjectInstanceRepository.getById(
                     Alias(
                         provider = AliasProvider.Vpp,
                         value = vppSubjectInstanceId.toString(),

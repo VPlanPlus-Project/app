@@ -20,6 +20,7 @@ val databaseModule = module {
     single { get<VppDatabase>().groupDao }
     single { get<VppDatabase>().teacherDao }
     single { get<VppDatabase>().courseDao }
+    single { get<VppDatabase>().subjectInstanceDao }
 }
 
 expect val roomModule: Module

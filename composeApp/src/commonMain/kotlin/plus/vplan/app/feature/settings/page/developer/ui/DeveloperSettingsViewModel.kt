@@ -15,15 +15,14 @@ import kotlinx.datetime.plus
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.database.model.database.DbFcmLog
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
@@ -163,7 +162,7 @@ class DeveloperSettingsViewModel(
                     keyValueRepository.set(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC, (!keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).first().toBoolean()).toString())
                 }
                 is DeveloperSettingsEvent.UpdateSubjectInstance -> {
-                    subjectInstanceRepository.findByAliases(event.subjectInstance.aliases, forceUpdate = true, preferCurrentState = false).getFirstValue().also {
+                    subjectInstanceRepository.getByIds(event.subjectInstance.aliases, forceUpdate = true).first().also {
                         Logger.i { "Updated subject instance.\nWas: ${event.subjectInstance}\nIs:  $it" }
                     }
                 }

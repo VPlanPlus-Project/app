@@ -15,6 +15,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AppEntity
@@ -27,7 +28,6 @@ import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.utils.combine6
 
@@ -76,8 +76,8 @@ class HomeworkPopulator : KoinComponent {
     ): Flow<List<PopulatedHomework>> {
         if (homework.isEmpty()) return flowOf(emptyList())
         val subjectInstances = when (context) {
-            is PopulationContext.Profile -> subjectInstanceRepository.getBySchool(context.profile.school.id)
-            is PopulationContext.School -> subjectInstanceRepository.getBySchool(context.school.id)
+            is PopulationContext.Profile -> subjectInstanceRepository.getBySchool(context.profile.school)
+            is PopulationContext.School -> subjectInstanceRepository.getBySchool(context.school)
         }
 
         val groups = when (context) {
@@ -150,9 +150,9 @@ class HomeworkPopulator : KoinComponent {
     }
 
     fun populateSingle(homework: Homework): Flow<PopulatedHomework> {
-        val subjectInstance = homework.subjectInstanceId?.let {
-            subjectInstanceRepository.getByLocalId(it)
-        } ?: flowOf(null)
+        val subjectInstance = homework.subjectInstanceId
+            ?.let { subjectInstanceRepository.getByLocalId(it) }
+            ?: flowOf(null)
 
         val tasks =
             if (homework.taskIds.isEmpty()) flowOf(emptyList())

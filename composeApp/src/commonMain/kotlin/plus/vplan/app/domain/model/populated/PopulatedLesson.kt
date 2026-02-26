@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Lesson
@@ -19,7 +20,6 @@ import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.combine6
 
@@ -72,12 +72,9 @@ class LessonPopulator : KoinComponent {
         }
 
         val subjectInstances = when (context) {
-            is PopulationContext.Profile if context.profile is Profile.StudentProfile -> subjectInstanceRepository.getByGroup(
-                context.profile.group.id
-            )
-
-            is PopulationContext.Profile -> subjectInstanceRepository.getBySchool(context.profile.school.id)
-            is PopulationContext.School -> subjectInstanceRepository.getBySchool(context.school.id)
+            is PopulationContext.Profile if context.profile is Profile.StudentProfile -> subjectInstanceRepository.getByGroup(context.profile.group)
+            is PopulationContext.Profile -> subjectInstanceRepository.getBySchool(context.profile.school)
+            is PopulationContext.School -> subjectInstanceRepository.getBySchool(context.school)
         }
 
         val groups = when (context) {

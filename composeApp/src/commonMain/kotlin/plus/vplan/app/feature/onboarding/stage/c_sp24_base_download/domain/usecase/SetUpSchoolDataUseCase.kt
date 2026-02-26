@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
@@ -18,7 +19,6 @@ import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
@@ -185,9 +185,9 @@ class SetUpSchoolDataUseCase(
             require(updateSubjectInstanceUseCase(school, client) == null) { "Couldn't update subject instances" }
 
             onboardingRepository.addProfileOptions(groups.map { group ->
-                val subjectInstances = subjectInstanceRepository.getByGroup(group.id).first()
+                val subjectInstances = subjectInstanceRepository.getByGroup(group).first()
 
-                Logger.d { "${group.name}: ${subjectInstances.joinToString { "${it.subject} ${it.courseId}" }}" }
+                Logger.d { "${group.name}: ${subjectInstances.joinToString { "${it.subject} ${it.course}" }}" }
 
                 OnboardingProfile.StudentProfile(
                     name = group.name,

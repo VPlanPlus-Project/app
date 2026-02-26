@@ -26,7 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Group
-import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
+import plus.vplan.app.core.model.SubjectInstance
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
 import vplanplus.composeapp.generated.resources.user
@@ -34,7 +34,7 @@ import vplanplus.composeapp.generated.resources.user
 @Composable
 fun VisibilityTile(
     isPublic: Boolean,
-    selectedSubjectInstance: PopulatedSubjectInstance?,
+    selectedSubjectInstance: SubjectInstance?,
     group: Group,
     onSetVisibility: (to: Boolean) -> Unit
 ) {

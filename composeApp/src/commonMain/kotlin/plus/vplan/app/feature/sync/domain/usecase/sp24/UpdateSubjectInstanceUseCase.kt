@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.data.course.CourseRepository
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
@@ -14,8 +15,6 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.domain.repository.SubjectInstanceDbDto
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import plus.vplan.lib.sp24.source.extension.SubjectInstanceResponse
@@ -44,7 +43,7 @@ class UpdateSubjectInstanceUseCase(
         val teachers = teacherRepository.getBySchool(school).first()
         val groups = groupRepository.getBySchool(school).first()
         val existingCourses = courseRepository.getBySchool(school)
-        val existingSubjectInstances = subjectInstanceRepository.getBySchool(schoolId = school.id)
+        val existingSubjectInstances = subjectInstanceRepository.getBySchool(school)
 
         updateCourses(
             school = school,
@@ -125,7 +124,7 @@ class UpdateSubjectInstanceUseCase(
             it.data.subjectInstances.map { si -> DownloadedSubjectInstance(si, SubjectInstance.buildSp24Alias(sp24SchoolId.toInt(), si.id)) }
         }
 
-        val downloadedSubjectEntities = downloadedSubjectInstances.filter { subjectInstanceRepository.resolveAliasToLocalId(it.sp24Alias) == null }
+        val downloadedSubjectEntities = downloadedSubjectInstances.filter { subjectInstanceRepository.getById(it.sp24Alias).first() == null }
 
         downloadedSubjectInstances.let {
             val downloadedSubjectInstancesToDelete = existingSubjectInstances
@@ -134,8 +133,9 @@ class UpdateSubjectInstanceUseCase(
                     downloadedSubjectEntities.firstOrNull { it.sp24Alias.hashCode() == existingAlias.hashCode() } ?: return@filter false
                     return@filter true
                 }
+
             LOGGER.d { "Delete ${downloadedSubjectInstancesToDelete.size} default lessons" }
-            subjectInstanceRepository.deleteById(downloadedSubjectInstancesToDelete.map { it.id })
+            subjectInstanceRepository.delete(downloadedSubjectInstancesToDelete)
         }
 
         val updatedSubjectInstances =
@@ -148,15 +148,24 @@ class UpdateSubjectInstanceUseCase(
                 } ?: return@mapNotNull null
 
                 val courses = courseRepository.getByGroup(firstGroup).first()
-                SubjectInstanceDbDto(
+
+                val existing = subjectInstanceRepository.getById(sp24Alias).first()
+                existing?.copy(
                     subject = subjectInstance.subject,
-                    course = subjectInstance.course?.let { courses.firstOrNull { course -> course.name == subjectInstance.course } }?.id,
-                    teacher = subjectInstance.teacher?.let { teachers.firstOrNull { teacher -> teacher.name == subjectInstance.teacher }?.id },
-                    groups = groups.filter { group -> group.name in subjectInstance.classes }
-                        .map { it.id },
-                    aliases = listOf(sp24Alias)
+                    course = subjectInstance.course?.let { courses.firstOrNull { course -> course.name == subjectInstance.course } },
+                    teacher = subjectInstance.teacher?.let { teachers.firstOrNull { teacher -> teacher.name == subjectInstance.teacher } },
+                    groups = groups.filter { group -> group.name in subjectInstance.classes },
+                    aliases = (existing.aliases + sp24Alias)
+                ) ?: SubjectInstance(
+                    id = Uuid.random(),
+                    subject = subjectInstance.subject,
+                    course = subjectInstance.course?.let { courses.firstOrNull { course -> course.name == subjectInstance.course } },
+                    teacher = subjectInstance.teacher?.let { teachers.firstOrNull { teacher -> teacher.name == subjectInstance.teacher } },
+                    groups = groups.filter { group -> group.name in subjectInstance.classes },
+                    cachedAt = Clock.System.now(),
+                    aliases = setOf(sp24Alias)
                 )
-            }.forEach { subjectInstanceRepository.upsert(it) }
+            }.forEach { subjectInstanceRepository.save(it) }
         return true
     }
 }

@@ -19,7 +19,7 @@ import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.School
-import plus.vplan.app.network.vpp.school.GroupApi
+import plus.vplan.app.network.vpp.group.GroupApi
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 

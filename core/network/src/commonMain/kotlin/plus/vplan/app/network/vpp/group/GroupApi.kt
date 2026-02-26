@@ -1,7 +1,6 @@
-package plus.vplan.app.network.vpp.school
+package plus.vplan.app.network.vpp.group
 
 import plus.vplan.app.core.model.Alias
-import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.network.vpp.AliasDto
 
 interface GroupApi {

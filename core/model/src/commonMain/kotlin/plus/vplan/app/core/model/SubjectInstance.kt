@@ -6,9 +6,9 @@ import kotlin.uuid.Uuid
 data class SubjectInstance(
     override val id: Uuid,
     val subject: String,
-    val courseId: Uuid?,
-    val teacherId: Uuid?,
-    val groups: List<Alias>,
+    val course: Course?,
+    val teacher: Teacher?,
+    val groups: List<Group>,
     val cachedAt: Instant,
     override val aliases: Set<Alias>
 ) : AliasedItem<DataTag> {

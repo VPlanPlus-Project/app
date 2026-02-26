@@ -176,14 +176,14 @@ private fun ProfileSubjectInstanceContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { onEvent(ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection(subjectInstance.subjectInstance, !isSelected)) }
+                            .clickable { onEvent(ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection(subjectInstance, !isSelected)) }
                             .padding(start = 8.dp, end = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Checkbox(
                             checked = isSelected,
-                            onCheckedChange = { onEvent(ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection(subjectInstance.subjectInstance, !isSelected)) }
+                            onCheckedChange = { onEvent(ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection(subjectInstance, !isSelected)) }
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -192,18 +192,18 @@ private fun ProfileSubjectInstanceContent(
                         ) {
                             Column {
                                 Text(
-                                    text = subjectInstance.subjectInstance.subject,
+                                    text = subjectInstance.subject,
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 if (subjectInstance.course != null) Text(
-                                    text = subjectInstance.course.name,
+                                    text = subjectInstance.course!!.name,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             if (subjectInstance.teacher != null) Text(
-                                text = subjectInstance.teacher.name,
+                                text = subjectInstance.teacher!!.name,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

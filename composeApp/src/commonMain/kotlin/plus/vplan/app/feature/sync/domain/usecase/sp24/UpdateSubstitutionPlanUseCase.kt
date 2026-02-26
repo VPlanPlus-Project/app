@@ -11,6 +11,7 @@ import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Day
@@ -26,7 +27,6 @@ import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
@@ -73,7 +73,7 @@ class UpdateSubstitutionPlanUseCase(
         val teachers = teacherRepository.getBySchool(sp24School).first()
         val rooms = roomRepository.getBySchool(sp24School.id).first()
         val groups = groupRepository.getBySchool(sp24School).first()
-        val subjectInstances = subjectInstanceRepository.getBySchool(sp24School.id).first()
+        val subjectInstances = subjectInstanceRepository.getBySchool(sp24School).first()
         var error: Response.Error? = null
 
         val studentProfilesForSchool = profileRepository.getAll().first()

@@ -11,16 +11,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
-import plus.vplan.app.domain.model.populated.PopulationContext
-import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkResult
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
@@ -37,7 +34,6 @@ class NewHomeworkViewModel(
     private val hideVppIdBannerUseCase: HideVppIdBannerUseCase,
     private val createHomeworkUseCase: CreateHomeworkUseCase,
     private val subjectInstanceRepository: SubjectInstanceRepository,
-    private val subjectInstancePopulator: SubjectInstancePopulator,
 ) : ViewModel() {
     @OptIn(ExperimentalUuidApi::class)
     val state = MutableStateFlow(NewHomeworkState())
@@ -68,14 +64,13 @@ class NewHomeworkViewModel(
                 val profile = state.value.currentProfile ?: return@collectLatest
 
                 subjectInstanceRepository
-                    .getByGroup(profile.group.id)
+                    .getByGroup(profile.group)
                     .map { subjectInstances ->
                         subjectInstances.filter { subjectInstance ->
                             profile.subjectInstanceConfiguration[subjectInstance.id] != false
                         }
                     }
                     .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
-                    .flatMapLatest { subjectInstancePopulator.populateMultiple(it, PopulationContext.Profile(profile)) }
                     .collectLatest {
                         state.update { state -> state.copy(subjectInstances = it) }
                     }
@@ -115,7 +110,7 @@ class NewHomeworkViewModel(
                             tasks = currentState.tasks.values.mapNotNull { it.ifBlank { null } }.toList().ifEmpty { return@save false },
                             isPublic = currentState.isPublic,
                             date = currentState.selectedDate ?: return@save false,
-                            subjectInstance = currentState.selectedSubjectInstance?.subjectInstance,
+                            subjectInstance = currentState.selectedSubjectInstance,
                             selectedFiles = currentState.files
                         )
                     }
@@ -134,8 +129,8 @@ class NewHomeworkViewModel(
 data class NewHomeworkState(
     val tasks: Map<Uuid, String> = emptyMap(),
     val currentProfile: Profile.StudentProfile? = null,
-    val subjectInstances: List<PopulatedSubjectInstance> = emptyList(),
-    val selectedSubjectInstance: PopulatedSubjectInstance? = null,
+    val subjectInstances: List<SubjectInstance> = emptyList(),
+    val selectedSubjectInstance: SubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val isPublic: Boolean? = null,
     val files: List<AttachedFile> = emptyList(),
@@ -155,7 +150,7 @@ sealed class NewHomeworkEvent {
     data class UpdateTask(val taskId: Uuid, val task: String) : NewHomeworkEvent()
     data class RemoveTask(val taskId: Uuid) : NewHomeworkEvent()
 
-    data class SelectSubjectInstance(val subjectInstance: PopulatedSubjectInstance?) : NewHomeworkEvent()
+    data class SelectSubjectInstance(val subjectInstance: SubjectInstance?) : NewHomeworkEvent()
     data class SelectDate(val date: LocalDate) : NewHomeworkEvent()
 
     data class SetVisibility(val isPublic: Boolean) : NewHomeworkEvent()

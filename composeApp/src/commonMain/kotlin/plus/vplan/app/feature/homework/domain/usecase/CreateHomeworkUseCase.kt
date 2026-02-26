@@ -1,11 +1,10 @@
-@file:OptIn(ExperimentalUuidApi::class, ExperimentalUuidApi::class, ExperimentalTime::class)
-
 package plus.vplan.app.feature.homework.domain.usecase
 
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Homework
@@ -13,17 +12,13 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.HomeworkEntity
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlin.uuid.ExperimentalUuidApi
 
 class CreateHomeworkUseCase(
     private val homeworkRepository: HomeworkRepository,
@@ -68,11 +63,8 @@ class CreateHomeworkUseCase(
             val subjectInstanceId = subjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
                 val subjectInstanceAlias = subjectInstance.aliases.firstOrNull()
                     ?: return CreateHomeworkResult.Error.UnknownError("Subject instance $subjectInstance has no aliases")
-                val downloadedSubjectInstance = subjectInstanceRepository.findByAlias(
-                    subjectInstanceAlias,
-                    forceUpdate = true,
-                    preferCurrentState = true
-                ).getFirstValue()
+                val downloadedSubjectInstance = subjectInstanceRepository.getById(subjectInstanceAlias)
+                    .first()
                     ?: return CreateHomeworkResult.Error.UnknownError("Subject instance $subjectInstance not found on VPP")
                 val subjectInstanceId = downloadedSubjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
                 if (subjectInstanceId == null) return CreateHomeworkResult.Error.UnknownError("Subject instance $subjectInstance not found on VPP")

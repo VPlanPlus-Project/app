@@ -22,7 +22,6 @@ import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.RoomSource
-import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.WeekSource
@@ -53,7 +52,6 @@ object AppConfig {
 object App {
     lateinit var homeworkSource: HomeworkSource
     lateinit var homeworkTaskSource: HomeworkTaskSource
-    lateinit var subjectInstanceSource: SubjectInstanceSource
     lateinit var daySource: DaySource
     lateinit var timetableSource: TimetableSource
     lateinit var weekSource: WeekSource

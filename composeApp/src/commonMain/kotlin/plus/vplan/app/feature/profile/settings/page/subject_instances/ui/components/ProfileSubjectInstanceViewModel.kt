@@ -10,14 +10,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import plus.vplan.app.core.data.profile.ProfileRepository
-import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Course
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
-import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateIndicesUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.GetCourseConfigurationUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileSubjectInstanceEnabledUseCase
@@ -31,8 +28,6 @@ class ProfileSubjectInstanceViewModel(
     private val updateIndicesUseCase: UpdateIndicesUseCase,
     private val subjectInstanceRepository: SubjectInstanceRepository,
 ) : ViewModel(), KoinComponent {
-    private val subjectInstancePopulator by inject<SubjectInstancePopulator>()
-
     val state: StateFlow<ProfileSubjectInstanceState>
         field = MutableStateFlow(ProfileSubjectInstanceState())
 
@@ -53,7 +48,7 @@ class ProfileSubjectInstanceViewModel(
                         profile = profile,
                         courses = getCourseConfigurationUseCase(profile),
                         subjectInstances = profile.subjectInstanceConfiguration
-                            .mapKeys { subjectInstancePopulator.populateSingle(subjectInstanceRepository.getByLocalId(it.key).first() ?: return@mapKeys null).first() }
+                            .mapKeys {subjectInstanceRepository.getByLocalId(it.key).first() ?: return@mapKeys null }
                             .filterKeysNotNull()
                     )
                 }
@@ -68,7 +63,7 @@ class ProfileSubjectInstanceViewModel(
                     state.value.profile!!.subjectInstanceConfiguration
                         .keys
                         .mapNotNull { subjectInstanceRepository.getByLocalId(it).first() }
-                        .filter { it.courseId == event.course.id }
+                        .filter { it.course == event.course.id }
                         .let { subjectInstances ->
                             setProfileSubjectInstanceEnabledUseCase(state.value.profile!!, subjectInstances, event.isSelected)
                             shouldRebuildIndicesOnProfileReload = true
@@ -89,7 +84,7 @@ class ProfileSubjectInstanceViewModel(
 data class ProfileSubjectInstanceState(
     val profile: Profile.StudentProfile? = null,
     val courses: Map<Course, Boolean?> = emptyMap(),
-    val subjectInstances: Map<PopulatedSubjectInstance, Boolean> = emptyMap(),
+    val subjectInstances: Map<SubjectInstance, Boolean> = emptyMap(),
 )
 
 sealed class ProfileSubjectInstanceEvent {

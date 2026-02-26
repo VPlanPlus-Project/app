@@ -45,6 +45,8 @@ import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.profile.ProfileRepositoryImpl
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.school.SchoolRepositoryImpl
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepositoryImpl
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.data.teacher.TeacherRepositoryImpl
 import plus.vplan.app.core.database.di.databaseModule
@@ -58,7 +60,6 @@ import plus.vplan.app.data.repository.LessonTimeRepositoryImpl
 import plus.vplan.app.data.repository.NewsRepositoryImpl
 import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
-import plus.vplan.app.data.repository.SubjectInstanceRepositoryImpl
 import plus.vplan.app.data.repository.SubstitutionPlanRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
@@ -75,7 +76,6 @@ import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -88,7 +88,6 @@ import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.RoomSource
-import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.WeekSource
@@ -124,10 +123,12 @@ import plus.vplan.app.network.besteschule.YearApiImpl
 import plus.vplan.app.network.vpp.GenericAuthenticationProvider
 import plus.vplan.app.network.vpp.SchoolAuthenticationProvider
 import plus.vplan.app.network.vpp.VppIdAuthenticationProvider
-import plus.vplan.app.network.vpp.school.GroupApi
-import plus.vplan.app.network.vpp.school.GroupApiImpl
+import plus.vplan.app.network.vpp.group.GroupApi
+import plus.vplan.app.network.vpp.group.GroupApiImpl
 import plus.vplan.app.network.vpp.school.SchoolApi
 import plus.vplan.app.network.vpp.school.SchoolApiImpl
+import plus.vplan.app.network.vpp.subject_instance.SubjectInstanceApi
+import plus.vplan.app.network.vpp.subject_instance.SubjectInstanceApiImpl
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -214,15 +215,16 @@ val appModule = module(createdAtStart = true) {
 
     singleOf(::SchoolApiImpl).bind<SchoolApi>()
     singleOf(::GroupApiImpl).bind<GroupApi>()
+    singleOf(::SubjectInstanceApiImpl).bind<SubjectInstanceApi>()
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
     singleOf(::TeacherRepositoryImpl).bind<TeacherRepository>()
     singleOf(::CourseRepositoryImpl).bind<CourseRepository>()
+    singleOf(::SubjectInstanceRepositoryImpl).bind<SubjectInstanceRepository>()
 
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
     singleOf(::Stundenplan24RepositoryImpl).bind<Stundenplan24Repository>()
-    singleOf(::SubjectInstanceRepositoryImpl).bind<SubjectInstanceRepository>()
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
     singleOf(::KeyValueRepositoryImpl).bind<KeyValueRepository>()
     singleOf(::WeekRepositoryImpl).bind<WeekRepository>()
@@ -271,7 +273,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
 
         App.homeworkSource = HomeworkSource(koin.get())
         App.homeworkTaskSource = HomeworkTaskSource(koin.get())
-        App.subjectInstanceSource = SubjectInstanceSource(koin.get())
         App.daySource = DaySource(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
         App.timetableSource = TimetableSource(koin.get())
         App.weekSource = WeekSource(koin.get())

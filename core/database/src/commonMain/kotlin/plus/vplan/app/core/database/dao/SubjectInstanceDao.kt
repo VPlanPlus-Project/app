@@ -42,6 +42,9 @@ interface SubjectInstanceDao {
     @Upsert
     suspend fun upsertSubjectInstance(entity: DbSubjectInstance, groups: List<FKSubjectInstanceGroup>, aliases: List<DbSubjectInstanceAlias>)
 
+    @Upsert
+    suspend fun upsert(alias: DbSubjectInstanceAlias)
+
     @Query("DELETE FROM subject_instance WHERE id = :id")
     suspend fun deleteById(id: Uuid)
 
@@ -52,6 +55,6 @@ interface SubjectInstanceDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM subject_instances_aliases LEFT JOIN subject_instance ON subject_instance_id = subject_instance.id WHERE alias = :value AND alias_type = :provider AND version = :version")
-    fun getByAlias(value: String, provider: AliasProvider, version: Int): Flow<EmbeddedSubjectInstance?>
+    @Query("SELECT subject_instances_aliases.subject_instance_id FROM subject_instances_aliases LEFT JOIN subject_instance ON subject_instance_id = subject_instance.id WHERE alias = :value AND alias_type = :provider AND version = :version")
+    fun getIdByAlias(value: String, provider: AliasProvider, version: Int): Flow<Uuid?>
 }

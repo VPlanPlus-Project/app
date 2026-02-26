@@ -23,18 +23,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.CacheState
-import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Homework
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedHomework
-import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
-import plus.vplan.app.domain.model.populated.PopulationContext
-import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.homework.domain.usecase.AddFileUseCase
@@ -69,7 +67,6 @@ class HomeworkDetailViewModel(
     private val addFileUseCase: AddFileUseCase,
     private val keyValueRepository: KeyValueRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
-    private val subjectInstancePopulator: SubjectInstancePopulator,
     private val homeworkPopulator: HomeworkPopulator,
 ) : ViewModel() {
     val state: StateFlow<HomeworkDetailState>
@@ -123,20 +120,18 @@ class HomeworkDetailViewModel(
                         subjectInstanceRepository
                             .getByLocalId(subjectInstanceId)
                             .filterNotNull()
-                            .flatMapLatest { subjectInstance -> subjectInstancePopulator.populateSingle(subjectInstance) }
                             .onEach { state.update { state -> state.copy(homeworkSubjectInstance = it) } }
                             .launchIn(this)
                     }
 
                     subjectInstanceRepository
-                        .getByGroup(profile.group.id)
+                        .getByGroup(profile.group)
                         .map { subjectInstances ->
                             subjectInstances.filter { subjectInstance ->
                                 profile.subjectInstanceConfiguration[subjectInstance.id] != false
                             }
                         }
                         .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
-                        .flatMapLatest { subjectInstancePopulator.populateMultiple(it, PopulationContext.Profile(state.value.profile!!)) }
                         .onEach { state.update { state -> state.copy(subjectInstances = it) } }
                         .launchIn(this)
                 }
@@ -194,7 +189,7 @@ class HomeworkDetailViewModel(
                         state.update { it.copy(homework = revertedHomework) }
                     }
                 }
-                is HomeworkDetailEvent.UpdateSubjectInstance -> editHomeworkSubjectInstanceUseCase(state.value.homework!!, event.subjectInstance?.subjectInstance, state.value.profile!!)
+                is HomeworkDetailEvent.UpdateSubjectInstance -> editHomeworkSubjectInstanceUseCase(state.value.homework!!, event.subjectInstance, state.value.profile!!)
                 is HomeworkDetailEvent.UpdateDueTo -> editHomeworkDueToUseCase(state.value.homework!!.homework, event.dueTo, state.value.profile!!)
                 is HomeworkDetailEvent.UpdateVisibility -> editHomeworkVisibilityUseCase(state.value.homework?.homework as Homework.CloudHomework, event.isPublic, state.value.profile!!)
                 is HomeworkDetailEvent.Reload -> {
@@ -262,10 +257,10 @@ class HomeworkDetailViewModel(
 
 data class HomeworkDetailState(
     val homework: PopulatedHomework? = null,
-    val homeworkSubjectInstance: PopulatedSubjectInstance? = null,
+    val homeworkSubjectInstance: SubjectInstance? = null,
 
     val profile: Profile.StudentProfile? = null,
-    val subjectInstances: List<PopulatedSubjectInstance> = emptyList(),
+    val subjectInstances: List<SubjectInstance> = emptyList(),
     val canEdit: Boolean = false,
     val reloadingState: UnoptimisticTaskState? = null,
     val deleteState: UnoptimisticTaskState? = null,
@@ -278,7 +273,7 @@ data class HomeworkDetailState(
 
 sealed class HomeworkDetailEvent {
     data class ToggleTaskDone(val task: Homework.HomeworkTask) : HomeworkDetailEvent()
-    data class UpdateSubjectInstance(val subjectInstance: PopulatedSubjectInstance?) : HomeworkDetailEvent()
+    data class UpdateSubjectInstance(val subjectInstance: SubjectInstance?) : HomeworkDetailEvent()
     data class UpdateDueTo(val dueTo: LocalDate) : HomeworkDetailEvent()
     data class UpdateVisibility(val isPublic: Boolean) : HomeworkDetailEvent()
     data class AddTask(val task: String) : HomeworkDetailEvent()
