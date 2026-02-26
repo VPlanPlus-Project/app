@@ -7,18 +7,18 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
-import plus.vplan.app.domain.repository.TeacherDbDto
-import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
@@ -135,10 +135,12 @@ class SetUpSchoolDataUseCase(
                     version = 1
                 )
             }.onEach { (teacher, aliases) ->
-                teacherRepository.upsert(TeacherDbDto(
-                    schoolId = school.id,
+                teacherRepository.save(Teacher(
+                    id = Uuid.random(),
+                    school = school,
                     name = teacher.name,
-                    aliases = listOf(aliases)
+                    cachedAt = Clock.System.now(),
+                    aliases = setOf(aliases)
                 ))
             }.also {
                 onboardingRepository.addProfileOptions(it.map { (teacher, alias) ->

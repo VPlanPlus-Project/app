@@ -7,13 +7,13 @@ import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Course
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.domain.repository.CourseRepository
-import plus.vplan.app.domain.repository.TeacherRepository
 
 @Immutable
 data class PopulatedSubjectInstance(
@@ -38,8 +38,8 @@ class SubjectInstancePopulator: KoinComponent {
 
         val teachers =
             when (context) {
-                is PopulationContext.School -> teacherRepository.getBySchool(context.school.id)
-                is PopulationContext.Profile -> teacherRepository.getBySchool(context.profile.school.id)
+                is PopulationContext.School -> teacherRepository.getBySchool(context.school)
+                is PopulationContext.Profile -> teacherRepository.getBySchool(context.profile.school)
                 else -> teacherRepository.getAll()
             }
 

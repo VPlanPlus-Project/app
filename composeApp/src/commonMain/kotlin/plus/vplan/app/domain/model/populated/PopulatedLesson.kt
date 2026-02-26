@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.LessonTime
@@ -19,7 +20,6 @@ import plus.vplan.app.core.model.Week
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
-import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.combine6
 
@@ -91,8 +91,8 @@ class LessonPopulator : KoinComponent {
         }
 
         val teachers = when (context) {
-            is PopulationContext.Profile -> teacherRepository.getBySchool(context.profile.school.id)
-            is PopulationContext.School -> teacherRepository.getBySchool(context.school.id)
+            is PopulationContext.Profile -> teacherRepository.getBySchool(context.profile.school)
+            is PopulationContext.School -> teacherRepository.getBySchool(context.school)
         }
 
         val weeks = when (context) {
@@ -143,7 +143,7 @@ class LessonPopulator : KoinComponent {
 
         val groups = groupRepository.getBySchool(contextSchool)
         val rooms = roomRepository.getBySchool(contextSchool.id)
-        val teachers = teacherRepository.getBySchool(contextSchool.id)
+        val teachers = teacherRepository.getBySchool(contextSchool)
         val weeks = weekRepository.getBySchool(contextSchool.id)
 
         return combine6(

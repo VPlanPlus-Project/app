@@ -6,12 +6,12 @@ import kotlinx.datetime.LocalDate
 import plus.vplan.app.capture
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
@@ -55,7 +55,7 @@ class SelectProfileUseCase(
                 ).also { profileRepository.save(it) }
             }
             is OnboardingProfile.TeacherProfile -> {
-                val teacher = teacherRepository.getByLocalId(teacherRepository.resolveAliasToLocalId(onboardingProfile.alias)!!).first()!!
+                val teacher = teacherRepository.getById(onboardingProfile.alias).first()!!
 
                 Profile.TeacherProfile(
                     id = Uuid.random(),

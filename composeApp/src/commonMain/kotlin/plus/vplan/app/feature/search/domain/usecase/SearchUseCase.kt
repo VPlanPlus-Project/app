@@ -17,6 +17,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
@@ -28,7 +29,6 @@ import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem
@@ -68,7 +68,7 @@ class SearchUseCase(
                 if (searchRequest.query.isNotEmpty() && searchRequest.assessmentType == null) launch {
                     combine(
                         groupRepository.getBySchool(profile.school).map { it.filter { group -> query in group.name.lowercase() } },
-                        teacherRepository.getBySchool(profile.school.id).map { it.filter { teacher -> query in teacher.name.lowercase() } },
+                        teacherRepository.getBySchool(profile.school).map { it.filter { teacher -> query in teacher.name.lowercase() } },
                         roomRepository.getBySchool(profile.school.id).map { it.filter { room -> query in room.name.lowercase() } },
                     ) { groups, teachers, rooms ->
                         results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->

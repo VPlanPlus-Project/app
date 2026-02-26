@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,8 +39,10 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.App
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.domain.cache.collectAsLoadingState
@@ -154,10 +157,13 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                     if (course.teacherId == null) return@detailsRow
-                                                    val teacherState by App.teacherSource.getById(course.teacherId!!).collectAsLoadingState(course.teacherId.toString())
-                                                    if (teacherState !is AliasState.Done) return@detailsRow
+
+                                                    // TODO: Cleanup, that's bad code:
+                                                    val teacherRepository = koinInject<TeacherRepository>()
+                                                    val teacher by teacherRepository.getByLocalId(course.teacherId!!).collectAsState(null)
+
                                                     Text(
-                                                        text = (teacherState as? AliasState.Done)?.data?.name ?: "-",
+                                                        text = teacher?.name ?: "-",
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
@@ -217,9 +223,13 @@ private fun OnboardingSelectProfileScreen(
                                                     )
                                                 }
                                                 if (subjectInstance.teacherId == null) return@dataRow
-                                                val teacherState by App.teacherSource.getById(subjectInstance.teacherId!!).collectAsLoadingState(subjectInstance.teacherId.toString())
-                                                if (teacherState is AliasState.Done) Text(
-                                                    text = (teacherState as AliasState.Done).data.name,
+
+                                                // TODO: Dirty as well
+                                                val teacherRepository = koinInject<TeacherRepository>()
+                                                val teacher by teacherRepository.getByLocalId(subjectInstance.teacherId!!).collectAsState(null)
+
+                                                Text(
+                                                    text = teacher?.name ?: "",
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )

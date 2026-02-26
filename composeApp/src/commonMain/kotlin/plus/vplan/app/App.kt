@@ -25,7 +25,6 @@ import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.RoomSource
 import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
-import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.feature.host.ui.NavigationHost
@@ -60,7 +59,6 @@ object App {
     lateinit var timetableSource: TimetableSource
     lateinit var weekSource: WeekSource
     lateinit var courseSource: CourseSource
-    lateinit var teacherSource: TeacherSource
     lateinit var roomSource: RoomSource
     lateinit var lessonTimeSource: LessonTimeSource
     lateinit var substitutionPlanSource: SubstitutionPlanSource

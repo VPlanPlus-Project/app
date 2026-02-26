@@ -3,11 +3,11 @@ package plus.vplan.app.feature.profile.settings.page.subject_instances.domain.us
 import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Course
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
-import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.utils.filterKeysNotNull
 import plus.vplan.app.utils.sortedBySuspending
 

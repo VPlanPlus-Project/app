@@ -6,10 +6,10 @@ import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Course
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Teacher
-import plus.vplan.app.domain.repository.TeacherRepository
 
 data class PopulatedCourse(
     val course: Course,
@@ -24,8 +24,8 @@ class CoursePopulator: KoinComponent {
     fun populateMultiple(courses: List<Course>, context: PopulationContext?): Flow<List<PopulatedCourse>> {
         val teachers =
             when (context) {
-                is PopulationContext.School -> teacherRepository.getBySchool(context.school.id)
-                is PopulationContext.Profile -> teacherRepository.getBySchool(context.profile.school.id)
+                is PopulationContext.School -> teacherRepository.getBySchool(context.school)
+                is PopulationContext.Profile -> teacherRepository.getBySchool(context.profile.school)
                 else -> teacherRepository.getAll()
             }
 

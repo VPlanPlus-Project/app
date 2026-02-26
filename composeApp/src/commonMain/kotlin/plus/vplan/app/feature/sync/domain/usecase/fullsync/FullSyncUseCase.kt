@@ -14,9 +14,11 @@ import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
@@ -24,8 +26,6 @@ import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.domain.repository.TeacherDbDto
-import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
@@ -176,8 +176,6 @@ class FullSyncUseCase(
                                             aliases = setOf(alias),
                                             cachedAt = Clock.System.now(),
                                         ))
-                                    } else {
-                                        groupRepository.save(existing)
                                     }
                                 }
                             }
@@ -191,14 +189,18 @@ class FullSyncUseCase(
                                         value = "${school.sp24Id}/${teacher.name}",
                                         version = 1
                                     )
-                                }.forEach { (teacher, aliases) ->
-                                    teacherRepository.upsert(
-                                        TeacherDbDto(
-                                            schoolId = school.id,
+                                }.forEach { (teacher, alias) ->
+                                    val existing = teacherRepository.getById(alias).first()
+
+                                    if (existing == null) {
+                                        teacherRepository.save(Teacher(
+                                            id = Uuid.random(),
+                                            school = school,
                                             name = teacher.name,
-                                            aliases = listOf(aliases)
-                                        )
-                                    )
+                                            cachedAt = Clock.System.now(),
+                                            aliases = setOf(alias)
+                                        ))
+                                    }
                                 }
                             }
 

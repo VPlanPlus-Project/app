@@ -43,6 +43,8 @@ import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.profile.ProfileRepositoryImpl
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.school.SchoolRepositoryImpl
+import plus.vplan.app.core.data.teacher.TeacherRepository
+import plus.vplan.app.core.data.teacher.TeacherRepositoryImpl
 import plus.vplan.app.core.database.di.databaseModule
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.CourseRepositoryImpl
@@ -57,7 +59,6 @@ import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.SubjectInstanceRepositoryImpl
 import plus.vplan.app.data.repository.SubstitutionPlanRepositoryImpl
-import plus.vplan.app.data.repository.TeacherRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.repository.WeekRepositoryImpl
@@ -76,7 +77,6 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.WeekRepository
@@ -91,7 +91,6 @@ import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.RoomSource
 import plus.vplan.app.domain.source.SubjectInstanceSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
-import plus.vplan.app.domain.source.TeacherSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
@@ -219,8 +218,8 @@ val appModule = module(createdAtStart = true) {
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
-
     singleOf(::TeacherRepositoryImpl).bind<TeacherRepository>()
+
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
     singleOf(::Stundenplan24RepositoryImpl).bind<Stundenplan24Repository>()
     singleOf(::CourseRepositoryImpl).bind<CourseRepository>()
@@ -278,7 +277,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         App.timetableSource = TimetableSource(koin.get())
         App.weekSource = WeekSource(koin.get())
         App.courseSource = CourseSource(koin.get())
-        App.teacherSource = TeacherSource(koin.get())
         App.roomSource = RoomSource(koin.get())
         App.lessonTimeSource = LessonTimeSource(koin.get())
         App.substitutionPlanSource = SubstitutionPlanSource(koin.get())

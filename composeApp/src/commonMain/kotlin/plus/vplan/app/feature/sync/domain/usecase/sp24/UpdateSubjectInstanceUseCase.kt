@@ -3,6 +3,7 @@ package plus.vplan.app.feature.sync.domain.usecase.sp24
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Course
@@ -16,7 +17,6 @@ import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubjectInstanceDbDto
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
-import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import plus.vplan.lib.sp24.source.extension.SubjectInstanceResponse
@@ -40,7 +40,7 @@ class UpdateSubjectInstanceUseCase(
             withCache = true
         )
 
-        val teachers = teacherRepository.getBySchool(schoolId = school.id).first()
+        val teachers = teacherRepository.getBySchool(school).first()
         val groups = groupRepository.getBySchool(school).first()
         val existingCourses = courseRepository.getBySchool(school.id)
         val existingSubjectInstances = subjectInstanceRepository.getBySchool(schoolId = school.id)

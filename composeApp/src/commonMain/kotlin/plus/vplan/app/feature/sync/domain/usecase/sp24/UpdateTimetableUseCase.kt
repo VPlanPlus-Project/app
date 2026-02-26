@@ -9,6 +9,7 @@ import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
@@ -19,7 +20,6 @@ import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TeacherRepository
 import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
@@ -61,7 +61,7 @@ class UpdateTimetableUseCase(
         )
         LOGGER.i { "Updating timetable for indiware school ${sp24School.id}" }
         val rooms = roomRepository.getBySchool(sp24School.id).first()
-        val teachers = teacherRepository.getBySchool(sp24School.id).first()
+        val teachers = teacherRepository.getBySchool(sp24School).first()
         val groups = groupRepository.getBySchool(sp24School).first()
 
         val insertVersion = timetableRepository.getCurrentVersion().first() + 1
