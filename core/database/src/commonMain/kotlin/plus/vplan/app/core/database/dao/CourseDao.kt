@@ -47,5 +47,5 @@ interface CourseDao {
     }
 
     @Query("SELECT course_id FROM courses_aliases WHERE alias = :value AND alias_type = :provider AND version = :version")
-    suspend fun getIdByAlias(value: String, provider: AliasProvider, version: Int): Uuid?
+    fun getIdByAlias(value: String, provider: AliasProvider, version: Int): Flow<Uuid?>
 }

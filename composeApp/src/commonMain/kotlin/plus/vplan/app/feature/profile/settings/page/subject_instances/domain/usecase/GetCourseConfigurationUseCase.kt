@@ -3,17 +3,15 @@ package plus.vplan.app.feature.profile.settings.page.subject_instances.domain.us
 import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.data.teacher.TeacherRepository
+import plus.vplan.app.core.data.course.CourseRepository
 import plus.vplan.app.core.model.Course
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.app.utils.filterKeysNotNull
 import plus.vplan.app.utils.sortedBySuspending
 
 class GetCourseConfigurationUseCase: KoinComponent {
     private val subjectInstanceRepository by inject<SubjectInstanceRepository>()
-    private val teacherRepository by inject<TeacherRepository>()
     private val courseRepository by inject<CourseRepository>()
 
     suspend operator fun invoke(profile: Profile.StudentProfile): Map<Course, Boolean?> {
@@ -29,8 +27,7 @@ class GetCourseConfigurationUseCase: KoinComponent {
             }
             .filterKeysNotNull()
             .sortedBySuspending { (course, enabled) ->
-                val teacher = course.teacherId?.let { teacherRepository.getByLocalId(it).first() }
-                course.name + teacher?.name
+                course.name + course.teacher?.name
             }
             .associate { it.key to it.value }
     }

@@ -6,6 +6,7 @@ import androidx.room.Relation
 import plus.vplan.app.core.database.model.database.DbCourse
 import plus.vplan.app.core.database.model.database.DbCourseAlias
 import plus.vplan.app.core.database.model.database.DbGroup
+import plus.vplan.app.core.database.model.database.DbTeacher
 import plus.vplan.app.core.database.model.database.crossovers.DbCourseGroupCrossover
 import plus.vplan.app.core.model.Course
 
@@ -25,14 +26,19 @@ data class EmbeddedCourse(
         parentColumn = "id",
         entityColumn = "course_id",
         entity = DbCourseAlias::class
-    ) val aliases: List<DbCourseAlias>
+    ) val aliases: List<DbCourseAlias>,
+    @Relation(
+        parentColumn = "teacher_id",
+        entityColumn = "id",
+        entity = DbTeacher::class,
+    ) val teacher: EmbeddedTeacher?,
 ) {
     fun toModel(): Course {
         return Course(
             id = course.id,
             name = course.name,
-            teacherId = course.teacherId,
-            groups = groups.flatMap { it.aliases.map { alias -> alias.toModel() } },
+            teacher = teacher?.toModel(),
+            groups = groups.map { it.toModel() }.toSet(),
             cachedAt = course.cachedAt,
             aliases = aliases.map { it.toModel() }.toSet()
         )

@@ -2,6 +2,7 @@ package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.course.CourseRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Alias
@@ -12,14 +13,14 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
-import plus.vplan.app.domain.repository.CourseDbDto
-import plus.vplan.app.domain.repository.CourseRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubjectInstanceDbDto
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import plus.vplan.lib.sp24.source.extension.SubjectInstanceResponse
+import kotlin.time.Clock
+import kotlin.uuid.Uuid
 import plus.vplan.lib.sp24.source.Response as Sp24Response
 
 private val LOGGER = Logger.withTag("UpdateSubjectInstanceUseCase")
@@ -42,7 +43,7 @@ class UpdateSubjectInstanceUseCase(
 
         val teachers = teacherRepository.getBySchool(school).first()
         val groups = groupRepository.getBySchool(school).first()
-        val existingCourses = courseRepository.getBySchool(school.id)
+        val existingCourses = courseRepository.getBySchool(school)
         val existingSubjectInstances = subjectInstanceRepository.getBySchool(schoolId = school.id)
 
         updateCourses(
@@ -52,8 +53,6 @@ class UpdateSubjectInstanceUseCase(
             teachers = teachers,
             groups = groups
         )
-
-        courseRepository.getBySchool(school.id).first()
 
         updateSubjectInstances(
             client = client,
@@ -76,7 +75,7 @@ class UpdateSubjectInstanceUseCase(
             .map { DownloadedCourse(it, Course.buildSp24Alias(school.sp24Id, it.name, it.classes.sorted().toSet(), it.teacher)) }
 
         val downloadedCourseEntities = downloadedCourses
-            .filter { downloadedCourse -> courseRepository.resolveAliasToLocalId(downloadedCourse.sp24Alias) == null }
+            .filter { downloadedCourse -> courseRepository.getById(downloadedCourse.sp24Alias).first() == null }
 
         downloadedCourses.let {
             val downloadedCoursesToDelete = existingCourses
@@ -86,7 +85,7 @@ class UpdateSubjectInstanceUseCase(
                     return@filter true
                 }
             LOGGER.d { "Delete ${downloadedCoursesToDelete.size} courses" }
-            courseRepository.deleteById(downloadedCoursesToDelete.map { it.id })
+            courseRepository.delete(downloadedCoursesToDelete)
         }
 
         val updatedCourses =
@@ -96,15 +95,22 @@ class UpdateSubjectInstanceUseCase(
             .map { (course, sp24Alias) ->
                 val teacher = course.teacher?.ifBlank { null }
                     ?.let { teachers.firstOrNull { it.name == course.teacher } }
-                CourseDbDto(
+                val existing = courseRepository.getById(sp24Alias).first()
+                existing?.copy(
                     name = course.name,
-                    groups = course.classes.mapNotNull { groups.firstOrNull { group -> group.name == it } }
-                        .map { it.id },
-                    teacher = teacher?.id,
-                    aliases = listOf(sp24Alias)
+                    teacher = teacher,
+                    aliases = existing.aliases + sp24Alias
                 )
+                    ?: Course(
+                        id = Uuid.random(),
+                        groups = course.classes.mapNotNull { groups.firstOrNull { group -> group.name == it } }.toSet(),
+                        name = course.name,
+                        teacher = teacher,
+                        cachedAt = Clock.System.now(),
+                        aliases = setOf(sp24Alias)
+                    )
             }
-            .forEach { courseRepository.upsert(it) }
+            .forEach { courseRepository.save(it) }
         return true
     }
 
@@ -141,7 +147,7 @@ class UpdateSubjectInstanceUseCase(
                     groupRepository.getById(identifier = Group.buildSp24Alias(sp24SchoolId.toInt(), groupName)).first() ?: return@firstNotNullOfOrNull null
                 } ?: return@mapNotNull null
 
-                val courses = courseRepository.getByGroup(firstGroup.id).first()
+                val courses = courseRepository.getByGroup(firstGroup).first()
                 SubjectInstanceDbDto(
                     subject = subjectInstance.subject,
                     course = subjectInstance.course?.let { courses.firstOrNull { course -> course.name == subjectInstance.course } }?.id,

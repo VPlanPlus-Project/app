@@ -15,8 +15,6 @@ import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Course
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.domain.model.populated.CoursePopulator
-import plus.vplan.app.domain.model.populated.PopulatedCourse
 import plus.vplan.app.domain.model.populated.PopulatedSubjectInstance
 import plus.vplan.app.domain.model.populated.SubjectInstancePopulator
 import plus.vplan.app.domain.repository.SubjectInstanceRepository
@@ -34,7 +32,6 @@ class ProfileSubjectInstanceViewModel(
     private val subjectInstanceRepository: SubjectInstanceRepository,
 ) : ViewModel(), KoinComponent {
     private val subjectInstancePopulator by inject<SubjectInstancePopulator>()
-    private val coursePopulator by inject<CoursePopulator>()
 
     val state: StateFlow<ProfileSubjectInstanceState>
         field = MutableStateFlow(ProfileSubjectInstanceState())
@@ -54,8 +51,7 @@ class ProfileSubjectInstanceViewModel(
                 state.update { state ->
                     state.copy(
                         profile = profile,
-                        courses = getCourseConfigurationUseCase(profile)
-                            .mapKeys { coursePopulator.populateSingle(it.key).first() },
+                        courses = getCourseConfigurationUseCase(profile),
                         subjectInstances = profile.subjectInstanceConfiguration
                             .mapKeys { subjectInstancePopulator.populateSingle(subjectInstanceRepository.getByLocalId(it.key).first() ?: return@mapKeys null).first() }
                             .filterKeysNotNull()
@@ -92,7 +88,7 @@ class ProfileSubjectInstanceViewModel(
 @Immutable
 data class ProfileSubjectInstanceState(
     val profile: Profile.StudentProfile? = null,
-    val courses: Map<PopulatedCourse, Boolean?> = emptyMap(),
+    val courses: Map<Course, Boolean?> = emptyMap(),
     val subjectInstances: Map<PopulatedSubjectInstance, Boolean> = emptyMap(),
 )
 

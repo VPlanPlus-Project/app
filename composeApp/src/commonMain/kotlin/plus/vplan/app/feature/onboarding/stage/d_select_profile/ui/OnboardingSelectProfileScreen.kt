@@ -41,12 +41,9 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.App
+import plus.vplan.app.core.data.course.CourseRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
-import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.ProfileType
-import plus.vplan.app.domain.cache.collectAsLoadingState
-import plus.vplan.app.domain.cache.collectAsResultingFlow
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.SubjectInstanceTitle
@@ -112,8 +109,10 @@ private fun OnboardingSelectProfileScreen(
                                 .padding(bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) listHost@{
+                            // TODO: Find a better way
+                            val courseRepository = koinInject<CourseRepository>()
                             val courses = (state.selectedProfile as? OnboardingProfile.StudentProfile)?.subjectInstances.orEmpty().mapNotNull { it.courseId }.toSet()
-                                .map { App.courseSource.getById(it).collectAsResultingFlow() }
+                                .map { courseRepository.getByLocalId(it).collectAsState(null) }
                                 .mapNotNull { it.value }
                                 .sortedBy { it.name }
 
@@ -156,14 +155,10 @@ private fun OnboardingSelectProfileScreen(
                                                         style = MaterialTheme.typography.titleSmall,
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
-                                                    if (course.teacherId == null) return@detailsRow
-
-                                                    // TODO: Cleanup, that's bad code:
-                                                    val teacherRepository = koinInject<TeacherRepository>()
-                                                    val teacher by teacherRepository.getByLocalId(course.teacherId!!).collectAsState(null)
+                                                    if (course.teacher == null) return@detailsRow
 
                                                     Text(
-                                                        text = teacher?.name ?: "-",
+                                                        text = course.teacher?.name ?: "-",
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
@@ -208,6 +203,9 @@ private fun OnboardingSelectProfileScreen(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.SpaceBetween
                                             ) dataRow@{
+                                                // TODO: Find a better way
+                                                val courseRepository = koinInject<CourseRepository>()
+
                                                 Column subjectAndCourse@{
                                                     Text(
                                                         text = subjectInstance.subject,
@@ -215,9 +213,9 @@ private fun OnboardingSelectProfileScreen(
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
                                                     if (subjectInstance.courseId == null) return@subjectAndCourse
-                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.courseId!!).collectAsLoadingState(subjectInstance.courseId.toString())
-                                                    if (subjectInstanceState is AliasState.Done) Text(
-                                                        text = (subjectInstanceState as AliasState.Done).data.name,
+                                                    val subjectInstanceState by courseRepository.getByLocalId(subjectInstance.courseId!!).collectAsState(null)
+                                                    if (subjectInstanceState != null) Text(
+                                                        text = subjectInstanceState!!.name,
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )

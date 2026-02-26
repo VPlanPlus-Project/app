@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.course.CourseRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Course
@@ -13,7 +14,6 @@ import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
-import plus.vplan.app.domain.repository.CourseRepository
 
 @Immutable
 data class PopulatedSubjectInstance(
@@ -31,8 +31,8 @@ class SubjectInstancePopulator: KoinComponent {
     fun populateMultiple(subjectInstances: List<SubjectInstance>, context: PopulationContext?): Flow<List<PopulatedSubjectInstance>> {
         val courses =
             when (context) {
-                is PopulationContext.School -> courseRepository.getBySchool(context.school.id)
-                is PopulationContext.Profile if context.profile is Profile.StudentProfile -> courseRepository.getByGroup(context.profile.group.id)
+                is PopulationContext.School -> courseRepository.getBySchool(context.school)
+                is PopulationContext.Profile if context.profile is Profile.StudentProfile -> courseRepository.getByGroup(context.profile.group)
                 else -> courseRepository.getAll()
             }
 

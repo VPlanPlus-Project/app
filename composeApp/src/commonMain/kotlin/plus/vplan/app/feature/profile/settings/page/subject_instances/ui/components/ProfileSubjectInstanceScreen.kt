@@ -126,7 +126,7 @@ private fun ProfileSubjectInstanceContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { onEvent(ProfileSubjectInstanceEvent.ToggleCourseSelection(course.course, isSelected?.not() ?: false)) }
+                            .clickable { onEvent(ProfileSubjectInstanceEvent.ToggleCourseSelection(course, isSelected?.not() ?: false)) }
                             .padding(start = 8.dp, end = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -137,7 +137,7 @@ private fun ProfileSubjectInstanceContent(
                                 false -> ToggleableState.Off
                                 null -> ToggleableState.Indeterminate
                             },
-                            onClick = { onEvent(ProfileSubjectInstanceEvent.ToggleCourseSelection(course.course, isSelected?.not() ?: false)) }
+                            onClick = { onEvent(ProfileSubjectInstanceEvent.ToggleCourseSelection(course, isSelected?.not() ?: false)) }
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -145,12 +145,12 @@ private fun ProfileSubjectInstanceContent(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = course.course.name,
+                                text = course.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             if (course.teacher != null) Text(
-                                text = course.teacher.name,
+                                text = course.teacher!!.name,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

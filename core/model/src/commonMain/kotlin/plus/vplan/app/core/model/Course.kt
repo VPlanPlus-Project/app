@@ -5,9 +5,9 @@ import kotlin.uuid.Uuid
 
 data class Course(
     override val id: Uuid,
-    val groups: List<Alias>,
+    val groups: Set<Group>,
     val name: String,
-    val teacherId: Uuid?,
+    val teacher: Teacher?,
     val cachedAt: Instant,
     override val aliases: Set<Alias>
 ): AliasedItem<DataTag> {
