@@ -121,9 +121,4 @@ class GroupRepositoryImpl(
             }
         )
     }
-
-    @Deprecated("Use getByIds instead")
-    override fun getByLocalId(id: Uuid): Flow<Group?> {
-        return groupDao.findById(id).map { it?.toModel() }
-    }
 }

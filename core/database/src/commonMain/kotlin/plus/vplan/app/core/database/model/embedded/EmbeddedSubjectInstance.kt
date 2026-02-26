@@ -1,7 +1,9 @@
 package plus.vplan.app.core.database.model.embedded
 
 import androidx.room.Embedded
+import androidx.room.Junction
 import androidx.room.Relation
+import plus.vplan.app.core.database.model.database.DbGroup
 import plus.vplan.app.core.database.model.database.DbSubjectInstance
 import plus.vplan.app.core.database.model.database.DbSubjectInstanceAlias
 import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstanceGroup
@@ -11,9 +13,14 @@ data class EmbeddedSubjectInstance(
     @Embedded val subjectInstance: DbSubjectInstance,
     @Relation(
         parentColumn = "id",
-        entityColumn = "subject_instance_id",
-        entity = FKSubjectInstanceGroup::class
-    ) val groups: List<FKSubjectInstanceGroup>,
+        entityColumn = "id",
+        entity = DbGroup::class,
+        associateBy = Junction(
+            value = FKSubjectInstanceGroup::class,
+            parentColumn = "subject_instance_id",
+            entityColumn = "group_id"
+        )
+    ) val groups: List<EmbeddedGroup>,
     @Relation(
         parentColumn = "id",
         entityColumn = "subject_instance_id",
@@ -25,7 +32,7 @@ data class EmbeddedSubjectInstance(
             id = subjectInstance.id,
             subject = subjectInstance.subject,
             teacherId = subjectInstance.teacherId,
-            groupIds = groups.map { it.groupId },
+            groups = groups.flatMap{ it.aliases.map { alias -> alias.toModel() } },
             courseId = subjectInstance.courseId,
             cachedAt = subjectInstance.cachedAt,
             aliases = aliases.map { it.toModel() }.toSet()

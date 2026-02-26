@@ -13,6 +13,7 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
@@ -47,6 +48,7 @@ class UpdateAssessmentsUseCase(
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateProfileAssessmentIndexUseCase: UpdateProfileAssessmentIndexUseCase,
     private val vppIdRepository: VppIdRepository,
+    private val groupRepository: GroupRepository,
     private val assessmentPopulator: AssessmentPopulator
 ) {
     private val logger = Logger.withTag("UpdateAssessmentUseCase")
@@ -118,7 +120,7 @@ class UpdateAssessmentsUseCase(
                         subject = item.subject,
                         course = item.courseId,
                         teacher = item.teacherId,
-                        groups = item.groupIds,
+                        groups = item.groups.mapNotNull { groupRepository.getById(it).first()?.id }.distinct(),
                         aliases = item.aliases.toList() + vppAlias
                     )
                 )
@@ -199,7 +201,7 @@ class UpdateAssessmentsUseCase(
                             newAssessments.first().let { assessment ->
                                 append((assessment as PopulatedAssessment.CloudAssessment).createdByUser.name)
                                 append(" hat eine neue Leistungserhebung in ")
-                                append(assessment.subjectInstance.subject ?: "wined Fach")
+                                append(assessment.subjectInstance.subject)
                                 append(" für ")
                                 (assessment.assessment.date untilRelativeText LocalDate.now())?.let { append(it) } ?: append(assessment.assessment.date.format(LocalDate.Format {
                                     dayOfWeek(shortDayOfWeekNames)

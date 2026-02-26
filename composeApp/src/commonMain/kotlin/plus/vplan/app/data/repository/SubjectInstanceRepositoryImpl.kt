@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.database.VppDatabase
 import plus.vplan.app.core.database.model.database.DbSubjectInstance
@@ -50,6 +51,7 @@ class SubjectInstanceRepositoryImpl(
     private val vppDatabase: VppDatabase,
     private val httpClient: HttpClient,
     private val schoolRepository: SchoolRepository,
+    private val groupRepository: GroupRepository,
     private val schoolAuthenticationProvider: SchoolAuthenticationProvider
 ) : SubjectInstanceRepository {
 
@@ -257,7 +259,7 @@ class SubjectInstanceRepositoryImpl(
                     subject = existing.subject,
                     course = existing.courseId,
                     teacher = existing.teacherId,
-                    groups = existing.groupIds,
+                    groups = existing.groups.mapNotNull { groupRepository.getById(it).first()?.id }.distinct(),
                     aliases = (existing.aliases + item.data.aliases).distinctBy { it.toString() }
                 ))
 

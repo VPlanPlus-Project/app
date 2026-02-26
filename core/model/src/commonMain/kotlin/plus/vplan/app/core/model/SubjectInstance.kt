@@ -8,7 +8,7 @@ data class SubjectInstance(
     val subject: String,
     val courseId: Uuid?,
     val teacherId: Uuid?,
-    val groupIds: List<Uuid>,
+    val groups: List<Alias>,
     val cachedAt: Instant,
     override val aliases: Set<Alias>
 ) : AliasedItem<DataTag> {

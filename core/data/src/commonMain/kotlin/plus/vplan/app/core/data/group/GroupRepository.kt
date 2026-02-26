@@ -16,7 +16,4 @@ interface GroupRepository {
     fun getByIds(identifiers: Set<Alias>, forceUpdate: Boolean = false): Flow<Group?>
 
     suspend fun save(group: Group)
-
-    @Deprecated("Use getByIds instead")
-    fun getByLocalId(id: Uuid): Flow<Group?>
 }

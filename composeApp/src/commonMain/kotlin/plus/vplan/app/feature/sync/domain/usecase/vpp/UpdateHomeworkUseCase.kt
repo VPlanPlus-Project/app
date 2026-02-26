@@ -126,7 +126,7 @@ class UpdateHomeworkUseCase(
                         subject = item.subject,
                         course = item.courseId,
                         teacher = item.teacherId,
-                        groups = item.groupIds,
+                        groups = item.groups.mapNotNull { groupRepository.getById(it).first()?.id }.distinct(),
                         aliases = item.aliases.toList() + vppAlias
                     )
                 )

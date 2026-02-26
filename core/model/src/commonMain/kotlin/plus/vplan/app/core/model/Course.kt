@@ -5,7 +5,7 @@ import kotlin.uuid.Uuid
 
 data class Course(
     override val id: Uuid,
-    val groupIds: List<Uuid>,
+    val groups: List<Alias>,
     val name: String,
     val teacherId: Uuid?,
     val cachedAt: Instant,

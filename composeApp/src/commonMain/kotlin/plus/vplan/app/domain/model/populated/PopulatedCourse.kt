@@ -41,7 +41,7 @@ class CoursePopulator: KoinComponent {
                 PopulatedCourse(
                     course = course,
                     teacher = teachers.find { it.id == course.teacherId },
-                    groups = groups.filter { course.groupIds.contains(it.id) }
+                    groups = groups.filter { course.groups.intersect(it.aliases).isNotEmpty() }
                 )
             }
         }
@@ -49,7 +49,7 @@ class CoursePopulator: KoinComponent {
 
     fun populateSingle(course: Course): Flow<PopulatedCourse> {
         val teacher = course.teacherId?.let { teacherId -> teacherRepository.getByLocalId(teacherId) } ?: flowOf(null)
-        val groups = combine(course.groupIds.map { groupId -> groupRepository.getByLocalId(groupId) }) { it.filterNotNull() }
+        val groups = combine(course.groups.map { groupId -> groupRepository.getById(groupId) }) { it.filterNotNull() }
 
         return combine(teacher, groups) { teacher, groups ->
             PopulatedCourse(

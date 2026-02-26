@@ -56,7 +56,7 @@ class SubjectInstancePopulator: KoinComponent {
                     subjectInstance = subjectInstance,
                     course = courses.firstOrNull { it.id == subjectInstance.courseId },
                     teacher = teachers.firstOrNull { it.id == subjectInstance.teacherId },
-                    groups = groups.filter { it.id in subjectInstance.groupIds }
+                    groups = groups.filter { subjectInstance.groups.intersect(it.aliases).isNotEmpty() }
                 )
             }
         }
@@ -66,8 +66,8 @@ class SubjectInstancePopulator: KoinComponent {
         val teacher = subjectInstance.teacherId?.let { teacherId -> teacherRepository.getByLocalId(teacherId) } ?: flowOf(null)
         val course = subjectInstance.courseId?.let { courseId -> courseRepository.getByLocalId(courseId) } ?: flowOf(null)
         val groups =
-            if (subjectInstance.groupIds.isEmpty()) flowOf(emptyList())
-            else combine(subjectInstance.groupIds.map { groupId -> groupRepository.getByLocalId(groupId) }) { it.filterNotNull() }
+            if (subjectInstance.groups.isEmpty()) flowOf(emptyList())
+            else combine(subjectInstance.groups.map { groupId -> groupRepository.getById(groupId) }) { it.filterNotNull() }
 
         return combine(teacher, course, groups) { teacher, course, groups ->
             PopulatedSubjectInstance(

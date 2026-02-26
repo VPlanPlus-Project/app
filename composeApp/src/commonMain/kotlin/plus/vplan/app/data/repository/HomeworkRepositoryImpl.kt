@@ -110,7 +110,7 @@ class HomeworkRepositoryImpl(
         return vppDatabase.homeworkDao.getAll().map { flowData ->
             val subjectInstances = vppDatabase.subjectInstanceDao.getByGroup(group.id).first()
             flowData.filter {
-                it.homework.groupId == group.id || subjectInstances.any { subjectInstance -> subjectInstance.groups.any { siGroup -> siGroup.groupId == group.id } }
+                it.homework.groupId == group.id || subjectInstances.any { subjectInstance -> subjectInstance.groups.any { siGroup -> siGroup.group.id == group.id } }
             }.map { it.toModel() }
         }
     }
