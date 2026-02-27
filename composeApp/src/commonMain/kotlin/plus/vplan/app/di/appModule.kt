@@ -57,7 +57,7 @@ import plus.vplan.app.data.repository.FileRepositoryImpl
 import plus.vplan.app.data.repository.HomeworkRepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepositoryImpl
-import plus.vplan.app.data.repository.NewsRepositoryImpl
+import plus.vplan.app.core.data.news.NewsRepositoryImpl
 import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.SubstitutionPlanRepositoryImpl
@@ -73,7 +73,7 @@ import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
-import plus.vplan.app.domain.repository.NewsRepository
+import plus.vplan.app.core.data.news.NewsRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
@@ -123,6 +123,8 @@ import plus.vplan.app.network.vpp.SchoolAuthenticationProvider
 import plus.vplan.app.network.vpp.VppIdAuthenticationProvider
 import plus.vplan.app.network.vpp.group.GroupApi
 import plus.vplan.app.network.vpp.group.GroupApiImpl
+import plus.vplan.app.network.vpp.news.NewsApi
+import plus.vplan.app.network.vpp.news.NewsApiImpl
 import plus.vplan.app.network.vpp.school.SchoolApi
 import plus.vplan.app.network.vpp.school.SchoolApiImpl
 import plus.vplan.app.network.vpp.subject_instance.SubjectInstanceApi
@@ -213,6 +215,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::SchoolApiImpl).bind<SchoolApi>()
     singleOf(::GroupApiImpl).bind<GroupApi>()
     singleOf(::SubjectInstanceApiImpl).bind<SubjectInstanceApi>()
+    singleOf(::NewsApiImpl).bind<NewsApi>()
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
@@ -220,6 +223,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::CourseRepositoryImpl).bind<CourseRepository>()
     singleOf(::SubjectInstanceRepositoryImpl).bind<SubjectInstanceRepository>()
     singleOf(::WeekRepositoryImpl).bind<WeekRepository>()
+    singleOf(::NewsRepositoryImpl).bind<NewsRepository>()
 
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
     singleOf(::Stundenplan24RepositoryImpl).bind<Stundenplan24Repository>()
@@ -233,7 +237,6 @@ val appModule = module(createdAtStart = true) {
     singleOf(::HomeworkRepositoryImpl).bind<HomeworkRepository>()
     singleOf(::FileRepositoryImpl).bind<FileRepository>()
     singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
-    singleOf(::NewsRepositoryImpl).bind<NewsRepository>()
     singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
 
     singleOf(::ProfileServiceImpl).bind<ProfileService>()

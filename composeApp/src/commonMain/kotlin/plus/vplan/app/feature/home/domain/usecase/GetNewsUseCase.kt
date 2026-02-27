@@ -10,7 +10,7 @@ import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.NewsRepository
+import plus.vplan.app.core.data.news.NewsRepository
 import plus.vplan.app.utils.now
 
 class GetNewsUseCase(

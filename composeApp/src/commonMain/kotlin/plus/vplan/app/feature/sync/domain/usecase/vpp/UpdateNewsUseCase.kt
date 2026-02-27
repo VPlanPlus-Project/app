@@ -1,33 +1,25 @@
 package plus.vplan.app.feature.sync.domain.usecase.vpp
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.news.NewsRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
-import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.repository.NewsRepository
+import plus.vplan.app.core.model.News
 
 class UpdateNewsUseCase(
     private val newsRepository: NewsRepository,
     private val profileRepository: ProfileRepository,
 ) {
-    private val logger = Logger.withTag("UpdateNewsUseCase")
     suspend operator fun invoke() {
         val existing = newsRepository.getAll().first()
-        val downloadedNewsIds = mutableSetOf<Int>()
+        val downloadedNews = mutableSetOf<News>()
         profileRepository.getAll().first()
             .map { it.school }
             .distinctBy { it.id }
             .forEach { school ->
-                val response = newsRepository.download(school)
-                if (response is Response.Success) {
-                    downloadedNewsIds.addAll(response.data)
-                } else {
-                    logger.e { "Cannot update news for school ${school.name} (${school.id}); error: $response" }
-                    return
-                }
+                downloadedNews.addAll(newsRepository.getBySchool(school, forceReload = true).first())
             }
 
-        val newsToDelete = existing.map { it.id }.toSet() - downloadedNewsIds
-        newsRepository.delete(newsToDelete.toList())
+        val newsToDelete = existing.filter { existing -> existing.id !in downloadedNews.map { it.id } }
+        newsRepository.delete(newsToDelete)
     }
 }

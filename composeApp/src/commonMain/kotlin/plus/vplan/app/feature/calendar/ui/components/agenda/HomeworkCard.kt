@@ -41,11 +41,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.core.model.AliasState
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.model.populated.PopulatedHomework
-import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.ui.theme.CustomColor
@@ -83,7 +80,7 @@ fun HomeworkCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background((subject as? AliasState.Done<SubjectInstance>)?.data?.subject.subjectColor().getGroup().color)
+                .background((subject)?.subject.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -113,7 +110,7 @@ fun HomeworkCard(
                         }
                     } else SubjectIcon(
                         modifier = Modifier.fillMaxSize(),
-                        subject = (subject as? AliasState.Done<SubjectInstance>)?.data?.subject
+                        subject = subject?.subject
                     )
                 }
                 Spacer(Modifier.size(8.dp))
@@ -172,15 +169,6 @@ fun HomeworkCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val createdByFont = MaterialTheme.typography.labelMedium
-                val shimmerLoader = remember<@Composable () -> Unit> { {
-                    ShimmerLoader(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .fillMaxWidth(.3f)
-                            .height(createdByFont.lineHeight.toDp())
-                    )
-                } }
-
                 Row {
                     when (homework) {
                         is PopulatedHomework.LocalHomework -> {
