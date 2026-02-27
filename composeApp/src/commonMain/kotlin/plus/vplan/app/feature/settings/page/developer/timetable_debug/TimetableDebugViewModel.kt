@@ -6,10 +6,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import plus.vplan.app.core.model.getFirstValue
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.domain.repository.TimetableRepository
-import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 
 class TimetableDebugViewModel(
@@ -28,7 +27,7 @@ class TimetableDebugViewModel(
         viewModelScope.launch {
             getCurrentProfileUseCase().collectLatest { profile ->
                 val school = profile.school
-                weekRepository.getBySchool(school.id).collectLatest collectWeek@{ weeks ->
+                weekRepository.getBySchool(school).collectLatest collectWeek@{ weeks ->
                     weeks.forEach { week ->
                         launch {
                             timetableRepository.getTimetableData(school.id, week.id).collectLatest { timetableMetadata ->

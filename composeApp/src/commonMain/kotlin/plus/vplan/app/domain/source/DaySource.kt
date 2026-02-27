@@ -37,7 +37,7 @@ import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
-import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.utils.minus
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
@@ -83,7 +83,7 @@ class DaySource(
                     onBufferOverflow = BufferOverflow.DROP_OLDEST
                 )
                 CoroutineScope(Dispatchers.IO).launch {
-                    val weeks = weekRepository.getBySchool(school.id).first()
+                    val weeks = weekRepository.getBySchool(school).first()
                     val day = MutableStateFlow(
                         Day(
                             id = Day.buildId(school, date),
@@ -109,7 +109,7 @@ class DaySource(
 
                     launch {
                         combine(
-                            weekRepository.getBySchool(school.id).distinctUntilChanged(),
+                            weekRepository.getBySchool(school).distinctUntilChanged(),
                             dayRepository.getHolidays(school.id)
                                 .map { it.map { holiday -> holiday.date } }
                                 .distinctUntilChanged(),
@@ -217,7 +217,7 @@ class DaySource(
                         combine(
                             dayRepository.getHolidays(school.id)
                                 .map { it.map { holiday -> holiday.date } },
-                            weekRepository.getBySchool(school.id)
+                            weekRepository.getBySchool(school)
                         ) { holidays, weeks ->
                             val nextSchoolDay = findNextRegularSchoolDayAfter(
                                 holidays,

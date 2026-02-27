@@ -9,6 +9,7 @@ import org.koin.core.component.inject
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
+import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.LessonTime
@@ -20,7 +21,6 @@ import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.domain.repository.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
-import plus.vplan.app.domain.repository.WeekRepository
 import plus.vplan.app.utils.combine6
 
 @Immutable
@@ -93,8 +93,8 @@ class LessonPopulator : KoinComponent {
         }
 
         val weeks = when (context) {
-            is PopulationContext.Profile -> weekRepository.getBySchool(context.profile.school.id)
-            is PopulationContext.School -> weekRepository.getBySchool(context.school.id)
+            is PopulationContext.Profile -> weekRepository.getBySchool(context.profile.school)
+            is PopulationContext.School -> weekRepository.getBySchool(context.school)
         }
 
         return combine6(
@@ -141,7 +141,7 @@ class LessonPopulator : KoinComponent {
         val groups = groupRepository.getBySchool(contextSchool)
         val rooms = roomRepository.getBySchool(contextSchool.id)
         val teachers = teacherRepository.getBySchool(contextSchool)
-        val weeks = weekRepository.getBySchool(contextSchool.id)
+        val weeks = weekRepository.getBySchool(contextSchool)
 
         return combine6(
             lessonTime,

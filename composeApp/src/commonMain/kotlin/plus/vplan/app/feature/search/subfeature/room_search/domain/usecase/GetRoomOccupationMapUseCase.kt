@@ -21,7 +21,7 @@ import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
-import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.overlaps
 import kotlin.uuid.ExperimentalUuidApi
@@ -36,7 +36,7 @@ class GetRoomOccupationMapUseCase(
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> = channelFlow {
         combine(
-            weekRepository.getBySchool(profile.school.id).map { weeks ->
+            weekRepository.getBySchool(profile.school).map { weeks ->
                 weeks.firstOrNull { LocalDate.now() in it.start..it.end }
             },
             timetableRepository.getCurrentVersion()
@@ -49,7 +49,7 @@ class GetRoomOccupationMapUseCase(
                     .map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } }
                     .flatMapLatest { lessons -> lessonPopulator.populateMultiple(lessons, PopulationContext.Profile(profile)) }
                     .map { lessons -> lessons.map { it as PopulatedLesson.TimetableLesson } },
-                weekRepository.getBySchool(profile.school.id),
+                weekRepository.getBySchool(profile.school),
                 roomRepository.getBySchool(profile.school.id)
             ) { substitutionPlanLessons, timetableLessons, weeks, rooms ->
                 val substitution = substitutionPlanLessons

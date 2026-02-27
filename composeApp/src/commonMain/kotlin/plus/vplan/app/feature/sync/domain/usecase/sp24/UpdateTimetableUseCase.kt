@@ -21,7 +21,7 @@ import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
-import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.takeContinuousBy
@@ -178,7 +178,7 @@ class UpdateTimetableUseCase(
 
     private suspend fun getWeekStates(school: School.AppSchool): List<WeekState> {
         val today = LocalDate.now()
-        val weeks = weekRepository.getBySchool(school.id).first()
+        val weeks = weekRepository.getBySchool(school).first()
         if (weeks.isEmpty()) return emptyList()
 
         fun getAllWeeksContainingWeek(week: Week): List<Week>? {

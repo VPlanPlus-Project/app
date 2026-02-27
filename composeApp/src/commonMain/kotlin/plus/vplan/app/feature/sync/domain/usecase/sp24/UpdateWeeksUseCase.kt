@@ -6,7 +6,7 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.domain.repository.WeekRepository
+import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import plus.vplan.lib.sp24.source.extension.SchoolDoesNotSupportWeeks
@@ -37,7 +37,7 @@ class UpdateWeeksUseCase(
             weeks.data
         }
 
-        val existingWeeks = weekRepository.getBySchool(schoolId = school.id).first()
+        val existingWeeks = weekRepository.getBySchool(school).first()
         val downloadedWeeks = weeks.map { baseDataWeek ->
             Week(
                 calendarWeek = baseDataWeek.calendarWeek,
@@ -52,12 +52,12 @@ class UpdateWeeksUseCase(
             val downloadedIds = downloadedWeeks.map { it.id }
             val weeksToDelete = existing.filter { existingWeek -> downloadedIds.none { it == existingWeek.id } }
             LOGGER.d { "Delete ${weeksToDelete.size} weeks" }
-            weekRepository.deleteById(weeksToDelete.map { it.id })
+            weekRepository.delete(weeksToDelete)
         }
         existingWeeks.let { existing ->
             val weeksToUpsert = downloadedWeeks.filter { downloadedWeek -> existing.none { it.hashCode() == downloadedWeek.hashCode() } }
             LOGGER.d { "Upsert ${weeksToUpsert.size} weeks" }
-            weekRepository.upsert(weeksToUpsert)
+            weekRepository.save(weeksToUpsert)
         }
         return null
     }
