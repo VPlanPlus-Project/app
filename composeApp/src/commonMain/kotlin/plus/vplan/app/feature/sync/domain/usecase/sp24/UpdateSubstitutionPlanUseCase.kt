@@ -23,7 +23,7 @@ import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
@@ -131,7 +131,7 @@ class UpdateSubstitutionPlanUseCase(
             dayRepository.insert(day)
 
             substitutionPlan.lessons.mapNotNull { lesson ->
-                val lessonTimes = lessonTimeRepository.getByGroup(groups.firstOrNull { it.name == lesson.classes.first() }?.id ?: run {
+                val lessonTimes = lessonTimeRepository.getByGroup(groups.firstOrNull { it.name == lesson.classes.first() } ?: run {
                     LOGGER.w { "Group ${lesson.classes.joinToString()} (specific: ${lesson.classes.first()}) not found" }
                     return@mapNotNull null
                 }).first()

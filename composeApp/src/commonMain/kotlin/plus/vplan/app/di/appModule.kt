@@ -56,7 +56,7 @@ import plus.vplan.app.data.repository.FcmRepositoryImpl
 import plus.vplan.app.data.repository.FileRepositoryImpl
 import plus.vplan.app.data.repository.HomeworkRepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
-import plus.vplan.app.data.repository.LessonTimeRepositoryImpl
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepositoryImpl
 import plus.vplan.app.data.repository.NewsRepositoryImpl
 import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
@@ -72,7 +72,7 @@ import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.domain.repository.NewsRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository

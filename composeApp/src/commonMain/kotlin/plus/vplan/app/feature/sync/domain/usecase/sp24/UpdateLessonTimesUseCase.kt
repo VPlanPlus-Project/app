@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.map
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.utils.isContinuous
 import plus.vplan.app.utils.lastContinuousBy
 import plus.vplan.app.utils.plus
@@ -30,7 +30,7 @@ class UpdateLessonTimesUseCase(
         val lessonTimes = (client.lessonTime.getLessonTime(contextSchoolWeek = null) as? plus.vplan.lib.sp24.source.Response.Success)?.data
 
         val groups = groupRepository.getBySchool(school).first()
-        val existingLessonTimes = lessonTimeRepository.getBySchool(schoolId = school.id)
+        val existingLessonTimes = lessonTimeRepository.getBySchool(school)
             .map { it.filter { lessonTime -> !lessonTime.interpolated } }
 
         val downloadedLessonTimes = lessonTimes
@@ -55,7 +55,7 @@ class UpdateLessonTimesUseCase(
             val downloadedLessonTimesToDelete =
                 existing.filter { existingLessonTime -> downloadedLessonTimes.none { it.id == existingLessonTime.id } }
             LOGGER.d { "Delete ${downloadedLessonTimesToDelete.size} lesson times" }
-            lessonTimeRepository.deleteById(downloadedLessonTimesToDelete.map { it.id })
+            lessonTimeRepository.delete(downloadedLessonTimesToDelete)
         }
 
         downloadedLessonTimes.let {
@@ -63,13 +63,13 @@ class UpdateLessonTimesUseCase(
             val downloadedLessonTimesToUpsert =
                 downloadedLessonTimes.filter { downloadedLessonTime -> existingLessonTimesIds.none { it.hashCode() == downloadedLessonTime.hashCode() } }
             LOGGER.d { "Upsert ${downloadedLessonTimesToUpsert.size} lesson times" }
-            lessonTimeRepository.upsert(downloadedLessonTimesToUpsert)
+            lessonTimeRepository.save(downloadedLessonTimesToUpsert)
         }
 
         val lessonsToInterpolate = mutableListOf<LessonTime>()
         groups.forEach { group ->
             val lessonTimes = lessonTimeRepository
-                .getByGroup(group.id).first()
+                .getByGroup(group).first()
                 .sortedBy { it.lessonNumber }
                 .toMutableList()
 
@@ -90,7 +90,7 @@ class UpdateLessonTimesUseCase(
                 lessonsToInterpolate.add(next)
             }
         }
-        lessonTimeRepository.upsert(lessonsToInterpolate)
+        lessonTimeRepository.save(lessonsToInterpolate)
 
         LOGGER.i { "Lesson times updated" }
     }

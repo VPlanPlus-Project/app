@@ -16,7 +16,7 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
-import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
@@ -115,7 +115,7 @@ class UpdateTimetableUseCase(
 
                         val downloadedTimetable = timetableResponse.data
                         val lessons = downloadedTimetable.lessons.mapNotNull { lesson ->
-                            val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }.map { it.id }
+                            val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }
                             if (lessonGroups.isEmpty()) {
                                 captureError(
                                     location = "UpdateTimetableUseCase",
@@ -132,7 +132,8 @@ class UpdateTimetableUseCase(
                             }
 
                             val lessonTimeId = if (lessonGroups.isEmpty()) null
-                            else lessonTimeRepository.get(lessonGroups.first(), lesson.lessonNumber)
+                            else lessonTimeRepository
+                                .getByGroup(lessonGroups.first(), lesson.lessonNumber)
                                 .map { it?.id }
                                 .first()
 
@@ -142,7 +143,7 @@ class UpdateTimetableUseCase(
                                 subject = lesson.subject,
                                 roomIds = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
                                 teacherIds = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
-                                groupIds = lessonGroups,
+                                groupIds = lessonGroups.map { it.id },
                                 timetableId = timetableMetadata.id,
                                 limitedToWeekIds = lesson.limitToWeekNumber
                                     ?.mapNotNull { weeks.firstOrNull { week -> week.weekEntity.weekIndex == it } }

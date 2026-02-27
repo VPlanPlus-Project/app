@@ -19,7 +19,7 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.Week
-import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.utils.combine6
 
@@ -63,12 +63,9 @@ class LessonPopulator : KoinComponent {
         context: PopulationContext
     ): Flow<List<PopulatedLesson>> {
         val lessonTimes = when (context) {
-            is PopulationContext.Profile if context.profile is Profile.StudentProfile -> lessonTimeRepository.getByGroup(
-                context.profile.group.id
-            )
-
-            is PopulationContext.Profile -> lessonTimeRepository.getBySchool(context.profile.school.id)
-            is PopulationContext.School -> lessonTimeRepository.getBySchool(context.school.id)
+            is PopulationContext.Profile if context.profile is Profile.StudentProfile -> lessonTimeRepository.getByGroup(context.profile.group)
+            is PopulationContext.Profile -> lessonTimeRepository.getBySchool(context.profile.school)
+            is PopulationContext.School -> lessonTimeRepository.getBySchool(context.school)
         }
 
         val subjectInstances = when (context) {

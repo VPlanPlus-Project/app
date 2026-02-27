@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.LessonTime
-import plus.vplan.app.domain.repository.LessonTimeRepository
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 
 class LessonTimeSource(
     private val lessonTimeRepository: LessonTimeRepository
