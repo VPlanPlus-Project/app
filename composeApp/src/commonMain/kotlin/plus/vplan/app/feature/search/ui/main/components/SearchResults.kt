@@ -62,7 +62,7 @@ private fun sectionTitleFont() = MaterialTheme.typography.titleMedium
 fun SearchResults(
     isLoading: Boolean,
     profile: Profile,
-    dayType: Day.DayType,
+    dayType: Day.DayType?,
     date: LocalDate,
     results: Map<SearchResult.Type, List<SearchResult>>,
     onHomeworkClicked: (homeworkId: Int) -> Unit,
@@ -225,7 +225,7 @@ private val typeTypeSortings = listOf(
 @Composable
 private fun LessonsDrawer(
     date: LocalDate,
-    dayType: Day.DayType,
+    dayType: Day.DayType?,
     lessons: List<LessonLayoutingInfo>,
     type: SearchResult.Type,
     name: String,

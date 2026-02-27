@@ -3,6 +3,7 @@ package plus.vplan.app.domain.di
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
+import plus.vplan.app.domain.model.populated.DayPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
@@ -25,6 +26,7 @@ val domainModule = module {
 
     singleOf(::LessonPopulator)
     singleOf(::HomeworkPopulator)
+    singleOf(::DayPopulator)
     singleOf(::AssessmentPopulator)
     singleOf(::IntervalPopulator)
     singleOf(::CollectionPopulator)

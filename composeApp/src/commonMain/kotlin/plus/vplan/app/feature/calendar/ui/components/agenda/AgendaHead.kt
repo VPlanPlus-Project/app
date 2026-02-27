@@ -120,7 +120,6 @@ fun AgendaHead(
                         )
                     }
                 }
-                Day.DayType.UNKNOWN -> Unit
             }
         }
     }

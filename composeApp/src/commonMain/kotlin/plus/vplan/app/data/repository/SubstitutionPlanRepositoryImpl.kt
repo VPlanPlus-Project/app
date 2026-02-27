@@ -80,8 +80,8 @@ class SubstitutionPlanRepositoryImpl(
         })
     }
 
-    override suspend fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): Flow<List<Lesson.SubstitutionPlanLesson>> {
-        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date).map { it.map { it.toModel() } }.distinctUntilChanged()
+    override suspend fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>> {
+        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date, version).map { it.map { it.toModel() } }.distinctUntilChanged()
     }
 
     override suspend fun getForProfile(profile: Profile, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>> {

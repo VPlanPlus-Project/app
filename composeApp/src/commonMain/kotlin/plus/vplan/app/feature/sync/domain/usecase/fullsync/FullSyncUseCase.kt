@@ -12,6 +12,7 @@ import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
 import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.holiday.HolidayRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
@@ -20,7 +21,6 @@ import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.getByProvider
-import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.RoomDbDto
@@ -49,7 +49,7 @@ import kotlin.uuid.Uuid
 
 class FullSyncUseCase(
     private val schoolRepository: SchoolRepository,
-    private val dayRepository: DayRepository,
+    private val holidayRepository: HolidayRepository,
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val keyValueRepository: KeyValueRepository,
@@ -228,7 +228,7 @@ class FullSyncUseCase(
                             updateWeeksUseCase(school, client)
                             val today = LocalDate.now()
                             val nextDay = run {
-                                val holidayDates = dayRepository.getHolidays(school.id).first().map { it.date }
+                                val holidayDates = holidayRepository.getBySchool(school).first().map { it.date }
                                 var start = today + 1.days
                                 while (start.dayOfWeek.isoDayNumber > 5 || start in holidayDates) {
                                     start += 1.days

@@ -7,29 +7,27 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
 import kotlinx.datetime.format
 import kotlinx.serialization.json.Json
-import plus.vplan.app.App
 import plus.vplan.app.StartTaskJson
+import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
+import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulationContext
-import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.TimetableRepository
-import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormat
@@ -116,19 +114,16 @@ class UpdateSubstitutionPlanUseCase(
             val day = Day(
                 id = Day.buildId(sp24School, date),
                 date = date,
-                schoolId = sp24School.id,
-                weekId = week?.id,
-                info = substitutionPlan.info.joinToString("\n").ifBlank { null },
+                school = sp24School,
+                week = week,
+                info = substitutionPlan.info
+                    .joinToString("\n")
+                    .ifBlank { null },
                 dayType = Day.DayType.REGULAR,
-                substitutionPlan = emptySet(),
-                timetable = emptySet(),
-                assessmentIds = emptySet(),
-                homeworkIds = emptySet(),
-                 nextSchoolDay = null,
-                tags = emptySet()
+                nextSchoolDay = null,
             )
 
-            dayRepository.insert(day)
+            dayRepository.save(day)
 
             substitutionPlan.lessons.mapNotNull { lesson ->
                 val lessonTimes = lessonTimeRepository.getByGroup(groups.firstOrNull { it.name == lesson.classes.first() } ?: run {
@@ -196,7 +191,7 @@ class UpdateSubstitutionPlanUseCase(
 
                 Logger.d { "Sending notification for ${profile.name}" }
 
-                val newDay = App.daySource.getForDay(date, sp24School, profile).getFirstValueOld()
+                val newDay = dayRepository.getBySchool(sp24School, date).first()
 
                 val changedLessons = changedOrNewLessons
                     .associateWith { it.lesson.lessonNumber }

@@ -320,22 +320,18 @@ private fun HomeContent(
                         }
                     }
                     item yourDay@{
-                        // Fixme: Dirty
-                        val weekRepository = koinInject<WeekRepository>()
-                        val isYourDayToday = state.day?.date == state.currentTime.date
-                        val week = remember(state.day?.weekId) {
-                            val weekId = state.day?.weekId
-                            if (weekId == null) flowOf(null)
-                            else weekRepository.getById(weekId)
-                        }.collectAsState(null).value
+                        val isYourDayToday = state.day?.populatedDay?.day?.date == state.currentTime.date
+
                         if (state.day == null) return@yourDay
+
+                        val week = state.day.populatedDay.day.week
 
                         Column {
                             FeedTitle(
                                 icon = Res.drawable.chart_no_axes_gantt,
                                 title = if (isYourDayToday) "Dein Tag" else "Nächster Schultag",
                                 endText = buildString {
-                                    append(state.day.date.format(LocalDate.Format {
+                                    append(state.day.populatedDay.day.date.format(LocalDate.Format {
                                         dayOfWeek(longDayOfWeekNames)
                                         chars(", ")
                                         day(padding = Padding.ZERO)
@@ -344,6 +340,7 @@ private fun HomeContent(
                                         char(' ')
                                         year()
                                     }))
+
                                     if (week != null) {
                                         append("\n")
                                         if (week.weekType != null) {
@@ -358,15 +355,15 @@ private fun HomeContent(
                                     }
                                 }
                             )
-                            val info = state.day.info
+                            val info = state.day.populatedDay.day.info
                             if (info != null) DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = info)
-                            if (state.day.substitutionPlan.isEmpty()) InfoCard(
+                            if (state.day.populatedDay.substitution.isEmpty()) InfoCard(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                                 imageVector = Res.drawable.triangle_alert,
                                 title = "Kein Vertretungsplan",
                                 text = buildString {
                                     append("Für ")
-                                    append((state.currentTime.date untilRelativeText state.day.date) ?: "den ${state.day.date.format(regularDateFormatWithoutYear)}")
+                                    append((state.currentTime.date untilRelativeText state.day.populatedDay.day.date) ?: "den ${state.day.populatedDay.day.date.format(regularDateFormatWithoutYear)}")
                                     append(" ist noch kein Vertretungsplan verfügbar. Es kann noch zu Änderungen kommen.")
                                 },
                                 backgroundColor = colors[CustomColor.Yellow]!!.getGroup().container,
@@ -378,39 +375,6 @@ private fun HomeContent(
                                     .padding(vertical = 4.dp)
                                     .fillMaxWidth()
                             ) {
-                                // Very dirty but will be refactored later (hopefully) fixme
-                                val homeworkPopulator = koinInject<HomeworkPopulator>()
-                                val homeworkRepository = koinInject<HomeworkRepository>()
-                                val assessmentPopulator = koinInject<AssessmentPopulator>()
-                                val assessmentRepository = koinInject<AssessmentRepository>()
-                                val homework by remember(state.day.homeworkIds) {
-                                    state.day.homeworkIds
-                                        .let {
-                                            if (it.isEmpty()) flowOf(emptyList())
-                                            else combine(it.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { it.data } }) { it.toList() }
-                                        }
-                                        .flatMapLatest {
-                                            homeworkPopulator.populateMultiple(
-                                                it.toList(),
-                                                PopulationContext.Profile(state.currentProfile!!)
-                                            )
-                                        }
-                                }.collectAsState(emptyList())
-
-                                val assessments by remember(state.day.assessmentIds) {
-                                    state.day.assessmentIds
-                                        .let {
-                                            if (it.isEmpty()) flowOf(emptyList())
-                                            else combine(it.map { id -> assessmentRepository.getById(id, false).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }
-                                        }
-                                        .flatMapLatest {
-                                            assessmentPopulator.populateMultiple(
-                                                it.toList(),
-                                                PopulationContext.Profile(state.currentProfile!!)
-                                            )
-                                        }
-                                }.collectAsState(emptyList())
-
                                 if (highlightedLessons.hasLessons) AnimatedContent(
                                     targetState = highlightedLessons
                                 ) { highlightConfig ->
@@ -434,21 +398,21 @@ private fun HomeContent(
                                                         val homeworkForLesson =
                                                             remember { mutableListOf<PopulatedHomework>() }
                                                         LaunchedEffect(
-                                                            homework,
+                                                            state.day.homework,
                                                             currentLesson.lesson.subjectInstanceId
                                                         ) {
                                                             homeworkForLesson.clear()
-                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.id == currentLesson.lesson.subjectInstanceId })
+                                                            homeworkForLesson.addAll(state.day.homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.id == currentLesson.lesson.subjectInstanceId })
                                                         }
 
                                                         val assessmentsForLesson =
                                                             remember { mutableListOf<PopulatedAssessment>() }
                                                         LaunchedEffect(
-                                                            assessments,
+                                                            state.day.assessments,
                                                             currentLesson.lesson.subjectInstanceId
                                                         ) {
                                                             assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.id == currentLesson.lesson.subjectInstanceId })
+                                                            assessmentsForLesson.addAll(state.day.assessments.filter { assessment -> assessment.subjectInstance.id == currentLesson.lesson.subjectInstanceId })
                                                         }
 
                                                         CurrentOrNextLesson(
@@ -563,15 +527,15 @@ private fun HomeContent(
                                                         val groups = populatedLesson.groups
                                                         val teachers = populatedLesson.teachers
                                                         val homeworkForLesson = remember { mutableListOf<PopulatedHomework>() }
-                                                        LaunchedEffect(homework, (lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId) {
+                                                        LaunchedEffect(state.day.homework, (lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId) {
                                                             homeworkForLesson.clear()
-                                                            homeworkForLesson.addAll(homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.id == lesson.subjectInstanceId })
+                                                            homeworkForLesson.addAll(state.day.homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.id == lesson.subjectInstanceId })
                                                         }
 
                                                         val assessmentsForLesson = remember { mutableListOf<PopulatedAssessment>() }
-                                                        LaunchedEffect(assessments, lesson.subjectInstanceId) {
+                                                        LaunchedEffect(state.day.assessments, lesson.subjectInstanceId) {
                                                             assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(assessments.filter { assessment -> assessment.subjectInstance.id == lesson.subjectInstanceId })
+                                                            assessmentsForLesson.addAll(state.day.assessments.filter { assessment -> assessment.subjectInstance.id == lesson.subjectInstanceId })
                                                         }
 
                                                         Column(Modifier.fillMaxWidth()) {

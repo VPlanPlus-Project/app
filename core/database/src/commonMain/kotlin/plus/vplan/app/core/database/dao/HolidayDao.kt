@@ -12,16 +12,14 @@ import kotlin.uuid.Uuid
 interface HolidayDao {
 
     @Upsert
-    suspend fun upsert(holiday: DbHoliday)
-
-    @Transaction
-    suspend fun upsert(holidays: List<DbHoliday>) {
-        holidays.forEach { upsert(it) }
-    }
+    suspend fun upsert(holiday: List<DbHoliday>)
 
     @Transaction
     @Query("SELECT * FROM holidays WHERE school_id = :schoolId")
     fun getBySchoolId(schoolId: Uuid): Flow<List<DbHoliday>>
+
+    @Query("SELECT * FROM holidays")
+    fun getAll(): Flow<List<DbHoliday>>
 
     @Query("DELETE FROM holidays WHERE id IN (:ids)")
     suspend fun deleteByIds(ids: List<String>)

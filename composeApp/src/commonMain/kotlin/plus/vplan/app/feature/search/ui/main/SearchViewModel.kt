@@ -10,18 +10,19 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.App
+import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
+import plus.vplan.app.domain.model.populated.DayPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
@@ -51,7 +52,8 @@ class SearchViewModel(
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val lockGradesUseCase: LockGradesUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
-    private val getSubjectsForProfileUseCase: GetSubjectsForProfileUseCase
+    private val getSubjectsForProfileUseCase: GetSubjectsForProfileUseCase,
+    private val dayRepository: DayRepository,
 ) : ViewModel() {
 
     var state by mutableStateOf(SearchState())
@@ -128,11 +130,11 @@ class SearchViewModel(
             state = state.copy(results = emptyMap())
             return
         }
-        val day = App.daySource.getForDay(state.query.date, school).getFirstValueOld()
+        val day = dayRepository.getBySchool(school, state.query.date).first()
         searchJob = viewModelScope.launch {
             state = state.copy(isLoading = true)
             searchUseCase(state.query).collectLatest {
-                state = state.copy(results = it, selectedDateType = day?.dayType ?: Day.DayType.UNKNOWN, isLoading = false)
+                state = state.copy(results = it, selectedDateType = day?.dayType, isLoading = false)
             }
         }
     }
@@ -141,7 +143,7 @@ class SearchViewModel(
 data class SearchState(
     val query: SearchRequest = SearchRequest(),
     val isLoading: Boolean = false,
-    val selectedDateType: Day.DayType = Day.DayType.UNKNOWN,
+    val selectedDateType: Day.DayType? = null,
     val results: Map<SearchResult.Type, List<SearchResult>> = emptyMap(),
     val homework: List<PopulatedHomework> = emptyList(),
     val assessments: List<PopulatedAssessment> = emptyList(),

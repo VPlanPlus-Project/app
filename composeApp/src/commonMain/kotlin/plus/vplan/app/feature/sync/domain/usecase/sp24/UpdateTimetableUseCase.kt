@@ -98,7 +98,7 @@ class UpdateTimetableUseCase(
                     ?: Timetable(
                         id = Uuid.random(),
                         schoolId = sp24School.id,
-                        weekId = week.weekEntity.id,
+                        week = week.weekEntity,
                         dataState = Timetable.HasData.Unknown
                     ).also { timetableRepository.upsertTimetable(it) }
 

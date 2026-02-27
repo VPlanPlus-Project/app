@@ -1,37 +1,25 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 
 package plus.vplan.app.feature.calendar.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
-import plus.vplan.app.App
-import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Day
-import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
@@ -39,16 +27,15 @@ import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
+import plus.vplan.app.domain.model.populated.PopulatedDay
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
-import plus.vplan.app.domain.repository.AssessmentRepository
-import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetFirstLessonStartUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetHolidaysUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
@@ -60,183 +47,142 @@ import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.sortedByKey
 import kotlin.time.Duration.Companion.days
 
-@OptIn(FlowPreview::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class CalendarViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
+    private val getDayUseCase: GetDayUseCase,
     private val getLastDisplayTypeUseCase: GetLastDisplayTypeUseCase,
     private val setLastDisplayTypeUseCase: SetLastDisplayTypeUseCase,
     private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase,
     private val getHolidaysUseCase: GetHolidaysUseCase,
-    private val keyValueRepository: KeyValueRepository,
-    private val weekRepository: WeekRepository,
     private val lessonPopulator: LessonPopulator,
     private val homeworkPopulator: HomeworkPopulator,
-    private val homeworkRepository: HomeworkRepository,
     private val assessmentPopulator: AssessmentPopulator,
-    private val assessmentRepository: AssessmentRepository,
+    private val keyValueRepository: KeyValueRepository,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(CalendarState())
-    val state = _state.asStateFlow()
+    val state: StateFlow<CalendarState>
+        field = MutableStateFlow(CalendarState())
 
-    private val syncJobs = mutableListOf<SyncJob>()
-    private val holidays: MutableList<LocalDate> = mutableListOf()
-
-    private fun launchSyncJob(date: LocalDate): Job {
-        return syncJobs.firstOrNull { it.date == date }?.job ?: viewModelScope.launch {
-            val currentProfile = _state.value.currentProfile ?: return@launch
-            App.daySource.getForDay(date, currentProfile.school, currentProfile)
-                .filterIsInstance<CacheState.Done<Day>>()
-                .map { it.data }
-                .collectLatest { day ->
-                    var selectorDay = DateSelectorDay(
-                        date = date,
-                        homework = day.homeworkIds.map { DateSelectorDay.HomeworkItem(subject = "", isDone = false) },
-                        assessments = day.assessmentIds.map { "" },
-                        isHoliday = date in holidays
-                    )
-
-                    var calendarDay = CalendarDay(
-                        date = date,
-                        info = day.info,
-                        dayType = day.dayType,
-                        week = day.weekId?.let { weekRepository.getById(it).first() },
-                        lessons = null
-                    )
-
-                    fun updateState() {
-                        _state.update {
-                            it.copy(
-                                uiUpdateVersion = it.uiUpdateVersion + 1,
-                                calendarDays = it.calendarDays + (date to calendarDay),
-                                selectorDays = it.selectorDays + (date to selectorDay)
-                            )
-                        }
-                    }
-
-                    coroutineScope {
-                        launch {
-                            App.daySource.getLessons(day)
-                                .map { lessons -> lessons.toList() }
-                                .flatMapLatest { lessons -> lessonPopulator.populateMultiple(lessons, PopulationContext.Profile(state.value.currentProfile!!)) }
-                                .collectLatest { populatedLessons ->
-                                    val lessons = populatedLessons
-                                    .groupBy { lesson -> lesson.lesson.lessonNumber }
-                                    .mapValues { lessonOverLessonNumber -> lessonOverLessonNumber.value.sortedBy { lesson -> lesson.lesson.subject } }
-
-                                val hasTooManyInterpolatedLessonTimes = populatedLessons.count { lesson -> lesson.lessonTime?.interpolated == false } < populatedLessons.size / 2
-                                val hasMissingLessonTimes = populatedLessons.any { lesson -> lesson.lessonTime == null }
-
-                                keyValueRepository.getBooleanOrDefault(Keys.forceReducedCalendarView.key, false).collectLatest { forceReducedCalendarView ->
-                                    val layoutedLessons = if (_state.value.displayType == DisplayType.Agenda || hasTooManyInterpolatedLessonTimes || hasMissingLessonTimes || forceReducedCalendarView) null
-                                    else try {
-                                        populatedLessons.calculateLayouting()
-                                    } catch (_: LessonWithoutTimeException) {
-                                        null
-                                    }
-
-                                    calendarDay = calendarDay.copy(lessons = if (layoutedLessons != null) LessonRendering.Layouted(layoutedLessons) else LessonRendering.ListView(lessons))
-                                    updateState()
-                                }
-                            }
-                        }
-                        launch {
-                            day.assessmentIds
-                                .let {
-                                    if (it.isEmpty()) flowOf(emptyList())
-                                    else combine(it.map { id -> assessmentRepository.getById(id, false).filterIsInstance<CacheState.Done<Assessment>>().map { it.data } }) { it.toList() }
-                                }
-                                .flatMapLatest {
-                                    assessmentPopulator.populateMultiple(
-                                        it.toList(),
-                                        PopulationContext.Profile(state.value.currentProfile!!)
-                                    )
-                                }
-                                .collectLatest { assessments ->
-                                    calendarDay =
-                                        calendarDay.copy(assessments = assessments.toList())
-                                    assessments
-                                        .map { assessment -> assessment.subjectInstance.subject }
-                                        .sorted()
-                                        .let { assessments -> selectorDay = selectorDay.copy(assessments = assessments) }
-
-                                    updateState()
-                                }
-                        }
-                        launch {
-                            day.homeworkIds
-                                .let {
-                                    if (it.isEmpty()) flowOf(emptyList())
-                                    else combine(it.map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { it.data } }) { it.toList() }
-                                }
-                                .flatMapLatest { homeworkPopulator.populateMultiple(it.toList(), PopulationContext.Profile(state.value.currentProfile!!)) }
-                                .collectLatest { dayHomework ->
-                                    calendarDay = calendarDay.copy(homework = dayHomework)
-                                    dayHomework
-                                        .map {
-                                            DateSelectorDay.HomeworkItem(
-                                                subject = it.subjectInstance?.subject
-                                                    ?: it.group?.name ?: "?",
-                                                isDone = _state.value.currentProfile is Profile.StudentProfile && it.tasks
-                                                    .all { task -> task.isDone(_state.value.currentProfile as Profile.StudentProfile) })
-                                        }
-                                        .sortedBy { it.subject }
-                                        .let { selectorDay = selectorDay.copy(homework = it) }
-                                    updateState()
-                                }
-                        }
-                    }
-            }
-        }.also {
-            syncJobs.add(SyncJob(it, date))
-        }
-    }
-
-    private fun startDaySyncJobsFromSelectedDate() {
-        val startOfWeek = _state.value.selectedDate.atStartOfWeek()
-        val startOfMonth = startOfWeek.atStartOfMonth()
-        val coveredDates = mutableListOf<LocalDate>()
-        repeat(2*31) {
-            val date = startOfMonth + it.days
-            coveredDates.add(date)
-            launchSyncJob(date)
-        }
-    }
+    private var dayJobs: Map<LocalDate, Job> = emptyMap()
 
     init {
-        viewModelScope.launch { getCurrentDateTimeUseCase().debounce(100).collectLatest { _state.update { state -> state.copy(currentTime = it) } } }
-        viewModelScope.launch { getLastDisplayTypeUseCase().collectLatest { _state.update { state -> state.copy(displayType = it) } } }
+        viewModelScope.launch {
+            getCurrentDateTimeUseCase()
+                .debounce(100)
+                .collect { time ->
+                    state.update { it.copy(currentTime = time) }
+                }
+        }
 
         viewModelScope.launch {
-            getCurrentProfileUseCase().collectLatest { profile ->
-                _state.update {
-                    it.copy(
-                        currentProfile = profile,
-                        start = getFirstLessonStartUseCase(profile)
-                    )
-                }
-                syncJobs.forEach { it.job.cancel() }
-                syncJobs.clear()
-
-                var hasHolidaysInitialized = false
-
-                launch {
-                    getHolidaysUseCase(profile)
-                        .collectLatest {
-                            hasHolidaysInitialized = true
-                            holidays.clear()
-                            holidays.addAll(it)
-                        }
-                }
-
-                launch {
-                    while (!hasHolidaysInitialized) {
-                        delay(10)
-                    }
-                    startDaySyncJobsFromSelectedDate()
-                }
-
+            getLastDisplayTypeUseCase().collect { displayType ->
+                state.update { it.copy(displayType = displayType) }
             }
+        }
+
+        viewModelScope.launch {
+            getCurrentProfileUseCase()
+                .filterNotNull()
+                .collect { profile ->
+                    state.update {
+                        it.copy(
+                            currentProfile = profile,
+                            start = getFirstLessonStartUseCase(profile)
+                        )
+                    }
+                    launchHolidays(profile)
+                    launchDaysForMonth(profile)
+                }
+        }
+    }
+
+    private fun launchHolidays(profile: Profile) {
+        viewModelScope.launch {
+            getHolidaysUseCase(profile).collect { holidays ->
+                state.update { it.copy(holidays = holidays.toSet()) }
+            }
+        }
+    }
+
+    private fun launchDaysForMonth(profile: Profile) {
+        dayJobs.values.forEach { it.cancel() }
+        dayJobs = emptyMap()
+
+        val startOfMonth = state.value.selectedDate.atStartOfWeek().atStartOfMonth()
+        repeat(2 * 31) { offset ->
+            val date = startOfMonth + offset.days
+            dayJobs = dayJobs + (date to launchDay(profile, date))
+        }
+    }
+
+    private fun launchDay(profile: Profile, date: LocalDate): Job {
+        return viewModelScope.launch {
+            getDayUseCase(profile, date).collect { populatedDay ->
+                updateDayState(date, populatedDay)
+            }
+        }
+    }
+
+    private suspend fun updateDayState(date: LocalDate, day: PopulatedDay) {
+        val profile = state.value.currentProfile ?: return
+
+        val lessons = day.substitution.ifEmpty { day.timetable }
+            .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
+
+        val populatedHomework = day.homework.toList()
+            .let { homeworkPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
+
+        val populatedAssessments = day.assessments.toList()
+            .let { assessmentPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
+
+        val lessonsGrouped = lessons
+            .groupBy { it.lesson.lessonNumber }
+            .mapValues { (_, lessons) -> lessons.sortedBy { it.lesson.subject } }
+
+        val hasTooManyInterpolated = lessons.count { it.lessonTime?.interpolated == false } < lessons.size / 2
+        val hasMissingLessonTimes = lessons.any { it.lessonTime == null }
+
+        val forceReduced = keyValueRepository.getBooleanOrDefault(Keys.forceReducedCalendarView.key, false).first()
+
+        val lessonRendering = if (state.value.displayType == DisplayType.Agenda || hasTooManyInterpolated || hasMissingLessonTimes || forceReduced) {
+            LessonRendering.ListView(lessonsGrouped)
+        } else {
+            try {
+                LessonRendering.Layouted(lessons.calculateLayouting())
+            } catch (_: LessonWithoutTimeException) {
+                LessonRendering.ListView(lessonsGrouped)
+            }
+        }
+
+        val calendarDay = CalendarDay(
+            date = date,
+            info = day.day.info,
+            dayType = day.day.dayType,
+            week = day.day.week,
+            lessons = lessonRendering,
+            assessments = populatedAssessments,
+            homework = populatedHomework
+        )
+
+        val selectorDay = DateSelectorDay(
+            date = date,
+            homework = populatedHomework.map { hw ->
+                DateSelectorDay.HomeworkItem(
+                    subject = hw.subjectInstance?.subject ?: hw.group?.name ?: "?",
+                    isDone = profile is Profile.StudentProfile && hw.tasks.all { it.isDone(profile) }
+                )
+            }.sortedBy { it.subject },
+            assessments = populatedAssessments.map { it.subjectInstance.subject },
+            isHoliday = state.value.holidays.contains(date)
+        )
+
+        state.update {
+            it.copy(
+                uiUpdateVersion = it.uiUpdateVersion + 1,
+                calendarDays = it.calendarDays + (date to calendarDay),
+                selectorDays = it.selectorDays + (date to selectorDay)
+            )
         }
     }
 
@@ -244,12 +190,8 @@ class CalendarViewModel(
         viewModelScope.launch {
             when (event) {
                 is CalendarEvent.SelectDate -> {
-                    while (_state.value.currentProfile == null) {
-                        delay(10)
-                        Logger.d { "Waiting for profile" }
-                    }
-                    _state.update { it.copy(selectedDate = event.date) }
-                    startDaySyncJobsFromSelectedDate()
+                    state.update { it.copy(selectedDate = event.date) }
+                    state.value.currentProfile?.let { launchDaysForMonth(it) }
                 }
                 is CalendarEvent.SelectDisplayType -> {
                     setLastDisplayTypeUseCase(event.displayType)
@@ -266,20 +208,15 @@ data class CalendarState(
     val uiUpdateVersion: Int = 0,
     val displayType: DisplayType = DisplayType.Calendar,
     val start: LocalTime = LocalTime(0, 0),
+    val holidays: Set<LocalDate> = emptySet(),
     val selectorDays: Map<LocalDate, DateSelectorDay> = emptyMap(),
     val calendarDays: Map<LocalDate, CalendarDay> = emptyMap()
 )
 
 sealed class CalendarEvent {
     data class SelectDate(val date: LocalDate) : CalendarEvent()
-
     data class SelectDisplayType(val displayType: DisplayType): CalendarEvent()
 }
-
-private data class SyncJob(
-    val job: Job,
-    val date: LocalDate
-)
 
 data class DateSelectorDay(
     val date: LocalDate,
@@ -298,21 +235,17 @@ data class DateSelectorDay(
 data class CalendarDay(
     val date: LocalDate,
     val info: String? = null,
-    val dayType: Day.DayType = Day.DayType.UNKNOWN,
+    val dayType: Day.DayType = Day.DayType.REGULAR,
     val week: Week? = null,
     val assessments: List<PopulatedAssessment> = emptyList(),
     val homework: List<PopulatedHomework> = emptyList(),
     val lessons: LessonRendering? = null
 )
 
-/**
- * Creates a layout for a calendar view of the given lessons based on their overlap if some exists.
- */
 suspend fun Collection<PopulatedLesson>.calculateLayouting(): List<LessonLayoutingInfo> {
     this.firstOrNull { it.lessonTime == null }?.let { throw LessonWithoutTimeException(it) }
 
     return withContext(Dispatchers.Default) {
-        // Step 1: Extract the first lesson time and sort lessons by start time and subject
         val lessons = this@calculateLayouting
             .toList()
             .filter { it.lessonTime != null }
@@ -320,7 +253,6 @@ suspend fun Collection<PopulatedLesson>.calculateLayouting(): List<LessonLayouti
 
         val layoutingInfo = mutableListOf<LessonLayoutingInfo>()
 
-        // Step 2: Create events for start and end of each lesson (times in minutes)
         data class Event(val time: Long, val isStart: Boolean, val lesson: PopulatedLesson)
 
         val events = lessons.flatMap { populatedLesson ->
@@ -330,18 +262,15 @@ suspend fun Collection<PopulatedLesson>.calculateLayouting(): List<LessonLayouti
             )
         }
 
-        // Step 3: Group events by time, sorted by time
         val eventsByTime = events.groupBy { it.time }.sortedByKey()
 
         val active = mutableListOf<LessonLayoutingInfo>()
 
         for ((_, evs) in eventsByTime) {
-            // 3a: Process end events first to remove finished lessons
             evs.filter { !it.isStart }.forEach { endEvent ->
                 active.removeAll { it.lesson == endEvent.lesson }
             }
 
-            // 3b: Process all start events at this time simultaneously to avoid staircase effect
             val startEvents = evs.filter { it.isStart }
             if (startEvents.isNotEmpty()) {
                 val occupied = active.map { it.sideShift }.toMutableSet()
@@ -356,7 +285,6 @@ suspend fun Collection<PopulatedLesson>.calculateLayouting(): List<LessonLayouti
                 layoutingInfo.addAll(newInfos)
                 active.addAll(newInfos)
 
-                // 3c: Update overlap counts for all active lessons
                 val activeSnapshot = active.toList()
                 for (a in activeSnapshot) {
                     val overlaps = activeSnapshot.count { other ->

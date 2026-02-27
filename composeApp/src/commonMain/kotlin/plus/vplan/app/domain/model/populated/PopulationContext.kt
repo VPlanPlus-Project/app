@@ -1,6 +1,10 @@
 package plus.vplan.app.domain.model.populated
 
 sealed class PopulationContext {
-    data class School(val school: plus.vplan.app.core.model.School): PopulationContext()
-    data class Profile(val profile: plus.vplan.app.core.model.Profile): PopulationContext()
+    abstract val school: plus.vplan.app.core.model.School.AppSchool
+
+    data class School(override val school: plus.vplan.app.core.model.School.AppSchool): PopulationContext()
+    data class Profile(val profile: plus.vplan.app.core.model.Profile): PopulationContext() {
+        override val school: plus.vplan.app.core.model.School.AppSchool = profile.school
+    }
 }

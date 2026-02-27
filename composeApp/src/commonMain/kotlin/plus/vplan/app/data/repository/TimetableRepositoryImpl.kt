@@ -1,8 +1,5 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package plus.vplan.app.data.repository
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -17,9 +14,9 @@ import plus.vplan.app.core.database.model.database.crossovers.DbTimetableRoomCro
 import plus.vplan.app.core.database.model.database.crossovers.DbTimetableTeacherCrossover
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.domain.repository.TimetableRepository
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class TimetableRepositoryImpl(
@@ -102,10 +99,9 @@ class TimetableRepositoryImpl(
         return vppDatabase.timetableDao.getById(id.toString()).map { it?.toModel() }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
+    override fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Lesson.TimetableLesson>> {
         return vppDatabase.timetableDao.getBySchool(schoolId, weekIndex, dayOfWeek)
-            .map { it.toSet() }
+            .map { lessons -> lessons.map { it.toModel() }.toSet() }
             .distinctUntilChanged()
     }
 
@@ -113,7 +109,7 @@ class TimetableRepositoryImpl(
         vppDatabase.timetableDao.upsert(DbTimetable(
             id = timetable.id,
             schoolId = timetable.schoolId,
-            weekId = timetable.weekId,
+            weekId = timetable.week.id,
             dataState = timetable.dataState
         ))
     }
@@ -122,10 +118,13 @@ class TimetableRepositoryImpl(
         return vppDatabase.timetableDao.getTimetableData(schoolId, weekId).map { it?.toModel() }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Uuid>> {
+    override fun getTimetables(school: School.AppSchool): Flow<List<Timetable>> {
+        return vppDatabase.timetableDao.getTimetables(school.id).map { it.map { item -> item.toModel() } }
+    }
+
+    override fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Lesson.TimetableLesson>> {
         return vppDatabase.timetableDao.getLessonsForProfile(profile.id, weekIndex, dayOfWeek)
-            .map { it.toSet() }
+            .map { lessons -> lessons.map { it.toModel() }.toSet() }
             .distinctUntilChanged()
     }
 }

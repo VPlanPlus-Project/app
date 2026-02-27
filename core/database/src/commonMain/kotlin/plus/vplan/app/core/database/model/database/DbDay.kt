@@ -38,21 +38,4 @@ data class DbDay(
     @ColumnInfo("week_id") val weekId: String?,
     @ColumnInfo("school_id") val schoolId: Uuid,
     @ColumnInfo("info") val info: String?,
-) {
-    fun toModel(): Day {
-        return Day(
-            id = id,
-            date = date,
-            info = info,
-            weekId = weekId,
-            schoolId = schoolId,
-            dayType = Day.DayType.UNKNOWN,
-            substitutionPlan = emptySet(),
-            timetable = emptySet(),
-            assessmentIds = emptySet(),
-            homeworkIds = emptySet(),
-            nextSchoolDay = null,
-            tags = emptySet()
-        )
-    }
-}
+)

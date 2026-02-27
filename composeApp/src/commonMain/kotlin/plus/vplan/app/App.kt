@@ -16,7 +16,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.domain.source.AssessmentSource
-import plus.vplan.app.domain.source.DaySource
 import plus.vplan.app.domain.source.FileSource
 import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.HomeworkTaskSource
@@ -52,7 +51,6 @@ object AppConfig {
 object App {
     lateinit var homeworkSource: HomeworkSource
     lateinit var homeworkTaskSource: HomeworkTaskSource
-    lateinit var daySource: DaySource
     lateinit var timetableSource: TimetableSource
     lateinit var weekSource: WeekSource
     lateinit var roomSource: RoomSource

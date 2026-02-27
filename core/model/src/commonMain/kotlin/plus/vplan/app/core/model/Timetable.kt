@@ -13,7 +13,7 @@ import kotlin.uuid.Uuid
 data class Timetable(
     val id: Uuid,
     val schoolId: Uuid,
-    val weekId: String,
+    val week: Week,
     val dataState: HasData
 ) {
     enum class HasData {

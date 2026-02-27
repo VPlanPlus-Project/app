@@ -37,11 +37,4 @@ data class DbTimetable(
     @ColumnInfo(name = "school_id") val schoolId: Uuid,
     @ColumnInfo(name = "week_id") val weekId: String,
     @ColumnInfo(name = "data_state") val dataState: Timetable.HasData
-) {
-    fun toModel() = Timetable(
-        id = id,
-        schoolId = schoolId,
-        weekId = weekId,
-        dataState = dataState
-    )
-}
+)

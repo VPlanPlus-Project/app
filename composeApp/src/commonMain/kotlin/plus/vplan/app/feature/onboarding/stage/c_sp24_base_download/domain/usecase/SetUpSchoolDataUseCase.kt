@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.holiday.HolidayRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
@@ -16,7 +17,6 @@ import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.VppSchoolAuthentication
-import plus.vplan.app.domain.repository.DayRepository
 import plus.vplan.app.domain.repository.RoomDbDto
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
@@ -34,7 +34,7 @@ class SetUpSchoolDataUseCase(
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
-    private val dayRepository: DayRepository,
+    private val holidayRepository: HolidayRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
@@ -101,7 +101,7 @@ class SetUpSchoolDataUseCase(
 
             val holidays = (client.holiday.getHolidays() as? plus.vplan.lib.sp24.source.Response.Success)?.data
 
-            dayRepository.upsert(holidays.orEmpty().map { Holiday(it, school.id) })
+            holidayRepository.save(holidays.orEmpty().map { Holiday(it, school.id) })
             result[SetUpSchoolDataStep.GET_HOLIDAYS] = SetUpSchoolDataState.DONE
 
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.IN_PROGRESS

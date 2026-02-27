@@ -96,7 +96,7 @@ fun CalendarView(
     modifier: Modifier = Modifier,
     profile: Profile?,
     date: LocalDate,
-    dayType: Day.DayType,
+    dayType: Day.DayType?,
     lessons: CalendarViewLessons,
     assessments: List<PopulatedAssessment>,
     homework: List<PopulatedHomework>,

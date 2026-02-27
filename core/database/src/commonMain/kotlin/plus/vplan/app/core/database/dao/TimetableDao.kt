@@ -16,6 +16,7 @@ import plus.vplan.app.core.database.model.database.DbTimetableWeekLimitation
 import plus.vplan.app.core.database.model.database.crossovers.DbTimetableGroupCrossover
 import plus.vplan.app.core.database.model.database.crossovers.DbTimetableRoomCrossover
 import plus.vplan.app.core.database.model.database.crossovers.DbTimetableTeacherCrossover
+import plus.vplan.app.core.database.model.embedded.EmbeddedTimetable
 import plus.vplan.app.core.database.model.embedded.EmbeddedTimetableLesson
 import kotlin.uuid.Uuid
 
@@ -88,7 +89,7 @@ interface TimetableDao {
 
     @Transaction
     @Query("""
-SELECT timetable_lessons.id
+SELECT *
 FROM timetable_lessons
          LEFT JOIN timetable_week_limitation ON timetable_lessons.id = timetable_week_limitation.timetable_lesson_id
          LEFT JOIN main.weeks w ON w.id = timetable_week_limitation.week_id
@@ -103,7 +104,7 @@ WHERE timetable_lessons.timetable_id = (SELECT timetables.id
   AND (w.week_index = :currentWeekIndex OR w.week_index IS NULL)
   AND day_of_week = :dayOfWeek;
     """)
-    fun getBySchool(schoolId: Uuid, currentWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<Uuid>>
+    fun getBySchool(schoolId: Uuid, currentWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<EmbeddedTimetableLesson>>
 
     @Transaction
     @Query("SELECT * FROM timetable_lessons WHERE id = :id")
@@ -139,7 +140,7 @@ WITH profile_school AS (SELECT school_id
                             AND w_tt.week_index <= :currentWeekIndex
                           ORDER BY w_tt.week_index DESC
                           LIMIT 1)
-SELECT tl.id
+SELECT *
 FROM profile_timetable_cache AS ptc
          JOIN timetable_lessons AS tl
               ON tl.id = ptc.timetable_lesson_id
@@ -154,13 +155,16 @@ FROM profile_timetable_cache AS ptc
 WHERE (w_main.week_index = :currentWeekIndex OR w_main.week_index IS NULL)
   AND tl.day_of_week = :dayOfWeek AND p.id = :profileId
     """)
-    fun getLessonsForProfile(profileId: Uuid, currentWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<Uuid>>
+    fun getLessonsForProfile(profileId: Uuid, currentWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<EmbeddedTimetableLesson>>
 
     @Query("DELETE FROM profile_timetable_cache WHERE profile_id = :profileId")
     suspend fun dropIndexForProfile(profileId: Uuid)
 
     @Query("SELECT * FROM timetables WHERE school_id = :schoolId AND week_id = :weekId LIMIT 1")
-    fun getTimetableData(schoolId: Uuid, weekId: String): Flow<DbTimetable?>
+    fun getTimetableData(schoolId: Uuid, weekId: String): Flow<EmbeddedTimetable?>
+
+    @Query("SELECT * FROM timetables WHERE school_id = :schoolId")
+    fun getTimetables(schoolId: Uuid): Flow<List<EmbeddedTimetable>>
 
     @Upsert
     suspend fun upsert(entries: List<DbProfileTimetableCache>)

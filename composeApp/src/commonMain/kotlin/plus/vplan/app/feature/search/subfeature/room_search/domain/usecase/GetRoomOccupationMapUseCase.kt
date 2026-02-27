@@ -42,9 +42,11 @@ class GetRoomOccupationMapUseCase(
             timetableRepository.getCurrentVersion()
         ) { currentWeek, timetableVersion ->
             combine(
-                substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, date)
-                    .flatMapLatest { lessons -> lessonPopulator.populateMultiple(lessons.toList(), PopulationContext.Profile(profile)) }
-                    .map { lessons -> lessons.map { it as PopulatedLesson.SubstitutionPlanLesson } },
+                substitutionPlanRepository.getCurrentVersion().flatMapLatest { substitutionPlanVersion ->
+                    substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, date, substitutionPlanVersion)
+                        .flatMapLatest { lessons -> lessonPopulator.populateMultiple(lessons.toList(), PopulationContext.Profile(profile)) }
+                        .map { lessons -> lessons.map { it as PopulatedLesson.SubstitutionPlanLesson } }
+                },
                 timetableRepository.getTimetableForSchool(profile.school.id, timetableVersion)
                     .map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } }
                     .flatMapLatest { lessons -> lessonPopulator.populateMultiple(lessons, PopulationContext.Profile(profile)) }
