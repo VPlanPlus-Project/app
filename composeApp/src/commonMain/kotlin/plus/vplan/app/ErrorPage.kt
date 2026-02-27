@@ -16,10 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
@@ -27,7 +29,9 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.theme.monospaceFontFamily
+import plus.vplan.app.utils.copyToClipboard
 import vplanplus.composeapp.generated.resources.Res
+import vplanplus.composeapp.generated.resources.copy
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.triangle_alert
@@ -67,28 +71,46 @@ fun ErrorPage(
 
         Text(
             text = "Fehlerdetails",
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f, true)
                 .clip(RoundedCornerShape(16.dp))
-                .horizontalScroll(rememberScrollState())
-                .verticalScroll(rememberScrollState())
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(16.dp)
         ) {
-            Box {
-                Text(
-                    text = error.stacktrace,
-                    fontFamily = monospaceFontFamily(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    softWrap = false
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .horizontalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
+                Box {
+                    Text(
+                        text = error.stacktrace,
+                        fontFamily = monospaceFontFamily(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        softWrap = false
+                    )
+                }
+            }
+
+            FilledTonalIconButton(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp),
+                onClick = { copyToClipboard("Stacktrace", error.stacktrace) }
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.copy),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp).padding(2.dp),
                 )
             }
         }

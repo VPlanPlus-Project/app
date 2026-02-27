@@ -28,7 +28,7 @@ class YearApiImpl(
                 url {
                     protocol = URLProtocol.HTTPS
                     host = "beste.schule"
-                    pathSegments = listOf("api", "years", id.toString())
+                    pathSegments = listOf("api", "years")
                 }
                 bearerAuth(access.schulverwalterAccessToken)
             }
@@ -41,7 +41,9 @@ class YearApiImpl(
 
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
 
-            return response.body< ResponseDataWrapper<YearApiResponse>>().data.toDto()
+            val years = response.body<ResponseDataWrapper<List<YearApiResponse>>>().data
+            val yearWithId = years.firstOrNull { it.id == id }
+            if (yearWithId != null) return yearWithId.toDto()
         }
 
         throw Exception("No valid access token found")

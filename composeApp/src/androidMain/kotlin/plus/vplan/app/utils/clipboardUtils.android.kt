@@ -1,5 +1,6 @@
 package plus.vplan.app.utils
 
+import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ClipDescription
 import android.content.Context
@@ -13,4 +14,10 @@ actual fun readLatestClipboardValue(): String? {
         return clip.getItemAt(0).text?.toString()
     }
     return null
+}
+
+actual fun copyToClipboard(title: String, value: String) {
+    val context = GlobalContext.get().get<Context>()
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText(title, value))
 }

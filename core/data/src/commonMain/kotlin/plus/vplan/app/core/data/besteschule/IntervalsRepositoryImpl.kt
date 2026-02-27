@@ -49,7 +49,7 @@ class IntervalsRepositoryImpl(
     }
 }
 
-fun IntervalDto.toEntity() = DbBesteSchuleInterval(
+private fun IntervalDto.toEntity() = DbBesteSchuleInterval(
     id = this.id,
     type = BesteSchuleInterval.Type.fromString(this.type).name,
     name = this.name,

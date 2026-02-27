@@ -10,8 +10,8 @@ class BesteSchuleRepositoryImpl(
     private val besteSchuleApi: BesteSchuleApi,
     private val vppIdDao: VppIdDao,
 ): BesteSchuleRepository {
-    override suspend fun checkValidity(userId: Int): Boolean {
-        val access = vppIdDao.getSchulverwalterAccess().first().first { it.schulverwalterUserId == userId }
+    override suspend fun checkValidity(schulverwalterUserId: Int): Boolean {
+        val access = vppIdDao.getSchulverwalterAccess().first().first { it.schulverwalterUserId == schulverwalterUserId }
 
         return besteSchuleApi.checkValidity(access.schulverwalterAccessToken)
     }

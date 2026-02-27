@@ -112,8 +112,6 @@ import plus.vplan.app.feature.system.di.systemModule
 import plus.vplan.app.feature.vpp_id.di.vppIdModule
 import plus.vplan.app.network.besteschule.BesteSchuleApi
 import plus.vplan.app.network.besteschule.BesteSchuleApiImpl
-import plus.vplan.app.network.besteschule.CollectionApi
-import plus.vplan.app.network.besteschule.CollectionApiImpl
 import plus.vplan.app.network.besteschule.GradesApi
 import plus.vplan.app.network.besteschule.GradesApiImpl
 import plus.vplan.app.network.besteschule.IntervalApi
@@ -197,7 +195,6 @@ val appModule = module(createdAtStart = true) {
 
     singleOf(::YearApiImpl).bind<YearApi>()
     singleOf(::IntervalApiImpl).bind<IntervalApi>()
-    singleOf(::CollectionApiImpl).bind<CollectionApi>()
     singleOf(::GradesApiImpl).bind<GradesApi>()
     singleOf(::BesteSchuleApiImpl).bind<BesteSchuleApi>()
 
