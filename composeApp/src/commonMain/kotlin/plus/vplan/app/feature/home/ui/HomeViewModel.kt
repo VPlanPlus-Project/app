@@ -5,6 +5,7 @@ package plus.vplan.app.feature.home.ui
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.atDate
 import kotlinx.datetime.atTime
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Lesson
@@ -76,6 +78,8 @@ class HomeViewModel(
     val state: StateFlow<HomeState>
         field = MutableStateFlow(HomeState())
 
+    private val logger = Logger.withTag("HomeViewModel")
+
     private var newsJob: Job? = null
 
     init {
@@ -110,6 +114,7 @@ class HomeViewModel(
                     )
                 }
                 .collectLatest { dayWithDetails ->
+                    logger.d { "Day With Details: $dayWithDetails" }
                     // Handle null case (e.g. no data available for date)
                     if (dayWithDetails == null) {
                         state.update { it.copy(day = null, currentLessons = emptyList(), nextLessons = emptyList(), remainingLessons = emptyMap()) }
@@ -125,13 +130,13 @@ class HomeViewModel(
                                 Keys.forceStaticTimetableHomescreen.default
                             ).first()
 
-                            val canShowCurrentAndNext = !forceStatic
+                            val canShowCurrentAndNext = !forceStatic && dayWithDetails.populatedDay.day.date == time.date
                             val lessons = dayWithDetails.lessons
 
                             val currentLessons = if (canShowCurrentAndNext) {
                                 lessons.filter { lesson ->
                                     val timeRange = lesson.lessonTime ?: return@filter false
-                                    time.time in timeRange.start..timeRange.end
+                                    time in timeRange.start.atDate(dayWithDetails.populatedDay.day.date)..timeRange.end.atDate(dayWithDetails.populatedDay.day.date)
                                 }.map { lesson ->
                                     CurrentLesson(
                                         lesson = lesson,
@@ -154,7 +159,7 @@ class HomeViewModel(
                             val nextLessons = if (canShowCurrentAndNext) {
                                 lessons.filter { lesson ->
                                     val timeRange = lesson.lessonTime ?: return@filter true
-                                    timeRange.start > time.time
+                                    timeRange.start.atDate(dayWithDetails.populatedDay.day.date) > time
                                 }
                                     .groupBy { it.lesson.lessonNumber }
                                     .minByOrNull { it.key }?.value.orEmpty()
@@ -165,7 +170,7 @@ class HomeViewModel(
                                     if (!canShowCurrentAndNext || (nextLessons.isEmpty() && currentLessons.isEmpty())) return@filter true
                                     if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
                                     val timeRange = lesson.lessonTime ?: return@filter true
-                                    timeRange.start > time.time
+                                    timeRange.start.atDate(dayWithDetails.populatedDay.day.date) > time
                                 }
                                 .sortedBySuspending { lesson ->
                                     val subject = lesson.lesson.subject ?: ""
@@ -213,8 +218,7 @@ class HomeViewModel(
             }
             .flatMapLatest { dayWithDetails ->
                 // Check if day is completed AND it's the current date (prevents infinite recursion)
-                val isToday = forDate == LocalDate.now()
-                if (shouldRetryRecursively && isToday && dayWithDetails.isCompleted(LocalDateTime.now()) && dayWithDetails.populatedDay.day.nextSchoolDay != null) {
+                if (shouldRetryRecursively && dayWithDetails.isCompleted(LocalDateTime.now()) && dayWithDetails.populatedDay.day.nextSchoolDay != null) {
                     getDay(profile, dayWithDetails.populatedDay.day.nextSchoolDay!!, false)
                 } else {
                     flowOf(dayWithDetails)
@@ -286,8 +290,7 @@ data class DayWithDetails(
     val assessments: List<PopulatedAssessment>
 ) {
     fun isCompleted(comparedTo: LocalDateTime): Boolean {
-        // If there are no lessons (weekend/holiday), don't mark as completed yet
-        if (lessons.isEmpty()) return false
+        if (lessons.isEmpty()) return true
         return lessons.all { lesson ->
             val lessonTime = lesson.lessonTime ?: return@all true
             val plannedEnd = comparedTo.date.atTime(lessonTime.end)

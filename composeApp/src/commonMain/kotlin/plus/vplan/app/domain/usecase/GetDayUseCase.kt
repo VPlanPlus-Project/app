@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.data.holiday.HolidayRepository
 import plus.vplan.app.core.model.Day
@@ -30,9 +31,11 @@ class GetDayUseCase(
                 school = profile.school,
                 week = null,
                 info = null,
-                dayType = Day.DayType.REGULAR,
+                dayType = if (date.dayOfWeek.isoDayNumber > profile.school.daysPerWeek) Day.DayType.WEEKEND else Day.DayType.REGULAR,
                 nextSchoolDay = date + 1.days
             ) }
-            .flatMapLatest { day -> dayPopulator.populateSingle(day, PopulationContext.Profile(profile)) }
+            .flatMapLatest { day ->
+                dayPopulator.populateSingle(day, PopulationContext.Profile(profile))
+            }
     }
 }
