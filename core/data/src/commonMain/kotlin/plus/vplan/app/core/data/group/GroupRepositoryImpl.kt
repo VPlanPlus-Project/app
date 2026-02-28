@@ -2,13 +2,17 @@
 
 package plus.vplan.app.core.data.group
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.database.dao.GroupDao
 import plus.vplan.app.core.database.dao.SchoolDao
@@ -28,24 +32,38 @@ class GroupRepositoryImpl(
     private val groupDao: GroupDao,
     private val schoolDao: SchoolDao,
     private val groupApi: GroupApi,
+    private val applicationScope: CoroutineScope,
 ) : GroupRepository {
+
+    // Cache pro schoolId: wird geteilt, solange ≥1 Subscriber aktiv (+ 5 s grace period)
+    private val bySchoolCache = mutableMapOf<Uuid, Flow<List<Group>>>()
+    private val allCache: Flow<List<Group>> by lazy {
+        groupDao.getAll()
+            .map { items -> items.map { it.toModel() } }
+            .distinctUntilChanged()
+            .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
+    }
+
     override fun getBySchool(school: School): Flow<List<Group>> {
         return combine(school.aliases.map { alias -> schoolDao.getIdByAlias(alias.value, alias.provider, alias.version) }) { it.firstNotNullOf { it } }
             .flatMapLatest { schoolId ->
-                groupDao.getBySchool(schoolId).map { items -> items.map { it.toModel() } }
+                bySchoolCache.getOrPut(schoolId) {
+                    groupDao.getBySchool(schoolId)
+                        .map { items -> items.map { it.toModel() } }
+                        .distinctUntilChanged()
+                        .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
+                }
             }
     }
 
-    override fun getAll(): Flow<List<Group>> {
-        return groupDao.getAll().map { items -> items.map { it.toModel() } }
-    }
+    override fun getAll(): Flow<List<Group>> = allCache
 
     override fun getByIds(identifiers: Set<Alias>, forceUpdate: Boolean): Flow<Group?> {
         if (identifiers.isEmpty()) throw IllegalArgumentException("Identifiers cannot be empty")
 
         return this
             .findLocalIdByIdentifier(identifiers)
-            .flatMapLatest { id -> id ?.let { groupDao.findById(id).map { it?.toModel() } } ?: flowOf(null) }
+            .flatMapLatest { id -> id?.let { groupDao.findById(id).map { it?.toModel() }.distinctUntilChanged() } ?: flowOf(null) }
             .map { group ->
                 if (group == null || forceUpdate) {
                     val result = groupApi.getById(identifiers.first()) ?: return@map null

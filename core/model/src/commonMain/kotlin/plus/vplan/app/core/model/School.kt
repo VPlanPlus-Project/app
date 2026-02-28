@@ -27,7 +27,6 @@ sealed class School: AliasedItem<DataTag> {
         override val name: String,
         override val aliases: Set<Alias>,
         override val cachedAt: Instant,
-        val groupIds: List<Uuid>,
         val sp24Id: String,
         val username: String,
         val password: String,

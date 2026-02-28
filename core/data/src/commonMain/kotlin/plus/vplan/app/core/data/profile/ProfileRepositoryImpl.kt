@@ -1,6 +1,7 @@
 package plus.vplan.app.core.data.profile
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.core.database.dao.ProfileDao
 import plus.vplan.app.core.database.model.database.DbGroupProfile
@@ -14,11 +15,15 @@ class ProfileRepositoryImpl(
 ) : ProfileRepository {
 
     override fun getAll(): Flow<List<Profile>> {
-        return profileDao.getAll().map { items -> items.mapNotNull { it.toModel() } }
+        return profileDao.getAll()
+            .map { items -> items.mapNotNull { it.toModel() } }
+            .distinctUntilChanged()
     }
 
     override fun getById(id: Uuid): Flow<Profile?> {
-        return profileDao.getById(id).map { it?.toModel() }
+        return profileDao.getById(id)
+            .map { it?.toModel() }
+            .distinctUntilChanged()
     }
 
     override suspend fun delete(profile: Profile) {

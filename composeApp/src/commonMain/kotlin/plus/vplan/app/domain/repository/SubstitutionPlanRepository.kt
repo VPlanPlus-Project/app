@@ -19,7 +19,7 @@ interface SubstitutionPlanRepository {
 
     suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>)
 
-    suspend fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>>
+    fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>>
     suspend fun getForProfile(profile: Profile, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>>
     suspend fun getAll(): Set<Uuid>
     fun getSubstitutionPlanBySchool(schoolId: Uuid, version: Int): Flow<Set<Lesson.SubstitutionPlanLesson>>

@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -23,13 +24,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
 import kotlinx.datetime.atTime
-import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
@@ -66,7 +67,6 @@ class HomeViewModel(
     private val lessonPopulator: LessonPopulator,
     private val homeworkPopulator: HomeworkPopulator,
     private val assessmentPopulator: AssessmentPopulator,
-    private val subjectInstanceRepository: SubjectInstanceRepository,
     private val keyValueRepository: KeyValueRepository,
     private val stundenplan24Repository: Stundenplan24Repository,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
@@ -103,95 +103,97 @@ class HomeViewModel(
 
         // 3. Main Data Orchestration
         viewModelScope.launch {
-            state
-                .distinctUntilChangedBy { it.currentProfile?.id.toString() + it.currentTime.date.toString() }
-                .filter { it.currentProfile != null }
-                .flatMapLatest { currentState ->
+            val dayFlow = combine(
+                state.map { it.currentProfile }.distinctUntilChanged(),
+                state.map { it.currentTime.date }.distinctUntilChanged()
+            ) { profile, date -> profile to date }
+                .filter { (profile, _) -> profile != null }
+                .flatMapLatest { (profile, date) ->
                     getDay(
-                        profile = currentState.currentProfile!!,
-                        forDate = currentState.currentTime.date,
+                        profile = profile!!,
+                        forDate = date,
                         shouldRetryRecursively = true
                     )
                 }
-                .collectLatest { dayWithDetails ->
-                    logger.d { "Day With Details: $dayWithDetails" }
-                    // Handle null case (e.g. no data available for date)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), null)
+
+            combine(
+                dayFlow,
+                state.map { it.currentTime }.distinctUntilChanged()
+            ) { dayWithDetails, time -> dayWithDetails to time }
+                .distinctUntilChangedBy { (dayWithDetails, time) ->
+                    val lessonIds = dayWithDetails?.lessons?.map { it.lesson.id }?.sorted()
+                    "$lessonIds|${time.date}|${time.hour}|${time.minute}"
+                }
+                .collectLatest { (dayWithDetails, time) ->
+                    logger.d { "Day With Details: date=${dayWithDetails?.populatedDay?.day?.date}, lessons=${dayWithDetails?.lessons?.size}, homework=${dayWithDetails?.homework?.size}, assessments=${dayWithDetails?.assessments?.size}" }
                     if (dayWithDetails == null) {
                         state.update { it.copy(day = null, currentLessons = emptyList(), nextLessons = emptyList(), remainingLessons = emptyMap()) }
                         return@collectLatest
                     }
 
-                    // React to time changes to update "Current" vs "Next" status
-                    state.map { it.currentTime }
-                        .distinctUntilChanged()
-                        .collectLatest { time ->
-                            val forceStatic = keyValueRepository.getBooleanOrDefault(
-                                Keys.forceStaticTimetableHomescreen.key,
-                                Keys.forceStaticTimetableHomescreen.default
-                            ).first()
+                    val forceStatic = keyValueRepository.getBooleanOrDefault(
+                        Keys.forceStaticTimetableHomescreen.key,
+                        Keys.forceStaticTimetableHomescreen.default
+                    ).first()
 
-                            val canShowCurrentAndNext = !forceStatic && dayWithDetails.populatedDay.day.date == time.date
-                            val lessons = dayWithDetails.lessons
+                    val canShowCurrentAndNext = !forceStatic && dayWithDetails.populatedDay.day.date == time.date
+                    val lessons = dayWithDetails.lessons
 
-                            val currentLessons = if (canShowCurrentAndNext) {
-                                lessons.filter { lesson ->
-                                    val timeRange = lesson.lessonTime ?: return@filter false
-                                    time in timeRange.start.atDate(dayWithDetails.populatedDay.day.date)..timeRange.end.atDate(dayWithDetails.populatedDay.day.date)
-                                }.map { lesson ->
-                                    CurrentLesson(
-                                        lesson = lesson,
-                                        continuing = lessons.firstOrNull {
-                                            it.lesson.subject != null &&
-                                                    it.lesson.subject == lesson.lesson.subject &&
-                                                    (it.lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId ==
-                                                    (lesson.lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId &&
-                                                    it.lesson.lessonNumber == lesson.lesson.lessonNumber + 1
-                                        }
-                                    )
-                                }.sortedBySuspending {
-                                    val subjectInstance = (it.lesson.lesson as? Lesson.SubstitutionPlanLesson)
-                                        ?.subjectInstanceId
-                                        ?.let { id -> subjectInstanceRepository.getByLocalId(id).first() }
-                                    it.lesson.lesson.subject + (subjectInstance?.course?.name ?: "")
+                    val currentLessons = if (canShowCurrentAndNext) {
+                        lessons.filter { lesson ->
+                            val timeRange = lesson.lessonTime ?: return@filter false
+                            time in timeRange.start.atDate(dayWithDetails.populatedDay.day.date)..timeRange.end.atDate(dayWithDetails.populatedDay.day.date)
+                        }.map { lesson ->
+                            CurrentLesson(
+                                lesson = lesson,
+                                continuing = lessons.firstOrNull {
+                                    it.lesson.subject != null &&
+                                            it.lesson.subject == lesson.lesson.subject &&
+                                            (it.lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId ==
+                                            (lesson.lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId &&
+                                            it.lesson.lessonNumber == lesson.lesson.lessonNumber + 1
                                 }
-                            } else emptyList()
-
-                            val nextLessons = if (canShowCurrentAndNext) {
-                                lessons.filter { lesson ->
-                                    val timeRange = lesson.lessonTime ?: return@filter true
-                                    timeRange.start.atDate(dayWithDetails.populatedDay.day.date) > time
-                                }
-                                    .groupBy { it.lesson.lessonNumber }
-                                    .minByOrNull { it.key }?.value.orEmpty()
-                            } else emptyList()
-
-                            val remainingLessons = lessons
-                                .filter { lesson ->
-                                    if (!canShowCurrentAndNext || (nextLessons.isEmpty() && currentLessons.isEmpty())) return@filter true
-                                    if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
-                                    val timeRange = lesson.lessonTime ?: return@filter true
-                                    timeRange.start.atDate(dayWithDetails.populatedDay.day.date) > time
-                                }
-                                .sortedBySuspending { lesson ->
-                                    val subject = lesson.lesson.subject ?: ""
-                                    val subjectInstance = (lesson.lesson as? Lesson.SubstitutionPlanLesson)
-                                        ?.subjectInstanceId
-                                        ?.let { subjectInstanceRepository.getByLocalId(it).first() }
-                                    val courseName = subjectInstance?.course?.name ?: ""
-                                    lesson.lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
-                                }
-                                .groupBy { it.lesson.lessonNumber }
-
-                            state.update {
-                                it.copy(
-                                    day = dayWithDetails,
-                                    currentLessons = currentLessons,
-                                    nextLessons = nextLessons,
-                                    remainingLessons = remainingLessons,
-                                    hasInterpolatedLessonTimes = lessons.any { l -> l.lessonTime?.interpolated == true }
-                                )
-                            }
+                            )
+                        }.sortedBySuspending {
+                            val subjectInstance = (it.lesson as? PopulatedLesson.SubstitutionPlanLesson)?.subjectInstance
+                            it.lesson.lesson.subject + (subjectInstance?.course?.name ?: "")
                         }
+                    } else emptyList()
+
+                    val nextLessons = if (canShowCurrentAndNext) {
+                        lessons.filter { lesson ->
+                            val timeRange = lesson.lessonTime ?: return@filter true
+                            timeRange.start.atDate(dayWithDetails.populatedDay.day.date) > time
+                        }
+                            .groupBy { it.lesson.lessonNumber }
+                            .minByOrNull { it.key }?.value.orEmpty()
+                    } else emptyList()
+
+                    val remainingLessons = lessons
+                        .filter { lesson ->
+                            if (!canShowCurrentAndNext || (nextLessons.isEmpty() && currentLessons.isEmpty())) return@filter true
+                            if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
+                            val timeRange = lesson.lessonTime ?: return@filter true
+                            timeRange.start.atDate(dayWithDetails.populatedDay.day.date) > time
+                        }
+                        .sortedBySuspending { lesson ->
+                            val subject = lesson.lesson.subject ?: ""
+                            val subjectInstance = (lesson as? PopulatedLesson.SubstitutionPlanLesson)?.subjectInstance
+                            val courseName = subjectInstance?.course?.name ?: ""
+                            lesson.lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
+                        }
+                        .groupBy { it.lesson.lessonNumber }
+
+                    state.update {
+                        it.copy(
+                            day = dayWithDetails,
+                            currentLessons = currentLessons,
+                            nextLessons = nextLessons,
+                            remainingLessons = remainingLessons,
+                            hasInterpolatedLessonTimes = lessons.any { l -> l.lessonTime?.interpolated == true }
+                        )
+                    }
                 }
         }
     }
@@ -206,22 +208,34 @@ class HomeViewModel(
     }
 
     private fun getDay(profile: Profile, forDate: LocalDate, shouldRetryRecursively: Boolean): Flow<DayWithDetails?> {
+        logger.d { "[$forDate] getDay called (recursive=$shouldRetryRecursively)" }
         return getDayUseCase(profile, forDate)
+            .distinctUntilChangedBy { day ->
+                val lessonIds = (day.substitution.ifEmpty { day.timetable }).map { it.id }.sorted()
+                "${day.day.id}|${day.day.info}|${day.day.dayType}|${day.holiday?.id}|$lessonIds"
+            }
             .flatMapLatest { day ->
+                logger.d { "[$forDate] getDay flatMapLatest → timetable=${day.timetable.size} substitution=${day.substitution.size} – calling populateMultiple" }
                 combine(
                     homeworkPopulator.populateMultiple(day.homework, PopulationContext.Profile(profile)),
                     assessmentPopulator.populateMultiple(day.assessments, PopulationContext.Profile(profile)),
                     lessonPopulator.populateMultiple(day.substitution.ifEmpty { day.timetable }, PopulationContext.Profile(profile)),
                 ) { homework, assessments, lessons ->
+                    logger.d { "[$forDate] populateMultiple combine fired → populatedLessons=${lessons.size}" }
                     DayWithDetails(day, lessons, homework, assessments)
-                }
-            }
-            .flatMapLatest { dayWithDetails ->
-                // Check if day is completed AND it's the current date (prevents infinite recursion)
-                if (shouldRetryRecursively && dayWithDetails.isCompleted(LocalDateTime.now()) && dayWithDetails.populatedDay.day.nextSchoolDay != null) {
-                    getDay(profile, dayWithDetails.populatedDay.day.nextSchoolDay!!, false)
-                } else {
-                    flowOf(dayWithDetails)
+                }.distinctUntilChangedBy { d ->
+                    val lessonIds = d.lessons.map { it.lesson.id }.sorted()
+                    val homeworkIds = d.homework.map { it.homework.id }.sorted()
+                    val assessmentIds = d.assessments.map { it.assessment.id }.sorted()
+                    "$lessonIds|$homeworkIds|$assessmentIds"
+                }.flatMapLatest { dayWithDetails ->
+                    // Retry with next school day if current day is completed
+                    if (shouldRetryRecursively && dayWithDetails.isCompleted(LocalDateTime.now()) && dayWithDetails.populatedDay.day.nextSchoolDay != null) {
+                        logger.d { "[$forDate] day completed → retrying with nextSchoolDay=${dayWithDetails.populatedDay.day.nextSchoolDay}" }
+                        getDay(profile, dayWithDetails.populatedDay.day.nextSchoolDay!!, false)
+                    } else {
+                        flowOf(dayWithDetails)
+                    }
                 }
             }
     }

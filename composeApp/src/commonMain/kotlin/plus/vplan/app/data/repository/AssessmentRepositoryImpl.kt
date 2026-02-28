@@ -26,6 +26,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -163,12 +164,20 @@ class AssessmentRepositoryImpl(
     }
 
     override fun getByDate(date: LocalDate): Flow<List<Assessment>> {
-        return vppDatabase.assessmentDao.getByDate(date).map { it.map { assessment -> assessment.toModel() } }
+        val flow = vppDatabase.assessmentDao.getByDate(date)
+            .map { it.map { assessment -> assessment.toModel() } }
+        return flow.distinctUntilChanged()
     }
 
     override fun getByProfile(profileId: Uuid, date: LocalDate?): Flow<List<Assessment>> {
-        if (date == null) return vppDatabase.assessmentDao.getByProfile(profileId).map { it.map { assessment -> assessment.toModel() } }
-        return vppDatabase.assessmentDao.getByProfileAndDate(profileId, date).map { it.map { assessment -> assessment.toModel() } }
+        val flow = if (date == null) {
+            vppDatabase.assessmentDao.getByProfile(profileId)
+                .map { it.map { assessment -> assessment.toModel() } }
+        } else {
+            vppDatabase.assessmentDao.getByProfileAndDate(profileId, date)
+                .map { it.map { assessment -> assessment.toModel() } }
+        }
+        return flow.distinctUntilChanged()
     }
 
     override fun getAllIds(): Flow<List<Int>> {

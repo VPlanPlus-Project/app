@@ -2,7 +2,6 @@ package plus.vplan.app.core.database.model.embedded
 
 import androidx.room.Embedded
 import androidx.room.Relation
-import plus.vplan.app.core.database.model.database.DbGroup
 import plus.vplan.app.core.database.model.database.DbSchool
 import plus.vplan.app.core.database.model.database.DbSchoolAlias
 import plus.vplan.app.core.database.model.database.DbSchoolSp24Acess
@@ -16,11 +15,6 @@ data class EmbeddedSchool(
         entityColumn = "school_id",
         entity = DbSchoolSp24Acess::class
     ) val sp24SchoolDetails: DbSchoolSp24Acess?,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "school_id",
-        entity = DbGroup::class
-    ) val groups: List<DbGroup>,
     @Relation(
         parentColumn = "id",
         entityColumn = "school_id",
@@ -39,7 +33,6 @@ data class EmbeddedSchool(
             CreationReason.Persisted -> School.AppSchool(
                 id = school.id,
                 name = school.name,
-                groupIds = groups.map { it.id },
                 sp24Id = sp24SchoolDetails!!.sp24SchoolId,
                 username = sp24SchoolDetails.username,
                 password = sp24SchoolDetails.password,

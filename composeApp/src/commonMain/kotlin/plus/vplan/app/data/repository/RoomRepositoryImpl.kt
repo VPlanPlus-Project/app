@@ -3,6 +3,7 @@
 package plus.vplan.app.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.core.database.VppDatabase
 import plus.vplan.app.core.database.model.database.DbRoom
@@ -19,7 +20,9 @@ class RoomRepositoryImpl(
     private val vppDatabase: VppDatabase
 ) : RoomRepository {
     override fun getBySchool(schoolId: Uuid): Flow<List<Room>> {
-        return vppDatabase.roomDao.getBySchool(schoolId).map { result -> result.map { it.toModel() } }
+        return vppDatabase.roomDao.getBySchool(schoolId)
+            .map { result -> result.map { it.toModel() } }
+            .distinctUntilChanged()
     }
 
     override suspend fun upsert(item: RoomDbDto): Uuid {
@@ -43,9 +46,9 @@ class RoomRepositoryImpl(
     }
 
     override fun getByLocalId(id: Uuid): Flow<Room?> {
-        return vppDatabase.roomDao.findById(id).map { embeddedRoom ->
-            embeddedRoom?.toModel()
-        }
+        return vppDatabase.roomDao.findById(id)
+            .map { embeddedRoom -> embeddedRoom?.toModel() }
+            .distinctUntilChanged()
     }
 
     override fun getAllLocalIds(): Flow<List<Uuid>> {

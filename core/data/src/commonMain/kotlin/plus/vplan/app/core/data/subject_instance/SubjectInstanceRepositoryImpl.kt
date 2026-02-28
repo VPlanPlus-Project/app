@@ -2,14 +2,17 @@
 
 package plus.vplan.app.core.data.subject_instance
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import plus.vplan.app.core.database.dao.SubjectInstanceDao
 import plus.vplan.app.core.database.model.database.DbSubjectInstance
 import plus.vplan.app.core.database.model.database.DbSubjectInstanceAlias
@@ -26,7 +29,18 @@ import kotlin.uuid.Uuid
 class SubjectInstanceRepositoryImpl(
     private val subjectInstanceDao: SubjectInstanceDao,
     private val subjectInstanceApi: SubjectInstanceApi,
+    private val applicationScope: CoroutineScope,
 ): SubjectInstanceRepository {
+
+    private val bySchoolCache = mutableMapOf<Uuid, Flow<List<SubjectInstance>>>()
+    private val byGroupCache = mutableMapOf<Uuid, Flow<List<SubjectInstance>>>()
+    private val allCache: Flow<List<SubjectInstance>> by lazy {
+        subjectInstanceDao.getAll()
+            .map { items -> items.map { it.toModel() } }
+            .distinctUntilChanged()
+            .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
+    }
+
     override fun getByIds(
         identifiers: Set<Alias>,
         forceUpdate: Boolean
@@ -35,7 +49,7 @@ class SubjectInstanceRepositoryImpl(
             uuids.firstNotNullOfOrNull { it }
         }.distinctUntilChanged().flatMapLatest { id ->
             if (id == null) flowOf(null)
-            else subjectInstanceDao.findById(id).map { it?.toModel() }
+            else subjectInstanceDao.findById(id).map { it?.toModel() }.distinctUntilChanged()
         }.map { subjectInstance ->
             if (subjectInstance == null || forceUpdate) {
                 val response = subjectInstanceApi.getByAlias(identifiers.first())
@@ -75,34 +89,37 @@ class SubjectInstanceRepositoryImpl(
         }
     }
 
-
     override fun getByGroup(group: Group): Flow<List<SubjectInstance>> {
-        return subjectInstanceDao.getByGroup(group.id).map { items ->
-            items.map { it.toModel() }
+        return byGroupCache.getOrPut(group.id) {
+            subjectInstanceDao.getByGroup(group.id)
+                .map { items -> items.map { it.toModel() } }
+                .distinctUntilChanged()
+                .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
         }
     }
 
     override fun getByTeacher(teacher: Teacher): Flow<List<SubjectInstance>> {
-        return subjectInstanceDao.getByTeacher(teacher.id).map { items ->
-            items.map { it.toModel() }
-        }
+        return subjectInstanceDao.getByTeacher(teacher.id)
+            .map { items -> items.map { it.toModel() } }
+            .distinctUntilChanged()
     }
 
     override fun getBySchool(school: School): Flow<List<SubjectInstance>> {
-        return subjectInstanceDao.getBySchool(school.id).map { items ->
-            items.map { it.toModel() }
+        return bySchoolCache.getOrPut(school.id) {
+            subjectInstanceDao.getBySchool(school.id)
+                .map { items -> items.map { it.toModel() } }
+                .distinctUntilChanged()
+                .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
         }
     }
 
-    override fun getAll(): Flow<List<SubjectInstance>> {
-        return subjectInstanceDao.getAll().map { items ->
-            items.map { it.toModel() }
-        }
-    }
+    override fun getAll(): Flow<List<SubjectInstance>> = allCache
 
     @Deprecated("Use alias")
     override fun getByLocalId(id: Uuid): Flow<SubjectInstance?> {
-        return subjectInstanceDao.findById(id).map { it?.toModel() }
+        return subjectInstanceDao.findById(id)
+            .map { it?.toModel() }
+            .distinctUntilChanged()
     }
 
     override suspend fun save(subjectInstance: SubjectInstance) {

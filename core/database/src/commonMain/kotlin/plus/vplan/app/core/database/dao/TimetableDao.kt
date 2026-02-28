@@ -79,7 +79,7 @@ interface TimetableDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM timetable_lessons LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id WHERE school_groups.school_id = :schoolId AND version = :version")
+    @Query("SELECT * FROM timetable_lessons LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id WHERE school_groups.school_id = :schoolId AND version = :version GROUP BY timetable_lessons.id")
     fun getBySchool(schoolId: Uuid, version: Int): Flow<List<EmbeddedTimetableLesson>>
 
     @Transaction
@@ -102,7 +102,8 @@ WHERE timetable_lessons.timetable_id = (SELECT timetables.id
                                         ORDER BY week_index DESC
                                         LIMIT 1)
   AND (w.week_index = :currentWeekIndex OR w.week_index IS NULL)
-  AND day_of_week = :dayOfWeek;
+  AND day_of_week = :dayOfWeek
+GROUP BY timetable_lessons.id;
     """)
     fun getBySchool(schoolId: Uuid, currentWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<EmbeddedTimetableLesson>>
 
@@ -154,6 +155,7 @@ FROM profile_timetable_cache AS ptc
               ON tl.timetable_id = lt.id
 WHERE (w_main.week_index = :currentWeekIndex OR w_main.week_index IS NULL)
   AND tl.day_of_week = :dayOfWeek AND p.id = :profileId
+GROUP BY tl.id
     """)
     fun getLessonsForProfile(profileId: Uuid, currentWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<EmbeddedTimetableLesson>>
 

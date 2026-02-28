@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -124,12 +125,18 @@ class HomeworkRepositoryImpl(
     }
 
     override fun getByDate(date: LocalDate): Flow<List<Homework>> {
-        return vppDatabase.homeworkDao.getByDate(date).map { it.map { homework -> homework.toModel() } }
+        return vppDatabase.homeworkDao.getByDate(date)
+            .map { it.map { homework -> homework.toModel() } }
+            .distinctUntilChanged()
     }
 
     override fun getByProfile(profileId: Uuid, date: LocalDate?): Flow<List<Homework>> {
-        if (date == null) return vppDatabase.homeworkDao.getByProfile(profileId).map { it.map { homework -> homework.toModel() } }
-        return vppDatabase.homeworkDao.getByProfileAndDate(profileId, date).map { it.map { homework -> homework.toModel() } }
+        if (date == null) return vppDatabase.homeworkDao.getByProfile(profileId)
+            .map { it.map { homework -> homework.toModel() } }
+            .distinctUntilChanged()
+        return vppDatabase.homeworkDao.getByProfileAndDate(profileId, date)
+            .map { it.map { homework -> homework.toModel() } }
+            .distinctUntilChanged()
     }
 
     override fun getAllIds(): Flow<List<Int>> {

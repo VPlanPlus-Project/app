@@ -80,12 +80,14 @@ class SubstitutionPlanRepositoryImpl(
         })
     }
 
-    override suspend fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>> {
+    override fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>> {
         return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date, version).map { it.map { it.toModel() } }.distinctUntilChanged()
     }
 
     override suspend fun getForProfile(profile: Profile, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>> {
-        return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date, version).map { it.map { it.toModel() } }
+        return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date, version)
+            .map { it.map { it.toModel() } }
+            .distinctUntilChanged()
     }
 
     override suspend fun getAll(): Set<Uuid> {
@@ -94,10 +96,14 @@ class SubstitutionPlanRepositoryImpl(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getSubstitutionPlanBySchool(schoolId: Uuid, version: Int): Flow<Set<Lesson.SubstitutionPlanLesson>> {
-        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, version).map { items -> items.map { it.toModel() }.toSet() }.distinctUntilChanged()
+        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, version)
+            .map { items -> items.map { it.toModel() }.toSet() }
+            .distinctUntilChanged()
     }
 
     override fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?> {
-        return vppDatabase.substitutionPlanDao.getById(id).map { it?.toModel() }
+        return vppDatabase.substitutionPlanDao.getById(id)
+            .map { it?.toModel() }
+            .distinctUntilChanged()
     }
 }

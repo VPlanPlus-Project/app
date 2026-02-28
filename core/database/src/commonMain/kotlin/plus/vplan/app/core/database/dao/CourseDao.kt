@@ -28,7 +28,7 @@ interface CourseDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM course_group_crossover LEFT JOIN courses ON courses.id = course_group_crossover.course_id LEFT JOIN school_groups ON course_group_crossover.group_id = school_groups.id WHERE school_groups.school_id = :schoolId")
+    @Query("SELECT * FROM course_group_crossover LEFT JOIN courses ON courses.id = course_group_crossover.course_id LEFT JOIN school_groups ON course_group_crossover.group_id = school_groups.id WHERE school_groups.school_id = :schoolId GROUP BY courses.id")
     fun getBySchool(schoolId: Uuid): Flow<List<EmbeddedCourse>>
 
     @Transaction

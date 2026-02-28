@@ -7,6 +7,7 @@ import androidx.compose.runtime.Stable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -61,60 +62,61 @@ class AssessmentPopulator : KoinComponent {
         context: PopulationContext
     ): Flow<List<PopulatedAssessment>> {
         if (assessments.isEmpty()) return flowOf(emptyList())
-        
-        val subjectInstances = when (context) {
+
+        val subjectInstances: Flow<List<SubjectInstance>> = when (context) {
             is PopulationContext.Profile -> subjectInstanceRepository.getBySchool(context.profile.school)
             is PopulationContext.School -> subjectInstanceRepository.getBySchool(context.school)
         }
 
-        val vppIds = vppIdRepository.getAllLocalIds()
+        val vppIds: Flow<List<VppId>> = vppIdRepository.getAllLocalIds()
             .flatMapLatest { ids ->
                 if (ids.isEmpty()) flowOf(emptyList())
                 else combine(ids.map { vppIdRepository.getByLocalId(it) }) { it.filterNotNull() }
             }
 
-        val profiles = profileRepository.getAll()
+        val profiles: Flow<List<Profile>> = profileRepository.getAll()
 
-        return combine(
+        // Per-assessment file flows – built once, not rebuilt on every subjectInstances emit
+        val fileFlows: List<Flow<List<File>>> = assessments.map { assessment ->
+            if (assessment.fileIds.isEmpty()) flowOf(emptyList())
+            else combine(assessment.fileIds.map { fileRepository.getById(it, false) }) { arr ->
+                arr.filterIsInstance<CacheState.Done<File>>().map { it.data }
+            }
+        }
+
+        val filesCombined: Flow<List<List<File>>> =
+            if (fileFlows.size == 1) fileFlows[0].map { listOf(it) }
+            else combine(fileFlows) { it.toList() }
+
+        val result: Flow<List<PopulatedAssessment>> = combine(
             subjectInstances,
             vppIds,
             profiles,
-        ) { subjectInstances, vppIds, profiles ->
-            Triple(subjectInstances, vppIds, profiles)
-        }.flatMapLatest { (subjectInstances, vppIds, profiles) ->
-
-            combine(
-                assessments.map { assessment ->
-                    val filesFlow =
-                        if (assessment.fileIds.isEmpty()) flowOf(emptyList())
-                        else combine(
-                            assessment.fileIds.map { fileRepository.getById(it, false) }
-                        ) { it.filterIsInstance<CacheState.Done<File>>() }
-
-                    filesFlow.map { files ->
-                        val subjectInstance = subjectInstances.firstOrNull { it.id == assessment.subjectInstanceId }
-                            ?: return@map null
-
-                        when (val creator = assessment.creator) {
-                            is AppEntity.VppId -> PopulatedAssessment.CloudAssessment(
-                                assessment = assessment,
-                                subjectInstance = subjectInstance,
-                                files = files.map { it.data },
-                                createdBy = creator,
-                                createdByUser = vppIds.first { it.id == creator.id }
-                            )
-                            is AppEntity.Profile -> PopulatedAssessment.LocalAssessment(
-                                assessment = assessment,
-                                subjectInstance = subjectInstance,
-                                files = files.map { it.data },
-                                createdBy = creator,
-                                createdByProfile = profiles.first { it.id == creator.id } as Profile.StudentProfile
-                            )
-                        }
-                    }
+            filesCombined,
+        ) { subjectInstances, vppIds, profiles, filesPerAssessment ->
+            assessments.mapIndexedNotNull { i, assessment ->
+                val files = filesPerAssessment[i]
+                val subjectInstance = subjectInstances.firstOrNull { it.id == assessment.subjectInstanceId }
+                    ?: return@mapIndexedNotNull null
+                when (val creator = assessment.creator) {
+                    is AppEntity.VppId -> PopulatedAssessment.CloudAssessment(
+                        assessment = assessment,
+                        subjectInstance = subjectInstance,
+                        files = files,
+                        createdBy = creator,
+                        createdByUser = vppIds.first { it.id == creator.id }
+                    )
+                    is AppEntity.Profile -> PopulatedAssessment.LocalAssessment(
+                        assessment = assessment,
+                        subjectInstance = subjectInstance,
+                        files = files,
+                        createdBy = creator,
+                        createdByProfile = profiles.first { it.id == creator.id } as Profile.StudentProfile
+                    )
                 }
-            ) { it.filterNotNull() }
+            }
         }
+        return result.distinctUntilChanged()
     }
 
     fun populateSingle(assessment: Assessment): Flow<PopulatedAssessment> {

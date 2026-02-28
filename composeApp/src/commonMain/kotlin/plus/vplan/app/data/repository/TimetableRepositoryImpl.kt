@@ -75,7 +75,9 @@ class TimetableRepositoryImpl(
     }
 
     override fun getCurrentVersion(): Flow<Int> {
-        return vppDatabase.timetableDao.getCurrentVersion().map { it ?: 1 }
+        return vppDatabase.timetableDao.getCurrentVersion()
+            .map { it ?: 1 }
+            .distinctUntilChanged()
     }
 
     override suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>) {
@@ -96,7 +98,9 @@ class TimetableRepositoryImpl(
     }
 
     override fun getById(id: Uuid): Flow<Lesson.TimetableLesson?> {
-        return vppDatabase.timetableDao.getById(id.toString()).map { it?.toModel() }
+        return vppDatabase.timetableDao.getById(id.toString())
+            .map { it?.toModel() }
+            .distinctUntilChanged()
     }
 
     override fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Lesson.TimetableLesson>> {
@@ -115,11 +119,15 @@ class TimetableRepositoryImpl(
     }
 
     override suspend fun getTimetableData(schoolId: Uuid, weekId: String): Flow<Timetable?> {
-        return vppDatabase.timetableDao.getTimetableData(schoolId, weekId).map { it?.toModel() }
+        return vppDatabase.timetableDao.getTimetableData(schoolId, weekId)
+            .map { it?.toModel() }
+            .distinctUntilChanged()
     }
 
     override fun getTimetables(school: School.AppSchool): Flow<List<Timetable>> {
-        return vppDatabase.timetableDao.getTimetables(school.id).map { it.map { item -> item.toModel() } }
+        return vppDatabase.timetableDao.getTimetables(school.id)
+            .map { it.map { item -> item.toModel() } }
+            .distinctUntilChanged()
     }
 
     override fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Lesson.TimetableLesson>> {

@@ -5,6 +5,7 @@ package plus.vplan.app.core.data.school
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -14,11 +15,9 @@ import plus.vplan.app.core.database.model.database.DbSchool
 import plus.vplan.app.core.database.model.database.DbSchoolAlias
 import plus.vplan.app.core.database.model.database.DbSchoolSp24Acess
 import plus.vplan.app.core.model.Alias
-import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.CreationReason
 import plus.vplan.app.core.model.School
 import plus.vplan.app.network.vpp.school.SchoolApi
-import plus.vplan.app.network.vpp.school.SchoolDto
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
@@ -49,7 +48,8 @@ class SchoolRepositoryImpl(
         if (identifier.isEmpty()) throw IllegalArgumentException("Identifiers cannot be empty")
         return this
             .findLocalIdByIdentifier(identifier)
-            .flatMapLatest { id -> id ?.let { schoolDao.findById(id).map { it?.toModel() } } ?: flowOf(null) }
+            .distinctUntilChanged()
+            .flatMapLatest { id -> id?.let { schoolDao.findById(id).map { it?.toModel() }.distinctUntilChanged() } ?: flowOf(null) }
             .map { school ->
                 if (school == null) {
                     val result = schoolApi.getByAlias(identifier.first()) ?: return@map null

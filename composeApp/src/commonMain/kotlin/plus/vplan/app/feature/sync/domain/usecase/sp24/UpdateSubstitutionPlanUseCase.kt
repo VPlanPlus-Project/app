@@ -112,7 +112,7 @@ class UpdateSubstitutionPlanUseCase(
             val lessonsForDay = mutableListOf<Lesson.SubstitutionPlanLesson>()
 
             val day = Day(
-                id = Day.buildId(sp24School, date),
+                id = Day.buildId(sp24School.id, date),
                 date = date,
                 school = sp24School,
                 week = week,

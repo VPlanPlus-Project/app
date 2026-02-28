@@ -7,6 +7,7 @@ import androidx.compose.runtime.Stable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -75,78 +76,76 @@ class HomeworkPopulator : KoinComponent {
         context: PopulationContext
     ): Flow<List<PopulatedHomework>> {
         if (homework.isEmpty()) return flowOf(emptyList())
-        val subjectInstances = when (context) {
+
+        val subjectInstances: Flow<List<SubjectInstance>> = when (context) {
             is PopulationContext.Profile -> subjectInstanceRepository.getBySchool(context.profile.school)
             is PopulationContext.School -> subjectInstanceRepository.getBySchool(context.school)
         }
 
-        val groups = when (context) {
+        val groups: Flow<List<Group>> = when (context) {
             is PopulationContext.Profile -> groupRepository.getBySchool(context.profile.school)
             is PopulationContext.School -> groupRepository.getBySchool(context.school)
         }
 
-        val vppIds = vppIdRepository.getAllLocalIds()
+        val vppIds: Flow<List<VppId>> = vppIdRepository.getAllLocalIds()
             .flatMapLatest { ids ->
                 if (ids.isEmpty()) flowOf(emptyList())
                 else combine(ids.map { vppIdRepository.getByLocalId(it) }) { it.filterNotNull() }
             }
 
-        val profiles = profileRepository.getAll()
+        val profiles: Flow<List<Profile>> = profileRepository.getAll()
 
-        return combine(
+        // Per-homework task/file flows – built once, not rebuilt on every subjectInstances/groups emit
+        val homeworkFlows: List<Flow<Pair<List<Homework.HomeworkTask>, List<File>>>> = homework.map { hw ->
+            val tasksFlow: Flow<List<Homework.HomeworkTask>> =
+                if (hw.taskIds.isEmpty()) flowOf(emptyList())
+                else combine(hw.taskIds.map { homeworkRepository.getTaskByLocalId(it) }) { it.filterNotNull() }
+
+            val filesFlow: Flow<List<File>> =
+                if (hw.fileIds.isEmpty()) flowOf(emptyList())
+                else combine(hw.fileIds.map { fileRepository.getById(it, false) }) { arr ->
+                    arr.filterIsInstance<CacheState.Done<File>>().map { it.data }
+                }
+
+            combine(tasksFlow, filesFlow) { tasks, files -> tasks to files }
+        }
+
+        val homeworkCombined: Flow<List<Pair<List<Homework.HomeworkTask>, List<File>>>> =
+            if (homeworkFlows.size == 1) homeworkFlows[0].map { listOf(it) }
+            else combine(homeworkFlows) { it.toList() }
+
+        val result: Flow<List<PopulatedHomework>> = combine(
             subjectInstances,
             groups,
             vppIds,
             profiles,
-        ) { subjectInstances, groups, vppIds, profiles ->
-            Quadruple(subjectInstances, groups, vppIds, profiles)
-        }.flatMapLatest { (subjectInstances, groups, vppIds, profiles) ->
-
-            combine(
-                homework.map { homework ->
-                    val tasksFlow =
-                        if (homework.taskIds.isEmpty()) flowOf(emptyList())
-                        else combine(
-                        homework.taskIds.map { homeworkRepository.getTaskByLocalId(it) }
-                    ) { it.filterNotNull() }
-
-                    val filesFlow =
-                        if (homework.fileIds.isEmpty()) flowOf(emptyList())
-                        else combine(
-                        homework.fileIds.map { fileRepository.getById(it, false) }
-                    ) { it.filterIsInstance<CacheState.Done<File>>() }
-
-                    combine(tasksFlow, filesFlow) { tasks, files ->
-
-                        when (homework) {
-                            is Homework.CloudHomework -> PopulatedHomework.CloudHomework(
-                                homework = homework,
-                                tasks = tasks,
-                                files = files.map { it.data },
-                                subjectInstance = homework.subjectInstanceId
-                                    ?.let { sid -> subjectInstances.firstOrNull { it.id == sid } },
-                                group = homework.groupId
-                                    ?.let { gid -> groups.firstOrNull { it.id == gid } },
-                                createdBy = AppEntity.VppId(homework.createdById),
-                                createdByUser = vppIds.first { it.id == homework.createdById }
-                            )
-
-                            is Homework.LocalHomework -> PopulatedHomework.LocalHomework(
-                                homework = homework,
-                                tasks = tasks,
-                                files = files.map { it.data },
-                                subjectInstance = homework.subjectInstanceId
-                                    ?.let { sid -> subjectInstances.firstOrNull { it.id == sid } },
-                                group = homework.groupId
-                                    ?.let { gid -> groups.firstOrNull { it.id == gid } },
-                                createdBy = AppEntity.Profile(homework.createdByProfileId),
-                                createdByProfile = profiles.first { it.id == homework.createdByProfileId } as Profile.StudentProfile
-                            )
-                        }
-                    }
+            homeworkCombined,
+        ) { subjectInstances, groups, vppIds, profiles, taskFilePairs ->
+            homework.mapIndexed { i, hw ->
+                val (tasks, files) = taskFilePairs[i]
+                when (hw) {
+                    is Homework.CloudHomework -> PopulatedHomework.CloudHomework(
+                        homework = hw,
+                        tasks = tasks,
+                        files = files,
+                        subjectInstance = hw.subjectInstanceId?.let { sid -> subjectInstances.firstOrNull { it.id == sid } },
+                        group = hw.groupId?.let { gid -> groups.firstOrNull { it.id == gid } },
+                        createdBy = AppEntity.VppId(hw.createdById),
+                        createdByUser = vppIds.first { it.id == hw.createdById }
+                    )
+                    is Homework.LocalHomework -> PopulatedHomework.LocalHomework(
+                        homework = hw,
+                        tasks = tasks,
+                        files = files,
+                        subjectInstance = hw.subjectInstanceId?.let { sid -> subjectInstances.firstOrNull { it.id == sid } },
+                        group = hw.groupId?.let { gid -> groups.firstOrNull { it.id == gid } },
+                        createdBy = AppEntity.Profile(hw.createdByProfileId),
+                        createdByProfile = profiles.first { it.id == hw.createdByProfileId } as Profile.StudentProfile
+                    )
                 }
-            ) { it.toList() }
+            }
         }
+        return result.distinctUntilChanged()
     }
 
     fun populateSingle(homework: Homework): Flow<PopulatedHomework> {
@@ -225,9 +224,3 @@ class HomeworkPopulator : KoinComponent {
     }
 }
 
-private data class Quadruple<A, B, C, D>(
-    val first: A,
-    val second: B,
-    val third: C,
-    val fourth: D
-)

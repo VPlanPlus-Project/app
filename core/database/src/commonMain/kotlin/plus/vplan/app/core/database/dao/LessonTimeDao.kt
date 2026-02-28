@@ -31,10 +31,8 @@ interface LessonTimeDao {
     @Upsert
     suspend fun upsert(lessonTime: DbLessonTime)
 
-    @Transaction
-    suspend fun upsert(lessonTimes: List<DbLessonTime>) {
-        lessonTimes.forEach { upsert(it) }
-    }
+    @Upsert
+    suspend fun upsert(lessonTimes: List<DbLessonTime>)
 
     @Query("DELETE FROM lesson_times WHERE id = :id")
     suspend fun deleteById(id: String)

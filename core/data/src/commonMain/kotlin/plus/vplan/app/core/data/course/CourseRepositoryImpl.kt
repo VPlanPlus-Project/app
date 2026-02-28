@@ -32,20 +32,28 @@ class CourseRepositoryImpl(
     }
 
     override fun getBySchool(school: School): Flow<List<Course>> {
-        return courseDao.getBySchool(school.id).map { courses -> courses.map { it.toModel() } }
+        return courseDao.getBySchool(school.id)
+            .map { courses -> courses.map { it.toModel() } }
+            .distinctUntilChanged()
     }
 
     override fun getByGroup(group: Group): Flow<List<Course>> {
-        return courseDao.getByGroup(group.id).map { items -> items.map { it.toModel() } }
+        return courseDao.getByGroup(group.id)
+            .map { items -> items.map { it.toModel() } }
+            .distinctUntilChanged()
     }
 
     override fun getAll(): Flow<List<Course>> {
-        return courseDao.getAll().map { courses -> courses.map { it.toModel() } }
+        return courseDao.getAll()
+            .map { courses -> courses.map { it.toModel() } }
+            .distinctUntilChanged()
     }
 
     @Deprecated("Use alias")
     override fun getByLocalId(id: Uuid): Flow<Course?> {
-        return courseDao.findById(id).map { it?.toModel() }
+        return courseDao.findById(id)
+            .map { it?.toModel() }
+            .distinctUntilChanged()
     }
 
     override suspend fun save(course: Course) {

@@ -2,6 +2,9 @@ package plus.vplan.app.di
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
@@ -136,6 +139,8 @@ import kotlin.time.Instant
 expect val platformModule: Module
 
 val appModule = module(createdAtStart = true) {
+    single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+
     single<HttpClient> {
         val appLogger = co.touchlab.kermit.Logger.withTag("Ktor Client")
         HttpClient {

@@ -86,7 +86,6 @@ class SetUpSchoolDataUseCase(
                 name = schoolName?.data ?: "Unbekannte Schule",
                 aliases = setOf(sp24Alias),
                 cachedAt = Clock.System.now(),
-                groupIds = emptyList(),
                 sp24Id = state.sp24Id.toString(),
                 username = state.username,
                 password = state.password,

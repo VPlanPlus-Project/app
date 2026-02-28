@@ -17,7 +17,6 @@ data class Day(
     }
 
     companion object {
-        fun buildId(school: School, date: LocalDate) = "${school.aliases}/$date"
         fun buildId(schoolId: Uuid, date: LocalDate) = "$schoolId/$date"
     }
 }
