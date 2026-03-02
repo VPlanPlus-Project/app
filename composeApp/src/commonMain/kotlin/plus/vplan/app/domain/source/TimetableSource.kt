@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Lesson
-import plus.vplan.app.domain.repository.TimetableRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

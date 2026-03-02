@@ -24,7 +24,7 @@ import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TimetableRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause

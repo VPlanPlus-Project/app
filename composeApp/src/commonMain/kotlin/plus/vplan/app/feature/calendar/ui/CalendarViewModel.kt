@@ -4,15 +4,18 @@ package plus.vplan.app.feature.calendar.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,7 +30,6 @@ import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
-import plus.vplan.app.domain.model.populated.PopulatedDay
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
@@ -63,6 +65,8 @@ class CalendarViewModel(
 ) : ViewModel() {
     val state: StateFlow<CalendarState>
         field = MutableStateFlow(CalendarState())
+
+    private val logger = Logger.withTag("CalendarViewModel")
 
     private var dayJobs: Map<LocalDate, Job> = emptyMap()
 
@@ -118,71 +122,87 @@ class CalendarViewModel(
 
     private fun launchDay(profile: Profile, date: LocalDate): Job {
         return viewModelScope.launch {
-            getDayUseCase(profile, date).collect { populatedDay ->
-                updateDayState(date, populatedDay)
-            }
-        }
-    }
+            val context = PopulationContext.Profile(profile)
+            val forceReducedFlow = keyValueRepository.getBooleanOrDefault(Keys.forceReducedCalendarView.key, false)
+            getDayUseCase(profile, date)
+                .distinctUntilChangedBy { day ->
+                    val timetableIds = day.timetable.map { it.id }.sorted()
+                    val substitutionIds = day.substitution.map { it.id }.sorted()
+                    val homeworkIds = day.homework.map { it.id }.sorted()
+                    val assessmentIds = day.assessments.map { it.id }.sorted()
+                    "${day.day.id}|${day.day.dayType}|${day.day.info}|$timetableIds|$substitutionIds|$homeworkIds|$assessmentIds"
+                }
+                .flatMapLatest { day ->
+                    logger.d { "[$date] PopulatedDay emitted: timetable=${day.timetable.size} substitution=${day.substitution.size}" }
+                    val lessonsSource = day.substitution.ifEmpty { day.timetable }
+                    logger.d { "[$date] lessonsSource=${lessonsSource.size} (using ${if (day.substitution.isEmpty()) "timetable" else "substitution"})" }
+                    combine(
+                        lessonPopulator.populateMultiple(lessonsSource, context),
+                        homeworkPopulator.populateMultiple(day.homework, context),
+                        assessmentPopulator.populateMultiple(day.assessments, context),
+                        forceReducedFlow,
+                    ) { lessons, homework, assessments, forceReduced ->
+                        logger.d { "[$date] populateMultiple combine fired: lessons=${lessons.size}" }
+                        Triple(day, Pair(lessons, forceReduced), Pair(homework, assessments))
+                    }
+                }
+                .distinctUntilChangedBy { (d, lessonsForceReduced, hwAssessments) ->
+                    val lessonIds = lessonsForceReduced.first.map { it.lesson.id }.sorted()
+                    val homeworkIds = hwAssessments.first.map { it.homework.id }.sorted()
+                    val assessmentIds = hwAssessments.second.map { it.assessment.id }.sorted()
+                    "${d.day.id}|${d.day.dayType}|${d.day.info}|$lessonIds|$homeworkIds|$assessmentIds"
+                }
+                .collect { (day, lessonsForceReduced, hwAssessments) ->
+                    val (lessons, forceReduced) = lessonsForceReduced
+                    val (homework, assessments) = hwAssessments
 
-    private suspend fun updateDayState(date: LocalDate, day: PopulatedDay) {
-        val profile = state.value.currentProfile ?: return
+                    val lessonsGrouped = lessons
+                        .groupBy { it.lesson.lessonNumber }
+                        .mapValues { (_, l) -> l.sortedBy { it.lesson.subject } }
 
-        val lessons = day.substitution.ifEmpty { day.timetable }
-            .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
+                    val hasTooManyInterpolated = lessons.count { it.lessonTime?.interpolated == false } < lessons.size / 2
+                    val hasMissingLessonTimes = lessons.any { it.lessonTime == null }
 
-        val populatedHomework = day.homework.toList()
-            .let { homeworkPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
+                    val lessonRendering = if (state.value.displayType == DisplayType.Agenda || hasTooManyInterpolated || hasMissingLessonTimes || forceReduced) {
+                        LessonRendering.ListView(lessonsGrouped)
+                    } else {
+                        try {
+                            LessonRendering.Layouted(lessons.calculateLayouting())
+                        } catch (_: LessonWithoutTimeException) {
+                            LessonRendering.ListView(lessonsGrouped)
+                        }
+                    }
 
-        val populatedAssessments = day.assessments.toList()
-            .let { assessmentPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
+                    val calendarDay = CalendarDay(
+                        date = date,
+                        info = day.day.info,
+                        dayType = day.day.dayType,
+                        week = day.day.week,
+                        lessons = lessonRendering,
+                        assessments = assessments,
+                        homework = homework
+                    )
 
-        val lessonsGrouped = lessons
-            .groupBy { it.lesson.lessonNumber }
-            .mapValues { (_, lessons) -> lessons.sortedBy { it.lesson.subject } }
+                    val selectorDay = DateSelectorDay(
+                        date = date,
+                        homework = homework.map { hw ->
+                            DateSelectorDay.HomeworkItem(
+                                subject = hw.subjectInstance?.subject ?: hw.group?.name ?: "?",
+                                isDone = profile is Profile.StudentProfile && hw.tasks.all { it.isDone(profile) }
+                            )
+                        }.sortedBy { it.subject },
+                        assessments = assessments.map { it.subjectInstance.subject },
+                        isHoliday = state.value.holidays.contains(date)
+                    )
 
-        val hasTooManyInterpolated = lessons.count { it.lessonTime?.interpolated == false } < lessons.size / 2
-        val hasMissingLessonTimes = lessons.any { it.lessonTime == null }
-
-        val forceReduced = keyValueRepository.getBooleanOrDefault(Keys.forceReducedCalendarView.key, false).first()
-
-        val lessonRendering = if (state.value.displayType == DisplayType.Agenda || hasTooManyInterpolated || hasMissingLessonTimes || forceReduced) {
-            LessonRendering.ListView(lessonsGrouped)
-        } else {
-            try {
-                LessonRendering.Layouted(lessons.calculateLayouting())
-            } catch (_: LessonWithoutTimeException) {
-                LessonRendering.ListView(lessonsGrouped)
-            }
-        }
-
-        val calendarDay = CalendarDay(
-            date = date,
-            info = day.day.info,
-            dayType = day.day.dayType,
-            week = day.day.week,
-            lessons = lessonRendering,
-            assessments = populatedAssessments,
-            homework = populatedHomework
-        )
-
-        val selectorDay = DateSelectorDay(
-            date = date,
-            homework = populatedHomework.map { hw ->
-                DateSelectorDay.HomeworkItem(
-                    subject = hw.subjectInstance?.subject ?: hw.group?.name ?: "?",
-                    isDone = profile is Profile.StudentProfile && hw.tasks.all { it.isDone(profile) }
-                )
-            }.sortedBy { it.subject },
-            assessments = populatedAssessments.map { it.subjectInstance.subject },
-            isHoliday = state.value.holidays.contains(date)
-        )
-
-        state.update {
-            it.copy(
-                uiUpdateVersion = it.uiUpdateVersion + 1,
-                calendarDays = it.calendarDays + (date to calendarDay),
-                selectorDays = it.selectorDays + (date to selectorDay)
-            )
+                    state.update {
+                        it.copy(
+                            uiUpdateVersion = it.uiUpdateVersion + 1,
+                            calendarDays = it.calendarDays + (date to calendarDay),
+                            selectorDays = it.selectorDays + (date to selectorDay)
+                        )
+                    }
+                }
         }
     }
 

@@ -16,7 +16,7 @@ import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Timetable
-import plus.vplan.app.domain.repository.TimetableRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
 import kotlin.uuid.Uuid
 
 class TimetableRepositoryImpl(

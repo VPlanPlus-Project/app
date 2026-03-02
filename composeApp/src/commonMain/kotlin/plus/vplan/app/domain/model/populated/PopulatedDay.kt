@@ -6,11 +6,9 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.core.data.holiday.HolidayRepository
 import plus.vplan.app.core.model.Assessment
@@ -22,11 +20,10 @@ import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TimetableRepository
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
-private val logger = Logger.withTag("DayPopulator")
+private val LOGGER = Logger.withTag("DayPopulator")
 
 data class PopulatedDay(
     val day: Day,
@@ -41,28 +38,23 @@ class DayPopulator(
     private val holidayRepository: HolidayRepository,
     private val assessmentRepository: AssessmentRepository,
     private val homeworkRepository: HomeworkRepository,
-    private val timetableRepository: TimetableRepository,
+    private val timetableRepository: plus.vplan.app.core.data.timetable.TimetableRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
 ) {
     fun populateSingle(day: Day, context: PopulationContext): Flow<PopulatedDay> {
-        logger.d { "[${day.date}] populateSingle START – building sub-flows" }
-
-        val holidays = holidayRepository
-            .getBySchool(day.school)
-            .onEach { logger.d { "[${day.date}] holidays emitted: count=${it.size}" } }
+        val holidays = holidayRepository.getBySchool(day.school)
 
         val assessments = when (context) {
             is PopulationContext.Profile -> assessmentRepository.getByProfile(profileId = context.profile.id, day.date)
             else -> assessmentRepository.getByDate(day.date)
-        }.onEach { logger.d { "[${day.date}] assessments emitted: count=${it.size}" } }
+        }
 
         val homework = when (context) {
             is PopulationContext.Profile -> homeworkRepository.getByProfile(profileId = context.profile.id, day.date)
             else -> homeworkRepository.getByDate(day.date)
-        }.onEach { logger.d { "[${day.date}] homework emitted: count=${it.size}" } }
+        }
 
-        val timetable = timetableRepository.getTimetables(context.school)
-            .onEach { logger.d { "[${day.date}] getTimetables emitted: count=${it.size}, relevant=${it.filter { t -> t.week.start <= day.date && t.dataState == Timetable.HasData.Yes }.size}" } }
+        val timetable: Flow<List<Lesson.TimetableLesson>> = timetableRepository.getTimetables(context.school)
             .distinctUntilChangedBy { timetables ->
                 timetables
                     .filter { it.week.start <= day.date && it.dataState == Timetable.HasData.Yes }
@@ -75,8 +67,6 @@ class DayPopulator(
                     .filter { it.dataState == Timetable.HasData.Yes }
                     .maxByOrNull { it.week.weekIndex }
                     ?.week
-                logger.d { "[${day.date}] timetable flatMapLatest – timetableWeek=${timetableWeek?.id} weekIndex=${timetableWeek?.weekIndex}" }
-
                 when (context) {
                     is PopulationContext.Profile -> timetableRepository.getForProfile(
                         profile = context.profile,
@@ -89,26 +79,21 @@ class DayPopulator(
                         dayOfWeek = day.date.dayOfWeek
                     )
                 }.map { it.toList() }
-                    .onEach { logger.d { "[${day.date}] timetable lessons emitted: count=${it.size}" } }
             }
 
         val substitution = substitutionPlanRepository
-            .getCurrentVersion()
-            .onEach { logger.d { "[${day.date}] getCurrentVersion emitted: version=$it" } }
-            .flatMapLatest { substitutionPlanVersion ->
-                logger.d { "[${day.date}] substitution flatMapLatest – version=$substitutionPlanVersion" }
-                substitutionPlanRepository.getSubstitutionPlanBySchool(
-                    schoolId = context.school.id,
-                    date = day.date,
-                    version = substitutionPlanVersion
-                ).map { lessons ->
-                    if (context !is PopulationContext.Profile) return@map lessons
-                    val profile = context.profile
-                    lessons.filter { lesson -> lessonMatchesProfile(lesson, profile) }
-                }.onEach { logger.d { "[${day.date}] substitution lessons emitted: count=${it.size}" } }
+            .getSubstitutionPlanBySchool(
+                schoolId = context.school.id,
+                date = day.date,
+                version = null
+            ).map { lessons ->
+                LOGGER.d { "[${day.date}] raw substitution from DB: ${lessons.size} lessons, groupIds per lesson: ${lessons.map { it.groupIds }}" }
+                if (context !is PopulationContext.Profile) return@map lessons
+                val profile = context.profile
+                val filtered = lessons.filter { lesson -> lessonMatchesProfile(lesson, profile) }
+                LOGGER.d { "[${day.date}] after lessonMatchesProfile (profile.group=${if (profile is plus.vplan.app.core.model.Profile.StudentProfile) profile.group.id else "teacher"}): ${filtered.size} lessons" }
+                filtered
             }
-
-        logger.d { "[${day.date}] populateSingle – calling combine(assessments, homework, timetable, substitution, holidays)" }
 
         return combine(
             assessments,
@@ -117,7 +102,6 @@ class DayPopulator(
             substitution,
             holidays
         ) { assessments, homework, timetable, substitution, holidays ->
-            logger.d { "[${day.date}] combine fired – assessments=${assessments.size} homework=${homework.size} timetable=${timetable.size} substitution=${substitution.size} holidays=${holidays.size}" }
             val holiday = holidays.firstOrNull { it.date == day.date }
             PopulatedDay(
                 day = day.copy(
@@ -148,7 +132,7 @@ class DayPopulator(
 }
 
 private fun lessonMatchesProfile(
-    lesson: plus.vplan.app.core.model.Lesson.SubstitutionPlanLesson,
+    lesson: Lesson.SubstitutionPlanLesson,
     profile: plus.vplan.app.core.model.Profile
 ): Boolean {
     if (profile is plus.vplan.app.core.model.Profile.StudentProfile) {
@@ -161,4 +145,3 @@ private fun lessonMatchesProfile(
     }
     return true
 }
-

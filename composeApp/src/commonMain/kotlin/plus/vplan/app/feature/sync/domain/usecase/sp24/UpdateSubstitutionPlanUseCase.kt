@@ -27,7 +27,7 @@ import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TimetableRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormat
@@ -135,6 +135,8 @@ class UpdateSubstitutionPlanUseCase(
                     return@mapNotNull null
                 }
 
+                val groupsForLesson = groups.filter { it.name in lesson.classes }
+
                 Lesson.SubstitutionPlanLesson(
                     id = Uuid.random(),
                     date = date,
@@ -145,10 +147,10 @@ class UpdateSubstitutionPlanUseCase(
                     isTeacherChanged = lesson.teachersChanged,
                     roomIds = rooms.filter { it.name in lesson.rooms }.map { it.id },
                     isRoomChanged = lesson.roomsChanged,
-                    groupIds = groups.filter { it.name in lesson.classes }.map { it.id },
+                    groupIds = groupsForLesson.map { it.id },
                     subjectInstanceId = lesson.subjectInstanceId?.let { subjectInstances.firstOrNull { it.aliases.any { alias -> alias.provider == AliasProvider.Sp24 && alias.version == 1 && alias.value.split("/").last() == lesson.subjectInstanceId.toString() } } }?.id,
                     lessonNumber = lesson.lessonNumber,
-                    lessonTimeId = lessonTimes.first().id,
+                    lessonTimeId = lessonTimes.firstOrNull { lessonTime -> lessonTime.lessonNumber == lesson.lessonNumber && lessonTime.group in groupsForLesson.map { it.id } }?.id,
                     info = lesson.info
                 )
             }.let { lessonsForDay.addAll(it) }

@@ -78,8 +78,6 @@ class HomeViewModel(
     val state: StateFlow<HomeState>
         field = MutableStateFlow(HomeState())
 
-    private val logger = Logger.withTag("HomeViewModel")
-
     private var newsJob: Job? = null
 
     init {
@@ -103,6 +101,11 @@ class HomeViewModel(
 
         // 3. Main Data Orchestration
         viewModelScope.launch {
+            val forceStaticFlow = keyValueRepository.getBooleanOrDefault(
+                Keys.forceStaticTimetableHomescreen.key,
+                Keys.forceStaticTimetableHomescreen.default
+            )
+
             val dayFlow = combine(
                 state.map { it.currentProfile }.distinctUntilChanged(),
                 state.map { it.currentTime.date }.distinctUntilChanged()
@@ -119,23 +122,19 @@ class HomeViewModel(
 
             combine(
                 dayFlow,
-                state.map { it.currentTime }.distinctUntilChanged()
-            ) { dayWithDetails, time -> dayWithDetails to time }
-                .distinctUntilChangedBy { (dayWithDetails, time) ->
+                state.map { it.currentTime }.distinctUntilChanged(),
+                forceStaticFlow
+            ) { dayWithDetails, time, forceStatic -> Triple(dayWithDetails, time, forceStatic) }
+                .distinctUntilChangedBy { (dayWithDetails, time, _) ->
                     val lessonIds = dayWithDetails?.lessons?.map { it.lesson.id }?.sorted()
                     "$lessonIds|${time.date}|${time.hour}|${time.minute}"
                 }
-                .collectLatest { (dayWithDetails, time) ->
-                    logger.d { "Day With Details: date=${dayWithDetails?.populatedDay?.day?.date}, lessons=${dayWithDetails?.lessons?.size}, homework=${dayWithDetails?.homework?.size}, assessments=${dayWithDetails?.assessments?.size}" }
+                .collectLatest { (dayWithDetails, time, forceStatic) ->
                     if (dayWithDetails == null) {
                         state.update { it.copy(day = null, currentLessons = emptyList(), nextLessons = emptyList(), remainingLessons = emptyMap()) }
                         return@collectLatest
                     }
 
-                    val forceStatic = keyValueRepository.getBooleanOrDefault(
-                        Keys.forceStaticTimetableHomescreen.key,
-                        Keys.forceStaticTimetableHomescreen.default
-                    ).first()
 
                     val canShowCurrentAndNext = !forceStatic && dayWithDetails.populatedDay.day.date == time.date
                     val lessons = dayWithDetails.lessons
@@ -208,20 +207,18 @@ class HomeViewModel(
     }
 
     private fun getDay(profile: Profile, forDate: LocalDate, shouldRetryRecursively: Boolean): Flow<DayWithDetails?> {
-        logger.d { "[$forDate] getDay called (recursive=$shouldRetryRecursively)" }
         return getDayUseCase(profile, forDate)
             .distinctUntilChangedBy { day ->
                 val lessonIds = (day.substitution.ifEmpty { day.timetable }).map { it.id }.sorted()
                 "${day.day.id}|${day.day.info}|${day.day.dayType}|${day.holiday?.id}|$lessonIds"
             }
             .flatMapLatest { day ->
-                logger.d { "[$forDate] getDay flatMapLatest → timetable=${day.timetable.size} substitution=${day.substitution.size} – calling populateMultiple" }
+                Logger.d("HomeViewModel") { "[getDay $forDate] PopulatedDay: timetable=${day.timetable.size}, substitution=${day.substitution.size}, using=${if (day.substitution.isEmpty()) "timetable" else "substitution"}" }
                 combine(
                     homeworkPopulator.populateMultiple(day.homework, PopulationContext.Profile(profile)),
                     assessmentPopulator.populateMultiple(day.assessments, PopulationContext.Profile(profile)),
                     lessonPopulator.populateMultiple(day.substitution.ifEmpty { day.timetable }, PopulationContext.Profile(profile)),
                 ) { homework, assessments, lessons ->
-                    logger.d { "[$forDate] populateMultiple combine fired → populatedLessons=${lessons.size}" }
                     DayWithDetails(day, lessons, homework, assessments)
                 }.distinctUntilChangedBy { d ->
                     val lessonIds = d.lessons.map { it.lesson.id }.sorted()
@@ -231,7 +228,6 @@ class HomeViewModel(
                 }.flatMapLatest { dayWithDetails ->
                     // Retry with next school day if current day is completed
                     if (shouldRetryRecursively && dayWithDetails.isCompleted(LocalDateTime.now()) && dayWithDetails.populatedDay.day.nextSchoolDay != null) {
-                        logger.d { "[$forDate] day completed → retrying with nextSchoolDay=${dayWithDetails.populatedDay.day.nextSchoolDay}" }
                         getDay(profile, dayWithDetails.populatedDay.day.nextSchoolDay!!, false)
                     } else {
                         flowOf(dayWithDetails)
@@ -307,7 +303,7 @@ data class DayWithDetails(
         if (lessons.isEmpty()) return true
         return lessons.all { lesson ->
             val lessonTime = lesson.lessonTime ?: return@all true
-            val plannedEnd = comparedTo.date.atTime(lessonTime.end)
+            val plannedEnd = populatedDay.day.date.atTime(lessonTime.end)
             plannedEnd < comparedTo
         }
     }

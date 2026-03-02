@@ -74,12 +74,32 @@ interface SubstitutionPlanDao {
     suspend fun deleteSubstitutionPlanByIds(ids: List<Uuid>)
     
     @Transaction
-    @Query("SELECT * FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id LEFT JOIN day ON day.id = day_id WHERE school_groups.school_id = :schoolId AND day.date = :date AND (version = :version OR :version IS NULL) GROUP BY substitution_plan_lesson.id")
+    @RewriteQueriesToDropUnusedColumns
+    @Query("""
+        SELECT * FROM substitution_plan_lesson
+        WHERE substitution_plan_lesson.day_id IN (
+            SELECT id FROM day WHERE school_id = :schoolId AND date = :date
+        )
+        AND (:version IS NULL OR version = :version)
+        AND substitution_plan_lesson.id IN (
+            SELECT substitution_plan_lesson_id FROM substitution_plan_group_crossover
+            LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id
+            WHERE school_groups.school_id = :schoolId
+        )
+    """)
     fun getTimetableLessons(schoolId: Uuid, date: LocalDate, version: Int?): Flow<List<EmbeddedSubstitutionPlanLesson>>
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM substitution_plan_lesson LEFT JOIN substitution_plan_group_crossover ON substitution_plan_group_crossover.substitution_plan_lesson_id = substitution_plan_lesson.id LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id WHERE school_groups.school_id = :schoolId AND version = :version GROUP BY substitution_plan_lesson.id")
+    @Query("""
+        SELECT * FROM substitution_plan_lesson
+        WHERE version = :version
+          AND substitution_plan_lesson.id IN (
+              SELECT substitution_plan_lesson_id FROM substitution_plan_group_crossover
+              LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id
+              WHERE school_groups.school_id = :schoolId
+          )
+    """)
     fun getTimetableLessons(schoolId: Uuid, version: Int): Flow<List<EmbeddedSubstitutionPlanLesson>>
 
     @Transaction
@@ -88,7 +108,17 @@ interface SubstitutionPlanDao {
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM profile_substitution_plan_cache LEFT JOIN substitution_plan_lesson ON substitution_plan_lesson.id = profile_substitution_plan_cache.substitution_lesson_id LEFT JOIN day ON day.id = substitution_plan_lesson.day_id WHERE profile_substitution_plan_cache.profile_id = :profileId AND day.date = :date AND (version = :version OR :version IS NULL)")
+    @Query("""
+        SELECT * FROM substitution_plan_lesson
+        WHERE substitution_plan_lesson.id IN (
+            SELECT substitution_lesson_id FROM profile_substitution_plan_cache
+            WHERE profile_id = :profileId
+        )
+        AND substitution_plan_lesson.day_id IN (
+            SELECT id FROM day WHERE date = :date
+        )
+        AND (:version IS NULL OR version = :version)
+    """)
     fun getForProfile(profileId: Uuid, date: LocalDate, version: Int?): Flow<List<EmbeddedSubstitutionPlanLesson>>
 
     @Transaction

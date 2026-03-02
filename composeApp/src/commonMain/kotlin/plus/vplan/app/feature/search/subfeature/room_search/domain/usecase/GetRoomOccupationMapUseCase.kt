@@ -20,7 +20,7 @@ import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TimetableRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.overlaps

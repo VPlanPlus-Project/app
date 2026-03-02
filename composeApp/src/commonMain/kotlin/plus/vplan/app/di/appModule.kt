@@ -82,7 +82,7 @@ import plus.vplan.app.core.data.news.NewsRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TimetableRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.domain.service.ProfileService
