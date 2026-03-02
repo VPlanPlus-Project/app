@@ -38,37 +38,37 @@ class TimetableRepositoryImpl(
                     lessonNumber = lesson.lessonNumber,
                     subject = lesson.subject,
                     timetableId = lesson.timetableId,
-                    lessonTimeId = lesson.lessonTimeId,
+                    lessonTimeId = lesson.lessonTime?.id,
                     version = version,
                 )
             },
             groups = lessons.flatMap { lesson ->
-                lesson.groupIds.map { group ->
+                lesson.groups.map { group ->
                     DbTimetableGroupCrossover(
                         timetableLessonId = lesson.id,
-                        groupId = group
+                        groupId = group.id,
                     )
                 }
             },
             teachers = lessons.flatMap { lesson ->
-                lesson.teacherIds.map { teacher ->
+                lesson.teachers.map { teacher ->
                     DbTimetableTeacherCrossover(
                         timetableLessonId = lesson.id,
-                        teacherId = teacher
+                        teacherId = teacher.id,
                     )
                 }
             },
             rooms = lessons.flatMap { lesson ->
-                lesson.roomIds.orEmpty().map { room ->
+                lesson.rooms.orEmpty().map { room ->
                     DbTimetableRoomCrossover(
                         timetableLessonId = lesson.id,
-                        roomId = room
+                        roomId = room.id,
                     )
                 }
             },
             weekLimitations = lessons.flatMap { lesson ->
-                lesson.limitedToWeekIds.orEmpty().map {
-                    DbTimetableWeekLimitation(timetableLessonId = lesson.id, weekId = it)
+                lesson.limitedToWeeks.orEmpty().map { week ->
+                    DbTimetableWeekLimitation(timetableLessonId = lesson.id, weekId = week.id)
                 }
             }
         )

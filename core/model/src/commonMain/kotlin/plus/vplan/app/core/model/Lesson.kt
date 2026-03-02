@@ -7,12 +7,12 @@ import kotlin.uuid.Uuid
 sealed interface Lesson : Item<Uuid, DataTag> {
     val weekId: String?
     val subject: String?
-    val teacherIds: List<Uuid>
-    val roomIds: List<Uuid>?
-    val groupIds: List<Uuid>
-    val subjectInstanceId: Uuid?
+    val teachers: List<Teacher>
+    val rooms: List<Room>?
+    val groups: List<Group>
+    val subjectInstance: SubjectInstance?
     val lessonNumber: Int
-    val lessonTimeId: String?
+    val lessonTime: LessonTime?
 
     fun getLessonSignature(): String
 
@@ -29,20 +29,20 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         val dayOfWeek: DayOfWeek,
         override val weekId: String,
         override val subject: String?,
-        override val teacherIds: List<Uuid>,
-        override val roomIds: List<Uuid>?,
-        override val groupIds: List<Uuid>,
+        override val teachers: List<Teacher>,
+        override val rooms: List<Room>?,
+        override val groups: List<Group>,
         override val lessonNumber: Int,
-        override val lessonTimeId: String?,
+        override val lessonTime: LessonTime?,
         val timetableId: Uuid,
         val weekType: String?,
-        val limitedToWeekIds: Set<String>?
+        val limitedToWeeks: List<Week>?
     ) : Lesson {
-        override val subjectInstanceId = null
+        override val subjectInstance = null
         override val isCancelled: Boolean = false
 
         override fun getLessonSignature(): String {
-            return "$subject/$teacherIds/$roomIds/$groupIds/$lessonNumber/$dayOfWeek/$weekType"
+            return "$subject/${teachers.map { it.id }.sorted()}/${rooms.orEmpty().map { it.id }.sorted()}/${groups.map { it.id }.sorted()}/$lessonNumber/$dayOfWeek/$weekType"
         }
     }
 
@@ -52,21 +52,21 @@ sealed interface Lesson : Item<Uuid, DataTag> {
         override val weekId: String?,
         override val subject: String?,
         val isSubjectChanged: Boolean,
-        override val teacherIds: List<Uuid>,
+        override val teachers: List<Teacher>,
         val isTeacherChanged: Boolean,
-        override val roomIds: List<Uuid>,
+        override val rooms: List<Room>,
         val isRoomChanged: Boolean,
-        override val groupIds: List<Uuid>,
-        override val subjectInstanceId: Uuid?,
+        override val groups: List<Group>,
+        override val subjectInstance: SubjectInstance?,
         override val lessonNumber: Int,
-        override val lessonTimeId: String?,
+        override val lessonTime: LessonTime?,
         val info: String?
     ) : Lesson {
         override val isCancelled: Boolean
-            get() = subject == null && subjectInstanceId != null
+            get() = subject == null && subjectInstance != null
 
         override fun getLessonSignature(): String {
-            return "$subject/${teacherIds.sorted()}/${roomIds.sorted()}/${groupIds.sorted()}/$lessonNumber/$date/$subjectInstanceId"
+            return "$subject/${teachers.map { it.id }.sorted()}/${rooms.map { it.id }.sorted()}/${groups.map { it.id }.sorted()}/$lessonNumber/$date/${subjectInstance?.id}"
         }
     }
 }

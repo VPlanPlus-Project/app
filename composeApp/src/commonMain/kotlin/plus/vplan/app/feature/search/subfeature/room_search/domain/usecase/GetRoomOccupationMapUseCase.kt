@@ -12,16 +12,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
+import plus.vplan.app.core.data.timetable.TimetableRepository
+import plus.vplan.app.core.data.week.WeekRepository
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Room
-import plus.vplan.app.domain.model.populated.LessonPopulator
-import plus.vplan.app.domain.model.populated.PopulatedLesson
-import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.core.data.timetable.TimetableRepository
-import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.overlaps
 import kotlin.uuid.ExperimentalUuidApi
@@ -31,7 +29,6 @@ class GetRoomOccupationMapUseCase(
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val timetableRepository: TimetableRepository,
     private val weekRepository: WeekRepository,
-    private val lessonPopulator: LessonPopulator,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> = channelFlow {
@@ -44,26 +41,21 @@ class GetRoomOccupationMapUseCase(
             combine(
                 substitutionPlanRepository.getCurrentVersion().flatMapLatest { substitutionPlanVersion ->
                     substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, date, substitutionPlanVersion)
-                        .flatMapLatest { lessons -> lessonPopulator.populateMultiple(lessons.toList(), PopulationContext.Profile(profile)) }
-                        .map { lessons -> lessons.map { it as PopulatedLesson.SubstitutionPlanLesson } }
                 },
                 timetableRepository.getTimetableForSchool(profile.school.id, timetableVersion)
-                    .map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } }
-                    .flatMapLatest { lessons -> lessonPopulator.populateMultiple(lessons, PopulationContext.Profile(profile)) }
-                    .map { lessons -> lessons.map { it as PopulatedLesson.TimetableLesson } },
-                weekRepository.getBySchool(profile.school),
+                    .map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } },
                 roomRepository.getBySchool(profile.school.id)
-            ) { substitutionPlanLessons, timetableLessons, weeks, rooms ->
+            ) { substitutionPlanLessons, timetableLessons, rooms ->
                 val substitution = substitutionPlanLessons
-                    .filter { lesson -> lesson.lesson.subject != null }
+                    .filter { lesson -> lesson.subject != null }
 
                 val lessons = substitution.ifEmpty { timetableLessons }
 
                 rooms.associateWith { room ->
-                    lessons.filter { room.id in it.lesson.roomIds.orEmpty() }.map {
+                    lessons.filter { room.id in it.rooms.orEmpty().map { it.id } }.map {
                         when (it) {
-                            is PopulatedLesson.SubstitutionPlanLesson -> Occupancy.Lesson.fromLesson(it, date)
-                            is PopulatedLesson.TimetableLesson -> Occupancy.Lesson.fromLesson(it, date)
+                            is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson.fromLesson(it, date)
+                            is Lesson.TimetableLesson -> Occupancy.Lesson.fromLesson(it, date)
                         }
                     }.toSet()
                 }.let { map -> send(map.map { OccupancyMapRecord(it.key, it.value) }) }
@@ -76,9 +68,9 @@ sealed class Occupancy(
     open val start: LocalDateTime,
     open val end: LocalDateTime
 ) {
-    data class Lesson(val lesson: PopulatedLesson, val date: LocalDate, override val start: LocalDateTime, override val end: LocalDateTime) : Occupancy(start, end) {
+    data class Lesson(val lesson: plus.vplan.app.core.model.Lesson, val date: LocalDate, override val start: LocalDateTime, override val end: LocalDateTime) : Occupancy(start, end) {
         companion object {
-            suspend fun fromLesson(lesson: PopulatedLesson, contextDate: LocalDate): Occupancy {
+            fun fromLesson(lesson: plus.vplan.app.core.model.Lesson, contextDate: LocalDate): Occupancy {
                 return Lesson(lesson, contextDate, lesson.lessonTime!!.start.atDate(contextDate), lesson.lessonTime!!.end.atDate(contextDate))
             }
         }

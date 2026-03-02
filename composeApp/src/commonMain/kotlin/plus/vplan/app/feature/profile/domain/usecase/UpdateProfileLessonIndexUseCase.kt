@@ -1,9 +1,9 @@
 package plus.vplan.app.feature.profile.domain.usecase
 
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.core.data.timetable.TimetableRepository
 
 class UpdateProfileLessonIndexUseCase(
     private val timetableRepository: TimetableRepository,
@@ -15,10 +15,10 @@ class UpdateProfileLessonIndexUseCase(
             version = substitutionPlanVersion
         ).first().filter { lesson ->
             if (profile is Profile.StudentProfile) {
-                if (profile.group.id !in lesson.groupIds) return@filter false
-                if (lesson.subjectInstanceId != null && profile.subjectInstanceConfiguration[lesson.subjectInstanceId] == false) return@filter false
+                if (profile.group.id !in lesson.groups.map { it.id }) return@filter false
+                if (lesson.subjectInstance != null && profile.subjectInstanceConfiguration.toList().firstOrNull { it.first.id == lesson.subjectInstance!!.id }?.second == false) return@filter false
             } else if (profile is Profile.TeacherProfile) {
-                if (profile.teacher.id !in lesson.teacherIds) return@filter false
+                if (profile.teacher.id !in lesson.teachers.map { it.id }) return@filter false
             }
 
             return@filter true
@@ -30,9 +30,9 @@ class UpdateProfileLessonIndexUseCase(
             version = timetableVersion
         ).first().filter { lesson ->
             if (profile is Profile.StudentProfile) {
-                if (profile.group.id !in lesson.groupIds) return@filter false
+                if (profile.group.id !in lesson.groups.map { it.id }) return@filter false
             } else if (profile is Profile.TeacherProfile) {
-                if (profile.teacher.id !in lesson.teacherIds) return@filter false
+                if (profile.teacher.id !in lesson.teachers.map { it.id }) return@filter false
             }
 
             return@filter true

@@ -19,7 +19,7 @@ class GetCourseConfigurationUseCase: KoinComponent {
             .filterKeysNotNull()
             .mapValues { (_, subjectInstances) ->
                 val selections =
-                    subjectInstances.map { profile.subjectInstanceConfiguration[it.id] == true }
+                    subjectInstances.map { si -> profile.subjectInstanceConfiguration.toList().firstOrNull { it.first.id == si.id }?.second == true }
                 if (selections.all { it }) true else if (selections.any { it }) null else false
             }
             .toList()

@@ -42,26 +42,26 @@ class SubstitutionPlanRepositoryImpl(
                     subject = lesson.subject,
                     isSubjectChanged = lesson.isSubjectChanged,
                     info = lesson.info,
-                    subjectInstanceId = lesson.subjectInstanceId,
+                    subjectInstanceId = lesson.subjectInstance?.id,
                     isRoomChanged = lesson.isRoomChanged,
                     isTeacherChanged = lesson.isTeacherChanged,
-                    lessonTimeId = lesson.lessonTimeId,
+                    lessonTimeId = lesson.lessonTime?.id,
                     version = version
                 )
             },
             groups = lessons.flatMap { lesson ->
-                lesson.groupIds.map { group ->
-                    DbSubstitutionPlanGroupCrossover(group, lesson.id)
+                lesson.groups.map { group ->
+                    DbSubstitutionPlanGroupCrossover(group.id, lesson.id)
                 }
             },
             teachers = lessons.flatMap { lesson ->
-                lesson.teacherIds.map { teacher ->
-                    DbSubstitutionPlanTeacherCrossover(teacher, lesson.id)
+                lesson.teachers.map { teacher ->
+                    DbSubstitutionPlanTeacherCrossover(teacher.id, lesson.id)
                 }
             },
             rooms = lessons.flatMap { lesson ->
-                lesson.roomIds.map { room ->
-                    DbSubstitutionPlanRoomCrossover(room, lesson.id)
+                lesson.rooms.map { room ->
+                    DbSubstitutionPlanRoomCrossover(room.id, lesson.id)
                 }
             }
         )
@@ -84,7 +84,7 @@ class SubstitutionPlanRepositoryImpl(
         return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date, version).map { it.map { it.toModel() } }.distinctUntilChanged()
     }
 
-    override suspend fun getForProfile(profile: Profile, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>> {
+    override fun getForProfile(profile: Profile, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>> {
         return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date, version)
             .map { it.map { it.toModel() } }
             .distinctUntilChanged()

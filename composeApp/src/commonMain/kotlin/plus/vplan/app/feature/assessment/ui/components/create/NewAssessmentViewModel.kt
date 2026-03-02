@@ -48,7 +48,7 @@ class NewAssessmentViewModel(
                         .getByGroup(profile.group)
                         .map { subjectInstances ->
                             subjectInstances.filter { subjectInstance ->
-                                profile.subjectInstanceConfiguration[subjectInstance.id] != false
+                                profile.subjectInstanceConfiguration.toList().firstOrNull { it.first.id == subjectInstance.id }?.second != false
                             }
                         }
                         .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }

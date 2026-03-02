@@ -28,7 +28,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import plus.vplan.app.core.model.Day
-import plus.vplan.app.domain.model.populated.PopulatedLesson
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLessons
 import plus.vplan.app.feature.search.domain.model.SearchResult
@@ -136,7 +136,7 @@ fun SchoolEntityResults(
 }
 
 data class LessonLoadResult(
-    val currentLessons: SnapshotStateList<PopulatedLesson>,
+    val currentLessons: SnapshotStateList<Lesson>,
     val nextLesson: LocalTime?,
     val hasLessonsLoaded: Boolean
 )
@@ -146,7 +146,7 @@ private fun rememberLessonLoadResult(
     result: SearchResult.SchoolEntity,
     contextDate: LocalDate
 ): LessonLoadResult {
-    val currentLessons = remember { mutableStateListOf<PopulatedLesson>() }
+    val currentLessons = remember { mutableStateListOf<Lesson>() }
     var nextLesson by remember { mutableStateOf<LocalTime?>(null) }
     var hasLessonsLoaded by remember { mutableStateOf(false) }
 
@@ -169,15 +169,15 @@ private fun getHeaderTextForTodayWithLessons(lessons: Int) = when (lessons) {
 }
 
 @Composable
-private fun getHeaderTextForRoomWithCurrentLessons(lessons: List<PopulatedLesson>): String {
+private fun getHeaderTextForRoomWithCurrentLessons(lessons: List<Lesson>): String {
     val groups = lessons.flatMap { it.groups }.distinct()
     return if (groups.isEmpty()) "Momentan nicht belegt (Keine Gruppen zugeteilt)"
     else "Momentan belegt von ${groups.map { it.name }.sorted().joinToString()}"
 }
 
 @Composable
-private fun getHeaderTextForTeacherOrGroupWithCurrentLessons(lessons: List<PopulatedLesson>): String {
-    val rooms = lessons.flatMap { it.rooms }.distinct()
+private fun getHeaderTextForTeacherOrGroupWithCurrentLessons(lessons: List<Lesson>): String {
+    val rooms = lessons.flatMap { it.rooms.orEmpty() }.distinct()
     return if (rooms.isEmpty()) "Aktuell keine Stunde"
     else {
         val until = lessons.mapNotNull { it.lessonTime }.maxOfOrNull { it.end }

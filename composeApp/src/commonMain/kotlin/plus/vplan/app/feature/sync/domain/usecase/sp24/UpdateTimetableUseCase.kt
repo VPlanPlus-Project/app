@@ -2,7 +2,6 @@ package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
@@ -131,28 +130,25 @@ class UpdateTimetableUseCase(
                                 return@mapNotNull null
                             }
 
-                            val lessonTimeId = if (lessonGroups.isEmpty()) null
+                            val lessonTime = if (lessonGroups.isEmpty()) null
                             else lessonTimeRepository
                                 .getByGroup(lessonGroups.first(), lesson.lessonNumber)
-                                .map { it?.id }
                                 .first()
 
                             Lesson.TimetableLesson(
                                 dayOfWeek = DayOfWeek(lesson.dayOfWeek.isoDayNumber),
                                 weekType = lesson.weekType,
                                 subject = lesson.subject,
-                                roomIds = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
-                                teacherIds = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
-                                groupIds = lessonGroups.map { it.id },
+                                rooms = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } },
+                                teachers = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } },
+                                groups = lessonGroups,
                                 timetableId = timetableMetadata.id,
-                                limitedToWeekIds = lesson.limitToWeekNumber
-                                    ?.mapNotNull { weeks.firstOrNull { week -> week.weekEntity.weekIndex == it } }
-                                    ?.map { it.weekEntity.id }
-                                    ?.toSet(),
+                                limitedToWeeks = lesson.limitToWeekNumber
+                                    ?.mapNotNull { weeks.firstOrNull { week -> week.weekEntity.weekIndex == it }?.weekEntity },
                                 lessonNumber = lesson.lessonNumber,
                                 weekId = week.weekEntity.id,
                                 id = Uuid.random(),
-                                lessonTimeId = lessonTimeId
+                                lessonTime = lessonTime
                             )
                         }
 

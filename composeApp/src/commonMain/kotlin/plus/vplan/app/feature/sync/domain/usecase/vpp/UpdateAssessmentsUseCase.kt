@@ -66,7 +66,6 @@ class UpdateAssessmentsUseCase(
 
             val enabledSubjectInstanceIds = studentProfile.subjectInstanceConfiguration.filterValues { it }.keys
             val subjectInstanceAliases = enabledSubjectInstanceIds
-                .mapNotNull { subjectInstanceRepository.getByLocalId(it).first() }
                 .flatMap { it.aliases }
 
             logger.d { "Downloading assessments for ${studentProfile.name}" }
@@ -140,9 +139,7 @@ class UpdateAssessmentsUseCase(
             run buildAndSendNotifications@{
                 if (allowNotifications) {
                     logger.d { "Checking if new assessments are created" }
-                    val allowedSubjectInstanceIds = studentProfile.subjectInstanceConfiguration
-                        .filterValues { it }
-                        .keys
+                    val allowedSubjectInstances = studentProfile.subjectInstanceConfiguration.keys
 
                     val newAssessments = combine(
                         (downloadedIds - existingIds).ifEmpty { return@buildAndSendNotifications }
@@ -158,7 +155,7 @@ class UpdateAssessmentsUseCase(
                             assessment is PopulatedAssessment.CloudAssessment && assessment.createdByUser.id != studentProfile.vppId?.id && (assessment.assessment.createdAt until Clock.System.now()
                                 .toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days
                         }
-                        .filter { assessment -> allowedSubjectInstanceIds.contains(assessment.subjectInstance.id) }
+                        .filter { assessment -> allowedSubjectInstances.contains(assessment.subjectInstance) }
 
                     if (newAssessments.isEmpty()) return@buildAndSendNotifications
 

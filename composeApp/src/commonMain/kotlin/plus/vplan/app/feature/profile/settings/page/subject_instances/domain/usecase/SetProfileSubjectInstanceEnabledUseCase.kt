@@ -18,11 +18,10 @@ class SetProfileSubjectInstanceEnabledUseCase(
         profileRepository.save(profile.copy(
             subjectInstanceConfiguration =
                 subjectInstanceRepository.getByGroup(profile.group).first()
-                    .associate { it.id to true } +
+                    .associateWith { true } +
                     profile.subjectInstanceConfiguration +
                         subjectInstances
                             .associateWith { enabled }
-                            .mapKeys { it.key.id }
         ))
     }
 

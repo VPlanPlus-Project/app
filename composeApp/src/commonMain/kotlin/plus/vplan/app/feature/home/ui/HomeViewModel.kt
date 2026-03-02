@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -36,11 +35,9 @@ import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
-import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedDay
 import plus.vplan.app.domain.model.populated.PopulatedHomework
-import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -64,7 +61,6 @@ class HomeViewModel(
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getDayUseCase: GetDayUseCase,
     private val getNewsUseCase: GetNewsUseCase,
-    private val lessonPopulator: LessonPopulator,
     private val homeworkPopulator: HomeworkPopulator,
     private val assessmentPopulator: AssessmentPopulator,
     private val keyValueRepository: KeyValueRepository,
@@ -126,7 +122,7 @@ class HomeViewModel(
                 forceStaticFlow
             ) { dayWithDetails, time, forceStatic -> Triple(dayWithDetails, time, forceStatic) }
                 .distinctUntilChangedBy { (dayWithDetails, time, _) ->
-                    val lessonIds = dayWithDetails?.lessons?.map { it.lesson.id }?.sorted()
+                    val lessonIds = dayWithDetails?.lessons?.map { it.id }?.sorted()
                     "$lessonIds|${time.date}|${time.hour}|${time.minute}"
                 }
                 .collectLatest { (dayWithDetails, time, forceStatic) ->
@@ -147,16 +143,16 @@ class HomeViewModel(
                             CurrentLesson(
                                 lesson = lesson,
                                 continuing = lessons.firstOrNull {
-                                    it.lesson.subject != null &&
-                                            it.lesson.subject == lesson.lesson.subject &&
-                                            (it.lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId ==
-                                            (lesson.lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstanceId &&
-                                            it.lesson.lessonNumber == lesson.lesson.lessonNumber + 1
+                                    it.subject != null &&
+                                            it.subject == lesson.subject &&
+                                            (it as? Lesson.SubstitutionPlanLesson)?.subjectInstance?.id ==
+                                            (lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstance?.id &&
+                                            it.lessonNumber == lesson.lessonNumber + 1
                                 }
                             )
                         }.sortedBySuspending {
-                            val subjectInstance = (it.lesson as? PopulatedLesson.SubstitutionPlanLesson)?.subjectInstance
-                            it.lesson.lesson.subject + (subjectInstance?.course?.name ?: "")
+                            val subjectInstance = it.lesson.subjectInstance
+                            it.lesson.subject + (subjectInstance?.course?.name ?: "")
                         }
                     } else emptyList()
 
@@ -165,7 +161,7 @@ class HomeViewModel(
                             val timeRange = lesson.lessonTime ?: return@filter true
                             timeRange.start.atDate(dayWithDetails.populatedDay.day.date) > time
                         }
-                            .groupBy { it.lesson.lessonNumber }
+                            .groupBy { it.lessonNumber }
                             .minByOrNull { it.key }?.value.orEmpty()
                     } else emptyList()
 
@@ -177,12 +173,12 @@ class HomeViewModel(
                             timeRange.start.atDate(dayWithDetails.populatedDay.day.date) > time
                         }
                         .sortedBySuspending { lesson ->
-                            val subject = lesson.lesson.subject ?: ""
-                            val subjectInstance = (lesson as? PopulatedLesson.SubstitutionPlanLesson)?.subjectInstance
+                            val subject = lesson.subject ?: ""
+                            val subjectInstance = lesson.subjectInstance
                             val courseName = subjectInstance?.course?.name ?: ""
-                            lesson.lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
+                            lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
                         }
-                        .groupBy { it.lesson.lessonNumber }
+                        .groupBy { it.lessonNumber }
 
                     state.update {
                         it.copy(
@@ -217,11 +213,10 @@ class HomeViewModel(
                 combine(
                     homeworkPopulator.populateMultiple(day.homework, PopulationContext.Profile(profile)),
                     assessmentPopulator.populateMultiple(day.assessments, PopulationContext.Profile(profile)),
-                    lessonPopulator.populateMultiple(day.substitution.ifEmpty { day.timetable }, PopulationContext.Profile(profile)),
-                ) { homework, assessments, lessons ->
-                    DayWithDetails(day, lessons, homework, assessments)
+                ) { homework, assessments ->
+                    DayWithDetails(day, day.substitution.ifEmpty { day.timetable }, homework, assessments)
                 }.distinctUntilChangedBy { d ->
-                    val lessonIds = d.lessons.map { it.lesson.id }.sorted()
+                    val lessonIds = d.lessons.map { it.id }.sorted()
                     val homeworkIds = d.homework.map { it.homework.id }.sorted()
                     val assessmentIds = d.assessments.map { it.assessment.id }.sorted()
                     "$lessonIds|$homeworkIds|$assessmentIds"
@@ -285,8 +280,8 @@ data class HomeState(
     val news: List<News> = emptyList(),
     val hasInterpolatedLessonTimes: Boolean = false,
     val currentLessons: List<CurrentLesson> = emptyList(),
-    val nextLessons: List<PopulatedLesson> = emptyList(),
-    val remainingLessons: Map<Int, List<PopulatedLesson>> = emptyMap()
+    val nextLessons: List<Lesson> = emptyList(),
+    val remainingLessons: Map<Int, List<Lesson>> = emptyMap()
 )
 
 sealed class HomeEvent {
@@ -295,7 +290,7 @@ sealed class HomeEvent {
 
 data class DayWithDetails(
     val populatedDay: PopulatedDay,
-    val lessons: List<PopulatedLesson>,
+    val lessons: List<Lesson>,
     val homework: List<PopulatedHomework>,
     val assessments: List<PopulatedAssessment>
 ) {
@@ -310,6 +305,6 @@ data class DayWithDetails(
 }
 
 data class CurrentLesson(
-    val lesson: PopulatedLesson,
-    val continuing: PopulatedLesson?
+    val lesson: Lesson,
+    val continuing: Lesson?
 )

@@ -21,7 +21,7 @@ class UpdateProfileHomeworkIndexUseCase(
                 (homework is PopulatedHomework.LocalHomework && homework.createdByProfile.id == profile.id) ||
                         (homework is PopulatedHomework.CloudHomework && homework.createdByUser.id == (profile as? Profile.StudentProfile)?.vppId?.id) ||
                         (homework.group?.id == (profile as? Profile.StudentProfile)?.group?.id && profile is Profile.StudentProfile) ||
-                        (homework.subjectInstance?.id in (profile as? Profile.StudentProfile)?.subjectInstanceConfiguration.orEmpty().filterValues { it }.keys && profile is Profile.StudentProfile)
+                        (homework.subjectInstance?.id in (profile as? Profile.StudentProfile)?.subjectInstanceConfiguration.orEmpty().filterValues { it }.keys.map { it.id } && profile is Profile.StudentProfile)
             }
             .let { relevantHomework ->
                 homeworkRepository.createCacheForProfile(profile.id, relevantHomework.map { it.homework.id })

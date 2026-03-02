@@ -61,9 +61,9 @@ interface ProfileDao {
                 active != newActive
             }
 
-        deleteDisabledSubjectInstances(profile.id, subjectInstanceConfigurationsToBeDeleted.keys.toList())
+        deleteDisabledSubjectInstances(profile.id, subjectInstanceConfigurationsToBeDeleted.keys.toList().map { it.id })
         profile.subjectInstanceConfiguration.forEach { (sid, active) ->
-            if (!active) insertDisabledSubjectInstances(profile.id, sid)
+            if (!active) insertDisabledSubjectInstances(profile.id, sid.id)
         }
     }
 

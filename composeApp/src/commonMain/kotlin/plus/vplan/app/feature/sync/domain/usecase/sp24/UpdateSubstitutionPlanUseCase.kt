@@ -14,6 +14,7 @@ import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Day
@@ -21,13 +22,10 @@ import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.model.populated.LessonPopulator
-import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormat
@@ -52,7 +50,6 @@ class UpdateSubstitutionPlanUseCase(
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val platformNotificationRepository: PlatformNotificationRepository,
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
-    private val lessonPopulator: LessonPopulator,
 ) {
     suspend operator fun invoke(
         sp24School: School.AppSchool,
@@ -143,15 +140,15 @@ class UpdateSubstitutionPlanUseCase(
                     weekId = week?.id,
                     subject = lesson.subject,
                     isSubjectChanged = lesson.subjectChanged,
-                    teacherIds = teachers.filter { it.name in lesson.teachers }.map { it.id },
+                    teachers = teachers.filter { it.name in lesson.teachers },
                     isTeacherChanged = lesson.teachersChanged,
-                    roomIds = rooms.filter { it.name in lesson.rooms }.map { it.id },
+                    rooms = rooms.filter { it.name in lesson.rooms },
                     isRoomChanged = lesson.roomsChanged,
-                    groupIds = groupsForLesson.map { it.id },
-                    subjectInstanceId = lesson.subjectInstanceId?.let { subjectInstances.firstOrNull { it.aliases.any { alias -> alias.provider == AliasProvider.Sp24 && alias.version == 1 && alias.value.split("/").last() == lesson.subjectInstanceId.toString() } } }?.id,
+                    groups = groupsForLesson,
+                    subjectInstance = lesson.subjectInstanceId?.let { subjectInstances.firstOrNull { it.aliases.any { alias -> alias.provider == AliasProvider.Sp24 && alias.version == 1 && alias.value.split("/").last() == lesson.subjectInstanceId.toString() } } },
                     lessonNumber = lesson.lessonNumber,
-                    lessonTimeId = lessonTimes.firstOrNull { lessonTime -> lessonTime.lessonNumber == lesson.lessonNumber && lessonTime.group in groupsForLesson.map { it.id } }?.id,
-                    info = lesson.info
+                    lessonTime = lessonTimes.firstOrNull { lessonTime -> lessonTime.lessonNumber == lesson.lessonNumber && lessonTime.group in groupsForLesson.map { it.id } },
+                    info = lesson.info,
                 )
             }.let { lessonsForDay.addAll(it) }
 
@@ -172,16 +169,14 @@ class UpdateSubstitutionPlanUseCase(
             dates.forEach forEachDate@{ date ->
                 val oldLessons = oldLessonsMaps
                     .firstOrNull { it.date == date }?.oldLessons.orEmpty()
-                    .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
-                    .associateWith { it.lesson.getLessonSignature() }
+                    .associateWith { it.getLessonSignature() }
 
                 val newLessons = substitutionPlanRepository.getForProfile(
                     profile = profile,
                     date = date,
                     version = insertVersion
                 ).first()
-                    .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
-                    .associateWith { it.lesson.getLessonSignature() }
+                    .associateWith { it.getLessonSignature() }
 
                 // Skip if last lesson ends in past (notification is not important anymore)
                 if ((oldLessons + newLessons).keys.mapNotNull { it.lessonTime?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachDate
@@ -196,7 +191,7 @@ class UpdateSubstitutionPlanUseCase(
                 val newDay = dayRepository.getBySchool(sp24School, date).first()
 
                 val changedLessons = changedOrNewLessons
-                    .associateWith { it.lesson.lessonNumber }
+                    .associateWith { it.lessonNumber }
                     .toList()
                     .sortedBy { it.second }
                     .map { it.first }
@@ -209,9 +204,9 @@ class UpdateSubstitutionPlanUseCase(
                         largeText = buildString {
                             changedLessons.forEachIndexed { i, lesson ->
                                 if (i > 0) append("\n")
-                                append(lesson.lesson.lessonNumber)
+                                append(lesson.lessonNumber)
                                 append(". ")
-                                append(lesson.lesson.subject ?: "Entfall")
+                                append(lesson.subject ?: "Entfall")
                                 if (lesson.teachers.isNotEmpty()) {
                                     append(" mit ")
                                     append(lesson.teachers.joinToString(", ") { it.name })

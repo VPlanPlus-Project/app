@@ -66,9 +66,8 @@ class UpdateHomeworkUseCase(
                 return@forEachProfile
             }
 
-            val enabledSubjectInstanceIds = studentProfile.subjectInstanceConfiguration.filterValues { it }.keys
-            val subjectInstanceAliases = enabledSubjectInstanceIds
-                .mapNotNull { subjectInstanceRepository.getByLocalId(it).first() }
+            val enabledSubjectInstances = studentProfile.subjectInstanceConfiguration.filterValues { it }.keys
+            val subjectInstanceAliases = enabledSubjectInstances
                 .flatMap { it.aliases }
 
             logger.d { "Downloading homework for ${studentProfile.group.name}" }
@@ -177,7 +176,7 @@ class UpdateHomeworkUseCase(
                             homework.createdById != studentProfile.vppId?.id && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now()
                                 .toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days
                         }
-                        .filter { it.subjectInstanceId == null || it.subjectInstanceId in allowedSubjectInstanceVppIds }
+                        .filter { it.subjectInstanceId == null || it.subjectInstanceId in allowedSubjectInstanceVppIds.map { it.id } }
 
                     if (newHomework.size == 1) {
                         platformNotificationRepository.sendNotification(

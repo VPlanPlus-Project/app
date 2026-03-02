@@ -65,7 +65,6 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
-import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.LessonRendering
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
@@ -197,28 +196,28 @@ fun CalendarView(
                                                     .offset(y = y, x = (availableWidth / lesson.of) * lesson.sideShift)
                                                     .clip(RoundedCornerShape(6.dp))
                                                     .background(
-                                                        if (lesson.lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
+                                                        if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.isCancelled) MaterialTheme.colorScheme.errorContainer
                                                         else MaterialTheme.colorScheme.surfaceVariant
                                                     )
                                                     .padding(4.dp)
                                             ) {
                                                 CompositionLocalProvider(
-                                                    LocalContentColor provides if (lesson.lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                    LocalContentColor provides if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.subject == null) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                                 ) {
                                                     Column {
                                                         Row(
                                                             verticalAlignment = Alignment.Top,
                                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                                         ) {
-                                                            if (lesson.lesson.lesson is Lesson.SubstitutionPlanLesson && (lesson.lesson.lesson as Lesson.SubstitutionPlanLesson).isSubjectChanged) SubjectIcon(
+                                                            if (lesson.lesson is Lesson.SubstitutionPlanLesson && (lesson.lesson as Lesson.SubstitutionPlanLesson).isSubjectChanged) SubjectIcon(
                                                                 modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                                                                subject = lesson.lesson.lesson.subject,
+                                                                subject = lesson.lesson.subject,
                                                                 contentColor = MaterialTheme.colorScheme.onError,
                                                                 containerColor = MaterialTheme.colorScheme.error
                                                             )
                                                             else SubjectIcon(
                                                                 modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
-                                                                subject = lesson.lesson.lesson.subject
+                                                                subject = lesson.lesson.subject
                                                             )
                                                             Column {
                                                                 FlowRow(
@@ -233,10 +232,10 @@ fun CalendarView(
                                                                         Text(
                                                                             text = buildAnnotatedString {
                                                                                 withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle()) {
-                                                                                    if (lesson.lesson.lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
-                                                                                        if (lesson.lesson is PopulatedLesson.SubstitutionPlanLesson && lesson.lesson.subjectInstance != null) append(lesson.lesson.subjectInstance.subject + " ")
+                                                                                    if (lesson.lesson.isCancelled) withStyle(style = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(textDecoration = TextDecoration.LineThrough)) {
+                                                                                        if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.subjectInstance != null) append(lesson.lesson.subjectInstance!!.subject + " ")
                                                                                         append("Entfall")
-                                                                                    } else append(lesson.lesson.lesson.subject)
+                                                                                    } else append(lesson.lesson.subject)
                                                                                 }
                                                                             },
                                                                             style = MaterialTheme.typography.bodySmall
@@ -251,12 +250,12 @@ fun CalendarView(
                                                                             style = MaterialTheme.typography.labelMedium
                                                                         )
                                                                     }
-                                                                    if (lesson.lesson.rooms.isNotEmpty()) Box(
+                                                                    if (lesson.lesson.rooms.orEmpty().isNotEmpty()) Box(
                                                                         modifier = Modifier.height(itemHeight),
                                                                         contentAlignment = Alignment.BottomStart
                                                                     ) {
                                                                         Text(
-                                                                            text = lesson.lesson.rooms.joinToString { it.name },
+                                                                            text = lesson.lesson.rooms.orEmpty().joinToString { it.name },
                                                                             style = MaterialTheme.typography.labelMedium
                                                                         )
                                                                     }
@@ -285,7 +284,7 @@ fun CalendarView(
                                                                 )
                                                             }
                                                         }
-                                                        if (lesson.lesson.lesson is Lesson.SubstitutionPlanLesson && (lesson.lesson.lesson as Lesson.SubstitutionPlanLesson).info != null) Row(
+                                                        if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.info != null) Row(
                                                             verticalAlignment = Alignment.CenterVertically,
                                                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                                                             modifier = Modifier.padding(start = 16.dp)
@@ -297,13 +296,13 @@ fun CalendarView(
                                                                 tint = MaterialTheme.colorScheme.onSurface
                                                             )
                                                             Text(
-                                                                text = (lesson.lesson.lesson as Lesson.SubstitutionPlanLesson).info!!,
+                                                                text = lesson.lesson.info!!,
                                                                 style = MaterialTheme.typography.bodySmall,
                                                                 maxLines = 1,
                                                                 overflow = TextOverflow.Ellipsis
                                                             )
                                                         }
-                                                        if (lesson.lesson.lesson is Lesson.TimetableLesson && (lesson.lesson as PopulatedLesson.TimetableLesson).weeks != null) Row {
+                                                        if (lesson.lesson is Lesson.TimetableLesson && lesson.lesson.limitedToWeeks != null) Row {
                                                             Box(
                                                                 modifier = Modifier
                                                                     .padding(end = 4.dp)
@@ -318,9 +317,9 @@ fun CalendarView(
                                                                     tint = MaterialTheme.colorScheme.onSurface
                                                                 )
                                                             }
-                                                            if (lesson.lesson.weeks != null && lesson.lesson.weeks.isNotEmpty()) Text(
-                                                                text = if (lesson.lesson.weeks.size == 1) "Nur in Schulwoche ${lesson.lesson.weeks.first()}"
-                                                                else "Nur in Schulwochen ${lesson.lesson.weeks.map { it.weekIndex }.sorted().dropLast(1).joinToString()} und ${lesson.lesson.weeks.map { it.weekIndex }.maxOf { it }}",
+                                                            if (lesson.lesson.limitedToWeeks != null && lesson.lesson.limitedToWeeks.orEmpty().isNotEmpty()) Text(
+                                                                text = if (lesson.lesson.limitedToWeeks!!.size == 1) "Nur in Schulwoche ${lesson.lesson.limitedToWeeks!!.first()}"
+                                                                else "Nur in Schulwochen ${lesson.lesson.limitedToWeeks!!.map { it.weekIndex }.sorted().dropLast(1).joinToString()} und ${lesson.lesson.limitedToWeeks!!.map { it.weekIndex }.maxOf { it }}",
                                                                 style = MaterialTheme.typography.bodySmall,
                                                                 maxLines = 1,
                                                                 overflow = TextOverflow.Ellipsis
@@ -475,7 +474,7 @@ sealed class CalendarViewLessons {
     /**
      * Used if lesson times are missing ore unsafe.
      */
-    data class ListView(val lessons: Map<Int, List<PopulatedLesson>>): CalendarViewLessons()
+    data class ListView(val lessons: Map<Int, List<Lesson>>): CalendarViewLessons()
 
     companion object {
         operator fun invoke(lessonRendering: LessonRendering): CalendarViewLessons {

@@ -20,7 +20,7 @@ class UpdateProfileAssessmentIndexUseCase(
                 val assessment = assessment
                 (assessment is PopulatedAssessment.LocalAssessment && assessment.createdByProfile.id == profile.id) ||
                         (assessment is PopulatedAssessment.CloudAssessment && assessment.createdByUser.id == (profile as? Profile.StudentProfile)?.vppId?.id) ||
-                        (assessment.subjectInstance.id in (profile as? Profile.StudentProfile)?.subjectInstanceConfiguration.orEmpty().filterValues { it }.keys && profile is Profile.StudentProfile)
+                        (assessment.subjectInstance.id in (profile as? Profile.StudentProfile)?.subjectInstanceConfiguration.orEmpty().filterValues { it }.keys.map { it.id } && profile is Profile.StudentProfile)
             }
             .let { relevantAssessments ->
                 assessmentRepository.createCacheForProfile(profile.id, relevantAssessments.map { it.assessment.id })

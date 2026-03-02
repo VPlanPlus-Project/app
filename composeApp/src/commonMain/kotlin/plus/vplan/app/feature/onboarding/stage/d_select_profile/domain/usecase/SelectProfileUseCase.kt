@@ -48,9 +48,7 @@ class SelectProfileUseCase(
                     id = Uuid.random(),
                     name = group.name,
                     group = group,
-                    subjectInstanceConfiguration = subjectInstances
-                        .mapKeys { it.key.id }
-                        .mapValues { it.value },
+                    subjectInstanceConfiguration = subjectInstances,
                     vppId = null,
                 ).also { profileRepository.save(it) }
             }

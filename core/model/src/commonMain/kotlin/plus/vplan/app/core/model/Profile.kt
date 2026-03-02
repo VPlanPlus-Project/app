@@ -13,7 +13,7 @@ abstract class Profile : Item<Uuid, DataTag> {
         override val id: Uuid,
         override val name: String,
         val group: Group,
-        val subjectInstanceConfiguration: Map<Uuid, Boolean>,
+        val subjectInstanceConfiguration: Map<SubjectInstance, Boolean>,
         val vppId: VppId.Active?
     ) : Profile() {
         override val profileType = ProfileType.STUDENT

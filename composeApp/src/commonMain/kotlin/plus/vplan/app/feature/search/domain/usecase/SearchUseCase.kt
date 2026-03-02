@@ -21,7 +21,6 @@ import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
-import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
@@ -47,7 +46,6 @@ class SearchUseCase(
     private val assessmentPopulator: AssessmentPopulator
 ): KoinComponent {
     private val besteSchuleGradesRepository by inject<GradesRepository>()
-    private val lessonPopulator by inject<LessonPopulator>()
     private val gradesPopulator by inject<GradesPopulator>()
     private val collectionPopulator by inject<CollectionPopulator>()
 
@@ -60,8 +58,7 @@ class SearchUseCase(
             substitutionPlanRepository.getCurrentVersion().collectLatest { substitutionPlanVersion ->
                 substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, date = searchRequest.date, version = substitutionPlanVersion).collectLatest { substitutionPlanLessons ->
                     val lessons = substitutionPlanLessons
-                        .let { lessonPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
-                        .filter { lesson -> lesson.lesson.subject != null }
+                        .filter { lesson -> lesson.subject != null }
 
                     val results = MutableStateFlow(emptyMap<SearchResult.Type, List<SearchResult>>())
                     launch { results.collect { send(it) } }
@@ -75,21 +72,21 @@ class SearchUseCase(
                             results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->
                                 SearchResult.SchoolEntity.Group(
                                     group = group,
-                                    lessons = lessons.filter { group.id in it.lesson.groupIds }.calculateLayouting()
+                                    lessons = lessons.filter { group.id in it.groups.map { it.id } }.calculateLayouting()
                                 )
                             })
 
                             results.value = results.value.plus(SearchResult.Type.Teacher to teachers.map { teacher ->
                                 SearchResult.SchoolEntity.Teacher(
                                     teacher = teacher,
-                                    lessons = lessons.filter { teacher.id in it.lesson.teacherIds }.calculateLayouting()
+                                    lessons = lessons.filter { teacher.id in it.teachers.map { it.id } }.calculateLayouting()
                                 )
                             })
 
                             results.value = results.value.plus(SearchResult.Type.Room to rooms.map { room ->
                                 SearchResult.SchoolEntity.Room(
                                     room = room,
-                                    lessons = lessons.filter { room.id in it.lesson.roomIds.orEmpty() }.calculateLayouting()
+                                    lessons = lessons.filter { room.id in it.rooms.map { it.id } }.calculateLayouting()
                                 )
                             })
                         }.collect()

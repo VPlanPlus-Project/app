@@ -4,7 +4,6 @@ package plus.vplan.app.feature.calendar.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -23,15 +22,14 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import plus.vplan.app.core.model.Day
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
-import plus.vplan.app.domain.model.populated.LessonPopulator
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
-import plus.vplan.app.domain.model.populated.PopulatedLesson
 import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
@@ -46,7 +44,6 @@ import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
-import plus.vplan.app.utils.sortedByKey
 import kotlin.time.Duration.Companion.days
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -58,15 +55,12 @@ class CalendarViewModel(
     private val setLastDisplayTypeUseCase: SetLastDisplayTypeUseCase,
     private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase,
     private val getHolidaysUseCase: GetHolidaysUseCase,
-    private val lessonPopulator: LessonPopulator,
     private val homeworkPopulator: HomeworkPopulator,
     private val assessmentPopulator: AssessmentPopulator,
     private val keyValueRepository: KeyValueRepository,
 ) : ViewModel() {
     val state: StateFlow<CalendarState>
         field = MutableStateFlow(CalendarState())
-
-    private val logger = Logger.withTag("CalendarViewModel")
 
     private var dayJobs: Map<LocalDate, Job> = emptyMap()
 
@@ -133,21 +127,17 @@ class CalendarViewModel(
                     "${day.day.id}|${day.day.dayType}|${day.day.info}|$timetableIds|$substitutionIds|$homeworkIds|$assessmentIds"
                 }
                 .flatMapLatest { day ->
-                    logger.d { "[$date] PopulatedDay emitted: timetable=${day.timetable.size} substitution=${day.substitution.size}" }
-                    val lessonsSource = day.substitution.ifEmpty { day.timetable }
-                    logger.d { "[$date] lessonsSource=${lessonsSource.size} (using ${if (day.substitution.isEmpty()) "timetable" else "substitution"})" }
+                    val lessons = day.substitution.ifEmpty { day.timetable }
                     combine(
-                        lessonPopulator.populateMultiple(lessonsSource, context),
                         homeworkPopulator.populateMultiple(day.homework, context),
                         assessmentPopulator.populateMultiple(day.assessments, context),
                         forceReducedFlow,
-                    ) { lessons, homework, assessments, forceReduced ->
-                        logger.d { "[$date] populateMultiple combine fired: lessons=${lessons.size}" }
+                    ) { homework, assessments, forceReduced ->
                         Triple(day, Pair(lessons, forceReduced), Pair(homework, assessments))
                     }
                 }
                 .distinctUntilChangedBy { (d, lessonsForceReduced, hwAssessments) ->
-                    val lessonIds = lessonsForceReduced.first.map { it.lesson.id }.sorted()
+                    val lessonIds = lessonsForceReduced.first.map { it.id }.sorted()
                     val homeworkIds = hwAssessments.first.map { it.homework.id }.sorted()
                     val assessmentIds = hwAssessments.second.map { it.assessment.id }.sorted()
                     "${d.day.id}|${d.day.dayType}|${d.day.info}|$lessonIds|$homeworkIds|$assessmentIds"
@@ -157,8 +147,8 @@ class CalendarViewModel(
                     val (homework, assessments) = hwAssessments
 
                     val lessonsGrouped = lessons
-                        .groupBy { it.lesson.lessonNumber }
-                        .mapValues { (_, l) -> l.sortedBy { it.lesson.subject } }
+                        .groupBy { it.lessonNumber }
+                        .mapValues { (_, l) -> l.sortedBy { it.subject } }
 
                     val hasTooManyInterpolated = lessons.count { it.lessonTime?.interpolated == false } < lessons.size / 2
                     val hasMissingLessonTimes = lessons.any { it.lessonTime == null }
@@ -262,66 +252,69 @@ data class CalendarDay(
     val lessons: LessonRendering? = null
 )
 
-suspend fun Collection<PopulatedLesson>.calculateLayouting(): List<LessonLayoutingInfo> {
+suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> {
+
     this.firstOrNull { it.lessonTime == null }?.let { throw LessonWithoutTimeException(it) }
 
     return withContext(Dispatchers.Default) {
+
         val lessons = this@calculateLayouting
-            .toList()
             .filter { it.lessonTime != null }
-            .sortedBy { it.lessonTime!!.start.inWholeMinutes().toString().padStart(4, '0') + " " + it.lesson.subject }
+            .sortedBy { it.lessonTime!!.start.inWholeMinutes() }
 
-        val layoutingInfo = mutableListOf<LessonLayoutingInfo>()
+        data class Event(val time: Int, val isStart: Boolean, val lesson: Lesson)
 
-        data class Event(val time: Long, val isStart: Boolean, val lesson: PopulatedLesson)
-
-        val events = lessons.flatMap { populatedLesson ->
+        val events = lessons.flatMap { lesson ->
             listOf(
-                Event(populatedLesson.lessonTime!!.start.inWholeMinutes().toLong(), true, populatedLesson),
-                Event(populatedLesson.lessonTime!!.end.inWholeMinutes().toLong(), false, populatedLesson)
+                Event(lesson.lessonTime!!.start.inWholeMinutes(), true, lesson),
+                Event(lesson.lessonTime!!.end.inWholeMinutes(), false, lesson)
             )
-        }
-
-        val eventsByTime = events.groupBy { it.time }.sortedByKey()
+        }.sortedWith(
+            compareBy<Event> { it.time }
+                .thenBy { if (it.isStart) 1 else 0 } // end events first at same time
+        )
 
         val active = mutableListOf<LessonLayoutingInfo>()
+        val result = mutableListOf<LessonLayoutingInfo>()
 
-        for ((_, evs) in eventsByTime) {
-            evs.filter { !it.isStart }.forEach { endEvent ->
-                active.removeAll { it.lesson == endEvent.lesson }
+        for (event in events) {
+
+            if (!event.isStart) {
+                active.removeAll { it.lesson == event.lesson }
+                continue
             }
 
-            val startEvents = evs.filter { it.isStart }
-            if (startEvents.isNotEmpty()) {
-                val occupied = active.map { it.sideShift }.toMutableSet()
+            // Determine lowest free column
+            val usedColumns = active.map { it.sideShift }.toMutableSet()
+            var column = 0
+            while (column in usedColumns) column++
 
-                val newInfos = startEvents.map { se ->
-                    var shift = 0
-                    while (shift in occupied) shift++
-                    occupied.add(shift)
-                    LessonLayoutingInfo(se.lesson, shift, 0)
-                }
+            val info = LessonLayoutingInfo(
+                lesson = event.lesson,
+                sideShift = column,
+                of = 0 // temporary
+            )
 
-                layoutingInfo.addAll(newInfos)
-                active.addAll(newInfos)
+            active.add(info)
+            result.add(info)
 
-                val activeSnapshot = active.toList()
-                for (a in activeSnapshot) {
-                    val overlaps = activeSnapshot.count { other ->
-                        other.lesson.lessonTime!!.start < a.lesson.lessonTime!!.end && other.lesson.lessonTime!!.end > a.lesson.lessonTime!!.start
-                    }
-                    val i = layoutingInfo.indexOfFirst { it.lesson == a.lesson }
-                    if (i >= 0) layoutingInfo[i] = layoutingInfo[i].copy(of = overlaps)
+            // Update overlap count for current overlap group
+            val overlapCount = active.size
+
+            active.forEach { a ->
+                val index = result.indexOfFirst { it.lesson == a.lesson }
+                if (index >= 0) {
+                    result[index] = result[index].copy(of = overlapCount)
                 }
             }
         }
 
-        return@withContext layoutingInfo
+        result
     }
 }
 
 data class LessonLayoutingInfo(
-    val lesson: PopulatedLesson,
+    val lesson: Lesson,
     val sideShift: Int,
     val of: Int
 )
@@ -331,7 +324,7 @@ enum class DisplayType {
 }
 
 sealed class LessonRendering {
-    data class ListView(val lessons: Map<Int, List<PopulatedLesson>>) : LessonRendering()
+    data class ListView(val lessons: Map<Int, List<Lesson>>) : LessonRendering()
     data class Layouted(val lessons: List<LessonLayoutingInfo>) : LessonRendering()
 
     val size: Int
@@ -342,4 +335,4 @@ sealed class LessonRendering {
 }
 
 sealed class LessonLayoutingException(message: String) : Exception(message)
-class LessonWithoutTimeException(lesson: PopulatedLesson) : LessonLayoutingException("Lesson ${lesson.lesson.id} has no lesson time")
+class LessonWithoutTimeException(lesson: Lesson) : LessonLayoutingException("Lesson ${lesson.id} has no lesson time")

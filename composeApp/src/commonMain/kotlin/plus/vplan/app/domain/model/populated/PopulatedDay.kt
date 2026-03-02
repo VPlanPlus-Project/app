@@ -2,7 +2,6 @@
 
 package plus.vplan.app.domain.model.populated
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -16,14 +15,13 @@ import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
-
-private val LOGGER = Logger.withTag("DayPopulator")
 
 data class PopulatedDay(
     val day: Day,
@@ -45,55 +43,64 @@ class DayPopulator(
         val holidays = holidayRepository.getBySchool(day.school)
 
         val assessments = when (context) {
-            is PopulationContext.Profile -> assessmentRepository.getByProfile(profileId = context.profile.id, day.date)
+            is PopulationContext.Profile -> assessmentRepository.getByProfile(
+                profileId = context.profile.id,
+                day.date
+            )
+
             else -> assessmentRepository.getByDate(day.date)
         }
 
         val homework = when (context) {
-            is PopulationContext.Profile -> homeworkRepository.getByProfile(profileId = context.profile.id, day.date)
+            is PopulationContext.Profile -> homeworkRepository.getByProfile(
+                profileId = context.profile.id,
+                day.date
+            )
+
             else -> homeworkRepository.getByDate(day.date)
         }
 
-        val timetable: Flow<List<Lesson.TimetableLesson>> = timetableRepository.getTimetables(context.school)
-            .distinctUntilChangedBy { timetables ->
-                timetables
-                    .filter { it.week.start <= day.date && it.dataState == Timetable.HasData.Yes }
-                    .maxByOrNull { it.week.weekIndex }
-                    ?.let { "${it.id}|${it.week.weekIndex}" }
-            }
-            .flatMapLatest { timetables ->
-                val timetableWeek = timetables
-                    .filter { it.week.start <= day.date }
-                    .filter { it.dataState == Timetable.HasData.Yes }
-                    .maxByOrNull { it.week.weekIndex }
-                    ?.week
-                when (context) {
-                    is PopulationContext.Profile -> timetableRepository.getForProfile(
-                        profile = context.profile,
-                        weekIndex = timetableWeek?.weekIndex ?: 0,
-                        dayOfWeek = day.date.dayOfWeek
-                    )
-                    is PopulationContext.School -> timetableRepository.getForSchool(
-                        schoolId = context.school.id,
-                        weekIndex = timetableWeek?.weekIndex ?: 0,
-                        dayOfWeek = day.date.dayOfWeek
-                    )
-                }.map { it.toList() }
-            }
+        val timetable: Flow<List<Lesson.TimetableLesson>> =
+            timetableRepository.getTimetables(context.school)
+                .distinctUntilChangedBy { timetables ->
+                    timetables
+                        .filter { it.week.start <= day.date && it.dataState == Timetable.HasData.Yes }
+                        .maxByOrNull { it.week.weekIndex }
+                        ?.let { "${it.id}|${it.week.weekIndex}" }
+                }
+                .flatMapLatest { timetables ->
+                    val timetableWeek = timetables
+                        .filter { it.week.start <= day.date }
+                        .filter { it.dataState == Timetable.HasData.Yes }
+                        .maxByOrNull { it.week.weekIndex }
+                        ?.week
+                    when (context) {
+                        is PopulationContext.Profile -> timetableRepository.getForProfile(
+                            profile = context.profile,
+                            weekIndex = timetableWeek?.weekIndex ?: 0,
+                            dayOfWeek = day.date.dayOfWeek
+                        )
 
-        val substitution = substitutionPlanRepository
-            .getSubstitutionPlanBySchool(
+                        is PopulationContext.School -> timetableRepository.getForSchool(
+                            schoolId = context.school.id,
+                            weekIndex = timetableWeek?.weekIndex ?: 0,
+                            dayOfWeek = day.date.dayOfWeek
+                        )
+                    }.map { it.toList() }
+                }
+
+        val substitution = when (context) {
+            is PopulationContext.Profile -> substitutionPlanRepository.getForProfile(
+                profile = context.profile,
+                date = day.date,
+                version = null,
+            )
+            is PopulationContext.School -> substitutionPlanRepository.getSubstitutionPlanBySchool(
                 schoolId = context.school.id,
                 date = day.date,
                 version = null
-            ).map { lessons ->
-                LOGGER.d { "[${day.date}] raw substitution from DB: ${lessons.size} lessons, groupIds per lesson: ${lessons.map { it.groupIds }}" }
-                if (context !is PopulationContext.Profile) return@map lessons
-                val profile = context.profile
-                val filtered = lessons.filter { lesson -> lessonMatchesProfile(lesson, profile) }
-                LOGGER.d { "[${day.date}] after lessonMatchesProfile (profile.group=${if (profile is plus.vplan.app.core.model.Profile.StudentProfile) profile.group.id else "teacher"}): ${filtered.size} lessons" }
-                filtered
-            }
+            )
+        }
 
         return combine(
             assessments,
@@ -136,12 +143,14 @@ private fun lessonMatchesProfile(
     profile: plus.vplan.app.core.model.Profile
 ): Boolean {
     if (profile is plus.vplan.app.core.model.Profile.StudentProfile) {
-        if (profile.group.id !in lesson.groupIds) return false
-        if (lesson.subjectInstanceId != null &&
-            profile.subjectInstanceConfiguration[lesson.subjectInstanceId] == false) return false
+        if (profile.group.id !in lesson.groups.map { it.id }) return false
+        if (lesson.subjectInstance != null &&
+            profile.subjectInstanceConfiguration.toList()
+                .firstOrNull { it.first.id == lesson.subjectInstance!!.id }?.second == false
+        ) return false
     }
     if (profile is plus.vplan.app.core.model.Profile.TeacherProfile) {
-        if (profile.teacher.id !in lesson.teacherIds) return false
+        if (profile.teacher.id !in lesson.teachers.map { it.id }) return false
     }
     return true
 }
