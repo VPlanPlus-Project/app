@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.isoDayNumber
+import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.data.holiday.HolidayRepository
 import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.model.Assessment
@@ -17,7 +18,6 @@ import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Timetable
-import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days

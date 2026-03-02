@@ -3,12 +3,12 @@
 package plus.vplan.app.feature.assessment.domain.usecase
 
 import io.github.vinceglb.filekit.core.PlatformFile
+import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.ui.common.AttachedFile
@@ -47,8 +47,13 @@ class AddAssessmentFileUseCase(
         )
 
         val fileItem = fileRepository.getById(id, forceReload = false).getFirstValueOld()!!
-        if (id > 0 && profile.vppId != null) assessmentRepository.linkFileToAssessmentOnline(profile.vppId!!, assessment.id, fileItem.id)
-        assessmentRepository.linkFileToAssessment(assessment.id, fileItem.id)
-        return true
+        val linkResult = assessmentRepository.linkFile(
+            vppId = if (id > 0) profile.vppId?.asActive() else null,
+            assessmentId = assessment.id,
+            fileId = fileItem.id
+        )
+        return linkResult is Response.Success
     }
+
+    private fun plus.vplan.app.core.model.VppId.asActive() = this as? plus.vplan.app.core.model.VppId.Active
 }

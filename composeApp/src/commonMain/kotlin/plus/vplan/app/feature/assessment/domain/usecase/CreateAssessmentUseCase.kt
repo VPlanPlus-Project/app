@@ -4,6 +4,7 @@ package plus.vplan.app.feature.assessment.domain.usecase
 
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AppEntity
@@ -12,7 +13,7 @@ import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.domain.repository.AssessmentRepository
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.service.ProfileService
@@ -53,47 +54,44 @@ class CreateAssessmentUseCase(
             return@run subjectInstanceId
         }
 
-        val id: Int
+        val activeVppId = profile.vppId as? VppId.Active
+        if (activeVppId == null) {
+            return CreateAssessmentResult.Error.UnknownError("Profile has no active VPP ID")
+        }
+        
+        val result = assessmentRepository.createAssessmentOnline(
+            vppId = activeVppId,
+            date = date,
+            type = type,
+            subjectInstanceId = subjectInstanceId,
+            isPublic = isPublic ?: false,
+            content = text
+        )
+        
+        if (result !is Response.Success) {
+            return CreateAssessmentResult.Error.CreationError(result as Response.Error)
+        }
+        
+        val assessmentId = result.data
+
         val files = mutableListOf<Assessment.AssessmentFile>()
-        if (profile.vppId != null) {
-            val result = assessmentRepository.createAssessmentOnline(
-                vppId = profile.vppId!!,
-                date = date,
-                type = type,
-                subjectInstanceId = subjectInstanceId,
-                isPublic = isPublic ?: false,
-                content = text
+        selectedFiles.forEach { attachedFile ->
+            val fileId = fileRepository.uploadFile(
+                vppId = activeVppId,
+                document = attachedFile
             )
-            if (result !is Response.Success) return CreateAssessmentResult.Error.CreationError(result as Response.Error)
-            id = result.data
-            selectedFiles.forEach {
-                val fileId = fileRepository.uploadFile(
-                    vppId = profile.vppId!!,
-                    document = it
-                )
-                if (fileId !is Response.Success) return@forEach
-                assessmentRepository.linkFileToAssessmentOnline(
-                    vppId = profile.vppId!!,
-                    assessmentId = result.data,
-                    fileId = fileId.data
-                )
-                files.add(Assessment.AssessmentFile(
-                    id = fileId.data,
-                    name = it.name,
-                    size = it.size,
-                    assessment = result.data
-                ))
-            }
-        } else {
-            id = assessmentRepository.getIdForNewLocalAssessment() - 1
-            files.addAll(selectedFiles.mapIndexed { index, attachedFile ->
-                Assessment.AssessmentFile(
-                    id = fileRepository.getMinIdForLocalFile()-1-index,
-                    name = attachedFile.name,
-                    assessment = id,
-                    size = attachedFile.size
-                )
-            })
+            if (fileId !is Response.Success) return@forEach
+            assessmentRepository.linkFile(
+                vppId = activeVppId,
+                assessmentId = assessmentId,
+                fileId = fileId.data
+            )
+            files.add(Assessment.AssessmentFile(
+                id = fileId.data,
+                name = attachedFile.name,
+                size = attachedFile.size,
+                assessment = assessmentId
+            ))
         }
 
         files.forEach { file ->
@@ -106,20 +104,8 @@ class CreateAssessmentUseCase(
                 cachedAt = Clock.System.now()
             ))
         }
-        assessmentRepository.upsertLocally(
-            assessmentId = id,
-            subjectInstanceId = subjectInstance.id,
-            date = date,
-            isPublic = isPublic,
-            createdAt = Clock.System.now(),
-            createdBy = if (creator is AppEntity.VppId) creator.vppId.id else null,
-            createdByProfile = if (creator is AppEntity.Profile) creator.profile.id else null,
-            description = text,
-            type = type,
-            associatedFileIds = files.map { it.id }
-        )
-        assessmentRepository.createCacheForProfile(profile.id, setOf(id))
-        return CreateAssessmentResult.Success(id)
+
+        return CreateAssessmentResult.Success(assessmentId)
     }
 }
 

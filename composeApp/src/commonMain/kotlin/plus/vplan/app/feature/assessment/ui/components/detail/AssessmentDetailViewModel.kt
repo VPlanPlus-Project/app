@@ -12,14 +12,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.App
+import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.model.AppEntity
-import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.File
@@ -39,6 +36,7 @@ import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskStat
 import plus.vplan.app.ui.common.AttachedFile
 
 class AssessmentDetailViewModel(
+    private val assessmentRepository: AssessmentRepository,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateAssessmentUseCase: UpdateAssessmentUseCase,
     private val deleteAssessmentUseCase: DeleteAssessmentUseCase,
@@ -62,9 +60,7 @@ class AssessmentDetailViewModel(
         mainJob = viewModelScope.launch {
             combine(
                 getCurrentProfileUseCase(),
-                App.assessmentSource.getById(assessmentId)
-                    .filterIsInstance<CacheState.Done<Assessment>>()
-                    .map { it.data }
+                assessmentRepository.getById(assessmentId).filterNotNull()
             ) { profile, assessment ->
                 if (profile !is Profile.StudentProfile) return@combine null
 

@@ -195,6 +195,76 @@ class HomeworkRepositoryImpl(
         }
     }
 
+    override suspend fun syncById(vppId: VppId.Active, homeworkId: Int, forceReload: Boolean): Boolean {
+        try {
+            // Check if we already have fresh data (unless forceReload is true)
+            if (!forceReload) {
+                val existing = homeworkDao.getById(homeworkId).first()
+                if (existing != null) {
+                    val age = Clock.System.now() - existing.homework.cachedAt
+                    if (age.inWholeMinutes < 5) {
+                        return true // Data is fresh enough
+                    }
+                }
+            }
+            
+            val dto = homeworkApi.getHomeworkById(vppId, homeworkId)
+                ?: return false // Homework not found on server
+            
+            // Resolve group and subject instance IDs from API to local UUIDs via aliases
+            val groupId = dto.group?.let { groupEntity ->
+                val alias = Alias(AliasProvider.Vpp, groupEntity.id.toString(), 1)
+                groupRepository.getByIds(setOf(alias), forceUpdate = false).first()?.id
+            }
+            
+            val subjectInstanceId = dto.subjectInstance?.let { siEntity ->
+                val alias = Alias(AliasProvider.Vpp, siEntity.id.toString(), 1)
+                subjectInstanceRepository.getByIds(setOf(alias), forceUpdate = false).first()?.id
+            }
+            
+            val homework = DbHomework(
+                id = dto.id,
+                subjectInstanceId = subjectInstanceId,
+                groupId = groupId,
+                createdAt = kotlin.time.Instant.fromEpochMilliseconds(dto.createdAt),
+                dueTo = LocalDate.parse(dto.dueTo),
+                createdBy = dto.createdBy.id,
+                createdByProfileId = null,
+                isPublic = dto.isPublic,
+                cachedAt = Clock.System.now()
+            )
+            val tasks = dto.tasks.map { taskWrapper ->
+                DbHomeworkTask(
+                    id = taskWrapper.value.id,
+                    homeworkId = dto.id,
+                    content = taskWrapper.value.content,
+                    cachedAt = Clock.System.now()
+                )
+            }
+            
+            val tasksDoneAccount = dto.tasks.mapNotNull { taskWrapper ->
+                taskWrapper.value.done?.let { isDone ->
+                    DbHomeworkTaskDoneAccount(
+                        taskId = taskWrapper.value.id,
+                        vppId = vppId.id,
+                        isDone = isDone
+                    )
+                }
+            }
+            
+            homeworkDao.upsertSingleHomework(
+                homework = homework,
+                tasks = tasks,
+                tasksDoneAccount = tasksDoneAccount,
+                tasksDoneProfile = emptyList(),
+                fileIds = dto.files.map { it.id }
+            )
+            return true
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
     override suspend fun toggleTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Boolean {
         return try {
             val isDone = !task.isDone(profile)

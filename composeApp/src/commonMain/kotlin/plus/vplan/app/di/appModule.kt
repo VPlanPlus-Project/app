@@ -26,6 +26,8 @@ import org.koin.dsl.module
 import plus.vplan.app.App
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
+import plus.vplan.app.core.data.assessment.AssessmentRepository
+import plus.vplan.app.core.data.assessment.AssessmentRepositoryImpl
 import plus.vplan.app.core.data.besteschule.BesteSchuleRepository
 import plus.vplan.app.core.data.besteschule.BesteSchuleRepositoryImpl
 import plus.vplan.app.core.data.besteschule.CollectionsRepository
@@ -68,7 +70,6 @@ import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.core.data.week.WeekRepositoryImpl
 import plus.vplan.app.core.database.di.databaseModule
-import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.FcmRepositoryImpl
 import plus.vplan.app.data.repository.FileRepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
@@ -78,7 +79,6 @@ import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.domain.di.domainModule
-import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
@@ -86,7 +86,6 @@ import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.service.ProfileService
-import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.FileSource
 import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
@@ -122,6 +121,8 @@ import plus.vplan.app.network.besteschule.YearApiImpl
 import plus.vplan.app.network.vpp.GenericAuthenticationProvider
 import plus.vplan.app.network.vpp.SchoolAuthenticationProvider
 import plus.vplan.app.network.vpp.VppIdAuthenticationProvider
+import plus.vplan.app.network.vpp.assessment.AssessmentApi
+import plus.vplan.app.network.vpp.assessment.AssessmentApiImpl
 import plus.vplan.app.network.vpp.group.GroupApi
 import plus.vplan.app.network.vpp.group.GroupApiImpl
 import plus.vplan.app.network.vpp.homework.HomeworkApi
@@ -222,6 +223,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::SubjectInstanceApiImpl).bind<SubjectInstanceApi>()
     singleOf(::NewsApiImpl).bind<NewsApi>()
     singleOf(::HomeworkApiImpl).bind<HomeworkApi>()
+    singleOf(::AssessmentApiImpl).bind<AssessmentApi>()
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
@@ -234,6 +236,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::DayRepositoryImpl).bind<DayRepository>()
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
     singleOf(::HomeworkRepositoryImpl).bind<HomeworkRepository>()
+    singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
 
     singleOf(::Stundenplan24RepositoryImpl).bind<Stundenplan24Repository>()
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
@@ -243,7 +246,6 @@ val appModule = module(createdAtStart = true) {
     singleOf(::SubstitutionPlanRepositoryImpl).bind<SubstitutionPlanRepository>()
     singleOf(::VppIdRepositoryImpl).bind<VppIdRepository>()
     singleOf(::FileRepositoryImpl).bind<FileRepository>()
-    singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
     singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
 
     singleOf(::ProfileServiceImpl).bind<ProfileService>()
@@ -282,7 +284,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         App.weekSource = WeekSource(koin.get())
         App.lessonTimeSource = LessonTimeSource(koin.get())
         App.substitutionPlanSource = SubstitutionPlanSource(koin.get())
-        App.assessmentSource = AssessmentSource(koin.get())
         App.fileSource = FileSource(koin.get(), koin.get())
     }
 }
