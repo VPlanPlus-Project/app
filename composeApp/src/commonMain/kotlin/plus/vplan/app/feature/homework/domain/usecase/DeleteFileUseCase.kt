@@ -1,9 +1,9 @@
 package plus.vplan.app.feature.homework.domain.usecase
 
+import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
 
 class DeleteFileUseCase(

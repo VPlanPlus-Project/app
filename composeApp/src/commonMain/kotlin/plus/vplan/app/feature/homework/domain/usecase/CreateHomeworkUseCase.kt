@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AppEntity
@@ -14,8 +15,6 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.FileRepository
-import plus.vplan.app.domain.repository.HomeworkEntity
-import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.ui.common.AttachedFile
@@ -158,28 +157,7 @@ class CreateHomeworkUseCase(
             localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
         }
 
-        val creator = homework.creator
-
-        homeworkRepository.upsert(HomeworkEntity(
-            id = homework.id,
-            subjectInstanceId = homework.subjectInstance?.id,
-            groupId = if (subjectInstance == null) profile.group.id else null,
-            dueTo = homework.dueTo,
-            isPublic = isPublic ?: false,
-            createdAt = Clock.System.now(),
-            createdByVppId = if (creator is AppEntity.VppId) creator.vppId.id else null,
-            createdByProfileId = if (creator is AppEntity.Profile) creator.profile.id else null,
-            cachedAt = Clock.System.now(),
-            tasks = homeworkTasks.map { homeworkTask ->
-                HomeworkEntity.TaskEntity(
-                    id = homeworkTask.id,
-                    homeworkId = homework.id,
-                    createdAt = Clock.System.now(),
-                    content = homeworkTask.content,
-                    cachedAt = Clock.System.now()
-                )
-            }
-        ))
+        homeworkRepository.save(homework)
 
         files.forEach { file ->
             homeworkRepository.linkHomeworkFile(

@@ -1,9 +1,9 @@
 package plus.vplan.app.feature.profile.domain.usecase
 
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.HomeworkRepository
 
 class UpdateProfileHomeworkIndexUseCase(
     private val homeworkRepository: HomeworkRepository,

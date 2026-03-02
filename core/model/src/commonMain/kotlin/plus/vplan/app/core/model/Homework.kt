@@ -50,7 +50,7 @@ sealed class Homework: Item<Int, DataTag> {
         val isPublic: Boolean,
         val createdBy: VppId,
     ) : Homework() {
-        override val creator: AppEntity = AppEntity.VppId(createdBy)
+        override val creator: AppEntity.VppId = AppEntity.VppId(createdBy)
     }
 
     data class LocalHomework(
@@ -64,7 +64,7 @@ sealed class Homework: Item<Int, DataTag> {
         override val cachedAt: Instant,
         val createdByProfile: Profile.StudentProfile
     ) : Homework() {
-        override val creator: AppEntity = AppEntity.Profile(createdByProfile)
+        override val creator: AppEntity.Profile = AppEntity.Profile(createdByProfile)
     }
 }
 

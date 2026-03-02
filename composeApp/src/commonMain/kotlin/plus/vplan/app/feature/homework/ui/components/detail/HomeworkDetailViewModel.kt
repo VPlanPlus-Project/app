@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -21,9 +21,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
+import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AppEntity
-import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
@@ -48,6 +48,7 @@ import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
 import plus.vplan.app.ui.common.AttachedFile
 
 class HomeworkDetailViewModel(
+    private val homeworkRepository: HomeworkRepository,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val toggleTaskDoneUseCase: ToggleTaskDoneUseCase,
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
@@ -90,8 +91,7 @@ class HomeworkDetailViewModel(
         mainJob = viewModelScope.launch {
             combine(
                 getCurrentProfileUseCase(),
-                App.homeworkSource.getById(homeworkId).filterIsInstance<CacheState.Done<Homework>>()
-                    .map { it.data }
+                homeworkRepository.getById(homeworkId).filterNotNull()
             ) { profile, homework ->
                 if (profile !is Profile.StudentProfile) return@combine null
 

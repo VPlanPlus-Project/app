@@ -16,7 +16,7 @@ import kotlin.uuid.Uuid
 interface GroupDao {
 
     @Upsert
-    fun upsert(alias: DbGroupAlias)
+    suspend fun upsert(alias: DbGroupAlias)
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns

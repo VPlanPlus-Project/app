@@ -1,14 +1,15 @@
 package plus.vplan.app.feature.homework.domain.usecase
 
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.model.Homework
+import plus.vplan.app.core.model.Optional
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.HomeworkRepository
 
 class EditHomeworkDueToUseCase(
     private val homeworkRepository: HomeworkRepository
 ) {
     suspend operator fun invoke(homework: Homework, dueTo: LocalDate, profile: Profile.StudentProfile) {
-        homeworkRepository.editHomeworkDueTo(homework, dueTo, profile)
+        homeworkRepository.updateHomeworkMetadata(homework, dueTo = Optional.of(dueTo), profile = profile)
     }
 }

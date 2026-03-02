@@ -48,6 +48,8 @@ import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.group.GroupRepositoryImpl
 import plus.vplan.app.core.data.holiday.HolidayRepository
 import plus.vplan.app.core.data.holiday.HolidayRepositoryImpl
+import plus.vplan.app.core.data.homework.HomeworkRepository
+import plus.vplan.app.core.data.homework.HomeworkRepositoryImpl
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepositoryImpl
 import plus.vplan.app.core.data.news.NewsRepository
@@ -69,7 +71,6 @@ import plus.vplan.app.core.database.di.databaseModule
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
 import plus.vplan.app.data.repository.FcmRepositoryImpl
 import plus.vplan.app.data.repository.FileRepositoryImpl
-import plus.vplan.app.data.repository.HomeworkRepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
 import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.SubstitutionPlanRepositoryImpl
@@ -80,7 +81,6 @@ import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.FileRepository
-import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
@@ -88,8 +88,6 @@ import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.FileSource
-import plus.vplan.app.domain.source.HomeworkSource
-import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TimetableSource
@@ -126,6 +124,8 @@ import plus.vplan.app.network.vpp.SchoolAuthenticationProvider
 import plus.vplan.app.network.vpp.VppIdAuthenticationProvider
 import plus.vplan.app.network.vpp.group.GroupApi
 import plus.vplan.app.network.vpp.group.GroupApiImpl
+import plus.vplan.app.network.vpp.homework.HomeworkApi
+import plus.vplan.app.network.vpp.homework.HomeworkApiImpl
 import plus.vplan.app.network.vpp.news.NewsApi
 import plus.vplan.app.network.vpp.news.NewsApiImpl
 import plus.vplan.app.network.vpp.school.SchoolApi
@@ -221,6 +221,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::GroupApiImpl).bind<GroupApi>()
     singleOf(::SubjectInstanceApiImpl).bind<SubjectInstanceApi>()
     singleOf(::NewsApiImpl).bind<NewsApi>()
+    singleOf(::HomeworkApiImpl).bind<HomeworkApi>()
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
@@ -232,6 +233,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::HolidayRepositoryImpl).bind<HolidayRepository>()
     singleOf(::DayRepositoryImpl).bind<DayRepository>()
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
+    singleOf(::HomeworkRepositoryImpl).bind<HomeworkRepository>()
 
     singleOf(::Stundenplan24RepositoryImpl).bind<Stundenplan24Repository>()
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
@@ -240,7 +242,6 @@ val appModule = module(createdAtStart = true) {
     singleOf(::TimetableRepositoryImpl).bind<TimetableRepository>()
     singleOf(::SubstitutionPlanRepositoryImpl).bind<SubstitutionPlanRepository>()
     singleOf(::VppIdRepositoryImpl).bind<VppIdRepository>()
-    singleOf(::HomeworkRepositoryImpl).bind<HomeworkRepository>()
     singleOf(::FileRepositoryImpl).bind<FileRepository>()
     singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
     singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
@@ -277,8 +278,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             newsModule
         )
 
-        App.homeworkSource = HomeworkSource(koin.get())
-        App.homeworkTaskSource = HomeworkTaskSource(koin.get())
         App.timetableSource = TimetableSource(koin.get())
         App.weekSource = WeekSource(koin.get())
         App.lessonTimeSource = LessonTimeSource(koin.get())

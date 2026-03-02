@@ -1,14 +1,14 @@
 package plus.vplan.app.feature.homework.domain.usecase
 
+import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.HomeworkRepository
 
 class ToggleTaskDoneUseCase(
     private val homeworkRepository: HomeworkRepository
 ) {
 
     suspend operator fun invoke(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Boolean {
-        return homeworkRepository.toggleHomeworkTaskDone(task, profile)
+        return homeworkRepository.toggleTaskDone(task, profile)
     }
 }

@@ -2,12 +2,13 @@ package plus.vplan.app.feature.homework.domain.usecase
 
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Homework
+import plus.vplan.app.core.model.Optional
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.domain.repository.HomeworkRepository
 
 class EditHomeworkSubjectInstanceUseCase(
     private val homeworkRepository: HomeworkRepository,
@@ -27,6 +28,6 @@ class EditHomeworkSubjectInstanceUseCase(
             group = groupRepository.getById(group.aliases.first(), forceUpdate = true).first() ?: return
             if (group.aliases.none { it.provider == AliasProvider.Vpp }) return
         }
-        homeworkRepository.editHomeworkSubjectInstance(homework, subjectInstance, group, profile)
+        homeworkRepository.updateHomeworkMetadata(homework, subjectInstance = Optional.of(subjectInstance), group = Optional.of(group), profile = profile)
     }
 }
