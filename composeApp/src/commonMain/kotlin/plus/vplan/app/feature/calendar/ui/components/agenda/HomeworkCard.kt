@@ -41,6 +41,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.ui.components.SubjectIcon
@@ -170,16 +171,16 @@ fun HomeworkCard(
             ) {
                 val createdByFont = MaterialTheme.typography.labelMedium
                 Row {
-                    when (homework) {
-                        is PopulatedHomework.LocalHomework -> {
+                    when (val creator = homework.homework.creator) {
+                        is AppEntity.Profile -> {
                             Text(
-                                text = "Profil " + homework.createdByProfile.name,
+                                text = "Profil " + creator.profile.name,
                                 style = createdByFont
                             )
                         }
-                        is PopulatedHomework.CloudHomework -> {
+                        is AppEntity.VppId -> {
                             Text(
-                                text = homework.createdByUser.name,
+                                text = creator.vppId.name,
                                 style = createdByFont
                             )
                         }

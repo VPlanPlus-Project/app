@@ -1,10 +1,9 @@
 package plus.vplan.app.feature.profile.domain.usecase
 
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
-import plus.vplan.app.domain.model.populated.PopulatedAssessment
-import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.AssessmentRepository
 
 class UpdateProfileAssessmentIndexUseCase(
@@ -15,12 +14,12 @@ class UpdateProfileAssessmentIndexUseCase(
         assessmentRepository.dropIndicesForProfile(profile.id)
         assessmentRepository.getAll()
             .first()
-            .let { assessmentPopulator.populateMultiple(it, PopulationContext.Profile(profile)).first() }
+            .let { assessmentPopulator.populateMultiple(it).first() }
             .filter { assessment ->
                 val assessment = assessment
-                (assessment is PopulatedAssessment.LocalAssessment && assessment.createdByProfile.id == profile.id) ||
-                        (assessment is PopulatedAssessment.CloudAssessment && assessment.createdByUser.id == (profile as? Profile.StudentProfile)?.vppId?.id) ||
-                        (assessment.subjectInstance.id in (profile as? Profile.StudentProfile)?.subjectInstanceConfiguration.orEmpty().filterValues { it }.keys.map { it.id } && profile is Profile.StudentProfile)
+                (assessment.assessment.creator is AppEntity.Profile && (assessment.assessment.creator as AppEntity.Profile).profile.id == profile.id) ||
+                        (assessment.assessment.creator is AppEntity.VppId && (assessment.assessment.creator as AppEntity.VppId).vppId.id == (profile as? Profile.StudentProfile)?.vppId?.id) ||
+                        (assessment.assessment.subjectInstance.id in (profile as? Profile.StudentProfile)?.subjectInstanceConfiguration.orEmpty().filterValues { it }.keys.map { it.id } && profile is Profile.StudentProfile)
             }
             .let { relevantAssessments ->
                 assessmentRepository.createCacheForProfile(profile.id, relevantAssessments.map { it.assessment.id })

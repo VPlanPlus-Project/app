@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
@@ -58,7 +59,7 @@ fun AssessmentCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background(assessment.subjectInstance.subject.subjectColor().getGroup().color)
+                .background(assessment.assessment.subjectInstance.subject.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -68,13 +69,13 @@ fun AssessmentCard(
             Row {
                 SubjectIcon(
                     modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
-                    subject = assessment.subjectInstance.subject
+                    subject = assessment.assessment.subjectInstance.subject
                 )
                 Spacer(Modifier.size(8.dp))
                 Column {
                     Text(
                         text = buildString {
-                            append(assessment.subjectInstance.subject)
+                            append(assessment.assessment.subjectInstance.subject)
                             append(": ")
                             append(assessment.assessment.type.toName())
                         },
@@ -97,16 +98,16 @@ fun AssessmentCard(
                 val createdByFont = MaterialTheme.typography.labelMedium
 
                 Row {
-                    when (assessment) {
-                        is PopulatedAssessment.LocalAssessment -> {
+                    when (val creator = assessment.assessment.creator) {
+                        is AppEntity.Profile -> {
                             Text(
-                                text = "Profil " + assessment.createdByProfile.name,
+                                text = "Profil " + creator.profile.name,
                                 style = createdByFont
                             )
                         }
-                        is PopulatedAssessment.CloudAssessment -> {
+                        is AppEntity.VppId -> {
                             Text(
-                                text = assessment.createdByUser.name,
+                                text = creator.vppId.name,
                                 style = createdByFont
                             )
                         }

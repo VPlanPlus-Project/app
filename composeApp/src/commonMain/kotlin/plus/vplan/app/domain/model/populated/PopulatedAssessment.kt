@@ -9,72 +9,40 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.data.profile.ProfileRepository
-import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.File
-import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.FileRepository
-import plus.vplan.app.domain.repository.VppIdRepository
 
 @Immutable
 @Stable
 sealed class PopulatedAssessment {
     abstract val assessment: Assessment
-    abstract val subjectInstance: SubjectInstance
     abstract val files: List<File>
-    abstract val createdBy: AppEntity
 
     data class CloudAssessment(
         override val assessment: Assessment,
-        override val subjectInstance: SubjectInstance,
         override val files: List<File>,
-        override val createdBy: AppEntity.VppId,
-        val createdByUser: VppId,
     ) : PopulatedAssessment()
 
     data class LocalAssessment(
         override val assessment: Assessment,
-        override val subjectInstance: SubjectInstance,
         override val files: List<File>,
-        override val createdBy: AppEntity.Profile,
-        val createdByProfile: Profile.StudentProfile
     ) : PopulatedAssessment()
 }
 
 class AssessmentPopulator : KoinComponent {
-    private val subjectInstanceRepository by inject<SubjectInstanceRepository>()
-    private val profileRepository by inject<ProfileRepository>()
-    private val vppIdRepository by inject<VppIdRepository>()
     private val fileRepository by inject<FileRepository>()
 
     fun populateMultiple(
         assessments: List<Assessment>,
-        context: PopulationContext
     ): Flow<List<PopulatedAssessment>> {
         if (assessments.isEmpty()) return flowOf(emptyList())
-
-        val subjectInstances: Flow<List<SubjectInstance>> = when (context) {
-            is PopulationContext.Profile -> subjectInstanceRepository.getBySchool(context.profile.school)
-            is PopulationContext.School -> subjectInstanceRepository.getBySchool(context.school)
-        }
-
-        val vppIds: Flow<List<VppId>> = vppIdRepository.getAllLocalIds()
-            .flatMapLatest { ids ->
-                if (ids.isEmpty()) flowOf(emptyList())
-                else combine(ids.map { vppIdRepository.getByLocalId(it) }) { it.filterNotNull() }
-            }
-
-        val profiles: Flow<List<Profile>> = profileRepository.getAll()
 
         // Per-assessment file flows – built once, not rebuilt on every subjectInstances emit
         val fileFlows: List<Flow<List<File>>> = assessments.map { assessment ->
@@ -88,47 +56,24 @@ class AssessmentPopulator : KoinComponent {
             if (fileFlows.size == 1) fileFlows[0].map { listOf(it) }
             else combine(fileFlows) { it.toList() }
 
-        val result: Flow<List<PopulatedAssessment>> = combine(
-            subjectInstances,
-            vppIds,
-            profiles,
-            filesCombined,
-        ) { subjectInstances, vppIds, profiles, filesPerAssessment ->
-            assessments.mapIndexedNotNull { i, assessment ->
+        return filesCombined.map { filesPerAssessment ->
+            assessments.mapIndexed { i, assessment ->
                 val files = filesPerAssessment[i]
-                val subjectInstance = subjectInstances.firstOrNull { it.id == assessment.subjectInstanceId }
-                    ?: return@mapIndexedNotNull null
-                when (val creator = assessment.creator) {
+                when (assessment.creator) {
                     is AppEntity.VppId -> PopulatedAssessment.CloudAssessment(
                         assessment = assessment,
-                        subjectInstance = subjectInstance,
                         files = files,
-                        createdBy = creator,
-                        createdByUser = vppIds.first { it.id == creator.id }
                     )
                     is AppEntity.Profile -> PopulatedAssessment.LocalAssessment(
                         assessment = assessment,
-                        subjectInstance = subjectInstance,
                         files = files,
-                        createdBy = creator,
-                        createdByProfile = profiles.first { it.id == creator.id } as Profile.StudentProfile
                     )
                 }
             }
-        }
-        return result.distinctUntilChanged()
+        }.distinctUntilChanged()
     }
 
     fun populateSingle(assessment: Assessment): Flow<PopulatedAssessment> {
-        val subjectInstance = subjectInstanceRepository.getByLocalId(assessment.subjectInstanceId)
-        val profile =
-            (assessment.creator as? AppEntity.Profile)?.id?.let { profileRepository.getById(it) }
-                ?: flowOf(null)
-
-        val vppId =
-            (assessment.creator as? AppEntity.VppId)?.id?.let { vppIdRepository.getByLocalId(it) }
-                ?: flowOf(null)
-
         val files =
             if (assessment.fileIds.isEmpty()) flowOf(emptyList())
             else combine(assessment.fileIds.map {
@@ -136,26 +81,15 @@ class AssessmentPopulator : KoinComponent {
                     .map { it.data }
             }) { it.toList() }
 
-        return combine(
-            subjectInstance,
-            profile,
-            vppId,
-            files,
-        ) { subjectInstance, profile, vppId, files ->
-            when (val creator = assessment.creator) {
+        return files.map { files ->
+            when (assessment.creator) {
                 is AppEntity.VppId -> PopulatedAssessment.CloudAssessment(
                     assessment = assessment,
-                    subjectInstance = subjectInstance!!,
                     files = files,
-                    createdBy = AppEntity.VppId(creator.id),
-                    createdByUser = vppId!!
                 )
                 is AppEntity.Profile -> PopulatedAssessment.LocalAssessment(
                     assessment = assessment,
-                    subjectInstance = subjectInstance!!,
                     files = files,
-                    createdBy = AppEntity.Profile(creator.id),
-                    createdByProfile = profile as Profile.StudentProfile
                 )
             }
         }

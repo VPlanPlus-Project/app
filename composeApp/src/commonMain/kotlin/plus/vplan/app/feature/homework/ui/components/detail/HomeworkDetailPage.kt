@@ -37,6 +37,7 @@ import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.HomeworkStatus
 import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
@@ -230,7 +231,7 @@ fun DetailPage(
                 else HomeworkStatus.PENDING
             }
             StatusRow(status = status)
-            if (homework is PopulatedHomework.CloudHomework) CreatedByRow(createdBy = homework.createdByUser)
+            if (homework.homework.creator is AppEntity.VppId) CreatedByRow(createdBy = (homework.homework.creator as AppEntity.VppId).vppId)
             else SavedLocalRow()
 
             CreatedAtRow(createdAt = homework.homework.createdAt)

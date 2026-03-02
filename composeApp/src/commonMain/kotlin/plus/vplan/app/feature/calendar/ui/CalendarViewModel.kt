@@ -130,7 +130,7 @@ class CalendarViewModel(
                     val lessons = day.substitution.ifEmpty { day.timetable }
                     combine(
                         homeworkPopulator.populateMultiple(day.homework, context),
-                        assessmentPopulator.populateMultiple(day.assessments, context),
+                        assessmentPopulator.populateMultiple(day.assessments),
                         forceReducedFlow,
                     ) { homework, assessments, forceReduced ->
                         Triple(day, Pair(lessons, forceReduced), Pair(homework, assessments))
@@ -181,7 +181,7 @@ class CalendarViewModel(
                                 isDone = profile is Profile.StudentProfile && hw.tasks.all { it.isDone(profile) }
                             )
                         }.sortedBy { it.subject },
-                        assessments = assessments.map { it.subjectInstance.subject },
+                        assessments = assessments.map { it.assessment.subjectInstance.subject },
                         isHoliday = state.value.holidays.contains(date)
                     )
 

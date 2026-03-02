@@ -22,7 +22,7 @@ class GroupApiImpl(
 ): GroupApi {
     override suspend fun getById(identifier: Alias): VppGroupDto? {
         val url = URLBuilder("https://vplan.plus/api/app").apply {
-            appendPathSegments("group", "v1", identifier.toString())
+            appendPathSegments("group", "v1", identifier.toUrlString())
         }.buildString()
         val authenticationOptions = getAuthenticationOptionsForRestrictedEntity(
             httpClient = httpClient,

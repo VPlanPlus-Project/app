@@ -37,8 +37,6 @@ import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.AppEntity
-import plus.vplan.app.domain.model.populated.PopulatedAssessment
-import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.feature.search.ui.main.NewItem
 import plus.vplan.app.ui.components.Grid
 import plus.vplan.app.ui.components.SubjectIcon
@@ -138,7 +136,7 @@ fun SearchStart(
                                 )
                             } else {
                                 val subject = when (item) {
-                                    is NewItem.Assessment -> item.assessment.subjectInstance.subject
+                                    is NewItem.Assessment -> item.assessment.assessment.subjectInstance.subject
                                     is NewItem.Homework -> item.homework.subjectInstance?.subject
                                 }
                                 SubjectIcon(
@@ -199,16 +197,16 @@ fun SearchStart(
                             val createdByFont = MaterialTheme.typography.labelMedium
 
                             val creator = when (item) {
-                                is NewItem.Assessment -> item.assessment.createdBy
-                                is NewItem.Homework -> item.homework.createdBy
+                                is NewItem.Assessment -> item.assessment.assessment.creator
+                                is NewItem.Homework -> item.homework.homework.creator
                             }
 
                             Row {
                                 when (creator) {
                                     is AppEntity.Profile -> {
                                         val profile = when (item) {
-                                            is NewItem.Assessment -> (item.assessment as PopulatedAssessment.LocalAssessment).createdByProfile
-                                            is NewItem.Homework -> (item.homework as PopulatedHomework.LocalHomework).createdByProfile
+                                            is NewItem.Assessment -> (item.assessment.assessment.creator as AppEntity.Profile).profile
+                                            is NewItem.Homework -> (item.homework.homework.creator as AppEntity.Profile).profile
                                         }
                                         Text(
                                             text = "Profil " + profile.name,
@@ -217,8 +215,8 @@ fun SearchStart(
                                     }
                                     is AppEntity.VppId -> {
                                         val vppId = when (item) {
-                                            is NewItem.Assessment -> (item.assessment as PopulatedAssessment.CloudAssessment).createdByUser
-                                            is NewItem.Homework -> (item.homework as PopulatedHomework.CloudHomework).createdByUser
+                                            is NewItem.Assessment -> (item.assessment.assessment.creator as AppEntity.VppId).vppId
+                                            is NewItem.Homework -> (item.homework.homework.creator as AppEntity.VppId).vppId
                                         }
                                         Text(
                                             text = vppId.name,

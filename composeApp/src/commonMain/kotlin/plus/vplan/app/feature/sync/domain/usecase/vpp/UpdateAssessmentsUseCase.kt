@@ -17,14 +17,13 @@ import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
-import plus.vplan.app.domain.model.populated.PopulatedAssessment
-import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -149,22 +148,22 @@ class UpdateAssessmentsUseCase(
                                     .map { assessment -> assessment.data }
                             })
                     { list ->
-                        assessmentPopulator.populateMultiple(list.toList(), PopulationContext.Profile(studentProfile)).first()
+                        assessmentPopulator.populateMultiple(list.toList()).first()
                     }.first()
                         .filter { assessment ->
-                            assessment is PopulatedAssessment.CloudAssessment && assessment.createdByUser.id != studentProfile.vppId?.id && (assessment.assessment.createdAt until Clock.System.now()
+                            assessment.assessment.creator is AppEntity.VppId && (assessment.assessment.creator as AppEntity.VppId).vppId.id != studentProfile.vppId?.id && (assessment.assessment.createdAt until Clock.System.now()
                                 .toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days
                         }
-                        .filter { assessment -> allowedSubjectInstances.contains(assessment.subjectInstance) }
+                        .filter { assessment -> allowedSubjectInstances.contains(assessment.assessment.subjectInstance) }
 
                     if (newAssessments.isEmpty()) return@buildAndSendNotifications
 
                     if (newAssessments.size == 1) {
                         val message = buildString {
                             newAssessments.first().let { assessment ->
-                                append((assessment as PopulatedAssessment.CloudAssessment).createdByUser.name)
+                                append((assessment.assessment.creator as AppEntity.VppId).vppId.name)
                                 append(" hat eine neue Leistungserhebung in ")
-                                append(assessment.subjectInstance.subject)
+                                append(assessment.assessment.subjectInstance.subject)
                                 append(" für ")
                                 (assessment.assessment.date untilRelativeText LocalDate.now())?.let { append(it) } ?: append(assessment.assessment.date.format(LocalDate.Format {
                                     dayOfWeek(shortDayOfWeekNames)

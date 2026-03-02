@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Homework
@@ -105,7 +106,7 @@ class HomeworkDetailViewModel(
                     state.copy(
                         homework = homework,
                         profile = profile,
-                        canEdit = (homework is PopulatedHomework.CloudHomework && homework.createdByUser.id == profile.vppId?.id) || (homework is PopulatedHomework.LocalHomework && homework.createdByProfile.id == profile.id),
+                        canEdit = (homework.homework.creator is AppEntity.VppId && (homework.homework.creator as AppEntity.VppId).vppId.id == profile.vppId?.id) || (homework.homework.creator is AppEntity.Profile && (homework.homework.creator as AppEntity.Profile).profile.id == profile.id),
                         initDone = true
                     )
                 }

@@ -9,28 +9,21 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.group.GroupRepository
-import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Homework
-import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.utils.combine6
 
 @Immutable
 @Stable
@@ -40,7 +33,6 @@ sealed class PopulatedHomework {
     abstract val files: List<File>
     abstract val subjectInstance: SubjectInstance?
     abstract val group: Group?
-    abstract val createdBy: AppEntity
 
     data class CloudHomework(
         override val homework: Homework.CloudHomework,
@@ -48,8 +40,6 @@ sealed class PopulatedHomework {
         override val files: List<File>,
         override val subjectInstance: SubjectInstance?,
         override val group: Group?,
-        override val createdBy: AppEntity.VppId,
-        val createdByUser: VppId
     ) : PopulatedHomework()
 
     data class LocalHomework(
@@ -58,8 +48,6 @@ sealed class PopulatedHomework {
         override val files: List<File>,
         override val subjectInstance: SubjectInstance?,
         override val group: Group?,
-        override val createdBy: AppEntity.Profile,
-        val createdByProfile: Profile.StudentProfile
     ) : PopulatedHomework()
 }
 
@@ -68,8 +56,6 @@ class HomeworkPopulator : KoinComponent {
     private val fileRepository by inject<FileRepository>()
     private val subjectInstanceRepository by inject<SubjectInstanceRepository>()
     private val groupRepository by inject<GroupRepository>()
-    private val vppIdRepository by inject<VppIdRepository>()
-    private val profileRepository by inject<ProfileRepository>()
 
     fun populateMultiple(
         homework: List<Homework>,
@@ -86,14 +72,6 @@ class HomeworkPopulator : KoinComponent {
             is PopulationContext.Profile -> groupRepository.getBySchool(context.profile.school)
             is PopulationContext.School -> groupRepository.getBySchool(context.school)
         }
-
-        val vppIds: Flow<List<VppId>> = vppIdRepository.getAllLocalIds()
-            .flatMapLatest { ids ->
-                if (ids.isEmpty()) flowOf(emptyList())
-                else combine(ids.map { vppIdRepository.getByLocalId(it) }) { it.filterNotNull() }
-            }
-
-        val profiles: Flow<List<Profile>> = profileRepository.getAll()
 
         // Per-homework task/file flows – built once, not rebuilt on every subjectInstances/groups emit
         val homeworkFlows: List<Flow<Pair<List<Homework.HomeworkTask>, List<File>>>> = homework.map { hw ->
@@ -117,10 +95,8 @@ class HomeworkPopulator : KoinComponent {
         val result: Flow<List<PopulatedHomework>> = combine(
             subjectInstances,
             groups,
-            vppIds,
-            profiles,
             homeworkCombined,
-        ) { subjectInstances, groups, vppIds, profiles, taskFilePairs ->
+        ) { subjectInstances, groups, taskFilePairs ->
             homework.mapIndexed { i, hw ->
                 val (tasks, files) = taskFilePairs[i]
                 when (hw) {
@@ -130,8 +106,6 @@ class HomeworkPopulator : KoinComponent {
                         files = files,
                         subjectInstance = hw.subjectInstanceId?.let { sid -> subjectInstances.firstOrNull { it.id == sid } },
                         group = hw.groupId?.let { gid -> groups.firstOrNull { it.id == gid } },
-                        createdBy = AppEntity.VppId(hw.createdById),
-                        createdByUser = vppIds.first { it.id == hw.createdById }
                     )
                     is Homework.LocalHomework -> PopulatedHomework.LocalHomework(
                         homework = hw,
@@ -139,8 +113,6 @@ class HomeworkPopulator : KoinComponent {
                         files = files,
                         subjectInstance = hw.subjectInstanceId?.let { sid -> subjectInstances.firstOrNull { it.id == sid } },
                         group = hw.groupId?.let { gid -> groups.firstOrNull { it.id == gid } },
-                        createdBy = AppEntity.Profile(hw.createdByProfileId),
-                        createdByProfile = profiles.first { it.id == hw.createdByProfileId } as Profile.StudentProfile
                     )
                 }
             }
@@ -183,22 +155,12 @@ class HomeworkPopulator : KoinComponent {
             )
         } ?: flowOf(null)
 
-        val vppId = (homework as? Homework.CloudHomework)?.createdById?.let { vppId ->
-            vppIdRepository.getByLocalId(vppId)
-        } ?: flowOf(null)
-
-        val profile = (homework as? Homework.LocalHomework)?.createdByProfileId?.let { profileId ->
-            profileRepository.getById(profileId).map { it as Profile.StudentProfile }
-        } ?: flowOf(null)
-
-        return combine6(
+        return combine(
             tasks,
             files,
             subjectInstance,
             group,
-            vppId,
-            profile,
-        ) { tasks, files, subjectInstance, group, vppId, profile ->
+        ) { tasks, files, subjectInstance, group ->
             when (homework) {
                 is Homework.CloudHomework -> PopulatedHomework.CloudHomework(
                     homework = homework,
@@ -206,8 +168,6 @@ class HomeworkPopulator : KoinComponent {
                     files = files,
                     subjectInstance = subjectInstance,
                     group = group,
-                    createdBy = AppEntity.VppId(homework.createdById),
-                    createdByUser = vppId!!
                 )
 
                 is Homework.LocalHomework -> PopulatedHomework.LocalHomework(
@@ -216,8 +176,6 @@ class HomeworkPopulator : KoinComponent {
                     files = files,
                     subjectInstance = subjectInstance,
                     group = group,
-                    createdBy = AppEntity.Profile(homework.createdByProfileId),
-                    createdByProfile = profile!!
                 )
             }
         }

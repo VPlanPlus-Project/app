@@ -48,9 +48,9 @@ sealed class Homework(
         override val cachedAt: Instant,
         override val groupId: Uuid?,
         val isPublic: Boolean,
-        val createdById: Int,
+        val createdBy: VppId,
     ) : Homework(
-        creator = AppEntity.VppId(createdById)
+        creator = AppEntity.VppId(createdBy)
     )
 
     data class LocalHomework(
@@ -62,9 +62,9 @@ sealed class Homework(
         override val groupId: Uuid?,
         override val fileIds: List<Int>,
         override val cachedAt: Instant,
-        val createdByProfileId: Uuid
+        val createdByProfile: Profile.StudentProfile
     ) : Homework(
-        creator = AppEntity.Profile(createdByProfileId)
+        creator = AppEntity.Profile(createdByProfile)
     )
 }
 

@@ -396,7 +396,7 @@ private fun HomeContent(
                                                             currentLesson.subjectInstance?.id
                                                         ) {
                                                             assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(state.day.assessments.filter { assessment -> assessment.subjectInstance.id == currentLesson.subjectInstance?.id })
+                                                            assessmentsForLesson.addAll(state.day.assessments.filter { assessment -> assessment.assessment.subjectInstance.id == currentLesson.subjectInstance?.id })
                                                         }
 
                                                         CurrentOrNextLesson(
@@ -513,7 +513,7 @@ private fun HomeContent(
                                                         val assessmentsForLesson = remember { mutableListOf<PopulatedAssessment>() }
                                                         LaunchedEffect(state.day.assessments, lesson.subjectInstance?.id) {
                                                             assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(state.day.assessments.filter { assessment -> assessment.subjectInstance.id == lesson.subjectInstance?.id })
+                                                            assessmentsForLesson.addAll(state.day.assessments.filter { assessment -> assessment.assessment.subjectInstance.id == lesson.subjectInstance?.id })
                                                         }
 
                                                         Column(Modifier.fillMaxWidth()) {

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.App
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Assessment
@@ -75,7 +76,7 @@ class AssessmentDetailViewModel(
                 state.copy(
                     assessment = assessment,
                     profile = profile,
-                    canEdit = (assessment is PopulatedAssessment.CloudAssessment && profile.vppId?.id == assessment.createdByUser.id) || (assessment is PopulatedAssessment.LocalAssessment && profile.id == assessment.createdByProfile.id),
+                    canEdit = (assessment.assessment.creator is AppEntity.VppId && profile.vppId?.id == (assessment.assessment.creator as AppEntity.VppId).vppId.id) || (assessment.assessment.creator is AppEntity.Profile && profile.id == (assessment.assessment.creator as AppEntity.Profile).profile.id),
                     reloadingState = if (isOtherAssessment) null else state.reloadingState,
                     deleteState = if (isOtherAssessment) null else state.deleteState,
                     initDone = true

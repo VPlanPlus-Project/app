@@ -3,7 +3,6 @@ package plus.vplan.app.core.model
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.time.Instant
-import kotlin.uuid.Uuid
 
 data class Assessment(
     override val id: Int,
@@ -11,7 +10,7 @@ data class Assessment(
     val createdAt: LocalDateTime,
     val date: LocalDate,
     val isPublic: Boolean,
-    val subjectInstanceId: Uuid,
+    val subjectInstance: SubjectInstance,
     val description: String,
     val type: Type,
     val fileIds: List<Int>,

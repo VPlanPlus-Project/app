@@ -18,6 +18,7 @@ import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
@@ -173,7 +174,7 @@ class UpdateHomeworkUseCase(
                         .map { id -> homeworkRepository.getById(id, false).filterIsInstance<CacheState.Done<Homework>>().map { homework -> homework.data } }) { list -> list.toList() }.first()
                         .filterIsInstance<Homework.CloudHomework>()
                         .filter { homework ->
-                            homework.createdById != studentProfile.vppId?.id && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now()
+                            (homework.creator as? AppEntity.VppId)?.vppId?.id != studentProfile.vppId?.id && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now()
                                 .toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days
                         }
                         .filter { it.subjectInstanceId == null || it.subjectInstanceId in allowedSubjectInstanceVppIds.map { it.id } }
@@ -185,7 +186,7 @@ class UpdateHomeworkUseCase(
                             message = buildString {
                                 newHomework.first().let { homework ->
                                     val homework = homeworkPopulator.populateSingle(homework).first() as PopulatedHomework.CloudHomework
-                                    append(homework.createdByUser.name)
+                                    append((homework.homework.creator as AppEntity.VppId).vppId.name)
                                     append(" hat eine neue Hausaufgabe ")
                                     if (homework.subjectInstance == null) append("für Klasse ${homework.group?.name}")
                                     else append("für ${homework.subjectInstance.subject}")

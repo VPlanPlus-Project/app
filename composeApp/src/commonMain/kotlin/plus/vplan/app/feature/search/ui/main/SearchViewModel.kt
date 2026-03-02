@@ -22,7 +22,6 @@ import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.domain.model.populated.AssessmentPopulator
-import plus.vplan.app.domain.model.populated.DayPopulator
 import plus.vplan.app.domain.model.populated.HomeworkPopulator
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedHomework
@@ -85,7 +84,7 @@ class SearchViewModel(
                     }
                     assessmentJob = launch {
                         getAssessmentsForProfileUseCase(currentProfile)
-                            .flatMapLatest { assessmentPopulator.populateMultiple(it, PopulationContext.Profile(currentProfile)) }
+                            .flatMapLatest { assessmentPopulator.populateMultiple(it) }
                             .collectLatest { state = state.copy(assessments = it) }
                     }
                 }

@@ -105,10 +105,10 @@ class SearchUseCase(
 
                     launch {
                         assessmentRepository.getAll()
-                            .flatMapLatest { assessmentPopulator.populateMultiple(it, PopulationContext.Profile(profile)) }
+                            .flatMapLatest { assessmentPopulator.populateMultiple(it) }
                             .collectLatest { assessmentList ->
                                 val assessments = assessmentList
-                                    .filter { (query.isEmpty() || query in it.assessment.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.assessment.type == searchRequest.assessmentType) }
+                                    .filter { (query.isEmpty() || query in it.assessment.description.lowercase()) && (searchRequest.subject == null || it.assessment.subjectInstance.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.assessment.type == searchRequest.assessmentType) }
                                     .sortedByDescending { (if (it.assessment.date < LocalDate.now()) "" else "_") + it.assessment.date.toString() }
                                 results.value = results.value.plus(SearchResult.Type.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
                             }

@@ -4,11 +4,12 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import plus.vplan.app.core.database.model.database.DbHomework
 import plus.vplan.app.core.database.model.database.DbHomeworkTask
+import plus.vplan.app.core.database.model.database.DbProfile
+import plus.vplan.app.core.database.model.database.DbVppId
 import plus.vplan.app.core.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.core.model.Homework
-import kotlin.time.ExperimentalTime
+import plus.vplan.app.core.model.Profile
 
-@OptIn(ExperimentalTime::class)
 data class EmbeddedHomework(
     @Embedded val homework: DbHomework,
     @Relation(
@@ -20,7 +21,17 @@ data class EmbeddedHomework(
         parentColumn = "id",
         entityColumn = "homework_id",
         entity = FKHomeworkFile::class
-    ) val files: List<FKHomeworkFile>
+    ) val files: List<FKHomeworkFile>,
+    @Relation(
+        parentColumn = "created_by_profile_id",
+        entityColumn = "id",
+        entity = DbProfile::class
+    ) val createdByProfileId: EmbeddedProfile?,
+    @Relation(
+        parentColumn = "created_by_vpp_id",
+        entityColumn = "id",
+        entity = DbVppId::class
+    ) val createdBy: EmbeddedVppId?,
 ) {
     fun toModel(): Homework {
         if (homework.id < 0) {
@@ -28,7 +39,7 @@ data class EmbeddedHomework(
                 id = homework.id,
                 dueTo = homework.dueTo,
                 createdAt = homework.createdAt,
-                createdByProfileId = homework.createdByProfileId!!,
+                createdByProfile = createdByProfileId?.toModel() as Profile.StudentProfile,
                 subjectInstanceId = homework.subjectInstanceId,
                 fileIds = files.map { it.fileId },
                 taskIds = tasks.map { it.id },
@@ -40,7 +51,7 @@ data class EmbeddedHomework(
             id = homework.id,
             dueTo = homework.dueTo,
             createdAt = homework.createdAt,
-            createdById = homework.createdBy!!,
+            createdBy = createdBy!!.toModel(),
             subjectInstanceId = homework.subjectInstanceId,
             groupId = homework.groupId,
             isPublic = homework.isPublic,

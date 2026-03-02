@@ -39,6 +39,7 @@ import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
@@ -187,7 +188,7 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = false,
                 allowGroup = false,
-                subject = assessment.subjectInstance.subject,
+                subject = assessment.assessment.subjectInstance.subject,
                 onClick = {}
             )
             TypeRow(
@@ -221,7 +222,7 @@ fun DetailPage(
                     HorizontalDivider()
                 }
             }
-            if (assessment is PopulatedAssessment.CloudAssessment) CreatedByRow(createdBy = assessment.createdByUser)
+            if (assessment.assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = (assessment.assessment.creator as AppEntity.VppId).vppId)
             else SavedLocalRow()
 
             CreatedAtRow(createdAt = assessment.assessment.createdAt.toInstant(TimeZone.UTC))

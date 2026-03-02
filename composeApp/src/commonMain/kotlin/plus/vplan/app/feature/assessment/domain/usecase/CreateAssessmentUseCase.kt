@@ -38,8 +38,8 @@ class CreateAssessmentUseCase(
         val profile = (profileService.getCurrentProfile().first() as? Profile.StudentProfile) ?: return CreateAssessmentResult.Error.UnknownError("No current profile found or profile is not a student profile")
 
         val creator = profile.vppId?.let { vppId ->
-            AppEntity.VppId(vppId.id)
-        } ?: AppEntity.Profile(profile.id)
+            AppEntity.VppId(vppId)
+        } ?: AppEntity.Profile(profile)
 
         val subjectInstanceId = subjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
             val subjectInstanceAlias = subjectInstance.aliases.firstOrNull()
@@ -112,8 +112,8 @@ class CreateAssessmentUseCase(
             date = date,
             isPublic = isPublic,
             createdAt = Clock.System.now(),
-            createdBy = if (creator is AppEntity.VppId) creator.id else null,
-            createdByProfile = if (creator is AppEntity.Profile) creator.id else null,
+            createdBy = if (creator is AppEntity.VppId) creator.vppId.id else null,
+            createdByProfile = if (creator is AppEntity.Profile) creator.profile.id else null,
             description = text,
             type = type,
             associatedFileIds = files.map { it.id }

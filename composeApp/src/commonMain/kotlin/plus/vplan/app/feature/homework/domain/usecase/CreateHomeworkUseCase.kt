@@ -94,7 +94,7 @@ class CreateHomeworkUseCase(
                 subjectInstanceId = subjectInstance?.id,
                 groupId = if (subjectInstance == null) profile.group.id else null,
                 createdAt = Clock.System.now(),
-                createdById = profile.vppId!!.id,
+                createdBy = profile.vppId!!,
                 isPublic = isPublic == true,
                 dueTo = date,
                 fileIds = emptyList(),
@@ -129,7 +129,7 @@ class CreateHomeworkUseCase(
                 subjectInstanceId = subjectInstance?.id,
                 groupId = if (subjectInstance == null) profile.group.id else null,
                 createdAt = Clock.System.now(),
-                createdByProfileId = profile.id,
+                createdByProfile = profile,
                 dueTo = date,
                 taskIds = taskIds.map { it.value },
                 fileIds = files.map { it.id },
@@ -160,8 +160,8 @@ class CreateHomeworkUseCase(
             dueTo = homework.dueTo,
             isPublic = isPublic ?: false,
             createdAt = Clock.System.now(),
-            createdByVppId = if (creator is AppEntity.VppId) creator.id else null,
-            createdByProfileId = if (creator is AppEntity.Profile) creator.id else null,
+            createdByVppId = if (creator is AppEntity.VppId) creator.vppId.id else null,
+            createdByProfileId = if (creator is AppEntity.Profile) creator.profile.id else null,
             cachedAt = Clock.System.now(),
             tasks = homeworkTasks.map { homeworkTask ->
                 HomeworkEntity.TaskEntity(

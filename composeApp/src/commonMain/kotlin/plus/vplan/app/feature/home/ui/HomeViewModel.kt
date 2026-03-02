@@ -212,7 +212,7 @@ class HomeViewModel(
                 Logger.d("HomeViewModel") { "[getDay $forDate] PopulatedDay: timetable=${day.timetable.size}, substitution=${day.substitution.size}, using=${if (day.substitution.isEmpty()) "timetable" else "substitution"}" }
                 combine(
                     homeworkPopulator.populateMultiple(day.homework, PopulationContext.Profile(profile)),
-                    assessmentPopulator.populateMultiple(day.assessments, PopulationContext.Profile(profile)),
+                    assessmentPopulator.populateMultiple(day.assessments),
                 ) { homework, assessments ->
                     DayWithDetails(day, day.substitution.ifEmpty { day.timetable }, homework, assessments)
                 }.distinctUntilChangedBy { d ->
