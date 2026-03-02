@@ -23,7 +23,6 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import plus.vplan.app.App
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
 import plus.vplan.app.core.data.assessment.AssessmentRepository
@@ -86,11 +85,6 @@ import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.service.ProfileService
-import plus.vplan.app.domain.source.FileSource
-import plus.vplan.app.domain.source.LessonTimeSource
-import plus.vplan.app.domain.source.SubstitutionPlanSource
-import plus.vplan.app.domain.source.TimetableSource
-import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.di.assessmentModule
 import plus.vplan.app.feature.calendar.di.calendarModule
@@ -279,11 +273,5 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
             profileModule,
             newsModule
         )
-
-        App.timetableSource = TimetableSource(koin.get())
-        App.weekSource = WeekSource(koin.get())
-        App.lessonTimeSource = LessonTimeSource(koin.get())
-        App.substitutionPlanSource = SubstitutionPlanSource(koin.get())
-        App.fileSource = FileSource(koin.get(), koin.get())
     }
 }

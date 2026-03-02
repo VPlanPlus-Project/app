@@ -15,11 +15,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.core.model.Alias
-import plus.vplan.app.domain.source.FileSource
-import plus.vplan.app.domain.source.LessonTimeSource
-import plus.vplan.app.domain.source.SubstitutionPlanSource
-import plus.vplan.app.domain.source.TimetableSource
-import plus.vplan.app.domain.source.WeekSource
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.feature.settings.page.info.domain.usecase.getSystemInfo
 import plus.vplan.app.ui.theme.AppTheme
@@ -42,14 +37,6 @@ object PostHogConfig {
 
 object AppConfig {
     const val VERSION_CODE = AppBuildConfig.APP_VERSION_CODE
-}
-
-object App {
-    lateinit var timetableSource: TimetableSource
-    lateinit var weekSource: WeekSource
-    lateinit var lessonTimeSource: LessonTimeSource
-    lateinit var substitutionPlanSource: SubstitutionPlanSource
-    lateinit var fileSource: FileSource
 }
 
 @Composable
