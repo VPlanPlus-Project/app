@@ -1,11 +1,10 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package plus.vplan.app.feature.homework.ui.components
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import io.github.vinceglb.filekit.core.PlatformFile
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +24,6 @@ import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
 import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class NewHomeworkViewModel(
@@ -35,7 +33,6 @@ class NewHomeworkViewModel(
     private val createHomeworkUseCase: CreateHomeworkUseCase,
     private val subjectInstanceRepository: SubjectInstanceRepository,
 ) : ViewModel() {
-    @OptIn(ExperimentalUuidApi::class)
     val state = MutableStateFlow(NewHomeworkState())
 
     /**

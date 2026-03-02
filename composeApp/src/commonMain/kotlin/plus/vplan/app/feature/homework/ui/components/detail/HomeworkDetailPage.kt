@@ -31,9 +31,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
-import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.core.PickerMode
-import io.github.vinceglb.filekit.core.PickerType
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.path
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
@@ -87,8 +88,8 @@ fun DetailPage(
     var taskToEdit by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val filePickerLauncher = rememberFilePickerLauncher(
-        mode = PickerMode.Multiple(),
-        type = PickerType.File()
+        mode = FileKitMode.Multiple(),
+        type = FileKitType.File()
     ) { files ->
         // Handle picked files
         Logger.d { "Picked files: ${files?.map { it.path }}" }
@@ -98,8 +99,8 @@ fun DetailPage(
     }
 
     val imagePickerLauncher = rememberFilePickerLauncher(
-        mode = PickerMode.Multiple(),
-        type = PickerType.Image
+        mode = FileKitMode.Multiple(),
+        type = FileKitType.Image
     ) { images ->
         Logger.d { "Picked images: ${images?.map { it.path }}" }
         images?.forEach { image ->

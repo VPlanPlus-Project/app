@@ -2,7 +2,6 @@ package plus.vplan.app
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Process
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -14,10 +13,10 @@ import co.touchlab.kermit.Logger
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
 import com.posthog.PostHog
-import io.github.vinceglb.filekit.core.FileKit
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.manualFileKitCoreInitialization
 import io.ktor.http.URLBuilder
 import plus.vplan.app.di.ActivityProviderImpl
-import kotlin.system.exitProcess
 
 class MainActivity : FragmentActivity() {
 
@@ -30,7 +29,7 @@ class MainActivity : FragmentActivity() {
         onNewIntent(intent)
 
         ActivityProviderImpl.currentActivity = this
-        FileKit.init(this)
+        FileKit.manualFileKitCoreInitialization(this)
         enableEdgeToEdge()
 
         PostHog.capture("App.Start")

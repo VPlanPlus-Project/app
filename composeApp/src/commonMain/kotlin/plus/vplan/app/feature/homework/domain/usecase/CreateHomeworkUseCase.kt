@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.homework.domain.usecase
 
+import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.captureError

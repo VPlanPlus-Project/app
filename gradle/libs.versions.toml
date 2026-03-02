@@ -61,7 +61,8 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
 androidx-sqlite-framework = { group = "androidx.sqlite", name = "sqlite-framework", version.ref = "androidx-sqlite" }
 cmp-easy-permission = { module = "network.chaintech:cmp-easy-permission", version.ref = "cmpEasyPermission" }
-filekit = { module = "io.github.vinceglb:filekit-core", version.ref = "filekitCompose" }
+filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekitCompose" }
+filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekitCompose" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 posthog-android = { module = "com.posthog:posthog-android", version.ref = "posthogAndroid" }

@@ -1,8 +1,9 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.homework.domain.usecase
 
-import io.github.vinceglb.filekit.core.PlatformFile
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.readBytes
+import io.github.vinceglb.filekit.size
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.data.homework.HomeworkRepository
@@ -15,7 +16,6 @@ import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 class AddFileUseCase(
     private val localFileRepository: LocalFileRepository,
@@ -43,7 +43,7 @@ class AddFileUseCase(
                 File(
                     id = fileId,
                     name = file.name,
-                    size = file.getSize() ?: 0L,
+                    size = file.size(),
                     isOfflineReady = true,
                     cachedAt = Clock.System.now()
                 )

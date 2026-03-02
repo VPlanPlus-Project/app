@@ -6,23 +6,6 @@ import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.size
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.onDownload
-import io.ktor.client.plugins.onUpload
-import io.ktor.client.request.delete
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.request.patch
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.request.url
-import io.ktor.client.statement.bodyAsBytes
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
-import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
@@ -31,23 +14,18 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import plus.vplan.app.core.database.VppDatabase
 import plus.vplan.app.core.database.model.database.DbFile
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
-import plus.vplan.app.network.besteschule.NetworkRequestUnsuccessfulException
-import plus.vplan.app.network.besteschule.ResponseDataWrapper
-import plus.vplan.app.network.vpp.GenericAuthenticationProvider
+import plus.vplan.app.network.vpp.file.FileApi
 import kotlin.time.Clock
 
 class FileRepositoryImpl(
-    private val httpClient: HttpClient,
+    private val fileApi: FileApi,
     private val vppDatabase: VppDatabase,
-    private val genericAuthenticationProvider: GenericAuthenticationProvider,
     private val thumbnailGenerator: ThumbnailGenerator,
     private val fileOpener: FileOpener,
     private val getFileSystemPath: (relativePath: String) -> String
@@ -55,7 +33,6 @@ class FileRepositoryImpl(
     
     private val logger = Logger.withTag("FileRepositoryImpl")
     private val fileProgressMap = mutableMapOf<Int, MutableStateFlow<FileOperationProgress>>()
-    private val baseUrl = "https://vplan.plus/api/app/file/v1"
     
     override fun getFileById(id: Int): Flow<File?> {
         return vppDatabase.fileDao.getById(id).map { it?.toModel() }
@@ -73,7 +50,7 @@ class FileRepositoryImpl(
         }
     }
     
-    private suspend fun updateProgress(fileId: Int, progress: FileOperationProgress) {
+    private fun updateProgress(fileId: Int, progress: FileOperationProgress) {
         fileProgressMap.getOrPut(fileId) {
             MutableStateFlow(FileOperationProgress.Idle)
         }.value = progress
@@ -98,30 +75,16 @@ class FileRepositoryImpl(
             // Detect MIME type from file extension
             val mimeType = detectMimeType(fileName)
             
-            // Upload to server
-            val response = httpClient.post {
-                url(baseUrl)
-                vppId.buildVppSchoolAuthentication().authentication(this)
-                header("File-Name", fileName)
-                header(HttpHeaders.ContentType, ContentType.Application.OctetStream.toString())
-                header(HttpHeaders.ContentLength, fileSize.toString())
-                setBody(ByteReadChannel(fileBytes))
-                onUpload { bytesSentTotal, contentLength ->
-                    val progress = if (contentLength != null) {
-                        (bytesSentTotal.toFloat() / contentLength.toFloat())
-                    } else 0f
+            // Upload to server via API
+            val serverFileId = fileApi.uploadFile(
+                vppId = vppId,
+                fileName = fileName,
+                fileBytes = fileBytes,
+                onProgress = { progress ->
                     onProgress(progress)
                     updateProgress(localFileId, FileOperationProgress.Uploading(progress))
                 }
-            }
-            
-            if (!response.status.isSuccess()) {
-                val error = Response.Error.Other("Upload failed: ${response.status}")
-                updateProgress(localFileId, FileOperationProgress.Error(error))
-                throw NetworkRequestUnsuccessfulException(response)
-            }
-            
-            val serverFileId = response.body<ResponseDataWrapper<Int>>().data
+            )
             
             // Store file locally
             val filePath = "files/$serverFileId"
@@ -153,11 +116,6 @@ class FileRepositoryImpl(
             
             updateProgress(localFileId, FileOperationProgress.Success(file))
             Response.Success(file)
-        } catch (e: NetworkRequestUnsuccessfulException) {
-            logger.e(e) { "Network error uploading file" }
-            val error = Response.Error.Other("Network error: ${e.message}")
-            updateProgress(localFileId, FileOperationProgress.Error(error))
-            error
         } catch (e: Exception) {
             logger.e(e) { "Error uploading file" }
             val error = Response.Error.Other(e.message ?: "Unknown error")
@@ -174,25 +132,15 @@ class FileRepositoryImpl(
             send(FileOperationProgress.Downloading(0f))
             updateProgress(file.id, FileOperationProgress.Downloading(0f))
             
-            val response = httpClient.get {
-                url("$baseUrl/${file.id}/download")
-                schoolApiAccess.authentication(this)
-                onDownload { bytesSentTotal, contentLength ->
-                    val progress = if (contentLength == null) 0f 
-                        else (bytesSentTotal.toFloat() / contentLength.toFloat())
-                    send(FileOperationProgress.Downloading(progress))
+            // Download from server via API
+            val data = fileApi.downloadFile(
+                fileId = file.id,
+                schoolApiAccess = schoolApiAccess,
+                onProgress = { progress ->
+                    trySend(FileOperationProgress.Downloading(progress))
                     updateProgress(file.id, FileOperationProgress.Downloading(progress))
                 }
-            }
-            
-            if (!response.status.isSuccess()) {
-                val error = Response.Error.Other("Download failed: ${response.status}")
-                send(FileOperationProgress.Error(error))
-                updateProgress(file.id, FileOperationProgress.Error(error))
-                throw NetworkRequestUnsuccessfulException(response)
-            }
-            
-            val data = response.bodyAsBytes()
+            )
             
             // Store file locally
             val filePath = "files/${file.id}"
@@ -205,11 +153,6 @@ class FileRepositoryImpl(
             val updatedFile = file.copy(isOfflineReady = true)
             send(FileOperationProgress.Success(updatedFile))
             updateProgress(file.id, FileOperationProgress.Success(updatedFile))
-        } catch (e: NetworkRequestUnsuccessfulException) {
-            logger.e(e) { "Network error downloading file ${file.id}" }
-            val error = Response.Error.Other("Network error: ${e.message}")
-            send(FileOperationProgress.Error(error))
-            updateProgress(file.id, FileOperationProgress.Error(error))
         } catch (e: Exception) {
             logger.e(e) { "Error downloading file ${file.id}" }
             val error = Response.Error.Other(e.message ?: "Unknown error")
@@ -250,26 +193,15 @@ class FileRepositoryImpl(
         
         // Update on server
         try {
-            val response = httpClient.patch {
-                url("$baseUrl/${file.id}")
-                vppId.buildVppSchoolAuthentication().authentication(this)
-                contentType(ContentType.Application.Json)
-                setBody(FileUpdateNameRequest(newName))
-            }
-            
-            if (!response.status.isSuccess()) {
-                // Rollback on error
-                vppDatabase.fileDao.updateName(file.id, oldName)
-                throw NetworkRequestUnsuccessfulException(response)
-            }
-            
+            fileApi.renameFile(
+                fileId = file.id,
+                newName = newName,
+                vppId = vppId
+            )
             Response.Success(Unit)
-        } catch (e: NetworkRequestUnsuccessfulException) {
-            logger.e(e) { "Network error renaming file ${file.id}" }
-            vppDatabase.fileDao.updateName(file.id, oldName)
-            Response.Error.Other("Network error: ${e.message}")
         } catch (e: Exception) {
             logger.e(e) { "Error renaming file ${file.id}" }
+            // Rollback on error
             vppDatabase.fileDao.updateName(file.id, oldName)
             Response.Error.Other(e.message ?: "Unknown error")
         }
@@ -299,23 +231,16 @@ class FileRepositoryImpl(
         
         // Delete from server
         try {
-            val response = httpClient.delete {
-                url("$baseUrl/${file.id}")
-                vppId.buildVppSchoolAuthentication().authentication(this)
-            }
-            
-            if (!response.status.isSuccess()) {
-                throw NetworkRequestUnsuccessfulException(response)
-            }
+            fileApi.deleteFile(
+                fileId = file.id,
+                vppId = vppId
+            )
             
             // Delete from database after successful server deletion
             vppDatabase.fileDao.deleteById(file.id)
             vppDatabase.fileDao.deleteHomeworkFileConnections(file.id)
             
             Response.Success(Unit)
-        } catch (e: NetworkRequestUnsuccessfulException) {
-            logger.e(e) { "Network error deleting file ${file.id}" }
-            Response.Error.Other("Network error: ${e.message}")
         } catch (e: Exception) {
             logger.e(e) { "Error deleting file ${file.id}" }
             Response.Error.Other(e.message ?: "Unknown error")
@@ -434,23 +359,3 @@ expect suspend fun deleteFilePlatform(path: String)
 expect suspend fun fileExistsPlatform(path: String): Boolean
 expect suspend fun loadThumbnailPlatform(path: String): ImageBitmap?
 expect suspend fun saveThumbnailPlatform(thumbnail: ImageBitmap, path: String)
-
-@Serializable
-data class FileUpdateNameRequest(
-    @SerialName("file_name") val fileName: String,
-)
-
-@Serializable
-data class ResponseDataWrapper<T>(
-    val data: T
-) {
-    companion object {
-        inline fun <reified T> fromJson(json: String): ResponseDataWrapper<T>? {
-            return try {
-                kotlinx.serialization.json.Json.decodeFromString<ResponseDataWrapper<T>>(json)
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-}

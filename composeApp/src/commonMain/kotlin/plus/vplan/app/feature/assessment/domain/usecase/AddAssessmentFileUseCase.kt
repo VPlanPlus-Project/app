@@ -1,8 +1,9 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.assessment.domain.usecase
 
-import io.github.vinceglb.filekit.core.PlatformFile
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.readBytes
+import io.github.vinceglb.filekit.size
 import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getFirstValueOld
@@ -13,7 +14,6 @@ import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 class AddAssessmentFileUseCase(
     private val localFileRepository: LocalFileRepository,
@@ -26,7 +26,7 @@ class AddAssessmentFileUseCase(
             val response = fileRepository.uploadFile(profile.vppId!!, AttachedFile.Other(
                 platformFile = file,
                 bitmap = null,
-                size = file.getSize() ?: 0L,
+                size = file.size(),
                 name = file.name,
             ))
             if (response !is Response.Success) return false
@@ -40,7 +40,7 @@ class AddAssessmentFileUseCase(
             File(
                 id = id,
                 name = file.name,
-                size = file.getSize() ?: 0L,
+                size = file.size(),
                 isOfflineReady = true,
                 cachedAt = Clock.System.now()
             )

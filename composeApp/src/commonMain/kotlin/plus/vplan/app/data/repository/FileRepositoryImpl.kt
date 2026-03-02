@@ -3,6 +3,7 @@
 package plus.vplan.app.data.repository
 
 import co.touchlab.kermit.Logger
+import io.github.vinceglb.filekit.readBytes
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onDownload

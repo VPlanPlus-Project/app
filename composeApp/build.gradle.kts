@@ -94,7 +94,8 @@ kotlin {
 
             implementation(libs.cmp.easy.permission)
 
-            implementation(libs.filekit)
+            implementation(libs.filekit.core)
+            implementation(libs.filekit.dialogs.compose)
             implementation(libs.compose.ui.tooling.preview)
 
             implementation(libs.kermit)

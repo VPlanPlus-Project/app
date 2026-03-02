@@ -1,8 +1,11 @@
 package plus.vplan.app.ui.common
 
 import androidx.compose.ui.graphics.ImageBitmap
-import io.github.vinceglb.filekit.core.PlatformFile
-import io.github.vinceglb.filekit.core.extension
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.extension
+import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.readBytes
+import io.github.vinceglb.filekit.size
 import plus.vplan.app.utils.getBitmapFromBytes
 import plus.vplan.app.utils.getDataFromPdf
 
@@ -15,7 +18,7 @@ abstract class AttachedFile {
     companion object {
         suspend fun fromFile(file: PlatformFile): AttachedFile {
             val bytes = file.readBytes()
-            val size = file.getSize() ?: 0L
+            val size = file.size()
             val name = file.name
             return when (file.extension) {
                 "pdf" -> {
@@ -87,7 +90,8 @@ abstract class AttachedFile {
             return copy(platformFile = platformFile, bitmap = bitmap, size = size, name = name)
         }
 
-        constructor(platformFile: PlatformFile) : this(platformFile, null, platformFile.getSize() ?: 0L, platformFile.name)
+        constructor(platformFile: PlatformFile) : this(platformFile, null,
+            platformFile.size(), platformFile.name)
     }
 
     abstract fun copyBase(

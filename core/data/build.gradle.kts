@@ -28,7 +28,7 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.kermit)
 
-            implementation(libs.filekit)
+            implementation(libs.filekit.core)
 
             implementation(project(":core:database"))
             implementation(project(":core:network"))
