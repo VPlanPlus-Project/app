@@ -12,20 +12,19 @@ import plus.vplan.app.utils.sortedBySuspending
 class GetCourseConfigurationUseCase: KoinComponent {
     private val subjectInstanceRepository by inject<SubjectInstanceRepository>()
 
-    suspend operator fun invoke(profile: Profile.StudentProfile): Map<Course, Boolean?> {
+    suspend operator fun invoke(profile: Profile.StudentProfile): List<Pair<Course, Boolean?>> {
         val subjectInstances = subjectInstanceRepository.getByGroup(profile.group).first()
         return subjectInstances
-            .filter { subjectInstance -> profile.subjectInstanceConfiguration[subjectInstance.id] != false }
             .groupBy { it.course }
+            .filterKeysNotNull()
             .mapValues { (_, subjectInstances) ->
                 val selections =
                     subjectInstances.map { profile.subjectInstanceConfiguration[it.id] == true }
                 if (selections.all { it }) true else if (selections.any { it }) null else false
             }
-            .filterKeysNotNull()
+            .toList()
             .sortedBySuspending { (course, _) ->
                 course.name + course.teacher?.name
             }
-            .associate { it.key to it.value }
     }
 }

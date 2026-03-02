@@ -19,6 +19,7 @@ import plus.vplan.app.feature.profile.domain.usecase.UpdateIndicesUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.GetCourseConfigurationUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileSubjectInstanceEnabledUseCase
 import plus.vplan.app.utils.filterKeysNotNull
+import plus.vplan.app.utils.sortedBySuspending
 import kotlin.uuid.Uuid
 
 class ProfileSubjectInstanceViewModel(
@@ -47,9 +48,12 @@ class ProfileSubjectInstanceViewModel(
                     state.copy(
                         profile = profile,
                         courses = getCourseConfigurationUseCase(profile),
-                        subjectInstances = profile.subjectInstanceConfiguration
-                            .mapKeys {subjectInstanceRepository.getByLocalId(it.key).first() ?: return@mapKeys null }
-                            .filterKeysNotNull()
+                        subjectInstances = subjectInstanceRepository.getByGroup(profile.group).first().associate { it to true } +
+                                profile.subjectInstanceConfiguration
+                                    .mapKeys {subjectInstanceRepository.getByLocalId(it.key).first() ?: return@mapKeys null }
+                                    .filterKeysNotNull()
+                                    .sortedBySuspending { it.key.subject }
+                                    .associate { it.key to it.value }
                     )
                 }
             }
@@ -63,7 +67,7 @@ class ProfileSubjectInstanceViewModel(
                     state.value.profile!!.subjectInstanceConfiguration
                         .keys
                         .mapNotNull { subjectInstanceRepository.getByLocalId(it).first() }
-                        .filter { it.course == event.course.id }
+                        .filter { it.course?.id == event.course.id }
                         .let { subjectInstances ->
                             setProfileSubjectInstanceEnabledUseCase(state.value.profile!!, subjectInstances, event.isSelected)
                             shouldRebuildIndicesOnProfileReload = true
@@ -83,7 +87,7 @@ class ProfileSubjectInstanceViewModel(
 @Immutable
 data class ProfileSubjectInstanceState(
     val profile: Profile.StudentProfile? = null,
-    val courses: Map<Course, Boolean?> = emptyMap(),
+    val courses: List<Pair<Course, Boolean?>> = emptyList(),
     val subjectInstances: Map<SubjectInstance, Boolean> = emptyMap(),
 )
 
