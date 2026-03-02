@@ -1,10 +1,12 @@
 package plus.vplan.app.core.database.model.embedded
 
 import androidx.room.Embedded
+import androidx.room.Junction
 import androidx.room.Relation
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.core.database.model.database.DbAssessment
+import plus.vplan.app.core.database.model.database.DbFile
 import plus.vplan.app.core.database.model.database.DbProfile
 import plus.vplan.app.core.database.model.database.DbSubjectInstance
 import plus.vplan.app.core.database.model.database.DbVppId
@@ -16,9 +18,14 @@ data class EmbeddedAssessment(
     @Embedded val assessment: DbAssessment,
     @Relation(
         parentColumn = "id",
-        entityColumn = "assessment_id",
-        entity = FKAssessmentFile::class
-    ) val files: List<FKAssessmentFile>,
+        entityColumn = "id",
+        entity = DbFile::class,
+        associateBy = Junction(
+            value = FKAssessmentFile::class,
+            parentColumn = "assessment_id",
+            entityColumn = "file_id"
+        )
+    ) val files: List<DbFile>,
     @Relation(
         parentColumn = "subject_instance_id",
         entityColumn = "id",
@@ -44,7 +51,7 @@ data class EmbeddedAssessment(
         subjectInstance = subjectInstance.toModel(),
         description = assessment.description,
         type = Assessment.Type.entries[assessment.type],
-        fileIds = files.map { it.fileId },
+        files = files.map { it.toModel() },
         cachedAt = assessment.cachedAt
     )
 }

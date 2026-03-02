@@ -40,7 +40,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.AppEntity
-import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
@@ -188,23 +187,23 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = false,
                 allowGroup = false,
-                subject = assessment.assessment.subjectInstance.subject,
+                subject = assessment.subjectInstance.subject,
                 onClick = {}
             )
             TypeRow(
                 canEdit = state.canEdit,
-                type = assessment.assessment.type,
+                type = assessment.type,
                 onClick = { showTypeSelectDrawer = true }
             )
             DueToRow(
                 canEdit = state.canEdit,
                 isHomework = false,
-                dueTo = assessment.assessment.date,
+                dueTo = assessment.date,
                 onClick = { showDateSelectDrawer = true },
             )
-            if (assessment is PopulatedAssessment.CloudAssessment) ShareStatusRow(
+            if (assessment.id > 0) ShareStatusRow(
                 canEdit = state.canEdit,
-                isPublic = assessment.assessment.isPublic,
+                isPublic = assessment.isPublic,
                 onSelect = { isPublic -> onEvent(AssessmentDetailEvent.UpdateVisibility(isPublic)) }
             )
 
@@ -222,14 +221,14 @@ fun DetailPage(
                     HorizontalDivider()
                 }
             }
-            if (assessment.assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = (assessment.assessment.creator as AppEntity.VppId).vppId)
+            if (assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = (assessment.creator as AppEntity.VppId).vppId)
             else SavedLocalRow()
 
-            CreatedAtRow(createdAt = assessment.assessment.createdAt.toInstant(TimeZone.UTC))
+            CreatedAtRow(createdAt = assessment.createdAt.toInstant(TimeZone.UTC))
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             if (state.canEdit) {
-                var text by rememberSaveable(assessment.assessment.id, state.reloadingState == UnoptimisticTaskState.Success) { mutableStateOf(assessment.assessment.description) }
+                var text by rememberSaveable(assessment.id, state.reloadingState == UnoptimisticTaskState.Success) { mutableStateOf(assessment.description) }
                 TextField(
                     value = text,
                     enabled = state.canEdit,
@@ -238,7 +237,7 @@ fun DetailPage(
                     modifier = Modifier.fillMaxWidth(),
                 )
             } else Text(
-                text = assessment.assessment.description
+                text = assessment.description
             )
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
@@ -290,14 +289,14 @@ fun DetailPage(
             configuration = DateSelectConfiguration(
                 allowDatesInPast = false
             ),
-            selectedDate = assessment.assessment.date,
+            selectedDate = assessment.date,
             onSelectDate = { onEvent(AssessmentDetailEvent.UpdateDate(it)) },
             onDismiss = { showDateSelectDrawer = false }
         )
     }
 
     if (showTypeSelectDrawer) TypeDrawer(
-        selectedType = assessment.assessment.type,
+        selectedType = assessment.type,
         onSelectType = { onEvent(AssessmentDetailEvent.UpdateType(it)) },
         onDismiss = { showTypeSelectDrawer = false }
     )

@@ -14,7 +14,6 @@ import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.data.repository.HomeworkDto
-import plus.vplan.app.domain.model.populated.PopulatedHomework
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -42,7 +41,7 @@ interface HomeworkRepository: WebEntityRepository<Homework> {
     suspend fun getIdForNewLocalHomeworkFile(): Int
 
     suspend fun toggleHomeworkTaskDone(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Boolean
-    suspend fun editHomeworkSubjectInstance(homework: PopulatedHomework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile)
+    suspend fun editHomeworkSubjectInstance(homework: Homework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile)
     suspend fun editHomeworkDueTo(homework: Homework, dueTo: LocalDate, profile: Profile.StudentProfile)
     suspend fun editHomeworkVisibility(homework: Homework.CloudHomework, isPublic: Boolean, profile: Profile.StudentProfile)
 

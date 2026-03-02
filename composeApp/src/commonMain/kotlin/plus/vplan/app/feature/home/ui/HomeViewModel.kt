@@ -5,7 +5,6 @@ package plus.vplan.app.feature.home.ui
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -33,12 +32,7 @@ import kotlinx.datetime.atTime
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.populated.AssessmentPopulator
-import plus.vplan.app.domain.model.populated.HomeworkPopulator
-import plus.vplan.app.domain.model.populated.PopulatedAssessment
 import plus.vplan.app.domain.model.populated.PopulatedDay
-import plus.vplan.app.domain.model.populated.PopulatedHomework
-import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.repository.Stundenplan24Repository
@@ -61,8 +55,6 @@ class HomeViewModel(
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getDayUseCase: GetDayUseCase,
     private val getNewsUseCase: GetNewsUseCase,
-    private val homeworkPopulator: HomeworkPopulator,
-    private val assessmentPopulator: AssessmentPopulator,
     private val keyValueRepository: KeyValueRepository,
     private val stundenplan24Repository: Stundenplan24Repository,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
@@ -132,13 +124,13 @@ class HomeViewModel(
                     }
 
 
-                    val canShowCurrentAndNext = !forceStatic && dayWithDetails.populatedDay.day.date == time.date
+                    val canShowCurrentAndNext = !forceStatic && dayWithDetails.day.date == time.date
                     val lessons = dayWithDetails.lessons
 
                     val currentLessons = if (canShowCurrentAndNext) {
                         lessons.filter { lesson ->
                             val timeRange = lesson.lessonTime ?: return@filter false
-                            time in timeRange.start.atDate(dayWithDetails.populatedDay.day.date)..timeRange.end.atDate(dayWithDetails.populatedDay.day.date)
+                            time in timeRange.start.atDate(dayWithDetails.day.date)..timeRange.end.atDate(dayWithDetails.day.date)
                         }.map { lesson ->
                             CurrentLesson(
                                 lesson = lesson,
@@ -159,7 +151,7 @@ class HomeViewModel(
                     val nextLessons = if (canShowCurrentAndNext) {
                         lessons.filter { lesson ->
                             val timeRange = lesson.lessonTime ?: return@filter true
-                            timeRange.start.atDate(dayWithDetails.populatedDay.day.date) > time
+                            timeRange.start.atDate(dayWithDetails.day.date) > time
                         }
                             .groupBy { it.lessonNumber }
                             .minByOrNull { it.key }?.value.orEmpty()
@@ -170,7 +162,7 @@ class HomeViewModel(
                             if (!canShowCurrentAndNext || (nextLessons.isEmpty() && currentLessons.isEmpty())) return@filter true
                             if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
                             val timeRange = lesson.lessonTime ?: return@filter true
-                            timeRange.start.atDate(dayWithDetails.populatedDay.day.date) > time
+                            timeRange.start.atDate(dayWithDetails.day.date) > time
                         }
                         .sortedBySuspending { lesson ->
                             val subject = lesson.subject ?: ""
@@ -202,31 +194,17 @@ class HomeViewModel(
         }
     }
 
-    private fun getDay(profile: Profile, forDate: LocalDate, shouldRetryRecursively: Boolean): Flow<DayWithDetails?> {
+    private fun getDay(profile: Profile, forDate: LocalDate, shouldRetryRecursively: Boolean): Flow<PopulatedDay?> {
         return getDayUseCase(profile, forDate)
             .distinctUntilChangedBy { day ->
                 val lessonIds = (day.substitution.ifEmpty { day.timetable }).map { it.id }.sorted()
                 "${day.day.id}|${day.day.info}|${day.day.dayType}|${day.holiday?.id}|$lessonIds"
             }
             .flatMapLatest { day ->
-                Logger.d("HomeViewModel") { "[getDay $forDate] PopulatedDay: timetable=${day.timetable.size}, substitution=${day.substitution.size}, using=${if (day.substitution.isEmpty()) "timetable" else "substitution"}" }
-                combine(
-                    homeworkPopulator.populateMultiple(day.homework, PopulationContext.Profile(profile)),
-                    assessmentPopulator.populateMultiple(day.assessments),
-                ) { homework, assessments ->
-                    DayWithDetails(day, day.substitution.ifEmpty { day.timetable }, homework, assessments)
-                }.distinctUntilChangedBy { d ->
-                    val lessonIds = d.lessons.map { it.id }.sorted()
-                    val homeworkIds = d.homework.map { it.homework.id }.sorted()
-                    val assessmentIds = d.assessments.map { it.assessment.id }.sorted()
-                    "$lessonIds|$homeworkIds|$assessmentIds"
-                }.flatMapLatest { dayWithDetails ->
-                    // Retry with next school day if current day is completed
-                    if (shouldRetryRecursively && dayWithDetails.isCompleted(LocalDateTime.now()) && dayWithDetails.populatedDay.day.nextSchoolDay != null) {
-                        getDay(profile, dayWithDetails.populatedDay.day.nextSchoolDay!!, false)
-                    } else {
-                        flowOf(dayWithDetails)
-                    }
+                if (shouldRetryRecursively && day.isCompleted(LocalDateTime.now()) && day.day.nextSchoolDay != null) {
+                    getDay(profile, day.day.nextSchoolDay!!, false)
+                } else {
+                    flowOf(day)
                 }
             }
     }
@@ -252,8 +230,8 @@ class HomeViewModel(
                                 school,
                                 setOfNotNull(
                                     LocalDate.now(),
-                                    state.value.day?.populatedDay?.day?.date,
-                                    state.value.day?.populatedDay?.day?.nextSchoolDay
+                                    state.value.day?.day?.date,
+                                    state.value.day?.day?.nextSchoolDay
                                 ).sorted(),
                                 allowNotification = false,
                                 providedClient = client
@@ -275,7 +253,7 @@ data class HomeState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = LocalDateTime.now(),
     val initDone: Boolean = false,
-    val day: DayWithDetails? = null,
+    val day: PopulatedDay? = null,
     val isUpdating: Boolean = false,
     val news: List<News> = emptyList(),
     val hasInterpolatedLessonTimes: Boolean = false,
@@ -288,19 +266,13 @@ sealed class HomeEvent {
     data object OnRefresh : HomeEvent()
 }
 
-data class DayWithDetails(
-    val populatedDay: PopulatedDay,
-    val lessons: List<Lesson>,
-    val homework: List<PopulatedHomework>,
-    val assessments: List<PopulatedAssessment>
-) {
-    fun isCompleted(comparedTo: LocalDateTime): Boolean {
-        if (lessons.isEmpty()) return true
-        return lessons.all { lesson ->
-            val lessonTime = lesson.lessonTime ?: return@all true
-            val plannedEnd = populatedDay.day.date.atTime(lessonTime.end)
-            plannedEnd < comparedTo
-        }
+private fun PopulatedDay.isCompleted(comparedTo: LocalDateTime): Boolean {
+    val lessons = this.substitution.ifEmpty { this.timetable }
+    if (lessons.isEmpty()) return true
+    return lessons.all { lesson ->
+        val lessonTime = lesson.lessonTime ?: return@all true
+        val plannedEnd = this.day.date.atTime(lessonTime.end)
+        plannedEnd < comparedTo
     }
 }
 

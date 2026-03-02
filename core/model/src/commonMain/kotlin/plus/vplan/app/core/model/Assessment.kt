@@ -13,7 +13,7 @@ data class Assessment(
     val subjectInstance: SubjectInstance,
     val description: String,
     val type: Type,
-    val fileIds: List<Int>,
+    val files: List<File>,
     val cachedAt: Instant
 ): Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()

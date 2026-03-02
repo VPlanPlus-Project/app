@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
 import plus.vplan.app.core.model.AppEntity
-import plus.vplan.app.domain.model.populated.PopulatedAssessment
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.utils.regularDateFormat
@@ -39,7 +39,7 @@ import plus.vplan.app.utils.toName
 
 @Composable
 fun AssessmentCard(
-    assessment: PopulatedAssessment,
+    assessment: Assessment,
     onClick: () -> Unit
 ) {
     val localDensity = LocalDensity.current
@@ -59,7 +59,7 @@ fun AssessmentCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background(assessment.assessment.subjectInstance.subject.subjectColor().getGroup().color)
+                .background(assessment.subjectInstance.subject.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -69,20 +69,20 @@ fun AssessmentCard(
             Row {
                 SubjectIcon(
                     modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
-                    subject = assessment.assessment.subjectInstance.subject
+                    subject = assessment.subjectInstance.subject
                 )
                 Spacer(Modifier.size(8.dp))
                 Column {
                     Text(
                         text = buildString {
-                            append(assessment.assessment.subjectInstance.subject)
+                            append(assessment.subjectInstance.subject)
                             append(": ")
-                            append(assessment.assessment.type.toName())
+                            append(assessment.type.toName())
                         },
                         style = MaterialTheme.typography.titleLarge
                     )
                     Text(
-                        text = assessment.assessment.description,
+                        text = assessment.description,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -98,7 +98,7 @@ fun AssessmentCard(
                 val createdByFont = MaterialTheme.typography.labelMedium
 
                 Row {
-                    when (val creator = assessment.assessment.creator) {
+                    when (val creator = assessment.creator) {
                         is AppEntity.Profile -> {
                             Text(
                                 text = "Profil " + creator.profile.name,
@@ -115,7 +115,7 @@ fun AssessmentCard(
                     Text(
                         text = buildString {
                             append(", am ")
-                            append(assessment.assessment.date.format(regularDateFormat))
+                            append(assessment.date.format(regularDateFormat))
                             append(" erstellt")
                         },
                         style = createdByFont,

@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.calendar.ui.components.agenda
 
 import androidx.compose.animation.AnimatedContent
@@ -42,8 +40,8 @@ import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.ui.theme.CustomColor
@@ -52,17 +50,14 @@ import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
-import kotlin.time.ExperimentalTime
 
 @Composable
 fun HomeworkCard(
-    homework: PopulatedHomework,
+    homework: Homework,
     profile: Profile?,
     onClick: () -> Unit
 ) {
     val localDensity = LocalDensity.current
-
-    val subject = homework.subjectInstance
 
     var boxHeight by remember { mutableStateOf(0.dp) }
     val tasks = homework.tasks
@@ -81,7 +76,7 @@ fun HomeworkCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background((subject)?.subject.subjectColor().getGroup().color)
+                .background(homework.subjectInstance?.subject.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -111,7 +106,7 @@ fun HomeworkCard(
                         }
                     } else SubjectIcon(
                         modifier = Modifier.fillMaxSize(),
-                        subject = subject?.subject
+                        subject = homework.subjectInstance?.subject
                     )
                 }
                 Spacer(Modifier.size(8.dp))
@@ -171,7 +166,7 @@ fun HomeworkCard(
             ) {
                 val createdByFont = MaterialTheme.typography.labelMedium
                 Row {
-                    when (val creator = homework.homework.creator) {
+                    when (val creator = homework.creator) {
                         is AppEntity.Profile -> {
                             Text(
                                 text = "Profil " + creator.profile.name,
@@ -188,7 +183,7 @@ fun HomeworkCard(
                     Text(
                         text = buildString {
                             append(", am ")
-                            append(homework.homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date.format(regularDateFormat))
+                            append(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date.format(regularDateFormat))
                             append(" erstellt")
                         },
                         style = createdByFont,

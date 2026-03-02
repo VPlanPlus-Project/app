@@ -539,7 +539,7 @@ private fun CalendarScreenContent(
                                                 day.assessments.forEach forEachAssessment@{ assessment ->
                                                     AssessmentCard(
                                                         assessment = assessment,
-                                                        onClick = { displayAssessmentId = assessment.assessment.id }
+                                                        onClick = { displayAssessmentId = assessment.id }
                                                     )
                                                 }
                                                 if (state.currentProfile == null) return@items
@@ -547,7 +547,7 @@ private fun CalendarScreenContent(
                                                     HomeworkCard(
                                                         homework = homework,
                                                         profile = state.currentProfile,
-                                                        onClick = { displayHomeworkId = homework.homework.id }
+                                                        onClick = { displayHomeworkId = homework.id }
                                                     )
                                                 }
                                             }

@@ -4,17 +4,17 @@ import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-sealed class Homework(
-    val creator: AppEntity
-) : Item<Int, DataTag> {
+sealed class Homework: Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
     abstract val createdAt: Instant
     abstract val dueTo: LocalDate
-    abstract val taskIds: List<Int>
-    abstract val subjectInstanceId: Uuid?
-    abstract val fileIds: List<Int>
+    abstract val tasks: List<HomeworkTask>
+    abstract val subjectInstance: SubjectInstance?
+    abstract val files: List<File>
     abstract val cachedAt: Instant
-    abstract val groupId: Uuid?
+    abstract val group: Group?
+
+    abstract val creator: AppEntity
 
     data class HomeworkTask(
         override val id: Int,
@@ -42,30 +42,30 @@ sealed class Homework(
         override val id: Int,
         override val createdAt: Instant,
         override val dueTo: LocalDate,
-        override val taskIds: List<Int>,
-        override val subjectInstanceId: Uuid?,
-        override val fileIds: List<Int>,
+        override val tasks: List<HomeworkTask>,
+        override val subjectInstance: SubjectInstance?,
+        override val files: List<File>,
         override val cachedAt: Instant,
-        override val groupId: Uuid?,
+        override val group: Group?,
         val isPublic: Boolean,
         val createdBy: VppId,
-    ) : Homework(
-        creator = AppEntity.VppId(createdBy)
-    )
+    ) : Homework() {
+        override val creator: AppEntity = AppEntity.VppId(createdBy)
+    }
 
     data class LocalHomework(
         override val id: Int,
         override val createdAt: Instant,
         override val dueTo: LocalDate,
-        override val taskIds: List<Int>,
-        override val subjectInstanceId: Uuid?,
-        override val groupId: Uuid?,
-        override val fileIds: List<Int>,
+        override val tasks: List<HomeworkTask>,
+        override val subjectInstance: SubjectInstance?,
+        override val group: Group?,
+        override val files: List<File>,
         override val cachedAt: Instant,
         val createdByProfile: Profile.StudentProfile
-    ) : Homework(
-        creator = AppEntity.Profile(createdByProfile)
-    )
+    ) : Homework() {
+        override val creator: AppEntity = AppEntity.Profile(createdByProfile)
+    }
 }
 
 enum class HomeworkStatus {

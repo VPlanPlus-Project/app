@@ -38,8 +38,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.HomeworkStatus
-import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
@@ -194,19 +194,19 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = state.canEdit,
                 allowGroup = true,
-                subject = state.homeworkSubjectInstance?.subject,
+                subject = state.homework.subjectInstance?.subject,
                 group = homework.group,
                 onClick = { showLessonSelectDrawer = true },
             )
             DueToRow(
                 canEdit = state.canEdit,
                 isHomework = true,
-                dueTo = homework.homework.dueTo,
+                dueTo = homework.dueTo,
                 onClick = { showDateSelectDrawer = true },
             )
-            if (homework is PopulatedHomework.CloudHomework) ShareStatusRow(
+            if (homework is Homework.CloudHomework) ShareStatusRow(
                 canEdit = state.canEdit,
-                isPublic = homework.homework.isPublic,
+                isPublic = homework.isPublic,
                 onSelect = { isPublic -> onEvent(HomeworkDetailEvent.UpdateVisibility(isPublic)) }
             )
 
@@ -227,18 +227,18 @@ fun DetailPage(
             val status = remember(homework.tasks) {
                 val tasksUndone = homework.tasks.any { !it.isDone(state.profile) }
                 if (!tasksUndone) HomeworkStatus.DONE
-                if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date > homework.homework.dueTo) HomeworkStatus.OVERDUE
+                if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date > homework.dueTo) HomeworkStatus.OVERDUE
                 else HomeworkStatus.PENDING
             }
             StatusRow(status = status)
-            if (homework.homework.creator is AppEntity.VppId) CreatedByRow(createdBy = (homework.homework.creator as AppEntity.VppId).vppId)
+            if (homework.creator is AppEntity.VppId) CreatedByRow(createdBy = (homework.creator as AppEntity.VppId).vppId)
             else SavedLocalRow()
 
-            CreatedAtRow(createdAt = homework.homework.createdAt)
+            CreatedAtRow(createdAt = homework.createdAt)
 
             if (state.isDeveloperMode) MetadataRow(
                 key = { Text(text = "ID", style = tableNameStyle()) },
-                value = { Text(text = state.homework.homework.id.toString(), style = tableValueStyle()) }
+                value = { Text(text = state.homework.id.toString(), style = tableValueStyle()) }
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -314,7 +314,7 @@ fun DetailPage(
             group = profile.group,
             allowGroup = true,
             subjectInstances = state.subjectInstances,
-            selectedSubjectInstance = state.homeworkSubjectInstance,
+            selectedSubjectInstance = state.homework.subjectInstance,
             onSelectSubjectInstance = { onEvent(HomeworkDetailEvent.UpdateSubjectInstance(it)) },
             onDismiss = { showLessonSelectDrawer = false }
         )
@@ -325,7 +325,7 @@ fun DetailPage(
             configuration = DateSelectConfiguration(
                 allowDatesInPast = false
             ),
-            selectedDate = homework.homework.dueTo,
+            selectedDate = homework.dueTo,
             onSelectDate = { onEvent(HomeworkDetailEvent.UpdateDueTo(it)) },
             onDismiss = { showDateSelectDrawer = false }
         )

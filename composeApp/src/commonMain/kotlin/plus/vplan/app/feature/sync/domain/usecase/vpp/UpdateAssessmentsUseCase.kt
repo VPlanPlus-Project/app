@@ -23,7 +23,6 @@ import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getByProvider
-import plus.vplan.app.domain.model.populated.AssessmentPopulator
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -45,7 +44,6 @@ class UpdateAssessmentsUseCase(
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateProfileAssessmentIndexUseCase: UpdateProfileAssessmentIndexUseCase,
     private val vppIdRepository: VppIdRepository,
-    private val assessmentPopulator: AssessmentPopulator
 ) {
     private val logger = Logger.withTag("UpdateAssessmentUseCase")
 
@@ -146,26 +144,24 @@ class UpdateAssessmentsUseCase(
                                 assessmentRepository.getById(id, false)
                                     .filterIsInstance<CacheState.Done<Assessment>>()
                                     .map { assessment -> assessment.data }
-                            })
-                    { list ->
-                        assessmentPopulator.populateMultiple(list.toList()).first()
-                    }.first()
-                        .filter { assessment ->
-                            assessment.assessment.creator is AppEntity.VppId && (assessment.assessment.creator as AppEntity.VppId).vppId.id != studentProfile.vppId?.id && (assessment.assessment.createdAt until Clock.System.now()
-                                .toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days
-                        }
-                        .filter { assessment -> allowedSubjectInstances.contains(assessment.assessment.subjectInstance) }
+                            }) { list -> list.toList() }
+                                .first()
+                                .filter { assessment ->
+                                    assessment.creator is AppEntity.VppId && (assessment.creator as AppEntity.VppId).vppId.id != studentProfile.vppId?.id && (assessment.createdAt until Clock.System.now()
+                                        .toLocalDateTime(TimeZone.currentSystemDefault())) < 2.days
+                                }
+                                .filter { assessment -> allowedSubjectInstances.contains(assessment.subjectInstance) }
 
                     if (newAssessments.isEmpty()) return@buildAndSendNotifications
 
                     if (newAssessments.size == 1) {
                         val message = buildString {
                             newAssessments.first().let { assessment ->
-                                append((assessment.assessment.creator as AppEntity.VppId).vppId.name)
+                                append((assessment.creator as AppEntity.VppId).vppId.name)
                                 append(" hat eine neue Leistungserhebung in ")
-                                append(assessment.assessment.subjectInstance.subject)
+                                append(assessment.subjectInstance.subject)
                                 append(" für ")
-                                (assessment.assessment.date untilRelativeText LocalDate.now())?.let { append(it) } ?: append(assessment.assessment.date.format(LocalDate.Format {
+                                (assessment.date untilRelativeText LocalDate.now())?.let { append(it) } ?: append(assessment.date.format(LocalDate.Format {
                                     dayOfWeek(shortDayOfWeekNames)
                                     chars(", ")
                                     day(padding = Padding.ZERO)
@@ -179,7 +175,7 @@ class UpdateAssessmentsUseCase(
                             title = "Neue Leistungserhebung",
                             category = studentProfile.name,
                             message = message,
-                            largeText = "$message\n${newAssessments.first().assessment.description}",
+                            largeText = "$message\n${newAssessments.first().description}",
                             isLarge = true,
                             onClickData = Json.encodeToString(
                                 StartTaskJson(
@@ -190,7 +186,7 @@ class UpdateAssessmentsUseCase(
                                             type = "assessment",
                                             value = Json.encodeToString(
                                                 StartTaskJson.StartTaskOpen.Assessment(
-                                                    assessmentId = newAssessments.first().assessment.id
+                                                    assessmentId = newAssessments.first().id
                                                 )
                                             )
                                         )

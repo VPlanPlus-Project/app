@@ -1,10 +1,14 @@
 package plus.vplan.app.core.database.model.embedded
 
 import androidx.room.Embedded
+import androidx.room.Junction
 import androidx.room.Relation
+import plus.vplan.app.core.database.model.database.DbFile
+import plus.vplan.app.core.database.model.database.DbGroup
 import plus.vplan.app.core.database.model.database.DbHomework
 import plus.vplan.app.core.database.model.database.DbHomeworkTask
 import plus.vplan.app.core.database.model.database.DbProfile
+import plus.vplan.app.core.database.model.database.DbSubjectInstance
 import plus.vplan.app.core.database.model.database.DbVppId
 import plus.vplan.app.core.database.model.database.foreign_key.FKHomeworkFile
 import plus.vplan.app.core.model.Homework
@@ -16,12 +20,17 @@ data class EmbeddedHomework(
         parentColumn = "id",
         entityColumn = "homework_id",
         entity = DbHomeworkTask::class
-    ) val tasks: List<DbHomeworkTask>,
+    ) val tasks: List<EmbeddedHomeworkTask>,
     @Relation(
         parentColumn = "id",
-        entityColumn = "homework_id",
-        entity = FKHomeworkFile::class
-    ) val files: List<FKHomeworkFile>,
+        entityColumn = "id",
+        entity = DbFile::class,
+        associateBy = Junction(
+            parentColumn = "file_id",
+            entityColumn = "homework_id",
+            value = FKHomeworkFile::class
+        )
+    ) val files: List<DbFile>,
     @Relation(
         parentColumn = "created_by_profile_id",
         entityColumn = "id",
@@ -32,6 +41,16 @@ data class EmbeddedHomework(
         entityColumn = "id",
         entity = DbVppId::class
     ) val createdBy: EmbeddedVppId?,
+    @Relation(
+        parentColumn = "subject_instance_id",
+        entityColumn = "id",
+        entity = DbSubjectInstance::class
+    ) val subjectInstance: EmbeddedSubjectInstance?,
+    @Relation(
+        parentColumn = "group_id",
+        entityColumn = "id",
+        entity = DbGroup::class
+    ) val group: EmbeddedGroup?
 ) {
     fun toModel(): Homework {
         if (homework.id < 0) {
@@ -40,11 +59,11 @@ data class EmbeddedHomework(
                 dueTo = homework.dueTo,
                 createdAt = homework.createdAt,
                 createdByProfile = createdByProfileId?.toModel() as Profile.StudentProfile,
-                subjectInstanceId = homework.subjectInstanceId,
-                fileIds = files.map { it.fileId },
-                taskIds = tasks.map { it.id },
+                subjectInstance = subjectInstance?.toModel(),
+                files = files.map { it.toModel() },
+                tasks = tasks.map { it.toModel() },
                 cachedAt = homework.cachedAt,
-                groupId = homework.groupId
+                group = group?.toModel(),
             )
         }
         return Homework.CloudHomework(
@@ -52,11 +71,11 @@ data class EmbeddedHomework(
             dueTo = homework.dueTo,
             createdAt = homework.createdAt,
             createdBy = createdBy!!.toModel(),
-            subjectInstanceId = homework.subjectInstanceId,
-            groupId = homework.groupId,
+            subjectInstance = subjectInstance?.toModel(),
+            group = group?.toModel(),
             isPublic = homework.isPublic,
-            fileIds = files.map { it.fileId },
-            taskIds = tasks.map { it.id },
+            files = files.map { it.toModel() },
+            tasks = tasks.map { it.toModel() },
             cachedAt = homework.cachedAt
         )
     }

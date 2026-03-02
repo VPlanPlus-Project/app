@@ -24,8 +24,6 @@ import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.getByProvider
-import plus.vplan.app.domain.model.populated.HomeworkPopulator
-import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.repository.HomeworkEntity
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
@@ -49,7 +47,6 @@ class UpdateHomeworkUseCase(
     private val updateProfileHomeworkIndexUseCase: UpdateProfileHomeworkIndexUseCase,
     private val vppIdRepository: VppIdRepository,
     private val groupRepository: GroupRepository,
-    private val homeworkPopulator: HomeworkPopulator,
 ) {
     private val logger = Logger.withTag("UpdateHomeworkUseCase")
 
@@ -177,7 +174,7 @@ class UpdateHomeworkUseCase(
                             (homework.creator as? AppEntity.VppId)?.vppId?.id != studentProfile.vppId?.id && (homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()) until Clock.System.now()
                                 .toLocalDateTime(TimeZone.currentSystemDefault())) <= 2.days
                         }
-                        .filter { it.subjectInstanceId == null || it.subjectInstanceId in allowedSubjectInstanceVppIds.map { it.id } }
+                        .filter { it.subjectInstance == null || it.subjectInstance!!.id in allowedSubjectInstanceVppIds.map { it.id } }
 
                     if (newHomework.size == 1) {
                         platformNotificationRepository.sendNotification(
@@ -185,13 +182,12 @@ class UpdateHomeworkUseCase(
                             category = studentProfile.name,
                             message = buildString {
                                 newHomework.first().let { homework ->
-                                    val homework = homeworkPopulator.populateSingle(homework).first() as PopulatedHomework.CloudHomework
-                                    append((homework.homework.creator as AppEntity.VppId).vppId.name)
+                                    append((homework.creator as AppEntity.VppId).vppId.name)
                                     append(" hat eine neue Hausaufgabe ")
                                     if (homework.subjectInstance == null) append("für Klasse ${homework.group?.name}")
-                                    else append("für ${homework.subjectInstance.subject}")
+                                    else append("für ${homework.subjectInstance!!.subject}")
                                     append(" erstellt, welche bis ")
-                                    append(homework.homework.dueTo.let { date ->
+                                    append(homework.dueTo.let { date ->
                                         (LocalDate.now() untilRelativeText date) ?: date.format(LocalDate.Format {
                                             dayOfWeek(shortDayOfWeekNames)
                                             chars(", ")

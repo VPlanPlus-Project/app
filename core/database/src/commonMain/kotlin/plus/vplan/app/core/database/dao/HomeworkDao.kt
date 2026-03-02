@@ -32,14 +32,14 @@ interface HomeworkDao {
     ) {
         val existing = getById(homework.id).first()
 
-        val existingTasks = existing?.tasks?.map { it.id }
+        val existingTasks = existing?.tasks?.map { it.homeworkTask.id }
         if (existingTasks != null) {
-            deleteTaskById(existingTasks - tasks.map { it.id })
+            deleteTaskById(existingTasks - tasks.map { it.id }.toSet())
         }
 
-        val existingFiles = existing?.files?.map { it.fileId }
+        val existingFiles = existing?.files?.map { it.id }
         if (existingFiles != null) {
-            deleteFileHomeworkConnectionsById(existingFiles - fileIds)
+            deleteFileHomeworkConnectionsById(existingFiles - fileIds.toSet())
         }
 
         upsertSingleHomework(homework)

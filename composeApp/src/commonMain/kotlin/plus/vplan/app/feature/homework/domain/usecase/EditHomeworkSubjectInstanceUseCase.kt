@@ -4,9 +4,9 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.repository.HomeworkRepository
 
 class EditHomeworkSubjectInstanceUseCase(
@@ -14,7 +14,7 @@ class EditHomeworkSubjectInstanceUseCase(
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val groupRepository: GroupRepository,
 ) {
-    suspend operator fun invoke(homework: PopulatedHomework, subjectInstance: SubjectInstance?, profile: Profile.StudentProfile) {
+    suspend operator fun invoke(homework: Homework, subjectInstance: SubjectInstance?, profile: Profile.StudentProfile) {
         var group = if (subjectInstance == null) profile.group else null
         var subjectInstance = subjectInstance
 

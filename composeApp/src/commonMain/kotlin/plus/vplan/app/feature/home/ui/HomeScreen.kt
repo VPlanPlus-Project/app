@@ -68,13 +68,13 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Assessment
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getByProvider
-import plus.vplan.app.domain.model.populated.PopulatedAssessment
-import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
@@ -304,18 +304,18 @@ private fun HomeContent(
                         }
                     }
                     item yourDay@{
-                        val isYourDayToday = state.day?.populatedDay?.day?.date == state.currentTime.date
+                        val isYourDayToday = state.day?.day?.date == state.currentTime.date
 
                         if (state.day == null) return@yourDay
 
-                        val week = state.day.populatedDay.day.week
+                        val week = state.day.day.week
 
                         Column {
                             FeedTitle(
                                 icon = Res.drawable.chart_no_axes_gantt,
                                 title = if (isYourDayToday) "Dein Tag" else "Nächster Schultag",
                                 endText = buildString {
-                                    append(state.day.populatedDay.day.date.format(LocalDate.Format {
+                                    append(state.day.day.date.format(LocalDate.Format {
                                         dayOfWeek(longDayOfWeekNames)
                                         chars(", ")
                                         day(padding = Padding.ZERO)
@@ -339,15 +339,15 @@ private fun HomeContent(
                                     }
                                 }
                             )
-                            val info = state.day.populatedDay.day.info
+                            val info = state.day.day.info
                             if (info != null) DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = info)
-                            if (state.day.populatedDay.substitution.isEmpty()) InfoCard(
+                            if (state.day.substitution.isEmpty()) InfoCard(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                                 imageVector = Res.drawable.triangle_alert,
                                 title = "Kein Vertretungsplan",
                                 text = buildString {
                                     append("Für ")
-                                    append((state.currentTime.date untilRelativeText state.day.populatedDay.day.date) ?: "den ${state.day.populatedDay.day.date.format(regularDateFormatWithoutYear)}")
+                                    append((state.currentTime.date untilRelativeText state.day.day.date) ?: "den ${state.day.day.date.format(regularDateFormatWithoutYear)}")
                                     append(" ist noch kein Vertretungsplan verfügbar. Es kann noch zu Änderungen kommen.")
                                 },
                                 backgroundColor = colors[CustomColor.Yellow]!!.getGroup().container,
@@ -380,7 +380,7 @@ private fun HomeContent(
                                                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
                                                     highlightedLessons.currentLessons.forEach { (currentLesson, continuing) ->
                                                         val homeworkForLesson =
-                                                            remember { mutableListOf<PopulatedHomework>() }
+                                                            remember { mutableListOf<Homework>() }
                                                         LaunchedEffect(
                                                             state.day.homework,
                                                             currentLesson.subjectInstance?.id
@@ -390,13 +390,13 @@ private fun HomeContent(
                                                         }
 
                                                         val assessmentsForLesson =
-                                                            remember { mutableListOf<PopulatedAssessment>() }
+                                                            remember { mutableListOf<Assessment>() }
                                                         LaunchedEffect(
                                                             state.day.assessments,
                                                             currentLesson.subjectInstance?.id
                                                         ) {
                                                             assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(state.day.assessments.filter { assessment -> assessment.assessment.subjectInstance.id == currentLesson.subjectInstance?.id })
+                                                            assessmentsForLesson.addAll(state.day.assessments.filter { assessment -> assessment.subjectInstance.id == currentLesson.subjectInstance?.id })
                                                         }
 
                                                         CurrentOrNextLesson(
@@ -504,16 +504,16 @@ private fun HomeContent(
                                                 ) {
                                                     val headFont = MaterialTheme.typography.bodyLarge
                                                     lessons.forEach forEachLesson@{ lesson ->
-                                                        val homeworkForLesson = remember { mutableListOf<PopulatedHomework>() }
+                                                        val homeworkForLesson = remember { mutableListOf<Homework>() }
                                                         LaunchedEffect(state.day.homework, (lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstance?.id) {
                                                             homeworkForLesson.clear()
                                                             homeworkForLesson.addAll(state.day.homework.filter { homework -> homework.subjectInstance != null && homework.subjectInstance?.id == lesson.subjectInstance?.id })
                                                         }
 
-                                                        val assessmentsForLesson = remember { mutableListOf<PopulatedAssessment>() }
+                                                        val assessmentsForLesson = remember { mutableListOf<Assessment>() }
                                                         LaunchedEffect(state.day.assessments, lesson.subjectInstance?.id) {
                                                             assessmentsForLesson.clear()
-                                                            assessmentsForLesson.addAll(state.day.assessments.filter { assessment -> assessment.assessment.subjectInstance.id == lesson.subjectInstance?.id })
+                                                            assessmentsForLesson.addAll(state.day.assessments.filter { assessment -> assessment.subjectInstance.id == lesson.subjectInstance?.id })
                                                         }
 
                                                         Column(Modifier.fillMaxWidth()) {
@@ -625,7 +625,7 @@ private fun HomeContent(
                                                                             .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp())
                                                                     )
                                                                     Text(
-                                                                        text = assessmentsForLesson.joinToString { it.assessment.description },
+                                                                        text = assessmentsForLesson.joinToString { it.description },
                                                                         style = MaterialTheme.typography.bodyMedium
                                                                     )
                                                                 }
@@ -747,8 +747,8 @@ private fun CurrentOrNextLesson(
     currentTime: LocalDateTime,
     currentLesson: Lesson,
     currentProfileType: ProfileType?,
-    homework: List<PopulatedHomework>,
-    assessments: List<PopulatedAssessment>,
+    homework: List<Homework>,
+    assessments: List<Assessment>,
     continuing: Lesson?,
     progressType: ProgressType
 ) {
@@ -783,12 +783,12 @@ private fun CurrentOrNextLesson(
                     if (currentLesson.rooms.orEmpty().isNotEmpty()) Text(
                         text = currentLesson.rooms.orEmpty().joinToString { it.name },
                         style = MaterialTheme.typography.titleSmall,
-                        color = if (currentLesson is Lesson.SubstitutionPlanLesson && (currentLesson as Lesson.SubstitutionPlanLesson).isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                        color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isRoomChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
                     )
                     if (currentLesson.teachers.isNotEmpty() && currentProfileType != ProfileType.TEACHER) Text(
                         text = currentLesson.teachers.joinToString { it.name },
                         style = MaterialTheme.typography.titleSmall,
-                        color = if (currentLesson is Lesson.SubstitutionPlanLesson && (currentLesson as Lesson.SubstitutionPlanLesson).isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
+                        color = if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.isTeacherChanged) MaterialTheme.colorScheme.error else LocalContentColor.current
                     )
                     if (currentLesson.groups.isNotEmpty() && currentProfileType != ProfileType.STUDENT) Text(
                         text = currentLesson.groups.joinToString { it.name },

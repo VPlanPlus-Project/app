@@ -30,7 +30,9 @@ data class PopulatedDay(
     val timetable: List<Lesson.TimetableLesson>,
     val substitution: List<Lesson.SubstitutionPlanLesson>,
     val holiday: Holiday?
-)
+) {
+    val lessons = this.substitution.ifEmpty { this.timetable }
+}
 
 class DayPopulator(
     private val holidayRepository: HolidayRepository,

@@ -11,7 +11,7 @@ class DeleteTaskUseCase(
 ) {
     suspend operator fun invoke(task: Homework.HomeworkTask, profile: Profile.StudentProfile): Boolean {
         val homework = homeworkRepository.getByLocalId(task.homeworkId).first() ?: return false
-        if (homework.taskIds.size <= 1) {
+        if (homework.tasks.size <= 1) {
             return deleteHomeworkUseCase(homework, profile)
         }
         return homeworkRepository.deleteHomeworkTask(task, profile) == null

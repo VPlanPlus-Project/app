@@ -108,8 +108,8 @@ fun SearchStart(
                             .clip(RoundedCornerShape(8.dp))
                             .clickable {
                                 when (item) {
-                                    is NewItem.Assessment -> onAssessmentClicked(item.assessment.assessment.id)
-                                    is NewItem.Homework -> onHomeworkClicked(item.homework.homework.id)
+                                    is NewItem.Assessment -> onAssessmentClicked(item.assessment.id)
+                                    is NewItem.Homework -> onHomeworkClicked(item.homework.id)
                                 }
                             }
                             .padding(8.dp),
@@ -136,7 +136,7 @@ fun SearchStart(
                                 )
                             } else {
                                 val subject = when (item) {
-                                    is NewItem.Assessment -> item.assessment.assessment.subjectInstance.subject
+                                    is NewItem.Assessment -> item.assessment.subjectInstance.subject
                                     is NewItem.Homework -> item.homework.subjectInstance?.subject
                                 }
                                 SubjectIcon(
@@ -156,14 +156,14 @@ fun SearchStart(
                         Column(Modifier.weight(1f)) {
                             Text(
                                 text = when (item) {
-                                    is NewItem.Assessment -> "${item.assessment.assessment.type.toName()} (${item.assessment.assessment.date.format(regularDateFormatWithoutYear)})"
-                                    is NewItem.Homework -> "Hausaufgabe (${item.homework.homework.dueTo.format(regularDateFormatWithoutYear)})"
+                                    is NewItem.Assessment -> "${item.assessment.type.toName()} (${item.assessment.date.format(regularDateFormatWithoutYear)})"
+                                    is NewItem.Homework -> "Hausaufgabe (${item.homework.dueTo.format(regularDateFormatWithoutYear)})"
                                 },
                                 style = MaterialTheme.typography.labelMedium
                             )
                             when (item) {
                                 is NewItem.Assessment -> Text(
-                                    text = item.assessment.assessment.description.lines().firstOrNull() ?: "Keine Details",
+                                    text = item.assessment.description.lines().firstOrNull() ?: "Keine Details",
                                     maxLines = 1,
                                     style = MaterialTheme.typography.bodySmall,
                                     overflow = TextOverflow.Ellipsis
@@ -197,16 +197,16 @@ fun SearchStart(
                             val createdByFont = MaterialTheme.typography.labelMedium
 
                             val creator = when (item) {
-                                is NewItem.Assessment -> item.assessment.assessment.creator
-                                is NewItem.Homework -> item.homework.homework.creator
+                                is NewItem.Assessment -> item.assessment.creator
+                                is NewItem.Homework -> item.homework.creator
                             }
 
                             Row {
                                 when (creator) {
                                     is AppEntity.Profile -> {
                                         val profile = when (item) {
-                                            is NewItem.Assessment -> (item.assessment.assessment.creator as AppEntity.Profile).profile
-                                            is NewItem.Homework -> (item.homework.homework.creator as AppEntity.Profile).profile
+                                            is NewItem.Assessment -> (item.assessment.creator as AppEntity.Profile).profile
+                                            is NewItem.Homework -> (item.homework.creator as AppEntity.Profile).profile
                                         }
                                         Text(
                                             text = "Profil " + profile.name,
@@ -215,8 +215,8 @@ fun SearchStart(
                                     }
                                     is AppEntity.VppId -> {
                                         val vppId = when (item) {
-                                            is NewItem.Assessment -> (item.assessment.assessment.creator as AppEntity.VppId).vppId
-                                            is NewItem.Homework -> (item.homework.homework.creator as AppEntity.VppId).vppId
+                                            is NewItem.Assessment -> (item.assessment.creator as AppEntity.VppId).vppId
+                                            is NewItem.Homework -> (item.homework.creator as AppEntity.VppId).vppId
                                         }
                                         Text(
                                             text = vppId.name,

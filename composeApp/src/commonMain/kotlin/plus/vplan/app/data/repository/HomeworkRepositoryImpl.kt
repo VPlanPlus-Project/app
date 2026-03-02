@@ -58,7 +58,6 @@ import plus.vplan.app.data.source.network.toErrorResponse
 import plus.vplan.app.data.source.network.toResponse
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.domain.model.data_structure.ConcurrentMutableMap
-import plus.vplan.app.domain.model.populated.PopulatedHomework
 import plus.vplan.app.domain.repository.CreateHomeworkResponse
 import plus.vplan.app.domain.repository.HomeworkEntity
 import plus.vplan.app.domain.repository.HomeworkRepository
@@ -233,7 +232,7 @@ class HomeworkRepositoryImpl(
         return success
     }
 
-    override suspend fun editHomeworkSubjectInstance(homework: PopulatedHomework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile) {
+    override suspend fun editHomeworkSubjectInstance(homework: Homework, subjectInstance: SubjectInstance?, group: Group?, profile: Profile.StudentProfile) {
         require((subjectInstance == null) xor (group == null)) { "Either subjectInstance or group must not be null" }
         val oldSubjectInstance = homework.subjectInstance
         val oldSubjectInstanceVppId = oldSubjectInstance?.aliases?.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
@@ -244,18 +243,18 @@ class HomeworkRepositoryImpl(
         val subjectInstanceVppId = subjectInstance?.aliases?.first { it.provider == AliasProvider.Vpp }?.value?.toInt()
         val groupVppId = group?.aliases?.first { it.provider == AliasProvider.Vpp }?.value?.toInt()
 
-        vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.homework.id, subjectInstanceVppId, groupVppId)
+        vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, subjectInstanceVppId, groupVppId)
 
-        if (homework.homework.id < 0 || profile.vppId == null || homework !is PopulatedHomework.CloudHomework) return
-        safeRequest(onError = { vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.homework.id, subjectInstanceVppId, oldGroupVppId) }) {
+        if (homework.id < 0 || profile.vppId == null || homework !is Homework.CloudHomework) return
+        safeRequest(onError = { vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, subjectInstanceVppId, oldGroupVppId) }) {
             val response = httpClient.patch(URLBuilder(currentConfiguration.appApiUrl).apply {
-                appendPathSegments("homework", "v1", homework.homework.id.toString())
+                appendPathSegments("homework", "v1", homework.id.toString())
             }.build()) {
                 profile.vppId!!.buildVppSchoolAuthentication().authentication(this)
                 contentType(ContentType.Application.Json)
                 setBody(HomeworkUpdateSubjectInstanceRequest(subjectInstanceId = subjectInstanceVppId, groupId = groupVppId))
             }
-            if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.homework.id, oldSubjectInstanceVppId, oldGroupVppId)
+            if (!response.status.isSuccess()) vppDatabase.homeworkDao.updateSubjectInstanceAndGroup(homework.id, oldSubjectInstanceVppId, oldGroupVppId)
         }
     }
 

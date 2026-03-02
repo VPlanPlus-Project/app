@@ -7,6 +7,7 @@ import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
@@ -89,19 +90,19 @@ class CreateHomeworkUseCase(
             val idMapping = result.data
             id = idMapping.id
             taskIds = idMapping.taskIds
+            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homeworkId = id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
             homework = Homework.CloudHomework(
                 id = id,
-                subjectInstanceId = subjectInstance?.id,
-                groupId = if (subjectInstance == null) profile.group.id else null,
+                subjectInstance = subjectInstance,
+                group = if (subjectInstance == null) profile.group else null,
                 createdAt = Clock.System.now(),
                 createdBy = profile.vppId!!,
                 isPublic = isPublic == true,
                 dueTo = date,
-                fileIds = emptyList(),
-                taskIds = taskIds.map { it.value },
+                files = emptyList(),
+                tasks = homeworkTasks,
                 cachedAt = Clock.System.now()
             )
-            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homeworkId = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
 
             files = selectedFiles.mapNotNull {
                 val documentId = fileRepository.uploadFile(
@@ -124,18 +125,24 @@ class CreateHomeworkUseCase(
             val fileIdStart = homeworkRepository.getIdForNewLocalHomeworkFile() - 1
             taskIds = tasks.mapIndexed { index, s -> s to (taskIdStart - index) }.toMap()
             files = selectedFiles.mapIndexed { index, file -> Homework.HomeworkFile(fileIdStart - index, file.name, id, file.size) }
+            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homeworkId = id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
             homework = Homework.LocalHomework(
                 id = id,
-                subjectInstanceId = subjectInstance?.id,
-                groupId = if (subjectInstance == null) profile.group.id else null,
+                subjectInstance = subjectInstance,
+                group = if (subjectInstance == null) profile.group else null,
                 createdAt = Clock.System.now(),
                 createdByProfile = profile,
                 dueTo = date,
-                taskIds = taskIds.map { it.value },
-                fileIds = files.map { it.id },
+                tasks = homeworkTasks,
+                files = files.map { File(
+                    id = it.id,
+                    name = it.name,
+                    size = it.size,
+                    isOfflineReady = true,
+                    cachedAt = Clock.System.now()
+                ) },
                 cachedAt = Clock.System.now()
             )
-            homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homeworkId = homework.id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
         }
 
         files.forEach { file ->
@@ -155,7 +162,7 @@ class CreateHomeworkUseCase(
 
         homeworkRepository.upsert(HomeworkEntity(
             id = homework.id,
-            subjectInstanceId = homework.subjectInstanceId,
+            subjectInstanceId = homework.subjectInstance?.id,
             groupId = if (subjectInstance == null) profile.group.id else null,
             dueTo = homework.dueTo,
             isPublic = isPublic ?: false,

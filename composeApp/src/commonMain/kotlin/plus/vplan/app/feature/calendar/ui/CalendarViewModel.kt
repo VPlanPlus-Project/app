@@ -10,27 +10,24 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Day
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
-import plus.vplan.app.domain.model.populated.AssessmentPopulator
-import plus.vplan.app.domain.model.populated.HomeworkPopulator
-import plus.vplan.app.domain.model.populated.PopulatedAssessment
-import plus.vplan.app.domain.model.populated.PopulatedHomework
-import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
@@ -46,7 +43,6 @@ import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class CalendarViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
@@ -55,8 +51,6 @@ class CalendarViewModel(
     private val setLastDisplayTypeUseCase: SetLastDisplayTypeUseCase,
     private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase,
     private val getHolidaysUseCase: GetHolidaysUseCase,
-    private val homeworkPopulator: HomeworkPopulator,
-    private val assessmentPopulator: AssessmentPopulator,
     private val keyValueRepository: KeyValueRepository,
 ) : ViewModel() {
     val state: StateFlow<CalendarState>
@@ -116,82 +110,67 @@ class CalendarViewModel(
 
     private fun launchDay(profile: Profile, date: LocalDate): Job {
         return viewModelScope.launch {
-            val context = PopulationContext.Profile(profile)
-            val forceReducedFlow = keyValueRepository.getBooleanOrDefault(Keys.forceReducedCalendarView.key, false)
-            getDayUseCase(profile, date)
-                .distinctUntilChangedBy { day ->
-                    val timetableIds = day.timetable.map { it.id }.sorted()
-                    val substitutionIds = day.substitution.map { it.id }.sorted()
-                    val homeworkIds = day.homework.map { it.id }.sorted()
-                    val assessmentIds = day.assessments.map { it.id }.sorted()
-                    "${day.day.id}|${day.day.dayType}|${day.day.info}|$timetableIds|$substitutionIds|$homeworkIds|$assessmentIds"
-                }
-                .flatMapLatest { day ->
-                    val lessons = day.substitution.ifEmpty { day.timetable }
-                    combine(
-                        homeworkPopulator.populateMultiple(day.homework, context),
-                        assessmentPopulator.populateMultiple(day.assessments),
-                        forceReducedFlow,
-                    ) { homework, assessments, forceReduced ->
-                        Triple(day, Pair(lessons, forceReduced), Pair(homework, assessments))
-                    }
-                }
-                .distinctUntilChangedBy { (d, lessonsForceReduced, hwAssessments) ->
-                    val lessonIds = lessonsForceReduced.first.map { it.id }.sorted()
-                    val homeworkIds = hwAssessments.first.map { it.homework.id }.sorted()
-                    val assessmentIds = hwAssessments.second.map { it.assessment.id }.sorted()
-                    "${d.day.id}|${d.day.dayType}|${d.day.info}|$lessonIds|$homeworkIds|$assessmentIds"
-                }
-                .collect { (day, lessonsForceReduced, hwAssessments) ->
-                    val (lessons, forceReduced) = lessonsForceReduced
-                    val (homework, assessments) = hwAssessments
-
-                    val lessonsGrouped = lessons
-                        .groupBy { it.lessonNumber }
-                        .mapValues { (_, l) -> l.sortedBy { it.subject } }
-
-                    val hasTooManyInterpolated = lessons.count { it.lessonTime?.interpolated == false } < lessons.size / 2
-                    val hasMissingLessonTimes = lessons.any { it.lessonTime == null }
-
-                    val lessonRendering = if (state.value.displayType == DisplayType.Agenda || hasTooManyInterpolated || hasMissingLessonTimes || forceReduced) {
-                        LessonRendering.ListView(lessonsGrouped)
-                    } else {
-                        try {
-                            LessonRendering.Layouted(lessons.calculateLayouting())
-                        } catch (_: LessonWithoutTimeException) {
-                            LessonRendering.ListView(lessonsGrouped)
+            keyValueRepository.get(Keys.forceReducedCalendarView.key)
+                .map { it.toBoolean() }
+                .collectLatest { forceReduced ->
+                    getDayUseCase(profile, date)
+                        .distinctUntilChangedBy { day ->
+                            val timetableIds = day.timetable.map { it.id }.sorted()
+                            val substitutionIds = day.substitution.map { it.id }.sorted()
+                            val homeworkIds = day.homework.map { it.id }.sorted()
+                            val assessmentIds = day.assessments.map { it.id }.sorted()
+                            "${day.day.id}|${day.day.dayType}|${day.day.info}|$timetableIds|$substitutionIds|$homeworkIds|$assessmentIds"
                         }
-                    }
+                        .collect { day ->
+                            val lessons = day.substitution.ifEmpty { day.timetable }
 
-                    val calendarDay = CalendarDay(
-                        date = date,
-                        info = day.day.info,
-                        dayType = day.day.dayType,
-                        week = day.day.week,
-                        lessons = lessonRendering,
-                        assessments = assessments,
-                        homework = homework
-                    )
+                            val lessonsGrouped = lessons
+                                .groupBy { it.lessonNumber }
+                                .mapValues { (_, l) -> l.sortedBy { it.subject } }
 
-                    val selectorDay = DateSelectorDay(
-                        date = date,
-                        homework = homework.map { hw ->
-                            DateSelectorDay.HomeworkItem(
-                                subject = hw.subjectInstance?.subject ?: hw.group?.name ?: "?",
-                                isDone = profile is Profile.StudentProfile && hw.tasks.all { it.isDone(profile) }
+                            val hasTooManyInterpolated = lessons.count { it.lessonTime?.interpolated == false } < lessons.size / 2
+                            val hasMissingLessonTimes = lessons.any { it.lessonTime == null }
+
+                            val lessonRendering = if (state.value.displayType == DisplayType.Agenda || hasTooManyInterpolated || hasMissingLessonTimes || forceReduced) {
+                                LessonRendering.ListView(lessonsGrouped)
+                            } else {
+                                try {
+                                    LessonRendering.Layouted(lessons.calculateLayouting())
+                                } catch (_: LessonWithoutTimeException) {
+                                    LessonRendering.ListView(lessonsGrouped)
+                                }
+                            }
+
+                            val calendarDay = CalendarDay(
+                                date = date,
+                                info = day.day.info,
+                                dayType = day.day.dayType,
+                                week = day.day.week,
+                                lessons = lessonRendering,
+                                assessments = day.assessments,
+                                homework = day.homework,
                             )
-                        }.sortedBy { it.subject },
-                        assessments = assessments.map { it.assessment.subjectInstance.subject },
-                        isHoliday = state.value.holidays.contains(date)
-                    )
 
-                    state.update {
-                        it.copy(
-                            uiUpdateVersion = it.uiUpdateVersion + 1,
-                            calendarDays = it.calendarDays + (date to calendarDay),
-                            selectorDays = it.selectorDays + (date to selectorDay)
-                        )
-                    }
+                            val selectorDay = DateSelectorDay(
+                                date = date,
+                                homework = day.homework.map { hw ->
+                                    DateSelectorDay.HomeworkItem(
+                                        subject = hw.subjectInstance?.subject ?: hw.group?.name ?: "?",
+                                        isDone = profile is Profile.StudentProfile && hw.tasks.all { it.isDone(profile) }
+                                    )
+                                }.sortedBy { it.subject },
+                                assessments = day.assessments.map { it.subjectInstance.subject },
+                                isHoliday = state.value.holidays.contains(date)
+                            )
+
+                            state.update {
+                                it.copy(
+                                    uiUpdateVersion = it.uiUpdateVersion + 1,
+                                    calendarDays = it.calendarDays + (date to calendarDay),
+                                    selectorDays = it.selectorDays + (date to selectorDay)
+                                )
+                            }
+                        }
                 }
         }
     }
@@ -247,8 +226,8 @@ data class CalendarDay(
     val info: String? = null,
     val dayType: Day.DayType = Day.DayType.REGULAR,
     val week: Week? = null,
-    val assessments: List<PopulatedAssessment> = emptyList(),
-    val homework: List<PopulatedHomework> = emptyList(),
+    val assessments: List<Assessment> = emptyList(),
+    val homework: List<Homework> = emptyList(),
     val lessons: LessonRendering? = null
 )
 

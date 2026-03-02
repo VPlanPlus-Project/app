@@ -11,7 +11,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -20,12 +19,8 @@ import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Day
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.model.populated.AssessmentPopulator
-import plus.vplan.app.domain.model.populated.HomeworkPopulator
-import plus.vplan.app.domain.model.populated.PopulatedAssessment
-import plus.vplan.app.domain.model.populated.PopulatedHomework
-import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -45,8 +40,6 @@ class SearchViewModel(
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getHomeworkForProfileUseCase: GetHomeworkForProfileUseCase,
-    private val homeworkPopulator: HomeworkPopulator,
-    private val assessmentPopulator: AssessmentPopulator,
     private val getAssessmentsForProfileUseCase: GetAssessmentsForProfileUseCase,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val lockGradesUseCase: LockGradesUseCase,
@@ -79,12 +72,10 @@ class SearchViewModel(
                 if (currentProfile is Profile.StudentProfile) {
                     homeworkJob = launch {
                         getHomeworkForProfileUseCase(currentProfile)
-                            .flatMapLatest { homeworkPopulator.populateMultiple(it, PopulationContext.Profile(currentProfile)) }
                             .collectLatest { state = state.copy(homework = it) }
                     }
                     assessmentJob = launch {
                         getAssessmentsForProfileUseCase(currentProfile)
-                            .flatMapLatest { assessmentPopulator.populateMultiple(it) }
                             .collectLatest { state = state.copy(assessments = it) }
                     }
                 }
@@ -144,8 +135,8 @@ data class SearchState(
     val isLoading: Boolean = false,
     val selectedDateType: Day.DayType? = null,
     val results: Map<SearchResult.Type, List<SearchResult>> = emptyMap(),
-    val homework: List<PopulatedHomework> = emptyList(),
-    val assessments: List<PopulatedAssessment> = emptyList(),
+    val homework: List<Homework> = emptyList(),
+    val assessments: List<Assessment> = emptyList(),
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = LocalDateTime.now(),
     val gradeLockState: GradeLockState = GradeLockState.NotConfigured,
@@ -167,6 +158,6 @@ sealed class SearchEvent {
 }
 
 sealed class NewItem(val createdAt: LocalDate) {
-    data class Assessment(val assessment: PopulatedAssessment): NewItem(assessment.assessment.createdAt.date)
-    data class Homework(val homework: PopulatedHomework): NewItem(homework.homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date)
+    data class Assessment(val assessment: plus.vplan.app.core.model.Assessment): NewItem(assessment.createdAt.date)
+    data class Homework(val homework: plus.vplan.app.core.model.Homework): NewItem(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date)
 }

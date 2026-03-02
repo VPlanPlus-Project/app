@@ -163,7 +163,7 @@ fun SearchResults(
                                 plus.vplan.app.feature.calendar.ui.components.agenda.HomeworkCard(
                                     homework = result.homework,
                                     profile = profile,
-                                    onClick = { onHomeworkClicked(result.homework.homework.id) }
+                                    onClick = { onHomeworkClicked(result.homework.id) }
                                 )
                             }
                         }
@@ -177,7 +177,7 @@ fun SearchResults(
                             results.filterIsInstance<SearchResult.Assessment>().forEach { result ->
                                 AssessmentCard(
                                     assessment = result.assessment,
-                                    onClick = { onAssessmentClicked(result.assessment.assessment.id) }
+                                    onClick = { onAssessmentClicked(result.assessment.id) }
                                 )
                             }
                         }

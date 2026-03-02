@@ -60,11 +60,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Day
-import plus.vplan.app.domain.model.populated.PopulatedAssessment
-import plus.vplan.app.domain.model.populated.PopulatedHomework
+import plus.vplan.app.core.model.Homework
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.LessonRendering
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
@@ -97,8 +97,8 @@ fun CalendarView(
     date: LocalDate,
     dayType: Day.DayType?,
     lessons: CalendarViewLessons,
-    assessments: List<PopulatedAssessment>,
-    homework: List<PopulatedHomework>,
+    assessments: List<Assessment>,
+    homework: List<Homework>,
     bottomIslandPadding: PaddingValues = PaddingValues(0.dp),
     autoLimitTimeSpanToLessons: Boolean = false,
     limitTimeSpanToLessonsLowerBound: LocalTime? = null,
@@ -450,10 +450,10 @@ fun CalendarView(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 assessments.forEach { assessment ->
-                                    AssessmentCard(assessment) { onAssessmentClicked(assessment.assessment.id) }
+                                    AssessmentCard(assessment) { onAssessmentClicked(assessment.id) }
                                 }
                                 homework.forEach { homeworkItem ->
-                                    HomeworkCard(homeworkItem, profile) { onHomeworkClicked(homeworkItem.homework.id) }
+                                    HomeworkCard(homeworkItem, profile) { onHomeworkClicked(homeworkItem.id) }
                                 }
                             }
                         }

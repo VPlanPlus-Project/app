@@ -17,16 +17,13 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.room.RoomRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.domain.model.populated.AssessmentPopulator
-import plus.vplan.app.domain.model.populated.HomeworkPopulator
-import plus.vplan.app.domain.model.populated.PopulationContext
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.core.data.room.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
@@ -41,9 +38,7 @@ class SearchUseCase(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val homeworkRepository: HomeworkRepository,
-    private val homeworkPopulator: HomeworkPopulator,
     private val assessmentRepository: AssessmentRepository,
-    private val assessmentPopulator: AssessmentPopulator
 ): KoinComponent {
     private val besteSchuleGradesRepository by inject<GradesRepository>()
     private val gradesPopulator by inject<GradesPopulator>()
@@ -94,7 +89,6 @@ class SearchUseCase(
 
                     if (searchRequest.assessmentType == null) launch {
                         homeworkRepository.getAll()
-                            .flatMapLatest { homeworkPopulator.populateMultiple(it, PopulationContext.Profile(profile)) }
                             .collectLatest { homework ->
                                 results.value = results.value.plus(
                                     SearchResult.Type.Homework to homework
@@ -105,11 +99,10 @@ class SearchUseCase(
 
                     launch {
                         assessmentRepository.getAll()
-                            .flatMapLatest { assessmentPopulator.populateMultiple(it) }
                             .collectLatest { assessmentList ->
                                 val assessments = assessmentList
-                                    .filter { (query.isEmpty() || query in it.assessment.description.lowercase()) && (searchRequest.subject == null || it.assessment.subjectInstance.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.assessment.type == searchRequest.assessmentType) }
-                                    .sortedByDescending { (if (it.assessment.date < LocalDate.now()) "" else "_") + it.assessment.date.toString() }
+                                    .filter { (query.isEmpty() || query in it.description.lowercase()) && (searchRequest.subject == null || it.subjectInstance.subject == searchRequest.subject) && (searchRequest.assessmentType == null || it.type == searchRequest.assessmentType) }
+                                    .sortedByDescending { (if (it.date < LocalDate.now()) "" else "_") + it.date.toString() }
                                 results.value = results.value.plus(SearchResult.Type.Assessment to assessments.map { assessment -> SearchResult.Assessment(assessment) })
                             }
                     }
