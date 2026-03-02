@@ -81,7 +81,9 @@ class FileRepositoryImpl(
             createdByVppId = createdBy,
             size = fileSize,
             isOfflineReady = isOfflineReady,
-            cachedAt = Clock.System.now()
+            cachedAt = Clock.System.now(),
+            thumbnailPath = null,
+            mimeType = null
         ))
     }
 
@@ -94,7 +96,9 @@ class FileRepositoryImpl(
                 fileName = file.name,
                 size = file.size,
                 isOfflineReady = file.isOfflineReady,
-                cachedAt = file.cachedAt
+                cachedAt = file.cachedAt,
+                thumbnailPath = file.thumbnailPath,
+                mimeType = file.mimeType
             )
         )
     }

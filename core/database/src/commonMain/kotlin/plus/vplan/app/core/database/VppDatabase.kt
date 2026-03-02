@@ -257,6 +257,10 @@ import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstance
             from = 15,
             to = 16,
             spec = VppDatabase.Migration15to16::class
+        ),
+        AutoMigration(
+            from = 16,
+            to = 17
         )
     ]
 )
@@ -304,7 +308,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val besteSchuleGradesDao: BesteschuleGradesDao
 
     companion object {
-        const val DATABASE_VERSION = 16
+        const val DATABASE_VERSION = 17
     }
 
     @RenameColumn(

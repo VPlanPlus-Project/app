@@ -35,4 +35,10 @@ interface FileDao {
 
     @Query("DELETE FROM fk_homework_file WHERE file_id = :fileId")
     suspend fun deleteHomeworkFileConnections(fileId: Int)
+
+    @Query("UPDATE file SET thumbnail_path = :thumbnailPath WHERE id = :fileId")
+    suspend fun updateThumbnailPath(fileId: Int, thumbnailPath: String?)
+
+    @Query("UPDATE file SET mime_type = :mimeType WHERE id = :fileId")
+    suspend fun updateMimeType(fileId: Int, mimeType: String?)
 }

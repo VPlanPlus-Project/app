@@ -98,7 +98,7 @@ dependencies {
     
     implementation(libs.posthog.android)
 
-    implementation(libs.filekit.compose)
+    implementation(libs.filekit)
     implementation(libs.ktor.client.core)
     
     implementation(libs.koin.android)

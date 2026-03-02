@@ -18,7 +18,9 @@ data class DbFile(
     @ColumnInfo("file_name") val fileName: String,
     @ColumnInfo("size") val size: Long,
     @ColumnInfo("is_offline_ready") val isOfflineReady: Boolean,
-    @ColumnInfo(name = "cached_at") val cachedAt: Instant
+    @ColumnInfo(name = "cached_at") val cachedAt: Instant,
+    @ColumnInfo(name = "thumbnail_path") val thumbnailPath: String? = null,
+    @ColumnInfo(name = "mime_type") val mimeType: String? = null
 ) {
     fun toModel(): File {
         return File(
@@ -26,7 +28,9 @@ data class DbFile(
             name = fileName,
             size = size,
             isOfflineReady = isOfflineReady,
-            cachedAt = cachedAt
+            cachedAt = cachedAt,
+            thumbnailPath = thumbnailPath,
+            mimeType = mimeType
         )
     }
 }

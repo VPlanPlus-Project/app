@@ -7,7 +7,9 @@ data class File(
     val name: String,
     val size: Long,
     val isOfflineReady: Boolean,
-    val cachedAt: Instant
+    val cachedAt: Instant,
+    val thumbnailPath: String? = null,
+    val mimeType: String? = null
 ) : Item<Int, DataTag> {
     override val tags: Set<DataTag> = emptySet()
 }

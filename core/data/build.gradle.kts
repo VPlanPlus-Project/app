@@ -12,6 +12,13 @@ kotlin {
     }
 
     sourceSets {
+        androidMain.dependencies {
+            implementation(libs.androidx.core)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.graphics.core)
+            implementation(libs.androidx.compose.ui.graphics)
+        }
+
         commonMain.dependencies {
             implementation(libs.kotlinx.datetime)
 
@@ -20,6 +27,8 @@ kotlin {
 
             implementation(libs.koin.core)
             implementation(libs.kermit)
+
+            implementation(libs.filekit)
 
             implementation(project(":core:database"))
             implementation(project(":core:network"))
