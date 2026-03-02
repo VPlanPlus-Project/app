@@ -5,7 +5,7 @@ import kotlin.uuid.Uuid
 
 data class Room(
     override val id: Uuid,
-    val schoolId: Uuid,
+    val school: School,
     val name: String,
     val cachedAt: Instant,
     override val aliases: Set<Alias>

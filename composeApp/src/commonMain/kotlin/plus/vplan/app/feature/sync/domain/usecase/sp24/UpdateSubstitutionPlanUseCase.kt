@@ -23,7 +23,7 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.domain.repository.RoomRepository
+import plus.vplan.app.core.data.room.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
@@ -66,7 +66,7 @@ class UpdateSubstitutionPlanUseCase(
             withCache = true
         )
         val teachers = teacherRepository.getBySchool(sp24School).first()
-        val rooms = roomRepository.getBySchool(sp24School.id).first()
+        val rooms = roomRepository.getBySchool(sp24School).first()
         val groups = groupRepository.getBySchool(sp24School).first()
         val subjectInstances = subjectInstanceRepository.getBySchool(sp24School).first()
         var error: Response.Error? = null

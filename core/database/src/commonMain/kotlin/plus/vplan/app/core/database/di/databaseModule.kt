@@ -18,6 +18,7 @@ val databaseModule = module {
     single { get<VppDatabase>().schoolDao }
     single { get<VppDatabase>().profileDao }
     single { get<VppDatabase>().groupDao }
+    single { get<VppDatabase>().roomDao }
     single { get<VppDatabase>().teacherDao }
     single { get<VppDatabase>().courseDao }
     single { get<VppDatabase>().subjectInstanceDao }

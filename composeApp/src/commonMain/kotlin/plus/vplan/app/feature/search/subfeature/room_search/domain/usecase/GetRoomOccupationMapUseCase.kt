@@ -18,7 +18,7 @@ import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Room
-import plus.vplan.app.domain.repository.RoomRepository
+import plus.vplan.app.core.data.room.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.utils.now
 import plus.vplan.app.utils.overlaps
@@ -44,7 +44,7 @@ class GetRoomOccupationMapUseCase(
                 },
                 timetableRepository.getTimetableForSchool(profile.school.id, timetableVersion)
                     .map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } },
-                roomRepository.getBySchool(profile.school.id)
+                roomRepository.getBySchool(profile.school)
             ) { substitutionPlanLessons, timetableLessons, rooms ->
                 val substitution = substitutionPlanLessons
                     .filter { lesson -> lesson.subject != null }

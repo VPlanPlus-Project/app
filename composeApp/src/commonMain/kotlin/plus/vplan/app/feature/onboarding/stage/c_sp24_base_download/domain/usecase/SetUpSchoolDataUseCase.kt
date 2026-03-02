@@ -17,8 +17,8 @@ import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.VppSchoolAuthentication
-import plus.vplan.app.domain.repository.RoomDbDto
-import plus.vplan.app.domain.repository.RoomRepository
+import plus.vplan.app.core.data.room.RoomRepository
+import plus.vplan.app.core.model.Room
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
@@ -158,11 +158,13 @@ class SetUpSchoolDataUseCase(
                     value = "${school.sp24Id}/${room.name}",
                     version = 1
                 )
-            }.forEach { (room, aliases) ->
-                roomRepository.upsert(RoomDbDto(
-                    schoolId = school.id,
+            }.forEach { (room, alias) ->
+                roomRepository.save(Room(
+                    id = Uuid.random(),
+                    school = school,
                     name = room.name,
-                    aliases = listOf(aliases)
+                    cachedAt = Clock.System.now(),
+                    aliases = setOf(alias)
                 ))
             }
 

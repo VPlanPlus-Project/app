@@ -23,8 +23,8 @@ import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.RoomDbDto
-import plus.vplan.app.domain.repository.RoomRepository
+import plus.vplan.app.core.data.room.RoomRepository
+import plus.vplan.app.core.model.Room
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
@@ -213,12 +213,18 @@ class FullSyncUseCase(
                                         value = "${school.sp24Id}/${room.name}",
                                         version = 1
                                     )
-                                }.forEach { (room, aliases) ->
-                                    roomRepository.upsert(RoomDbDto(
-                                        schoolId = school.id,
-                                        name = room.name,
-                                        aliases = listOf(aliases)
-                                    ))
+                                }.forEach { (room, alias) ->
+                                    val existing = roomRepository.getById(alias).first()
+
+                                    if (existing == null) {
+                                        roomRepository.save(Room(
+                                            id = Uuid.random(),
+                                            school = school,
+                                            name = room.name,
+                                            aliases = setOf(alias),
+                                            cachedAt = Clock.System.now()
+                                        ))
+                                    }
                                 }
                             }
 

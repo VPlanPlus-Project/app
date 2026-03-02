@@ -35,7 +35,6 @@ class GroupRepositoryImpl(
     private val applicationScope: CoroutineScope,
 ) : GroupRepository {
 
-    // Cache pro schoolId: wird geteilt, solange ≥1 Subscriber aktiv (+ 5 s grace period)
     private val bySchoolCache = mutableMapOf<Uuid, Flow<List<Group>>>()
     private val allCache: Flow<List<Group>> by lazy {
         groupDao.getAll()

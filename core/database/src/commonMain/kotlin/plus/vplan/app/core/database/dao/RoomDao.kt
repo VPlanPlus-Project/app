@@ -17,8 +17,8 @@ interface RoomDao {
     @Query("SELECT * FROM school_rooms WHERE school_id = :schoolId")
     fun getBySchool(schoolId: Uuid): Flow<List<EmbeddedRoom>>
 
-    @Query("SELECT id FROM school_rooms")
-    fun getAll(): Flow<List<Uuid>>
+    @Query("SELECT * FROM school_rooms")
+    fun getAll(): Flow<List<EmbeddedRoom>>
 
     @Transaction
     @Query("SELECT * FROM school_rooms WHERE id = :id")

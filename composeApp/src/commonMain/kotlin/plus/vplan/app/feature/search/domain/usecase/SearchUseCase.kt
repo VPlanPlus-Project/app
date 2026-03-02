@@ -26,7 +26,7 @@ import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.repository.AssessmentRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
-import plus.vplan.app.domain.repository.RoomRepository
+import plus.vplan.app.core.data.room.RoomRepository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
@@ -67,7 +67,7 @@ class SearchUseCase(
                         combine(
                             groupRepository.getBySchool(profile.school).map { it.filter { group -> query in group.name.lowercase() } },
                             teacherRepository.getBySchool(profile.school).map { it.filter { teacher -> query in teacher.name.lowercase() } },
-                            roomRepository.getBySchool(profile.school.id).map { it.filter { room -> query in room.name.lowercase() } },
+                            roomRepository.getBySchool(profile.school).map { it.filter { room -> query in room.name.lowercase() } },
                         ) { groups, teachers, rooms ->
                             results.value = results.value.plus(SearchResult.Type.Group to groups.map { group ->
                                 SearchResult.SchoolEntity.Group(

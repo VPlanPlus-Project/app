@@ -20,7 +20,6 @@ import plus.vplan.app.domain.source.FileSource
 import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
-import plus.vplan.app.domain.source.RoomSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.WeekSource
@@ -53,7 +52,6 @@ object App {
     lateinit var homeworkTaskSource: HomeworkTaskSource
     lateinit var timetableSource: TimetableSource
     lateinit var weekSource: WeekSource
-    lateinit var roomSource: RoomSource
     lateinit var lessonTimeSource: LessonTimeSource
     lateinit var substitutionPlanSource: SubstitutionPlanSource
     lateinit var assessmentSource: AssessmentSource

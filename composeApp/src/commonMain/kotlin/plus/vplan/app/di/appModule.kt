@@ -2,9 +2,6 @@ package plus.vplan.app.di
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
@@ -14,7 +11,10 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
@@ -42,56 +42,55 @@ import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepositoryImpl
 import plus.vplan.app.core.data.course.CourseRepository
 import plus.vplan.app.core.data.course.CourseRepositoryImpl
+import plus.vplan.app.core.data.day.DayRepository
+import plus.vplan.app.core.data.day.DayRepositoryImpl
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.group.GroupRepositoryImpl
 import plus.vplan.app.core.data.holiday.HolidayRepository
 import plus.vplan.app.core.data.holiday.HolidayRepositoryImpl
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepositoryImpl
+import plus.vplan.app.core.data.news.NewsRepository
+import plus.vplan.app.core.data.news.NewsRepositoryImpl
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.profile.ProfileRepositoryImpl
+import plus.vplan.app.core.data.room.RoomRepository
+import plus.vplan.app.core.data.room.RoomRepositoryImpl
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.school.SchoolRepositoryImpl
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepositoryImpl
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.data.teacher.TeacherRepositoryImpl
+import plus.vplan.app.core.data.timetable.TimetableRepository
+import plus.vplan.app.core.data.week.WeekRepository
+import plus.vplan.app.core.data.week.WeekRepositoryImpl
 import plus.vplan.app.core.database.di.databaseModule
 import plus.vplan.app.data.repository.AssessmentRepositoryImpl
-import plus.vplan.app.core.data.day.DayRepositoryImpl
 import plus.vplan.app.data.repository.FcmRepositoryImpl
 import plus.vplan.app.data.repository.FileRepositoryImpl
 import plus.vplan.app.data.repository.HomeworkRepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
-import plus.vplan.app.core.data.lesson_times.LessonTimeRepositoryImpl
-import plus.vplan.app.core.data.news.NewsRepositoryImpl
-import plus.vplan.app.data.repository.RoomRepositoryImpl
 import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.SubstitutionPlanRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
-import plus.vplan.app.core.data.week.WeekRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.AssessmentRepository
-import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.HomeworkRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
-import plus.vplan.app.core.data.news.NewsRepository
-import plus.vplan.app.domain.repository.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.source.AssessmentSource
 import plus.vplan.app.domain.source.FileSource
 import plus.vplan.app.domain.source.HomeworkSource
 import plus.vplan.app.domain.source.HomeworkTaskSource
 import plus.vplan.app.domain.source.LessonTimeSource
-import plus.vplan.app.domain.source.RoomSource
 import plus.vplan.app.domain.source.SubstitutionPlanSource
 import plus.vplan.app.domain.source.TimetableSource
 import plus.vplan.app.domain.source.WeekSource
@@ -232,8 +231,8 @@ val appModule = module(createdAtStart = true) {
     singleOf(::NewsRepositoryImpl).bind<NewsRepository>()
     singleOf(::HolidayRepositoryImpl).bind<HolidayRepository>()
     singleOf(::DayRepositoryImpl).bind<DayRepository>()
-
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
+
     singleOf(::Stundenplan24RepositoryImpl).bind<Stundenplan24Repository>()
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
     singleOf(::KeyValueRepositoryImpl).bind<KeyValueRepository>()
@@ -282,7 +281,6 @@ fun initKoin(configuration: KoinAppDeclaration? = null) {
         App.homeworkTaskSource = HomeworkTaskSource(koin.get())
         App.timetableSource = TimetableSource(koin.get())
         App.weekSource = WeekSource(koin.get())
-        App.roomSource = RoomSource(koin.get())
         App.lessonTimeSource = LessonTimeSource(koin.get())
         App.substitutionPlanSource = SubstitutionPlanSource(koin.get())
         App.assessmentSource = AssessmentSource(koin.get())

@@ -16,7 +16,7 @@ import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
-import plus.vplan.app.domain.repository.RoomRepository
+import plus.vplan.app.core.data.room.RoomRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.core.data.timetable.TimetableRepository
@@ -59,7 +59,7 @@ class UpdateTimetableUseCase(
             withCache = true
         )
         LOGGER.i { "Updating timetable for indiware school ${sp24School.id}" }
-        val rooms = roomRepository.getBySchool(sp24School.id).first()
+        val rooms = roomRepository.getBySchool(sp24School).first()
         val teachers = teacherRepository.getBySchool(sp24School).first()
         val groups = groupRepository.getBySchool(sp24School).first()
 
