@@ -58,19 +58,12 @@ android {
         versionCode = applicationConfig.versionCode
         versionName = applicationConfig.versionName
     }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
 
     buildTypes {
         debug {
             signingConfig = signingConfigs.getByName("debug")
-
             applicationIdSuffix = ".debug"
         }
-
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.findByName("default") ?: run {
@@ -84,10 +77,17 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         compose = true
     }
-    
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
     sourceSets["main"].apply {
         java.directories.add("src/main/kotlin")
     }
@@ -96,32 +96,38 @@ android {
 dependencies {
     implementation(project(":composeApp"))
     implementation(project(":core:platform"))
-    
+
+    // AndroidX
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.work.runtime.ktx)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
+
+    // Compose
     implementation(libs.compose.material3)
-    
+
+    // Firebase
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
-    
-    implementation(libs.posthog.android)
+    implementation(libs.firebase.messaging)
 
-    implementation(libs.filekit.core)
-    implementation(libs.filekit.dialogs.compose)
-    implementation(libs.ktor.client.core)
-    
+    // Koin
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
     implementation(libs.koin.androidx.workmanager)
-    
-    implementation(libs.androidx.work.runtime.ktx)
 
+    // Ktor
+    implementation(libs.ktor.client.core)
+
+    // Third-party
+    implementation(libs.filekit.core)
+    implementation(libs.filekit.dialogs.compose)
     implementation(libs.kermit)
-    
+    implementation(libs.posthog.android)
+
     debugImplementation(libs.androidx.ui.tooling)
 }

@@ -2,8 +2,8 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.vplanplus.kmp.library)
     alias(libs.plugins.serialization)
-//    alias(libs.plugins.composeMultiplatform) // Only for preview in File
-//    alias(libs.plugins.composeCompiler)
+    // alias(libs.plugins.composeMultiplatform) // Only for preview in File
+    // alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
@@ -15,17 +15,24 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.datetime)
-            implementation(libs.ktor.client.core)
-            implementation(libs.kermit)
-            implementation(libs.vpp.sp24)
+            // Project modules
+            implementation(project(":core:utils"))
 
+            // Compose (for preview only)
+            implementation(libs.compose.foundation)
+
+            // Koin
             api(libs.koin.core)
 
-            implementation(libs.compose.foundation) // Only for preview in File
+            // KotlinX
+            implementation(libs.kotlinx.serialization.json)
 
-            implementation(project(":core:utils"))
+            // Ktor
+            implementation(libs.ktor.client.core)
+
+            // Third-party
+            implementation(libs.kermit)
+            implementation(libs.vpp.sp24)
         }
     }
 }
