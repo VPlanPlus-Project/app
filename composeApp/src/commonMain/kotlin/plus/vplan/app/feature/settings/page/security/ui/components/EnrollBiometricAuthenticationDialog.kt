@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.fingerprint
+import vplanplus.composeapp.generated.resources.fingerprint_pattern
 
 @Composable
 fun EnrollBiometricAuthenticationDialog(
@@ -23,7 +23,7 @@ fun EnrollBiometricAuthenticationDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                painter = painterResource(Res.drawable.fingerprint),
+                painter = painterResource(Res.drawable.fingerprint_pattern),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )
