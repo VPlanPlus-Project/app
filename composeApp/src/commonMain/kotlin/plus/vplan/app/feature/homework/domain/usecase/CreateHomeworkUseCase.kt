@@ -7,24 +7,26 @@ import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.model.database.DbFile
 import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.service.ProfileService
+import plus.vplan.app.domain.usecase.file.UploadFileUseCase
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.time.Clock
 
 class CreateHomeworkUseCase(
     private val homeworkRepository: HomeworkRepository,
     private val groupRepository: GroupRepository,
-    private val fileRepository: FileRepository,
+    private val uploadFileUseCase: UploadFileUseCase,
+    private val vppDatabase: VppDatabase,
     private val localFileRepository: LocalFileRepository,
     private val profileService: ProfileService,
     private val subjectInstanceRepository: SubjectInstanceRepository,
@@ -105,26 +107,47 @@ class CreateHomeworkUseCase(
             )
 
             files = selectedFiles.mapNotNull {
-                val documentId = fileRepository.uploadFile(
-                    vppId = profile.vppId!!,
-                    document = it
-                )
-
-                if (documentId !is Response.Success) return@mapNotNull null
+                // Upload file using the new use case
+                val uploadResult = uploadFileUseCase(profile.vppId!!, it.platformFile)
+                
+                if (uploadResult !is Response.Success) return@mapNotNull null
+                
+                val uploadedFile = uploadResult.data
 
                 Homework.HomeworkFile(
-                    id = documentId.data,
-                    name = it.name,
-                    size = it.size,
+                    id = uploadedFile.id,
+                    name = uploadedFile.name,
+                    size = uploadedFile.size,
                     homework = homework.id
                 )
             }
         } else {
+            // Local homework (no VppId.Active)
             id = homeworkRepository.getIdForNewLocalHomework() - 1
             val taskIdStart = homeworkRepository.getIdForNewLocalHomeworkTask() - 1
             val fileIdStart = homeworkRepository.getIdForNewLocalHomeworkFile() - 1
             taskIds = tasks.mapIndexed { index, s -> s to (taskIdStart - index) }.toMap()
-            files = selectedFiles.mapIndexed { index, file -> Homework.HomeworkFile(fileIdStart - index, file.name, id, file.size) }
+            
+            // For local homework, create File objects manually
+            val localFiles = selectedFiles.mapIndexed { index, attachedFile ->
+                File(
+                    id = fileIdStart - index,
+                    name = attachedFile.name,
+                    size = attachedFile.size,
+                    isOfflineReady = true,
+                    cachedAt = Clock.System.now()
+                )
+            }
+            
+            files = localFiles.map { file ->
+                Homework.HomeworkFile(
+                    id = file.id,
+                    name = file.name,
+                    size = file.size,
+                    homework = id
+                )
+            }
+            
             homeworkTasks = taskIds.map { Homework.HomeworkTask(id = it.value, content = it.key, homeworkId = id, doneByProfiles = emptyList(), doneByVppIds = emptyList(), cachedAt = Clock.System.now()) }
             homework = Homework.LocalHomework(
                 id = id,
@@ -134,31 +157,31 @@ class CreateHomeworkUseCase(
                 createdByProfile = profile,
                 dueTo = date,
                 tasks = homeworkTasks,
-                files = files.map { File(
-                    id = it.id,
-                    name = it.name,
-                    size = it.size,
-                    isOfflineReady = true,
-                    cachedAt = Clock.System.now()
-                ) },
+                files = localFiles,
                 cachedAt = Clock.System.now()
             )
         }
 
-        files.forEach { file ->
-            fileRepository.upsertLocally(
-                fileId = file.id,
-                fileName = file.name,
-                fileSize = file.size,
-                createdAt = Clock.System.now(),
-                isOfflineReady = true,
-                createdBy = if (homework.id > 0) profile.vppId?.id else null,
-            )
-
-            localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
-        }
-
         homeworkRepository.save(homework)
+
+        // Write local files for local homework
+        if (profile.vppId !is VppId.Active) {
+            files.forEach { file ->
+                vppDatabase.fileDao.upsert(DbFile(
+                    id = file.id,
+                    fileName = file.name,
+                    createdAt = Clock.System.now(),
+                    createdByVppId = null,
+                    size = file.size,
+                    isOfflineReady = true,
+                    cachedAt = Clock.System.now(),
+                    thumbnailPath = null,
+                    mimeType = null
+                ))
+
+                localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
+            }
+        }
 
         files.forEach { file ->
             homeworkRepository.linkHomeworkFile(

@@ -38,6 +38,7 @@ import io.github.vinceglb.filekit.path
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.HomeworkStatus
@@ -45,7 +46,6 @@ import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.FileRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.NewTaskRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SavedLocalRow
@@ -62,6 +62,7 @@ import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
+import plus.vplan.app.ui.components.file.FileRowWithThumbnail
 import plus.vplan.app.utils.safeBottomPadding
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
@@ -75,6 +76,7 @@ import kotlin.time.Clock
 @Composable
 fun DetailPage(
     state: HomeworkDetailState,
+    viewModel: HomeworkDetailViewModel,
     onEvent: (event: HomeworkDetailEvent) -> Unit
 ) {
     val homework = state.homework ?: return
@@ -272,11 +274,12 @@ fun DetailPage(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 homework.files.forEach { file ->
-                    FileRow(
+                    FileRowWithThumbnail(
                         file = file,
+                        getThumbnailUseCase = viewModel.getFileThumbnailUseCase,
                         canEdit = state.canEdit,
-                        downloadProgress = state.fileDownloadState[file.id],
-                        onDownloadClick = { onEvent(HomeworkDetailEvent.DownloadFile(file)) },
+                        progress = state.fileOperationState[file.id] ?: FileOperationProgress.Idle,
+                        onFileClick = { onEvent(HomeworkDetailEvent.OpenFile(file)) },
                         onRenameClick = { newName -> onEvent(HomeworkDetailEvent.RenameFile(file, newName)) },
                         onDeleteClick = { onEvent(HomeworkDetailEvent.DeleteFile(file)) }
                     )

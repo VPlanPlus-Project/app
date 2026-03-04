@@ -16,22 +16,26 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.data.assessment.AssessmentRepository
+import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.model.AppEntity
-import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.File
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.feature.assessment.domain.usecase.AddAssessmentFileUseCase
+import plus.vplan.app.domain.usecase.file.DeleteFileUseCase
+import plus.vplan.app.domain.usecase.file.DownloadFileUseCase
+import plus.vplan.app.domain.usecase.file.GetFileThumbnailUseCase
+import plus.vplan.app.domain.usecase.file.OpenFileUseCase
+import plus.vplan.app.domain.usecase.file.RenameFileUseCase
+import plus.vplan.app.domain.usecase.file.UploadFileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentContentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentDateUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentTypeUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentVisibilityUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.DeleteAssessmentUseCase
-import plus.vplan.app.feature.assessment.domain.usecase.DeleteFileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
-import plus.vplan.app.feature.homework.domain.usecase.DownloadFileUseCase
-import plus.vplan.app.feature.homework.domain.usecase.RenameFileUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 
@@ -44,10 +48,12 @@ class AssessmentDetailViewModel(
     private val changeAssessmentDateUseCase: ChangeAssessmentDateUseCase,
     private val changeAssessmentVisibilityUseCase: ChangeAssessmentVisibilityUseCase,
     private val changeAssessmentContentUseCase: ChangeAssessmentContentUseCase,
-    private val addAssessmentFileUseCase: AddAssessmentFileUseCase,
+    private val uploadFileUseCase: UploadFileUseCase,
     private val downloadFileUseCase: DownloadFileUseCase,
+    private val openFileUseCase: OpenFileUseCase,
     private val renameFileUseCase: RenameFileUseCase,
     private val deleteFileUseCase: DeleteFileUseCase,
+    val getFileThumbnailUseCase: GetFileThumbnailUseCase,
 ) : ViewModel() {
     var state by mutableStateOf(AssessmentDetailState())
         private set
@@ -105,15 +111,42 @@ class AssessmentDetailViewModel(
                 is AssessmentDetailEvent.UpdateDate -> changeAssessmentDateUseCase(state.assessment!!, event.date, state.profile!!)
                 is AssessmentDetailEvent.UpdateVisibility -> changeAssessmentVisibilityUseCase(state.assessment!!, event.isPublic, state.profile!!)
                 is AssessmentDetailEvent.UpdateContent -> changeAssessmentContentUseCase(state.assessment!!, event.content, state.profile!!)
-                is AssessmentDetailEvent.AddFile -> addAssessmentFileUseCase(state.assessment!!, event.file.platformFile, state.profile!!)
-                is AssessmentDetailEvent.DownloadFile -> {
-                    downloadFileUseCase(event.file, state.profile!!).collectLatest {
-                        state = state.copy(fileDownloadState = state.fileDownloadState.plus(event.file.id to it))
+                is AssessmentDetailEvent.AddFile -> {
+                    val profile = state.profile ?: return@launch
+                    val assessment = state.assessment ?: return@launch
+                    val vppId = profile.vppId ?: return@launch // Require VPP ID for upload
+                    
+                    when (val uploadResult = uploadFileUseCase(vppId, event.file.platformFile)) {
+                        is Response.Success -> {
+                            val uploadedFile = uploadResult.data
+                            // Link the file to the assessment
+                            if (assessment.id > 0) {
+                                assessmentRepository.linkFile(vppId, assessment.id, uploadedFile.id)
+                            }
+                        }
+                        is Response.Error, is Response.Loading -> {
+                            // Handle error or loading state
+                        }
                     }
-                    state = state.copy(fileDownloadState = state.fileDownloadState - event.file.id)
                 }
-                is AssessmentDetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.profile!!)
-                is AssessmentDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.assessment!!, state.profile!!)
+                is AssessmentDetailEvent.DownloadFile -> {
+                    val profile = state.profile ?: return@launch
+                    val schoolAuth = profile.vppId?.buildVppSchoolAuthentication(-1) ?: profile.school.buildSp24AppAuthentication()
+                    downloadFileUseCase(event.file, schoolAuth).collectLatest { progress ->
+                        state = state.copy(
+                            fileOperationState = state.fileOperationState.plus(event.file.id to progress)
+                        )
+                    }
+                }
+                is AssessmentDetailEvent.OpenFile -> {
+                    openFileUseCase(event.file)
+                }
+                is AssessmentDetailEvent.RenameFile -> {
+                    renameFileUseCase(event.file, event.newName, state.profile?.vppId)
+                }
+                is AssessmentDetailEvent.DeleteFile -> {
+                    deleteFileUseCase(event.file, state.profile?.vppId)
+                }
             }
         }
     }
@@ -126,7 +159,7 @@ data class AssessmentDetailState(
     val reloadingState: UnoptimisticTaskState? = UnoptimisticTaskState.Success,
     val deleteState: UnoptimisticTaskState? = null,
     val initDone: Boolean = false,
-    val fileDownloadState: Map<Int, Float> = emptyMap()
+    val fileOperationState: Map<Int, FileOperationProgress> = emptyMap()
 )
 
 sealed class AssessmentDetailEvent {
@@ -135,6 +168,7 @@ sealed class AssessmentDetailEvent {
     data class UpdateVisibility(val isPublic: Boolean): AssessmentDetailEvent()
     data class UpdateDate(val date: LocalDate): AssessmentDetailEvent()
     data class DownloadFile(val file: File): AssessmentDetailEvent()
+    data class OpenFile(val file: File): AssessmentDetailEvent()
     data class RenameFile(val file: File, val newName: String): AssessmentDetailEvent()
     data class DeleteFile(val file: File): AssessmentDetailEvent()
 

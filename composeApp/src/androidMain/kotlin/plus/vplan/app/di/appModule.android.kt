@@ -2,6 +2,8 @@ package plus.vplan.app.di
 
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import plus.vplan.app.core.data.file.FileOpener
+import plus.vplan.app.core.data.file.ThumbnailGenerator
 import plus.vplan.app.data.repository.LocalFileRepositoryImpl
 import plus.vplan.app.data.repository.PlatformAuthenticationRepositoryImpl
 import plus.vplan.app.data.repository.PlatformNotificationImpl
@@ -21,4 +23,16 @@ actual val platformModule: Module = module(createdAtStart = true) {
     single<OpenBiometricSettings> { OpenBiometricSettingsImpl(get()) }
     single<RunBiometricAuthentication> { RunBiometricAuthenticationImpl() }
     single<ActivityProvider> { getProperty<ActivityProvider>("activity_provider") }
+    
+    // New file infrastructure
+    single<ThumbnailGenerator> { 
+        ThumbnailGenerator(get<android.content.Context>().filesDir)
+    }
+    single<FileOpener> { 
+        FileOpener(get<android.content.Context>()) 
+    }
+    single<(String) -> String> { 
+        val filesDir = get<android.content.Context>().filesDir.absolutePath
+        { relativePath: String -> "$filesDir/$relativePath" }
+    }
 }

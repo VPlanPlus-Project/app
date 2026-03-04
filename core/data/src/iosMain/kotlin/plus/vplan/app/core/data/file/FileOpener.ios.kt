@@ -8,14 +8,52 @@ import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Response
 
 /**
- * QuickLook integration for iOS file preview.
- * TODO: Implement proper QuickLook integration once dependency injection is set up
+ * iOS-specific file opener implementation using QuickLook.
+ * 
+ * QuickLook is Apple's built-in document preview framework. This implementation:
+ * 1. Copies the file to a temporary directory (QuickLook requirement)
+ * 2. Triggers QuickLook preview through the OpenQuicklook interface
+ * 
+ * The OpenQuicklook interface is implemented in Swift and injected via Koin DI.
  */
-actual class FileOpener {
+interface OpenQuicklook {
+    fun open(path: String)
+}
+
+actual class FileOpener(
+    private val quicklook: OpenQuicklook
+) {
     
+    @OptIn(ExperimentalForeignApi::class)
     actual suspend fun openFile(file: File, filePath: String): Response<Unit> {
-        // TODO: Implement QuickLook integration
-        // This will require passing a platform-specific QuickLook handler through DI
-        return Response.Error.Other("File opening not yet implemented for iOS")
+        return try {
+            val fileManager = NSFileManager.defaultManager
+            
+            // Check if file exists
+            if (!fileManager.fileExistsAtPath(filePath)) {
+                return Response.Error.Other("File not found at $filePath")
+            }
+            
+            // Create temp file for QuickLook
+            val tempDirectory = fileManager.temporaryDirectory
+            val tempFile = tempDirectory.URLByAppendingPathComponent(file.name)!!
+            
+            // Remove old temp file if it exists
+            if (fileManager.fileExistsAtPath(tempFile.path!!)) {
+                fileManager.removeItemAtURL(tempFile, error = null)
+            }
+            
+            // Copy file to temp location
+            val sourceURL = NSURL.fileURLWithPath(filePath)
+            fileManager.copyItemAtURL(srcURL = sourceURL, toURL = tempFile, error = null)
+            
+            // Trigger QuickLook preview
+            quicklook.open(tempFile.absoluteString!!)
+            
+            Response.Success(Unit)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Response.Error.Other(e.message ?: "Failed to open file")
+        }
     }
 }

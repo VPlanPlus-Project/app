@@ -37,6 +37,6 @@ fun HomeworkDetailDrawer(
         contentWindowInsets = { WindowInsets(0.dp) },
         sheetState = sheetState
     ) {
-        DetailPage(state, viewModel::onEvent)
+        DetailPage(state, viewModel, viewModel::onEvent)
     }
 }

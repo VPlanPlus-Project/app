@@ -45,6 +45,8 @@ import plus.vplan.app.core.data.course.CourseRepository
 import plus.vplan.app.core.data.course.CourseRepositoryImpl
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.data.day.DayRepositoryImpl
+import plus.vplan.app.core.data.file.FileRepository
+import plus.vplan.app.core.data.file.FileRepositoryImpl
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.group.GroupRepositoryImpl
 import plus.vplan.app.core.data.holiday.HolidayRepository
@@ -70,7 +72,6 @@ import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.core.data.week.WeekRepositoryImpl
 import plus.vplan.app.core.database.di.databaseModule
 import plus.vplan.app.data.repository.FcmRepositoryImpl
-import plus.vplan.app.data.repository.FileRepositoryImpl
 import plus.vplan.app.data.repository.KeyValueRepositoryImpl
 import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.SubstitutionPlanRepositoryImpl
@@ -79,7 +80,6 @@ import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.domain.di.domainModule
 import plus.vplan.app.domain.repository.FcmRepository
-import plus.vplan.app.domain.repository.FileRepository
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
@@ -117,6 +117,8 @@ import plus.vplan.app.network.vpp.SchoolAuthenticationProvider
 import plus.vplan.app.network.vpp.VppIdAuthenticationProvider
 import plus.vplan.app.network.vpp.assessment.AssessmentApi
 import plus.vplan.app.network.vpp.assessment.AssessmentApiImpl
+import plus.vplan.app.network.vpp.file.FileApi
+import plus.vplan.app.network.vpp.file.FileApiImpl
 import plus.vplan.app.network.vpp.group.GroupApi
 import plus.vplan.app.network.vpp.group.GroupApiImpl
 import plus.vplan.app.network.vpp.homework.HomeworkApi
@@ -218,6 +220,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::NewsApiImpl).bind<NewsApi>()
     singleOf(::HomeworkApiImpl).bind<HomeworkApi>()
     singleOf(::AssessmentApiImpl).bind<AssessmentApi>()
+    singleOf(::FileApiImpl).bind<FileApi>()
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()
@@ -231,6 +234,17 @@ val appModule = module(createdAtStart = true) {
     singleOf(::RoomRepositoryImpl).bind<RoomRepository>()
     singleOf(::HomeworkRepositoryImpl).bind<HomeworkRepository>()
     singleOf(::AssessmentRepositoryImpl).bind<AssessmentRepository>()
+    
+    // File repository
+    single<FileRepository> {
+        FileRepositoryImpl(
+            fileApi = get(),
+            vppDatabase = get(),
+            thumbnailGenerator = get(),
+            fileOpener = get(),
+            getFileSystemPath = get()
+        )
+    }
 
     singleOf(::Stundenplan24RepositoryImpl).bind<Stundenplan24Repository>()
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
@@ -239,7 +253,6 @@ val appModule = module(createdAtStart = true) {
     singleOf(::TimetableRepositoryImpl).bind<TimetableRepository>()
     singleOf(::SubstitutionPlanRepositoryImpl).bind<SubstitutionPlanRepository>()
     singleOf(::VppIdRepositoryImpl).bind<VppIdRepository>()
-    singleOf(::FileRepositoryImpl).bind<FileRepository>()
     singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
 
     singleOf(::ProfileServiceImpl).bind<ProfileService>()

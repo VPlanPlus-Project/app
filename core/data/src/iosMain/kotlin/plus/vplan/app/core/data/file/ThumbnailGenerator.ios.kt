@@ -2,15 +2,15 @@ package plus.vplan.app.core.data.file
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asComposeImageBitmap
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Image
 import platform.Foundation.NSData
 import platform.Foundation.dataWithContentsOfFile
-import plus.vplan.app.core.model.File
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.usePinned
 import platform.posix.memcpy
+import plus.vplan.app.core.model.File
 
 actual class ThumbnailGenerator {
     
@@ -18,7 +18,7 @@ actual class ThumbnailGenerator {
         return try {
             when (FileType.fromFileName(file.name)) {
                 FileType.IMAGE -> generateImageThumbnail(filePath)
-                FileType.PDF -> null // PDF rendering not implemented for iOS yet
+                FileType.PDF -> null // TODO: PDF rendering for iOS requires complex CGContext work
                 else -> null // Generic icons will be handled in UI layer
             }
         } catch (e: Exception) {
@@ -36,8 +36,8 @@ actual class ThumbnailGenerator {
             val image = Image.makeFromEncoded(bytes)
             val bitmap = Bitmap.makeFromImage(image)
             
-            // For iOS, we just return the original image
-            // TODO: Implement proper scaling using UIImage or CIImage
+            // For iOS, return the original image for now
+            // TODO: Implement proper scaling for large images to reduce memory usage
             bitmap.asComposeImageBitmap()
         } catch (e: Exception) {
             e.printStackTrace()

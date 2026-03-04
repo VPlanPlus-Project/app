@@ -20,28 +20,31 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.App
+import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.repository.KeyValueRepository
 import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.domain.usecase.file.DeleteFileUseCase
+import plus.vplan.app.domain.usecase.file.DownloadFileUseCase
+import plus.vplan.app.domain.usecase.file.GetFileThumbnailUseCase
+import plus.vplan.app.domain.usecase.file.OpenFileUseCase
+import plus.vplan.app.domain.usecase.file.RenameFileUseCase
+import plus.vplan.app.domain.usecase.file.UploadFileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
-import plus.vplan.app.feature.homework.domain.usecase.AddFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
-import plus.vplan.app.feature.homework.domain.usecase.DeleteFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteTaskUseCase
-import plus.vplan.app.feature.homework.domain.usecase.DownloadFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkDueToUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkSubjectInstanceUseCase
 import plus.vplan.app.feature.homework.domain.usecase.EditHomeworkVisibilityUseCase
-import plus.vplan.app.feature.homework.domain.usecase.RenameFileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.ToggleTaskDoneUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.UpdateTaskUseCase
@@ -59,10 +62,12 @@ class HomeworkDetailViewModel(
     private val addTaskUseCase: AddTaskUseCase,
     private val updateTaskUseCase: UpdateTaskUseCase,
     private val deleteTaskUseCase: DeleteTaskUseCase,
+    private val uploadFileUseCase: UploadFileUseCase,
     private val downloadFileUseCase: DownloadFileUseCase,
+    private val openFileUseCase: OpenFileUseCase,
     private val renameFileUseCase: RenameFileUseCase,
     private val deleteFileUseCase: DeleteFileUseCase,
-    private val addFileUseCase: AddFileUseCase,
+    val getFileThumbnailUseCase: GetFileThumbnailUseCase,
     private val keyValueRepository: KeyValueRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
 ) : ViewModel() {
@@ -220,17 +225,47 @@ class HomeworkDetailViewModel(
                     }
                 }
                 is HomeworkDetailEvent.DownloadFile -> {
-                    downloadFileUseCase(event.file, state.value.profile!!).collectLatest {
+                    val profile = state.value.profile ?: return@launch
+                    val schoolAuth = profile.vppId?.buildVppSchoolAuthentication(-1) ?: profile.school.buildSp24AppAuthentication()
+                    downloadFileUseCase(event.file, schoolAuth).collectLatest { progress ->
                         state.update { state ->
                             state.copy(
-                                fileDownloadState = state.fileDownloadState.plus(event.file.id to it)
+                                fileOperationState = state.fileOperationState.plus(event.file.id to progress)
                             )
                         }
                     }
                 }
-                is HomeworkDetailEvent.RenameFile -> renameFileUseCase(event.file, event.newName, state.value.profile!!)
-                is HomeworkDetailEvent.DeleteFile -> deleteFileUseCase(event.file, state.value.homework!!, state.value.profile!!)
-                is HomeworkDetailEvent.AddFile -> addFileUseCase(state.value.homework!!, event.file.platformFile, state.value.profile!!)
+                is HomeworkDetailEvent.OpenFile -> {
+                    openFileUseCase(event.file)
+                }
+                is HomeworkDetailEvent.RenameFile -> {
+                    renameFileUseCase(event.file, event.newName, state.value.profile?.vppId)
+                }
+                is HomeworkDetailEvent.DeleteFile -> {
+                    deleteFileUseCase(event.file, state.value.profile?.vppId)
+                }
+                is HomeworkDetailEvent.AddFile -> {
+                    val profile = state.value.profile ?: return@launch
+                    val homework = state.value.homework ?: return@launch
+                    val vppId = profile.vppId ?: return@launch // Require VPP ID for upload
+                    
+                    when (val uploadResult = uploadFileUseCase(vppId, event.file.platformFile)) {
+                        is Response.Success -> {
+                            val uploadedFile = uploadResult.data
+                            // Link the file to the homework
+                            if (homework.id > 0) {
+                                homeworkRepository.linkHomeworkFile(
+                                    vppId = vppId,
+                                    homeworkId = homework.id,
+                                    fileId = uploadedFile.id
+                                )
+                            }
+                        }
+                        is Response.Error, is Response.Loading -> {
+                            // Handle error or loading state
+                        }
+                    }
+                }
             }
         }
     }
@@ -247,7 +282,7 @@ data class HomeworkDetailState(
     val initDone: Boolean = false,
     val newTaskState: UnoptimisticTaskState? = null,
     val taskDeleteState: Map<Int, UnoptimisticTaskState> = emptyMap(),
-    val fileDownloadState: Map<Int, Float> = emptyMap(),
+    val fileOperationState: Map<Int, FileOperationProgress> = emptyMap(),
     val isDeveloperMode: Boolean = false
 )
 
@@ -261,7 +296,7 @@ sealed class HomeworkDetailEvent {
     data class DeleteTask(val task: Homework.HomeworkTask) : HomeworkDetailEvent()
     data object DeleteHomework : HomeworkDetailEvent()
     data class DownloadFile(val file: File) : HomeworkDetailEvent()
-
+    data class OpenFile(val file: File) : HomeworkDetailEvent()
     data class RenameFile(val file: File, val newName: String) : HomeworkDetailEvent()
     data class DeleteFile(val file: File) : HomeworkDetailEvent()
     data class AddFile(val file: AttachedFile) : HomeworkDetailEvent()

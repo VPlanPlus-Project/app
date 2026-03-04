@@ -12,6 +12,12 @@ import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.domain.usecase.OnNotificationGrantedUseCase
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.UpdateFirebaseTokenUseCase
+import plus.vplan.app.domain.usecase.file.DeleteFileUseCase
+import plus.vplan.app.domain.usecase.file.DownloadFileUseCase
+import plus.vplan.app.domain.usecase.file.GetFileThumbnailUseCase
+import plus.vplan.app.domain.usecase.file.OpenFileUseCase
+import plus.vplan.app.domain.usecase.file.RenameFileUseCase
+import plus.vplan.app.domain.usecase.file.UploadFileUseCase
 
 val domainModule = module {
     singleOf(::GetCurrentDateTimeUseCase)
@@ -25,4 +31,12 @@ val domainModule = module {
     singleOf(::IntervalPopulator)
     singleOf(::CollectionPopulator)
     singleOf(::GradesPopulator)
+    
+    // New file use cases
+    singleOf(::UploadFileUseCase)
+    singleOf(::DownloadFileUseCase)
+    singleOf(::OpenFileUseCase)
+    singleOf(::GetFileThumbnailUseCase)
+    singleOf(::RenameFileUseCase)
+    singleOf(::DeleteFileUseCase)
 }

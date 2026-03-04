@@ -19,7 +19,7 @@ abstract class AttachedFile {
         suspend fun fromFile(file: PlatformFile): AttachedFile {
             val bytes = file.readBytes()
             val size = file.size()
-            val name = file.name
+            val name = if (file.extension.isNotEmpty()) "${file.name}.${file.extension}" else file.name
             return when (file.extension) {
                 "pdf" -> {
                     val data = getDataFromPdf(bytes)
@@ -90,8 +90,12 @@ abstract class AttachedFile {
             return copy(platformFile = platformFile, bitmap = bitmap, size = size, name = name)
         }
 
-        constructor(platformFile: PlatformFile) : this(platformFile, null,
-            platformFile.size(), platformFile.name)
+        constructor(platformFile: PlatformFile) : this(
+            platformFile, 
+            null,
+            platformFile.size(), 
+            if (platformFile.extension.isNotEmpty()) "${platformFile.name}.${platformFile.extension}" else platformFile.name
+        )
     }
 
     abstract fun copyBase(

@@ -1,31 +1,21 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.assessment.domain.usecase
 
-import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AliasProvider
-import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.core.model.VppId
-import plus.vplan.app.domain.repository.FileRepository
-import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.service.ProfileService
+import plus.vplan.app.domain.usecase.file.UploadFileUseCase
 import plus.vplan.app.ui.common.AttachedFile
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 class CreateAssessmentUseCase(
     private val assessmentRepository: AssessmentRepository,
-    private val fileRepository: FileRepository,
-    private val localFileRepository: LocalFileRepository,
+    private val uploadFileUseCase: UploadFileUseCase,
     private val profileService: ProfileService,
     private val subjectInstanceRepository: SubjectInstanceRepository,
 ) {
@@ -39,10 +29,6 @@ class CreateAssessmentUseCase(
     ): CreateAssessmentResult {
         val profile = (profileService.getCurrentProfile().first() as? Profile.StudentProfile) ?: return CreateAssessmentResult.Error.UnknownError("No current profile found or profile is not a student profile")
 
-        val creator = profile.vppId?.let { vppId ->
-            AppEntity.VppId(vppId)
-        } ?: AppEntity.Profile(profile)
-
         val subjectInstanceId = subjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
             val subjectInstanceAlias = subjectInstance.aliases.firstOrNull()
                 ?: return CreateAssessmentResult.Error.UnknownError("Subject instance $subjectInstance has no aliases")
@@ -55,11 +41,9 @@ class CreateAssessmentUseCase(
             return@run subjectInstanceId
         }
 
-        val activeVppId = profile.vppId as? VppId.Active
-        if (activeVppId == null) {
-            return CreateAssessmentResult.Error.UnknownError("Profile has no active VPP ID")
-        }
-        
+        val activeVppId = profile.vppId
+            ?: return CreateAssessmentResult.Error.UnknownError("Profile has no active VPP ID")
+
         val result = assessmentRepository.createAssessmentOnline(
             vppId = activeVppId,
             date = date,
@@ -77,32 +61,27 @@ class CreateAssessmentUseCase(
 
         val files = mutableListOf<Assessment.AssessmentFile>()
         selectedFiles.forEach { attachedFile ->
-            val fileId = fileRepository.uploadFile(
-                vppId = activeVppId,
-                document = attachedFile
-            )
-            if (fileId !is Response.Success) return@forEach
+            // Upload file using the new use case
+            val uploadResult = uploadFileUseCase(activeVppId, attachedFile.platformFile)
+            if (uploadResult !is Response.Success) {
+                // Skip files that failed to upload
+                return@forEach
+            }
+            
+            val uploadedFile = uploadResult.data
+            
+            // Link the uploaded file to the assessment
             assessmentRepository.linkFile(
                 vppId = activeVppId,
                 assessmentId = assessmentId,
-                fileId = fileId.data
+                fileId = uploadedFile.id
             )
+            
             files.add(Assessment.AssessmentFile(
-                id = fileId.data,
-                name = attachedFile.name,
-                size = attachedFile.size,
+                id = uploadedFile.id,
+                name = uploadedFile.name,
+                size = uploadedFile.size,
                 assessment = assessmentId
-            ))
-        }
-
-        files.forEach { file ->
-            localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
-            fileRepository.upsert(File(
-                name = file.name,
-                id = file.id,
-                isOfflineReady = true,
-                size = file.size,
-                cachedAt = Clock.System.now()
             ))
         }
 
