@@ -5,8 +5,9 @@ androidx-core = "1.17.0"
 androidx-lifecycle = "2.9.6"
 cmpEasyPermission = "1.0.3"
 compose-multiplatform = "1.10.1"
+compose-material3 = "1.10.0-alpha05"
 filekitCompose = "0.13.0"
-kermit = "2.0.8"
+kermit = "2.1.0"
 kotlin = "2.3.10"
 kotlinxDatetime = "0.7.1"
 gradle-buildconfig-plugin = "6.0.7"
@@ -16,9 +17,8 @@ ksp = "2.3.6"
 androidx-room = "2.8.4"
 androidx-sqlite = "2.6.2"
 navigationCompose = "2.9.2"
-posthogAndroid = "3.32.2"
+posthogAndroid = "3.34.3"
 
-androidx-material = "1.10.0-alpha05"
 androidx-icons = "1.7.8"
 
 koin = "4.1.1"
@@ -28,9 +28,9 @@ kotlinSerialization = "1.10.0"
 coroutines = "1.10.2"
 
 google-gms = "4.4.4"
-firebase-bom = "34.9.0"
+firebase-bom = "34.10.0"
 
-ktor = "3.4.0"
+ktor = "3.4.1"
 
 androidBrowser = "1.9.0"
 workRuntimeKtx = "2.11.1"
@@ -42,18 +42,16 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
 androidx-core = { group = "androidx.core", name = "core", version.ref = "androidx-core" }
 androidx-graphics-core = { group = "androidx.graphics", name = "graphics-core", version = "1.0.4" }
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version = "2026.02.00" }
-androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version = "1.10.3" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version = "2026.02.01" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version = "1.10.4" }
 compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose-multiplatform" }
 compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 
-androidx-material = { module = "org.jetbrains.compose.material3:material3", version.ref = "androidx-material" }
 androidx-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "androidx-icons" }
 androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
 
@@ -107,7 +105,10 @@ ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "symbol-processin
 room-gradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "androidx-room" }
 
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
-
+compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

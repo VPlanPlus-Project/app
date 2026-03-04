@@ -60,7 +60,6 @@ kotlin {
             implementation(libs.androidx.browser)
             implementation(libs.androidx.biometric)
 
-            implementation(libs.androidx.material)
             implementation(libs.androidx.icons.extended)
             implementation(libs.androidx.sqlite.framework)
             implementation(libs.androidx.work.runtime.ktx)
@@ -84,11 +83,13 @@ kotlin {
             implementation(project(":core:network"))
             implementation(project(":core:platform"))
 
-            implementation(compose.runtime)
+            implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
+            implementation(libs.compose.material3)
+
+            implementation(libs.compose.ui)
+            implementation(libs.compose.components.resources)
+
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.navigation.compose)
