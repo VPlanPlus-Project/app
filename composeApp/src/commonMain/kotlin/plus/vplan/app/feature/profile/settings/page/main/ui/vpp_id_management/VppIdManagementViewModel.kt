@@ -6,9 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.repository.VppIdDevice
+import plus.vplan.app.core.data.vpp_id.VppIdDevice
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.GetVppIdDevicesUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.LogoutVppIdDeviceUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.LogoutVppIdUseCase
@@ -24,7 +23,11 @@ class VppIdManagementViewModel(
     fun init(vppId: VppId.Active) {
         state = state.copy(vppId = vppId)
         viewModelScope.launch {
-            state = state.copy(devices = getVppIdDevicesUseCase(vppId))
+            try {
+                state = state.copy(devices = getVppIdDevicesUseCase(vppId), devicesLoading = false)
+            } catch (e: Exception) {
+                state = state.copy(devicesLoading = false, devicesError = true)
+            }
         }
     }
 
@@ -32,13 +35,18 @@ class VppIdManagementViewModel(
         viewModelScope.launch {
             when (event) {
                 VppIdManagementEvent.Logout -> {
-                    state = state.copy(logoutState = Response.Loading)
-                    state = state.copy(logoutState = logoutVppIdUseCase(state.vppId!!))
+                    state = state.copy(isLoggingOut = true, logoutError = false)
+                    try {
+                        logoutVppIdUseCase(state.vppId!!)
+                        state = state.copy(isLoggingOut = false, loggedOut = true)
+                    } catch (e: Exception) {
+                        state = state.copy(isLoggingOut = false, logoutError = true)
+                    }
                 }
                 is VppIdManagementEvent.LogoutDevice -> {
-                    val devices = (state.devices as? Response.Success)?.data?.toMutableList() ?: return@launch
+                    val devices = state.devices.toMutableList()
                     devices.removeAll { it.id == event.device.id }
-                    state = state.copy(devices = Response.Success(devices))
+                    state = state.copy(devices = devices)
                     logoutVppIdDeviceUseCase(state.vppId!!, event.device)
                 }
             }
@@ -48,8 +56,12 @@ class VppIdManagementViewModel(
 
 data class VppIdManagementState(
     val vppId: VppId.Active? = null,
-    val logoutState: Response<Unit>? = null,
-    val devices: Response<List<VppIdDevice>> = Response.Loading
+    val devices: List<VppIdDevice> = emptyList(),
+    val devicesLoading: Boolean = true,
+    val devicesError: Boolean = false,
+    val isLoggingOut: Boolean = false,
+    val logoutError: Boolean = false,
+    val loggedOut: Boolean = false,
 )
 
 sealed class VppIdManagementEvent {

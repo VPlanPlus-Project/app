@@ -4,7 +4,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import kotlinx.datetime.LocalDateTime
-import plus.vplan.app.utils.now
+import plus.vplan.app.core.utils.date.now
 
 class GetCurrentDateTimeUseCase {
     operator fun invoke() = flow {

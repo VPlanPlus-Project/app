@@ -27,10 +27,10 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.platform.BiometricAuthentication
 import plus.vplan.app.feature.settings.page.security.domain.usecase.BiometricDeviceState
 import plus.vplan.app.feature.settings.page.security.ui.components.EnrollBiometricAuthenticationDialog
 import plus.vplan.app.ui.platform.OpenBiometricSettings
-import plus.vplan.app.ui.platform.RunBiometricAuthentication
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
 
@@ -42,7 +42,7 @@ fun SecuritySettingsScreen(
     val state = viewModel.state
 
     val openBiometricSettings = koinInject<OpenBiometricSettings>()
-    val runBiometricAuthentication = koinInject<RunBiometricAuthentication>()
+    val runBiometricAuthentication = koinInject<BiometricAuthentication>()
 
     SecuritySettingsContent(
         state = state,

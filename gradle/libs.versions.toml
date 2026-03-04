@@ -1,21 +1,22 @@
 [versions]
 agp = "9.0.1"
 androidx-activityCompose = "1.12.4"
+androidx-core = "1.17.0"
 androidx-lifecycle = "2.9.6"
 cmpEasyPermission = "1.0.3"
 compose-multiplatform = "1.10.1"
-filekitCompose = "0.8.8"
+filekitCompose = "0.13.0"
 kermit = "2.0.8"
 kotlin = "2.3.10"
 kotlinxDatetime = "0.7.1"
 gradle-buildconfig-plugin = "6.0.7"
 biometric = "1.1.0"
 
-ksp = "2.3.4"
+ksp = "2.3.6"
 androidx-room = "2.8.4"
 androidx-sqlite = "2.6.2"
 navigationCompose = "2.9.2"
-posthogAndroid = "3.31.0"
+posthogAndroid = "3.32.2"
 
 androidx-material = "1.10.0-alpha05"
 androidx-icons = "1.7.8"
@@ -38,8 +39,11 @@ sp24-kt = "v2025.10.2"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
-androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.17.0" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
+androidx-core = { group = "androidx.core", name = "core", version.ref = "androidx-core" }
+androidx-graphics-core = { group = "androidx.graphics", name = "graphics-core", version = "1.0.4" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version = "2026.02.00" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version = "1.10.3" }
 compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose-multiplatform" }
 compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
@@ -57,11 +61,14 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
 androidx-sqlite-framework = { group = "androidx.sqlite", name = "sqlite-framework", version.ref = "androidx-sqlite" }
 cmp-easy-permission = { module = "network.chaintech:cmp-easy-permission", version.ref = "cmpEasyPermission" }
-filekit-compose = { module = "io.github.vinceglb:filekit-compose", version.ref = "filekitCompose" }
+filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekitCompose" }
+filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekitCompose" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 posthog-android = { module = "com.posthog:posthog-android", version.ref = "posthogAndroid" }
 sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
+
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
@@ -74,6 +81,7 @@ koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
 koin-androidx-workmanager = { module = "io.insert-koin:koin-androidx-workmanager", version.ref = "koin" }
+koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinSerialization" }
@@ -95,6 +103,11 @@ vpp-sp24 = { module = "plus.vplan.lib:sp24-kt", version.ref = "sp24-kt" }
 
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
+room-gradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "androidx-room" }
+
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
+
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -105,7 +118,7 @@ kotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", 
 
 room = { id = "androidx.room", version.ref = "androidx-room" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref="kotlin" }
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.6" }
 google-gms = { id = "com.google.gms.google-services", version.ref = "google-gms" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "gradle-buildconfig-plugin" }
@@ -113,3 +126,4 @@ buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "gradle-buil
 stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version = "0.7.0" }
 
 vplanplus-build-applicationConfig = { id = "vplanplus.build.applicationConfig" }
+vplanplus-kmp-library = { id = "vplanplus.kmp.library" }

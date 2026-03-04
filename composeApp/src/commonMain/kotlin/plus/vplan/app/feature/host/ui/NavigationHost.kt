@@ -17,14 +17,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.domain.repository.base.ResponsePreference
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.main.ui.MainScreenHost
@@ -33,7 +34,6 @@ import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwa
 import plus.vplan.app.feature.schulverwalter.domain.usecase.UpdateSchulverwalterAccessUseCase
 import plus.vplan.app.feature.vpp_id.ui.VppIdSetupScreen
 import plus.vplan.app.utils.openUrl
-import kotlin.uuid.Uuid
 
 @Composable
 fun NavigationHost(task: StartTask?) {
@@ -68,7 +68,7 @@ fun NavigationHost(task: StartTask?) {
             is StartTask.VppIdLogin -> navigationHostController.navigate(AppScreen.VppIdLogin(task.token))
             is StartTask.SchulverwalterReconnectDone -> navigationHostController.navigate(AppScreen.SchulverwalterReconnect(task.schulverwalterAccessToken, task.vppId))
             is StartTask.StartSchulverwalterReconnect -> {
-                val vppId = (vppIdRepository.getById(task.userId, ResponsePreference.Fast).getFirstValueOld() as? VppId.Active) ?: return@LaunchedEffect
+                val vppId = vppIdRepository.getById(task.userId).filterIsInstance<VppId.Active>().first()
                 val url = initializeSchulverwalterReauthUseCase(vppId) ?: return@LaunchedEffect
                 openUrl(url)
             }
@@ -85,13 +85,13 @@ fun NavigationHost(task: StartTask?) {
             val args = route.toRoute<AppScreen.Onboarding>()
             OnboardingScreen(
                 skipIntroAnimation = args.skipIntroAnimation,
-                schoolId = args.schoolId?.let { Uuid.parseHex(it) },
+                useSchool = args.schoolIdentifier?.map { Alias.fromString(it) }?.toSet(),
             ) { navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) } }
         }
 
         composable<AppScreen.MainScreen> {
             MainScreenHost(
-                onNavigateToOnboarding = { navigationHostController.navigate(AppScreen.Onboarding(it?.id?.toHexString(), true)) },
+                onNavigateToOnboarding = { navigationHostController.navigate(AppScreen.Onboarding(it?.aliases?.map { it.toString() }, true)) },
                 contentPaddingDevice = contentPadding,
                 navigationTask = task
             )
@@ -125,7 +125,7 @@ fun NavigationHost(task: StartTask?) {
 @Serializable
 sealed class AppScreen(val name: String) {
     @Serializable data object MainScreen : AppScreen("MainScreen")
-    @Serializable data class Onboarding(val schoolId: String?, val skipIntroAnimation: Boolean) : AppScreen("Onboarding")
+    @Serializable data class Onboarding(val schoolIdentifier: List<String>?, val skipIntroAnimation: Boolean) : AppScreen("Onboarding")
 
     @Serializable data class VppIdLogin(val token: String) : AppScreen("VppIdLogin")
     @Serializable data class SchulverwalterReconnect(val schulverwalterAccessToken: String, val vppId: Int): AppScreen("SchulverwalterReconnect")

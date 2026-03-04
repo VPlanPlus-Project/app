@@ -50,12 +50,12 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.Assessment
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.dateFormatDDMMMYY
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
 import plus.vplan.app.utils.untilRelativeText

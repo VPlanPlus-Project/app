@@ -1,20 +1,22 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package plus.vplan.app.feature.homework.ui.components
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import io.github.vinceglb.filekit.core.PlatformFile
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.path
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkResult
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
@@ -22,16 +24,15 @@ import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
 import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class NewHomeworkViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val isVppIdBannerAllowedUseCase: IsVppIdBannerAllowedUseCase,
     private val hideVppIdBannerUseCase: HideVppIdBannerUseCase,
-    private val createHomeworkUseCase: CreateHomeworkUseCase
+    private val createHomeworkUseCase: CreateHomeworkUseCase,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
 ) : ViewModel() {
-    @OptIn(ExperimentalUuidApi::class)
     val state = MutableStateFlow(NewHomeworkState())
 
     /**
@@ -41,6 +42,7 @@ class NewHomeworkViewModel(
      */
     private var dataJob: Job? = null
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun init() {
         state.value = NewHomeworkState()
         dataJob = viewModelScope.launch {
@@ -50,18 +52,26 @@ class NewHomeworkViewModel(
             ) { currentProfile, canShowVppIdBanner ->
                 state.update { state ->
                     state.copy(
-                        currentProfile = (currentProfile as? Profile.StudentProfile).also {
-                            it?.getGroupItem()
-                            it?.getSubjectInstances()?.onEach { subjectInstance ->
-                                subjectInstance.getTeacherItem()
-                                subjectInstance.getCourseItem()
-                            }
-                        },
-                        isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppIdId == null) null else true,
+                        currentProfile = (currentProfile as? Profile.StudentProfile),
+                        isPublic = if ((currentProfile as? Profile.StudentProfile)?.vppId?.id == null) null else true,
                         canShowVppIdBanner = canShowVppIdBanner
                     )
                 }
-            }.collect()
+            }.collectLatest {
+                val profile = state.value.currentProfile ?: return@collectLatest
+
+                subjectInstanceRepository
+                    .getByGroup(profile.group)
+                    .map { subjectInstances ->
+                        subjectInstances.filter { subjectInstance ->
+                            profile.subjectInstanceConfiguration.toList().firstOrNull { it.first.id == subjectInstance.id }?.second != false
+                        }
+                    }
+                    .map { subjectInstances -> subjectInstances.sortedBy { it.subject } }
+                    .collectLatest {
+                        state.update { state -> state.copy(subjectInstances = it) }
+                    }
+            }
         }
     }
 
@@ -71,11 +81,7 @@ class NewHomeworkViewModel(
                 is NewHomeworkEvent.AddTask -> state.update { state -> state.copy(tasks = state.tasks.plus(Uuid.random() to event.task), showTasksError = state.showTasksError && state.tasks.all { it.value.isBlank() }) }
                 is NewHomeworkEvent.UpdateTask -> state.update { state -> state.copy(tasks = state.tasks.plus(event.taskId to event.task), showTasksError = state.showTasksError && state.tasks.all { it.value.isBlank() }) }
                 is NewHomeworkEvent.RemoveTask -> state.update { state -> state.copy(tasks = state.tasks.minus(event.taskId)) }
-                is NewHomeworkEvent.SelectSubjectInstance -> state.update { state -> state.copy(selectedSubjectInstance = event.subjectInstance.also {
-                    it?.getCourseItem()
-                    it?.getTeacherItem()
-                    it?.getGroupItems()
-                }) }
+                is NewHomeworkEvent.SelectSubjectInstance -> state.update { state -> state.copy(selectedSubjectInstance = event.subjectInstance) }
                 is NewHomeworkEvent.SelectDate -> state.update { state -> state.copy(selectedDate = event.date, showDateError = false) }
                 is NewHomeworkEvent.SetVisibility -> state.update { state -> state.copy(isPublic = event.isPublic) }
                 is NewHomeworkEvent.AddFile -> {
@@ -120,6 +126,7 @@ class NewHomeworkViewModel(
 data class NewHomeworkState(
     val tasks: Map<Uuid, String> = emptyMap(),
     val currentProfile: Profile.StudentProfile? = null,
+    val subjectInstances: List<SubjectInstance> = emptyList(),
     val selectedSubjectInstance: SubjectInstance? = null,
     val selectedDate: LocalDate? = null,
     val isPublic: Boolean? = null,

@@ -17,7 +17,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,14 +28,9 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.map
 import kotlinx.datetime.format
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.collectAsLoadingStateOld
-import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.ui.components.ShimmerLoader
+import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.utils.regularDateFormat
@@ -50,7 +44,6 @@ fun AssessmentCard(
 ) {
     val localDensity = LocalDensity.current
 
-    val subject = assessment.subjectInstance.collectAsResultingFlow().value
     var boxHeight by remember { mutableStateOf(0.dp) }
     Box(
         modifier = Modifier
@@ -66,7 +59,7 @@ fun AssessmentCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background(subject?.subject.subjectColor().getGroup().color)
+                .background(assessment.subjectInstance.subject.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -74,19 +67,16 @@ fun AssessmentCard(
                 .fillMaxWidth()
         ) {
             Row {
-                if (subject == null) ShimmerLoader(Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()))
-                else SubjectIcon(
+                SubjectIcon(
                     modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
-                    subject = subject.subject
+                    subject = assessment.subjectInstance.subject
                 )
                 Spacer(Modifier.size(8.dp))
                 Column {
                     Text(
                         text = buildString {
-                            if (subject?.subject != null) {
-                                append(subject.subject)
-                                append(": ")
-                            }
+                            append(assessment.subjectInstance.subject)
+                            append(": ")
                             append(assessment.type.toName())
                         },
                         style = MaterialTheme.typography.titleLarge
@@ -106,54 +96,20 @@ fun AssessmentCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 val createdByFont = MaterialTheme.typography.labelMedium
-                val shimmerLoader = remember<@Composable () -> Unit> { {
-                    ShimmerLoader(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .fillMaxWidth(.3f)
-                            .height(createdByFont.lineHeight.toDp())
-                    )
-                } }
 
                 Row {
-                    when (assessment.creator) {
+                    when (val creator = assessment.creator) {
                         is AppEntity.Profile -> {
-                            val profileState by assessment.creator.profile.map { profile -> profile?.let { CacheState.Done(it) } ?: CacheState.NotExisting("") }.collectAsState(CacheState.Loading(""))
-                            when (val profile = profileState) {
-                                is CacheState.Loading -> shimmerLoader()
-                                is CacheState.Done -> {
-                                    Text(
-                                        text = "Profil " + profile.data.name,
-                                        style = createdByFont
-                                    )
-                                }
-                                else -> {
-                                    Text(
-                                        text = "Unbekannt",
-                                        style = createdByFont,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
+                            Text(
+                                text = "Profil " + creator.profile.name,
+                                style = createdByFont
+                            )
                         }
                         is AppEntity.VppId -> {
-                            val vppIdState by assessment.creator.vppId.collectAsLoadingStateOld()
-                            when (val vppId = vppIdState) {
-                                is CacheState.Loading -> shimmerLoader()
-                                is CacheState.Done -> {
-                                    Text(
-                                        text = vppId.data.name,
-                                        style = createdByFont
-                                    )
-                                }
-                                else -> {
-                                    Text(
-                                        text = "Unbekannt",
-                                        style = createdByFont,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
+                            Text(
+                                text = creator.vppId.name,
+                                style = createdByFont
+                            )
                         }
                     }
                     Text(

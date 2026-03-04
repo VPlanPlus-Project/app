@@ -24,6 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.model.Alias
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingSchoolSearch
 import plus.vplan.app.feature.onboarding.stage.a_welcome.ui.OnboardingWelcomeScreen
 import plus.vplan.app.feature.onboarding.stage.a_welcome.ui.components.BlurredBackground
@@ -32,7 +33,6 @@ import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.ui.Onboardin
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileScreen
 import plus.vplan.app.feature.onboarding.stage.e_permissions.ui.OnboardingPermissionsScreen
 import plus.vplan.app.feature.onboarding.stage.f_finished.ui.OnboardingFinishedScreen
-import kotlin.uuid.Uuid
 
 val enterSlideTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) =
     {
@@ -68,7 +68,7 @@ val exitSlideTransitionRight: (AnimatedContentTransitionScope<NavBackStackEntry>
 
 @Composable
 fun OnboardingScreen(
-    schoolId: Uuid?,
+    useSchool: Set<Alias>?,
     skipIntroAnimation: Boolean,
     onFinish: () -> Unit,
 ) {
@@ -79,9 +79,9 @@ fun OnboardingScreen(
     ) {
         val navController = rememberNavController()
 
-        LaunchedEffect(schoolId) {
-            viewModel.init(schoolId)
-            if (schoolId != null) navController.navigate(OnboardingScreen.OnboardingChooseProfile) {
+        LaunchedEffect(useSchool) {
+            viewModel.init(useSchool)
+            if (useSchool != null && useSchool.isNotEmpty()) navController.navigate(OnboardingScreen.OnboardingChooseProfile) {
                 popUpTo(0)
             }
         }

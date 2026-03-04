@@ -6,8 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.feature.vpp_id.domain.usecase.AddVppIdUseCase
 
 class VppIdSetupViewModel(
@@ -17,13 +16,20 @@ class VppIdSetupViewModel(
         private set
 
     fun init(token: String) {
+        state = VppIdSetupState(isLoading = true)
         viewModelScope.launch {
-            val response = addVppIdUseCase(token)
-            state = state.copy(user = response)
+            try {
+                val vppId = addVppIdUseCase(token)
+                state = state.copy(isLoading = false, user = vppId)
+            } catch (e: Exception) {
+                state = state.copy(isLoading = false, error = true)
+            }
         }
     }
 }
 
 data class VppIdSetupState(
-    val user: Response<VppId.Active> = Response.Loading
+    val isLoading: Boolean = true,
+    val user: VppId.Active? = null,
+    val error: Boolean = false,
 )

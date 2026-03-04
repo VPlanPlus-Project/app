@@ -1,17 +1,23 @@
 package plus.vplan.app.feature.profile.settings.page.main.domain.usecase
 
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
+import plus.vplan.app.core.model.NetworkErrorKind
+import plus.vplan.app.core.model.NetworkException
+import plus.vplan.app.core.model.VppId
 
 class CheckIfVppIdIsStillConnectedUseCase(
     private val vppIdRepository: VppIdRepository
 ) {
     suspend operator fun invoke(vppId: VppId.Active): VppIdConnectionState {
-        val response = vppIdRepository.getUserByToken(vppId.accessToken)
-        if (response is Response.Success && response.data.id == vppId.id) return VppIdConnectionState.CONNECTED
-        if (response is Response.Error.OnlineError.Unauthorized) return VppIdConnectionState.DISCONNECTED
-        return VppIdConnectionState.ERROR
+        return try {
+            val isValid = vppIdRepository.checkTokenValidity(vppId.accessToken)
+            if (isValid) VppIdConnectionState.CONNECTED else VppIdConnectionState.DISCONNECTED
+        } catch (e: NetworkException) {
+            if (e.kind == NetworkErrorKind.Unauthorized) VppIdConnectionState.DISCONNECTED
+            else VppIdConnectionState.ERROR
+        } catch (e: Exception) {
+            VppIdConnectionState.ERROR
+        }
     }
 }
 

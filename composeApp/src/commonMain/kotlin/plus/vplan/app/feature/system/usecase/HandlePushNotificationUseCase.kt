@@ -6,15 +6,19 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import plus.vplan.app.App
 import plus.vplan.app.capture
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.core.data.homework.HomeworkRepository
+import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.School
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
+import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 
 class HandlePushNotificationUseCase(
+    private val homeworkRepository: HomeworkRepository,
+    private val updateAssessmentsUseCase: UpdateAssessmentsUseCase,
     private val schoolRepository: SchoolRepository,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase
@@ -26,22 +30,19 @@ class HandlePushNotificationUseCase(
         when (topic) {
             "HOMEWORK_UPDATE" -> {
                 val data = json.decodeFromString<HomeworkUpdate>(payload)
-                data.homeworkIds.forEach {
-                    App.homeworkSource.getById(it, forceUpdate = true).getFirstValueOld()
-                }
+                // Sync homework when push notification is received
+                homeworkRepository.sync()
             }
             "ASSESSMENT_UPDATE" -> {
                 val data = json.decodeFromString<AssessmentUpdate>(payload)
-                data.assessmentIds.forEach {
-                    App.assessmentSource.getById(it, forceUpdate = true).getFirstValueOld()
-                }
+                // Sync assessments when push notification is received
+                updateAssessmentsUseCase(allowNotifications = false)
             }
             "INDIWARE_UPDATE" -> {
                 val data = json.decodeFromString<IndiwareUpdate>(payload)
-                val school = schoolRepository.getAllLocalIds().first()
-                    .map { schoolRepository.getByLocalId(it).first() }
-                    .filterIsInstance<School.AppSchool>()
-                    .firstOrNull { it.sp24Id == data.indiwareSchoolId }
+                val school = schoolRepository
+                    .getById(Alias(AliasProvider.Sp24, data.indiwareSchoolId, 1))
+                    .first() as? School.AppSchool
 
                 if (school == null) {
                     logger.w { "Indiware school ${data.indiwareSchoolId} not found" }

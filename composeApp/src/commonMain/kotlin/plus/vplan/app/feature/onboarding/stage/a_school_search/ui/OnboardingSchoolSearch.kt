@@ -29,7 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.OnboardingSchoolOption
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.components.OnboardingSchoolSearchHead
 import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.components.SearchBar

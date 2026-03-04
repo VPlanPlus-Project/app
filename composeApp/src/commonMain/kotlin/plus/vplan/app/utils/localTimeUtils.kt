@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.utils
 
 import kotlinx.datetime.DateTimeUnit
@@ -12,11 +10,9 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 
 infix fun LocalTime.until(other: LocalTime): Duration {
     val start = this.atDate(LocalDate.fromEpochDays(0)).toInstant(TimeZone.UTC)
@@ -68,9 +64,4 @@ val regularTimeFormat = LocalTime.Format {
     hour(Padding.ZERO)
     char(':')
     minute(Padding.ZERO)
-}
-
-fun LocalTime.Companion.now(): LocalTime {
-    //return LocalTime(7, 0)
-    return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
 }

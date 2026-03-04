@@ -13,8 +13,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.room)
     alias(libs.plugins.serialization)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.stability.analyzer)
@@ -34,6 +32,7 @@ kotlin {
         freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
         freeCompilerArgs.add("-Xcontext-parameters")
         freeCompilerArgs.add("-Xnested-type-aliases")
+        freeCompilerArgs.add("-Xexplicit-backing-fields")
         freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
     }
     
@@ -78,8 +77,15 @@ kotlin {
         }
 
         commonMain.dependencies {
+            implementation(project(":core:model"))
+            implementation(project(":core:utils"))
+            implementation(project(":core:database"))
+            implementation(project(":core:data"))
+            implementation(project(":core:network"))
+            implementation(project(":core:platform"))
+
             implementation(compose.runtime)
-            implementation(compose.foundation)
+            implementation(libs.compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
@@ -89,13 +95,11 @@ kotlin {
 
             implementation(libs.cmp.easy.permission)
 
-            implementation(libs.filekit.compose)
+            implementation(libs.filekit.core)
+            implementation(libs.filekit.dialogs.compose)
             implementation(libs.compose.ui.tooling.preview)
 
             implementation(libs.kermit)
-
-            implementation(libs.androidx.room.runtime)
-            implementation(libs.sqlite.bundled)
 
             api(libs.koin.core)
             implementation(libs.koin.compose)
@@ -117,17 +121,6 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
     }
-}
-
-room {
-    schemaDirectory("$projectDir/schemas")
-}
-
-dependencies {
-    add("kspAndroid", libs.androidx.room.compiler)
-    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
-    add("kspIosX64", libs.androidx.room.compiler)
-    add("kspIosArm64", libs.androidx.room.compiler)
 }
 
 buildConfig {

@@ -1,26 +1,30 @@
 package plus.vplan.app.feature.assessment.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.repository.AssessmentRepository
-import plus.vplan.app.domain.repository.FileRepository
+import plus.vplan.app.core.data.assessment.AssessmentRepository
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 
 class UpdateAssessmentUseCase(
     private val assessmentRepository: AssessmentRepository,
-    private val fileRepository: FileRepository
+    private val getCurrentProfileUseCase: GetCurrentProfileUseCase
 ) {
     suspend operator fun invoke(id: Int): UpdateResult {
-        return when(assessmentRepository.getById(id, true).first { it !is CacheState.Loading }.also {
-            if (it is CacheState.Done) {
-                it.data.fileIds.map { fileId ->
-                    fileRepository.getById(fileId, true).first { it !is CacheState.Loading }
-                }
-            }
-        }) {
-            is CacheState.Done -> UpdateResult.SUCCESS
-            is CacheState.NotExisting -> UpdateResult.DOES_NOT_EXIST
-            else -> UpdateResult.ERROR
-        }
+        val profile = getCurrentProfileUseCase().first() as? Profile.StudentProfile
+            ?: return UpdateResult.ERROR
+        
+        val vppId = profile.vppId ?: return UpdateResult.ERROR
+
+        val schoolApiAccess = vppId.buildVppSchoolAuthentication()
+        
+        // Sync the specific assessment from the server with forceReload=true
+        val success = assessmentRepository.syncById(schoolApiAccess, id, forceReload = true)
+        if (!success) return UpdateResult.DOES_NOT_EXIST
+        
+        assessmentRepository.getById(id).first()
+            ?: return UpdateResult.DOES_NOT_EXIST
+        
+        return UpdateResult.SUCCESS
     }
 }
 

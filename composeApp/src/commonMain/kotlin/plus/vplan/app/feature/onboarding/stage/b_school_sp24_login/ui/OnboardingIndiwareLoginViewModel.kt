@@ -7,11 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.data.Response
 import plus.vplan.app.feature.onboarding.domain.repository.Sp24CredentialsState
 import plus.vplan.app.feature.onboarding.domain.usecase.GetOnboardingStateUseCase
 import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.domain.usecase.CheckCredentialsUseCase
-import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.domain.usecase.Sp24LookupResponse
+import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.domain.usecase.Sp24LookupResult
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 
 class OnboardingIndiwareLoginViewModel(
@@ -53,13 +52,8 @@ class OnboardingIndiwareLoginViewModel(
                 is OnboardingIndiwareLoginEvent.OnPasswordChanged -> state = state?.copy(password = event.password)
                 is OnboardingIndiwareLoginEvent.OnCheckClicked -> {
                     val result = checkCredentialsUseCase(state!!.sp24Id, state!!.username, state!!.password)
-                    if (result is Response.Success) {
-                        when (result.data) {
-                            is Sp24LookupResponse.UseSchool -> {
-                                navController.navigate(OnboardingScreen.OnboardingIndiwareDataDownload)
-                            }
-                            else -> {}
-                        }
+                    if (result is Sp24LookupResult.UseSchool) {
+                        navController.navigate(OnboardingScreen.OnboardingIndiwareDataDownload)
                     }
                 }
             }

@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.settings.page.security.domain.usecase
 
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
 import plus.vplan.app.feature.settings.page.security.ui.GradeProtectLevel
 
 class SetGradeProtectionLevelUseCase(

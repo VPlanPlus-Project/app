@@ -20,6 +20,8 @@ kotlin {
 dependencies {
     compileOnly(libs.android.gradlePlugin)
     compileOnly(libs.kotlin.gradlePlugin)
+    compileOnly(libs.ksp.gradlePlugin)
+    compileOnly(libs.room.gradlePlugin)
 }
 
 gradlePlugin {
@@ -27,6 +29,10 @@ gradlePlugin {
         register("applicationConfig") {
             id = libs.plugins.vplanplus.build.applicationConfig.get().pluginId
             implementationClass = "ApplicationConfigPlugin"
+        }
+        register("kmpLibrary") {
+            id = libs.plugins.vplanplus.kmp.library.get().pluginId
+            implementationClass = "KmpLibraryConventionPlugin"
         }
     }
 }

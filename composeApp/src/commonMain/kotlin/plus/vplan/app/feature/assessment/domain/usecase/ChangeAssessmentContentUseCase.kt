@@ -1,14 +1,15 @@
 package plus.vplan.app.feature.assessment.domain.usecase
 
-import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.repository.AssessmentRepository
+import plus.vplan.app.core.data.assessment.AssessmentRepository
+import plus.vplan.app.core.model.Assessment
+import plus.vplan.app.core.model.Optional
+import plus.vplan.app.core.model.Profile
 
 class ChangeAssessmentContentUseCase(
     private val assessmentRepository: AssessmentRepository
 ) {
 
     suspend operator fun invoke(assessment: Assessment, content: String, profile: Profile.StudentProfile) {
-        assessmentRepository.changeContent(assessment, profile, content)
+        assessmentRepository.updateAssessmentMetadata(assessment, content = Optional.of(content), profile = profile)
     }
 }

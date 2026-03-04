@@ -1,18 +1,28 @@
 package plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase
 
-import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.repository.ProfileRepository
+import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.SubjectInstance
 
 class SetProfileSubjectInstanceEnabledUseCase(
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
 ) {
     suspend operator fun invoke(
         profile: Profile.StudentProfile,
         subjectInstances: List<SubjectInstance>,
         enabled: Boolean
     ) {
-        profileRepository.setSubjectInstancesEnabled(profile.id, subjectInstances.map { it.id }, enabled)
+        profileRepository.save(profile.copy(
+            subjectInstanceConfiguration =
+                subjectInstanceRepository.getByGroup(profile.group).first()
+                    .associateWith { true } +
+                    profile.subjectInstanceConfiguration +
+                        subjectInstances
+                            .associateWith { enabled }
+        ))
     }
 
     suspend operator fun invoke(

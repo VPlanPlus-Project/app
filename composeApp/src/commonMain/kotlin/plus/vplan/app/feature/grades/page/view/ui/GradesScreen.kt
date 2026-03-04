@@ -71,10 +71,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.AddGradeDialog
@@ -306,9 +305,9 @@ private fun GradesContent(
                                     text = buildString {
                                         append("Keine Noten ")
                                         if (state.selectedInterval != null) {
-                                            if (state.selectedInterval.includedIntervalId == null) append("für das Intervall ${state.selectedInterval.name} ")
-                                            else state.selectedInterval.includedInterval?.map { it?.name }?.collectAsState(null)?.let {
-                                                append("für die Intervalle ${it.value} und ${state.selectedInterval.name}")
+                                            if (state.selectedInterval.includedInterval == null) append("für das Intervall ${state.selectedInterval.interval.name} ")
+                                            else state.selectedInterval.includedInterval.let {
+                                                append("für die Intervalle ${it.name} und ${state.selectedInterval.interval.name}")
                                             }
                                         }
                                         append("verfügbar.")
@@ -368,21 +367,19 @@ private fun GradesContent(
                                                     }
                                                 }
                                                 val interval = state.selectedInterval
-                                                val hasIncludedInterval = interval?.includedIntervalId != null
-                                                val includeInterval = state.selectedInterval?.includedInterval?.collectAsState(null)?.value
-
+                                                val includedInterval = interval?.includedInterval
                                                 Text(
                                                     text = "Durchschnitt",
                                                     style = MaterialTheme.typography.labelMedium
                                                 )
-                                                if (interval == null || hasIncludedInterval && includeInterval == null) ShimmerLoader(
+                                                if (interval == null) ShimmerLoader(
                                                     modifier = Modifier
                                                         .height(MaterialTheme.typography.labelMedium.lineHeight.toDp())
                                                         .width(32.dp)
                                                         .clip(RoundedCornerShape(8.dp)),
                                                     infiniteTransition = infiniteTransition
                                                 ) else Text(
-                                                    text = listOfNotNull(interval.name, includeInterval?.name).sorted().joinToString(),
+                                                    text = listOfNotNull(interval.interval.name, includedInterval?.name).sorted().joinToString(),
                                                     style = MaterialTheme.typography.labelMedium,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis
@@ -536,10 +533,7 @@ private fun GradesContent(
                                                 }
                                             }
 
-                                            category.grades.forEach forEachGrade@{ (grade, isSelectedForFinalGrade) ->
-                                                val collection = grade.collection.collectAsState(null).value
-                                                val interval = collection?.interval?.collectAsState(null)?.value
-                                                val teacher = collection?.teacher?.collectAsState(null)?.value
+                                            category.grades.forEach forEachGrade@{ (item, isSelectedForFinalGrade) ->
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
@@ -559,19 +553,20 @@ private fun GradesContent(
                                                     ) {
                                                         val red = colors[CustomColor.Red]!!.getGroup()
                                                         val green = colors[CustomColor.Green]!!.getGroup()
+                                                        val value = item.grade.grade.value
                                                         val backgroundColor by animateColorAsState(
-                                                            if (isSelectedForFinalGrade != true || interval == null || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.Gray
-                                                            else when (interval.type) {
-                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
-                                                                else -> blendColor(blendColor(green.container, red.container, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                            if (isSelectedForFinalGrade != true || value == null || value.startsWith('+') || value.startsWith('-')) Color.Gray
+                                                            else when (item.grade.interval.type) {
+                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (item.grade.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                                else -> blendColor(blendColor(green.container, red.container, ((item.grade.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                             }
                                                         )
 
                                                         val textColor by animateColorAsState(
-                                                            if (isSelectedForFinalGrade != true || interval == null || grade.value == null || grade.value.startsWith('+') || grade.value.startsWith('-')) Color.White
-                                                            else when (interval.type) {
-                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
-                                                                else -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                            if (isSelectedForFinalGrade != true || value == null || value.startsWith('+') || value.startsWith('-')) Color.White
+                                                            else when (item.grade.interval.type) {
+                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (item.grade.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                                else -> blendColor(blendColor(green.onContainer, red.onContainer, ((item.grade.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                             }
                                                         )
 
@@ -582,16 +577,16 @@ private fun GradesContent(
                                                                 .fillMaxHeight()
                                                                 .width(42.dp)
                                                                 .clip(RoundedCornerShape(8.dp))
-                                                                .clickable(enabled = isSelectedForFinalGrade != null) { onEvent(GradeDetailEvent.ToggleConsiderForFinalGrade(grade)) }
+                                                                .clickable(enabled = isSelectedForFinalGrade != null) { onEvent(GradeDetailEvent.ToggleConsiderForFinalGrade(item)) }
                                                                 .background(backgroundColor),
                                                             contentAlignment = Alignment.Center
                                                         ) {
                                                             Text(
                                                                 text = buildString {
-                                                                    if (grade.isOptional) append("(")
-                                                                    if (grade.value != null) append(grade.value)
+                                                                    if (item.grade.grade.isOptional) append("(")
+                                                                    if (value != null) append(value)
                                                                     else append("-")
-                                                                    if (grade.isOptional) append(")")
+                                                                    if (item.grade.grade.isOptional) append(")")
                                                                 },
                                                                 style = MaterialTheme.typography.bodyLarge,
                                                                 color = textColor
@@ -602,23 +597,17 @@ private fun GradesContent(
                                                             modifier = Modifier
                                                                 .fillMaxWidth()
                                                                 .clip(RoundedCornerShape(8.dp))
-                                                                .clickable { gradeDrawerId = grade.id }
+                                                                .clickable { gradeDrawerId = item.grade.grade.id }
                                                                 .padding(4.dp),
                                                             verticalArrangement = Arrangement.spacedBy(2.dp)
                                                         ) {
                                                             AnimatedContent(
-                                                                targetState = collection?.name,
+                                                                targetState = item.collection.collection.name,
                                                                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                                                                 modifier = Modifier.fillMaxWidth()
                                                             ) { collectionName ->
                                                                 val style = MaterialTheme.typography.bodyMedium
-                                                                if (collectionName == null) ShimmerLoader(
-                                                                    modifier = Modifier
-                                                                        .height(style.lineHeight.toDp())
-                                                                        .fillMaxWidth()
-                                                                        .clip(RoundedCornerShape(8.dp)),
-                                                                    infiniteTransition = infiniteTransition
-                                                                ) else Text(
+                                                                Text(
                                                                     text = collectionName,
                                                                     style = style,
                                                                     color = if (isSelectedForFinalGrade == true) MaterialTheme.colorScheme.onSurfaceVariant else Color.Gray,
@@ -628,18 +617,12 @@ private fun GradesContent(
                                                                 )
                                                             }
                                                             AnimatedContent(
-                                                                targetState = teacher?.let { "${it.forename} ${it.surname}" },
+                                                                targetState = item.collection.teacher.let { "${it.forename} ${it.surname}" },
                                                                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                                                                 modifier = Modifier.fillMaxWidth()
                                                             ) { teacherName ->
                                                                 val style = MaterialTheme.typography.labelSmall
-                                                                if (teacherName == null) ShimmerLoader(
-                                                                    modifier = Modifier
-                                                                        .height(style.lineHeight.toDp())
-                                                                        .fillMaxWidth()
-                                                                        .clip(RoundedCornerShape(8.dp)),
-                                                                    infiniteTransition = infiniteTransition
-                                                                ) else Text(
+                                                                Text(
                                                                     text = teacherName,
                                                                     style = style,
                                                                     maxLines = 1,
@@ -671,14 +654,14 @@ private fun GradesContent(
                                                         val red = colors[CustomColor.Red]!!.getGroup()
                                                         val green = colors[CustomColor.Green]!!.getGroup()
                                                         val backgroundColor by animateColorAsState(
-                                                            when (state.selectedInterval!!.type) {
+                                                            when (state.selectedInterval!!.interval.type) {
                                                                 is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, grade/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                                 else -> blendColor(blendColor(green.container, red.container, (grade-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                             }
                                                         )
 
                                                         val textColor by animateColorAsState(
-                                                            when (state.selectedInterval.type) {
+                                                            when (state.selectedInterval.interval.type) {
                                                                 is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, grade /15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                                 else -> blendColor(blendColor(green.onContainer, red.onContainer, (grade-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                             }
@@ -886,7 +869,7 @@ private fun GradesContent(
     if (addGradeToCategoryId != null) AddGradeDialog(
         onDismiss = { addGradeToCategoryId = null },
         onSelectGrade = { onEvent(GradeDetailEvent.AddGrade(addGradeToCategoryId!!, it)); addGradeToCategoryId = null },
-        intervalType = state.selectedInterval?.type ?: BesteSchuleInterval.Type.Sek1
+        intervalType = state.selectedInterval?.interval?.type ?: BesteSchuleInterval.Type.Sek1
     )
 
     if (showIntervalFilterDrawer) SelectIntervalDrawer(

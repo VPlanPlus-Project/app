@@ -26,7 +26,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,22 +33,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
-import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.core.PickerMode
-import io.github.vinceglb.filekit.core.PickerType
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.path
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.cache.collectAsSingleFlowOld
-import plus.vplan.app.domain.model.AppEntity
+import plus.vplan.app.core.data.file.FileOperationProgress
+import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.FileRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SavedLocalRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.ShareStatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
@@ -60,6 +58,7 @@ import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
+import plus.vplan.app.ui.components.file.FileRowWithThumbnail
 import plus.vplan.app.utils.safeBottomPadding
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
@@ -73,6 +72,7 @@ import kotlin.time.ExperimentalTime
 @Composable
 fun DetailPage(
     state: AssessmentDetailState,
+    viewModel: AssessmentDetailViewModel,
     onEvent: (event: AssessmentDetailEvent) -> Unit
 ) {
     val assessment = state.assessment ?: return
@@ -83,8 +83,8 @@ fun DetailPage(
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
 
     val filePickerLauncher = rememberFilePickerLauncher(
-        mode = PickerMode.Multiple(),
-        type = PickerType.File()
+        mode = FileKitMode.Multiple(),
+        type = FileKitType.File()
     ) { files ->
         // Handle picked files
         Logger.d { "Picked files: ${files?.map { it.path }}" }
@@ -94,8 +94,8 @@ fun DetailPage(
     }
 
     val imagePickerLauncher = rememberFilePickerLauncher(
-        mode = PickerMode.Multiple(),
-        type = PickerType.Image
+        mode = FileKitMode.Multiple(),
+        type = FileKitType.Image
     ) { images ->
         Logger.d { "Picked images: ${images?.map { it.path }}" }
         images?.forEach { image ->
@@ -190,7 +190,7 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = false,
                 allowGroup = false,
-                subject = assessment.subjectInstance.collectAsResultingFlow().value?.subject,
+                subject = assessment.subjectInstance.subject,
                 onClick = {}
             )
             TypeRow(
@@ -204,7 +204,7 @@ fun DetailPage(
                 dueTo = assessment.date,
                 onClick = { showDateSelectDrawer = true },
             )
-            if (assessment.creator is AppEntity.VppId) ShareStatusRow(
+            if (assessment.id > 0) ShareStatusRow(
                 canEdit = state.canEdit,
                 isPublic = assessment.isPublic,
                 onSelect = { isPublic -> onEvent(AssessmentDetailEvent.UpdateVisibility(isPublic)) }
@@ -224,7 +224,7 @@ fun DetailPage(
                     HorizontalDivider()
                 }
             }
-            if (assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = assessment.creator)
+            if (assessment.creator is AppEntity.VppId) CreatedByRow(createdBy = (assessment.creator as AppEntity.VppId).vppId)
             else SavedLocalRow()
 
             CreatedAtRow(createdAt = assessment.createdAt.toInstant(TimeZone.UTC))
@@ -248,12 +248,13 @@ fun DetailPage(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                remember(assessment.fileIds) { assessment.files }.collectAsSingleFlowOld().value.forEach { file ->
-                    FileRow(
+                assessment.files.forEach { file ->
+                    FileRowWithThumbnail(
                         file = file,
+                        getThumbnailUseCase = viewModel.getFileThumbnailUseCase,
                         canEdit = state.canEdit,
-                        downloadProgress = state.fileDownloadState[file.id],
-                        onDownloadClick = { onEvent(AssessmentDetailEvent.DownloadFile(file)) },
+                        progress = state.fileOperationState[file.id] ?: FileOperationProgress.Idle,
+                        onFileClick = { onEvent(AssessmentDetailEvent.OpenFile(file)) },
                         onRenameClick = { newName -> onEvent(AssessmentDetailEvent.RenameFile(file, newName)) },
                         onDeleteClick = { onEvent(AssessmentDetailEvent.DeleteFile(file)) }
                     )

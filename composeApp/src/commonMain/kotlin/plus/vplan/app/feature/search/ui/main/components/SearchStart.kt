@@ -21,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,22 +32,17 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.collectAsLoadingStateOld
-import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.search.ui.main.NewItem
 import plus.vplan.app.ui.components.Grid
-import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.utils.blendColor
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.regularDateFormatWithoutYear
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
@@ -93,9 +87,8 @@ fun SearchStart(
                     text = buildString {
                         append("Neu in deiner Gruppe")
                         if (profile is Profile.StudentProfile) {
-                            val group = profile.group.collectAsResultingFlow().value?.name ?: return@buildString
                             append(" ")
-                            append(group)
+                            append(profile.group.name)
                         }
                     },
                     style = sectionTitleFont()
@@ -132,7 +125,7 @@ fun SearchStart(
                         ) {
                             if (item is NewItem.Homework && item.homework.subjectInstance == null) {
                                 Text(
-                                    text = item.homework.group!!.collectAsResultingFlow().value?.name ?: "?",
+                                    text = item.homework.group?.name ?: "",
                                     color = MaterialTheme.colorScheme.onPrimary,
                                     style = MaterialTheme.typography.bodySmall,
                                     modifier = Modifier
@@ -143,15 +136,16 @@ fun SearchStart(
                                 )
                             } else {
                                 val subject = when (item) {
-                                    is NewItem.Assessment -> item.assessment.subjectInstance
-                                    is NewItem.Homework -> item.homework.subjectInstance
-                                }?.collectAsResultingFlow()?.value?.subject
+                                    is NewItem.Assessment -> item.assessment.subjectInstance.subject
+                                    is NewItem.Homework -> item.homework.subjectInstance?.subject
+                                }
                                 SubjectIcon(
                                     modifier = Modifier
                                         .size(24.dp)
                                         .clip(RoundedCornerShape(8.dp)),
                                     subject = subject
                                 )
+
                                 Text(
                                     text = subject.orEmpty(),
                                     style = MaterialTheme.typography.bodyMedium,
@@ -175,18 +169,17 @@ fun SearchStart(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 is NewItem.Homework -> Row(Modifier.fillMaxWidth()) {
-                                    val tasks = item.homework.tasks.collectAsState(emptyList()).value
                                     Text(
-                                        text = if (tasks.isEmpty()) "Keine Aufgaben"
-                                        else tasks.first().content,
+                                        text = if (item.homework.tasks.isEmpty()) "Keine Aufgaben"
+                                        else item.homework.tasks.first().content,
                                         maxLines = 1,
                                         style = MaterialTheme.typography.bodySmall,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    if (tasks.size > 1) {
+                                    if (item.homework.tasks.size > 1) {
                                         Spacer(Modifier.size(4.dp))
                                         Text(
-                                            text = "+" + (tasks.size - 1),
+                                            text = "+" + (item.homework.tasks.size - 1),
                                             maxLines = 1,
                                             style = MaterialTheme.typography.labelMedium,
                                             overflow = TextOverflow.Ellipsis
@@ -202,14 +195,6 @@ fun SearchStart(
                             horizontalAlignment = Alignment.End
                         ) {
                             val createdByFont = MaterialTheme.typography.labelMedium
-                            val shimmerLoader = remember<@Composable () -> Unit> { {
-                                ShimmerLoader(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .fillMaxWidth(.3f)
-                                        .height(createdByFont.lineHeight.toDp())
-                                )
-                            } }
 
                             val creator = when (item) {
                                 is NewItem.Assessment -> item.assessment.creator
@@ -219,42 +204,24 @@ fun SearchStart(
                             Row {
                                 when (creator) {
                                     is AppEntity.Profile -> {
-                                        val profileState by creator.profile.map { profile -> profile?.let { CacheState.Done(it) } ?: CacheState.NotExisting("") }.collectAsState(CacheState.Loading(""))
-                                        when (val profile = profileState) {
-                                            is CacheState.Loading -> shimmerLoader()
-                                            is CacheState.Done -> {
-                                                Text(
-                                                    text = "Profil " + profile.data.name,
-                                                    style = createdByFont
-                                                )
-                                            }
-                                            else -> {
-                                                Text(
-                                                    text = "Unbekannt",
-                                                    style = createdByFont,
-                                                    color = MaterialTheme.colorScheme.error
-                                                )
-                                            }
+                                        val profile = when (item) {
+                                            is NewItem.Assessment -> (item.assessment.creator as AppEntity.Profile).profile
+                                            is NewItem.Homework -> (item.homework.creator as AppEntity.Profile).profile
                                         }
+                                        Text(
+                                            text = "Profil " + profile.name,
+                                            style = createdByFont
+                                        )
                                     }
                                     is AppEntity.VppId -> {
-                                        val vppIdState by creator.vppId.collectAsLoadingStateOld()
-                                        when (val vppId = vppIdState) {
-                                            is CacheState.Loading -> shimmerLoader()
-                                            is CacheState.Done -> {
-                                                Text(
-                                                    text = vppId.data.name,
-                                                    style = createdByFont
-                                                )
-                                            }
-                                            else -> {
-                                                Text(
-                                                    text = "Unbekannt",
-                                                    style = createdByFont,
-                                                    color = MaterialTheme.colorScheme.error
-                                                )
-                                            }
+                                        val vppId = when (item) {
+                                            is NewItem.Assessment -> (item.assessment.creator as AppEntity.VppId).vppId
+                                            is NewItem.Homework -> (item.homework.creator as AppEntity.VppId).vppId
                                         }
+                                        Text(
+                                            text = vppId.name,
+                                            style = createdByFont
+                                        )
                                     }
                                 }
                             }

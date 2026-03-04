@@ -37,8 +37,8 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.utils.atStartOfDay
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.safeBottomPadding
 import plus.vplan.app.utils.shortDayOfWeekNames

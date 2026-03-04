@@ -1,5 +1,4 @@
 import java.util.Properties
-import kotlin.apply
 
 val localProperties = Properties().apply {
     val file = file("local.properties")
@@ -55,3 +54,17 @@ dependencyResolutionManagement {
 
 include(":composeApp")
 include(":androidApp")
+
+// Core modules
+include(":core:model")
+include(":core:utils")
+include(":core:database")
+include(":core:data")
+include(":core:network")
+include(":core:platform")
+// include(":core:common")
+// include(":core:domain")
+// include(":core:sync")
+// include(":core:di")
+// include(":core:ui")
+// include(":core:navigation")

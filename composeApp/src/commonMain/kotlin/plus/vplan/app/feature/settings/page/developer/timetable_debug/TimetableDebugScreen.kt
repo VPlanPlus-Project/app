@@ -23,17 +23,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.model.Timetable
-import plus.vplan.app.domain.model.Week
-import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.utils.atStartOfWeek
-import plus.vplan.app.utils.now
+import plus.vplan.app.core.model.Timetable
+import plus.vplan.app.core.model.Week
+import plus.vplan.app.core.utils.date.atStartOfWeek
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.utils.plus
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left
@@ -128,37 +127,40 @@ private fun TimetableDebugContent(
 @Composable
 @Preview
 private fun TimetableDebugContentPreview() {
+    val week1 = Week(
+        id = "1",
+        calendarWeek = 42,
+        weekIndex = 4,
+        start = LocalDate.now().atStartOfWeek(),
+        end = LocalDate.now().atStartOfWeek() + 7.days,
+        school = Uuid.random(),
+        weekType = null,
+    )
+
+    val week2 = Week(
+        id = "2",
+        calendarWeek = 43,
+        weekIndex = 5,
+        start = LocalDate.now().atStartOfWeek() + 7.days,
+        end = LocalDate.now().atStartOfWeek() + 14.days,
+        school = Uuid.random(),
+        weekType = null,
+    )
     TimetableDebugContent(
         onBack = {},
         state = TimetableDebugState(
             weeks = listOf(
                 TimetableDebugState.Week(
-                    week = Week(
-                        id = "1",
-                        calendarWeek = 42,
-                        weekIndex = 4,
-                        start = LocalDate.now().atStartOfWeek(),
-                        end = LocalDate.now().atStartOfWeek() + 7.days,
-                        school = Uuid.random(),
-                        weekType = null,
-                    ),
+                    week = week1,
                     timetableMetadata = null
                 ),
                 TimetableDebugState.Week(
-                    week = Week(
-                        id = "2",
-                        calendarWeek = 43,
-                        weekIndex = 5,
-                        start = LocalDate.now().atStartOfWeek() + 7.days,
-                        end = LocalDate.now().atStartOfWeek() + 14.days,
-                        school = Uuid.random(),
-                        weekType = null,
-                    ),
+                    week = week2,
                     timetableMetadata = Timetable(
                         id = Uuid.random(),
-                        weekId = "2",
+                        week = week2,
                         schoolId = Uuid.random(),
-                        dataState = Stundenplan24Repository.HasData.No
+                        dataState = Timetable.HasData.No
                     )
                 )
             )

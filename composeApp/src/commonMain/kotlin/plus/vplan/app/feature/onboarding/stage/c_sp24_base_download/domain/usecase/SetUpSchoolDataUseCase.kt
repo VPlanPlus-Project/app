@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase
 
 import co.touchlab.kermit.Logger
@@ -7,30 +5,28 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
-import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.model.Group
-import plus.vplan.app.domain.model.Holiday
-import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.VppSchoolAuthentication
-import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.GroupDbDto
-import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.RoomDbDto
-import plus.vplan.app.domain.repository.RoomRepository
-import plus.vplan.app.domain.repository.SchoolDbDto
-import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
-import plus.vplan.app.domain.repository.TeacherDbDto
-import plus.vplan.app.domain.repository.TeacherRepository
+import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.holiday.HolidayRepository
+import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.model.Holiday
+import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.Teacher
+import plus.vplan.app.core.model.VppSchoolAuthentication
+import plus.vplan.app.core.data.room.RoomRepository
+import plus.vplan.app.core.model.Room
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.lib.sp24.source.Authentication
-import kotlin.time.ExperimentalTime
+import kotlin.time.Clock
+import kotlin.uuid.Uuid
 
 class SetUpSchoolDataUseCase(
     private val onboardingRepository: OnboardingRepository,
@@ -38,7 +34,7 @@ class SetUpSchoolDataUseCase(
     private val groupRepository: GroupRepository,
     private val teacherRepository: TeacherRepository,
     private val roomRepository: RoomRepository,
-    private val dayRepository: DayRepository,
+    private val holidayRepository: HolidayRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
@@ -85,43 +81,45 @@ class SetUpSchoolDataUseCase(
                 version = 1
             )
 
-            val schoolId = schoolRepository.upsert(SchoolDbDto(
+            val school = School.AppSchool(
+                id = Uuid.random(),
                 name = schoolName?.data ?: "Unbekannte Schule",
-                aliases = listOf(sp24Alias),
-                creationReason = CreationReason.Persisted
-            ))
-
-            schoolRepository.setSp24Access(
-                schoolId = schoolId,
-                sp24Id = state.sp24Id,
+                aliases = setOf(sp24Alias),
+                cachedAt = Clock.System.now(),
+                sp24Id = state.sp24Id.toString(),
                 username = state.username,
                 password = state.password,
                 daysPerWeek = 5,
+                credentialsValid = true
             )
 
-            val school = schoolRepository.getByLocalId(schoolId).first() as School.AppSchool
+            schoolRepository.save(school)
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_HOLIDAYS] = SetUpSchoolDataState.IN_PROGRESS
 
             val holidays = (client.holiday.getHolidays() as? plus.vplan.lib.sp24.source.Response.Success)?.data
 
-            dayRepository.upsert(holidays.orEmpty().map { Holiday(it, schoolId) })
+            holidayRepository.save(holidays.orEmpty().map { Holiday(it, school.id) })
             result[SetUpSchoolDataStep.GET_HOLIDAYS] = SetUpSchoolDataState.DONE
 
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
 
             val classes = (client.getAllClassesIntelligent() as? plus.vplan.lib.sp24.source.Response.Success)?.data
-            val classIds = classes.orEmpty().associateWith { group ->
+            val groups = classes.orEmpty().associateWith { group ->
                 Group.buildSp24Alias(school.sp24Id.toInt(), group.name)
-            }.map { (group, aliases) ->
-                groupRepository.upsert(GroupDbDto(
-                    schoolId = schoolId,
+            }.map { (group, alias) ->
+                val group = Group(
+                    id = Uuid.random(),
+                    school = school,
                     name = group.name,
-                    aliases = listOf(aliases),
-                    creationReason = CreationReason.Persisted
-                ))
+                    cachedAt = Clock.System.now(),
+                    aliases = setOf(alias)
+                )
+                groupRepository.save(group)
+
+                group
             }
 
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.DONE
@@ -136,10 +134,12 @@ class SetUpSchoolDataUseCase(
                     version = 1
                 )
             }.onEach { (teacher, aliases) ->
-                teacherRepository.upsert(TeacherDbDto(
-                    schoolId = schoolId,
+                teacherRepository.save(Teacher(
+                    id = Uuid.random(),
+                    school = school,
                     name = teacher.name,
-                    aliases = listOf(aliases)
+                    cachedAt = Clock.System.now(),
+                    aliases = setOf(aliases)
                 ))
             }.also {
                 onboardingRepository.addProfileOptions(it.map { (teacher, alias) ->
@@ -158,11 +158,13 @@ class SetUpSchoolDataUseCase(
                     value = "${school.sp24Id}/${room.name}",
                     version = 1
                 )
-            }.forEach { (room, aliases) ->
-                roomRepository.upsert(RoomDbDto(
-                    schoolId = schoolId,
+            }.forEach { (room, alias) ->
+                roomRepository.save(Room(
+                    id = Uuid.random(),
+                    school = school,
                     name = room.name,
-                    aliases = listOf(aliases)
+                    cachedAt = Clock.System.now(),
+                    aliases = setOf(alias)
                 ))
             }
 
@@ -183,11 +185,10 @@ class SetUpSchoolDataUseCase(
             require(updateWeeksUseCase(school, client) == null) { "Couldn't update weeks" }
             require(updateSubjectInstanceUseCase(school, client) == null) { "Couldn't update subject instances" }
 
-            onboardingRepository.addProfileOptions(classIds.map { classId ->
-                val group = groupRepository.getByLocalId(classId).first()!!
-                val subjectInstances = subjectInstanceRepository.getByGroup(classId).first()
+            onboardingRepository.addProfileOptions(groups.map { group ->
+                val subjectInstances = subjectInstanceRepository.getByGroup(group).first()
 
-                Logger.d { "${group.name}: ${subjectInstances.joinToString { "${it.subject} ${it.courseId}" }}" }
+                Logger.d { "${group.name}: ${subjectInstances.joinToString { "${it.subject} ${it.course}" }}" }
 
                 OnboardingProfile.StudentProfile(
                     name = group.name,

@@ -42,8 +42,7 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.VppId
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.components.LogoutDialog
 import plus.vplan.app.ui.components.Badge
 import plus.vplan.app.ui.components.Button
@@ -64,10 +63,8 @@ private fun VppIdManagementDrawerContent(
 ) {
     var isLogoutDialogVisible by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(state.logoutState) {
-        if (state.logoutState is Response.Success) {
-            isLogoutDialogVisible = false
-        }
+    LaunchedEffect(state.loggedOut) {
+        if (state.loggedOut) isLogoutDialogVisible = false
     }
 
     Column(
@@ -82,7 +79,7 @@ private fun VppIdManagementDrawerContent(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
-        if (state.devices is Response.Success) {
+        if (!state.devicesLoading && !state.devicesError) {
             Text(
                 text = "Tippe auf ein Gerät, um es abzumelden. Dieser Vorgang kann nicht rückgängig gemacht werden.",
                 style = MaterialTheme.typography.labelMedium,
@@ -91,20 +88,27 @@ private fun VppIdManagementDrawerContent(
         }
         Spacer(Modifier.height(4.dp))
         Column(Modifier.fillMaxWidth()) {
-            when (state.devices) {
-                is Response.Loading -> CircularProgressIndicator(
+            when {
+                state.devicesLoading -> CircularProgressIndicator(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .size(24.dp)
                 )
-                is Response.Success -> {
+                state.devicesError -> {
+                    Text(
+                        text = "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                else -> {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp)),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        state.devices.data.forEach { device ->
+                        state.devices.forEach { device ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -162,13 +166,6 @@ private fun VppIdManagementDrawerContent(
                         }
                     }
                 }
-                is Response.Error -> {
-                    Text(
-                        text = "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
             }
         }
         Spacer(Modifier.height(8.dp))
@@ -184,7 +181,8 @@ private fun VppIdManagementDrawerContent(
 
     if (isLogoutDialogVisible) LogoutDialog(
         onDismiss = { isLogoutDialogVisible = false },
-        deletionState = state.logoutState,
+        isLoggingOut = state.isLoggingOut,
+        logoutError = state.logoutError,
         onEvent = onEvent
     )
 }
@@ -206,10 +204,8 @@ fun VppIdManagementDrawer(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val hideSheet = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } }
 
-    LaunchedEffect(state.logoutState) {
-        if (state.logoutState is Response.Success) {
-            hideSheet()
-        }
+    LaunchedEffect(state.loggedOut) {
+        if (state.loggedOut) hideSheet()
     }
 
     ModalBottomSheet(

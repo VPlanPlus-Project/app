@@ -5,6 +5,7 @@ import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.temporaryDirectory
+import plus.vplan.app.core.model.File
 import plus.vplan.app.quicklook
 
 interface OpenQuicklook {

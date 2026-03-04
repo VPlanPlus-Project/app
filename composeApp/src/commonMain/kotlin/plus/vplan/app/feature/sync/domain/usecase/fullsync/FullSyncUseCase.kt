@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.sync.domain.usecase.fullsync
 
 import co.touchlab.kermit.Logger
@@ -13,24 +11,22 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.capture
 import plus.vplan.app.captureError
-import plus.vplan.app.domain.cache.CreationReason
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.data.Alias
-import plus.vplan.app.domain.data.AliasProvider
-import plus.vplan.app.domain.model.Group
-import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.GroupDbDto
-import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.ProfileRepository
-import plus.vplan.app.domain.repository.RoomDbDto
-import plus.vplan.app.domain.repository.RoomRepository
-import plus.vplan.app.domain.repository.SchoolDbDto
-import plus.vplan.app.domain.repository.SchoolRepository
-import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.domain.repository.TeacherDbDto
-import plus.vplan.app.domain.repository.TeacherRepository
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.holiday.HolidayRepository
+import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.room.RoomRepository
+import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
+import plus.vplan.app.core.data.teacher.TeacherRepository
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.model.Room
+import plus.vplan.app.core.model.Teacher
+import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
@@ -44,17 +40,16 @@ import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validit
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.SendInvalidSp24CredentialsNotification
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.Sp24CredentialsValidity
 import plus.vplan.app.isFeatureEnabled
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Response
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
-import kotlin.time.ExperimentalTime
+import kotlin.uuid.Uuid
 
 class FullSyncUseCase(
     private val schoolRepository: SchoolRepository,
-    private val dayRepository: DayRepository,
+    private val holidayRepository: HolidayRepository,
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
     private val keyValueRepository: KeyValueRepository,
@@ -128,7 +123,7 @@ class FullSyncUseCase(
 
                 val schoolDataUpdate = CoroutineScope(Dispatchers.IO).launch {
                     profileRepository.getAll().first()
-                        .mapNotNull { it.getSchool().getFirstValue() }
+                        .map { it.school }
                         .distinctBy { it.id }
                         .filter { it.credentialsValid }
                         .forEach forEachSchool@{ school ->
@@ -139,8 +134,8 @@ class FullSyncUseCase(
 
                             logger.i { "Checking stundenplan24.de credentials for ${school.id} (${school.name})" }
                             val result = checkSp24CredentialsUseCase(client, Authentication(school.sp24Id, school.username, school.password))
-                            if (result !is plus.vplan.app.domain.data.Response.Success) {
-                                if (result is plus.vplan.app.domain.data.Response.Error.OnlineError.ConnectionError) {
+                            if (result !is plus.vplan.app.core.model.Response.Success) {
+                                if (result is plus.vplan.app.core.model.Response.Error.OnlineError.ConnectionError) {
                                     logger.w { "No internet connection: $result, aborting" }
                                     return@forEachSchool
                                 }
@@ -150,8 +145,8 @@ class FullSyncUseCase(
 
                             if (result.data is Sp24CredentialsValidity.Invalid.InvalidFirstTime) {
                                 logger.w { "stundenplan24.de-access for school ${school.id} (${school.name}) expired, sending notification" }
-                                schoolRepository.setSp24CredentialValidity(school.id, false)
-                                sendInvalidSp24CredentialsNotification(school.name, school.id)
+                                schoolRepository.save(school.copy(credentialsValid = false))
+                                sendInvalidSp24CredentialsNotification(school.name, school.aliases.getByProvider(AliasProvider.Sp24)!!)
                                 return@forEachSchool
                             }
 
@@ -159,7 +154,7 @@ class FullSyncUseCase(
                             run updateSchoolName@{
                                 val schoolNameResponse = (client.getSchoolName() as? Response.Success)
                                 val schoolName = schoolNameResponse?.data ?: return@updateSchoolName
-                                schoolRepository.upsert(SchoolDbDto.fromModel(school.copy(name = schoolName), CreationReason.Persisted))
+                                schoolRepository.save(school.copy(name = schoolName))
                             }
 
                             logger.i { "Updating groups" }
@@ -167,8 +162,21 @@ class FullSyncUseCase(
                                 val groups = (client.getAllClassesIntelligent() as? Response.Success)?.data
                                 groups.orEmpty().associateWith { group ->
                                     Group.buildSp24Alias(school.sp24Id.toInt(), group.name)
-                                }.forEach { (group, aliases) ->
-                                    groupRepository.upsert(GroupDbDto(school.id, group.name, aliases = listOf(aliases), creationReason = CreationReason.Cached))
+                                }.forEach { (group, alias) ->
+                                    val existing = groupRepository.getById(
+                                        identifier = Group.buildSp24Alias(school.sp24Id.toInt(), group.name),
+                                        forceUpdate = true
+                                    ).first()
+
+                                    if (existing == null) {
+                                        groupRepository.save(Group(
+                                            id = Uuid.random(),
+                                            school = school,
+                                            name = group.name,
+                                            aliases = setOf(alias),
+                                            cachedAt = Clock.System.now(),
+                                        ))
+                                    }
                                 }
                             }
 
@@ -181,14 +189,18 @@ class FullSyncUseCase(
                                         value = "${school.sp24Id}/${teacher.name}",
                                         version = 1
                                     )
-                                }.forEach { (teacher, aliases) ->
-                                    teacherRepository.upsert(
-                                        TeacherDbDto(
-                                            schoolId = school.id,
+                                }.forEach { (teacher, alias) ->
+                                    val existing = teacherRepository.getById(alias).first()
+
+                                    if (existing == null) {
+                                        teacherRepository.save(Teacher(
+                                            id = Uuid.random(),
+                                            school = school,
                                             name = teacher.name,
-                                            aliases = listOf(aliases)
-                                        )
-                                    )
+                                            cachedAt = Clock.System.now(),
+                                            aliases = setOf(alias)
+                                        ))
+                                    }
                                 }
                             }
 
@@ -201,12 +213,18 @@ class FullSyncUseCase(
                                         value = "${school.sp24Id}/${room.name}",
                                         version = 1
                                     )
-                                }.forEach { (room, aliases) ->
-                                    roomRepository.upsert(RoomDbDto(
-                                        schoolId = school.id,
-                                        name = room.name,
-                                        aliases = listOf(aliases)
-                                    ))
+                                }.forEach { (room, alias) ->
+                                    val existing = roomRepository.getById(alias).first()
+
+                                    if (existing == null) {
+                                        roomRepository.save(Room(
+                                            id = Uuid.random(),
+                                            school = school,
+                                            name = room.name,
+                                            aliases = setOf(alias),
+                                            cachedAt = Clock.System.now()
+                                        ))
+                                    }
                                 }
                             }
 
@@ -216,7 +234,7 @@ class FullSyncUseCase(
                             updateWeeksUseCase(school, client)
                             val today = LocalDate.now()
                             val nextDay = run {
-                                val holidayDates = dayRepository.getHolidays(school.id).first().map { it.date }
+                                val holidayDates = holidayRepository.getBySchool(school).first().map { it.date }
                                 var start = today + 1.days
                                 while (start.dayOfWeek.isoDayNumber > 5 || start in holidayDates) {
                                     start += 1.days

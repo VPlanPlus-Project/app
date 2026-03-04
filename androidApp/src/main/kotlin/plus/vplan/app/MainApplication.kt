@@ -59,7 +59,7 @@ class MainApplication : Application() {
             workManagerFactory()
             properties(mapOf(
                 "notification_small_icon" to R.drawable.app_icon_full,
-                "activity_provider" to ActivityProviderImpl
+                "activity_provider" to ActivityProviderImpl(this@MainApplication)
             ))
             module {
                 single { WorkManager.getInstance(androidContext()) }

@@ -6,21 +6,23 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.captureError
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.model.Timetable
-import plus.vplan.app.domain.model.Week
-import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.ProfileRepository
-import plus.vplan.app.domain.repository.RoomRepository
-import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.domain.repository.TeacherRepository
-import plus.vplan.app.domain.repository.TimetableRepository
-import plus.vplan.app.domain.repository.WeekRepository
-import plus.vplan.app.utils.atStartOfWeek
-import plus.vplan.app.utils.now
+import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
+import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.room.RoomRepository
+import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
+import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
+import plus.vplan.app.core.data.teacher.TeacherRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
+import plus.vplan.app.core.data.week.WeekRepository
+import plus.vplan.app.core.model.Lesson
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.Timetable
+import plus.vplan.app.core.model.Week
+import plus.vplan.app.core.utils.date.atStartOfWeek
+import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.takeContinuousBy
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
@@ -37,7 +39,10 @@ class UpdateTimetableUseCase(
     private val teacherRepository: TeacherRepository,
     private val weekRepository: WeekRepository,
     private val timetableRepository: TimetableRepository,
-    private val profileRepository: ProfileRepository
+    private val substitutionPlanRepository: SubstitutionPlanRepository,
+    private val profileRepository: ProfileRepository,
+    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
+    private val lessonTimeRepository: LessonTimeRepository,
 ) {
 
     /**
@@ -54,20 +59,22 @@ class UpdateTimetableUseCase(
             withCache = true
         )
         LOGGER.i { "Updating timetable for indiware school ${sp24School.id}" }
-        val rooms = roomRepository.getBySchool(sp24School.id).first()
-        val teachers = teacherRepository.getBySchool(sp24School.id).first()
-        val groups = groupRepository.getBySchool(sp24School.id).first()
+        val rooms = roomRepository.getBySchool(sp24School).first()
+        val teachers = teacherRepository.getBySchool(sp24School).first()
+        val groups = groupRepository.getBySchool(sp24School).first()
+
+        val insertVersion = timetableRepository.getCurrentVersion().first() + 1
 
         val weeks = getWeekStates(sp24School)
             .let { weeks ->
                 if (forceUpdate) weeks
                 else weeks
-                    .filter { weekState -> weekState.relativeTime == WeekState.RelativeTime.CurrentOrFuture || (weekState.relativeTime == WeekState.RelativeTime.Past && weekState.hasData == Stundenplan24Repository.HasData.Unknown) }
+                    .filter { weekState -> weekState.relativeTime == WeekState.RelativeTime.CurrentOrFuture || (weekState.relativeTime == WeekState.RelativeTime.Past && weekState.hasData == Timetable.HasData.Unknown) }
                     .groupBy { it.hasData }
                     .let {
-                        val unknown = it[Stundenplan24Repository.HasData.Unknown].orEmpty()
+                        val unknown = it[Timetable.HasData.Unknown].orEmpty()
 
-                        val other = (it[Stundenplan24Repository.HasData.Yes].orEmpty() + it[Stundenplan24Repository.HasData.No].orEmpty())
+                        val other = (it[Timetable.HasData.Yes].orEmpty() + it[Timetable.HasData.No].orEmpty())
                             .sortedBy { week -> week.weekEntity.weekIndex }
                             .take(3)
 
@@ -77,8 +84,8 @@ class UpdateTimetableUseCase(
             }
 
         weeks.forEach forEachWeek@{ week ->
-            if ((week.relativeTime == WeekState.RelativeTime.Past && week.hasData != Stundenplan24Repository.HasData.Unknown) && !forceUpdate) return@forEachWeek
-            if (week.hasData != Stundenplan24Repository.HasData.Yes || forceUpdate) {
+            if ((week.relativeTime == WeekState.RelativeTime.Past && week.hasData != Timetable.HasData.Unknown) && !forceUpdate) return@forEachWeek
+            if (week.hasData != Timetable.HasData.Yes || forceUpdate) {
                 LOGGER.d {
                     buildString {
                         append("Downloading timetable for week ${week.weekEntity.weekIndex}, starting at ${week.weekEntity.start}")
@@ -90,24 +97,24 @@ class UpdateTimetableUseCase(
                     ?: Timetable(
                         id = Uuid.random(),
                         schoolId = sp24School.id,
-                        weekId = week.weekEntity.id,
-                        dataState = Stundenplan24Repository.HasData.Unknown
+                        week = week.weekEntity,
+                        dataState = Timetable.HasData.Unknown
                     ).also { timetableRepository.upsertTimetable(it) }
 
                 when (timetableResponse) {
                     is Sp24Response.Error.OnlineError.NotFound -> {
                         LOGGER.i { "Timetable not found for sp24 school ${sp24School.id} and week CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)" }
-                        timetableRepository.upsertTimetable(timetableMetadata.copy(dataState = Stundenplan24Repository.HasData.No))
+                        timetableRepository.upsertTimetable(timetableMetadata.copy(dataState = Timetable.HasData.No))
                         return@forEachWeek
                     }
                     is Sp24Response.Success -> {
                         LOGGER.i { "Timetable found for indiware school ${sp24School.id} in week CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)" }
 
-                        timetableRepository.upsertTimetable(timetableMetadata.copy(dataState = Stundenplan24Repository.HasData.Yes))
+                        timetableRepository.upsertTimetable(timetableMetadata.copy(dataState = Timetable.HasData.Yes))
 
                         val downloadedTimetable = timetableResponse.data
                         val lessons = downloadedTimetable.lessons.mapNotNull { lesson ->
-                            val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }.map { it.id }
+                            val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }
                             if (lessonGroups.isEmpty()) {
                                 captureError(
                                     location = "UpdateTimetableUseCase",
@@ -123,21 +130,25 @@ class UpdateTimetableUseCase(
                                 return@mapNotNull null
                             }
 
+                            val lessonTime = if (lessonGroups.isEmpty()) null
+                            else lessonTimeRepository
+                                .getByGroup(lessonGroups.first(), lesson.lessonNumber)
+                                .first()
+
                             Lesson.TimetableLesson(
                                 dayOfWeek = DayOfWeek(lesson.dayOfWeek.isoDayNumber),
                                 weekType = lesson.weekType,
                                 subject = lesson.subject,
-                                roomIds = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } }.map { it.id },
-                                teacherIds = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } }.map { it.id },
-                                groupIds = lessonGroups,
+                                rooms = lesson.rooms.mapNotNull { roomName -> rooms.firstOrNull { it.name == roomName } },
+                                teachers = lesson.teachers.mapNotNull { teacherName -> teachers.firstOrNull { it.name == teacherName } },
+                                groups = lessonGroups,
                                 timetableId = timetableMetadata.id,
-                                limitedToWeekIds = lesson.limitToWeekNumber
-                                    ?.mapNotNull { weeks.firstOrNull { week -> week.weekEntity.weekIndex == it } }
-                                    ?.map { it.weekEntity.id }
-                                    ?.toSet(),
+                                limitedToWeeks = lesson.limitToWeekNumber
+                                    ?.mapNotNull { weeks.firstOrNull { week -> week.weekEntity.weekIndex == it }?.weekEntity },
                                 lessonNumber = lesson.lessonNumber,
                                 weekId = week.weekEntity.id,
-                                id = Uuid.random()
+                                id = Uuid.random(),
+                                lessonTime = lessonTime
                             )
                         }
 
@@ -145,8 +156,7 @@ class UpdateTimetableUseCase(
                         timetableRepository.upsertLessons(
                             timetableId = timetableMetadata.id,
                             lessons = lessons,
-                            profiles = profileRepository.getAll().first()
-                                .filterIsInstance<Profile.StudentProfile>()
+                            version = insertVersion,
                         )
                     }
 
@@ -155,12 +165,17 @@ class UpdateTimetableUseCase(
             }
         }
 
+        val substitutionPlanVersion = substitutionPlanRepository.getCurrentVersion().first()
+        profileRepository.getAll().first().forEach { profile ->
+            updateProfileLessonIndexUseCase(profile, substitutionPlanVersion, insertVersion)
+        }
+
         return null
     }
 
     private suspend fun getWeekStates(school: School.AppSchool): List<WeekState> {
         val today = LocalDate.now()
-        val weeks = weekRepository.getBySchool(school.id).first()
+        val weeks = weekRepository.getBySchool(school).first()
         if (weeks.isEmpty()) return emptyList()
 
         fun getAllWeeksContainingWeek(week: Week): List<Week>? {
@@ -207,7 +222,7 @@ class UpdateTimetableUseCase(
             .map { week ->
                 WeekState(
                     weekEntity = week,
-                    hasData = timetableRepository.getTimetableData(school.id, week.id).first()?.dataState ?: Stundenplan24Repository.HasData.Unknown,
+                    hasData = timetableRepository.getTimetableData(school.id, week.id).first()?.dataState ?: Timetable.HasData.Unknown,
                     relativeTime = if (week.start < today) WeekState.RelativeTime.Past else WeekState.RelativeTime.CurrentOrFuture
                 )
             }
@@ -217,7 +232,7 @@ class UpdateTimetableUseCase(
 }
 
 private data class WeekState(
-    val hasData: Stundenplan24Repository.HasData,
+    val hasData: Timetable.HasData,
     val relativeTime: RelativeTime,
     val weekEntity: Week
 ) {

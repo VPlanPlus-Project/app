@@ -38,12 +38,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
-import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.core.PickerMode
-import io.github.vinceglb.filekit.core.PickerType
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.path
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
@@ -108,8 +109,8 @@ fun NewAssessmentDrawerContent(
     }
 
     val filePickerLauncher = rememberFilePickerLauncher(
-        mode = PickerMode.Multiple(),
-        type = PickerType.File()
+        mode = FileKitMode.Multiple(),
+        type = FileKitType.File()
     ) { files ->
         // Handle picked files
         Logger.d { "Picked files: ${files?.map { it.path }}" }
@@ -119,8 +120,8 @@ fun NewAssessmentDrawerContent(
     }
 
     val imagePickerLauncher = rememberFilePickerLauncher(
-        mode = PickerMode.Multiple(),
-        type = PickerType.Image
+        mode = FileKitMode.Multiple(),
+        type = FileKitType.Image
     ) { images ->
         Logger.d { "Picked images: ${images?.map { it.path }}" }
         images?.forEach { image ->
@@ -182,7 +183,7 @@ fun NewAssessmentDrawerContent(
             SubjectAndDateTile(
                 selectedSubjectInstance = state.selectedSubjectInstance,
                 selectedDate = state.selectedDate,
-                group = state.currentProfile.groupItem!!,
+                group = state.currentProfile.group,
                 isAssessment = true,
                 onClickSubjectInstance = { showLessonSelectDrawer = true },
                 onClickDate = { showDateSelectDrawer = true }
@@ -221,7 +222,7 @@ fun NewAssessmentDrawerContent(
             if (state.isVisible != null) VisibilityTile(
                 isPublic = state.isVisible,
                 selectedSubjectInstance = state.selectedSubjectInstance,
-                group = state.currentProfile.groupItem!!,
+                group = state.currentProfile.group,
                 onSetVisibility = { isPublic -> viewModel.onEvent(NewAssessmentEvent.SetVisibility(isPublic)) }
             ) else VppIdBanner(
                 canShow = state.canShowVppIdBanner,
@@ -319,10 +320,9 @@ fun NewAssessmentDrawerContent(
     }
 
     if (showLessonSelectDrawer) LessonSelectDrawer(
-        group = (state.currentProfile as Profile.StudentProfile).groupItem!!,
+        group = (state.currentProfile as Profile.StudentProfile).group,
         allowGroup = false,
-        subjectInstances = state.currentProfile.subjectInstanceItems.filter { subjectInstance -> state.currentProfile.subjectInstanceConfiguration.filterValues { !it }.none { it.key == subjectInstance.id } }
-            .sortedBy { it.subject },
+        subjectInstances = state.subjectInstances,
         selectedSubjectInstance = state.selectedSubjectInstance,
         onSelectSubjectInstance = { if (it == null) return@LessonSelectDrawer; viewModel.onEvent(NewAssessmentEvent.SelectSubjectInstance(it)) },
         onDismiss = { showLessonSelectDrawer = false }

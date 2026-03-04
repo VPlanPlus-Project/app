@@ -1,0 +1,44 @@
+plugins {
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.vplanplus.kmp.library)
+    alias(libs.plugins.serialization)
+}
+
+kotlin {
+    androidLibrary {
+        namespace = "plus.vplan.app.core.data"
+        compileSdk = applicationConfig.android.targetSdk
+        minSdk = applicationConfig.android.minSdk
+    }
+
+    sourceSets {
+        androidMain.dependencies {
+            implementation(libs.androidx.core)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.graphics.core)
+            implementation(libs.androidx.compose.ui.graphics)
+        }
+
+        commonMain.dependencies {
+            implementation(libs.kotlinx.datetime)
+
+            api(libs.androidx.room.runtime)
+            implementation(libs.sqlite.bundled)
+
+            implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.koin.core)
+            implementation(libs.kermit)
+
+            implementation(libs.filekit.core)
+
+            implementation(project(":core:database"))
+            implementation(project(":core:network"))
+            implementation(project(":core:model"))
+            implementation(project(":core:utils"))
+
+            implementation(libs.vpp.sp24)
+            implementation(libs.ktor.client.core)
+        }
+    }
+}

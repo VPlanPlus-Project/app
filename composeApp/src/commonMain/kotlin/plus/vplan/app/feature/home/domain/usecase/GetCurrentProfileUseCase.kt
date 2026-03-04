@@ -2,23 +2,20 @@ package plus.vplan.app.feature.home.domain.usecase
 
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.map
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
+import kotlinx.coroutines.flow.distinctUntilChanged
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.data.profile.ProfileRepository
 import kotlin.uuid.Uuid
 
 class GetCurrentProfileUseCase(
-    private val keyValueRepository: KeyValueRepository
+    private val keyValueRepository: KeyValueRepository,
+    private val profileRepository: ProfileRepository
 ) {
     operator fun invoke() = channelFlow {
         keyValueRepository.get(Keys.CURRENT_PROFILE).collectLatest { currentProfileId ->
-            if (currentProfileId != null) App.profileSource.getById(Uuid.parseHex(currentProfileId))
-                .filterIsInstance<CacheState.Done<Profile>>()
-                .map { it.data }
+            if (currentProfileId != null) profileRepository.getById(Uuid.parseHex(currentProfileId))
+                .distinctUntilChanged()
                 .collectLatest { send(it) }
         }
     }

@@ -1,8 +1,8 @@
 package plus.vplan.app.domain.usecase
 
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.model.Profile
 import kotlin.uuid.Uuid
 
 class SetCurrentProfileUseCase(

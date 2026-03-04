@@ -20,13 +20,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.components.GivenAtRow
 import plus.vplan.app.feature.grades.page.detail.ui.components.GivenByRow
@@ -52,11 +51,11 @@ fun GradeDetailPage(
 ) {
     val grade = state.grade ?: return
     val vppId = state.gradeUser
-    val collection = grade.collection.collectAsState(null).value
-    val teacher = collection?.teacher?.collectAsState(null)?.value
-    val subject = collection?.subject?.collectAsState(null)?.value
-    val interval = collection?.interval?.collectAsState(null)?.value
-    val year = interval?.year?.collectAsState(null)?.value
+    val collection = state.gradeCollection
+    val teacher = collection?.teacher
+    val subject = collection?.subject
+    val interval = state.gradeInterval
+    val year = interval?.year
 
     AnimatedContent(
         targetState = state.lockState!!.canAccess
@@ -115,7 +114,7 @@ fun GradeDetailPage(
                     Text(
                         text = buildString {
                             val value = if (grade.isOptional) "(${grade.value})" else grade.value
-                            when (interval?.type) {
+                            when (interval?.interval?.type) {
                                 null -> Unit
                                 is BesteSchuleInterval.Type.Sek2 -> {
                                     if (grade.value == null) append("Note")
@@ -191,8 +190,8 @@ fun GradeDetailPage(
                     subject = subject.shortName,
                     onClick = {}
                 )
-                if (collection != null) TypeRow(type = collection.type)
-                if (interval != null) IntervalRow(schoolYearName = year?.name ?: "?", intervalName = interval.name)
+                if (collection != null) TypeRow(type = collection.collection.type)
+                if (interval != null) IntervalRow(schoolYearName = year?.name ?: "?", intervalName = interval.interval.name)
                 GivenAtRow(grade.givenAt)
                 if (teacher != null) GivenByRow("${teacher.forename} ${teacher.surname}")
                 if (vppId != null) UserRow(vppId.name)
@@ -200,7 +199,7 @@ fun GradeDetailPage(
                 UseForFinalGradeRow(grade.isSelectedForFinalGrade, grade.value == null) { onEvent(GradeDetailEvent.ToggleConsiderForFinalGrade) }
 
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                if (collection != null) Text(text = collection.name)
+                if (collection != null) Text(text = collection.collection.name)
             }
         }
     }

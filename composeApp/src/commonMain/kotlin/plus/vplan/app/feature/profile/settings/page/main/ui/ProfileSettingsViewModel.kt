@@ -7,13 +7,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.domain.repository.base.ResponsePreference
-import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
+import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.VppId
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.CheckIfVppIdIsStillConnectedUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.ConnectVppIdUseCase
@@ -26,7 +26,7 @@ import kotlin.uuid.Uuid
 private val logger = Logger.withTag("ProfileSettingsViewModel")
 
 class ProfileSettingsViewModel(
-    private val getProfileByIdUseCase: GetProfileByIdUseCase,
+    private val profileRepository: ProfileRepository,
     private val renameProfileUseCase: RenameProfileUseCase,
     private val checkIfVppIdIsStillConnectedUseCase: CheckIfVppIdIsStillConnectedUseCase,
     private val isLastProfileOfSchoolUseCase: IsLastProfileOfSchoolUseCase,
@@ -41,11 +41,11 @@ class ProfileSettingsViewModel(
         viewModelScope.launch {
             state = state.copy(profileDeletionState = null)
             logger.d { "Init profile settings for profile $profileId" }
-            getProfileByIdUseCase(Uuid.parse(profileId)).collectLatest { profile ->
+            profileRepository.getById(Uuid.parse(profileId)).collectLatest { profile ->
                 logger.d { "Got profile $profile" }
                 state = state.copy(profile = profile)
-                if (profile is Profile.StudentProfile && profile.vppIdId != null) {
-                    checkIfVppIdIsStillConnectedUseCase(vppIdRepository.getById(profile.vppIdId, ResponsePreference.Fast).getFirstValueOld() as VppId.Active).let {
+                if (profile is Profile.StudentProfile && profile.vppId != null) {
+                    checkIfVppIdIsStillConnectedUseCase(vppIdRepository.getById(profile.vppId!!.id).filterIsInstance<VppId.Active>().first()).let {
                         state = state.copy(isVppIdStillConnected = it)
                     }
                 }

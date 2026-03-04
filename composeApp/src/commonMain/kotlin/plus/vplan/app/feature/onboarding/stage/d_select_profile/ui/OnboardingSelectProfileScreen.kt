@@ -30,7 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,12 +37,10 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.cache.collectAsLoadingState
-import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.model.ProfileType
+import plus.vplan.app.core.data.course.CourseRepository
+import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.SubjectInstanceTitle
@@ -109,9 +106,7 @@ private fun OnboardingSelectProfileScreen(
                                 .padding(bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) listHost@{
-                            val courses = (state.selectedProfile as? OnboardingProfile.StudentProfile)?.subjectInstances.orEmpty().mapNotNull { it.courseId }.toSet()
-                                .map { App.courseSource.getById(it).collectAsResultingFlow() }
-                                .mapNotNull { it.value }
+                            val courses = (state.selectedProfile as? OnboardingProfile.StudentProfile)?.subjectInstances.orEmpty().mapNotNull { it.course }.toSet()
                                 .sortedBy { it.name }
 
                             if (courses.isNotEmpty()) {
@@ -125,8 +120,8 @@ private fun OnboardingSelectProfileScreen(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         courses.forEach { course ->
-                                            val isCourseFullySelected = state.subjectInstances.filterKeys { it.courseId == course.id }.values.all { it }
-                                            val isCoursePartiallySelected = state.subjectInstances.filterKeys { it.courseId == course.id }.values.any { it }
+                                            val isCourseFullySelected = state.subjectInstances.filterKeys { it.course == course.id }.values.all { it }
+                                            val isCoursePartiallySelected = state.subjectInstances.filterKeys { it.course == course.id }.values.any { it }
                                             Row (
                                                 modifier = Modifier
                                                     .fillMaxWidth()
@@ -153,11 +148,10 @@ private fun OnboardingSelectProfileScreen(
                                                         style = MaterialTheme.typography.titleSmall,
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
-                                                    if (course.teacherId == null) return@detailsRow
-                                                    val teacherState by App.teacherSource.getById(course.teacherId).collectAsLoadingState(course.teacherId.toString())
-                                                    if (teacherState !is AliasState.Done) return@detailsRow
+                                                    if (course.teacher == null) return@detailsRow
+
                                                     Text(
-                                                        text = (teacherState as? AliasState.Done)?.data?.name ?: "-",
+                                                        text = course.teacher?.name ?: "-",
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
@@ -179,7 +173,7 @@ private fun OnboardingSelectProfileScreen(
                                 ) {
                                     state.subjectInstances
                                         .entries
-                                        .sortedBy { "${it.key.subject}_${it.key.courseId ?: ""}" }
+                                        .sortedBy { "${it.key.subject}_${it.key.course ?: ""}" }
                                         .forEach { (subjectInstance, enabled) ->
                                         Row (
                                             modifier = Modifier
@@ -202,24 +196,26 @@ private fun OnboardingSelectProfileScreen(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.SpaceBetween
                                             ) dataRow@{
+                                                // TODO: Find a better way
+                                                val courseRepository = koinInject<CourseRepository>()
+
                                                 Column subjectAndCourse@{
                                                     Text(
                                                         text = subjectInstance.subject,
                                                         style = MaterialTheme.typography.titleSmall,
                                                         color = MaterialTheme.colorScheme.onSurface,
                                                     )
-                                                    if (subjectInstance.courseId == null) return@subjectAndCourse
-                                                    val subjectInstanceState by App.courseSource.getById(subjectInstance.courseId).collectAsLoadingState(subjectInstance.courseId.toString())
-                                                    if (subjectInstanceState is AliasState.Done) Text(
-                                                        text = (subjectInstanceState as AliasState.Done).data.name,
+                                                    if (subjectInstance.course == null) return@subjectAndCourse
+                                                    if (subjectInstance.course != null) Text(
+                                                        text = subjectInstance.course!!.name,
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
                                                 }
                                                 if (subjectInstance.teacher == null) return@dataRow
-                                                val teacherState by App.teacherSource.getById(subjectInstance.teacher).collectAsLoadingState(subjectInstance.teacher.toString())
-                                                if (teacherState is AliasState.Done) Text(
-                                                    text = (teacherState as AliasState.Done).data.name,
+
+                                                Text(
+                                                    text = subjectInstance.teacher?.name ?: "",
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )

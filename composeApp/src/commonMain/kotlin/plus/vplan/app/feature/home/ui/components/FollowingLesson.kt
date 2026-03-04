@@ -14,14 +14,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -31,13 +26,7 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.cache.collectAsLoadingState
-import plus.vplan.app.domain.cache.collectAsResultingFlowOld
-import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.Room
-import plus.vplan.app.domain.model.Teacher
+import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.toDp
@@ -90,13 +79,10 @@ fun FollowingLesson(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val subjectInstanceState = lesson.subjectInstanceId?.let {
-                        App.subjectInstanceSource.getById(it).collectAsLoadingState()
-                    }
                     Text(
                         text = buildString {
                             if (lesson.subject != null) append(lesson.subject)
-                            else if (subjectInstanceState?.value is AliasState.Done) append((subjectInstanceState.value as AliasState.Done).data.subject + " entfällt")
+                            else if (lesson is Lesson.SubstitutionPlanLesson && lesson.subjectInstance != null) append(lesson.subjectInstance!!.subject + " entfällt")
                             else append("Entfall")
                         },
                         style = headerFont(),
@@ -104,13 +90,11 @@ fun FollowingLesson(
                         if (lesson is Lesson.SubstitutionPlanLesson && lesson.isSubjectChanged) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.onSurface
                     )
-                    if (lesson.roomIds != null && !lesson.isCancelled) {
-                        val rooms by (if (lesson.roomIds.isNullOrEmpty()) flowOf(emptyList()) else combine(lesson.roomIds.orEmpty().map { App.roomSource.getById(it) }) { it.toList() }).collectAsState(null)
+                    if (!lesson.isCancelled) {
                         Text(
                             text = buildString {
-                                if (rooms == null) return@buildString
-                                append(rooms!!.filterIsInstance<AliasState.Done<Room>>().joinToString { it.data.name })
-                                if (rooms!!.isEmpty()) append("Kein Raum")
+                                if (lesson.rooms.orEmpty().isEmpty()) append("Kein Raum")
+                                else append(lesson.rooms.orEmpty().joinToString { it.name })
                             },
                             style = headerFont(),
                             color =
@@ -118,12 +102,10 @@ fun FollowingLesson(
                             else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    val teachers by (if (lesson.teacherIds.isEmpty()) flowOf(emptyList()) else combine(lesson.teacherIds.map { App.teacherSource.getById(it) }) { it.toList() }).collectAsState(null)
-                    if (!lesson.isCancelled) Text(
+                    if (lesson !is Lesson.SubstitutionPlanLesson || !lesson.isCancelled) Text(
                         text = buildString {
-                            if (teachers == null) return@buildString
-                            append(teachers!!.filterIsInstance<AliasState.Done<Teacher>>().joinToString { it.data.name })
-                            if (teachers!!.isEmpty()) append("Keine Lehrkraft")
+                            append(lesson.teachers.joinToString { it.name })
+                            if (lesson.teachers.isEmpty()) append("Keine Lehrkraft")
                         },
                         style = headerFont(),
                         color =
@@ -131,16 +113,15 @@ fun FollowingLesson(
                         else MaterialTheme.colorScheme.onSurface
                     )
                 }
-                val lessonTime = remember(lesson.id) { lesson.lessonTime }?.collectAsResultingFlowOld()?.value
                 Text(
                     text = buildString {
                         append(lesson.lessonNumber)
                         append(". Stunde")
-                        if (lessonTime != null) {
+                        if (lesson.lessonTime != null) {
                             append( "$DOT ")
-                            append(lessonTime.start.atDate(date).format())
+                            append(lesson.lessonTime!!.start.atDate(date).format())
                             append(" - ")
-                            append(lessonTime.end.atDate(date).format())
+                            append(lesson.lessonTime!!.end.atDate(date).format())
                         }
                     },
                     style = MaterialTheme.typography.labelSmall,
@@ -164,7 +145,7 @@ fun FollowingLesson(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = "Nur in ${lesson.weekType}-Woche",
+                                text = "Nur in ${(lesson as Lesson.TimetableLesson).weekType}-Woche",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -185,13 +166,13 @@ fun FollowingLesson(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = lesson.info,
+                                text = lesson.info ?: "",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
-                    if (lessonTime?.interpolated == true) {
+                    if (lesson.lessonTime?.interpolated == true) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,

@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.homework.ui.components.detail
 
 import androidx.compose.animation.AnimatedContent
@@ -23,9 +21,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,19 +31,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
-import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.core.PickerMode
-import io.github.vinceglb.filekit.core.PickerType
-import kotlinx.coroutines.flow.onEach
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.path
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.collectAsResultingFlow
-import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Homework
+import plus.vplan.app.core.data.file.FileOperationProgress
+import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.Homework
+import plus.vplan.app.core.model.HomeworkStatus
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.FileRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.NewTaskRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SavedLocalRow
@@ -62,6 +62,7 @@ import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
+import plus.vplan.app.ui.components.file.FileRowWithThumbnail
 import plus.vplan.app.utils.safeBottomPadding
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
@@ -70,11 +71,12 @@ import vplanplus.composeapp.generated.resources.image
 import vplanplus.composeapp.generated.resources.info
 import vplanplus.composeapp.generated.resources.rotate_cw
 import vplanplus.composeapp.generated.resources.trash_2
-import kotlin.time.ExperimentalTime
+import kotlin.time.Clock
 
 @Composable
 fun DetailPage(
     state: HomeworkDetailState,
+    viewModel: HomeworkDetailViewModel,
     onEvent: (event: HomeworkDetailEvent) -> Unit
 ) {
     val homework = state.homework ?: return
@@ -88,8 +90,8 @@ fun DetailPage(
     var taskToEdit by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val filePickerLauncher = rememberFilePickerLauncher(
-        mode = PickerMode.Multiple(),
-        type = PickerType.File()
+        mode = FileKitMode.Multiple(),
+        type = FileKitType.File()
     ) { files ->
         // Handle picked files
         Logger.d { "Picked files: ${files?.map { it.path }}" }
@@ -99,8 +101,8 @@ fun DetailPage(
     }
 
     val imagePickerLauncher = rememberFilePickerLauncher(
-        mode = PickerMode.Multiple(),
-        type = PickerType.Image
+        mode = FileKitMode.Multiple(),
+        type = FileKitType.Image
     ) { images ->
         Logger.d { "Picked images: ${images?.map { it.path }}" }
         images?.forEach { image ->
@@ -195,8 +197,8 @@ fun DetailPage(
             SubjectGroupRow(
                 canEdit = state.canEdit,
                 allowGroup = true,
-                subject = homework.subjectInstance?.collectAsResultingFlow()?.value?.subject,
-                group = homework.group?.collectAsResultingFlow()?.value,
+                subject = state.homework.subjectInstance?.subject,
+                group = homework.group,
                 onClick = { showLessonSelectDrawer = true },
             )
             DueToRow(
@@ -225,8 +227,14 @@ fun DetailPage(
                     HorizontalDivider()
                 }
             }
-            StatusRow(status = homework.getStatusFlow(state.profile).collectAsState(null).value)
-            if (homework.creator is AppEntity.VppId) CreatedByRow(createdBy = homework.creator)
+            val status = remember(homework.tasks) {
+                val tasksUndone = homework.tasks.any { !it.isDone(state.profile) }
+                if (!tasksUndone) HomeworkStatus.DONE
+                if (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date > homework.dueTo) HomeworkStatus.OVERDUE
+                else HomeworkStatus.PENDING
+            }
+            StatusRow(status = status)
+            if (homework.creator is AppEntity.VppId) CreatedByRow(createdBy = (homework.creator as AppEntity.VppId).vppId)
             else SavedLocalRow()
 
             CreatedAtRow(createdAt = homework.createdAt)
@@ -238,7 +246,7 @@ fun DetailPage(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            homework.getTasksFlow().collectAsState(emptyList()).value.forEach { task ->
+            homework.tasks.forEach { task ->
                 TaskRow(
                     task = task,
                     isDone = task.isDone(state.profile),
@@ -249,7 +257,7 @@ fun DetailPage(
                     onToggleTaskDone = { onEvent(HomeworkDetailEvent.ToggleTaskDone(task)) },
                     onUpdateTask = { onEvent(HomeworkDetailEvent.UpdateTask(task, it)) },
                     onDeleteTask = {
-                        if (homework.taskIds.size == 1) showDeleteDialog = true
+                        if (homework.tasks.size == 1) showDeleteDialog = true
                         else onEvent(HomeworkDetailEvent.DeleteTask(task))
                     }
                 )
@@ -265,12 +273,13 @@ fun DetailPage(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                homework.getFilesFlow().onEach { it.onEach { file -> if (file.isOfflineReady) file.getPreview() } }.collectAsState(emptyList()).value.forEach { file ->
-                    FileRow(
+                homework.files.forEach { file ->
+                    FileRowWithThumbnail(
                         file = file,
+                        getThumbnailUseCase = viewModel.getFileThumbnailUseCase,
                         canEdit = state.canEdit,
-                        downloadProgress = state.fileDownloadState[file.id],
-                        onDownloadClick = { onEvent(HomeworkDetailEvent.DownloadFile(file)) },
+                        progress = state.fileOperationState[file.id] ?: FileOperationProgress.Idle,
+                        onFileClick = { onEvent(HomeworkDetailEvent.OpenFile(file)) },
                         onRenameClick = { newName -> onEvent(HomeworkDetailEvent.RenameFile(file, newName)) },
                         onDeleteClick = { onEvent(HomeworkDetailEvent.DeleteFile(file)) }
                     )
@@ -306,10 +315,10 @@ fun DetailPage(
 
     if (showLessonSelectDrawer) {
         LessonSelectDrawer(
-            group = profile.groupItem!!,
+            group = profile.group,
             allowGroup = true,
-            subjectInstances = profile.subjectInstanceItems.filter { subjectInstance -> profile.subjectInstanceConfiguration.filterValues { !it }.none { it.key == subjectInstance.id } }.sortedBy { it.subject },
-            selectedSubjectInstance = homework.subjectInstance?.collectAsResultingFlow()?.value,
+            subjectInstances = state.subjectInstances,
+            selectedSubjectInstance = state.homework.subjectInstance,
             onSelectSubjectInstance = { onEvent(HomeworkDetailEvent.UpdateSubjectInstance(it)) },
             onDismiss = { showLessonSelectDrawer = false }
         )

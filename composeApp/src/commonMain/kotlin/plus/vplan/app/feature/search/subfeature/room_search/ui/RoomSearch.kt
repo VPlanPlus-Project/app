@@ -44,7 +44,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -64,7 +63,6 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.domain.cache.collectAsSingleFlow
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.Occupancy
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
@@ -262,8 +260,7 @@ fun RoomSearch(
                                                     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
                                                         when (occupancy) {
                                                             is Occupancy.Lesson -> {
-                                                                val groups by remember(occupancy.lesson.groupIds)  { occupancy.lesson.groups }.collectAsSingleFlow()
-                                                                Text(groups.joinToString { it.name })
+                                                                Text(occupancy.lesson.groups.joinToString { it.name })
                                                             }
                                                         }
                                                     }

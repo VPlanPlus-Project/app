@@ -1,0 +1,40 @@
+package plus.vplan.app.core.database.di
+
+import androidx.room.RoomDatabase
+import org.koin.core.module.Module
+import org.koin.dsl.module
+import plus.vplan.app.core.database.VppDatabase
+
+val databaseModule = module {
+    includes(roomModule)
+
+    single { get<VppDatabase>().besteSchuleYearDao }
+    single { get<VppDatabase>().besteSchuleIntervalDao }
+    single { get<VppDatabase>().besteSchuleTeacherDao }
+    single { get<VppDatabase>().besteSchuleSubjectDao }
+    single { get<VppDatabase>().besteSchuleCollectionDao }
+    single { get<VppDatabase>().besteSchuleGradesDao }
+    single { get<VppDatabase>().fcmDao }
+    single { get<VppDatabase>().vppIdDao }
+    single { get<VppDatabase>().schoolDao }
+    single { get<VppDatabase>().profileDao }
+    single { get<VppDatabase>().groupDao }
+    single { get<VppDatabase>().roomDao }
+    single { get<VppDatabase>().teacherDao }
+    single { get<VppDatabase>().courseDao }
+    single { get<VppDatabase>().subjectInstanceDao }
+    single { get<VppDatabase>().weekDao }
+    single { get<VppDatabase>().newsDao }
+    single { get<VppDatabase>().holidayDao }
+    single { get<VppDatabase>().dayDao }
+    single { get<VppDatabase>().homeworkDao }
+    single { get<VppDatabase>().assessmentDao }
+    single { get<VppDatabase>().fileDao }
+    single { get<VppDatabase>().keyValueDao }
+}
+
+expect val roomModule: Module
+
+internal fun RoomDatabase.Builder<VppDatabase>.config(): RoomDatabase.Builder<VppDatabase> = this
+    .addMigrations(VppDatabase.Migration8to9)
+    .addMigrations(VppDatabase.Migration9to10)

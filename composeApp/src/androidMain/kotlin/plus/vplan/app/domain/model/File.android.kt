@@ -3,7 +3,8 @@ package plus.vplan.app.domain.model
 import android.content.Intent
 import androidx.core.content.FileProvider
 import org.koin.core.context.GlobalContext
-import plus.vplan.app.domain.repository.ActivityProvider
+import plus.vplan.app.core.model.File
+import plus.vplan.app.core.platform.ActivityProvider
 
 actual fun openFile(file: File) {
     val activityProvider = GlobalContext.get().get<ActivityProvider>()

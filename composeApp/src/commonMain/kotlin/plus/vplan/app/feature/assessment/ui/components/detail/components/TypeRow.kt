@@ -4,7 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import plus.vplan.app.domain.model.Assessment
+import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataValueContainer
 import plus.vplan.app.feature.homework.ui.components.detail.components.tableNameStyle

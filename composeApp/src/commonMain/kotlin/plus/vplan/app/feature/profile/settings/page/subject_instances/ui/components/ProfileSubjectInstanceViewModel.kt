@@ -1,57 +1,58 @@
 package plus.vplan.app.feature.profile.settings.page.subject_instances.ui.components
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import plus.vplan.app.domain.model.Course
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.usecase.GetProfileByIdUseCase
+import org.koin.core.component.KoinComponent
+import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.model.Course
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.feature.profile.domain.usecase.UpdateIndicesUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.GetCourseConfigurationUseCase
 import plus.vplan.app.feature.profile.settings.page.subject_instances.domain.usecase.SetProfileSubjectInstanceEnabledUseCase
-import plus.vplan.app.utils.filterKeysNotNull
+import plus.vplan.app.utils.sortedBySuspending
 import kotlin.uuid.Uuid
 
 class ProfileSubjectInstanceViewModel(
-    private val getProfileByIdUseCase: GetProfileByIdUseCase,
+    private val profileRepository: ProfileRepository,
     private val getCourseConfigurationUseCase: GetCourseConfigurationUseCase,
     private val setProfileSubjectInstanceEnabledUseCase: SetProfileSubjectInstanceEnabledUseCase,
-    private val updateIndicesUseCase: UpdateIndicesUseCase
-) : ViewModel() {
-    var state by mutableStateOf(ProfileSubjectInstanceState())
-        private set
+    private val updateIndicesUseCase: UpdateIndicesUseCase,
+    private val subjectInstanceRepository: SubjectInstanceRepository,
+) : ViewModel(), KoinComponent {
+    val state: StateFlow<ProfileSubjectInstanceState>
+        field = MutableStateFlow(ProfileSubjectInstanceState())
 
     private var shouldRebuildIndicesOnProfileReload: Boolean = false
 
     fun init(profileId: Uuid) {
-        state = ProfileSubjectInstanceState()
+        state.update { ProfileSubjectInstanceState() }
         viewModelScope.launch {
-            getProfileByIdUseCase(profileId).collectLatest { profile ->
+            profileRepository.getById(profileId).collectLatest { profile ->
                 if (profile !is Profile.StudentProfile) return@collectLatest
                 if (shouldRebuildIndicesOnProfileReload) {
                     shouldRebuildIndicesOnProfileReload = false
                     updateIndicesUseCase(profile)
                 }
-                profile.getSubjectInstances().onEach {
-                    it.getCourseItem()
-                    it.getTeacherItem()
+
+                state.update { state ->
+                    state.copy(
+                        profile = profile,
+                        courses = getCourseConfigurationUseCase(profile),
+                        subjectInstances = subjectInstanceRepository.getByGroup(profile.group).first().associate { it to true } +
+                                profile.subjectInstanceConfiguration
+                                    .sortedBySuspending { it.key.subject }
+                                    .associate { it.key to it.value }
+                    )
                 }
-                state = state.copy(
-                    profile = profile,
-                    courses = getCourseConfigurationUseCase(profile),
-                    subjectInstance = profile.subjectInstanceConfiguration
-                        .mapKeys { (key, _) -> profile.subjectInstanceItems.firstOrNull { it.id == key } }
-                        .filterKeysNotNull()
-                        .toList()
-                        .sortedBy { runBlocking { it.first.subject + (it.first.getCourseItem()?.name ?: "") + (it.first.getTeacherItem()?.name ?: "") } }
-                        .toMap()
-                )
             }
         }
     }
@@ -60,28 +61,30 @@ class ProfileSubjectInstanceViewModel(
         viewModelScope.launch {
             when (event) {
                 is ProfileSubjectInstanceEvent.ToggleCourseSelection -> {
-                    state.profile!!.getSubjectInstances()
-                        .filter { it.getCourseItem()?.id == event.course.id }
+                    state.value.profile!!.subjectInstanceConfiguration
+                        .keys
+                        .filter { it.course?.id == event.course.id }
                         .let { subjectInstances ->
-                            setProfileSubjectInstanceEnabledUseCase(state.profile!!, subjectInstances, event.isSelected)
+                            setProfileSubjectInstanceEnabledUseCase(state.value.profile!!, subjectInstances, event.isSelected)
                             shouldRebuildIndicesOnProfileReload = true
-                            state = state.copy(subjectInstance = state.subjectInstance.plus(subjectInstances.map { it to event.isSelected }))
+                            //state = state.copy(subjectInstances = state.subjectInstances.plus(subjectInstances.map { it to event.isSelected }))
                         }
                 }
                 is ProfileSubjectInstanceEvent.ToggleSubjectInstanceSelection -> {
-                    setProfileSubjectInstanceEnabledUseCase(state.profile!!, event.subjectInstance, event.isSelected)
+                    setProfileSubjectInstanceEnabledUseCase(state.value.profile!!, event.subjectInstance, event.isSelected)
                     shouldRebuildIndicesOnProfileReload = true
-                    state = state.copy(subjectInstance = state.subjectInstance.plus(event.subjectInstance to event.isSelected))
+                    //state = state.copy(subjectInstances = state.subjectInstances.plus(event.subjectInstance to event.isSelected))
                 }
             }
         }
     }
 }
 
+@Immutable
 data class ProfileSubjectInstanceState(
     val profile: Profile.StudentProfile? = null,
-    val courses: Map<Course, Boolean?> = emptyMap(),
-    val subjectInstance: Map<SubjectInstance, Boolean> = emptyMap()
+    val courses: List<Pair<Course, Boolean?>> = emptyList(),
+    val subjectInstances: Map<SubjectInstance, Boolean> = emptyMap(),
 )
 
 sealed class ProfileSubjectInstanceEvent {

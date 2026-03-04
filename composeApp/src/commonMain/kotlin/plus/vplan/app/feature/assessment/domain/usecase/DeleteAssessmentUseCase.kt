@@ -1,8 +1,8 @@
 package plus.vplan.app.feature.assessment.domain.usecase
 
-import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.repository.AssessmentRepository
+import plus.vplan.app.core.data.assessment.AssessmentRepository
+import plus.vplan.app.core.model.Assessment
+import plus.vplan.app.core.model.Profile
 
 class DeleteAssessmentUseCase(
     private val assessmentRepository: AssessmentRepository

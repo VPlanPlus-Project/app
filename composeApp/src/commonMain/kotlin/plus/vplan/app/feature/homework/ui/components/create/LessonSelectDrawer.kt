@@ -36,8 +36,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.model.Group
-import plus.vplan.app.domain.model.SubjectInstance
+import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.safeBottomPadding
@@ -149,13 +149,13 @@ private fun LessonSelectContent(
                         Text(
                             text = buildString {
                                 append(subjectInstance.subject)
-                                if (subjectInstance.courseId != null) append(" (${subjectInstance.courseItem!!.name})")
+                                if (subjectInstance.course != null) append(" (${subjectInstance.course!!.name})")
                             },
                             style = MaterialTheme.typography.titleSmall,
                             color = if (selectedSubjectInstance == subjectInstance) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text = subjectInstance.teacherItem?.name ?: "Kein Lehrer",
+                            text = subjectInstance.teacher?.name ?: "Kein Lehrer",
                             style = MaterialTheme.typography.bodySmall,
                             color = if (selectedSubjectInstance == subjectInstance) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         )

@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Base64
 import java.util.Properties
 
@@ -21,7 +20,12 @@ plugins {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
+        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
+        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.add("-Xnested-type-aliases")
+        freeCompilerArgs.add("-Xexplicit-backing-fields")
+        freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
     }
 }
 
@@ -79,6 +83,7 @@ android {
 
 dependencies {
     implementation(project(":composeApp"))
+    implementation(project(":core:platform"))
     
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
@@ -94,7 +99,8 @@ dependencies {
     
     implementation(libs.posthog.android)
 
-    implementation(libs.filekit.compose)
+    implementation(libs.filekit.core)
+    implementation(libs.filekit.dialogs.compose)
     implementation(libs.ktor.client.core)
     
     implementation(libs.koin.android)

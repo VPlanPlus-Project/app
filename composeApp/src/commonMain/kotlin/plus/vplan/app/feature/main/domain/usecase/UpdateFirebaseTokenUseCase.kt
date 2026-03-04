@@ -2,8 +2,8 @@ package plus.vplan.app.feature.main.domain.usecase
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
 import plus.vplan.app.domain.usecase.UpdateFirebaseTokenUseCase
 
 expect suspend fun getFirebaseToken(): String?

@@ -8,12 +8,12 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.repository.SchoolRepository
+import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.School
 import plus.vplan.app.feature.settings.page.school.domain.usecase.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
 import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
-import kotlin.uuid.Uuid
 
 class Sp24CredentialViewModel(
     private val schoolRepository: SchoolRepository,
@@ -23,9 +23,9 @@ class Sp24CredentialViewModel(
     var state by mutableStateOf<Sp24CredentialState?>(null)
         private set
 
-    fun init(schoolId: Uuid) {
+    fun init(schoolIdentifier: Alias) {
         viewModelScope.launch {
-            val school = schoolRepository.getByLocalId(schoolId).first() as? School.AppSchool ?: return@launch
+            val school = schoolRepository.getById(schoolIdentifier).first() as? School.AppSchool ?: return@launch
             state = Sp24CredentialState(
                 school = school,
                 schoolName = school.name,
@@ -47,14 +47,11 @@ class Sp24CredentialViewModel(
                     delay(1000)
                     val result = checkSp24CredentialsUseCase(state!!.sp24Id.toInt(), state!!.username, state!!.password)
                     if (result == SchoolSettingsCredentialsState.Valid) {
-                        schoolRepository.setSp24Access(
-                            schoolId = state!!.school.id,
-                            sp24Id = state!!.school.sp24Id.toInt(),
+                        schoolRepository.save(state!!.school.copy(
                             username = state!!.username,
                             password = state!!.password,
-                            daysPerWeek = state!!.school.daysPerWeek,
-                        )
-                        schoolRepository.setSp24CredentialValidity(state!!.school.id, true)
+                            credentialsValid = true
+                        ))
                         sendSp24CredentialsToServerUseCase()
                     }
                     state = state?.copy(state = result)

@@ -14,18 +14,18 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.data.source.database.model.database.DbFcmLog
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.model.Group
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.domain.repository.FcmRepository
-import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.SubjectInstanceRepository
-import plus.vplan.app.domain.repository.SubstitutionPlanRepository
-import plus.vplan.app.domain.repository.TimetableRepository
+import plus.vplan.app.core.data.FcmRepository
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.data.group.GroupRepository
+import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
+import plus.vplan.app.core.database.model.database.DbFcmLog
+import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause
@@ -37,7 +37,6 @@ import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
-import plus.vplan.app.utils.now
 
 class DeveloperSettingsViewModel(
     private val fullSyncUseCase: FullSyncUseCase,
@@ -54,7 +53,7 @@ class DeveloperSettingsViewModel(
     private val updateHomeworkUseCase: UpdateHomeworkUseCase,
     private val updateAssessmentsUseCase: UpdateAssessmentsUseCase,
     private val subjectInstanceRepository: SubjectInstanceRepository,
-    private val groupRepository: GroupRepository
+    private val groupRepository: GroupRepository,
 ) : ViewModel(), KoinComponent {
 
     var state by mutableStateOf(DeveloperSettingsState())
@@ -113,7 +112,7 @@ class DeveloperSettingsViewModel(
                     if (state.isSubstitutionPlanUpdateRunning) return@launch
                     state = state.copy(isSubstitutionPlanUpdateRunning = true)
                     updateSubstitutionPlanUseCase(
-                        state.profile!!.getSchool().getFirstValue()!!, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
+                        state.profile!!.school, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
                         allowNotification = true
                     )
                     state = state.copy(isSubstitutionPlanUpdateRunning = false)
@@ -121,20 +120,20 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.UpdateTimetable -> {
                     if (state.isTimetableUpdateRunning) return@launch
                     state = state.copy(isTimetableUpdateRunning = true)
-                    updateTimetableUseCase(state.profile!!.getSchool().getFirstValue()!!, forceUpdate = true)
+                    updateTimetableUseCase(state.profile!!.school, forceUpdate = true)
                     state = state.copy(isTimetableUpdateRunning = false)
                 }
                 DeveloperSettingsEvent.UpdateWeeks -> {
                     if (state.isWeekUpdateRunning) return@launch
                     state = state.copy(isWeekUpdateRunning = true)
-                    updateWeeksUseCase(state.profile!!.getSchool().getFirstValue()!!)
+                    updateWeeksUseCase(state.profile!!.school)
                     state = state.copy(isWeekUpdateRunning = false)
                 }
                 DeveloperSettingsEvent.UpdateSubjectInstances -> {
                     if (state.isSubjectInstanceUpdateRunning) return@launch
                     state = state.copy(isSubjectInstanceUpdateRunning = true)
                     updateSubjectInstanceUseCase(
-                        school = state.profile!!.getSchool().getFirstValue()!!,
+                        school = state.profile!!.school,
                         providedClient = null
                     )
                     state = state.copy(isSubjectInstanceUpdateRunning = false)
@@ -143,7 +142,7 @@ class DeveloperSettingsViewModel(
                     if (state.isLessonTimesUpdateRunning) return@launch
                     state = state.copy(isLessonTimesUpdateRunning = true)
                     updateLessonTimesUseCase(
-                        state.profile!!.getSchool().getFirstValue()!!,
+                        state.profile!!.school,
                         null
                     )
                     state = state.copy(isLessonTimesUpdateRunning = false)
@@ -154,7 +153,7 @@ class DeveloperSettingsViewModel(
                     try {
                         syncGradesUseCase(false)
                     } catch (e: Exception) {
-                        Logger.e { "Failed to sync grades: $e" }
+                        Logger.e { "Failed to sync grades: ${e.stackTraceToString()}" }
                     } finally {
                         state = state.copy(isGradeUpdateRunning = false)
                     }
@@ -163,13 +162,13 @@ class DeveloperSettingsViewModel(
                     keyValueRepository.set(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC, (!keyValueRepository.get(Keys.DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC).first().toBoolean()).toString())
                 }
                 is DeveloperSettingsEvent.UpdateSubjectInstance -> {
-                    subjectInstanceRepository.findByAliases(event.subjectInstance.aliases, forceUpdate = true, preferCurrentState = false).getFirstValue().also {
+                    subjectInstanceRepository.getByIds(event.subjectInstance.aliases, forceUpdate = true).first().also {
                         Logger.i { "Updated subject instance.\nWas: ${event.subjectInstance}\nIs:  $it" }
                     }
                 }
                 is DeveloperSettingsEvent.UpdateGroup -> {
-                    groupRepository.findByAliases(event.group.aliases, forceUpdate = true, preferCurrentState = false).getFirstValue().also {
-                        Logger.i { "Updated group.\nWas: ${event.group}\nIs:  $it" }
+                    groupRepository.getByIds(event.group.aliases, forceUpdate = true).first().also {
+                        Logger.i { "Updated group.\nWas: ${event.group}\nIs: $it" }
                     }
                 }
                 DeveloperSettingsEvent.UpdateHomework -> {

@@ -3,7 +3,7 @@ package plus.vplan.app.utils
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
 import org.koin.core.context.GlobalContext
-import plus.vplan.app.domain.repository.ActivityProvider
+import plus.vplan.app.core.platform.ActivityProvider
 
 actual fun openUrl(url: String) {
     val activityProvider = GlobalContext.get().get<ActivityProvider>()

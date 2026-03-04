@@ -1,50 +1,43 @@
 package plus.vplan.app.di
 
-import androidx.room.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
-import plus.vplan.app.data.repository.LocalFileRepositoryImpl
-import plus.vplan.app.data.repository.PlatformNotificationRepositoryImpl
-import plus.vplan.app.data.source.database.VppDatabase
-import plus.vplan.app.data.source.database.VppDatabaseConstructor
-import plus.vplan.app.domain.repository.LocalFileRepository
-import plus.vplan.app.domain.repository.PlatformNotificationRepository
-import plus.vplan.app.ui.platform.RunBiometricAuthentication
-import plus.vplan.app.ui.platform.RunBiometricAuthenticationImpl
-
-actual val platformModule: Module = module {
-    single<LocalFileRepository> { LocalFileRepositoryImpl() }
-    single<PlatformNotificationRepository> { PlatformNotificationRepositoryImpl() }
-    single<RunBiometricAuthentication> { RunBiometricAuthenticationImpl() }
-    single<VppDatabase> {
-        val dbFilePath = documentDirectory() + "/vpp.db"
-        Room.databaseBuilder<VppDatabase>(
-            name = dbFilePath,
-            factory = { VppDatabaseConstructor.initialize() }
-        )
-            .fallbackToDestructiveMigrationOnDowngrade(true)
-            .setDriver(BundledSQLiteDriver()) // Very important
-            .setQueryCoroutineContext(Dispatchers.IO)
-            .build()
-    }
-}
+import plus.vplan.app.core.data.file.FileOpener
+import plus.vplan.app.core.data.file.ThumbnailGenerator
+import plus.vplan.app.core.platform.AuthenticationRepository
+import plus.vplan.app.core.platform.AuthenticationRepositoryImpl
+import plus.vplan.app.core.platform.BiometricAuthentication
+import plus.vplan.app.core.platform.BiometricAuthenticationImpl
+import plus.vplan.app.core.platform.NotificationRepository
+import plus.vplan.app.core.platform.NotificationRepositoryImpl
 
 @OptIn(ExperimentalForeignApi::class)
-private fun documentDirectory(): String {
-    val documentDirectory = NSFileManager.defaultManager.URLForDirectory(
-        directory = NSDocumentDirectory,
-        inDomain = NSUserDomainMask,
-        appropriateForURL = null,
-        create = false,
-        error = null,
-    )
-
-    return requireNotNull(documentDirectory?.path)
+actual val platformModule: Module = module {
+    single<NotificationRepository> { NotificationRepositoryImpl() }
+    single<AuthenticationRepository> { AuthenticationRepositoryImpl() }
+    single<BiometricAuthentication> { BiometricAuthenticationImpl() }
+    
+    // New file infrastructure
+    single<ThumbnailGenerator> { ThumbnailGenerator() }
+    single<OpenQuicklook> { quicklook }
+    single<FileOpener> { FileOpener(get()) }
+    single<(String) -> String> {
+        val fileManager = NSFileManager.defaultManager
+        val documentDirectoryPath = fileManager.URLForDirectory(
+            directory = NSDocumentDirectory,
+            inDomain = NSUserDomainMask,
+            appropriateForURL = null,
+            create = true,
+            error = null
+        )?.path ?: throw IllegalStateException("Could not access document directory")
+        
+        val pathResolver: (String) -> String = { relativePath: String -> 
+            "$documentDirectoryPath/$relativePath" 
+        }
+        pathResolver
+    }
 }

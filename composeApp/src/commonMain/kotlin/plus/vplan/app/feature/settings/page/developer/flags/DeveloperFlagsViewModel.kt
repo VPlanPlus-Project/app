@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
 
 class DeveloperFlagsViewModel(
     private val keyValueRepository: KeyValueRepository

@@ -1,20 +1,16 @@
 package plus.vplan.app.domain.usecase
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.VppId
-import plus.vplan.app.domain.repository.GroupRepository
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.ProfileRepository
-import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
+import plus.vplan.app.core.model.NetworkException
+import plus.vplan.app.core.model.Profile
 
 class UpdateFirebaseTokenUseCase(
     private val profileRepository: ProfileRepository,
     private val vppIdRepository: VppIdRepository,
-    private val groupRepository: GroupRepository,
     private val keyVppIdRepository: KeyValueRepository
 ) {
     suspend operator fun invoke(token: String) {
@@ -23,15 +19,14 @@ class UpdateFirebaseTokenUseCase(
         var success = true
         profiles.forEach { profile ->
             if (profile is Profile.StudentProfile) {
-                if (profile.vppIdId != null) {
-                    val vppId = profile.vppId!!.getFirstValueOld() as? VppId.Active ?: return@forEach
-                    vppIdRepository.updateFirebaseToken(vppId, token).let {
-                        if (it != null) success = false
+                if (profile.vppId != null) {
+                    try {
+                        vppIdRepository.updateFirebaseToken(profile.vppId!!, token)
+                    } catch (e: NetworkException) {
+                        success = false
                     }
                 } else {
-                    groupRepository.updateFirebaseToken(profile.group.getFirstValue()!!, token).let {
-                        if (it != null) success = false
-                    }
+                    // TODO
                 }
             }
         }

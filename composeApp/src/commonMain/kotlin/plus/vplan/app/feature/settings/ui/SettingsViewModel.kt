@@ -8,8 +8,8 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
 
 class SettingsViewModel(
     private val keyValueRepository: KeyValueRepository

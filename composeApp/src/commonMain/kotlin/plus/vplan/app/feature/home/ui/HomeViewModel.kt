@@ -1,227 +1,261 @@
+@file:OptIn(FlowPreview::class)
+
 package plus.vplan.app.feature.home.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import plus.vplan.app.App
-import plus.vplan.app.captureError
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Lesson
-import plus.vplan.app.domain.model.News
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
-import plus.vplan.app.domain.repository.Stundenplan24Repository
+import kotlinx.datetime.atDate
+import kotlinx.datetime.atTime
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
+import plus.vplan.app.core.model.Lesson
+import plus.vplan.app.core.model.News
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.domain.model.populated.PopulatedDay
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
+import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
-import plus.vplan.app.feature.home.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetNewsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
-import plus.vplan.app.utils.minus
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.sortedBySuspending
-import plus.vplan.app.utils.until
 import plus.vplan.lib.sp24.source.Authentication
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.seconds
-import kotlin.uuid.ExperimentalUuidApi
 
-private val LOGGER = Logger.withTag("HomeViewModel")
-
-@OptIn(ExperimentalUuidApi::class, FlowPreview::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val getCurrentDateTimeUseCase: GetCurrentDateTimeUseCase,
     private val getDayUseCase: GetDayUseCase,
+    private val getNewsUseCase: GetNewsUseCase,
+    private val keyValueRepository: KeyValueRepository,
+    private val stundenplan24Repository: Stundenplan24Repository,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
-    private val getNewsUseCase: GetNewsUseCase,
-    private val stundenplan24Repository: Stundenplan24Repository,
-    private val keyValueRepository: KeyValueRepository
 ) : ViewModel() {
-    var state by mutableStateOf(HomeState())
-        private set
+    val state: StateFlow<HomeState>
+        field = MutableStateFlow(HomeState())
+
+    private var newsJob: Job? = null
 
     init {
+        // 1. Profile & News Setup
         viewModelScope.launch {
-            var newsJob: Job? = null
-            var specialLessonsUpdateJob: Job? = null
-            getCurrentProfileUseCase().collectLatest { profile ->
-                state = state.copy(
-                    currentProfile = profile,
-                    day = null,
-                    initDone = false
-                )
-                newsJob?.cancel()
-                newsJob = launch { getNewsUseCase(profile).collectLatest { state = state.copy(news = it) } }
-
-                specialLessonsUpdateJob?.cancel()
-                specialLessonsUpdateJob = launch {
-                    var lastSpecialLessonUpdate = LocalDateTime.now() - 1.hours
-                    getCurrentDateTimeUseCase()
-                        .onEach { time -> state = state.copy(currentTime = time) }
-                        .collect { time ->
-                            if (lastSpecialLessonUpdate until time < 5.seconds) return@collect
-
-                            val hasInterpolatedLessonTimes = state.day?.lessons?.first().orEmpty()
-                                .any { lesson -> lesson.lessonTime?.getFirstValueOld()?.interpolated == true }
-
-                            if (state.day?.date == time.date) {
-                                val allLessons = state.day?.lessons?.first().orEmpty()
-
-                                /**
-                                 * If the current or next lesson can be determined reliably, show them. Otherwise, only show the full list of lessons.
-                                 * This includes the corresponding developer setting.
-                                 */
-                                val canShowCurrentAndNextLesson = !keyValueRepository.getBooleanOrDefault(Keys.forceStaticTimetableHomescreen.key, Keys.forceStaticTimetableHomescreen.default).first() &&
-                                        (allLessons.isEmpty() || allLessons.count { it.lessonTime?.getFirstValueOld()?.interpolated != false } <= allLessons.size)
-
-                                val currentLessons = if (!canShowCurrentAndNextLesson) null else allLessons
-                                    .filter { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime?.getFirstValueOld() ?: return@filter false
-                                        time.time in lessonTimeItem.start..lessonTimeItem.end
-                                    }.map { lesson ->
-                                        CurrentLesson(
-                                            lesson = lesson,
-                                            continuing = allLessons.firstOrNull {
-                                                it.subject != null && it.subject == lesson.subject && it.subjectInstanceId == lesson.subjectInstanceId && it.lessonNumber == lesson.lessonNumber + 1
-                                            }
-                                        )
-                                    }
-                                    .sortedBySuspending { it.lesson.subject + it.lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name }
-
-                                val nextLessons = if (!canShowCurrentAndNextLesson) null else allLessons
-                                    .filter { lesson ->
-                                        val lessonTimeItem = lesson.lessonTime?.getFirstValueOld() ?: return@filter true
-                                        lessonTimeItem.start > time.time
-                                    }
-                                    .groupBy { it.lessonNumber }
-                                    .minByOrNull { it.key }
-                                    ?.value
-                                    .orEmpty()
-
-                                val remainingLessons = allLessons
-                                    .filter { lesson ->
-                                        if (!canShowCurrentAndNextLesson || nextLessons == null || currentLessons == null) return@filter true // Show all lessons if current/next cannot be determined
-                                        if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
-                                        val lessonTimeItem = lesson.lessonTime?.getFirstValueOld() ?: return@filter true
-                                        lessonTimeItem.start > time.time
-                                    }
-                                    .sortedBySuspending { lesson ->
-                                        val subject = lesson.subject ?: ""
-                                        val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
-                                        lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
-                                    }
-                                    .groupBy { it.lessonNumber }
-
-                                state = state.copy(
-                                    currentLessons = currentLessons.orEmpty(),
-                                    nextLessons = nextLessons.orEmpty(),
-                                    remainingLessons = remainingLessons,
-                                    hasInterpolatedLessonTimes = hasInterpolatedLessonTimes
-                                )
-                                lastSpecialLessonUpdate = time
-                            } else {
-                                state = state.copy(
-                                    currentLessons = emptyList(),
-                                    nextLessons = emptyList(),
-                                    remainingLessons = state.day?.lessons?.first().orEmpty()
-                                        .sortedBySuspending { lesson ->
-                                            val subject = lesson.subject ?: ""
-                                            val courseName = lesson.subjectInstance?.getFirstValue()?.course?.getFirstValue()?.name ?: ""
-                                            lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
-                                        }
-                                        .groupBy { it.lessonNumber },
-                                    hasInterpolatedLessonTimes = hasInterpolatedLessonTimes
-                                )
-                            }
-                        }
+            getCurrentProfileUseCase()
+                .filterNotNull()
+                .collect { profile ->
+                    state.update { it.copy(currentProfile = profile, initDone = true) }
+                    launchNews(profile)
                 }
+        }
 
-                getDayUseCase(profile, state.currentTime.date)
-                    .catch { e -> LOGGER.e { "Something went wrong on retrieving the day for Profile ${profile.id} (${profile.name}) at ${state.currentTime.date}:\n${e.stackTraceToString()}" } }
-                    .collectLatest { day ->
-                        state = state.copy(initDone = true)
+        // 2. Continuous Time Updates
+        viewModelScope.launch {
+            getCurrentDateTimeUseCase()
+                .collect { time ->
+                    state.update { it.copy(currentTime = time) }
+                }
+        }
 
-                        val hasDayMissingLessonTimes = day.lessons.first().any { it.lessonTime == null }
-                        if (hasDayMissingLessonTimes) state = state.copy(day = day)
+        // 3. Main Data Orchestration
+        viewModelScope.launch {
+            val forceStaticFlow = keyValueRepository.getBooleanOrDefault(
+                Keys.forceStaticTimetableHomescreen.key,
+                Keys.forceStaticTimetableHomescreen.default
+            )
 
-                        if (day.lessons.first().any { it.lessonTime!!.getFirstValueOld()!!.end >= state.currentTime.time }) state = state.copy(
-                            day = day
-                        ) else if (day.nextSchoolDayId != null) App.daySource.getById(day.nextSchoolDayId, profile).filterIsInstance<CacheState.Done<Day>>().map { it.data }.collectLatest { nextDay ->
-                            state = state.copy(day = nextDay)
-                        }
+            val dayFlow = combine(
+                state.map { it.currentProfile }.distinctUntilChanged(),
+                state.map { it.currentTime.date }.distinctUntilChanged()
+            ) { profile, date -> profile to date }
+                .filter { (profile, _) -> profile != null }
+                .flatMapLatest { (profile, date) ->
+                    getDay(
+                        profile = profile!!,
+                        forDate = date,
+                        shouldRetryRecursively = true
+                    )
+                }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), null)
+
+            combine(
+                dayFlow,
+                state.map { it.currentTime }.distinctUntilChanged(),
+                forceStaticFlow
+            ) { dayWithDetails, time, forceStatic -> Triple(dayWithDetails, time, forceStatic) }
+                .distinctUntilChangedBy { (dayWithDetails, time, _) ->
+                    val lessonIds = dayWithDetails?.lessons?.map { it.id }?.sorted()
+                    "$lessonIds|${time.date}|${time.hour}|${time.minute}"
+                }
+                .collectLatest { (dayWithDetails, time, forceStatic) ->
+                    if (dayWithDetails == null) {
+                        state.update { it.copy(day = null, currentLessons = emptyList(), nextLessons = emptyList(), remainingLessons = emptyMap()) }
+                        return@collectLatest
                     }
+
+
+                    val canShowCurrentAndNext = !forceStatic && dayWithDetails.day.date == time.date
+                    val lessons = dayWithDetails.lessons
+
+                    val currentLessons = if (canShowCurrentAndNext) {
+                        lessons.filter { lesson ->
+                            val timeRange = lesson.lessonTime ?: return@filter false
+                            time in timeRange.start.atDate(dayWithDetails.day.date)..timeRange.end.atDate(dayWithDetails.day.date)
+                        }.map { lesson ->
+                            CurrentLesson(
+                                lesson = lesson,
+                                continuing = lessons.firstOrNull {
+                                    it.subject != null &&
+                                            it.subject == lesson.subject &&
+                                            (it as? Lesson.SubstitutionPlanLesson)?.subjectInstance?.id ==
+                                            (lesson as? Lesson.SubstitutionPlanLesson)?.subjectInstance?.id &&
+                                            it.lessonNumber == lesson.lessonNumber + 1
+                                }
+                            )
+                        }.sortedBySuspending {
+                            val subjectInstance = it.lesson.subjectInstance
+                            it.lesson.subject + (subjectInstance?.course?.name ?: "")
+                        }
+                    } else emptyList()
+
+                    val nextLessons = if (canShowCurrentAndNext) {
+                        lessons.filter { lesson ->
+                            val timeRange = lesson.lessonTime ?: return@filter true
+                            timeRange.start.atDate(dayWithDetails.day.date) > time
+                        }
+                            .groupBy { it.lessonNumber }
+                            .minByOrNull { it.key }?.value.orEmpty()
+                    } else emptyList()
+
+                    val remainingLessons = lessons
+                        .filter { lesson ->
+                            if (!canShowCurrentAndNext || (nextLessons.isEmpty() && currentLessons.isEmpty())) return@filter true
+                            if (lesson in nextLessons && currentLessons.isEmpty()) return@filter false
+                            val timeRange = lesson.lessonTime ?: return@filter true
+                            timeRange.start.atDate(dayWithDetails.day.date) > time
+                        }
+                        .sortedBySuspending { lesson ->
+                            val subject = lesson.subject ?: ""
+                            val subjectInstance = lesson.subjectInstance
+                            val courseName = subjectInstance?.course?.name ?: ""
+                            lesson.lessonNumber.toString().padStart(2, '0') + "${subject}_${courseName}"
+                        }
+                        .groupBy { it.lessonNumber }
+
+                    state.update {
+                        it.copy(
+                            day = dayWithDetails,
+                            currentLessons = currentLessons,
+                            nextLessons = nextLessons,
+                            remainingLessons = remainingLessons,
+                            hasInterpolatedLessonTimes = lessons.any { l -> l.lessonTime?.interpolated == true }
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun launchNews(profile: Profile) {
+        newsJob?.cancel()
+        newsJob = viewModelScope.launch {
+            getNewsUseCase(profile).collect { news ->
+                state.update { it.copy(news = news) }
             }
         }
     }
 
-    private fun update() {
-        state = state.copy(isUpdating = true)
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val school = state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool
-                try {
-                    val client = stundenplan24Repository.getSp24Client(Authentication(school.sp24Id, school.username, school.password), true)
-                    updateSubjectInstanceUseCase(school, client)
-                    updateLessonTimesUseCase(school, client)
-                    updateHolidaysUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, client)
-                    updateTimetableUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, forceUpdate = false, client = client)
-                    updateSubstitutionPlanUseCase(state.currentProfile!!.getSchool().getFirstValue() as School.AppSchool, setOfNotNull(LocalDate.now(), state.day?.date, state.day?.nextSchoolDay?.getFirstValueOld()?.date).sorted(), allowNotification = false, providedClient = client)
-                } catch (e: Exception) {
-                    LOGGER.e { "Something went wrong on updating the data for Profile ${state.currentProfile!!.id} (${state.currentProfile!!.name}):\n${e.stackTraceToString()}" }
-                    captureError("HomeViewModel.update", "Error on updating the data for school ${school.id}: ${e.stackTraceToString()}")
+    private fun getDay(profile: Profile, forDate: LocalDate, shouldRetryRecursively: Boolean): Flow<PopulatedDay?> {
+        return getDayUseCase(profile, forDate)
+            .distinctUntilChangedBy { day ->
+                val lessonIds = (day.substitution.ifEmpty { day.timetable }).map { it.id }.sorted()
+                "${day.day.id}|${day.day.info}|${day.day.dayType}|${day.holiday?.id}|$lessonIds"
+            }
+            .flatMapLatest { day ->
+                if (shouldRetryRecursively && day.isCompleted(LocalDateTime.now()) && day.day.nextSchoolDay != null) {
+                    getDay(profile, day.day.nextSchoolDay!!, false)
+                } else {
+                    flowOf(day)
                 }
             }
-        }.invokeOnCompletion { state = state.copy(isUpdating = false) }
     }
 
     fun onEvent(event: HomeEvent) {
         viewModelScope.launch {
             when (event) {
-                HomeEvent.OnRefresh -> update()
+                is HomeEvent.OnRefresh -> {
+                    val profile = state.value.currentProfile ?: return@launch
+                    val school = profile.school
+                    state.update { it.copy(isUpdating = true) }
+                    try {
+                        coroutineScope {
+                            val client = stundenplan24Repository.getSp24Client(
+                                Authentication(school.sp24Id, school.username, school.password),
+                                true
+                            )
+                            updateSubjectInstanceUseCase(school, client)
+                            updateLessonTimesUseCase(school, client)
+                            updateHolidaysUseCase(school, client)
+                            updateTimetableUseCase(school, forceUpdate = false, client = client)
+                            updateSubstitutionPlanUseCase(
+                                school,
+                                setOfNotNull(
+                                    LocalDate.now(),
+                                    state.value.day?.day?.date,
+                                    state.value.day?.day?.nextSchoolDay
+                                ).sorted(),
+                                allowNotification = false,
+                                providedClient = client
+                            )
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        state.update { it.copy(isUpdating = false) }
+                    }
+                }
             }
         }
     }
 }
 
+@Immutable
 data class HomeState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = LocalDateTime.now(),
     val initDone: Boolean = false,
-    val day: Day? = null,
+    val day: PopulatedDay? = null,
     val isUpdating: Boolean = false,
-
     val news: List<News> = emptyList(),
-
     val hasInterpolatedLessonTimes: Boolean = false,
     val currentLessons: List<CurrentLesson> = emptyList(),
     val nextLessons: List<Lesson> = emptyList(),
@@ -230,6 +264,16 @@ data class HomeState(
 
 sealed class HomeEvent {
     data object OnRefresh : HomeEvent()
+}
+
+private fun PopulatedDay.isCompleted(comparedTo: LocalDateTime): Boolean {
+    val lessons = this.substitution.ifEmpty { this.timetable }
+    if (lessons.isEmpty()) return true
+    return lessons.all { lesson ->
+        val lessonTime = lesson.lessonTime ?: return@all true
+        val plannedEnd = this.day.date.atTime(lessonTime.end)
+        plannedEnd < comparedTo
+    }
 }
 
 data class CurrentLesson(

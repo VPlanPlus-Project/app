@@ -2,10 +2,10 @@ package plus.vplan.app.feature.settings.page.security.domain.usecase
 
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
-import plus.vplan.app.domain.repository.PlatformAuthenticationRepository
+import plus.vplan.app.core.platform.AuthenticationRepository
 
 class GetBiometricDeviceStateUseCase(
-    private val platformAuthenticationRepository: PlatformAuthenticationRepository
+    private val platformAuthenticationRepository: AuthenticationRepository
 ) {
     operator fun invoke() = flow {
         while (true) {

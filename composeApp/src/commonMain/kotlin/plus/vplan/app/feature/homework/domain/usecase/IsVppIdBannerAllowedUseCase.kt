@@ -2,8 +2,8 @@ package plus.vplan.app.feature.homework.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
 
 class IsVppIdBannerAllowedUseCase(
     private val keyValueRepository: KeyValueRepository

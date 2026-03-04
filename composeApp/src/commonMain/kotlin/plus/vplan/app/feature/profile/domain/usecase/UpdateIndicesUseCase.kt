@@ -1,15 +1,23 @@
 package plus.vplan.app.feature.profile.domain.usecase
 
-import plus.vplan.app.domain.model.Profile
+import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
+import plus.vplan.app.core.model.Profile
 
 class UpdateIndicesUseCase(
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
-    private val updateAssessmentIndicesUseCase: UpdateAssessmentIndicesUseCase,
-    private val updateProfileHomeworkIndexUseCase: UpdateProfileHomeworkIndexUseCase
+    private val updateProfileAssessmentIndexUseCase: UpdateProfileAssessmentIndexUseCase,
+    private val updateProfileHomeworkIndexUseCase: UpdateProfileHomeworkIndexUseCase,
+    private val substitutionPlanRepository: SubstitutionPlanRepository,
+    private val timetableRepository: TimetableRepository
 ) {
     suspend operator fun invoke(profile: Profile) {
-        updateProfileLessonIndexUseCase(profile)
+        val substitutionPlanVersion = substitutionPlanRepository.getCurrentVersion().first()
+        val timetableVersion = timetableRepository.getCurrentVersion().first()
+
+        updateProfileLessonIndexUseCase(profile, substitutionPlanVersion, timetableVersion)
         updateProfileHomeworkIndexUseCase(profile)
-        updateAssessmentIndicesUseCase(profile)
+        updateProfileAssessmentIndexUseCase(profile)
     }
 }

@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.OnboardingSchoolOption
 import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.SearchForSchoolUseCase
 import plus.vplan.app.feature.onboarding.stage.a_school_search.domain.usecase.SelectSp24SchoolUseCase
@@ -39,7 +39,11 @@ class OnboardingSchoolSearchViewModel(
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             _state.update { it.copy(results = Response.Loading) }
-            val response = searchForSchoolUseCase(_state.value.searchQuery)
+            val response = try {
+                Response.Success(searchForSchoolUseCase(_state.value.searchQuery))
+            } catch (_: Exception) {
+                Response.Error.Other("Something went wrong")
+            }
             _state.update {
                 it.copy(
                     results = response,

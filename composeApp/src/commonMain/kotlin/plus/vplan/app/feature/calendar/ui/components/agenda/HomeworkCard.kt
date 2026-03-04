@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.feature.calendar.ui.components.agenda
 
 import androidx.compose.animation.AnimatedContent
@@ -25,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,19 +35,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.domain.cache.AliasState
-import plus.vplan.app.domain.cache.CacheState
-import plus.vplan.app.domain.cache.collectAsLoadingStateOld
-import plus.vplan.app.domain.model.AppEntity
-import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.model.SubjectInstance
-import plus.vplan.app.ui.components.ShimmerLoader
+import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.Homework
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.ui.theme.CustomColor
@@ -59,7 +50,6 @@ import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.check
-import kotlin.time.ExperimentalTime
 
 @Composable
 fun HomeworkCard(
@@ -69,11 +59,9 @@ fun HomeworkCard(
 ) {
     val localDensity = LocalDensity.current
 
-    val subject = homework.subjectInstance?.collectAsState(AliasState.Loading(""))?.value
-
     var boxHeight by remember { mutableStateOf(0.dp) }
-    val tasks by homework.tasks.collectAsState(emptyList())
-    if (tasks.isEmpty() || subject is AliasState.Loading) return
+    val tasks = homework.tasks
+    if (tasks.isEmpty()) return
     Box(
         modifier = Modifier
             .padding(end = 8.dp)
@@ -88,7 +76,7 @@ fun HomeworkCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background((subject as? AliasState.Done<SubjectInstance>)?.data?.subject.subjectColor().getGroup().color)
+                .background(homework.subjectInstance?.subject.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -118,15 +106,15 @@ fun HomeworkCard(
                         }
                     } else SubjectIcon(
                         modifier = Modifier.fillMaxSize(),
-                        subject = (subject as? AliasState.Done<SubjectInstance>)?.data?.subject
+                        subject = homework.subjectInstance?.subject
                     )
                 }
                 Spacer(Modifier.size(8.dp))
                 Column {
                     Text(
                         text = buildString {
-                            if (homework.subjectInstanceId != null) {
-                                append((subject as? AliasState.Done<SubjectInstance>)?.data?.subject ?: "Unbekanntes Fach")
+                            if (homework.subjectInstance != null) {
+                                append(homework.subjectInstance?.subject ?: "Unbekanntes Fach")
                                 append(": ")
                             }
                             append("Hausaufgabe")
@@ -177,54 +165,19 @@ fun HomeworkCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val createdByFont = MaterialTheme.typography.labelMedium
-                val shimmerLoader = remember<@Composable () -> Unit> { {
-                    ShimmerLoader(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .fillMaxWidth(.3f)
-                            .height(createdByFont.lineHeight.toDp())
-                    )
-                } }
-
                 Row {
-                    when (homework.creator) {
+                    when (val creator = homework.creator) {
                         is AppEntity.Profile -> {
-                            val profileState by homework.creator.profile.map { profile -> profile?.let { CacheState.Done(it) } ?: CacheState.NotExisting("") }.collectAsState(CacheState.Loading(""))
-                            when (val profile = profileState) {
-                                is CacheState.Loading -> shimmerLoader()
-                                is CacheState.Done -> {
-                                    Text(
-                                        text = "Profil " + profile.data.name,
-                                        style = createdByFont
-                                    )
-                                }
-                                else -> {
-                                    Text(
-                                        text = "Unbekannt",
-                                        style = createdByFont,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
+                            Text(
+                                text = "Profil " + creator.profile.name,
+                                style = createdByFont
+                            )
                         }
                         is AppEntity.VppId -> {
-                            val vppIdState by homework.creator.vppId.collectAsLoadingStateOld()
-                            when (val vppId = vppIdState) {
-                                is CacheState.Loading -> shimmerLoader()
-                                is CacheState.Done -> {
-                                    Text(
-                                        text = vppId.data.name,
-                                        style = createdByFont
-                                    )
-                                }
-                                else -> {
-                                    Text(
-                                        text = "Unbekannt",
-                                        style = createdByFont,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
+                            Text(
+                                text = creator.vppId.name,
+                                style = createdByFont
+                            )
                         }
                     }
                     Text(

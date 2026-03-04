@@ -22,7 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.github.vinceglb.filekit.core.extension
+import io.github.vinceglb.filekit.extension
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.utils.DOT

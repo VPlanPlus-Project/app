@@ -1,9 +1,9 @@
 package plus.vplan.app.feature.profile.settings.page.main.domain.usecase
 
 import plus.vplan.app.VPP_ID_AUTH_URL
-import plus.vplan.app.domain.model.Profile
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.utils.openUrl
 
 class ConnectVppIdUseCase(

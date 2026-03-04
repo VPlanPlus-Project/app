@@ -1,17 +1,17 @@
 package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.domain.data.Response
-import plus.vplan.app.domain.model.Holiday
-import plus.vplan.app.domain.model.School
-import plus.vplan.app.domain.repository.DayRepository
-import plus.vplan.app.domain.repository.Stundenplan24Repository
+import plus.vplan.app.core.data.holiday.HolidayRepository
+import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
+import plus.vplan.app.core.model.Holiday
+import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.School
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 
 class UpdateHolidaysUseCase(
     private val stundenplan24Repository: Stundenplan24Repository,
-    private val dayRepository: DayRepository
+    private val holidayRepository: HolidayRepository,
 ) {
     suspend operator fun invoke(
         school: School.AppSchool,
@@ -29,11 +29,11 @@ class UpdateHolidaysUseCase(
         }
         require(downloadedHolidays is plus.vplan.lib.sp24.source.Response.Success)
 
-        val existingHolidays = dayRepository.getHolidays(school.id).first()
+        val existingHolidays = holidayRepository.getBySchool(school).first()
 
         existingHolidays.let { existing ->
             val downloadedDates = downloadedHolidays.data
-            dayRepository.deleteHolidaysByIds(existing.filter { it.date !in downloadedDates }.map { it.id })
+            holidayRepository.delete(existing.filter { it.date !in downloadedDates })
         }
 
         val existingDates = existingHolidays.map { it.date }
@@ -45,7 +45,7 @@ class UpdateHolidaysUseCase(
                     school = school.id
                 )
             }
-            .let { dayRepository.upsert(it) }
+            .let { holidayRepository.save(it) }
 
         return null
     }

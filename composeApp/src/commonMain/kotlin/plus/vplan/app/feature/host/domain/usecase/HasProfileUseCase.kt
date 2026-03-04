@@ -2,7 +2,7 @@ package plus.vplan.app.feature.host.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import plus.vplan.app.domain.repository.ProfileRepository
+import plus.vplan.app.core.data.profile.ProfileRepository
 
 class HasProfileUseCase(
     private val profileRepository: ProfileRepository

@@ -3,7 +3,7 @@ package plus.vplan.app.data.source.network
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
-import plus.vplan.app.domain.data.Response
+import plus.vplan.app.core.model.Response
 
 suspend fun <T> HttpResponse.toResponse(
     onSuccess: (httpResponse: HttpResponse) -> T = { TODO("OnSuccess is not implemented") }

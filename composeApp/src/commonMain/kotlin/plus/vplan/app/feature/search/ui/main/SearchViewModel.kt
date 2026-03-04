@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalTime::class)
+@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package plus.vplan.app.feature.search.ui.main
 
@@ -7,20 +7,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import plus.vplan.app.App
-import plus.vplan.app.domain.cache.getFirstValue
-import plus.vplan.app.domain.cache.getFirstValueOld
-import plus.vplan.app.domain.model.Assessment
-import plus.vplan.app.domain.model.Day
-import plus.vplan.app.domain.model.Homework
-import plus.vplan.app.domain.model.Profile
+import plus.vplan.app.core.data.day.DayRepository
+import plus.vplan.app.core.model.Assessment
+import plus.vplan.app.core.model.Day
+import plus.vplan.app.core.model.Homework
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -30,11 +31,9 @@ import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.GetAssessmentsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
-import plus.vplan.app.feature.search.domain.usecase.GetSubjectsUseCase
+import plus.vplan.app.feature.search.domain.usecase.GetSubjectsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.SearchRequest
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
-import plus.vplan.app.utils.now
-import kotlin.time.ExperimentalTime
 
 class SearchViewModel(
     private val searchUseCase: SearchUseCase,
@@ -45,7 +44,8 @@ class SearchViewModel(
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val lockGradesUseCase: LockGradesUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
-    private val getSubjectsUseCase: GetSubjectsUseCase
+    private val getSubjectsForProfileUseCase: GetSubjectsForProfileUseCase,
+    private val dayRepository: DayRepository,
 ) : ViewModel() {
 
     var state by mutableStateOf(SearchState())
@@ -70,10 +70,16 @@ class SearchViewModel(
                 homeworkJob?.cancel()
                 assessmentJob?.cancel()
                 if (currentProfile is Profile.StudentProfile) {
-                    homeworkJob = launch { getHomeworkForProfileUseCase(currentProfile).collectLatest { state = state.copy(homework = it) } }
-                    assessmentJob = launch { getAssessmentsForProfileUseCase(currentProfile).collectLatest { state = state.copy(assessments = it) } }
+                    homeworkJob = launch {
+                        getHomeworkForProfileUseCase(currentProfile)
+                            .collectLatest { state = state.copy(homework = it) }
+                    }
+                    assessmentJob = launch {
+                        getAssessmentsForProfileUseCase(currentProfile)
+                            .collectLatest { state = state.copy(assessments = it) }
+                    }
                 }
-                getSubjectsUseCase(currentProfile).let { state = state.copy(subjects = it) }
+                getSubjectsForProfileUseCase(currentProfile).let { state = state.copy(subjects = it) }
             }
         }
     }
@@ -109,16 +115,16 @@ class SearchViewModel(
 
     private suspend fun restartSearch() {
         searchJob?.cancel()
-        val schoolId = state.currentProfile?.getSchool()?.getFirstValue()?.id
-        if (state.currentProfile == null || schoolId == null) {
+        val school = state.currentProfile?.school
+        if (state.currentProfile == null || school == null) {
             state = state.copy(results = emptyMap())
             return
         }
-        val day = App.daySource.getById(Day.buildId(schoolId, state.query.date)).getFirstValueOld()
+        val day = dayRepository.getBySchool(school, state.query.date).first()
         searchJob = viewModelScope.launch {
             state = state.copy(isLoading = true)
             searchUseCase(state.query).collectLatest {
-                state = state.copy(results = it, selectedDateType = day?.dayType ?: Day.DayType.UNKNOWN, isLoading = false)
+                state = state.copy(results = it, selectedDateType = day?.dayType, isLoading = false)
             }
         }
     }
@@ -127,7 +133,7 @@ class SearchViewModel(
 data class SearchState(
     val query: SearchRequest = SearchRequest(),
     val isLoading: Boolean = false,
-    val selectedDateType: Day.DayType = Day.DayType.UNKNOWN,
+    val selectedDateType: Day.DayType? = null,
     val results: Map<SearchResult.Type, List<SearchResult>> = emptyMap(),
     val homework: List<Homework> = emptyList(),
     val assessments: List<Assessment> = emptyList(),
@@ -152,6 +158,6 @@ sealed class SearchEvent {
 }
 
 sealed class NewItem(val createdAt: LocalDate) {
-    data class Assessment(val assessment: plus.vplan.app.domain.model.Assessment): NewItem(assessment.createdAt.date)
-    data class Homework(val homework: plus.vplan.app.domain.model.Homework): NewItem(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date)
+    data class Assessment(val assessment: plus.vplan.app.core.model.Assessment): NewItem(assessment.createdAt.date)
+    data class Homework(val homework: plus.vplan.app.core.model.Homework): NewItem(homework.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date)
 }

@@ -38,9 +38,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
-import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.core.PickerMode
-import io.github.vinceglb.filekit.core.PickerType
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.path
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
@@ -102,8 +103,8 @@ fun NewHomeworkDrawerContent(
     }
 
     val filePickerLauncher = rememberFilePickerLauncher(
-        mode = PickerMode.Multiple(),
-        type = PickerType.File()
+        mode = FileKitMode.Multiple(),
+        type = FileKitType.File()
     ) { files ->
         // Handle picked files
         Logger.d { "Picked files: ${files?.map { it.path }}" }
@@ -113,8 +114,8 @@ fun NewHomeworkDrawerContent(
     }
 
     val imagePickerLauncher = rememberFilePickerLauncher(
-        mode = PickerMode.Multiple(),
-        type = PickerType.Image
+        mode = FileKitMode.Multiple(),
+        type = FileKitType.Image
     ) { images ->
         Logger.d { "Picked images: ${images?.map { it.path }}" }
         images?.forEach { image ->
@@ -217,7 +218,7 @@ fun NewHomeworkDrawerContent(
             SubjectAndDateTile(
                 selectedSubjectInstance = state.selectedSubjectInstance,
                 selectedDate = state.selectedDate,
-                group = state.currentProfile.groupItem!!,
+                group = state.currentProfile.group,
                 isAssessment = false,
                 onClickSubjectInstance = { showLessonSelectDrawer = true },
                 onClickDate = { showDateSelectDrawer = true }
@@ -241,7 +242,7 @@ fun NewHomeworkDrawerContent(
             if (state.isPublic != null) VisibilityTile(
                 isPublic = state.isPublic,
                 selectedSubjectInstance = state.selectedSubjectInstance,
-                group = state.currentProfile.groupItem!!,
+                group = state.currentProfile.group,
                 onSetVisibility = { isPublic -> viewModel.onEvent(NewHomeworkEvent.SetVisibility(isPublic)) }
             )
             else VppIdBanner(
@@ -311,9 +312,9 @@ fun NewHomeworkDrawerContent(
 
     if (showLessonSelectDrawer) {
         LessonSelectDrawer(
-            group = state.currentProfile.groupItem!!,
+            group = state.currentProfile.group,
             allowGroup = true,
-            subjectInstances = state.currentProfile.subjectInstanceItems.filter { subjectInstance -> state.currentProfile.subjectInstanceConfiguration.filterValues { !it }.none { it.key == subjectInstance.id } }.sortedBy { it.subject },
+            subjectInstances = state.subjectInstances,
             selectedSubjectInstance = state.selectedSubjectInstance,
             onSelectSubjectInstance = { viewModel.onEvent(NewHomeworkEvent.SelectSubjectInstance(it)) },
             onDismiss = { showLessonSelectDrawer = false }
