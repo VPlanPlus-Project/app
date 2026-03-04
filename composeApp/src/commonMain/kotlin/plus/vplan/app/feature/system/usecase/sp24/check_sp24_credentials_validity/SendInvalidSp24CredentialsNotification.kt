@@ -4,10 +4,10 @@ import co.touchlab.kermit.Logger
 import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.model.Alias
-import plus.vplan.app.domain.repository.PlatformNotificationRepository
+import plus.vplan.app.core.platform.NotificationRepository
 
 class SendInvalidSp24CredentialsNotification(
-    private val platformNotificationRepository: PlatformNotificationRepository
+    private val platformNotificationRepository: NotificationRepository
 ) {
     suspend operator fun invoke(
         schoolName: String,

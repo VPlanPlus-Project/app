@@ -1,6 +1,7 @@
-package plus.vplan.app.data.repository
+package plus.vplan.app.core.platform
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -12,15 +13,15 @@ import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import plus.vplan.app.domain.repository.PlatformNotificationRepository
 
-class PlatformNotificationImpl(
+class NotificationRepositoryImpl(
     private val context: Context,
     private val smallIconResId: Int = android.R.drawable.ic_dialog_info
-) : PlatformNotificationRepository {
+) : NotificationRepository {
     companion object {
         const val VPLANPLUS = "VPlanPlus"
     }
+
     override suspend fun initialize() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "VPlanPlus Benachrichtigungen"
@@ -33,6 +34,7 @@ class PlatformNotificationImpl(
         }
     }
 
+    @SuppressLint("MissingPermission")
     override suspend fun sendNotification(
         title: String,
         message: String,
@@ -68,6 +70,5 @@ class PlatformNotificationImpl(
         with(NotificationManagerCompat.from(context)) {
             notify(1, builder.build())
         }
-
     }
 }

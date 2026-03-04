@@ -82,6 +82,7 @@ kotlin {
             implementation(project(":core:database"))
             implementation(project(":core:data"))
             implementation(project(":core:network"))
+            implementation(project(":core:platform"))
 
             implementation(compose.runtime)
             implementation(libs.compose.foundation)

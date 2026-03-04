@@ -15,8 +15,8 @@ import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileHomeworkIndexUseCase
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.shortMonthNames
@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.days
 class UpdateHomeworkUseCase(
     private val profileRepository: ProfileRepository,
     private val homeworkRepository: HomeworkRepository,
-    private val platformNotificationRepository: PlatformNotificationRepository,
+    private val platformNotificationRepository: NotificationRepository,
     private val updateProfileHomeworkIndexUseCase: UpdateProfileHomeworkIndexUseCase,
 ) {
     private val logger = Logger.withTag("UpdateHomeworkUseCase")

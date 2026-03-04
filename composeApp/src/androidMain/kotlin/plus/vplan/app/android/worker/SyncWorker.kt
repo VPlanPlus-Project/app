@@ -8,7 +8,7 @@ import androidx.work.WorkerParameters
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.captureError
-import plus.vplan.app.data.repository.PlatformNotificationImpl
+import plus.vplan.app.core.platform.NotificationRepositoryImpl
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 
@@ -30,7 +30,7 @@ class SyncWorker(
     override suspend fun getForegroundInfo(): ForegroundInfo {
         return ForegroundInfo(
             1,
-            NotificationCompat.Builder(applicationContext, PlatformNotificationImpl.VPLANPLUS)
+            NotificationCompat.Builder(applicationContext, NotificationRepositoryImpl.VPLANPLUS)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setContentTitle("Synchronisiere...")
                 .setContentText("VPlanPlus aktualisiert die Daten auf deinem Gerät")

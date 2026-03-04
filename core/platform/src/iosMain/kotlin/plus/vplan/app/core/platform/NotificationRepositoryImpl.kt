@@ -1,4 +1,4 @@
-package plus.vplan.app.data.repository
+package plus.vplan.app.core.platform
 
 import co.touchlab.kermit.Logger
 import platform.UserNotifications.UNMutableNotificationContent
@@ -6,10 +6,9 @@ import platform.UserNotifications.UNNotificationRequest
 import platform.UserNotifications.UNNotificationSound
 import platform.UserNotifications.UNTimeIntervalNotificationTrigger
 import platform.UserNotifications.UNUserNotificationCenter
-import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import kotlin.uuid.Uuid
 
-class PlatformNotificationRepositoryImpl : PlatformNotificationRepository {
+class NotificationRepositoryImpl : NotificationRepository {
     override suspend fun initialize() {}
 
     override suspend fun sendNotification(

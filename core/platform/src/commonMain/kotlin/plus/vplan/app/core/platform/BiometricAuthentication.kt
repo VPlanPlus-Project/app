@@ -1,6 +1,6 @@
-package plus.vplan.app.ui.platform
+package plus.vplan.app.core.platform
 
-interface RunBiometricAuthentication {
+interface BiometricAuthentication {
     fun run(
         title: String,
         subtitle: String,

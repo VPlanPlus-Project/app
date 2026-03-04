@@ -2,7 +2,6 @@ package plus.vplan.app
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
@@ -16,7 +15,6 @@ import com.posthog.PostHog
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.manualFileKitCoreInitialization
 import io.ktor.http.URLBuilder
-import plus.vplan.app.di.ActivityProviderImpl
 
 class MainActivity : FragmentActivity() {
 
@@ -28,16 +26,12 @@ class MainActivity : FragmentActivity() {
 
         onNewIntent(intent)
 
-        ActivityProviderImpl.currentActivity = this
         FileKit.manualFileKitCoreInitialization(this)
         enableEdgeToEdge()
 
         PostHog.capture("App.Start")
 
         setContent {
-            (LocalActivity.current as? FragmentActivity)?.let {
-                ActivityProviderImpl.currentActivity = it
-            }
             if (canStart) App(task)
         }
 
@@ -86,12 +80,5 @@ class MainActivity : FragmentActivity() {
         }
 
         canStart = true
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (ActivityProviderImpl.currentActivity == this) {
-            ActivityProviderImpl.currentActivity = null
-        }
     }
 }

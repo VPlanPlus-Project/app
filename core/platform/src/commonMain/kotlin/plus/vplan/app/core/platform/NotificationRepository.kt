@@ -1,6 +1,6 @@
-package plus.vplan.app.domain.repository
+package plus.vplan.app.core.platform
 
-interface PlatformNotificationRepository {
+interface NotificationRepository {
     suspend fun initialize()
     suspend fun sendNotification(
         title: String,

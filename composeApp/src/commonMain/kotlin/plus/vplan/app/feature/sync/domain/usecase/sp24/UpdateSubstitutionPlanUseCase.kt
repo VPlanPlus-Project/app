@@ -23,8 +23,8 @@ import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
+import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
@@ -48,7 +48,7 @@ class UpdateSubstitutionPlanUseCase(
     private val timetableRepository: TimetableRepository,
     private val lessonTimeRepository: LessonTimeRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
-    private val platformNotificationRepository: PlatformNotificationRepository,
+    private val platformNotificationRepository: NotificationRepository,
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
 ) {
     suspend operator fun invoke(

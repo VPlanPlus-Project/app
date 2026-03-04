@@ -1,6 +1,6 @@
-package plus.vplan.app.ui.platform
+package plus.vplan.app.core.platform
 
-class RunBiometricAuthenticationImpl : RunBiometricAuthentication {
+class BiometricAuthenticationImpl : BiometricAuthentication {
     override fun run(
         title: String,
         subtitle: String,

@@ -18,9 +18,9 @@ import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.getFirstValueOld
+import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
-import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -43,7 +43,7 @@ class SyncGradesUseCase(
     private val gradesPopulator by inject<GradesPopulator>()
 
     private val profileRepository by inject<ProfileRepository>()
-    private val platformNotificationRepository by inject<PlatformNotificationRepository>()
+    private val platformNotificationRepository by inject<NotificationRepository>()
 
     suspend operator fun invoke(allowNotifications: Boolean, yearId: Int? = null) {
         try {

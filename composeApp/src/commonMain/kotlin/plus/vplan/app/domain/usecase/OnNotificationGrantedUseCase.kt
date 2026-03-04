@@ -1,9 +1,9 @@
 package plus.vplan.app.domain.usecase
 
-import plus.vplan.app.domain.repository.PlatformNotificationRepository
+import plus.vplan.app.core.platform.NotificationRepository
 
 class OnNotificationGrantedUseCase(
-    private val platformNotificationRepository: PlatformNotificationRepository
+    private val platformNotificationRepository: NotificationRepository
 ) {
     suspend operator fun invoke() {
         platformNotificationRepository.initialize()

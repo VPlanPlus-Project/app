@@ -1,4 +1,4 @@
-package plus.vplan.app.domain.repository
+package plus.vplan.app.core.platform
 
 import android.app.Activity
 

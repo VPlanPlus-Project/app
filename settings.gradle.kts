@@ -1,5 +1,4 @@
 import java.util.Properties
-import kotlin.apply
 
 val localProperties = Properties().apply {
     val file = file("local.properties")
@@ -62,6 +61,7 @@ include(":core:utils")
 include(":core:database")
 include(":core:data")
 include(":core:network")
+include(":core:platform")
 // include(":core:common")
 // include(":core:domain")
 // include(":core:sync")

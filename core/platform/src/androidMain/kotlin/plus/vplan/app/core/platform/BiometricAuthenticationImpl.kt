@@ -1,12 +1,11 @@
-package plus.vplan.app.ui.platform
+package plus.vplan.app.core.platform
 
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import org.koin.core.context.GlobalContext
-import plus.vplan.app.domain.repository.ActivityProvider
 
-class RunBiometricAuthenticationImpl : RunBiometricAuthentication {
+class BiometricAuthenticationImpl : BiometricAuthentication {
 
     override fun run(title: String, subtitle: String, negativeButtonText: String, onSuccess: () -> Unit, onError: () -> Unit, onCancel: () -> Unit) {
         val activityProvider = GlobalContext.get().get<ActivityProvider>()
@@ -43,6 +42,5 @@ class RunBiometricAuthenticationImpl : RunBiometricAuthentication {
             })
 
         biometricPrompt.authenticate(promptInfo)
-
     }
 }

@@ -11,13 +11,12 @@ import kotlinx.serialization.json.Json
 import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
-import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileAssessmentIndexUseCase
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.shortMonthNames
@@ -29,8 +28,7 @@ import kotlin.time.Duration.Companion.days
 class UpdateAssessmentsUseCase(
     private val assessmentRepository: AssessmentRepository,
     private val profileRepository: ProfileRepository,
-    private val platformNotificationRepository: PlatformNotificationRepository,
-    private val subjectInstanceRepository: SubjectInstanceRepository,
+    private val platformNotificationRepository: NotificationRepository,
     private val updateProfileAssessmentIndexUseCase: UpdateProfileAssessmentIndexUseCase,
 ) {
     private val logger = Logger.withTag("UpdateAssessmentUseCase")
