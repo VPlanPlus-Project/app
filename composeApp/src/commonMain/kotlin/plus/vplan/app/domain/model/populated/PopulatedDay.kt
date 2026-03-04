@@ -12,13 +12,13 @@ import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.data.holiday.HolidayRepository
 import plus.vplan.app.core.data.homework.HomeworkRepository
+import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Timetable
-import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
@@ -137,21 +137,4 @@ class DayPopulator(
             "${d.day.id}|${d.day.dayType}|${d.day.info}|${d.holiday?.date}|$timetableIds|$substitutionIds|$homeworkIds|$assessmentIds"
         }
     }
-}
-
-private fun lessonMatchesProfile(
-    lesson: Lesson.SubstitutionPlanLesson,
-    profile: plus.vplan.app.core.model.Profile
-): Boolean {
-    if (profile is plus.vplan.app.core.model.Profile.StudentProfile) {
-        if (profile.group.id !in lesson.groups.map { it.id }) return false
-        if (lesson.subjectInstance != null &&
-            profile.subjectInstanceConfiguration.toList()
-                .firstOrNull { it.first.id == lesson.subjectInstance!!.id }?.second == false
-        ) return false
-    }
-    if (profile is plus.vplan.app.core.model.Profile.TeacherProfile) {
-        if (profile.teacher.id !in lesson.teachers.map { it.id }) return false
-    }
-    return true
 }

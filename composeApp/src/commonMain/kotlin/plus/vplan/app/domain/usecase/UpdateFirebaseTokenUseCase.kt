@@ -4,8 +4,9 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
+import plus.vplan.app.core.model.NetworkException
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.VppIdRepository
 
 class UpdateFirebaseTokenUseCase(
     private val profileRepository: ProfileRepository,
@@ -19,14 +20,13 @@ class UpdateFirebaseTokenUseCase(
         profiles.forEach { profile ->
             if (profile is Profile.StudentProfile) {
                 if (profile.vppId != null) {
-                    vppIdRepository.updateFirebaseToken(profile.vppId!!, token).let {
-                        if (it != null) success = false
+                    try {
+                        vppIdRepository.updateFirebaseToken(profile.vppId!!, token)
+                    } catch (e: NetworkException) {
+                        success = false
                     }
                 } else {
                     // TODO
-//                    legacyGroupRepository.updateFirebaseToken(profile.group, token).let {
-//                        if (it != null) success = false
-//                    }
                 }
             }
         }

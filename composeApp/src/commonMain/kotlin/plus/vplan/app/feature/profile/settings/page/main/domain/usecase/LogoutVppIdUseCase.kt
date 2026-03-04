@@ -5,10 +5,11 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
+import plus.vplan.app.core.model.NetworkErrorKind
+import plus.vplan.app.core.model.NetworkException
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.domain.repository.VppIdRepository
 
 class LogoutVppIdUseCase(
     private val vppIdRepository: VppIdRepository,
@@ -16,9 +17,13 @@ class LogoutVppIdUseCase(
 ): KoinComponent {
     private val besteSchuleGradesRepository by inject<GradesRepository>()
 
-    suspend operator fun invoke(vppId: VppId.Active): Response<Unit> {
-        val result = vppIdRepository.logout(vppId.accessToken)
-        if (result is Response.Error && result !is Response.Error.OnlineError.Unauthorized) return result
+    suspend operator fun invoke(vppId: VppId.Active) {
+        try {
+            vppIdRepository.logout(vppId.accessToken)
+        } catch (e: NetworkException) {
+            if (e.kind != NetworkErrorKind.Unauthorized) throw e
+            // Unauthorized means already logged out — continue cleanup
+        }
         profileRepository
             .getAll()
             .first()
@@ -33,6 +38,5 @@ class LogoutVppIdUseCase(
             besteSchuleGradesRepository.removeGradesForUser(schulverwalterUserId)
         }
         vppIdRepository.deleteAccessTokens(vppId)
-        return Response.Success(Unit)
     }
 }

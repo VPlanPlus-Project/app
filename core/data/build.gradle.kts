@@ -25,6 +25,8 @@ kotlin {
             api(libs.androidx.room.runtime)
             implementation(libs.sqlite.bundled)
 
+            implementation(libs.kotlinx.serialization.json)
+
             implementation(libs.koin.core)
             implementation(libs.kermit)
 
@@ -34,6 +36,9 @@ kotlin {
             implementation(project(":core:network"))
             implementation(project(":core:model"))
             implementation(project(":core:utils"))
+
+            implementation(libs.vpp.sp24)
+            implementation(libs.ktor.client.core)
         }
     }
 }

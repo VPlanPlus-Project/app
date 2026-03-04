@@ -20,12 +20,12 @@ import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.room.RoomRepository
+import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
-import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem

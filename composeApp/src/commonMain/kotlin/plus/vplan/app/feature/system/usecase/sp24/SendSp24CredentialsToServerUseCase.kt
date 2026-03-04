@@ -3,7 +3,7 @@ package plus.vplan.app.feature.system.usecase.sp24
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.data.profile.ProfileRepository
-import plus.vplan.app.domain.repository.VppIdRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
 
 class SendSp24CredentialsToServerUseCase(
     private val profileRepository: ProfileRepository,

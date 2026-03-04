@@ -25,7 +25,7 @@ import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
-import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
@@ -34,8 +34,6 @@ import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedCollection
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedGrade
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
-import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculatorGrade
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -133,9 +131,8 @@ class GradesViewModel(
         gradeState.value = GradesState()
         mainJob = viewModelScope.launch {
             val activeJobs = mutableListOf<Job>()
-            vppIdRepository.getById(vppIdId, ResponsePreference.Fast)
-                .filterIsInstance<CacheState.Done<VppId.Active>>()
-                .map { it.data }
+            vppIdRepository.getById(vppIdId)
+                .filterIsInstance<VppId.Active>()
                 .filter { it.schulverwalterConnection != null }
                 .distinctUntilChangedBy { it.id.hashCode() + it.schulverwalterConnection.hashCode() }
                 .onEach { vppIdActive ->

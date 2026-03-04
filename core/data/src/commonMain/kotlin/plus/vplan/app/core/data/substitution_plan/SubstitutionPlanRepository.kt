@@ -1,4 +1,4 @@
-package plus.vplan.app.domain.repository
+package plus.vplan.app.core.data.substitution_plan
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate

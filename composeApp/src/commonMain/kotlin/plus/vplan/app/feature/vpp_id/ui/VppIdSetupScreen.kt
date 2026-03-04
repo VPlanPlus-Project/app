@@ -25,7 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.utils.toDp
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.circle_user_round
@@ -45,13 +44,13 @@ fun VppIdSetupScreen(
     Scaffold { contentPadding ->
         Column(Modifier.fillMaxSize()) {
             AnimatedContent(
-                targetState = state.user,
-                contentKey = { state.user is Response.Loading },
+                targetState = state.isLoading,
+                contentKey = { it },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding)
-            ) { user ->
-                if (user is Response.Loading) {
+            ) { isLoading ->
+                if (isLoading) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -61,7 +60,8 @@ fun VppIdSetupScreen(
                     return@AnimatedContent
                 }
 
-                if (user is Response.Success) Column(
+                val user = state.user
+                if (user != null) Column(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxSize(),
@@ -75,7 +75,7 @@ fun VppIdSetupScreen(
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Hallo ${user.data.name}",
+                        text = "Hallo ${user.name}",
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.headlineMedium.copy(
                             brush = Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary))

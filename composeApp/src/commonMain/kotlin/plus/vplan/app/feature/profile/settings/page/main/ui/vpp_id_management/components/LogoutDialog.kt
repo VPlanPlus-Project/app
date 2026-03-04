@@ -29,7 +29,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.VppIdManagementEvent
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.logout
@@ -37,7 +36,8 @@ import vplanplus.composeapp.generated.resources.logout
 @Composable
 fun LogoutDialog(
     onDismiss: () -> Unit,
-    deletionState: Response<Unit>?,
+    isLoggingOut: Boolean,
+    logoutError: Boolean,
     onEvent: (VppIdManagementEvent) -> Unit,
 ) {
     AlertDialog(
@@ -49,10 +49,10 @@ fun LogoutDialog(
                 modifier = Modifier.then(boxHeight?.let { Modifier.height(it) } ?: Modifier)
             ) {
                 AnimatedContent(
-                    targetState = deletionState,
+                    targetState = isLoggingOut,
                     modifier = Modifier.align(Alignment.Center)
-                ) { logoutState ->
-                    if (logoutState is Response.Loading) CircularProgressIndicator(Modifier.size(24.dp))
+                ) { loggingOut ->
+                    if (loggingOut) CircularProgressIndicator(Modifier.size(24.dp))
                     else TextButton(
                         onClick = { onEvent(VppIdManagementEvent.Logout) },
                         modifier = Modifier.onSizeChanged {
@@ -88,7 +88,7 @@ fun LogoutDialog(
             Column {
                 Text("Bist du sicher, dass du dich abmelden möchtest?")
                 AnimatedVisibility(
-                    visible = deletionState is Response.Error,
+                    visible = logoutError,
                     modifier = Modifier.fillMaxWidth(),
                     enter = expandVertically(),
                     exit = shrinkVertically()

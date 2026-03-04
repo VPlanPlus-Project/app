@@ -1,13 +1,11 @@
-package plus.vplan.app.data.repository
+package plus.vplan.app.core.platform
 
 import android.content.Context
 import androidx.biometric.BiometricManager
-import plus.vplan.app.domain.repository.PlatformAuthenticationRepository
 
-class PlatformAuthenticationRepositoryImpl(
-    context: Context
-) : PlatformAuthenticationRepository {
+class AuthenticationRepositoryImpl(context: Context) : AuthenticationRepository {
     private val biometricManager = BiometricManager.from(context)
+
     override fun isBiometricAuthenticationSupported(): Boolean {
         return when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
             BiometricManager.BIOMETRIC_SUCCESS -> true

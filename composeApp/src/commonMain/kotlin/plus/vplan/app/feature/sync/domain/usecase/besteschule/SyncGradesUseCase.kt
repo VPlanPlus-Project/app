@@ -15,14 +15,12 @@ import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.getFirstValueOld
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
-import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.atStartOfDay
 import plus.vplan.app.utils.until
@@ -54,8 +52,7 @@ class SyncGradesUseCase(
                     .mapNotNull { vppId ->
                         val isValid = besteSchuleRepository.checkValidity(vppId.schulverwalterConnection!!.userId)
                         if (isValid) return@mapNotNull null
-                        vppIdRepository.getUserByToken(vppId.accessToken)
-                        // fixme actually reload the user
+                        // fixme actually reload the user by re-fetching from network
                         return@mapNotNull vppId.id
                     }
                     .toSet()
@@ -71,7 +68,7 @@ class SyncGradesUseCase(
                     .toSet()
 
                 invalidVppIdsAfterTokenReload.forEach { stillInvalidVppId ->
-                    val vppId = vppIdRepository.getById(stillInvalidVppId, ResponsePreference.Fast).getFirstValueOld() as? VppId.Active ?: return@forEach
+                    val vppId = vppIdRepository.getById(stillInvalidVppId).first() as? VppId.Active ?: return@forEach
                     if (vppId.schulverwalterConnection!!.isValid == false) return@forEach
                     besteSchuleRepository.saveBesteSchuleAccessValidity(vppId.schulverwalterConnection!!.userId, false)
                     platformNotificationRepository.sendNotification(
@@ -97,7 +94,7 @@ class SyncGradesUseCase(
                     )
                 }
                 (invalidVppIds - invalidVppIdsAfterTokenReload).forEach { nowValidVppId ->
-                    val vppId = vppIdRepository.getById(nowValidVppId, ResponsePreference.Fast).getFirstValueOld() as? VppId.Active ?: return@forEach
+                    val vppId = vppIdRepository.getById(nowValidVppId).first() as? VppId.Active ?: return@forEach
                     besteSchuleRepository.saveBesteSchuleAccessValidity(vppId.schulverwalterConnection!!.userId, true)
                 }
             }

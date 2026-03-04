@@ -13,7 +13,9 @@ import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.room.RoomRepository
+import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.data.week.WeekRepository
@@ -25,8 +27,6 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.untilRelativeText

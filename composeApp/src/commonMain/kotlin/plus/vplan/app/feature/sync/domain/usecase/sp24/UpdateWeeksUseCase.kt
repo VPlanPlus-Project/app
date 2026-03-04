@@ -2,11 +2,11 @@ package plus.vplan.app.feature.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
+import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Week
-import plus.vplan.app.domain.repository.Stundenplan24Repository
-import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import plus.vplan.lib.sp24.source.extension.SchoolDoesNotSupportWeeks

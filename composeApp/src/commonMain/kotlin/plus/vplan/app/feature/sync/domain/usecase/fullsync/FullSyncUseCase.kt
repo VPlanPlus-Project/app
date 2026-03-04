@@ -18,6 +18,7 @@ import plus.vplan.app.core.data.holiday.HolidayRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.room.RoomRepository
 import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
@@ -26,7 +27,6 @@ import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase

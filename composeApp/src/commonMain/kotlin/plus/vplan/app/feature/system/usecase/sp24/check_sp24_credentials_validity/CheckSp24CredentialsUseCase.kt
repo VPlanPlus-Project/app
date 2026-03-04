@@ -2,11 +2,11 @@ package plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validi
 
 import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
-import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import plus.vplan.lib.sp24.source.TestConnectionResult

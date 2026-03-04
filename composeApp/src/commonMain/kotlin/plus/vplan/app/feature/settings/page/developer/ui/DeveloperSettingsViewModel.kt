@@ -19,13 +19,13 @@ import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.database.model.database.DbFcmLog
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause

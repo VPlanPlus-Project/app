@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.domain.usecase.CheckEMailStructureUseCase
@@ -61,17 +60,22 @@ class FeedbackDrawerViewModel(
                     }
                     if (error) return@launch
                     state = state.copy(showEmptyError = false, showEmailError = false, isLoading = true)
-                    state = state.copy(sendResult = state.currentProfile?.let { profile ->
-                        sendFeedbackWithProfileUseCase(
-                            profile = profile,
+                    try {
+                        state.currentProfile?.let { profile ->
+                            sendFeedbackWithProfileUseCase(
+                                profile = profile,
+                                message = state.message,
+                                email = state.customEmail.ifEmpty { null }
+                            )
+                        } ?: sendFeedbackWithSp24CredentialsUseCase(
+                            sp24Credentials = state.sp24Credentials!!,
                             message = state.message,
                             email = state.customEmail.ifEmpty { null }
                         )
-                    } ?: sendFeedbackWithSp24CredentialsUseCase(
-                        sp24Credentials = state.sp24Credentials!!,
-                        message = state.message,
-                        email = state.customEmail.ifEmpty { null }
-                    ), isLoading = false)
+                        state = state.copy(sendSuccess = true, isLoading = false)
+                    } catch (e: Exception) {
+                        state = state.copy(sendError = true, isLoading = false)
+                    }
                 }
             }
         }
@@ -87,7 +91,8 @@ data class FeedbackDrawerState(
     val customEmail: String = "",
     val showEmailError: Boolean = false,
     val isLoading: Boolean = false,
-    val sendResult: Response<Unit>? = null
+    val sendSuccess: Boolean = false,
+    val sendError: Boolean = false,
 )
 
 sealed class FeedbackEvent {

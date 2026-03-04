@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -25,7 +24,7 @@ import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
-import plus.vplan.app.core.model.CacheState
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
 import plus.vplan.app.core.utils.date.now
@@ -33,8 +32,6 @@ import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedGrade
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
-import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.domain.repository.base.ResponsePreference
 
 class AnalyticsViewModel(
     private val vppIdRepository: VppIdRepository
@@ -55,9 +52,8 @@ class AnalyticsViewModel(
         state = AnalyticsState()
         mainJob = viewModelScope.launch {
             val activeJobs = mutableListOf<Job>()
-            vppIdRepository.getById(vppIdId, ResponsePreference.Fast)
-                .filterIsInstance<CacheState.Done<VppId.Active>>()
-                .map { it.data }
+            vppIdRepository.getById(vppIdId)
+                .filterIsInstance<VppId.Active>()
                 .filter { it.schulverwalterConnection != null }
                 .distinctUntilChangedBy { it.id.hashCode() + it.schulverwalterConnection.hashCode() }
                 .onEach { vppIdActive ->

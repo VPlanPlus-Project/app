@@ -31,12 +31,12 @@ import kotlinx.datetime.atDate
 import kotlinx.datetime.atTime
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.PopulatedDay
-import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase

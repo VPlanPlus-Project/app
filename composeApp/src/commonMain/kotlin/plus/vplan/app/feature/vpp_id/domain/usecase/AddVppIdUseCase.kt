@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package plus.vplan.app.feature.vpp_id.domain.usecase
 
 import co.touchlab.kermit.Logger
@@ -8,16 +10,15 @@ import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.school.SchoolRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.NetworkErrorKind
+import plus.vplan.app.core.model.NetworkException
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.core.model.getFirstValueOld
-import plus.vplan.app.domain.repository.VppDbDto
-import plus.vplan.app.domain.repository.VppIdRepository
-import plus.vplan.app.domain.repository.base.ResponsePreference
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
+import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
 class AddVppIdUseCase(
@@ -30,53 +31,53 @@ class AddVppIdUseCase(
 ) {
     private val logger = Logger.withTag("AddVppIdUseCase")
 
-    suspend operator fun invoke(token: String): Response<VppId.Active> {
+    suspend operator fun invoke(token: String): VppId.Active {
         val accessToken = vppIdRepository.getAccessToken(token)
-        if (accessToken is Response.Error) {
-            logger.e { "Error getting access token: $accessToken" }
-            return accessToken
-        }
-        if (accessToken !is Response.Success) throw IllegalStateException("Unexpected response type")
 
         logger.i { "Got access token" }
 
-        val vppIdDto = vppIdRepository.getUserByToken(accessToken.data)
+        val vppIdInfo = vppIdRepository.getUserByToken(accessToken)
 
-        if (vppIdDto is Response.Error) return vppIdDto
-        vppIdDto as Response.Success
+        logger.i { "Resolved token to user ${vppIdInfo.id} (${vppIdInfo.username})" }
 
-        logger.i { "Resolved token to user ${vppIdDto.data.id} (${vppIdDto.data.username})" }
+        schoolRepository.getById(Alias(AliasProvider.Vpp, vppIdInfo.schoolId.toString(), 1))
+            .first() ?: throw NetworkException(NetworkErrorKind.NotFound, "School not found for VPP ID: ${vppIdInfo.id}")
 
-        schoolRepository.getById(Alias(AliasProvider.Vpp, vppIdDto.data.schoolId.toString(), 1))
-            .first() ?: return Response.Error.Other("School not found for VPP ID: ${vppIdDto.data.id}")
-
-        logger.d { "Loaded school by vpp school id ${vppIdDto.data.schoolId}" }
+        logger.d { "Loaded school by vpp school id ${vppIdInfo.schoolId}" }
 
         val group = groupRepository.getById(
-            identifier = Alias(AliasProvider.Vpp, vppIdDto.data.groupId.toString(), 1),
+            identifier = Alias(AliasProvider.Vpp, vppIdInfo.groupId.toString(), 1),
             forceUpdate = false,
         ).first()
 
         if (group == null) {
-            val errorMessage = "Group not found for VPP ID: ${vppIdDto.data.id}, group alias: ${vppIdDto.data.groupId}"
+            val errorMessage = "Group not found for VPP ID: ${vppIdInfo.id}, group alias: ${vppIdInfo.groupId}"
             logger.e { errorMessage }
             captureError("AddVppIdUseCase", errorMessage)
-            return Response.Error.Other("Group not found for VPP ID: ${vppIdDto.data.id}")
+            throw NetworkException(NetworkErrorKind.NotFound, "Group not found for VPP ID: ${vppIdInfo.id}")
         }
 
-        logger.d { "Assured a group with id ${vppIdDto.data.groupId} is cached on the app" }
+        logger.d { "Assured a group with id ${vppIdInfo.groupId} is cached on the app" }
 
-        vppIdRepository.upsert(VppDbDto.AppVppDbDto(
-            id = vppIdDto.data.id,
-            username = vppIdDto.data.username,
+        vppIdRepository.save(VppId.Active(
+            id = vppIdInfo.id,
+            name = vppIdInfo.username,
             groups = listOf(group.aliases.first { it.provider == AliasProvider.Vpp }.value.toInt()),
-            schulverwalterUserId = vppIdDto.data.schulverwalterId,
-            schulverwalterAccessToken = vppIdDto.data.schulverwalterAccessToken,
-            accessToken = accessToken.data
+            cachedAt = Clock.System.now(),
+            schulverwalterConnection = run {
+                val svId = vppIdInfo.schulverwalterId
+                val svToken = vppIdInfo.schulverwalterAccessToken
+                if (svId != null && svToken != null) VppId.Active.SchulverwalterConnection(
+                    accessToken = svToken,
+                    userId = svId,
+                    isValid = null
+                ) else null
+            },
+            accessToken = accessToken
         ))
 
-        val vppId = vppIdRepository.getById(vppIdDto.data.id, ResponsePreference.Fast)
-            .getFirstValueOld() as? VppId.Active ?: throw RuntimeException("Vpp.ID not found")
+        val vppId = vppIdRepository.getById(vppIdInfo.id).first() as? VppId.Active
+            ?: throw RuntimeException("Vpp.ID not found after save")
 
         val profile = (keyValueRepository.get(Keys.VPP_ID_LOGIN_LINK_TO_PROFILE).first()?.let { profileId ->
             profileRepository.getById(Uuid.parseHex(profileId)).first() as Profile.StudentProfile
@@ -90,6 +91,6 @@ class AddVppIdUseCase(
         keyValueRepository.delete(Keys.VPP_ID_LOGIN_LINK_TO_PROFILE)
         profileRepository.save(profile)
         syncGradesUseCase(false)
-        return Response.Success(vppId)
+        return vppId
     }
 }

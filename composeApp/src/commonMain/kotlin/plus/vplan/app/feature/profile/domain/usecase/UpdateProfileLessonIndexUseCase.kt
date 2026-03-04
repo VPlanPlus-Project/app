@@ -1,9 +1,9 @@
 package plus.vplan.app.feature.profile.domain.usecase
 
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 
 class UpdateProfileLessonIndexUseCase(
     private val timetableRepository: TimetableRepository,

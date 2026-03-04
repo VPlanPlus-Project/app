@@ -13,6 +13,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
 import plus.vplan.app.core.data.room.RoomRepository
+import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.core.model.Lesson
@@ -20,7 +21,6 @@ import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.utils.overlaps
 import kotlin.uuid.ExperimentalUuidApi
 

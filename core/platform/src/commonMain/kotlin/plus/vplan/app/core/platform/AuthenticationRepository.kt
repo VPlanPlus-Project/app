@@ -1,6 +1,6 @@
-package plus.vplan.app.domain.repository
+package plus.vplan.app.core.platform
 
-interface PlatformAuthenticationRepository {
+interface AuthenticationRepository {
     fun isBiometricAuthenticationSupported(): Boolean
     fun isBiometricAuthenticationEnabled(): Boolean
 }

@@ -10,8 +10,8 @@ import plus.vplan.app.captureError
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
 import plus.vplan.app.feature.main.domain.usecase.setup.DownloadVppSchoolIdentifierUseCase
 import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
@@ -48,7 +48,7 @@ class SetupApplicationUseCase(
         if (isFeatureEnabled("core_download-vpp-school-identifier", true)) downloadVppSchoolIdentifierUseCase()
 
         if (isFeatureEnabled("core_analytics-identifier", true)) vppIdRepository.getAllLocalIds().first()
-            .firstNotNullOfOrNull { vppIdRepository.getByLocalId(it).first() as? VppId.Active }
+            .firstNotNullOfOrNull { vppIdRepository.getById(it).first() as? VppId.Active }
             ?.let { vppId ->
                 setProperty("user.vpp_id", vppId.id.toString())
                 setPostHogProperty("user.vpp_id", vppId.id.toString())

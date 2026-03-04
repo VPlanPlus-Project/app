@@ -1,4 +1,4 @@
-package plus.vplan.app.data.repository
+package plus.vplan.app.core.data.timetable
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -16,7 +16,6 @@ import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Timetable
-import plus.vplan.app.core.data.timetable.TimetableRepository
 import kotlin.uuid.Uuid
 
 class TimetableRepositoryImpl(
@@ -110,12 +109,14 @@ class TimetableRepositoryImpl(
     }
 
     override suspend fun upsertTimetable(timetable: Timetable) {
-        vppDatabase.timetableDao.upsert(DbTimetable(
-            id = timetable.id,
-            schoolId = timetable.schoolId,
-            weekId = timetable.week.id,
-            dataState = timetable.dataState
-        ))
+        vppDatabase.timetableDao.upsert(
+            DbTimetable(
+                id = timetable.id,
+                schoolId = timetable.schoolId,
+                weekId = timetable.week.id,
+                dataState = timetable.dataState
+            )
+        )
     }
 
     override suspend fun getTimetableData(schoolId: Uuid, weekId: String): Flow<Timetable?> {
