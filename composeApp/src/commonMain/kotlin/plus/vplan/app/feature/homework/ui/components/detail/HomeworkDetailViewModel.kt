@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
@@ -29,8 +31,6 @@ import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.file.DeleteFileUseCase
 import plus.vplan.app.domain.usecase.file.DownloadFileUseCase

@@ -1,10 +1,10 @@
 package plus.vplan.app.feature.main.domain.usecase.setup
 
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileAssessmentIndexUseCase
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileHomeworkIndexUseCase
 

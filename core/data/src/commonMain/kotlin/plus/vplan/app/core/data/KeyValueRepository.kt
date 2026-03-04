@@ -1,4 +1,4 @@
-package plus.vplan.app.domain.repository
+package plus.vplan.app.core.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

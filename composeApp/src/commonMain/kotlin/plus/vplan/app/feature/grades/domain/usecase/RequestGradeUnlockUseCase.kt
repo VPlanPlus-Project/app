@@ -1,8 +1,8 @@
 package plus.vplan.app.feature.grades.domain.usecase
 
 import kotlinx.coroutines.runBlocking
-import plus.vplan.app.domain.repository.KeyValueRepository
-import plus.vplan.app.domain.repository.Keys
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
 import plus.vplan.app.ui.platform.RunBiometricAuthentication
 
 class RequestGradeUnlockUseCase(

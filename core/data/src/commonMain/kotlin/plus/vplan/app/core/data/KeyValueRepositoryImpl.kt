@@ -1,9 +1,8 @@
-package plus.vplan.app.data.repository
+package plus.vplan.app.core.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import plus.vplan.app.core.database.VppDatabase
-import plus.vplan.app.domain.repository.KeyValueRepository
 
 class KeyValueRepositoryImpl(
     private val vppDatabase: VppDatabase
