@@ -43,7 +43,6 @@ import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetNewsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.utils.sortedBySuspending
@@ -61,7 +60,6 @@ class HomeViewModel(
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
-    private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
 ) : ViewModel() {
     val state: StateFlow<HomeState>
         field = MutableStateFlow(HomeState())
@@ -222,7 +220,6 @@ class HomeViewModel(
                                 Authentication(school.sp24Id, school.username, school.password),
                                 true
                             )
-                            updateSubjectInstanceUseCase(school, client)
                             updateLessonTimesUseCase(school, client)
                             updateHolidaysUseCase(school, client)
                             updateTimetableUseCase(school, forceUpdate = false, client = client)

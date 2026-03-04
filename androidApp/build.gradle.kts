@@ -29,8 +29,15 @@ kotlin {
     }
 }
 
+val allKeysSet = arrayOf(
+    "signing.default.file",
+    "signing.default.storepassword",
+    "signing.default.keyalias",
+    "signing.default.keypassword"
+).all { localProperties.containsKey(it) }
+
 android {
-    if (listOf("signing.default.file", "signing.default.storepassword", "signing.default.keyalias", "signing.default.keypassword").all { localProperties.containsKey(it) }) {
+    if (allKeysSet) {
         signingConfigs {
             create("default") {
                 storeFile = file(localProperties["signing.default.file"]!!)
@@ -40,6 +47,7 @@ android {
             }
         }
     }
+
     namespace = "plus.vplan.app"
     compileSdk = applicationConfig.android.targetSdk
 
@@ -57,10 +65,13 @@ android {
     }
 
     buildTypes {
-        getByName("debug") {
+        debug {
             signingConfig = signingConfigs.getByName("debug")
+
+            applicationIdSuffix = ".debug"
         }
-        getByName("release") {
+
+        release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.findByName("default") ?: run {
                 println("No default signing config found, using debug signing config")
@@ -68,6 +79,7 @@ android {
             }
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

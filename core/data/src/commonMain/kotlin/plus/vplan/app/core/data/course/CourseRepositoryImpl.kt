@@ -64,8 +64,8 @@ class CourseRepositoryImpl(
                 teacherId = course.teacher?.id,
                 cachedAt = course.cachedAt
             ),
-            courseGroupCrossover = course.groups.map {
-                DbCourseGroupCrossover(course.id, it.id)
+            courseGroupCrossover = course.groups.map { group ->
+                DbCourseGroupCrossover(course.id, group.id)
             },
             aliases = course.aliases.map { DbCourseAlias.fromAlias(it, course.id) }
         )

@@ -15,5 +15,5 @@ interface TeacherRepository {
     @Deprecated("Use aliases")
     fun getByLocalId(id: Uuid): Flow<Teacher?>
 
-    suspend fun save(teacher: Teacher)
+    suspend fun save(teacher: Teacher): Teacher
 }

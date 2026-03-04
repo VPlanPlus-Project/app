@@ -37,9 +37,7 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.core.data.course.CourseRepository
 import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
@@ -120,8 +118,8 @@ private fun OnboardingSelectProfileScreen(
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         courses.forEach { course ->
-                                            val isCourseFullySelected = state.subjectInstances.filterKeys { it.course == course.id }.values.all { it }
-                                            val isCoursePartiallySelected = state.subjectInstances.filterKeys { it.course == course.id }.values.any { it }
+                                            val isCourseFullySelected = state.subjectInstances.filterKeys { it.course != null && it.course!!.id == course.id }.values.all { it }
+                                            val isCoursePartiallySelected = state.subjectInstances.filterKeys { it.course != null && it.course!!.id == course.id }.values.any { it }
                                             Row (
                                                 modifier = Modifier
                                                     .fillMaxWidth()
@@ -196,9 +194,6 @@ private fun OnboardingSelectProfileScreen(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.SpaceBetween
                                             ) dataRow@{
-                                                // TODO: Find a better way
-                                                val courseRepository = koinInject<CourseRepository>()
-
                                                 Column subjectAndCourse@{
                                                     Text(
                                                         text = subjectInstance.subject,

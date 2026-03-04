@@ -101,7 +101,7 @@ class SchoolRepositoryImpl(
         }
     }
 
-    override suspend fun save(school: School.AppSchool) {
+    override suspend fun save(school: School.AppSchool): School.AppSchool {
         val id = this.findLocalIdByIdentifier(school.aliases).first() ?: Uuid.random()
         schoolDao.upsertSchool(
             school = DbSchool(
@@ -123,5 +123,7 @@ class SchoolRepositoryImpl(
             daysPerWeek = school.daysPerWeek,
             credentialsValid = school.credentialsValid,
         ))
+
+        return schoolDao.findById(id).first()!!.toModel() as School.AppSchool
     }
 }

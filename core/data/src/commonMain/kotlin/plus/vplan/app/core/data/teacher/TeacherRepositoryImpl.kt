@@ -6,9 +6,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
@@ -35,12 +36,12 @@ class TeacherRepositoryImpl(
     }
 
     override fun getByIds(identifiers: Set<Alias>): Flow<Teacher?> {
-        return combine(identifiers.map { teacherDao.getIdByAlias(it.value, it.provider, it.version) }) { uuids ->
-            uuids.firstNotNullOfOrNull { it }
-        }.distinctUntilChanged().flatMapLatest { teacherId ->
-            if (teacherId == null) flowOf(null)
-            else teacherDao.findById(teacherId).map { it?.toModel() }.distinctUntilChanged()
-        }
+        if (identifiers.isEmpty()) throw IllegalArgumentException("Identifiers cannot be empty")
+
+        return findLocalIdByIdentifier(identifiers)
+            .flatMapLatest { id ->
+                id?.let { teacherDao.findById(id).map { it?.toModel() }.distinctUntilChanged() } ?: flowOf(null)
+            }
     }
 
     override fun getBySchool(school: School): Flow<List<Teacher>> {
@@ -61,16 +62,32 @@ class TeacherRepositoryImpl(
             .distinctUntilChanged()
     }
 
-    override suspend fun save(teacher: Teacher) {
+    private fun findLocalIdByIdentifier(identifiers: Set<Alias>): Flow<Uuid?> {
+        return flow {
+            emit(
+                identifiers.firstNotNullOfOrNull { alias ->
+                    teacherDao.getIdByAlias(
+                        value = alias.value,
+                        provider = alias.provider,
+                        version = alias.version
+                    )
+                }
+            )
+        }
+    }
+
+    override suspend fun save(teacher: Teacher): Teacher {
+        val id = findLocalIdByIdentifier(teacher.aliases).first() ?: Uuid.random()
         teacherDao.upsertTeacher(
             teacher = DbTeacher(
-                id = teacher.id,
+                id = id,
                 schoolId = teacher.school.id,
                 name = teacher.name,
                 cachedAt = Clock.System.now()
             ),
-            aliases = teacher.aliases.map { DbTeacherAlias.fromAlias(it, teacher.id) }
+            aliases = teacher.aliases.map { DbTeacherAlias.fromAlias(it, id) }
         )
-    }
 
+        return teacherDao.findById(id).first()!!.toModel()
+    }
 }

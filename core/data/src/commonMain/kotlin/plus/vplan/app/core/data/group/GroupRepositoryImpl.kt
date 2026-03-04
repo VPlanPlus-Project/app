@@ -124,18 +124,21 @@ class GroupRepositoryImpl(
         }
     }
 
-    override suspend fun save(group: Group) {
+    override suspend fun save(group: Group): Group {
+        val id = findLocalIdByIdentifier(group.aliases.toSet()).first() ?: Uuid.random()
         groupDao.upsert(
             group = DbGroup(
-                id = group.id,
+                id = id,
                 name = group.name,
                 schoolId = group.school.id,
                 cachedAt = Clock.System.now(),
                 creationReason = CreationReason.Persisted
             ),
             aliases = group.aliases.map {
-                DbGroupAlias.fromAlias(it, group.id)
+                DbGroupAlias.fromAlias(it, id)
             }
         )
+
+        return groupDao.findById(id).first()?.toModel()!!
     }
 }

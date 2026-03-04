@@ -123,19 +123,20 @@ class SubjectInstanceRepositoryImpl(
     }
 
     override suspend fun save(subjectInstance: SubjectInstance) {
+        val id = findLocalIdByIdentifier(subjectInstance.aliases.toSet()).first() ?: Uuid.random()
         subjectInstanceDao.upsertSubjectInstance(
             entity = DbSubjectInstance(
-                id = subjectInstance.id,
+                id = id,
                 subject = subjectInstance.subject,
                 teacherId = subjectInstance.teacher?.id,
                 courseId = subjectInstance.course?.id,
                 cachedAt = Clock.System.now()
             ),
             groups = subjectInstance.groups.map {
-                FKSubjectInstanceGroup(subjectInstance.id, it.id)
+                FKSubjectInstanceGroup(id, it.id)
             },
             aliases = subjectInstance.aliases.map {
-                DbSubjectInstanceAlias.fromAlias(it, subjectInstance.id)
+                DbSubjectInstanceAlias.fromAlias(it, id)
             }
         )
     }

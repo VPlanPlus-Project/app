@@ -14,5 +14,5 @@ interface RoomRepository {
 
     fun getByIds(identifiers: Set<Alias>): Flow<Room?>
 
-    suspend fun save(room: Room)
+    suspend fun save(room: Room): Room
 }

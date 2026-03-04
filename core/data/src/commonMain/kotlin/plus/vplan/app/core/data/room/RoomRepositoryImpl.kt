@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -73,15 +74,18 @@ class RoomRepositoryImpl(
         }
     }
 
-    override suspend fun save(room: Room) {
+    override suspend fun save(room: Room): Room {
+        val id = findLocalIdByIdentifier(room.aliases.toSet()).first() ?: Uuid.random()
         roomDao.upsertRoom(
             room = DbRoom(
-                id = room.id,
+                id = id,
                 schoolId = room.school.id,
                 name = room.name,
                 cachedAt = room.cachedAt
             ),
-            aliases = room.aliases.map { DbRoomAlias.fromAlias(it, room.id) }
+            aliases = room.aliases.map { DbRoomAlias.fromAlias(it, id) }
         )
+
+        return roomDao.findById(id).first()!!.toModel()
     }
 }

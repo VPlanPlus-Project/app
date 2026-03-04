@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.School
-import kotlin.uuid.Uuid
 
 interface GroupRepository {
     fun getBySchool(school: School): Flow<List<Group>>
@@ -15,5 +14,5 @@ interface GroupRepository {
 
     fun getByIds(identifiers: Set<Alias>, forceUpdate: Boolean = false): Flow<Group?>
 
-    suspend fun save(group: Group)
+    suspend fun save(group: Group): Group
 }

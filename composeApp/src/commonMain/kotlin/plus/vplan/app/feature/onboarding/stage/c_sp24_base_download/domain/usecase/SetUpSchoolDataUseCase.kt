@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.holiday.HolidayRepository
+import plus.vplan.app.core.data.room.RoomRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
@@ -14,11 +15,10 @@ import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Holiday
+import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.VppSchoolAuthentication
-import plus.vplan.app.core.data.room.RoomRepository
-import plus.vplan.app.core.model.Room
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
@@ -81,19 +81,20 @@ class SetUpSchoolDataUseCase(
                 version = 1
             )
 
-            val school = School.AppSchool(
-                id = Uuid.random(),
-                name = schoolName?.data ?: "Unbekannte Schule",
-                aliases = setOf(sp24Alias),
-                cachedAt = Clock.System.now(),
-                sp24Id = state.sp24Id.toString(),
-                username = state.username,
-                password = state.password,
-                daysPerWeek = 5,
-                credentialsValid = true
-            )
-
-            schoolRepository.save(school)
+            val school = run {
+                val school = School.AppSchool(
+                    id = Uuid.random(),
+                    name = schoolName?.data ?: "Unbekannte Schule",
+                    aliases = setOf(sp24Alias),
+                    cachedAt = Clock.System.now(),
+                    sp24Id = state.sp24Id.toString(),
+                    username = state.username,
+                    password = state.password,
+                    daysPerWeek = 5,
+                    credentialsValid = true
+                )
+                schoolRepository.save(school)
+            }
 
             result[SetUpSchoolDataStep.GET_SCHOOL_INFORMATION] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_HOLIDAYS] = SetUpSchoolDataState.IN_PROGRESS
@@ -118,55 +119,57 @@ class SetUpSchoolDataUseCase(
                     aliases = setOf(alias)
                 )
                 groupRepository.save(group)
-
-                group
             }
 
             result[SetUpSchoolDataStep.GET_GROUPS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_TEACHERS] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
 
-            val teachers = (client.getAllTeachersIntelligent() as? plus.vplan.lib.sp24.source.Response.Success)?.data
-            teachers.orEmpty().associateWith { teacher ->
-                Alias(
-                    provider = AliasProvider.Sp24,
-                    value = "${school.sp24Id}/${teacher.name}",
-                    version = 1
-                )
-            }.onEach { (teacher, aliases) ->
-                teacherRepository.save(Teacher(
-                    id = Uuid.random(),
-                    school = school,
-                    name = teacher.name,
-                    cachedAt = Clock.System.now(),
-                    aliases = setOf(aliases)
-                ))
-            }.also {
-                onboardingRepository.addProfileOptions(it.map { (teacher, alias) ->
-                    OnboardingProfile.TeacherProfile(teacher.name, alias)
-                })
-            }
+            // Teachers
+            (client.getAllTeachersIntelligent() as? plus.vplan.lib.sp24.source.Response.Success)?.data
+                .orEmpty().associateWith { teacher ->
+                    Alias(
+                        provider = AliasProvider.Sp24,
+                        value = "${school.sp24Id}/${teacher.name}",
+                        version = 1
+                    )
+                }.map { (teacher, aliases) ->
+                    teacherRepository.save(Teacher(
+                        id = Uuid.random(),
+                        school = school,
+                        name = teacher.name,
+                        cachedAt = Clock.System.now(),
+                        aliases = setOf(aliases)
+                    ))
+                }.also {
+                    onboardingRepository.addProfileOptions(it.map { teacher ->
+                        OnboardingProfile.TeacherProfile(teacher.name, teacher.aliases.first())
+                    })
+                }
 
             result[SetUpSchoolDataStep.GET_TEACHERS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_ROOMS] = SetUpSchoolDataState.IN_PROGRESS
             trySendResult()
 
-            val rooms = (client.getAllRoomsIntelligent() as? plus.vplan.lib.sp24.source.Response.Success)?.data
-            rooms.orEmpty().associateWith { room ->
-                Alias(
-                    provider = AliasProvider.Sp24,
-                    value = "${school.sp24Id}/${room.name}",
-                    version = 1
-                )
-            }.forEach { (room, alias) ->
-                roomRepository.save(Room(
-                    id = Uuid.random(),
-                    school = school,
-                    name = room.name,
-                    cachedAt = Clock.System.now(),
-                    aliases = setOf(alias)
-                ))
-            }
+            // Rooms
+            (client.getAllRoomsIntelligent() as? plus.vplan.lib.sp24.source.Response.Success)?.data
+                .orEmpty().associateWith { room ->
+                    Alias(
+                        provider = AliasProvider.Sp24,
+                        value = "${school.sp24Id}/${room.name}",
+                        version = 1
+                    )
+                }.forEach { (room, alias) ->
+                    roomRepository.save(
+                        Room(
+                            id = Uuid.random(),
+                            school = school,
+                            name = room.name,
+                            cachedAt = Clock.System.now(),
+                            aliases = setOf(alias)
+                        )
+                    )
+                }
 
             result[SetUpSchoolDataStep.GET_ROOMS] = SetUpSchoolDataState.DONE
             result[SetUpSchoolDataStep.GET_WEEKS] = SetUpSchoolDataState.IN_PROGRESS

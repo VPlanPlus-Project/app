@@ -32,5 +32,5 @@ interface TeacherDao {
     suspend fun upsertTeacher(teacher: DbTeacher, aliases: List<DbTeacherAlias>)
 
     @Query("SELECT teacher_id FROM teachers_aliases WHERE alias = :value AND alias_type = :provider AND version = :version")
-    fun getIdByAlias(value: String, provider: AliasProvider, version: Int): Flow<Uuid?>
+    suspend fun getIdByAlias(value: String, provider: AliasProvider, version: Int): Uuid?
 }

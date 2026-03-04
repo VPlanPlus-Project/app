@@ -43,7 +43,6 @@ class UpdateSubjectInstanceUseCase(
         val teachers = teacherRepository.getBySchool(school).first()
         val groups = groupRepository.getBySchool(school).first()
         val existingCourses = courseRepository.getBySchool(school)
-        val existingSubjectInstances = subjectInstanceRepository.getBySchool(school)
 
         updateCourses(
             school = school,
@@ -55,7 +54,6 @@ class UpdateSubjectInstanceUseCase(
 
         updateSubjectInstances(
             client = client,
-            existingSubjectInstances = existingSubjectInstances.first(),
             teachers = teachers,
             groups = groups
         )
@@ -115,7 +113,6 @@ class UpdateSubjectInstanceUseCase(
 
     private suspend fun updateSubjectInstances(
         client: Stundenplan24Client,
-        existingSubjectInstances: List<SubjectInstance>,
         teachers: List<Teacher>,
         groups: List<Group>
     ): Boolean {
@@ -124,40 +121,18 @@ class UpdateSubjectInstanceUseCase(
             it.data.subjectInstances.map { si -> DownloadedSubjectInstance(si, SubjectInstance.buildSp24Alias(sp24SchoolId.toInt(), si.id)) }
         }
 
-        val downloadedSubjectEntities = downloadedSubjectInstances.filter { subjectInstanceRepository.getById(it.sp24Alias).first() == null }
+        val coursesForGroups = mutableMapOf<Group, List<Course>>()
 
-        downloadedSubjectInstances.let {
-            val downloadedSubjectInstancesToDelete = existingSubjectInstances
-                .filter { existingSubjectInstance ->
-                    val existingAlias = existingSubjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Sp24 } ?: return@filter false
-                    downloadedSubjectEntities.firstOrNull { it.sp24Alias.hashCode() == existingAlias.hashCode() } ?: return@filter false
-                    return@filter true
-                }
-
-            LOGGER.d { "Delete ${downloadedSubjectInstancesToDelete.size} default lessons" }
-            subjectInstanceRepository.delete(downloadedSubjectInstancesToDelete)
-        }
-
-        val updatedSubjectInstances =
-            downloadedSubjectEntities.filter { downloadedSubjectInstance -> existingSubjectInstances.none { it.hashCode() == downloadedSubjectInstance.hashCode() } }
-        LOGGER.d { "Upsert ${updatedSubjectInstances.size} default lessons" }
-        updatedSubjectInstances
+        downloadedSubjectInstances
             .mapNotNull { (subjectInstance, sp24Alias) ->
                 val firstGroup = subjectInstance.classes.firstNotNullOfOrNull { groupName ->
-                    groupRepository.getById(identifier = Group.buildSp24Alias(sp24SchoolId.toInt(), groupName)).first() ?: return@firstNotNullOfOrNull null
+                    groupRepository.getById(identifier = Group.buildSp24Alias(sp24SchoolId.toInt(), groupName)).first()
                 } ?: return@mapNotNull null
 
-                val courses = courseRepository.getByGroup(firstGroup).first()
+                val courses = coursesForGroups.getOrPut(firstGroup) { courseRepository.getByGroup(firstGroup).first() }
 
-                val existing = subjectInstanceRepository.getById(sp24Alias).first()
-                existing?.copy(
-                    subject = subjectInstance.subject,
-                    course = subjectInstance.course?.let { courses.firstOrNull { course -> course.name == subjectInstance.course } },
-                    teacher = subjectInstance.teacher?.let { teachers.firstOrNull { teacher -> teacher.name == subjectInstance.teacher } },
-                    groups = groups.filter { group -> group.name in subjectInstance.classes },
-                    aliases = (existing.aliases + sp24Alias)
-                ) ?: SubjectInstance(
-                    id = Uuid.random(),
+                SubjectInstance(
+                    id = Uuid.NIL,
                     subject = subjectInstance.subject,
                     course = subjectInstance.course?.let { courses.firstOrNull { course -> course.name == subjectInstance.course } },
                     teacher = subjectInstance.teacher?.let { teachers.firstOrNull { teacher -> teacher.name == subjectInstance.teacher } },

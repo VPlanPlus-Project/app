@@ -209,7 +209,7 @@ fun CalendarView(
                                                             verticalAlignment = Alignment.Top,
                                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                                         ) {
-                                                            if (lesson.lesson is Lesson.SubstitutionPlanLesson && (lesson.lesson as Lesson.SubstitutionPlanLesson).isSubjectChanged) SubjectIcon(
+                                                            if (lesson.lesson is Lesson.SubstitutionPlanLesson && lesson.lesson.isSubjectChanged) SubjectIcon(
                                                                 modifier = Modifier.size(headerFont().lineHeight.toDp() + 4.dp),
                                                                 subject = lesson.lesson.subject,
                                                                 contentColor = MaterialTheme.colorScheme.onError,

@@ -10,5 +10,5 @@ interface SchoolRepository {
 
     fun getById(identifier: Alias): Flow<School?> = getByIds(setOf(identifier))
 
-    suspend fun save(school: School.AppSchool)
+    suspend fun save(school: School.AppSchool): School.AppSchool
 }
