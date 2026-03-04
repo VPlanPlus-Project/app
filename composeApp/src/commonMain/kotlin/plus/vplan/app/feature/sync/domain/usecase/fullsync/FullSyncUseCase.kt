@@ -25,6 +25,7 @@ import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
@@ -39,7 +40,6 @@ import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validit
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.SendInvalidSp24CredentialsNotification
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.Sp24CredentialsValidity
 import plus.vplan.app.isFeatureEnabled
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Response

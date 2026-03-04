@@ -15,9 +15,9 @@ import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileHomeworkIndexUseCase
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.shortMonthNames
 import plus.vplan.app.utils.until

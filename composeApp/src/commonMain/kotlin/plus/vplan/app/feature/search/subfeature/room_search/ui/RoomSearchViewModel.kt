@@ -13,12 +13,12 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.GetLessonTimesForProfileUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.GetRoomOccupationMapUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.OccupancyMapRecord
-import plus.vplan.app.utils.now
 
 class RoomSearchViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,

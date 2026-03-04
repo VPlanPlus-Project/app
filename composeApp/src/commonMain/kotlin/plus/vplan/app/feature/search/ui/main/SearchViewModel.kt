@@ -21,6 +21,7 @@ import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -33,7 +34,6 @@ import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetSubjectsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.SearchRequest
 import plus.vplan.app.feature.search.domain.usecase.SearchUseCase
-import plus.vplan.app.utils.now
 
 class SearchViewModel(
     private val searchUseCase: SearchUseCase,

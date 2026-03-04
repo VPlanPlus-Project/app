@@ -30,6 +30,7 @@ import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
@@ -39,7 +40,6 @@ import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.inWholeMinutes
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 

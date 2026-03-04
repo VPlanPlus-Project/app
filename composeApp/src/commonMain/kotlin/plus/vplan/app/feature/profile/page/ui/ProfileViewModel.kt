@@ -21,6 +21,7 @@ import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
@@ -31,7 +32,6 @@ import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.feature.profile.page.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
-import plus.vplan.app.utils.now
 
 class ProfileViewModel(
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,

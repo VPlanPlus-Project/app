@@ -8,10 +8,10 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.AppBuildConfig
+import plus.vplan.app.core.data.news.NewsRepository
 import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.core.data.news.NewsRepository
-import plus.vplan.app.utils.now
+import plus.vplan.app.core.utils.date.now
 
 class GetNewsUseCase(
     private val newsRepository: NewsRepository

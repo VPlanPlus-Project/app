@@ -28,13 +28,13 @@ import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedGrade
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.repository.VppIdRepository
 import plus.vplan.app.domain.repository.base.ResponsePreference
-import plus.vplan.app.utils.now
 
 class AnalyticsViewModel(
     private val vppIdRepository: VppIdRepository

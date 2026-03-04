@@ -14,6 +14,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.data.FcmRepository
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.group.GroupRepository
@@ -23,7 +24,7 @@ import plus.vplan.app.core.database.model.database.DbFcmLog
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.domain.repository.FcmRepository
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
@@ -36,7 +37,6 @@ import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
-import plus.vplan.app.utils.now
 
 class DeveloperSettingsViewModel(
     private val fullSyncUseCase: FullSyncUseCase,

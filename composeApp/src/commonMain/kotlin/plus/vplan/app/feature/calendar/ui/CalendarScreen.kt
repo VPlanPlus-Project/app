@@ -90,8 +90,9 @@ import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Day
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.components.DisplaySelectType
@@ -113,7 +114,6 @@ import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.ui.thenIf
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res

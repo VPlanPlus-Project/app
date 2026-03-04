@@ -61,10 +61,11 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.core.model.Lesson
-import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Homework
+import plus.vplan.app.core.model.Lesson
+import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.LessonRendering
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
@@ -77,7 +78,6 @@ import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.minusWithCapAtMidnight
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.plusWithCapAtMidnight
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp

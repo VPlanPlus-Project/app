@@ -27,10 +27,10 @@ import kotlinx.datetime.format.Padding
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.mediumDayOfWeekNames
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortMonthNames
 import plus.vplan.app.utils.untilText
 import vplanplus.composeapp.generated.resources.Res

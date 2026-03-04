@@ -27,6 +27,7 @@ import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
@@ -42,7 +43,6 @@ import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
-import plus.vplan.app.utils.now
 
 class GradesViewModel(
     private val calculateAverageUseCase: CalculateAverageUseCase,

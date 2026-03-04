@@ -32,7 +32,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
-import plus.vplan.app.utils.now
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.utils.plus
 import vplanplus.composeapp.generated.resources.Res
 import vplanplus.composeapp.generated.resources.arrow_left

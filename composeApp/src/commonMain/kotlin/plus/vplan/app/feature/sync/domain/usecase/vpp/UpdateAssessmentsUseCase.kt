@@ -2,7 +2,6 @@ package plus.vplan.app.feature.sync.domain.usecase.vpp
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -13,14 +12,13 @@ import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
-import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileAssessmentIndexUseCase
-import plus.vplan.app.utils.now
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.shortMonthNames
 import plus.vplan.app.utils.until

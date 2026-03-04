@@ -1,24 +1,18 @@
-@file:OptIn(ExperimentalTime::class)
-
 package plus.vplan.app.utils
 
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
 import kotlin.math.abs
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
-import kotlin.time.ExperimentalTime
 
 infix operator fun LocalDate.plus(duration: Duration): LocalDate {
     return this.plus(duration.inWholeDays, DateTimeUnit.DAY)
@@ -26,10 +20,6 @@ infix operator fun LocalDate.plus(duration: Duration): LocalDate {
 
 infix operator fun LocalDate.minus(duration: Duration): LocalDate {
     return this.minus(duration.inWholeDays, DateTimeUnit.DAY)
-}
-
-fun LocalDate.Companion.now(): LocalDate {
-    return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 }
 
 fun LocalDate.atStartOfMonth(): LocalDate {

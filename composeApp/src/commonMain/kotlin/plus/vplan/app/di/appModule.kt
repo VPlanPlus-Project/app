@@ -25,6 +25,8 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
+import plus.vplan.app.core.data.FcmRepository
+import plus.vplan.app.core.data.FcmRepositoryImpl
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.KeyValueRepositoryImpl
 import plus.vplan.app.core.data.assessment.AssessmentRepository
@@ -73,14 +75,12 @@ import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.core.data.week.WeekRepositoryImpl
 import plus.vplan.app.core.database.di.databaseModule
-import plus.vplan.app.data.repository.FcmRepositoryImpl
 import plus.vplan.app.data.repository.Stundenplan24RepositoryImpl
 import plus.vplan.app.data.repository.SubstitutionPlanRepositoryImpl
 import plus.vplan.app.data.repository.TimetableRepositoryImpl
 import plus.vplan.app.data.repository.VppIdRepositoryImpl
 import plus.vplan.app.data.service.ProfileServiceImpl
 import plus.vplan.app.domain.di.domainModule
-import plus.vplan.app.domain.repository.FcmRepository
 import plus.vplan.app.domain.repository.Stundenplan24Repository
 import plus.vplan.app.domain.repository.SubstitutionPlanRepository
 import plus.vplan.app.domain.repository.VppIdRepository
@@ -247,6 +247,7 @@ val appModule = module(createdAtStart = true) {
     }
 
     singleOf(::KeyValueRepositoryImpl).bind<KeyValueRepository>()
+    singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
 
     singleOf(::Stundenplan24RepositoryImpl).bind<Stundenplan24Repository>()
     singleOf(::ProfileRepositoryImpl).bind<ProfileRepository>()
@@ -254,7 +255,6 @@ val appModule = module(createdAtStart = true) {
     singleOf(::TimetableRepositoryImpl).bind<TimetableRepository>()
     singleOf(::SubstitutionPlanRepositoryImpl).bind<SubstitutionPlanRepository>()
     singleOf(::VppIdRepositoryImpl).bind<VppIdRepository>()
-    singleOf(::FcmRepositoryImpl).bind<FcmRepository>()
 
     singleOf(::ProfileServiceImpl).bind<ProfileService>()
 

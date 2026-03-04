@@ -8,7 +8,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
@@ -27,8 +26,4 @@ operator fun LocalDateTime.plus(duration: Duration): LocalDateTime {
 operator fun LocalDateTime.minus(duration: Duration): LocalDateTime {
     val instant = toInstant(TimeZone.UTC)
     return instant.minus(duration).toLocalDateTime(TimeZone.UTC)
-}
-
-fun LocalDateTime.Companion.now(): LocalDateTime {
-    return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 }
