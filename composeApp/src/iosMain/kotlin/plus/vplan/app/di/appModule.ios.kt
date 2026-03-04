@@ -8,10 +8,8 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
 import plus.vplan.app.core.data.file.FileOpener
 import plus.vplan.app.core.data.file.ThumbnailGenerator
-import plus.vplan.app.data.repository.LocalFileRepositoryImpl
 import plus.vplan.app.data.repository.PlatformNotificationRepositoryImpl
 import plus.vplan.app.domain.model.OpenQuicklook
-import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.repository.PlatformNotificationRepository
 import plus.vplan.app.quicklook
 import plus.vplan.app.ui.platform.RunBiometricAuthentication
@@ -19,7 +17,6 @@ import plus.vplan.app.ui.platform.RunBiometricAuthenticationImpl
 
 @OptIn(ExperimentalForeignApi::class)
 actual val platformModule: Module = module {
-    single<LocalFileRepository> { LocalFileRepositoryImpl() }
     single<PlatformNotificationRepository> { PlatformNotificationRepositoryImpl() }
     single<RunBiometricAuthentication> { RunBiometricAuthenticationImpl() }
     

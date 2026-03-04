@@ -4,6 +4,7 @@ import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.captureError
+import plus.vplan.app.core.data.file.FileRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
@@ -16,7 +17,6 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.domain.repository.LocalFileRepository
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.usecase.file.UploadFileUseCase
 import plus.vplan.app.ui.common.AttachedFile
@@ -27,7 +27,7 @@ class CreateHomeworkUseCase(
     private val groupRepository: GroupRepository,
     private val uploadFileUseCase: UploadFileUseCase,
     private val vppDatabase: VppDatabase,
-    private val localFileRepository: LocalFileRepository,
+    private val fileRepository: FileRepository,
     private val profileService: ProfileService,
     private val subjectInstanceRepository: SubjectInstanceRepository,
 ) {
@@ -179,7 +179,7 @@ class CreateHomeworkUseCase(
                     mimeType = null
                 ))
 
-                localFileRepository.writeFile("./files/${file.id}", selectedFiles.first { it.name == file.name }.platformFile.readBytes())
+                fileRepository.writeLocalFile(file.id, selectedFiles.first { it.name == file.name }.platformFile.readBytes())
             }
         }
 

@@ -48,6 +48,9 @@ interface FileRepository {
     // File opening
     suspend fun openFile(file: File): Response<Unit>
     
+    // Local file operations
+    suspend fun writeLocalFile(fileId: Int, content: ByteArray)
+    
     // Thumbnail operations
     suspend fun getThumbnail(file: File): ImageBitmap?
     suspend fun generateThumbnail(file: File): Response<ImageBitmap>

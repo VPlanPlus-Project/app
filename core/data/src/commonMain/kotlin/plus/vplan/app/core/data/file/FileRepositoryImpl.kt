@@ -309,6 +309,12 @@ class FileRepositoryImpl(
         }
     }
     
+    override suspend fun writeLocalFile(fileId: Int, content: ByteArray) = withContext(Dispatchers.IO) {
+        val filePath = "files/$fileId"
+        val fullPath = getFileSystemPath(filePath)
+        writeFile(fullPath, content)
+    }
+    
     private fun detectMimeType(fileName: String): String {
         return when (fileName.substringAfterLast('.', "").lowercase()) {
             "pdf" -> "application/pdf"
