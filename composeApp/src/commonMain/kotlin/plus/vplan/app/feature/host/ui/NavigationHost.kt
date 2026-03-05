@@ -11,6 +11,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.navigation.compose.NavHost
@@ -23,7 +24,10 @@ import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
+import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
@@ -81,8 +85,20 @@ fun NavigationHost(task: StartTask?) {
         navController = navigationHostController,
         startDestination = if (state.hasProfileAtAppStartup) AppScreen.MainScreen else AppScreen.Onboarding(null, false)
     ) {
-        composable<AppScreen.Onboarding> {
+        composable<AppScreen.Onboarding> { backStackEntry ->
+            val args = backStackEntry.toRoute<AppScreen.Onboarding>()
+            val schoolRepository = koinInject<SchoolRepository>()
+            val school by produceState<School.AppSchool?>(null, args.schoolIdentifier) {
+                val aliases = args.schoolIdentifier
+                    ?.mapNotNull { runCatching { Alias.fromString(it) }.getOrNull() }
+                    ?.toSet()
+                    .orEmpty()
+                value = if (aliases.isNotEmpty()) {
+                    schoolRepository.getByIds(aliases).first() as? School.AppSchool
+                } else null
+            }
             OnboardingView(
+                school = school,
                 onFinish = {
                     FullSyncUseCase.isOnboardingRunning = false
                     navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) }

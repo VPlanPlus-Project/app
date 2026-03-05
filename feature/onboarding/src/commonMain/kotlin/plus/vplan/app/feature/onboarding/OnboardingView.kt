@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.model.School
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.finished.ui.FinishedScreen
 import plus.vplan.app.feature.onboarding.stage.loading_data.ui.LoadingDataDialogContent
@@ -25,11 +26,17 @@ import plus.vplan.app.feature.onboarding.stage.welcome.WelcomeScreen
 import plus.vplan.app.feature.onboarding.stage.welcome.components.BlurredBackground
 
 @Composable
-fun OnboardingView(onFinish: () -> Unit = {}) {
+fun OnboardingView(
+    school: School.AppSchool? = null,
+    onFinish: () -> Unit = {},
+) {
     val viewModel = koinViewModel<OnboardingViewModel>()
     val onboardingState by viewModel.state.collectAsState()
 
-    LaunchedEffect(Unit) { viewModel.reset() }
+    LaunchedEffect(school) {
+        if (school != null) viewModel.initWithSchool(school)
+        else viewModel.reset()
+    }
 
     Box(Modifier.fillMaxSize()) {
         AnimatedVisibility(

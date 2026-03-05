@@ -153,7 +153,6 @@ import vplanplus.core.ui.generated.resources.undo_2
 import vplanplus.core.ui.generated.resources.undraw_profile
 import vplanplus.core.ui.generated.resources.undraw_relaxing_at_home_black
 import vplanplus.core.ui.generated.resources.undraw_relaxing_at_home_white
-import vplanplus.core.ui.generated.resources.undraw_warning
 import vplanplus.core.ui.generated.resources.union_jack
 import vplanplus.core.ui.generated.resources.user
 import vplanplus.core.ui.generated.resources.user_pen
@@ -295,7 +294,6 @@ object CoreUiRes {
         val undraw_profile: DrawableResource get() = Res.drawable.undraw_profile
         val undraw_relaxing_at_home_black: DrawableResource get() = Res.drawable.undraw_relaxing_at_home_black
         val undraw_relaxing_at_home_white: DrawableResource get() = Res.drawable.undraw_relaxing_at_home_white
-        val undraw_warning: DrawableResource get() = Res.drawable.undraw_warning
     }
 
     object font {
