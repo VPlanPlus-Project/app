@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import network.chaintech.cmpeasypermission.PermissionState
 import network.chaintech.cmpeasypermission.RequestPermission
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
+import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.Button
 import plus.vplan.app.core.ui.components.ButtonSize
@@ -30,7 +33,12 @@ import plus.vplan.app.core.ui.components.ButtonState
 
 @Composable
 internal fun PermissionsScreen(onDone: () -> Unit) {
+    val notificationRepository = koinInject<NotificationRepository>()
     var requestPermission by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (notificationRepository.isNotificationPermissionGranted()) onDone()
+    }
 
     Column(
         modifier = Modifier

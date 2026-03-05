@@ -22,8 +22,7 @@ class NotificationRepositoryImpl(
         const val VPLANPLUS = "VPlanPlus"
     }
 
-    override suspend fun initialize() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    override suspend fun initialize() {        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "VPlanPlus Benachrichtigungen"
             val descriptionText = "Benachrichtigungen für VPlanPlus"
             val importance = NotificationManager.IMPORTANCE_DEFAULT
@@ -32,6 +31,11 @@ class NotificationRepositoryImpl(
             val notificationManager = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(mChannel)
         }
+    }
+
+    override suspend fun isNotificationPermissionGranted(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     }
 
     @SuppressLint("MissingPermission")
