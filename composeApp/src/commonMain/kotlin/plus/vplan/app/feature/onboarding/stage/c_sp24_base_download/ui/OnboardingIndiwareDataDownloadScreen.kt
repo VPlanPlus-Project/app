@@ -25,12 +25,11 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase.SetUpSchoolDataState
 import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase.SetUpSchoolDataStep
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.download
+
 
 @Composable
 fun OnboardingIndiwareDataDownloadScreen(
@@ -73,7 +72,7 @@ private fun OnboardingIndiwareDataDownloadContent(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        painter = painterResource(Res.drawable.download),
+                        painter = painterResource(CoreUiRes.drawable.download),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.primary
@@ -124,7 +123,7 @@ private fun OnboardingIndiwareDataDownloadContent(
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
-                                                painter = painterResource(Res.drawable.check),
+                                                painter = painterResource(CoreUiRes.drawable.check),
                                                 contentDescription = null,
                                                 modifier = Modifier.size(24.dp)
                                             )

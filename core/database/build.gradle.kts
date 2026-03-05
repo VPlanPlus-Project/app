@@ -7,7 +7,7 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "plus.vplan.app.core.database"
         compileSdk = applicationConfig.android.targetSdk
         minSdk = applicationConfig.android.minSdk

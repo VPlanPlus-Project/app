@@ -25,10 +25,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.utils.toDp
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.circle_user_round
-import vplanplus.composeapp.generated.resources.house
+
 
 @Composable
 fun VppIdSetupScreen(
@@ -69,7 +68,7 @@ fun VppIdSetupScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        painter = painterResource(Res.drawable.circle_user_round),
+                        painter = painterResource(CoreUiRes.drawable.circle_user_round),
                         contentDescription = null,
                         modifier = Modifier.size(32.dp),
                         tint = MaterialTheme.colorScheme.primary
@@ -93,7 +92,7 @@ fun VppIdSetupScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.house),
+                                painter = painterResource(CoreUiRes.drawable.house),
                                 contentDescription = null,
                                 modifier = Modifier.size(LocalTextStyle.current.lineHeight.toDp())
                             )

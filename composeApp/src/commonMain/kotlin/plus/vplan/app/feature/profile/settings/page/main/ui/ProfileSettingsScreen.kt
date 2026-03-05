@@ -50,20 +50,14 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.VppIdConnectionState
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.VppIdManagementDrawer
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import plus.vplan.app.utils.DOT
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.circle_user_round
-import vplanplus.composeapp.generated.resources.graduation_cap
-import vplanplus.composeapp.generated.resources.pencil
-import vplanplus.composeapp.generated.resources.trash_2
-import vplanplus.composeapp.generated.resources.x
+
 
 @Composable
 fun ProfileSettingsScreen(
@@ -110,7 +104,7 @@ private fun ProfileSettingsContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -121,7 +115,7 @@ private fun ProfileSettingsContent(
                         onClick = { isDeleteDialogVisible = true }
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.trash_2),
+                            painter = painterResource(CoreUiRes.drawable.trash_2),
                             modifier = Modifier.size(20.dp),
                             contentDescription = null
                         )
@@ -167,7 +161,7 @@ private fun ProfileSettingsContent(
                             modifier = Modifier.size(56.dp)
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.x),
+                                painter = painterResource(CoreUiRes.drawable.x),
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -181,7 +175,7 @@ private fun ProfileSettingsContent(
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.check),
+                                painter = painterResource(CoreUiRes.drawable.check),
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -199,7 +193,7 @@ private fun ProfileSettingsContent(
                     )
                     IconButton(onClick = { isRenamingInProgress = true }) {
                         Icon(
-                            painter = painterResource(Res.drawable.pencil),
+                            painter = painterResource(CoreUiRes.drawable.pencil),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -244,7 +238,7 @@ private fun ProfileSettingsContent(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.circle_user_round),
+                            painter = painterResource(CoreUiRes.drawable.circle_user_round),
                             contentDescription = null,
                             modifier = Modifier.size(32.dp)
                         )
@@ -302,7 +296,7 @@ private fun ProfileSettingsContent(
             SettingsRecord(
                 title = "Stundenauswahl",
                 subtitle = "Wähle aus, welche Stunden dir angezeigt werden.",
-                icon = painterResource(Res.drawable.graduation_cap),
+                icon = painterResource(CoreUiRes.drawable.graduation_cap),
                 onClick = onOpenSubjectInstances,
                 showArrow = true
             )
@@ -319,7 +313,7 @@ private fun ProfileSettingsContent(
             onDismissRequest = { isDeleteDialogVisible = false },
             icon = {
                 Icon(
-                    painter = painterResource(Res.drawable.trash_2),
+                    painter = painterResource(CoreUiRes.drawable.trash_2),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )

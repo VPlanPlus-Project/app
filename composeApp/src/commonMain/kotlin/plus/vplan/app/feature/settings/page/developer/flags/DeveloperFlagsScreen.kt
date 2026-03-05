@@ -26,9 +26,9 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.settings.ui.components.SettingsRecordCheckbox
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
+
 
 @Composable
 fun DeveloperFlagsScreen(
@@ -59,7 +59,7 @@ private fun DeveloperFlagsContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )

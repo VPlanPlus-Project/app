@@ -18,8 +18,8 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.calendar_cog
+import plus.vplan.app.core.ui.CoreUiRes
+
 
 @Composable
 fun SubjectInstanceTitle(onChangeProfile: () -> Unit) {
@@ -29,7 +29,7 @@ fun SubjectInstanceTitle(onChangeProfile: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(Res.drawable.calendar_cog),
+                painter = painterResource(CoreUiRes.drawable.calendar_cog),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary

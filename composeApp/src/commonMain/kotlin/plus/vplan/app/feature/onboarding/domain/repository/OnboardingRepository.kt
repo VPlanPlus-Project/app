@@ -1,9 +1,9 @@
 package plus.vplan.app.feature.onboarding.domain.repository
 
 import kotlinx.coroutines.flow.Flow
+import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingSp24State
-import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
-import plus.vplan.app.ui.components.ButtonState
+import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.Sp24CredentialsState
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 
 interface OnboardingRepository {
@@ -32,19 +32,4 @@ interface OnboardingRepository {
     suspend fun setNeedToDownloadLessonData(needToDownload: Boolean)
 
     fun getState(): Flow<OnboardingSp24State>
-}
-
-enum class Sp24CredentialsState {
-    NOT_CHECKED,
-    LOADING,
-    VALID,
-    INVALID,
-    ERROR
-}
-
-fun Sp24CredentialsState.toButtonState(): ButtonState {
-    return when (this) {
-        Sp24CredentialsState.LOADING -> ButtonState.Loading
-        else -> ButtonState.Enabled
-    }
 }

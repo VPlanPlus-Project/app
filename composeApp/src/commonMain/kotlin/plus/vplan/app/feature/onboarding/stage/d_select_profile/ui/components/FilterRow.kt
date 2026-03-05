@@ -13,10 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.ProfileType
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.square_user_round
-import vplanplus.composeapp.generated.resources.users
+import plus.vplan.app.core.ui.CoreUiRes
+
+
+
 
 @Composable
 fun FilterRow(
@@ -40,13 +40,13 @@ fun FilterRow(
                 ) { selected ->
                     if (!selected) {
                         Icon(
-                            painter = painterResource(Res.drawable.users),
+                            painter = painterResource(CoreUiRes.drawable.users),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
                     } else {
                         Icon(
-                            painter = painterResource(Res.drawable.check),
+                            painter = painterResource(CoreUiRes.drawable.check),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -67,13 +67,13 @@ fun FilterRow(
                 ) { selected ->
                     if (!selected) {
                         Icon(
-                            painter = painterResource(Res.drawable.square_user_round),
+                            painter = painterResource(CoreUiRes.drawable.square_user_round),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
                     } else {
                         Icon(
-                            painter = painterResource(Res.drawable.check),
+                            painter = painterResource(CoreUiRes.drawable.check),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )

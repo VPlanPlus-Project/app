@@ -27,10 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.plus
-import vplanplus.composeapp.generated.resources.x
+
 
 @Composable
 fun NewTaskRow(
@@ -61,7 +60,7 @@ fun NewTaskRow(
                         strokeWidth = 2.dp
                     )
                     else -> Icon(
-                        painter = painterResource(Res.drawable.plus),
+                        painter = painterResource(CoreUiRes.drawable.plus),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp).padding(2.dp)
                     )
@@ -92,7 +91,7 @@ fun NewTaskRow(
                 onClick = cancel,
             ) {
                 Icon(
-                    painter = painterResource(Res.drawable.x),
+                    painter = painterResource(CoreUiRes.drawable.x),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp).padding(2.dp)
                 )

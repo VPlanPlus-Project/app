@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.calendar.ui.components.calendar
 
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ScrollState
@@ -65,7 +66,9 @@ import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.until
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.LessonRendering
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
@@ -82,11 +85,6 @@ import plus.vplan.app.utils.plusWithCapAtMidnight
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.transparent
-import plus.vplan.app.utils.until
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.chevron_right
-import vplanplus.composeapp.generated.resources.info
-import vplanplus.composeapp.generated.resources.x
 import kotlin.time.Duration.Companion.minutes
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -290,7 +288,7 @@ fun CalendarView(
                                                             modifier = Modifier.padding(start = 16.dp)
                                                         ) {
                                                             Icon(
-                                                                painter = painterResource(Res.drawable.info),
+                                                                painter = painterResource(CoreUiRes.drawable.info),
                                                                 contentDescription = null,
                                                                 modifier = Modifier.size(8.dp),
                                                                 tint = MaterialTheme.colorScheme.onSurface
@@ -310,7 +308,7 @@ fun CalendarView(
                                                                 contentAlignment = Alignment.Center
                                                             ) {
                                                                 Icon(
-                                                                    painter = painterResource(Res.drawable.info),
+                                                                    painter = painterResource(CoreUiRes.drawable.info),
                                                                     contentDescription = null,
                                                                     modifier = Modifier
                                                                         .size(8.dp),
@@ -367,7 +365,7 @@ fun CalendarView(
             ) {
                 if (info != null) {
                     InfoCard(
-                        imageVector = Res.drawable.info,
+                        imageVector = CoreUiRes.drawable.info,
                         title = "Informationen deiner Schule",
                         text = info,
                         shadow = false
@@ -417,7 +415,7 @@ fun CalendarView(
                                     }
                                 }
                                 Icon(
-                                    painter = painterResource(Res.drawable.chevron_right),
+                                    painter = painterResource(CoreUiRes.drawable.chevron_right),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp)
                                 )
@@ -437,7 +435,7 @@ fun CalendarView(
                                 )
                                 IconButton(onClick = { isEntityListExpanded = false }) {
                                     Icon(
-                                        painter = painterResource(Res.drawable.x),
+                                        painter = painterResource(CoreUiRes.drawable.x),
                                         contentDescription = null,
                                         modifier = Modifier.size(24.dp)
                                     )

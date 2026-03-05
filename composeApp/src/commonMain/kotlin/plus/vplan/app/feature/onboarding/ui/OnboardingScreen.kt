@@ -25,14 +25,14 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.Alias
-import plus.vplan.app.feature.onboarding.stage.a_school_search.ui.OnboardingSchoolSearch
-import plus.vplan.app.feature.onboarding.stage.a_welcome.ui.OnboardingWelcomeScreen
-import plus.vplan.app.feature.onboarding.stage.a_welcome.ui.components.BlurredBackground
-import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.OnboardingIndiwareLoginScreen
 import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.ui.OnboardingIndiwareDataDownloadScreen
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.OnboardingSelectProfileScreen
 import plus.vplan.app.feature.onboarding.stage.e_permissions.ui.OnboardingPermissionsScreen
 import plus.vplan.app.feature.onboarding.stage.f_finished.ui.OnboardingFinishedScreen
+import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.Stundenplan24CredentialsScreen
+import plus.vplan.app.feature.onboarding.stage.school_select.ui.SchoolSearch
+import plus.vplan.app.feature.onboarding.stage.welcome.WelcomeScreen
+import plus.vplan.app.feature.onboarding.stage.welcome.components.BlurredBackground
 
 val enterSlideTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) =
     {
@@ -104,7 +104,7 @@ fun OnboardingScreen(
             popExitTransition = exitSlideTransitionRight
         ) {
             composable<OnboardingScreen.OnboardingScreenStart> {
-                OnboardingWelcomeScreen(
+                WelcomeScreen(
                     onNext = remember { {
                         showColorfulBackground = false
                         navController.navigate(OnboardingScreen.OnboardingScreenSchoolSearch)
@@ -117,13 +117,11 @@ fun OnboardingScreen(
             }
 
             composable<OnboardingScreen.OnboardingScreenSchoolSearch> {
-                OnboardingSchoolSearch(
-                    navController = navController
-                )
+                SchoolSearch({})
             }
 
             composable<OnboardingScreen.OnboardingScreenSp24Login> {
-                OnboardingIndiwareLoginScreen(navController)
+                Stundenplan24CredentialsScreen(null, { _, _ -> })
             }
 
             composable<OnboardingScreen.OnboardingIndiwareDataDownload> {

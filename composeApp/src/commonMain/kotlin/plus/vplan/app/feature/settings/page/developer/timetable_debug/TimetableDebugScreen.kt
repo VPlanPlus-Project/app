@@ -31,11 +31,10 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.utils.plus
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.Uuid
 
@@ -67,7 +66,7 @@ private fun TimetableDebugContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )

@@ -43,6 +43,7 @@ import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.path
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
@@ -59,11 +60,7 @@ import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.FullscreenDrawerContext
 import plus.vplan.app.ui.components.InfoCard
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.cloud_alert
-import vplanplus.composeapp.generated.resources.triangle_alert
-import vplanplus.composeapp.generated.resources.x
+
 
 @Composable
 fun NewHomeworkDrawerContent(
@@ -77,7 +74,7 @@ fun NewHomeworkDrawerContent(
         AlertDialog(
             icon = {
                 Icon(
-                    painter = painterResource(Res.drawable.triangle_alert),
+                    painter = painterResource(CoreUiRes.drawable.triangle_alert),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )
@@ -182,7 +179,7 @@ fun NewHomeworkDrawerContent(
                                 onClick = { state.tasks.toList().getOrNull(index)?.first?.let { viewModel.onEvent(NewHomeworkEvent.RemoveTask(it)) } },
                             ) {
                                 Icon(
-                                    painter = painterResource(Res.drawable.x),
+                                    painter = painterResource(CoreUiRes.drawable.x),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
                                     tint = MaterialTheme.colorScheme.onSurface
@@ -279,7 +276,7 @@ fun NewHomeworkDrawerContent(
                 .padding(horizontal = 16.dp)
         ) {
             InfoCard(
-                imageVector = Res.drawable.cloud_alert,
+                imageVector = CoreUiRes.drawable.cloud_alert,
                 title = "Fehler",
                 text = "Die Hausaufgabe wurde nicht gespeichert.",
                 textColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -294,7 +291,7 @@ fun NewHomeworkDrawerContent(
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp),
             text = "Speichern",
-            icon = Res.drawable.check,
+            icon = CoreUiRes.drawable.check,
             state = if (state.savingState == UnoptimisticTaskState.InProgress) ButtonState.Loading else ButtonState.Enabled,
             size = ButtonSize.Normal,
             onlyEventOnActive = true,

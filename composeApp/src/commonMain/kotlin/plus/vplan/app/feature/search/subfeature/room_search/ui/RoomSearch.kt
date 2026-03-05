@@ -63,6 +63,8 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.utils.date.until
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.Occupancy
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
@@ -70,9 +72,6 @@ import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.minusWithCapAtMidnight
 import plus.vplan.app.utils.plusWithCapAtMidnight
 import plus.vplan.app.utils.regularTimeFormat
-import plus.vplan.app.utils.until
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.time.Duration.Companion.hours
@@ -95,7 +94,7 @@ fun RoomSearch(
                 navigationIcon = {
                     IconButton(onClick = navHostController::navigateUp) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )

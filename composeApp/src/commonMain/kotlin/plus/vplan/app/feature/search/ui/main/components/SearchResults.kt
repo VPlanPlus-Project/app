@@ -33,6 +33,7 @@ import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
@@ -46,14 +47,7 @@ import plus.vplan.app.utils.safeBottomPadding
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
 import plus.vplan.app.utils.untilRelativeText
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.book_open
-import vplanplus.composeapp.generated.resources.door_closed
-import vplanplus.composeapp.generated.resources.file_badge
-import vplanplus.composeapp.generated.resources.notebook_text
-import vplanplus.composeapp.generated.resources.search_x
-import vplanplus.composeapp.generated.resources.square_user_round
-import vplanplus.composeapp.generated.resources.users
+
 
 @Composable
 private fun sectionTitleFont() = MaterialTheme.typography.titleMedium
@@ -86,7 +80,7 @@ fun SearchResults(
                 return@Column
             }
             Icon(
-                painter = painterResource(Res.drawable.search_x),
+                painter = painterResource(CoreUiRes.drawable.search_x),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )
@@ -122,12 +116,12 @@ fun SearchResults(
                 ) {
                     Icon(
                         painter = painterResource(when (type) {
-                            SearchResult.Type.Group -> Res.drawable.users
-                            SearchResult.Type.Teacher -> Res.drawable.square_user_round
-                            SearchResult.Type.Room -> Res.drawable.door_closed
-                            SearchResult.Type.Homework -> Res.drawable.book_open
-                            SearchResult.Type.Assessment -> Res.drawable.notebook_text
-                            SearchResult.Type.Grade -> Res.drawable.file_badge
+                            SearchResult.Type.Group -> CoreUiRes.drawable.users
+                            SearchResult.Type.Teacher -> CoreUiRes.drawable.square_user_round
+                            SearchResult.Type.Room -> CoreUiRes.drawable.door_closed
+                            SearchResult.Type.Homework -> CoreUiRes.drawable.book_open
+                            SearchResult.Type.Assessment -> CoreUiRes.drawable.notebook_text
+                            SearchResult.Type.Grade -> CoreUiRes.drawable.file_badge
                         }),
                         contentDescription = null,
                         modifier = Modifier.size(sectionTitleFont().lineHeight.toDp())

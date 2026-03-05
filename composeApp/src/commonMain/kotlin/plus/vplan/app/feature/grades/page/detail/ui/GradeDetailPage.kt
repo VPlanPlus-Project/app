@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.components.GivenAtRow
 import plus.vplan.app.feature.grades.page.detail.ui.components.GivenByRow
@@ -37,12 +38,7 @@ import plus.vplan.app.feature.grades.page.detail.ui.components.UserRow
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
 import plus.vplan.app.utils.safeBottomPadding
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.info
-import vplanplus.composeapp.generated.resources.lock
-import vplanplus.composeapp.generated.resources.lock_open
-import vplanplus.composeapp.generated.resources.rotate_cw
+
 
 @Composable
 fun GradeDetailPage(
@@ -90,7 +86,7 @@ fun GradeDetailPage(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.lock_open),
+                                painter = painterResource(CoreUiRes.drawable.lock_open),
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -136,7 +132,7 @@ fun GradeDetailPage(
                         onClick = { onEvent(GradeDetailEvent.LockGrades) }
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.lock),
+                            painter = painterResource(CoreUiRes.drawable.lock),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp).padding(2.dp)
                         )
@@ -156,19 +152,19 @@ fun GradeDetailPage(
                                 )
 
                                 UnoptimisticTaskState.Error -> Icon(
-                                    painter = painterResource(Res.drawable.info),
+                                    painter = painterResource(CoreUiRes.drawable.info),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp).padding(2.dp)
                                 )
 
                                 UnoptimisticTaskState.Success -> Icon(
-                                    painter = painterResource(Res.drawable.check),
+                                    painter = painterResource(CoreUiRes.drawable.check),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp).padding(2.dp)
                                 )
 
                                 null -> Icon(
-                                    painter = painterResource(Res.drawable.rotate_cw),
+                                    painter = painterResource(CoreUiRes.drawable.rotate_cw),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp).padding(2.dp)
                                 )

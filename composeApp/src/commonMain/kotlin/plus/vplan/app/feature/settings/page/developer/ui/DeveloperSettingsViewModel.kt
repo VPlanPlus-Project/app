@@ -25,16 +25,16 @@ import plus.vplan.app.core.database.model.database.DbFcmLog
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 

@@ -16,11 +16,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.chevron_down
+import plus.vplan.app.core.ui.CoreUiRes
+
 
 @Composable
 fun ProfileTitle(
@@ -51,7 +51,7 @@ fun ProfileTitle(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                painter = painterResource(Res.drawable.chevron_down),
+                painter = painterResource(CoreUiRes.drawable.chevron_down),
                 modifier = Modifier.size(18.dp),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSecondaryContainer

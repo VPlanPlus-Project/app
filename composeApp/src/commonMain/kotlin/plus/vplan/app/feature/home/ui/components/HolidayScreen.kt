@@ -23,9 +23,9 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.undraw_relaxing_at_home_black
-import vplanplus.composeapp.generated.resources.undraw_relaxing_at_home_white
+import plus.vplan.app.core.ui.CoreUiRes
+
+
 
 @Composable
 fun HolidayScreen(
@@ -42,8 +42,8 @@ fun HolidayScreen(
     ) {
         Image(
             painter = painterResource(
-                if (!isSystemInDarkTheme()) Res.drawable.undraw_relaxing_at_home_white
-                else Res.drawable.undraw_relaxing_at_home_black
+                if (!isSystemInDarkTheme()) CoreUiRes.drawable.undraw_relaxing_at_home_white
+                else CoreUiRes.drawable.undraw_relaxing_at_home_black
             ),
             contentDescription = null,
             modifier = Modifier.fillMaxWidth(),

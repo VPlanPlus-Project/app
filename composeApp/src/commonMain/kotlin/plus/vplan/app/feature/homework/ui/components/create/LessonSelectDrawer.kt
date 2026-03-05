@@ -38,11 +38,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.safeBottomPadding
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.users
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,7 +103,7 @@ private fun LessonSelectContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        painter = painterResource(Res.drawable.users),
+                        painter = painterResource(CoreUiRes.drawable.users),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = if (isSubjectInstanceNotSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface

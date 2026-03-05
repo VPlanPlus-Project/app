@@ -1,7 +1,6 @@
 package plus.vplan.app.feature.onboarding.domain.model
 
-import plus.vplan.app.feature.onboarding.domain.repository.Sp24CredentialsState
-import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
+import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.Sp24CredentialsState
 
 data class OnboardingSp24State(
     val sp24Id: Int? = null,

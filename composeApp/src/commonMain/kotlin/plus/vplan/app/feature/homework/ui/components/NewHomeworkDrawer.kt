@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.ui.components.FullscreenDrawer
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.x
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,7 +52,7 @@ fun NewHomeworkDrawer(
                 navigationIcon = {
                     IconButton(onClick = { onCloseClicked() }) {
                         Icon(
-                            painter = painterResource(Res.drawable.x),
+                            painter = painterResource(CoreUiRes.drawable.x),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )

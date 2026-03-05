@@ -22,15 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import plus.vplan.app.core.model.VppSchoolAuthentication
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.onboarding.stage.c_sp24_base_download.domain.usecase.SetUpSchoolDataResult
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.bug_play
-import vplanplus.composeapp.generated.resources.undraw_warning
+
 
 @Composable
 fun OnboardingSetupErrorScreen(
@@ -44,7 +43,7 @@ fun OnboardingSetupErrorScreen(
             .padding(24.dp),
     ) {
         Image(
-            painter = painterResource(Res.drawable.undraw_warning),
+            painter = painterResource(CoreUiRes.drawable.undraw_warning),
             contentDescription = null,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
@@ -69,7 +68,7 @@ fun OnboardingSetupErrorScreen(
             onClick = { isFeedbackDrawerVisible = true },
         ) {
             Icon(
-                painter = painterResource(Res.drawable.bug_play),
+                painter = painterResource(CoreUiRes.drawable.bug_play),
                 contentDescription = null,
                 modifier = Modifier
                     .padding(end = 4.dp)

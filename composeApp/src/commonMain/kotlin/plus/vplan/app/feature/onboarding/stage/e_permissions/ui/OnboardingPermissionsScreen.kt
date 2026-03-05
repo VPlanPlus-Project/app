@@ -26,14 +26,13 @@ import network.chaintech.cmpeasypermission.PermissionState
 import network.chaintech.cmpeasypermission.RequestPermission
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.utils.isPermissionGranted
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_right
-import vplanplus.composeapp.generated.resources.bell_ring
+
 
 @Composable
 fun OnboardingPermissionsScreen(
@@ -58,7 +57,7 @@ fun OnboardingPermissionsScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                painter = painterResource(Res.drawable.bell_ring),
+                painter = painterResource(CoreUiRes.drawable.bell_ring),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary
@@ -89,7 +88,7 @@ fun OnboardingPermissionsScreen(
             Button(
                 text = "Weiter",
                 state = ButtonState.Enabled,
-                icon = Res.drawable.arrow_right,
+                icon = CoreUiRes.drawable.arrow_right,
                 size = ButtonSize.Big,
                 onlyEventOnActive = true,
                 onClick = { requestPermission = true }

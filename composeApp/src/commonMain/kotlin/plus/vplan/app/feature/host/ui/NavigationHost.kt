@@ -24,12 +24,11 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
-import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.main.ui.MainScreenHost
-import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
+import plus.vplan.app.feature.onboarding.OnboardingView
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.feature.schulverwalter.domain.usecase.UpdateSchulverwalterAccessUseCase
 import plus.vplan.app.feature.vpp_id.ui.VppIdSetupScreen
@@ -82,11 +81,13 @@ fun NavigationHost(task: StartTask?) {
         startDestination = if (state.hasProfileAtAppStartup) AppScreen.MainScreen else AppScreen.Onboarding(null, false)
     ) {
         composable<AppScreen.Onboarding> { route ->
-            val args = route.toRoute<AppScreen.Onboarding>()
-            OnboardingScreen(
-                skipIntroAnimation = args.skipIntroAnimation,
-                useSchool = args.schoolIdentifier?.map { Alias.fromString(it) }?.toSet(),
-            ) { navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) } }
+//            val args = route.toRoute<AppScreen.Onboarding>()
+//            OnboardingScreen(
+//                skipIntroAnimation = args.skipIntroAnimation,
+//                useSchool = args.schoolIdentifier?.map { Alias.fromString(it) }?.toSet(),
+//            ) { navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) } }
+
+            OnboardingView()
         }
 
         composable<AppScreen.MainScreen> {

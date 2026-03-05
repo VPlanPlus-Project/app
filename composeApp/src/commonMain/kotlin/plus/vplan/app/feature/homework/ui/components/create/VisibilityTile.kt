@@ -27,9 +27,9 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.SubjectInstance
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.user
+import plus.vplan.app.core.ui.CoreUiRes
+
+
 
 @Composable
 fun VisibilityTile(
@@ -72,8 +72,8 @@ fun VisibilityTile(
                     ) {
                         Icon(
                             painter =
-                            if (displayVisibility) painterResource(Res.drawable.user)
-                            else painterResource(Res.drawable.check),
+                            if (displayVisibility) painterResource(CoreUiRes.drawable.user)
+                            else painterResource(CoreUiRes.drawable.check),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
                             tint = if (!displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
@@ -107,8 +107,8 @@ fun VisibilityTile(
                     ) {
                         Icon(
                             painter =
-                            if (!displayVisibility) painterResource(Res.drawable.user)
-                            else painterResource(Res.drawable.check),
+                            if (!displayVisibility) painterResource(CoreUiRes.drawable.user)
+                            else painterResource(CoreUiRes.drawable.check),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
                             tint = if (displayVisibility) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface

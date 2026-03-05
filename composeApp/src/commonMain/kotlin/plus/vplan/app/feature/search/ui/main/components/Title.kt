@@ -10,13 +10,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.ui.components.noRippleClickable
 import plus.vplan.app.ui.theme.displayFontFamily
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.search
+
 
 @Composable
 fun Title(
@@ -29,7 +29,7 @@ fun Title(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Icon(
-            painter = painterResource(Res.drawable.search),
+            painter = painterResource(CoreUiRes.drawable.search),
             contentDescription = null,
             modifier = Modifier.size(24.dp)
         )

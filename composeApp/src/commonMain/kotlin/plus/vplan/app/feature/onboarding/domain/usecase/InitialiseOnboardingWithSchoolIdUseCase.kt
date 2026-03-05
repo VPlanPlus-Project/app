@@ -7,8 +7,8 @@ import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.School
+import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
-import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
 import plus.vplan.lib.sp24.source.Authentication
 
 class InitialiseOnboardingWithSchoolIdUseCase(

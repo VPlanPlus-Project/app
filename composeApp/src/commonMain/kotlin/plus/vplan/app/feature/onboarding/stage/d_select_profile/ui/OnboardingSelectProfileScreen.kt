@@ -39,15 +39,14 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.ProfileType
-import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.FilterRow
 import plus.vplan.app.feature.onboarding.stage.d_select_profile.ui.components.SubjectInstanceTitle
 import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_right
-import vplanplus.composeapp.generated.resources.user_pen
+
 
 @Composable
 fun OnboardingSelectProfileScreen(
@@ -223,7 +222,7 @@ private fun OnboardingSelectProfileScreen(
                             Button(
                                 text = "Speichern",
                                 state = state.saveState.toButtonState(),
-                                icon = Res.drawable.arrow_right,
+                                icon = CoreUiRes.drawable.arrow_right,
                                 size = ButtonSize.Big,
                                 onlyEventOnActive = true,
                                 onClick = { onEvent(OnboardingProfileSelectionEvent.CommitProfile) }
@@ -236,7 +235,7 @@ private fun OnboardingSelectProfileScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.user_pen),
+                            painter = painterResource(CoreUiRes.drawable.user_pen),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
                             tint = MaterialTheme.colorScheme.primary

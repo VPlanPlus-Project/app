@@ -26,14 +26,14 @@ import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.CheckSp24CredentialsUseCase

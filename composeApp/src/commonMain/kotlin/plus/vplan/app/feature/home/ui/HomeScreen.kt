@@ -2,6 +2,7 @@
 
 package plus.vplan.app.feature.home.ui
 
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -75,6 +76,7 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
@@ -99,18 +101,6 @@ import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.transparent
 import plus.vplan.app.utils.untilRelativeText
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_right
-import vplanplus.composeapp.generated.resources.book_open
-import vplanplus.composeapp.generated.resources.chart_no_axes_gantt
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.clock_fading
-import vplanplus.composeapp.generated.resources.info
-import vplanplus.composeapp.generated.resources.key_round
-import vplanplus.composeapp.generated.resources.megaphone
-import vplanplus.composeapp.generated.resources.minus
-import vplanplus.composeapp.generated.resources.notebook_text
-import vplanplus.composeapp.generated.resources.triangle_alert
 import kotlin.uuid.ExperimentalUuidApi
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp
@@ -231,7 +221,7 @@ private fun HomeContent(
                                 shadow = true,
                                 buttonAction1 = { onOpenSchoolSettings(displaySchool!!.aliases.getByProvider(AliasProvider.Sp24)!!) },
                                 buttonText1 = "Aktualisieren",
-                                imageVector = Res.drawable.key_round
+                                imageVector = CoreUiRes.drawable.key_round
                             )
                         }
                     }
@@ -257,7 +247,7 @@ private fun HomeContent(
                                     openUrl(url)
                                 } },
                                 buttonText1 = "Aktualisieren",
-                                imageVector = Res.drawable.key_round
+                                imageVector = CoreUiRes.drawable.key_round
                             )
                         }
                     }
@@ -266,7 +256,7 @@ private fun HomeContent(
                         if (unreadNews.isEmpty()) return@unreadNews
                         Column {
                             FeedTitle(
-                                icon = Res.drawable.megaphone,
+                                icon = CoreUiRes.drawable.megaphone,
                                 title = "Ungelesene Meldungen"
                             )
                             Spacer(Modifier.size(8.dp))
@@ -312,7 +302,7 @@ private fun HomeContent(
 
                         Column {
                             FeedTitle(
-                                icon = Res.drawable.chart_no_axes_gantt,
+                                icon = CoreUiRes.drawable.chart_no_axes_gantt,
                                 title = if (isYourDayToday) "Dein Tag" else "Nächster Schultag",
                                 endText = buildString {
                                     append(state.day.day.date.format(LocalDate.Format {
@@ -343,7 +333,7 @@ private fun HomeContent(
                             if (info != null) DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = info)
                             if (state.day.substitution.isEmpty()) InfoCard(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                                imageVector = Res.drawable.triangle_alert,
+                                imageVector = CoreUiRes.drawable.triangle_alert,
                                 title = "Kein Vertretungsplan",
                                 text = buildString {
                                     append("Für ")
@@ -570,7 +560,7 @@ private fun HomeContent(
                                                             ) {
                                                                 if (lesson is Lesson.SubstitutionPlanLesson && lesson.info != null) Row {
                                                                     Icon(
-                                                                        painter = painterResource(Res.drawable.info),
+                                                                        painter = painterResource(CoreUiRes.drawable.info),
                                                                         contentDescription = "Information",
                                                                         modifier = Modifier
                                                                             .padding(end = 8.dp)
@@ -583,7 +573,7 @@ private fun HomeContent(
                                                                 }
                                                                 if (lesson is Lesson.TimetableLesson && lesson.limitedToWeeks != null) Row {
                                                                     Icon(
-                                                                        painter = painterResource(Res.drawable.info),
+                                                                        painter = painterResource(CoreUiRes.drawable.info),
                                                                         contentDescription = "Information",
                                                                         modifier = Modifier
                                                                             .padding(end = 8.dp)
@@ -602,7 +592,7 @@ private fun HomeContent(
                                                                         horizontalArrangement = Arrangement.spacedBy(3.dp)
                                                                     ) info@{
                                                                         Icon(
-                                                                            painter = painterResource(Res.drawable.clock_fading),
+                                                                            painter = painterResource(CoreUiRes.drawable.clock_fading),
                                                                             modifier = Modifier
                                                                                 .padding(end = 2.dp)
                                                                                 .size(MaterialTheme.typography.bodyMedium.lineHeight.toDp()),
@@ -618,7 +608,7 @@ private fun HomeContent(
                                                                 }
                                                                 if (assessmentsForLesson.isNotEmpty()) Row {
                                                                     Icon(
-                                                                        painter = painterResource(Res.drawable.notebook_text),
+                                                                        painter = painterResource(CoreUiRes.drawable.notebook_text),
                                                                         contentDescription = "Leistungen",
                                                                         modifier = Modifier
                                                                             .padding(end = 8.dp)
@@ -631,7 +621,7 @@ private fun HomeContent(
                                                                 }
                                                                 if (homeworkForLesson.isNotEmpty()) Row {
                                                                     Icon(
-                                                                        painter = painterResource(Res.drawable.book_open),
+                                                                        painter = painterResource(CoreUiRes.drawable.book_open),
                                                                         contentDescription = "Aufgaben",
                                                                         modifier = Modifier
                                                                             .padding(end = 8.dp)
@@ -648,8 +638,8 @@ private fun HomeContent(
                                                                                     ) {
                                                                                         Icon(
                                                                                             painter = painterResource(
-                                                                                                if (state.currentProfile is Profile.StudentProfile && task.isDone(state.currentProfile)) Res.drawable.check
-                                                                                                else Res.drawable.minus
+                                                                                                if (state.currentProfile is Profile.StudentProfile && task.isDone(state.currentProfile)) CoreUiRes.drawable.check
+                                                                                                else CoreUiRes.drawable.minus
                                                                                             ),
                                                                                             contentDescription = null,
                                                                                             modifier = Modifier.size(min(MaterialTheme.typography.bodyMedium.fontSize.toDp(), 12.dp))
@@ -677,7 +667,7 @@ private fun HomeContent(
                                         Spacer(Modifier.size(8.dp))
                                         InfoCard(
                                             modifier = Modifier.padding(horizontal = 16.dp),
-                                            imageVector = Res.drawable.clock_fading,
+                                            imageVector = CoreUiRes.drawable.clock_fading,
                                             title = "Ungültige Stundenzeiten",
                                             text = "Deine Schule stellt nicht für alle Stunden gültige Stundenzeiten zur Verfügung. Einige Stundenzeiten wurden anhand der gegebenen berechnet und können daher falsch sein. Bald kannst du selber Stundenzeiten hinzufügen.",
                                             backgroundColor = colors[CustomColor.Yellow]!!.getGroup().container,
@@ -693,7 +683,7 @@ private fun HomeContent(
                         if (readNews.isEmpty()) return@readNews
                         Column {
                             FeedTitle(
-                                icon = Res.drawable.megaphone,
+                                icon = CoreUiRes.drawable.megaphone,
                                 title = "Alle Meldungen"
                             )
                             Spacer(Modifier.size(8.dp))
@@ -820,7 +810,7 @@ private fun CurrentOrNextLesson(
         ) {
             if (continuing != null) Row {
                 Icon(
-                    painter = painterResource(Res.drawable.arrow_right),
+                    painter = painterResource(CoreUiRes.drawable.arrow_right),
                     contentDescription = null,
                     modifier = Modifier
                         .padding(end = 4.dp)
@@ -833,7 +823,7 @@ private fun CurrentOrNextLesson(
             }
             if (currentLesson is Lesson.SubstitutionPlanLesson && currentLesson.info != null) Row {
                 Icon(
-                    painter = painterResource(Res.drawable.info),
+                    painter = painterResource(CoreUiRes.drawable.info),
                     contentDescription = null,
                     modifier = Modifier
                         .padding(end = 4.dp)
@@ -846,7 +836,7 @@ private fun CurrentOrNextLesson(
             }
             if (currentLesson.lessonTime?.interpolated == true) Row {
                 Icon(
-                    painter = painterResource(Res.drawable.clock_fading),
+                    painter = painterResource(CoreUiRes.drawable.clock_fading),
                     contentDescription = null,
                     modifier = Modifier
                         .padding(end = 4.dp)
@@ -859,7 +849,7 @@ private fun CurrentOrNextLesson(
             }
             if (homework.isNotEmpty()) Row {
                 Icon(
-                    painter = painterResource(Res.drawable.book_open),
+                    painter = painterResource(CoreUiRes.drawable.book_open),
                     contentDescription = null,
                     modifier = Modifier
                         .padding(end = 4.dp)
@@ -875,7 +865,7 @@ private fun CurrentOrNextLesson(
             }
             if (assessments.isNotEmpty()) Row {
                 Icon(
-                    painter = painterResource(Res.drawable.notebook_text),
+                    painter = painterResource(CoreUiRes.drawable.notebook_text),
                     contentDescription = null,
                     modifier = Modifier
                         .padding(end = 4.dp)

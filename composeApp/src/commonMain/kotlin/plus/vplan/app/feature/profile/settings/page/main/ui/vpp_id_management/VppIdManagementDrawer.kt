@@ -43,6 +43,7 @@ import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.components.LogoutDialog
 import plus.vplan.app.ui.components.Badge
 import plus.vplan.app.ui.components.Button
@@ -53,8 +54,7 @@ import plus.vplan.app.ui.theme.ColorToken
 import plus.vplan.app.ui.theme.customColors
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.safeBottomPadding
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.logout
+
 
 @Composable
 private fun VppIdManagementDrawerContent(
@@ -156,7 +156,7 @@ private fun VppIdManagementDrawerContent(
                                     else onEvent(VppIdManagementEvent.LogoutDevice(device))
                                 }) {
                                     Icon(
-                                        painter = painterResource(Res.drawable.logout),
+                                        painter = painterResource(CoreUiRes.drawable.logout),
                                         contentDescription = null,
                                         modifier = Modifier.size(24.dp),
                                         tint = MaterialTheme.colorScheme.error
@@ -174,7 +174,7 @@ private fun VppIdManagementDrawerContent(
             state = ButtonState.Enabled,
             size = ButtonSize.Big,
             type = ButtonType.Danger,
-            icon = Res.drawable.logout,
+            icon = CoreUiRes.drawable.logout,
             onClick = { isLogoutDialogVisible = true }
         )
     }

@@ -17,11 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.ui.components.Button
 import plus.vplan.app.ui.components.ButtonSize
 import plus.vplan.app.ui.components.ButtonState
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
+
 
 @Composable
 fun OnboardingFinishedScreen(
@@ -41,7 +41,7 @@ fun OnboardingFinishedScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                painter = painterResource(Res.drawable.check),
+                painter = painterResource(CoreUiRes.drawable.check),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary
@@ -69,7 +69,7 @@ fun OnboardingFinishedScreen(
             Button(
                 text = "Fertig",
                 state = ButtonState.Enabled,
-                icon = Res.drawable.check,
+                icon = CoreUiRes.drawable.check,
                 size = ButtonSize.Big,
                 onlyEventOnActive = true,
                 onClick = onFinish

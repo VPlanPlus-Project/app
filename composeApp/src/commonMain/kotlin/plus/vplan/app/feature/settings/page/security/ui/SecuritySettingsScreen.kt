@@ -28,11 +28,11 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.platform.BiometricAuthentication
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.settings.page.security.domain.usecase.BiometricDeviceState
 import plus.vplan.app.feature.settings.page.security.ui.components.EnrollBiometricAuthenticationDialog
 import plus.vplan.app.ui.platform.OpenBiometricSettings
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
+
 
 @Composable
 fun SecuritySettingsScreen(
@@ -79,7 +79,7 @@ private fun SecuritySettingsContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )

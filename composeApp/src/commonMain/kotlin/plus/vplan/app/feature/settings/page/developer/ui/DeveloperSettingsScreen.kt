@@ -24,21 +24,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import plus.vplan.app.ui.components.TopToggle
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
-import vplanplus.composeapp.generated.resources.flag
-import vplanplus.composeapp.generated.resources.logs
-import vplanplus.composeapp.generated.resources.rotate_cw
-import vplanplus.composeapp.generated.resources.trash_2
-import vplanplus.composeapp.generated.resources.triangle_alert
+
 
 @Composable
 fun DeveloperSettingsScreen(
@@ -76,7 +71,7 @@ private fun DeveloperSettingsContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -106,21 +101,21 @@ private fun DeveloperSettingsContent(
                 title = "Flags",
                 subtitle = "Experimentelle Funktionen aktivieren",
                 onClick = onOpenFlags,
-                icon = painterResource(Res.drawable.flag)
+                icon = painterResource(CoreUiRes.drawable.flag)
             )
 
             SettingsRecord(
                 title = "Absturz auslösen",
                 subtitle = "Testet den Absturz-Handler",
                 onClick = { throw RuntimeException("Test Crash from Developer Settings") },
-                icon = painterResource(Res.drawable.triangle_alert)
+                icon = painterResource(CoreUiRes.drawable.triangle_alert)
             )
 
             SettingsRecord(
                 title = "Logs",
                 subtitle = "Zeige alle Logs der App an",
                 onClick = onOpenLogs,
-                icon = painterResource(Res.drawable.logs)
+                icon = painterResource(CoreUiRes.drawable.logs)
             )
 
             SettingsRecord(
@@ -134,7 +129,7 @@ private fun DeveloperSettingsContent(
             SettingsRecord(
                 title = "Noten aktualisieren",
                 subtitle = "Noten über alle Jahre aktualisieren",
-                icon = painterResource(Res.drawable.rotate_cw),
+                icon = painterResource(CoreUiRes.drawable.rotate_cw),
                 isLoading = state.isGradeUpdateRunning,
                 enabled = !state.isGradeUpdateRunning,
                 onClick = { onEvent(DeveloperSettingsEvent.UpdateGrades) }
@@ -145,7 +140,7 @@ private fun DeveloperSettingsContent(
             SettingsRecord(
                 title = "Vollständige Aktualisierung",
                 subtitle = "Lädt alle Daten neu herunter",
-                icon = painterResource(Res.drawable.rotate_cw),
+                icon = painterResource(CoreUiRes.drawable.rotate_cw),
                 isLoading = state.isFullSyncRunning,
                 enabled = !state.isFullSyncRunning,
                 onClick = { onEvent(DeveloperSettingsEvent.StartFullSync) }
@@ -153,7 +148,7 @@ private fun DeveloperSettingsContent(
             SettingsRecord(
                 title = "Vertretungsplan aktualisieren",
                 subtitle = "Erzwingt das Neuladen des Vertretungsplans",
-                icon = painterResource(Res.drawable.rotate_cw),
+                icon = painterResource(CoreUiRes.drawable.rotate_cw),
                 isLoading = state.isSubstitutionPlanUpdateRunning,
                 enabled = !state.isSubstitutionPlanUpdateRunning,
                 onClick = { onEvent(DeveloperSettingsEvent.UpdateSubstitutionPlan) }
@@ -161,7 +156,7 @@ private fun DeveloperSettingsContent(
             SettingsRecord(
                 title = "Stundenplan aktualisieren",
                 subtitle = "Erzwingt das Neuladen des Stundenplans",
-                icon = painterResource(Res.drawable.rotate_cw),
+                icon = painterResource(CoreUiRes.drawable.rotate_cw),
                 isLoading = state.isTimetableUpdateRunning,
                 enabled = !state.isTimetableUpdateRunning,
                 onClick = { onEvent(DeveloperSettingsEvent.UpdateTimetable) }
@@ -169,7 +164,7 @@ private fun DeveloperSettingsContent(
             SettingsRecord(
                 title = "Wochen aktualisieren",
                 subtitle = "Erzwingt das Neuladen der Wochen",
-                icon = painterResource(Res.drawable.rotate_cw),
+                icon = painterResource(CoreUiRes.drawable.rotate_cw),
                 isLoading = state.isWeekUpdateRunning,
                 enabled = !state.isWeekUpdateRunning,
                 onClick = { onEvent(DeveloperSettingsEvent.UpdateWeeks) }
@@ -177,7 +172,7 @@ private fun DeveloperSettingsContent(
             SettingsRecord(
                 title = "Hausaufgaben aktualisieren",
                 subtitle = "Erzwingt das Neuladen der Hausaufgaben",
-                icon = painterResource(Res.drawable.rotate_cw),
+                icon = painterResource(CoreUiRes.drawable.rotate_cw),
                 isLoading = state.isHomeworkUpdateRunning,
                 enabled = !state.isHomeworkUpdateRunning,
                 onClick = { onEvent(DeveloperSettingsEvent.UpdateHomework) }
@@ -185,7 +180,7 @@ private fun DeveloperSettingsContent(
             SettingsRecord(
                 title = "Leistungserhebungen aktualisieren",
                 subtitle = "Erzwingt das Neuladen der Leistungserhebungen",
-                icon = painterResource(Res.drawable.rotate_cw),
+                icon = painterResource(CoreUiRes.drawable.rotate_cw),
                 isLoading = state.isAssessmentsUpdateRunning,
                 enabled = !state.isAssessmentsUpdateRunning,
                 onClick = { onEvent(DeveloperSettingsEvent.UpdateAssessments) }
@@ -193,7 +188,7 @@ private fun DeveloperSettingsContent(
             SettingsRecord(
                 title = "Fachinstanzen und Kurse aktualisieren",
                 subtitle = "Erzwingt das Neuladen der Fachinstanzen und Kurse",
-                icon = painterResource(Res.drawable.rotate_cw),
+                icon = painterResource(CoreUiRes.drawable.rotate_cw),
                 isLoading = state.isSubjectInstanceUpdateRunning,
                 enabled = !state.isSubjectInstanceUpdateRunning,
                 onClick = { onEvent(DeveloperSettingsEvent.UpdateSubjectInstances) }
@@ -201,7 +196,7 @@ private fun DeveloperSettingsContent(
             SettingsRecord(
                 title = "Stundenzeiten aktualisieren",
                 subtitle = "Erzwingt das Neuladen der Stundenzeiten",
-                icon = painterResource(Res.drawable.rotate_cw),
+                icon = painterResource(CoreUiRes.drawable.rotate_cw),
                 isLoading = state.isLessonTimesUpdateRunning,
                 enabled = !state.isLessonTimesUpdateRunning,
                 onClick = { onEvent(DeveloperSettingsEvent.UpdateLessonTimes) }
@@ -212,13 +207,13 @@ private fun DeveloperSettingsContent(
             SettingsRecord(
                 title = "Stundencache leeren",
                 subtitle = "Löscht alle lokal gespeicherten (Vertretungs)stunden",
-                icon = painterResource(Res.drawable.trash_2),
+                icon = painterResource(CoreUiRes.drawable.trash_2),
                 onClick = { onEvent(DeveloperSettingsEvent.ClearLessonCache) }
             )
             SettingsRecord(
                 title = "Vertretungsplancache leeren",
                 subtitle = "Löscht alle lokal gespeicherten Vertretungspläne",
-                icon = painterResource(Res.drawable.trash_2),
+                icon = painterResource(CoreUiRes.drawable.trash_2),
                 onClick = { onEvent(DeveloperSettingsEvent.ClearSubstitutionPlanCache) }
             )
 

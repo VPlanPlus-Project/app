@@ -22,14 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
-import vplanplus.composeapp.generated.resources.bug_play
-import vplanplus.composeapp.generated.resources.info
-import vplanplus.composeapp.generated.resources.lock
-import vplanplus.composeapp.generated.resources.school
+
 
 @Composable
 fun SettingsScreen(
@@ -67,7 +63,7 @@ private fun SettingsContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -88,7 +84,7 @@ private fun SettingsContent(
             SettingsRecord(
                 title = "Meine Schulen",
                 subtitle = "Zugänge für Schulen verwalten",
-                icon = painterResource(Res.drawable.school),
+                icon = painterResource(CoreUiRes.drawable.school),
                 onClick = onOpenSchoolSettings,
                 showArrow = true,
             )
@@ -96,7 +92,7 @@ private fun SettingsContent(
             SettingsRecord(
                 title = "Anmeldung und Sicherheit",
                 subtitle = "Noten und vpp.ID schützen",
-                icon = painterResource(Res.drawable.lock),
+                icon = painterResource(CoreUiRes.drawable.lock),
                 onClick = onOpenSecuritySettings,
                 showArrow = true,
             )
@@ -105,7 +101,7 @@ private fun SettingsContent(
                 SettingsRecord(
                     title = "Entwickleroptionen",
                     subtitle = "Flags, Diagnose und erweiterte Optionen",
-                    icon = painterResource(Res.drawable.bug_play),
+                    icon = painterResource(CoreUiRes.drawable.bug_play),
                     onClick = onOpenDeveloperSettings,
                     showArrow = true,
                 )
@@ -114,7 +110,7 @@ private fun SettingsContent(
             SettingsRecord(
                 title = "Info & Feedback",
                 subtitle = "Über VPlanPlus, Rückmeldung an die Entwickler",
-                icon = painterResource(Res.drawable.info),
+                icon = painterResource(CoreUiRes.drawable.info),
                 onClick = onOpenInfoAndFeedback,
                 showArrow = true,
             )

@@ -50,12 +50,9 @@ import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.settings.page.school.ui.components.Sp24CredentialSheet
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.cloud_alert
-import vplanplus.composeapp.generated.resources.x
+
 
 @Composable
 fun SchoolSettingsScreen(
@@ -89,7 +86,7 @@ private fun SchoolSettingsContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -182,18 +179,18 @@ private fun SchoolSettingsContent(
                                         when (displayCredentialsState) {
                                             SchoolSettingsCredentialsState.Loading -> CircularProgressIndicator()
                                             SchoolSettingsCredentialsState.Valid -> Icon(
-                                                painter = painterResource(Res.drawable.check),
+                                                painter = painterResource(CoreUiRes.drawable.check),
                                                 contentDescription = null,
                                                 modifier = Modifier.size(24.dp)
                                             )
                                             SchoolSettingsCredentialsState.Invalid -> Icon(
-                                                painter = painterResource(Res.drawable.x),
+                                                painter = painterResource(CoreUiRes.drawable.x),
                                                 contentDescription = null,
                                                 modifier = Modifier.size(24.dp),
                                                 tint = MaterialTheme.colorScheme.error
                                             )
                                             SchoolSettingsCredentialsState.Error -> Icon(
-                                                painter = painterResource(Res.drawable.cloud_alert),
+                                                painter = painterResource(CoreUiRes.drawable.cloud_alert),
                                                 contentDescription = null,
                                                 modifier = Modifier.size(24.dp),
                                                 tint = MaterialTheme.colorScheme.error

@@ -19,11 +19,11 @@ import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.VppSchoolAuthentication
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateWeeksUseCase
+import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
-import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.lib.sp24.source.Authentication
 import kotlin.time.Clock
 import kotlin.uuid.Uuid

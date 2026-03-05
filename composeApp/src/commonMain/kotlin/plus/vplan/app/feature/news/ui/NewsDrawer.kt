@@ -2,6 +2,7 @@
 
 package plus.vplan.app.feature.news.ui
 
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,15 +33,11 @@ import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.news.domain.usecase.NewsSchoolsState
 import plus.vplan.app.ui.components.FullscreenDrawer
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toDp
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.calendar
-import vplanplus.composeapp.generated.resources.school
-import vplanplus.composeapp.generated.resources.smartphone
-import vplanplus.composeapp.generated.resources.x
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,7 +63,7 @@ fun NewsDrawer(
                         onClick = onCloseClicked
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.x),
+                            painter = painterResource(CoreUiRes.drawable.x),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -115,7 +112,7 @@ fun NewsDrawer(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.calendar),
+                            painter = painterResource(CoreUiRes.drawable.calendar),
                             contentDescription = null,
                             modifier = Modifier.size(MaterialTheme.typography.labelLarge.lineHeight.toDp()),
                             tint = MaterialTheme.colorScheme.outline
@@ -139,7 +136,7 @@ fun NewsDrawer(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.smartphone),
+                            painter = painterResource(CoreUiRes.drawable.smartphone),
                             contentDescription = null,
                             modifier = Modifier.size(MaterialTheme.typography.labelLarge.lineHeight.toDp()),
                             tint = MaterialTheme.colorScheme.outline
@@ -163,7 +160,7 @@ fun NewsDrawer(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.school),
+                            painter = painterResource(CoreUiRes.drawable.school),
                             contentDescription = null,
                             modifier = Modifier.size(MaterialTheme.typography.labelLarge.lineHeight.toDp()),
                             tint = MaterialTheme.colorScheme.outline

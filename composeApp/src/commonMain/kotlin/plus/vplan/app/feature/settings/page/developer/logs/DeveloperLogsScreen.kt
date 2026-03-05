@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.bodyFontFamily
@@ -49,15 +50,7 @@ import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.ui.theme.monospaceFontFamily
 import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.generateColor
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
-import vplanplus.composeapp.generated.resources.arrow_up
-import vplanplus.composeapp.generated.resources.ban
-import vplanplus.composeapp.generated.resources.bug
-import vplanplus.composeapp.generated.resources.info
-import vplanplus.composeapp.generated.resources.message_square
-import vplanplus.composeapp.generated.resources.trash_2
-import vplanplus.composeapp.generated.resources.triangle_alert
+
 
 @Composable
 fun DeveloperSettingsLogsScreen(
@@ -89,7 +82,7 @@ private fun DeveloperSettingsLogsContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -98,7 +91,7 @@ private fun DeveloperSettingsLogsContent(
                 actions = {
                     IconButton(onClick = { onEvent(DeveloperLogsEvent.ClearLogs) }) {
                         Icon(
-                            painter = painterResource(Res.drawable.trash_2),
+                            painter = painterResource(CoreUiRes.drawable.trash_2),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
@@ -125,7 +118,7 @@ private fun DeveloperSettingsLogsContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_up),
+                            painter = painterResource(CoreUiRes.drawable.arrow_up),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -171,11 +164,11 @@ private fun LogEntry(log: Log) {
             Icon(
                 painter = painterResource(
                     when (log.level) {
-                        Log.LogLevel.VERBOSE -> Res.drawable.message_square
-                        Log.LogLevel.DEBUG -> Res.drawable.bug
-                        Log.LogLevel.INFO -> Res.drawable.info
-                        Log.LogLevel.WARN -> Res.drawable.triangle_alert
-                        Log.LogLevel.ERROR -> Res.drawable.ban
+                        Log.LogLevel.VERBOSE -> CoreUiRes.drawable.message_square
+                        Log.LogLevel.DEBUG -> CoreUiRes.drawable.bug
+                        Log.LogLevel.INFO -> CoreUiRes.drawable.info
+                        Log.LogLevel.WARN -> CoreUiRes.drawable.triangle_alert
+                        Log.LogLevel.ERROR -> CoreUiRes.drawable.ban
                     }
                 ),
                 modifier = Modifier.fillMaxSize(),

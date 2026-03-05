@@ -42,14 +42,14 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.ui.theme.CustomColor
 import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toDp
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
+
 
 @Composable
 fun HomeworkCard(
@@ -98,7 +98,7 @@ fun HomeworkCard(
                                 .padding(4.dp)
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.check),
+                                painter = painterResource(CoreUiRes.drawable.check),
                                 contentDescription = null,
                                 modifier = Modifier.fillMaxSize(),
                                 tint = greenGroup.onColor
@@ -132,7 +132,7 @@ fun HomeworkCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (isTaskDone) Icon(
-                                    painter = painterResource(Res.drawable.check),
+                                    painter = painterResource(CoreUiRes.drawable.check),
                                     modifier = Modifier.size(taskFont.fontSize.toDp()),
                                     contentDescription = null
                                 ) else {

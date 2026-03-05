@@ -4,10 +4,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
+import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingSp24State
 import plus.vplan.app.feature.onboarding.domain.repository.OnboardingRepository
-import plus.vplan.app.feature.onboarding.domain.repository.Sp24CredentialsState
-import plus.vplan.app.feature.onboarding.stage.d_select_profile.domain.model.OnboardingProfile
+import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.Sp24CredentialsState
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 

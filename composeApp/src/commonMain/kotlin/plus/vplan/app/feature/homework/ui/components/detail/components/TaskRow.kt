@@ -39,15 +39,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Homework
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.components.BackHandler
 import plus.vplan.app.utils.tryNoCatch
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.ellipsis_vertical
-import vplanplus.composeapp.generated.resources.pencil
-import vplanplus.composeapp.generated.resources.trash_2
-import vplanplus.composeapp.generated.resources.x
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -95,7 +91,7 @@ fun TaskRow(
                         },
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.check),
+                            painter = painterResource(CoreUiRes.drawable.check),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp).padding(2.dp)
                         )
@@ -168,7 +164,7 @@ fun TaskRow(
                         onClick = { onSetTaskToEdit(null) },
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.x),
+                            painter = painterResource(CoreUiRes.drawable.x),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp).padding(2.dp)
                         )
@@ -180,7 +176,7 @@ fun TaskRow(
                         onClick = { isDropdownOpen = true },
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.ellipsis_vertical),
+                            painter = painterResource(CoreUiRes.drawable.ellipsis_vertical),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp).padding(2.dp)
                         )
@@ -199,7 +195,7 @@ fun TaskRow(
                 ) },
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(Res.drawable.trash_2),
+                        painter = painterResource(CoreUiRes.drawable.trash_2),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.onSurface
@@ -214,7 +210,7 @@ fun TaskRow(
                 text = { Text("Bearbeiten") },
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(Res.drawable.pencil),
+                        painter = painterResource(CoreUiRes.drawable.pencil),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp)
                     )

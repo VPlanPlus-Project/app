@@ -24,13 +24,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.vinceglb.filekit.extension
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.toHumanSize
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.file
-import vplanplus.composeapp.generated.resources.pencil
-import vplanplus.composeapp.generated.resources.x
+
 
 @Composable
 fun FileItem(
@@ -62,7 +60,7 @@ fun FileItem(
                     contentScale = ContentScale.Fit
                 )
             } ?: Icon(
-                painter = painterResource(Res.drawable.file),
+                painter = painterResource(CoreUiRes.drawable.file),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.onSurface
@@ -113,7 +111,7 @@ fun FileItem(
                     onClick = onRenameClicked
                 ) {
                     Icon(
-                        painter = painterResource(Res.drawable.pencil),
+                        painter = painterResource(CoreUiRes.drawable.pencil),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.onSurface
@@ -123,7 +121,7 @@ fun FileItem(
                     onClick = onDeleteClicked
                 ) {
                     Icon(
-                        painter = painterResource(Res.drawable.x),
+                        painter = painterResource(CoreUiRes.drawable.x),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.onSurface
