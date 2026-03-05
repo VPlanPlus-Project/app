@@ -5,6 +5,8 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import plus.vplan.app.feature.onboarding.OnboardingViewModel
 import plus.vplan.app.feature.onboarding.stage.loading_data.domain.usecase.FetchProfileOptionsUseCase
+import plus.vplan.app.feature.onboarding.stage.profile_selection.domain.usecase.SelectProfileUseCase
+import plus.vplan.app.feature.onboarding.stage.profile_selection.ui.ProfileSelectionViewModel
 import plus.vplan.app.feature.onboarding.stage.school_credentials.domain.usecase.CheckCredentialsUseCase
 import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.Stundenplan24CredentialsViewModel
 import plus.vplan.app.feature.onboarding.stage.school_select.domain.usecase.SearchForSchoolUseCase
@@ -14,8 +16,10 @@ val onboardingModule = module {
     singleOf(::SearchForSchoolUseCase)
     singleOf(::CheckCredentialsUseCase)
     singleOf(::FetchProfileOptionsUseCase)
+    singleOf(::SelectProfileUseCase)
 
     viewModelOf(::OnboardingViewModel)
     viewModelOf(::SchoolSearchViewModel)
     viewModelOf(::Stundenplan24CredentialsViewModel)
+    viewModelOf(::ProfileSelectionViewModel)
 }

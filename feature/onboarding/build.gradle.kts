@@ -43,6 +43,9 @@ kotlin {
 
             // KotlinX
             implementation(libs.kotlinx.serialization.json)
+
+            // Permissions
+            implementation(libs.cmp.easy.permission)
         }
     }
 }

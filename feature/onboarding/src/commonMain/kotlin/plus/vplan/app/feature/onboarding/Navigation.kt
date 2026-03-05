@@ -28,6 +28,15 @@ internal sealed interface Onboarding : NavKey {
 
     @Serializable
     data object ProfileSelection: Onboarding
+
+    @Serializable
+    data object SubjectInstanceSelection: Onboarding
+
+    @Serializable
+    data object Permissions: Onboarding
+
+    @Serializable
+    data object Finished: Onboarding
 }
 
 private val enterSlideTransition: EnterTransition =

@@ -1,11 +1,10 @@
-package plus.vplan.app.feature.sync.domain.usecase.sp24
+package plus.vplan.app.core.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
-import plus.vplan.app.captureError
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
@@ -20,10 +19,10 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
+import plus.vplan.app.core.sync.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
-import plus.vplan.app.utils.takeContinuousBy
+import plus.vplan.app.core.utils.list.takeContinuousBy
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import kotlin.uuid.Uuid
@@ -116,17 +115,17 @@ class UpdateTimetableUseCase(
                         val lessons = downloadedTimetable.lessons.mapNotNull { lesson ->
                             val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }
                             if (lessonGroups.isEmpty()) {
-                                captureError(
-                                    location = "UpdateTimetableUseCase",
-                                    message = """
-                            Skipping lesson, because it does not have any groups set.
-                            School: ${sp24School.sp24Id} ${sp24School.name}
-                            Week: CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)
-                            Lesson: ${lesson.subject} on ${lesson.dayOfWeek}, lesson number ${lesson.lessonNumber}
-                            Groups configured in app: ${groups.joinToString { it.name }}
-                            Groups for lesson: ${lesson.classes.joinToString()}
-                        """.trimIndent()
-                                )
+                                // TODO captureError(
+                                //     location = "UpdateTimetableUseCase",
+                                //     message = """
+                                //         Skipping lesson, because it does not have any groups set.
+                                //         School: ${sp24School.sp24Id} ${sp24School.name}
+                                //         Week: CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)
+                                //         Lesson: ${lesson.subject} on ${lesson.dayOfWeek}, lesson number ${lesson.lessonNumber}
+                                //         Groups configured in app: ${groups.joinToString { it.name }}
+                                //         Groups for lesson: ${lesson.classes.joinToString()}
+                                //     """.trimIndent()
+                                // )
                                 return@mapNotNull null
                             }
 

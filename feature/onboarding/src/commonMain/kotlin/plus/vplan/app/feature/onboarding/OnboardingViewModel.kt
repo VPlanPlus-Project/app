@@ -10,10 +10,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.loading_data.domain.usecase.FetchProfileOptionsUseCase
+import plus.vplan.app.feature.onboarding.stage.profile_selection.domain.usecase.SelectProfileUseCase
 import plus.vplan.app.feature.onboarding.stage.school_select.domain.usecase.OnboardingSchoolOption
 
 internal class OnboardingViewModel(
     private val fetchProfileOptionsUseCase: FetchProfileOptionsUseCase,
+    private val selectProfileUseCase: SelectProfileUseCase,
 ): ViewModel() {
     val state: StateFlow<OnboardingState>
         field = MutableStateFlow(OnboardingState())
@@ -55,6 +57,34 @@ internal class OnboardingViewModel(
             backStack.add(Onboarding.ProfileSelection)
         }
     }
+
+    /**
+     * Called when the user selects a profile from the profile list.
+     * - If teacher: immediately saves the profile and navigates to Permissions.
+     * - If student: stores the selection and navigates to SubjectInstanceSelection.
+     */
+    fun onProfileSelected(profile: OnboardingProfile) {
+        if (profile is OnboardingProfile.TeacherProfile) {
+            viewModelScope.launch {
+                selectProfileUseCase(profile)
+                backStack.add(Onboarding.Permissions)
+            }
+        } else {
+            state.update { it.copy(selectedOnboardingProfile = profile) }
+            backStack.add(Onboarding.SubjectInstanceSelection)
+        }
+    }
+
+    /**
+     * Called after the student has configured subject instances.
+     */
+    fun onSubjectInstanceSelectionDone() {
+        backStack.add(Onboarding.Permissions)
+    }
+
+    fun onPermissionsDone() {
+        backStack.add(Onboarding.Finished)
+    }
 }
 
 data class OnboardingState(
@@ -62,4 +92,5 @@ data class OnboardingState(
     val username: String = "",
     val password: String = "",
     val profileOptions: List<OnboardingProfile> = emptyList(),
+    val selectedOnboardingProfile: OnboardingProfile? = null,
 )

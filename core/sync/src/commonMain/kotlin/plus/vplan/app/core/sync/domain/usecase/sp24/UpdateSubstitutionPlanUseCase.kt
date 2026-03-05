@@ -1,13 +1,12 @@
-package plus.vplan.app.feature.sync.domain.usecase.sp24
+package plus.vplan.app.core.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
-import kotlinx.datetime.format
-import kotlinx.serialization.json.Json
-import plus.vplan.app.StartTaskJson
+import kotlinx.datetime.format.Padding
+import kotlinx.datetime.format.char
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
@@ -26,15 +25,33 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.platform.NotificationRepository
+import plus.vplan.app.core.sync.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.feature.profile.domain.usecase.UpdateProfileLessonIndexUseCase
-import plus.vplan.app.utils.regularDateFormat
-import plus.vplan.app.utils.untilRelativeText
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import kotlin.uuid.Uuid
 
 private val LOGGER = Logger.withTag("UpdateSubstitutionPlanUseCase")
+
+private val regularDateFormat = LocalDate.Format {
+    day(padding = Padding.ZERO)
+    char('.')
+    monthNumber(Padding.ZERO)
+    char('.')
+    year(Padding.ZERO)
+}
+
+private fun LocalDate.untilRelativeText(other: LocalDate): String? {
+    val daysDiff = other.toEpochDays() - this.toEpochDays()
+    return when (daysDiff.toInt()) {
+        -2 -> "Vorgestern"
+        -1 -> "Gestern"
+        0 -> "Heute"
+        1 -> "Morgen"
+        2 -> "Übermorgen"
+        else -> null
+    }
+}
 
 class UpdateSubstitutionPlanUseCase(
     private val stundenplan24Repository: Stundenplan24Repository,
@@ -182,7 +199,7 @@ class UpdateSubstitutionPlanUseCase(
                 if ((oldLessons + newLessons).keys.mapNotNull { it.lessonTime?.end?.atDate(date) }.maxOrNull()?.let { it < LocalDateTime.now() } == true) return@forEachDate
 
                 val changedOrNewLessons = newLessons
-                    .filter { (lesson, signature) -> signature !in oldLessons.values }
+                    .filter { (_, signature) -> signature !in oldLessons.values }
                     .keys
                 if (changedOrNewLessons.isEmpty()) return@forEachDate
 
@@ -199,7 +216,7 @@ class UpdateSubstitutionPlanUseCase(
                 if (changedLessons.isNotEmpty()) {
                     Logger.d { "Sending notification for ${profile.name} with changed lessons: $changedLessons" }
                     platformNotificationRepository.sendNotification(
-                        title = "Neuer Plan (${(LocalDate.now() untilRelativeText date) ?: date.format(regularDateFormat)})",
+                        title = "Neuer Plan (${(LocalDate.now().untilRelativeText(date)) ?: regularDateFormat.format(date)})",
                         message = "Es gibt ${changedOrNewLessons.size} Änderungen für dich",
                         largeText = buildString {
                             changedLessons.forEachIndexed { i, lesson ->
@@ -220,22 +237,8 @@ class UpdateSubstitutionPlanUseCase(
                         }.dropLastWhile { it == '\n' }.dropWhile { it == '\n' },
                         category = profile.name,
                         isLarge = true,
-                        onClickData = Json.encodeToString(
-                            StartTaskJson(
-                                type = "navigate_to",
-                                profileId = profile.id.toString(),
-                                value = Json.encodeToString(
-                                    StartTaskJson.StartTaskNavigateTo(
-                                        screen = "calendar",
-                                        value = Json.encodeToString(
-                                            StartTaskJson.StartTaskNavigateTo.StartTaskCalendar(
-                                                date = date.toString()
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        ).also { Logger.d { "Task: $it" } }
+                        // TODO: Provide onClickData with navigation task (StartTaskJson is in composeApp)
+                        onClickData = null
                     )
                 }
             }
