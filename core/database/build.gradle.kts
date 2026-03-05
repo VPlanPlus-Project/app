@@ -15,19 +15,21 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.datetime)
+            // Project modules
+            implementation(project(":core:model"))
 
+            // Room & SQLite
             api(libs.androidx.room.runtime)
             implementation(libs.sqlite.bundled)
 
+            // Koin
             implementation(libs.koin.core)
-            implementation(libs.kermit)
 
-            implementation(project(":core:model"))
+            // Third-party
+            implementation(libs.kermit)
         }
     }
 }
-
 
 room {
     schemaDirectory("$projectDir/schemas")
@@ -35,7 +37,7 @@ room {
 
 dependencies {
     kspAndroid(libs.androidx.room.compiler)
+    kspIosArm64(libs.androidx.room.compiler)
     kspIosSimulatorArm64(libs.androidx.room.compiler)
     kspIosX64(libs.androidx.room.compiler)
-    kspIosArm64(libs.androidx.room.compiler)
 }
