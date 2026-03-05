@@ -63,9 +63,21 @@ android {
         debug {
             signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
+
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("default") ?: run {
+                println("No default signing config found, using debug signing config")
+                signingConfigs.getByName("debug")
+            }
+        }
+
+        create("staging") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
             signingConfig = signingConfigs.findByName("default") ?: run {
                 println("No default signing config found, using debug signing config")
                 signingConfigs.getByName("debug")
