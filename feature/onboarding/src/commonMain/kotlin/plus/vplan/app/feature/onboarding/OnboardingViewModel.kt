@@ -100,17 +100,15 @@ internal class OnboardingViewModel(
 
     /**
      * Called when the user selects a profile from the profile list.
-     * - If teacher: immediately saves the profile and navigates to Permissions.
+     * - If teacher: stores the selection and navigates to TeacherNotice (selectProfileUseCase
+     *   is deferred until after the Permissions screen is approved).
      * - If student: stores the selection and navigates to SubjectInstanceSelection.
      */
     fun onProfileSelected(profile: OnboardingProfile) {
+        state.update { it.copy(selectedOnboardingProfile = profile) }
         if (profile is OnboardingProfile.TeacherProfile) {
-            viewModelScope.launch {
-                selectProfileUseCase(profile)
-                backStack.add(Onboarding.Permissions)
-            }
+            backStack.add(Onboarding.TeacherNotice)
         } else {
-            state.update { it.copy(selectedOnboardingProfile = profile) }
             backStack.add(Onboarding.SubjectInstanceSelection)
         }
     }
@@ -123,7 +121,15 @@ internal class OnboardingViewModel(
     }
 
     fun onPermissionsDone() {
-        backStack.add(Onboarding.Finished)
+        val profile = state.value.selectedOnboardingProfile
+        if (profile is OnboardingProfile.TeacherProfile) {
+            viewModelScope.launch {
+                selectProfileUseCase(profile)
+                backStack.add(Onboarding.Finished)
+            }
+        } else {
+            backStack.add(Onboarding.Finished)
+        }
     }
 }
 

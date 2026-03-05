@@ -22,6 +22,7 @@ import plus.vplan.app.feature.onboarding.stage.profile_selection.ui.ProfileSelec
 import plus.vplan.app.feature.onboarding.stage.profile_selection.ui.SubjectInstanceSelectionScreen
 import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.Stundenplan24CredentialsScreen
 import plus.vplan.app.feature.onboarding.stage.school_select.ui.SchoolSearch
+import plus.vplan.app.feature.onboarding.stage.teacher_notice.ui.TeacherNoticeScreen
 import plus.vplan.app.feature.onboarding.stage.welcome.WelcomeScreen
 import plus.vplan.app.feature.onboarding.stage.welcome.components.BlurredBackground
 
@@ -79,6 +80,13 @@ fun OnboardingView(
                             ProfileSelectionScreen(
                                 options = onboardingState.profileOptions,
                                 onProfileSelected = { viewModel.onProfileSelected(it) },
+                            )
+                        }
+                    }
+                    is Onboarding.TeacherNotice -> {
+                        NavEntry(key = key, metadata = transitionSpec) {
+                            TeacherNoticeScreen(
+                                onContinue = { viewModel.backStack.add(Onboarding.Permissions) }
                             )
                         }
                     }

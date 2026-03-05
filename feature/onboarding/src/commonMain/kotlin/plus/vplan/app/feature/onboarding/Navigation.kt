@@ -30,6 +30,9 @@ internal sealed interface Onboarding : NavKey {
     data object ProfileSelection: Onboarding
 
     @Serializable
+    data object TeacherNotice: Onboarding
+
+    @Serializable
     data object SubjectInstanceSelection: Onboarding
 
     @Serializable
