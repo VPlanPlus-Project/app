@@ -61,6 +61,8 @@ kotlin {
             implementation(libs.compose.ui.tooling)
             implementation(libs.compose.ui.tooling.preview)
 
+            implementation(libs.navigation3.material3.adaptive)
+
             // Firebase
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.analytics)
