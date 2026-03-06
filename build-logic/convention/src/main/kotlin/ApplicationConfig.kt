@@ -3,9 +3,10 @@ import org.gradle.api.Project
 
 val applicationConfig = ApplicationConfig(
     versionMajor = 0,
-    versionMinor = 3,
+    versionMinor = 4,
     versionPatch = 0,
-    versionCode = 409,
+    versionCode = 419,
+    versionSuffix = "internal",
     android = ApplicationConfig.Android(
         minSdk = 24,
         targetSdk = 36
@@ -16,10 +17,12 @@ class ApplicationConfig(
     versionMajor: Int,
     versionMinor: Int,
     versionPatch: Int,
+    versionSuffix: String? = null,
     val versionCode: Int,
     val android: Android
 ) {
-    val versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
+    val versionName = "${versionMajor}.${versionMinor}.${versionPatch}" +
+            versionSuffix?.ifBlank { null }?.let { "-$it" }.orEmpty()
 
     data class Android(
         val minSdk: Int,
