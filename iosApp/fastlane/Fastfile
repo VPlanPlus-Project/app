@@ -23,6 +23,11 @@ platform :ios do
     )
 
     # ── Install certificate & provisioning profile ─────────────────────────
+    # Resolve absolute paths up-front; fastlane actions and sh() may resolve
+    # relative paths from different working directories.
+    cert_path    = File.expand_path("ci_certificate.p12", Dir.pwd)
+    profile_path = File.expand_path("ci_profile.mobileprovision", Dir.pwd)
+
     keychain_name     = "ci_keychain"
     keychain_password = SecureRandom.hex
 
@@ -36,36 +41,24 @@ platform :ios do
     )
 
     import_certificate(
-      certificate_path:     "ci_certificate.p12",
+      certificate_path:     cert_path,
       certificate_password: ENV["IOS_CERTIFICATE_PASSWORD"],
       keychain_name:        keychain_name,
       keychain_password:    keychain_password
     )
 
-    install_provisioning_profile(path: "ci_profile.mobileprovision")
+    install_provisioning_profile(path: profile_path)
 
     # ── Resolve the provisioning profile UUID so we can pass it to xcodebuild
+    # Use the absolute path — sh() runs from the repo root, not iosApp/.
     profile_uuid = sh(
-      "security cms -D -i ci_profile.mobileprovision | " \
+      "security cms -D -i #{profile_path.shellescape} | " \
       "plutil -extract UUID xml1 -o - - | " \
       "sed -n 's/.*<string>\\(.*\\)<\\/string>.*/\\1/p'",
       log: false
     ).strip
 
-    # ── Update version / build number from tag ─────────────────────────────
-    tag = options[:tag] || ENV["TAG_NAME"] || ""
-    # Strip leading "v" and any pre-release suffix (e.g. v1.2.3-internal → 1.2.3)
-    marketing_version = tag.sub(/^v/, "").split("-").first
-
-    increment_version_number(
-      version_number: marketing_version,
-      xcodeproj: "iosApp.xcodeproj"
-    ) unless marketing_version.to_s.empty?
-
-    increment_build_number(
-      build_number: ENV["GITHUB_RUN_NUMBER"] || Time.now.to_i.to_s,
-      xcodeproj: "iosApp.xcodeproj"
-    )
+    UI.user_error!("Could not read provisioning profile UUID from #{profile_path}") if profile_uuid.empty?
 
     # ── Build ──────────────────────────────────────────────────────────────
     build_app(
