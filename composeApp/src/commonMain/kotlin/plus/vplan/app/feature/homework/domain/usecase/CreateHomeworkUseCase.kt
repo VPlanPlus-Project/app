@@ -88,7 +88,11 @@ class CreateHomeworkUseCase(
                 isPublic = isPublic == true,
                 tasks = tasks
             )
-            if (result !is Response.Success) return CreateHomeworkResult.Error.CreationError(result as Response.Error)
+            if (result !is Response.Success) {
+                val error = result as Response.Error
+                analyticsRepository.captureError("CreateHomeworkUseCase", "Creation error: ${error::class.simpleName}")
+                return CreateHomeworkResult.Error.CreationError(error)
+            }
 
             val idMapping = result.data
             id = idMapping.id
