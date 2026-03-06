@@ -6,7 +6,8 @@
 #   IOS_PROVISIONING_PROFILE  – base64-encoded App Store provisioning profile (.mobileprovision)
 #   APP_STORE_KEY_ID          – App Store Connect API key ID
 #   APP_STORE_ISSUER_ID       – App Store Connect API issuer ID
-#   APP_STORE_KEY_CONTENT     – Contents of the .p8 API key file
+#   APP_STORE_KEY_CONTENT     – base64-encoded contents of the .p8 API key file
+#                               Encode with: base64 -i AuthKey_XXXXXX.p8 | pbcopy
 
 default_platform(:ios)
 
@@ -18,7 +19,7 @@ platform :ios do
       key_id:        ENV["APP_STORE_KEY_ID"],
       issuer_id:     ENV["APP_STORE_ISSUER_ID"],
       key_content:   ENV["APP_STORE_KEY_CONTENT"],
-      is_key_content_base64: false
+      is_key_content_base64: true
     )
 
     # ── Install certificate & provisioning profile ─────────────────────────
