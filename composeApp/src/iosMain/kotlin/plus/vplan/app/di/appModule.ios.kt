@@ -18,6 +18,8 @@ import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.platform.NotificationRepositoryImpl
 import plus.vplan.app.core.platform.PermissionRepository
 import plus.vplan.app.core.platform.PermissionRepositoryImpl
+import plus.vplan.app.core.platform.PlatformRepository
+import plus.vplan.app.core.platform.PlatformRepositoryImpl
 import plus.vplan.app.quicklook
 
 @OptIn(ExperimentalForeignApi::class)
@@ -26,6 +28,7 @@ actual val platformModule: Module = module {
     single<AuthenticationRepository> { AuthenticationRepositoryImpl() }
     single<BiometricAuthentication> { BiometricAuthenticationImpl() }
     factory<PermissionRepository> { (controller: PermissionsController) -> PermissionRepositoryImpl(controller) }
+    single<PlatformRepository> { PlatformRepositoryImpl() }
 
     // New file infrastructure
     single<ThumbnailGenerator> { ThumbnailGenerator() }

@@ -14,6 +14,8 @@ import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.platform.NotificationRepositoryImpl
 import plus.vplan.app.core.platform.PermissionRepository
 import plus.vplan.app.core.platform.PermissionRepositoryImpl
+import plus.vplan.app.core.platform.PlatformRepository
+import plus.vplan.app.core.platform.PlatformRepositoryImpl
 import plus.vplan.app.ui.platform.OpenBiometricSettings
 import plus.vplan.app.ui.platform.OpenBiometricSettingsImpl
 
@@ -24,6 +26,7 @@ actual val platformModule: Module = module(createdAtStart = true) {
     single<BiometricAuthentication> { BiometricAuthenticationImpl() }
     single<ActivityProvider> { getProperty<ActivityProvider>("activity_provider") }
     factory<PermissionRepository> { (controller: PermissionsController) -> PermissionRepositoryImpl(controller) }
+    single<PlatformRepository> { PlatformRepositoryImpl() }
 
     // New file infrastructure
     single<ThumbnailGenerator> {
