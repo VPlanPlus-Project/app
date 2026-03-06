@@ -88,9 +88,10 @@ class UpdateSubstitutionPlanUseCase(
         val subjectInstances = subjectInstanceRepository.getBySchool(sp24School).first()
         var error: Response.Error? = null
 
-        val studentProfilesForSchool = profileRepository.getAll().first()
-            .filterIsInstance<Profile.StudentProfile>()
+        val profilesForSchool = profileRepository.getAll().first()
             .filter { it.school.id == sp24School.id }
+
+        val studentProfilesForSchool = profilesForSchool.filterIsInstance<Profile.StudentProfile>()
 
         val insertVersion = substitutionPlanRepository.getCurrentVersion().first() + 1
 
@@ -178,7 +179,7 @@ class UpdateSubstitutionPlanUseCase(
         }
 
         val timetableVersion = timetableRepository.getCurrentVersion().first()
-        studentProfilesForSchool.forEach { profile ->
+        profilesForSchool.forEach { profile ->
             updateProfileLessonIndexUseCase(profile, insertVersion, timetableVersion)
         }
 
