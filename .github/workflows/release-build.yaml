@@ -90,7 +90,7 @@ jobs:
                         ${{ env.TAG_NAME }}.aab
 
     build-ios:
-        runs-on: macos-26
+        runs-on: macos-self
         steps:
             -   name: Checkout sources
                 uses: actions/checkout@v4
@@ -127,11 +127,6 @@ jobs:
                     key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/libs.versions.toml', '**/gradle-wrapper.properties') }}
                     restore-keys: |
                         ${{ runner.os }}-gradle-
-
-            -   name: List Xcode
-                run: ls -c /Applications/ | grep -i xcode
-            -   name: Select Xcode
-                run: sudo xcode-select -s /Applications/Xcode_26.4.app
 
             -   name: Install fastlane
                 run: gem install fastlane --no-document
