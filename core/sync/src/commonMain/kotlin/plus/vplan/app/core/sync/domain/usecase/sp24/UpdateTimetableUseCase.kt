@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
@@ -42,6 +43,7 @@ class UpdateTimetableUseCase(
     private val profileRepository: ProfileRepository,
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
     private val lessonTimeRepository: LessonTimeRepository,
+    private val analyticsRepository: AnalyticsRepository,
 ) {
 
     /**
@@ -115,17 +117,17 @@ class UpdateTimetableUseCase(
                         val lessons = downloadedTimetable.lessons.mapNotNull { lesson ->
                             val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }
                             if (lessonGroups.isEmpty()) {
-                                // TODO captureError(
-                                //     location = "UpdateTimetableUseCase",
-                                //     message = """
-                                //         Skipping lesson, because it does not have any groups set.
-                                //         School: ${sp24School.sp24Id} ${sp24School.name}
-                                //         Week: CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)
-                                //         Lesson: ${lesson.subject} on ${lesson.dayOfWeek}, lesson number ${lesson.lessonNumber}
-                                //         Groups configured in app: ${groups.joinToString { it.name }}
-                                //         Groups for lesson: ${lesson.classes.joinToString()}
-                                //     """.trimIndent()
-                                // )
+                                 analyticsRepository.captureError(
+                                     location = "UpdateTimetableUseCase",
+                                     message = """
+                                         Skipping lesson, because it does not have any groups set.
+                                         School: ${sp24School.sp24Id} ${sp24School.name}
+                                         Week: CW${week.weekEntity.calendarWeek} (${week.weekEntity.weekIndex} week of school year)
+                                         Lesson: ${lesson.subject} on ${lesson.dayOfWeek}, lesson number ${lesson.lessonNumber}
+                                         Groups configured in app: ${groups.joinToString { it.name }}
+                                         Groups for lesson: ${lesson.classes.joinToString()}
+                                     """.trimIndent()
+                                 )
                                 return@mapNotNull null
                             }
 

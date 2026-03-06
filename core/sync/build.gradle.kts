@@ -18,6 +18,7 @@ kotlin {
             implementation(project(":core:model"))
             implementation(project(":core:platform"))
             implementation(project(":core:utils"))
+            implementation(project(":core:analytics"))
 
             // Koin
             implementation(libs.koin.core)
