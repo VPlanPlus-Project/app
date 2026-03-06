@@ -89,14 +89,90 @@ jobs:
                         ${{ env.TAG_NAME }}.apk
                         ${{ env.TAG_NAME }}.aab
 
+    build-ios:
+        runs-on: macos-15
+        steps:
+            -   name: Checkout sources
+                uses: actions/checkout@v4
+
+            -   name: Setup Java
+                uses: actions/setup-java@v4
+                with:
+                    distribution: 'temurin'
+                    java-version: 17
+                    cache: 'gradle'
+                    cache-dependency-path: |
+                        ${{ github.workspace }}/gradle/wrapper/gradle-wrapper.properties
+                        ${{ github.workspace }}/**/*.versions.toml
+
+            -   name: Make gradlew executable
+                run: chmod +x ./gradlew
+
+            -   name: Add GitLab credentials to local.properties
+                run: |
+                    echo "GROUP_MAVEN_USERNAME=${{ secrets.GITLAB_USER }}" >> local.properties
+                    echo "GROUP_MAVEN_PASSWORD=${{ secrets.GITLAB_PASSWORD }}" >> local.properties
+
+            -   name: Use PostHog API-Key
+                run: echo "posthog.api.key=${{ secrets.POSTHOG_API_KEY }}" >> local.properties
+
+            -   name: Disable debug mode
+                run: echo "app.debug=false" >> local.properties
+
+            -   uses: actions/cache@v4
+                with:
+                    path: |
+                        ~/.gradle/caches
+                        ~/.gradle/wrapper
+                    key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/libs.versions.toml', '**/gradle-wrapper.properties') }}
+                    restore-keys: |
+                        ${{ runner.os }}-gradle-
+
+            -   name: Select Xcode
+                run: sudo xcode-select -s /Applications/Xcode_16.3.app
+
+            -   name: Install fastlane
+                run: gem install fastlane --no-document
+
+            -   name: Decode certificate
+                run: echo "${{ secrets.IOS_CERTIFICATE_P12 }}" | base64 -d > iosApp/ci_certificate.p12
+
+            -   name: Decode provisioning profile
+                run: echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 -d > iosApp/ci_profile.mobileprovision
+
+            -   name: Build & upload to TestFlight
+                working-directory: iosApp
+                env:
+                    IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+                    APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+                    APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+                    APP_STORE_KEY_CONTENT: ${{ secrets.APP_STORE_KEY_CONTENT }}
+                    TAG_NAME: ${{ env.TAG_NAME }}
+                    GITHUB_RUN_NUMBER: ${{ github.run_number }}
+                run: fastlane ios beta tag:${{ env.TAG_NAME }}
+
+            -   name: Upload IPA artifact
+                uses: actions/upload-artifact@v4
+                with:
+                    name: ios-build-artifacts
+                    path: iosApp/build/VPlanPlus.ipa
+
     release:
-        needs: build
+        needs: [build, build-ios]
         runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
-            -   name: Download build artifacts
+            -   name: Download Android build artifacts
                 uses: actions/download-artifact@v4
                 with:
                     name: build-artifacts
+
+            -   name: Download iOS build artifacts
+                uses: actions/download-artifact@v4
+                with:
+                    name: ios-build-artifacts
+
+            -   name: Rename IPA
+                run: mv VPlanPlus.ipa ${{ env.TAG_NAME }}.ipa
 
             -   name: Create release
                 uses: softprops/action-gh-release@v2
@@ -104,6 +180,7 @@ jobs:
                     files: |
                         ${{ env.TAG_NAME }}.apk
                         ${{ env.TAG_NAME }}.aab
+                        ${{ env.TAG_NAME }}.ipa
                     draft: false
                     prerelease: ${{ endsWith(env.TAG_NAME, '-closed') || endsWith(env.TAG_NAME, '-open') || endsWith(env.TAG_NAME, '-internal') }}
                     make_latest: true
