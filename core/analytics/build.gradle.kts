@@ -1,7 +1,12 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.vplanplus.kmp.library)
+    alias(libs.plugins.vplanplus.kmp.buildconfig)
     alias(libs.plugins.serialization)
+}
+
+buildConfig {
+    packageName("plus.vplan.app.core.analytics")
 }
 
 kotlin {

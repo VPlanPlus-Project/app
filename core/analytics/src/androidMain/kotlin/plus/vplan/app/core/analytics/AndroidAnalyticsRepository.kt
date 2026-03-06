@@ -12,15 +12,14 @@ import com.posthog.android.PostHogAndroidConfig
 private const val POSTHOG_HOST = "https://eu.i.posthog.com"
 
 class AndroidAnalyticsRepository(
-    private val isDebug: Boolean,
-    context: Context,
-    posthogApiKey: String,
-    versionCode: Int,
+    private val context: Context,
 ) : AnalyticsRepository {
+
+    private val isDebug = AppBuildConfig.APP_DEBUG
 
     init {
         val config = PostHogAndroidConfig(
-            apiKey = posthogApiKey,
+            apiKey = AppBuildConfig.POSTHOG_API_KEY,
             host = POSTHOG_HOST
         ).apply {
             if (isDebug) {
@@ -32,7 +31,7 @@ class AndroidAnalyticsRepository(
             }
         }
         PostHogAndroid.setup(context.applicationContext as Application, config)
-        PostHog.register($$"$app_build", versionCode)
+        PostHog.register($$"$app_build", AppBuildConfig.APP_VERSION_CODE)
         PostHog.register($$"$os_name", "Android")
         PostHog.register("debug_mode", isDebug.toString())
     }
