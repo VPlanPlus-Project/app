@@ -3,25 +3,6 @@ package plus.vplan.app.ui
 import org.jetbrains.compose.resources.DrawableResource
 import plus.vplan.app.core.ui.CoreUiRes
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 fun String?.subjectIcon(): DrawableResource {
     return when (this?.lowercase()?.replace("\\d".toRegex(), "")) {
         "ast", "astro", "astronomie" -> CoreUiRes.drawable.telescope
