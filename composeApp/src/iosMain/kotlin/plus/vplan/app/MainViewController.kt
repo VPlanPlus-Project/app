@@ -9,15 +9,18 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import platform.UIKit.UIViewController
 import plus.vplan.app.core.data.file.OpenQuicklook
+import plus.vplan.app.feature.onboarding.IosDevInfoSheetHandler
 
 @Suppress("unused") // Is called in SwiftUI
-fun initKoin(quicklookImpl: OpenQuicklook) {
+fun initKoin(quicklookImpl: OpenQuicklook, iosDevInfoSheetHandlerImpl: IosDevInfoSheetHandler) {
     quicklook = quicklookImpl
+    iosDevInfoSheetHandler = iosDevInfoSheetHandlerImpl
     plus.vplan.app.di.initKoin()
 }
 
 lateinit var mainViewController: UIViewController
 lateinit var quicklook: OpenQuicklook
+lateinit var iosDevInfoSheetHandler: IosDevInfoSheetHandler
 
 inline fun <reified T : Any> getKoinInstance(): T {
     return object : KoinComponent {

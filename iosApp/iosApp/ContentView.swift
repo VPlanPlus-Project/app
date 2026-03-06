@@ -18,7 +18,15 @@ struct ComposeView: UIViewControllerRepresentable {
 struct ContentView: View {
     let url: String
     let notificationTask: String?
+    @ObservedObject var sheetCoordinator: IosDevInfoSheetCoordinator
+
     var body: some View {
-        return ComposeView(url: url, notificationTask: notificationTask).ignoresSafeArea()
+        ComposeView(url: url, notificationTask: notificationTask)
+            .ignoresSafeArea()
+            .sheet(isPresented: $sheetCoordinator.isPresented, onDismiss: {
+                sheetCoordinator.handleDismiss()
+            }) {
+                IosDevInfoSheet()
+            }
     }
 }

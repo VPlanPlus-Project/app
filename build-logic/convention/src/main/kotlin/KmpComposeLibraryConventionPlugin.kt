@@ -38,7 +38,7 @@ class KmpComposeLibraryConventionPlugin : Plugin<Project> {
             ).forEach { iosTarget ->
                 iosTarget.binaries.framework {
                     baseName = project.name.replaceFirstChar { it.uppercase() }
-                    isStatic = true
+                    isStatic = false
                 }
             }
 

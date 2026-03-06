@@ -20,10 +20,13 @@ import plus.vplan.app.core.platform.PermissionRepository
 import plus.vplan.app.core.platform.PermissionRepositoryImpl
 import plus.vplan.app.core.platform.PlatformRepository
 import plus.vplan.app.core.platform.PlatformRepositoryImpl
+import plus.vplan.app.feature.onboarding.IosDevInfoSheetHandler
+import plus.vplan.app.iosDevInfoSheetHandler
 import plus.vplan.app.quicklook
 
 @OptIn(ExperimentalForeignApi::class)
 actual val platformModule: Module = module {
+    single<IosDevInfoSheetHandler> { iosDevInfoSheetHandler }
     single<NotificationRepository> { NotificationRepositoryImpl() }
     single<AuthenticationRepository> { AuthenticationRepositoryImpl() }
     single<BiometricAuthentication> { BiometricAuthenticationImpl() }
