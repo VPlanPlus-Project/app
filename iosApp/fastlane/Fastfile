@@ -25,8 +25,8 @@ platform :ios do
     # ── Install certificate & provisioning profile ─────────────────────────
     # Resolve absolute paths up-front; fastlane actions and sh() may resolve
     # relative paths from different working directories.
-    cert_path    = File.expand_path("ci_certificate.p12", Dir.pwd)
-    profile_path = File.expand_path("ci_profile.mobileprovision", Dir.pwd)
+    cert_path    = File.expand_path("../ci_certificate.p12", Dir.pwd)
+    profile_path = File.expand_path("../ci_profile.mobileprovision", Dir.pwd)
 
     keychain_name     = "ci_keychain"
     keychain_password = SecureRandom.hex
