@@ -94,7 +94,7 @@ internal class OnboardingViewModel(
         initDataJob = viewModelScope.launch {
             val options = buildProfileOptionsFromLocalDataUseCase(school)
             state.update { it.copy(profileOptions = options) }
-            backStack.add(Onboarding.ProfileSelection)
+            resetBackStack(Onboarding.ProfileSelection)
         }
     }
 
