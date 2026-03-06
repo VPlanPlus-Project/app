@@ -659,7 +659,8 @@ abstract class VppDatabase : RoomDatabase() {
     class Migration14to15: AutoMigrationSpec {
         override fun onPostMigrate(connection: SQLiteConnection) {
             connection.execSQL("""
-                UPDATE assessments SET subject_instance_id = (SELECT subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = assessments.subject_instance_id);
+                DELETE FROM assessments WHERE subject_instance_id NOT IN (SELECT alias FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp');
+                UPDATE assessments SET assessments.subject_instance_id = (SELECT subject_instances_aliases.subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = assessments.subject_instance_id);
             """.trimIndent())
         }
     }
