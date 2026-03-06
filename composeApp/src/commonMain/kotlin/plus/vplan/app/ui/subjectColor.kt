@@ -1,9 +1,8 @@
 package plus.vplan.app.ui
 
-import androidx.compose.ui.graphics.Color
-import plus.vplan.app.ui.theme.ColorTheme
-import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.colors
+import plus.vplan.app.core.ui.theme.ColorTheme
+import plus.vplan.app.core.ui.theme.CustomColor
+import plus.vplan.app.core.ui.theme.colors
 
 fun String?.subjectColor(): ColorTheme {
     return when (this?.lowercase()?.replace("\\d".toRegex(), "")) {

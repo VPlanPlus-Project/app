@@ -57,10 +57,10 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonSize
-import plus.vplan.app.ui.components.ButtonState
-import plus.vplan.app.ui.components.ButtonType
+import plus.vplan.app.core.ui.components.Button
+import plus.vplan.app.core.ui.components.ButtonSize
+import plus.vplan.app.core.ui.components.ButtonState
+import plus.vplan.app.core.ui.components.ButtonType
 import plus.vplan.app.ui.keyboardAsState
 import plus.vplan.app.utils.safeBottomPadding
 

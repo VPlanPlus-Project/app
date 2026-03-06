@@ -14,9 +14,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.ui.theme.AppTheme
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.feature.settings.page.info.domain.usecase.getSystemInfo
-import plus.vplan.app.ui.theme.AppTheme
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

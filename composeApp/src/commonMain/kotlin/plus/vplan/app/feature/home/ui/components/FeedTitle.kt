@@ -16,7 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.ui.theme.displayFontFamily
+import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.utils.toDp
 
 @Composable

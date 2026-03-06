@@ -26,13 +26,13 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Button
+import plus.vplan.app.core.ui.components.ButtonSize
+import plus.vplan.app.core.ui.components.ButtonState
+import plus.vplan.app.core.ui.components.ButtonType
 import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.components.PasswordField
 import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.components.UsernameField
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonSize
-import plus.vplan.app.ui.components.ButtonState
-import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.utils.safeBottomPadding
 
 

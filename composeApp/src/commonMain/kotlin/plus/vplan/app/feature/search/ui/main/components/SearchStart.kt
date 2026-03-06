@@ -38,11 +38,11 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.search.ui.main.NewItem
 import plus.vplan.app.ui.components.Grid
 import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.regularDateFormatWithoutYear
 import plus.vplan.app.utils.toDp

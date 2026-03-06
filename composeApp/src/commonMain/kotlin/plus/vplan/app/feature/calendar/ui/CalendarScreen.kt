@@ -94,6 +94,9 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.CustomColor
+import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
@@ -112,9 +115,6 @@ import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
-import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.colors
-import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.untilText

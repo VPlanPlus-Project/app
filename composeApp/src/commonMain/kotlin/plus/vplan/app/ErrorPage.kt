@@ -27,9 +27,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonType
-import plus.vplan.app.ui.theme.monospaceFontFamily
+import plus.vplan.app.core.ui.components.Button
+import plus.vplan.app.core.ui.components.ButtonType
+import plus.vplan.app.core.ui.theme.monospaceFontFamily
 import plus.vplan.app.utils.copyToClipboard
 
 

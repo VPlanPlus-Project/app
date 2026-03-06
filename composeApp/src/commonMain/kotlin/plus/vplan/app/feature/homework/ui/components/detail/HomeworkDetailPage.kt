@@ -44,6 +44,10 @@ import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.HomeworkStatus
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Button
+import plus.vplan.app.core.ui.components.ButtonSize
+import plus.vplan.app.core.ui.components.ButtonState
+import plus.vplan.app.core.ui.components.ButtonType
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
@@ -58,10 +62,6 @@ import plus.vplan.app.feature.homework.ui.components.detail.components.TaskRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.tableNameStyle
 import plus.vplan.app.feature.homework.ui.components.detail.components.tableValueStyle
 import plus.vplan.app.ui.common.AttachedFile
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonSize
-import plus.vplan.app.ui.components.ButtonState
-import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.file.FileRowWithThumbnail

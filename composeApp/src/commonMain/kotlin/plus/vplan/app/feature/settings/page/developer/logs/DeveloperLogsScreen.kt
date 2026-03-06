@@ -43,11 +43,11 @@ import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.CustomColor
+import plus.vplan.app.core.ui.theme.bodyFontFamily
+import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.monospaceFontFamily
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.bodyFontFamily
-import plus.vplan.app.ui.theme.colors
-import plus.vplan.app.ui.theme.monospaceFontFamily
 import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.generateColor
 

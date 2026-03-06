@@ -10,9 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.ColorToken
+import plus.vplan.app.core.ui.theme.customColors
 import plus.vplan.app.ui.components.InfoCard
-import plus.vplan.app.ui.theme.ColorToken
-import plus.vplan.app.ui.theme.customColors
 import plus.vplan.app.utils.openUrl
 
 
