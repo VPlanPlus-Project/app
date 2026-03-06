@@ -6,7 +6,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import plus.vplan.app.capture
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
@@ -21,7 +21,8 @@ class HandlePushNotificationUseCase(
     private val updateAssessmentsUseCase: UpdateAssessmentsUseCase,
     private val schoolRepository: SchoolRepository,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
-    private val updateTimetableUseCase: UpdateTimetableUseCase
+    private val updateTimetableUseCase: UpdateTimetableUseCase,
+    private val analyticsRepository: AnalyticsRepository,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
     private val logger = Logger.withTag("HandlePushNotificationUseCase")
@@ -46,7 +47,7 @@ class HandlePushNotificationUseCase(
 
                 if (school == null) {
                     logger.w { "Indiware school ${data.indiwareSchoolId} not found" }
-                    capture("PushHandler.IndiwareSchoolNotFound", mapOf("indiware_id" to data.indiwareSchoolId))
+                    analyticsRepository.capture("PushHandler.IndiwareSchoolNotFound", mapOf("indiware_id" to data.indiwareSchoolId))
                     return
                 }
 
@@ -54,7 +55,7 @@ class HandlePushNotificationUseCase(
                     try {
                         LocalDate.parse(it)
                     } catch (_: IllegalArgumentException) {
-                        capture("PushHandler.DateParseError", mapOf("value" to it))
+                        analyticsRepository.capture("PushHandler.DateParseError", mapOf("value" to it))
                         null
                     }
                 }

@@ -64,6 +64,7 @@ include(":core:network")
 include(":core:platform")
 include(":core:ui")
 include(":core:sync")
+include(":core:analytics")
 
 // Feature modules
 include(":feature:onboarding")

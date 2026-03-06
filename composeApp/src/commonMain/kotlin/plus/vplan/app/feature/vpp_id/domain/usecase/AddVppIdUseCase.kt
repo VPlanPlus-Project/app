@@ -4,7 +4,7 @@ package plus.vplan.app.feature.vpp_id.domain.usecase
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
-import plus.vplan.app.captureError
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.group.GroupRepository
@@ -28,6 +28,7 @@ class AddVppIdUseCase(
     private val syncGradesUseCase: SyncGradesUseCase,
     private val groupRepository: GroupRepository,
     private val schoolRepository: SchoolRepository,
+    private val analyticsRepository: AnalyticsRepository,
 ) {
     private val logger = Logger.withTag("AddVppIdUseCase")
 
@@ -53,7 +54,7 @@ class AddVppIdUseCase(
         if (group == null) {
             val errorMessage = "Group not found for VPP ID: ${vppIdInfo.id}, group alias: ${vppIdInfo.groupId}"
             logger.e { errorMessage }
-            captureError("AddVppIdUseCase", errorMessage)
+            analyticsRepository.captureError("AddVppIdUseCase", errorMessage)
             throw NetworkException(NetworkErrorKind.NotFound, "Group not found for VPP ID: ${vppIdInfo.id}")
         }
 

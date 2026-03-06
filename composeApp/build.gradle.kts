@@ -77,13 +77,11 @@ kotlin {
 
             // Ktor
             implementation(libs.ktor.client.okhttp)
-
-            // Analytics
-            implementation(libs.posthog.android)
         }
 
         commonMain.dependencies {
             // Project modules
+            implementation(project(":core:analytics"))
             implementation(project(":core:data"))
             implementation(project(":core:database"))
             implementation(project(":core:model"))

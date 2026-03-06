@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import kotlinx.datetime.LocalDate
@@ -40,7 +39,6 @@ object AppConfig {
 }
 
 @Composable
-@Preview
 fun App(task: StartTask?) {
     AppTheme(dynamicColor = false) {
         Surface(
@@ -176,27 +174,3 @@ fun getTaskFromNotificationString(data: String): StartTask? {
     }
     return null
 }
-
-enum class Platform {
-    Android, iOS
-}
-
-expect fun getPlatform(): Platform
-expect fun capture(event: String, properties: Map<String, Any>?)
-fun captureError(location: String, message: String) {
-    capture("error", mapOf("location" to location, "message" to message))
-}
-expect fun setPostHogProperty(key: String, value: String)
-expect fun isDebug(): Boolean
-expect fun posthogIdentify(
-    distinctId: String,
-    userProperties: Map<String, Any>?,
-    userPropertiesSetOnce: Map<String, Any>?,
-)
-expect fun firebaseIdentify(
-    id: String,
-)
-expect fun isFeatureEnabled(
-    key: String,
-    defaultValue: Boolean
-): Boolean

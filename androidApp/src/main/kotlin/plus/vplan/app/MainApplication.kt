@@ -35,7 +35,7 @@ class MainApplication : Application() {
             apiKey = PostHogConfig.API_KEY,
             host = POSTHOG_HOST
         ).apply {
-            if (isDebug()) {
+            if (AppBuildConfig.APP_DEBUG) {
                 flushAt = 1
                 flushIntervalSeconds = 20
             } else {
@@ -48,7 +48,7 @@ class MainApplication : Application() {
         PostHogAndroid.setup(this, config)
         PostHog.register("\$app_build", AppConfig.VERSION_CODE)
         PostHog.register("\$os_name", "Android")
-        PostHog.register("debug_mode", isDebug().toString())
+        PostHog.register("debug_mode", AppBuildConfig.APP_DEBUG.toString())
 
         FirebaseApp.initializeApp(this)
         Firebase.crashlytics.isCrashlyticsCollectionEnabled = false

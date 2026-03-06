@@ -25,6 +25,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.LOG_HTTP_REQUESTS
+import plus.vplan.app.core.analytics.di.analyticsModule
 import plus.vplan.app.core.data.FcmRepository
 import plus.vplan.app.core.data.FcmRepositoryImpl
 import plus.vplan.app.core.data.KeyValueRepository
@@ -264,7 +265,7 @@ val appModule = module(createdAtStart = true) {
 fun initKoin(configuration: KoinAppDeclaration? = null) {
     startKoin {
         configuration?.invoke(this)
-        modules(platformModule, databaseModule)
+        modules(platformModule, databaseModule, analyticsModule)
         modules(domainModule)
         modules(
             appModule,

@@ -108,6 +108,7 @@ android {
 dependencies {
     implementation(project(":composeApp"))
     implementation(project(":core:platform"))
+    implementation(project(":core:analytics"))
 
     // AndroidX
     implementation(libs.androidx.activity.compose)

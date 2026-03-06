@@ -7,7 +7,7 @@ import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.StartTaskJson
-import plus.vplan.app.captureError
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.besteschule.BesteSchuleRepository
 import plus.vplan.app.core.data.besteschule.CollectionsRepository
 import plus.vplan.app.core.data.besteschule.GradesRepository
@@ -42,6 +42,7 @@ class SyncGradesUseCase(
 
     private val profileRepository by inject<ProfileRepository>()
     private val platformNotificationRepository by inject<NotificationRepository>()
+    private val analyticsRepository by inject<AnalyticsRepository>()
 
     suspend operator fun invoke(allowNotifications: Boolean, yearId: Int? = null) {
         try {
@@ -244,7 +245,7 @@ class SyncGradesUseCase(
             }
         } catch (e: Exception) {
             Logger.e { "Failed to sync grades: ${e.stackTraceToString()}" }
-            captureError("SyncGradesUseCase", e.stackTraceToString())
+            analyticsRepository.captureError("SyncGradesUseCase", e.stackTraceToString())
         }
     }
 }
