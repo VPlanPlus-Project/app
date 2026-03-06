@@ -8,8 +8,10 @@ import BackgroundTasks
 struct iOSApp: SwiftUI.App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
+    let quickLookImpl = QuickLookImpl()
+    
     init() {
-        MainViewControllerKt.doInitKoin()
+        MainViewControllerKt.doInitKoin(quicklookImpl: quickLookImpl)
     }
     
     @State private var launchUrl: String? = nil
@@ -21,10 +23,10 @@ struct iOSApp: SwiftUI.App {
     
     var body: some Scene {
         WindowGroup {
+            let _ = { quickLookImpl.onQuicklook = { path in quickLookUrl = URL(string: path) } }()
             ContentView(
                 url: launchUrl ?? "",
-                notificationTask: notificationManager.notificationData,
-                onQuicklook: { path in quickLookUrl = URL(string: path) }
+                notificationTask: notificationManager.notificationData
             )
                 .onOpenURL { url in
                     (getVisibleViewController(UIApplication.shared.keyWindow?.rootViewController) as! SFSafariViewController).dismiss(animated: true)

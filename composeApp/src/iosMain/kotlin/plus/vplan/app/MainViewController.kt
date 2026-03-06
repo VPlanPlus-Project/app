@@ -11,7 +11,8 @@ import platform.UIKit.UIViewController
 import plus.vplan.app.core.data.file.OpenQuicklook
 
 @Suppress("unused") // Is called in SwiftUI
-fun initKoin() {
+fun initKoin(quicklookImpl: OpenQuicklook) {
+    quicklook = quicklookImpl
     plus.vplan.app.di.initKoin()
 }
 
@@ -29,10 +30,8 @@ var task: StartTask? by mutableStateOf(null)
 @Suppress("unused") // Is called in SwiftUI
 fun mainViewController(
     url: String,
-    notificationTask: String?,
-    quicklookImpl: OpenQuicklook
+    notificationTask: String?
 ): UIViewController {
-    quicklook = quicklookImpl
     updateTaskFromUrl(url)
     updateTaskFromNotification(notificationTask)
 
