@@ -35,6 +35,8 @@ import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.regularDateFormat
+import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
 import plus.vplan.app.feature.calendar.ui.components.agenda.GradeCard
@@ -42,11 +44,9 @@ import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLessons
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.result.SchoolEntityResults
-import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.safeBottomPadding
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
-import plus.vplan.app.utils.untilRelativeText
 
 
 @Composable

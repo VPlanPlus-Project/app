@@ -34,9 +34,9 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.utils.date.regularDateFormat
 import plus.vplan.app.feature.news.domain.usecase.NewsSchoolsState
 import plus.vplan.app.ui.components.FullscreenDrawer
-import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toDp
 import kotlin.time.ExperimentalTime
 
@@ -96,7 +96,15 @@ fun NewsDrawer(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 Text(
-                    text = state.news.author + ", am " + state.news.date.toLocalDateTime(TimeZone.currentSystemDefault()).date.format(regularDateFormat),
+                    text = buildString {
+                        append(state.news.author)
+                        append(", am ")
+                        append(
+                            state
+                                .news.date.toLocalDateTime(TimeZone.currentSystemDefault())
+                                .date.format(regularDateFormat)
+                        )
+                    },
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )

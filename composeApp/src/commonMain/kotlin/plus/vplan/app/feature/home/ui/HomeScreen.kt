@@ -79,6 +79,9 @@ import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.utils.date.longMonthNames
+import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
+import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
@@ -93,14 +96,11 @@ import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.longDayOfWeekNames
-import plus.vplan.app.utils.longMonthNames
 import plus.vplan.app.utils.openUrl
 import plus.vplan.app.utils.progressIn
-import plus.vplan.app.utils.regularDateFormatWithoutYear
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.transparent
-import plus.vplan.app.utils.untilRelativeText
 import kotlin.uuid.ExperimentalUuidApi
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp

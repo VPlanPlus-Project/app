@@ -6,7 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
-import plus.vplan.app.utils.regularDateFormat
+import plus.vplan.app.core.utils.date.regularDateFormat
 
 @Composable
 fun DueToRow(

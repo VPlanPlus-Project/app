@@ -1,4 +1,4 @@
-package plus.vplan.app.utils
+package plus.vplan.app.core.utils.date
 
 import kotlinx.datetime.format.MonthNames
 

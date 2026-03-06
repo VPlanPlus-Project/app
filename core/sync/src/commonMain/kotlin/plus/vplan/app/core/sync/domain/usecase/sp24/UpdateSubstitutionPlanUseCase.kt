@@ -5,8 +5,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
-import kotlinx.datetime.format.Padding
-import kotlinx.datetime.format.char
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
@@ -27,31 +25,13 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.sync.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.regularDateFormat
+import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import kotlin.uuid.Uuid
 
 private val LOGGER = Logger.withTag("UpdateSubstitutionPlanUseCase")
-
-private val regularDateFormat = LocalDate.Format {
-    day(padding = Padding.ZERO)
-    char('.')
-    monthNumber(Padding.ZERO)
-    char('.')
-    year(Padding.ZERO)
-}
-
-private fun LocalDate.untilRelativeText(other: LocalDate): String? {
-    val daysDiff = other.toEpochDays() - this.toEpochDays()
-    return when (daysDiff.toInt()) {
-        -2 -> "Vorgestern"
-        -1 -> "Gestern"
-        0 -> "Heute"
-        1 -> "Morgen"
-        2 -> "Übermorgen"
-        else -> null
-    }
-}
 
 class UpdateSubstitutionPlanUseCase(
     private val stundenplan24Repository: Stundenplan24Repository,
