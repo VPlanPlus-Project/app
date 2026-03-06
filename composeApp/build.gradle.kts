@@ -143,6 +143,25 @@ kotlin {
     }
 }
 
+// Generate a Version.xcconfig that Xcode includes so MARKETING_VERSION and
+// CURRENT_PROJECT_VERSION are always in sync with ApplicationConfig.
+val generateXcodeVersionConfig by tasks.registering {
+    group = "build"
+    description = "Writes app/app.xcodeproj/Version.xcconfig from ApplicationConfig"
+    val outFile = rootProject.file("app/app.xcodeproj/Version.xcconfig")
+    outputs.file(outFile)
+    doLast {
+        outFile.writeText(
+            "MARKETING_VERSION = ${applicationConfig.versionName}\n" +
+            "CURRENT_PROJECT_VERSION = ${applicationConfig.versionCode}\n"
+        )
+    }
+}
+
+tasks.named("embedAndSignAppleFrameworkForXcode") {
+    dependsOn(generateXcodeVersionConfig)
+}
+
 buildConfig {
     useKotlinOutput {
         topLevelConstants = false
