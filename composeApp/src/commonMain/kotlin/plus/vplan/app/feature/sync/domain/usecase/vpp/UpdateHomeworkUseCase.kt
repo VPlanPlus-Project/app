@@ -10,11 +10,11 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
-import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.application.StartTaskJson
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.shortMonthNames

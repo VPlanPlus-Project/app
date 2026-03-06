@@ -2,8 +2,8 @@ package plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validi
 
 import co.touchlab.kermit.Logger
 import kotlinx.serialization.json.Json
-import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.application.StartTaskJson
 import plus.vplan.app.core.platform.NotificationRepository
 
 class SendInvalidSp24CredentialsNotification(

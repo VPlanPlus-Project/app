@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
+import kotlinx.serialization.json.Json
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
@@ -22,6 +23,7 @@ import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.application.StartTaskJson
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.sync.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.core.utils.date.now
@@ -218,8 +220,22 @@ class UpdateSubstitutionPlanUseCase(
                         }.dropLastWhile { it == '\n' }.dropWhile { it == '\n' },
                         category = profile.name,
                         isLarge = true,
-                        // TODO: Provide onClickData with navigation task (StartTaskJson is in composeApp)
-                        onClickData = null
+                        onClickData = Json.encodeToString(
+                            StartTaskJson(
+                                type = "navigate_to",
+                                profileId = profile.id.toString(),
+                                value = Json.encodeToString(
+                                    StartTaskJson.StartTaskNavigateTo(
+                                        screen = "calendar",
+                                        value = Json.encodeToString(
+                                            StartTaskJson.StartTaskNavigateTo.StartTaskCalendar(
+                                                date = date.toString()
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ).also { Logger.d { "Task: $it" } },
                     )
                 }
             }

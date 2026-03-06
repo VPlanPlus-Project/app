@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.vplanplus.kmp.library)
+    alias(libs.plugins.serialization)
 }
 
 kotlin {
@@ -24,6 +25,9 @@ kotlin {
             // Third-party
             implementation(libs.kermit)
             implementation(libs.vpp.sp24)
+
+            // Kotlin
+            implementation(libs.kotlinx.serialization.json)
         }
     }
 }

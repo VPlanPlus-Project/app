@@ -6,7 +6,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.StartTaskJson
 import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.besteschule.BesteSchuleRepository
 import plus.vplan.app.core.data.besteschule.CollectionsRepository
@@ -18,6 +17,7 @@ import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.application.StartTaskJson
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.until
