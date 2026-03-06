@@ -128,9 +128,6 @@ jobs:
                     restore-keys: |
                         ${{ runner.os }}-gradle-
 
-            -   name: Install fastlane
-                run: gem install fastlane --no-document
-
             -   name: Decode certificate
                 run: echo "${{ secrets.IOS_CERTIFICATE_P12 }}" | base64 -d > iosApp/ci_certificate.p12
 
