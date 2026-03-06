@@ -108,6 +108,8 @@ android {
 dependencies {
     implementation(project(":composeApp"))
     implementation(project(":core:platform"))
+    implementation(project(":core:analytics"))
+    implementation(project(":core:ui"))
 
     // AndroidX
     implementation(libs.androidx.activity.compose)
@@ -139,7 +141,6 @@ dependencies {
     implementation(libs.filekit.core)
     implementation(libs.filekit.dialogs.compose)
     implementation(libs.kermit)
-    implementation(libs.posthog.android)
 
     debugImplementation(libs.androidx.ui.tooling)
 }

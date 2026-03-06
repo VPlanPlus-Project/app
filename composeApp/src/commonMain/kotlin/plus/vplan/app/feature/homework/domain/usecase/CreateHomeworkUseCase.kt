@@ -3,7 +3,7 @@ package plus.vplan.app.feature.homework.domain.usecase
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.captureError
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.file.FileRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.homework.HomeworkRepository
@@ -30,6 +30,7 @@ class CreateHomeworkUseCase(
     private val fileRepository: FileRepository,
     private val profileService: ProfileService,
     private val subjectInstanceRepository: SubjectInstanceRepository,
+    private val analyticsRepository: AnalyticsRepository,
 ) {
     suspend operator fun invoke(
         tasks: List<String>,
@@ -38,7 +39,7 @@ class CreateHomeworkUseCase(
         subjectInstance: SubjectInstance?,
         selectedFiles: List<AttachedFile>
     ): CreateHomeworkResult {
-        val profile = (profileService.getCurrentProfile().first() as? Profile.StudentProfile) ?: return CreateHomeworkResult.Error.UnknownError("No current profile found or profile is not a student profile")
+        val profile = (profileService.getCurrentProfile().first() as? Profile.StudentProfile) ?: return unknownError("No current profile found or profile is not a student profile")
         val id: Int
         val taskIds: Map<String, Int>
         var homework: Homework
@@ -48,13 +49,13 @@ class CreateHomeworkUseCase(
         val vppGroupId = if (subjectInstance == null) {
             val groupId = profile.group.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
                 val groupAlias = profile.group.aliases.firstOrNull()
-                    ?: return CreateHomeworkResult.Error.UnknownError("Group ${profile.group} has no aliases")
+                    ?: return unknownError("Group ${profile.group} has no aliases")
                 val downloadedGroup = groupRepository.getById(
                     identifier = groupAlias,
                     forceUpdate = true,
                 ).first() ?: return CreateHomeworkResult.Error.GroupNotFound
                 val groupId = downloadedGroup.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
-                if (groupId == null) return CreateHomeworkResult.Error.UnknownError("Group ${profile.group} not found on VPP")
+                if (groupId == null) return unknownError("Group ${profile.group} not found on VPP")
                 return@run groupId
             }
             groupId
@@ -65,12 +66,12 @@ class CreateHomeworkUseCase(
         val vppSubjectInstanceId = if (subjectInstance != null) {
             val subjectInstanceId = subjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
                 val subjectInstanceAlias = subjectInstance.aliases.firstOrNull()
-                    ?: return CreateHomeworkResult.Error.UnknownError("Subject instance $subjectInstance has no aliases")
+                    ?: return unknownError("Subject instance $subjectInstance has no aliases")
                 val downloadedSubjectInstance = subjectInstanceRepository.getById(subjectInstanceAlias)
                     .first()
-                    ?: return CreateHomeworkResult.Error.UnknownError("Subject instance $subjectInstance not found on VPP")
+                    ?: return unknownError("Subject instance $subjectInstance not found on VPP")
                 val subjectInstanceId = downloadedSubjectInstance.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
-                if (subjectInstanceId == null) return CreateHomeworkResult.Error.UnknownError("Subject instance $subjectInstance not found on VPP")
+                if (subjectInstanceId == null) return unknownError("Subject instance $subjectInstance not found on VPP")
                 return@run subjectInstanceId
             }
             subjectInstanceId
@@ -87,7 +88,11 @@ class CreateHomeworkUseCase(
                 isPublic = isPublic == true,
                 tasks = tasks
             )
-            if (result !is Response.Success) return CreateHomeworkResult.Error.CreationError(result as Response.Error)
+            if (result !is Response.Success) {
+                val error = result as Response.Error
+                analyticsRepository.captureError("CreateHomeworkUseCase", "Creation error: ${error::class.simpleName}")
+                return CreateHomeworkResult.Error.CreationError(error)
+            }
 
             val idMapping = result.data
             id = idMapping.id
@@ -194,6 +199,11 @@ class CreateHomeworkUseCase(
 
         return CreateHomeworkResult.Success(id)
     }
+
+    private fun unknownError(message: String): CreateHomeworkResult.Error.UnknownError {
+        analyticsRepository.captureError("CreateHomeworkUseCase", "Unknown error: $message")
+        return CreateHomeworkResult.Error.UnknownError(message)
+    }
 }
 
 sealed class CreateHomeworkResult {
@@ -207,11 +217,7 @@ sealed class CreateHomeworkResult {
          */
         data object GroupNotFound : Error()
 
-        data class UnknownError(val message: String): Error() {
-            init {
-                captureError("CreateHomeworkUseCase", "Unknown error: $message")
-            }
-        }
+        data class UnknownError(val message: String): Error()
 
         data class CreationError(val error: Response.Error) : Error()
     }

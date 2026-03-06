@@ -6,8 +6,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.StartTaskJson
-import plus.vplan.app.captureError
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.besteschule.BesteSchuleRepository
 import plus.vplan.app.core.data.besteschule.CollectionsRepository
 import plus.vplan.app.core.data.besteschule.GradesRepository
@@ -18,12 +17,13 @@ import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.application.StartTaskJson
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.until
 import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.atStartOfDay
-import plus.vplan.app.utils.until
 import kotlin.time.Duration.Companion.days
 
 class SyncGradesUseCase(
@@ -42,6 +42,7 @@ class SyncGradesUseCase(
 
     private val profileRepository by inject<ProfileRepository>()
     private val platformNotificationRepository by inject<NotificationRepository>()
+    private val analyticsRepository by inject<AnalyticsRepository>()
 
     suspend operator fun invoke(allowNotifications: Boolean, yearId: Int? = null) {
         try {
@@ -244,7 +245,7 @@ class SyncGradesUseCase(
             }
         } catch (e: Exception) {
             Logger.e { "Failed to sync grades: ${e.stackTraceToString()}" }
-            captureError("SyncGradesUseCase", e.stackTraceToString())
+            analyticsRepository.captureError("SyncGradesUseCase", e.stackTraceToString())
         }
     }
 }

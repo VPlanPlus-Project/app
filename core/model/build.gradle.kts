@@ -2,12 +2,10 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.vplanplus.kmp.library)
     alias(libs.plugins.serialization)
-    // alias(libs.plugins.composeMultiplatform) // Only for preview in File
-    // alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "plus.vplan.app.core.model"
         compileSdk = applicationConfig.android.targetSdk
         minSdk = applicationConfig.android.minSdk

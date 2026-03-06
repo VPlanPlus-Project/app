@@ -6,7 +6,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.AppBuildConfig
-import plus.vplan.app.captureError
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.profile.ProfileRepository
@@ -15,10 +15,6 @@ import plus.vplan.app.core.model.VppId
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
 import plus.vplan.app.feature.main.domain.usecase.setup.DownloadVppSchoolIdentifierUseCase
 import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
-import plus.vplan.app.firebaseIdentify
-import plus.vplan.app.isFeatureEnabled
-import plus.vplan.app.posthogIdentify
-import plus.vplan.app.setPostHogProperty
 
 class SetupApplicationUseCase(
     private val keyValueRepository: KeyValueRepository,
@@ -27,7 +23,8 @@ class SetupApplicationUseCase(
     private val updateFirebaseTokenUseCase: UpdateFirebaseTokenUseCase,
     private val downloadVppSchoolIdentifierUseCase: DownloadVppSchoolIdentifierUseCase,
     private val profileRepository: ProfileRepository,
-    private val vppIdRepository: VppIdRepository
+    private val vppIdRepository: VppIdRepository,
+    private val analyticsRepository: AnalyticsRepository,
 ) {
     private val logger = Logger.withTag("SetupApplicationUseCase")
     suspend operator fun invoke() {
@@ -45,14 +42,14 @@ class SetupApplicationUseCase(
         }
 
         keyValueRepository.set(Keys.PREVIOUS_APP_VERSION, AppBuildConfig.APP_VERSION_CODE.toString())
-        if (isFeatureEnabled("core_download-vpp-school-identifier", true)) downloadVppSchoolIdentifierUseCase()
+        if (analyticsRepository.isFeatureEnabled("core_download-vpp-school-identifier", true)) downloadVppSchoolIdentifierUseCase()
 
-        if (isFeatureEnabled("core_analytics-identifier", true)) vppIdRepository.getAllLocalIds().first()
+        if (analyticsRepository.isFeatureEnabled("core_analytics-identifier", true)) vppIdRepository.getAllLocalIds().first()
             .firstNotNullOfOrNull { vppIdRepository.getById(it).first() as? VppId.Active }
             ?.let { vppId ->
                 setProperty("user.vpp_id", vppId.id.toString())
-                setPostHogProperty("user.vpp_id", vppId.id.toString())
-                posthogIdentify(
+                analyticsRepository.setPostHogProperty("user.vpp_id", vppId.id.toString())
+                analyticsRepository.posthogIdentify(
                     distinctId = "vpp.ID/${vppId.id}",
                     userProperties = mapOf(
                         "vpp.id" to vppId.id.toString(),
@@ -60,11 +57,11 @@ class SetupApplicationUseCase(
                     ),
                     userPropertiesSetOnce = emptyMap()
                 )
-                firebaseIdentify("vpp.ID/${vppId.id}")
+                analyticsRepository.firebaseIdentify("vpp.ID/${vppId.id}")
                 logger.d { "Identified user for analytics with vpp.ID/${vppId.id}" }
             }
 
-        if (isFeatureEnabled("core_anonymous-user-profiles", true)) try {
+        if (analyticsRepository.isFeatureEnabled("core_anonymous-user-profiles", true)) try {
             val profiles = profileRepository.getAll().first().groupBy { it.school }.mapNotNull { (school, profiles) ->
                 FirebaseUserProfiles(
                     school = school.name,
@@ -72,14 +69,14 @@ class SetupApplicationUseCase(
                 )
             }.let { Json.encodeToString(it) }
             setProperty("user.profiles", profiles)
-            setPostHogProperty("user.profiles", profiles)
+            analyticsRepository.setPostHogProperty("user.profiles", profiles)
             logger.d { "Collected user profiles for analytics: $profiles" }
         } catch (e: Exception) {
             logger.e(e) { "Failed to collect user profiles for Firebase" }
-            captureError("SetupApplicationUseCase", "Failed to collect user profiles for Firebase: ${e.stackTraceToString()}")
+            analyticsRepository.captureError("SetupApplicationUseCase", "Failed to collect user profiles for Firebase: ${e.stackTraceToString()}")
         }
 
-        if (isFeatureEnabled("core_sp24-api-log", true)) sendSp24CredentialsToServerUseCase()
+        if (analyticsRepository.isFeatureEnabled("core_sp24-api-log", true)) sendSp24CredentialsToServerUseCase()
     }
 }
 

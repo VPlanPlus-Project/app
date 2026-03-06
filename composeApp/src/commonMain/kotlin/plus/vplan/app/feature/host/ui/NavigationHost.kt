@@ -11,6 +11,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.navigation.compose.NavHost
@@ -23,15 +24,18 @@ import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.main.ui.MainScreenHost
-import plus.vplan.app.feature.onboarding.ui.OnboardingScreen
+import plus.vplan.app.feature.onboarding.OnboardingView
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.feature.schulverwalter.domain.usecase.UpdateSchulverwalterAccessUseCase
+import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 import plus.vplan.app.feature.vpp_id.ui.VppIdSetupScreen
 import plus.vplan.app.utils.openUrl
 
@@ -81,12 +85,25 @@ fun NavigationHost(task: StartTask?) {
         navController = navigationHostController,
         startDestination = if (state.hasProfileAtAppStartup) AppScreen.MainScreen else AppScreen.Onboarding(null, false)
     ) {
-        composable<AppScreen.Onboarding> { route ->
-            val args = route.toRoute<AppScreen.Onboarding>()
-            OnboardingScreen(
-                skipIntroAnimation = args.skipIntroAnimation,
-                useSchool = args.schoolIdentifier?.map { Alias.fromString(it) }?.toSet(),
-            ) { navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) } }
+        composable<AppScreen.Onboarding> { backStackEntry ->
+            val args = backStackEntry.toRoute<AppScreen.Onboarding>()
+            val schoolRepository = koinInject<SchoolRepository>()
+            val school by produceState<School.AppSchool?>(null, args.schoolIdentifier) {
+                val aliases = args.schoolIdentifier
+                    ?.mapNotNull { runCatching { Alias.fromString(it) }.getOrNull() }
+                    ?.toSet()
+                    .orEmpty()
+                value = if (aliases.isNotEmpty()) {
+                    schoolRepository.getByIds(aliases).first() as? School.AppSchool
+                } else null
+            }
+            OnboardingView(
+                school = school,
+                onFinish = {
+                    FullSyncUseCase.isOnboardingRunning = false
+                    navigationHostController.navigate(AppScreen.MainScreen) { popUpTo(0) }
+                }
+            )
         }
 
         composable<AppScreen.MainScreen> {

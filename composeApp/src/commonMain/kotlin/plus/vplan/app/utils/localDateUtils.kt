@@ -5,8 +5,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.atTime
-import kotlinx.datetime.format.Padding
-import kotlinx.datetime.format.char
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.until
@@ -40,40 +38,6 @@ infix fun LocalDate.untilText(other: LocalDate): String {
     }
 }
 
-infix fun LocalDate.untilRelativeText(other: LocalDate): String? {
-    val days = (other - this).days
-    return when (days) {
-        -2 -> "Vorgestern"
-        -1 -> "Gestern"
-        0 -> "Heute"
-        1 -> "Morgen"
-        2 -> "Übermorgen"
-        else -> null
-    }
-}
-
 fun LocalDate.atStartOfDay(): LocalDateTime {
     return this.atTime(LocalTime.fromSecondOfDay(0))
-}
-
-val regularDateFormat = LocalDate.Format {
-    day(padding = Padding.ZERO)
-    char('.')
-    monthNumber(Padding.ZERO)
-    char('.')
-    year(Padding.ZERO)
-}
-
-val dateFormatDDMMMYY = LocalDate.Format {
-    day(padding = Padding.ZERO)
-    chars(". ")
-    monthName(shortMonthNames)
-    char(' ')
-    yearTwoDigits(2000)
-}
-
-val regularDateFormatWithoutYear = LocalDate.Format {
-    day(padding = Padding.ZERO)
-    char('.')
-    monthNumber(Padding.ZERO)
 }

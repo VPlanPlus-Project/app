@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.grades.page.view.ui
 
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -74,6 +75,9 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.CustomColor
+import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.AddGradeDialog
@@ -81,22 +85,9 @@ import plus.vplan.app.feature.grades.page.view.ui.components.SelectIntervalDrawe
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.roundTo
 import plus.vplan.app.utils.toDp
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
-import vplanplus.composeapp.generated.resources.calculator
-import vplanplus.composeapp.generated.resources.chart_no_axes_combined
-import vplanplus.composeapp.generated.resources.filter
-import vplanplus.composeapp.generated.resources.list_ordered
-import vplanplus.composeapp.generated.resources.lock
-import vplanplus.composeapp.generated.resources.lock_open
-import vplanplus.composeapp.generated.resources.trash_2
-import vplanplus.composeapp.generated.resources.undo_2
-import vplanplus.composeapp.generated.resources.x
 import kotlin.math.roundToInt
 
 @Composable
@@ -157,7 +148,7 @@ private fun GradesContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(24.dp)
@@ -172,7 +163,7 @@ private fun GradesContent(
                     ) {
                         IconButton(onClick = { onEvent(GradeDetailEvent.RequestGradeLock) }) {
                             Icon(
-                                painter = painterResource(Res.drawable.lock),
+                                painter = painterResource(CoreUiRes.drawable.lock),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(20.dp)
@@ -186,7 +177,7 @@ private fun GradesContent(
                     ) {
                         IconButton(onClick = { onOpenAnalytics() }) {
                             Icon(
-                                painter = painterResource(Res.drawable.chart_no_axes_combined),
+                                painter = painterResource(CoreUiRes.drawable.chart_no_axes_combined),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(20.dp)
@@ -200,7 +191,7 @@ private fun GradesContent(
                     ) {
                         IconButton(onClick = { showIntervalFilterDrawer = true }) {
                             Icon(
-                                painter = painterResource(Res.drawable.filter),
+                                painter = painterResource(CoreUiRes.drawable.filter),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(20.dp)
@@ -241,7 +232,7 @@ private fun GradesContent(
                             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.lock),
+                                painter = painterResource(CoreUiRes.drawable.lock),
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -261,7 +252,7 @@ private fun GradesContent(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Icon(
-                                        painter = painterResource(Res.drawable.lock_open),
+                                        painter = painterResource(CoreUiRes.drawable.lock_open),
                                         contentDescription = null,
                                         modifier = Modifier.size(24.dp)
                                     )
@@ -297,7 +288,7 @@ private fun GradesContent(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Icon(
-                                    painter = painterResource(Res.drawable.list_ordered),
+                                    painter = painterResource(CoreUiRes.drawable.list_ordered),
                                     modifier = Modifier.size(24.dp),
                                     contentDescription = null
                                 )
@@ -400,7 +391,7 @@ private fun GradesContent(
                                                     .background(colors[CustomColor.Green]!!.getGroup().container)
                                             ) {
                                                 Icon(
-                                                    painter = painterResource(Res.drawable.chart_no_axes_combined),
+                                                    painter = painterResource(CoreUiRes.drawable.chart_no_axes_combined),
                                                     contentDescription = null,
                                                     tint = colors[CustomColor.Green]!!.getGroup().onContainer.copy(alpha = .7f),
                                                     modifier = Modifier
@@ -428,7 +419,7 @@ private fun GradesContent(
                                                     .background(MaterialTheme.colorScheme.surfaceVariant)
                                             ) {
                                                 Icon(
-                                                    painter = painterResource(Res.drawable.calculator),
+                                                    painter = painterResource(CoreUiRes.drawable.calculator),
                                                     contentDescription = null,
                                                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .7f),
                                                     modifier = Modifier
@@ -702,7 +693,7 @@ private fun GradesContent(
                                                                 onClick = { onEvent(GradeDetailEvent.RemoveGrade(category.id, grade)) },
                                                             ) {
                                                                 Icon(
-                                                                    painter = painterResource(Res.drawable.trash_2),
+                                                                    painter = painterResource(CoreUiRes.drawable.trash_2),
                                                                     contentDescription = null,
                                                                     modifier = Modifier.size(24.dp)
                                                                 )
@@ -828,14 +819,14 @@ private fun GradesContent(
                                         ) {
                                             CompositionLocalProvider(LocalContentColor provides if (editMode) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant) {
                                                 Icon(
-                                                    painter = painterResource(Res.drawable.calculator),
+                                                    painter = painterResource(CoreUiRes.drawable.calculator),
                                                     contentDescription = null,
                                                     modifier = Modifier.size(24.dp)
                                                 )
                                                 if (editMode) {
                                                     VerticalDivider(Modifier.height(16.dp))
                                                     Icon(
-                                                        painter = painterResource(Res.drawable.x),
+                                                        painter = painterResource(CoreUiRes.drawable.x),
                                                         contentDescription = null,
                                                         modifier = Modifier.size(24.dp).padding(4.dp)
                                                     )
@@ -846,7 +837,7 @@ private fun GradesContent(
                                             onClick = { onEvent(GradeDetailEvent.ResetAdditionalGrades) },
                                         ) {
                                             Icon(
-                                                painter = painterResource(Res.drawable.undo_2),
+                                                painter = painterResource(CoreUiRes.drawable.undo_2),
                                                 contentDescription = null,
                                                 modifier = Modifier.size(24.dp)
                                             )

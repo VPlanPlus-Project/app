@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.File
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.domain.usecase.file.GetFileThumbnailUseCase
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.file_text
+
 
 /**
  * Displays a thumbnail for a file, or a generic icon if no thumbnail is available.
@@ -85,7 +85,7 @@ fun FileThumbnail(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(Res.drawable.file_text),
+                        painter = painterResource(CoreUiRes.drawable.file_text),
                         contentDescription = file.name,
                         modifier = Modifier.size(size * 0.5f),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant

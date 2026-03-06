@@ -20,7 +20,7 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "plus.vplan.app.composeapp"
         compileSdk = applicationConfig.android.targetSdk
         experimentalProperties["android.experimental.kmp.enableAndroidResources"] = true
@@ -77,19 +77,22 @@ kotlin {
 
             // Ktor
             implementation(libs.ktor.client.okhttp)
-
-            // Analytics
-            implementation(libs.posthog.android)
         }
 
         commonMain.dependencies {
             // Project modules
+            implementation(project(":core:analytics"))
             implementation(project(":core:data"))
             implementation(project(":core:database"))
             implementation(project(":core:model"))
             implementation(project(":core:network"))
             implementation(project(":core:platform"))
+            implementation(project(":core:sync"))
+            implementation(project(":core:ui"))
             implementation(project(":core:utils"))
+
+
+            implementation(project(":feature:onboarding"))
 
             // Compose
             implementation(libs.compose.components.resources)

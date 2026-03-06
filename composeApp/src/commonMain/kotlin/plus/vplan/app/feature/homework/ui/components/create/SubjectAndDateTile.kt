@@ -27,15 +27,14 @@ import kotlinx.datetime.format.Padding
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.shortMonthNames
 import plus.vplan.app.ui.subjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.mediumDayOfWeekNames
-import plus.vplan.app.utils.shortMonthNames
 import plus.vplan.app.utils.untilText
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.calendar
-import vplanplus.composeapp.generated.resources.users
+
 
 @Composable
 fun SubjectAndDateTile(
@@ -70,7 +69,7 @@ fun SubjectAndDateTile(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        if (selectedSubjectInstance == null) painterResource(Res.drawable.users)
+                        if (selectedSubjectInstance == null) painterResource(CoreUiRes.drawable.users)
                         else painterResource(selectedSubjectInstance.subject.subjectIcon()),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
@@ -112,7 +111,7 @@ fun SubjectAndDateTile(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        painter = painterResource(Res.drawable.calendar),
+                        painter = painterResource(CoreUiRes.drawable.calendar),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.onSurface

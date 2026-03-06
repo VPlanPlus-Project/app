@@ -38,15 +38,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.File
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.domain.model.openFile
 import plus.vplan.app.feature.homework.ui.components.create.RenameFileDialog
 import plus.vplan.app.utils.toHumanSize
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.cloud_download
-import vplanplus.composeapp.generated.resources.ellipsis_vertical
-import vplanplus.composeapp.generated.resources.pencil
-import vplanplus.composeapp.generated.resources.square_arrow_out_up_right
-import vplanplus.composeapp.generated.resources.trash_2
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -87,13 +83,13 @@ fun FileRow(
         ) {
             if (file.isOfflineReady) {
                 Icon(
-                    painter = painterResource(Res.drawable.square_arrow_out_up_right),
+                    painter = painterResource(CoreUiRes.drawable.square_arrow_out_up_right),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )
             } else {
                 Icon(
-                    painter = painterResource(Res.drawable.cloud_download),
+                    painter = painterResource(CoreUiRes.drawable.cloud_download),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )
@@ -128,7 +124,7 @@ fun FileRow(
         }
         IconButton(onClick = { isDropdownOpen = true }) {
             Icon(
-                painter = painterResource(Res.drawable.ellipsis_vertical),
+                painter = painterResource(CoreUiRes.drawable.ellipsis_vertical),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp).padding(2.dp)
             )
@@ -147,7 +143,7 @@ fun FileRow(
                 ) },
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(Res.drawable.trash_2),
+                        painter = painterResource(CoreUiRes.drawable.trash_2),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.error
@@ -162,7 +158,7 @@ fun FileRow(
                 text = { Text("Umbenennen") },
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(Res.drawable.pencil),
+                        painter = painterResource(CoreUiRes.drawable.pencil),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp)
                     )
@@ -186,7 +182,7 @@ fun FileRow(
             onDismissRequest = { showDeleteDialog = false },
             icon = {
                 Icon(
-                    painter = painterResource(Res.drawable.trash_2),
+                    painter = painterResource(CoreUiRes.drawable.trash_2),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )

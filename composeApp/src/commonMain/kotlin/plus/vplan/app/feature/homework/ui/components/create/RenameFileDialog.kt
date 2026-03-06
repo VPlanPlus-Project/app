@@ -31,8 +31,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.file_text
+import plus.vplan.app.core.ui.CoreUiRes
+
 
 @Composable
 fun RenameFileDialog(
@@ -60,7 +60,7 @@ fun RenameFileDialog(
         onDismissRequest = onDismissRequest,
         icon = {
             Icon(
-                painter = painterResource(Res.drawable.file_text),
+                painter = painterResource(CoreUiRes.drawable.file_text),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.onSurface

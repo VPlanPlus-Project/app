@@ -25,17 +25,16 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.Alias
-import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.component.PasswordField
-import plus.vplan.app.feature.onboarding.stage.b_school_sp24_login.ui.component.UsernameField
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Button
+import plus.vplan.app.core.ui.components.ButtonSize
+import plus.vplan.app.core.ui.components.ButtonState
+import plus.vplan.app.core.ui.components.ButtonType
+import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.components.PasswordField
+import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.components.UsernameField
 import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsCredentialsState
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonSize
-import plus.vplan.app.ui.components.ButtonState
-import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.utils.safeBottomPadding
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.school
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,7 +98,7 @@ private fun Sp24CredentialSheetContent(
             label = { Text("Stundenplan24.de-ID") },
             leadingIcon = {
                 Icon(
-                    painter = painterResource(Res.drawable.school),
+                    painter = painterResource(CoreUiRes.drawable.school),
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )
@@ -126,7 +125,7 @@ private fun Sp24CredentialSheetContent(
         Spacer(Modifier.height(8.dp))
         Button(
             text = "Speichern",
-            icon = Res.drawable.check,
+            icon = CoreUiRes.drawable.check,
             size = ButtonSize.Normal,
             type = ButtonType.Primary,
             state = if (state.state == SchoolSettingsCredentialsState.Loading) ButtonState.Loading else ButtonState.Enabled,

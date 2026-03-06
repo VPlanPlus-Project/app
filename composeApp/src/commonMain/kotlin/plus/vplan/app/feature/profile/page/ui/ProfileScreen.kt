@@ -41,16 +41,14 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.page.ui.components.GradesCard
 import plus.vplan.app.feature.profile.page.ui.components.GradesCardFeaturedGrade
 import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
 import plus.vplan.app.utils.openUrl
 import plus.vplan.app.utils.roundTo
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.log_in
-import vplanplus.composeapp.generated.resources.settings
-import vplanplus.composeapp.generated.resources.undraw_profile
+
 
 @Composable
 fun ProfileScreen(
@@ -114,7 +112,7 @@ private fun ProfileContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(Res.drawable.undraw_profile),
+                            painter = painterResource(CoreUiRes.drawable.undraw_profile),
                             contentDescription = null,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -136,7 +134,7 @@ private fun ProfileContent(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.log_in),
+                            painter = painterResource(CoreUiRes.drawable.log_in),
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                         )
@@ -209,7 +207,7 @@ private fun ProfileContent(
                 onClick = onOpenSettings
             ) {
                 Icon(
-                    painter = painterResource(Res.drawable.settings),
+                    painter = painterResource(CoreUiRes.drawable.settings),
                     modifier = Modifier.size(24.dp),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer

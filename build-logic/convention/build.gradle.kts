@@ -19,6 +19,7 @@ kotlin {
 
 dependencies {
     compileOnly(libs.android.gradlePlugin)
+    implementation(libs.buildconfig.gradlePlugin)
     compileOnly(libs.kotlin.gradlePlugin)
     compileOnly(libs.ksp.gradlePlugin)
     compileOnly(libs.room.gradlePlugin)
@@ -33,6 +34,14 @@ gradlePlugin {
         register("kmpLibrary") {
             id = libs.plugins.vplanplus.kmp.library.get().pluginId
             implementationClass = "KmpLibraryConventionPlugin"
+        }
+        register("kmpComposeLibrary") {
+            id = libs.plugins.vplanplus.kmp.compose.library.get().pluginId
+            implementationClass = "KmpComposeLibraryConventionPlugin"
+        }
+        register("kmpBuildConfig") {
+            id = libs.plugins.vplanplus.kmp.buildconfig.get().pluginId
+            implementationClass = "KmpBuildConfigConventionPlugin"
         }
     }
 }

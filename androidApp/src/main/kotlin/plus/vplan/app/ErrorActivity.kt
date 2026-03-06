@@ -12,11 +12,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
 import co.touchlab.kermit.Logger
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import plus.vplan.app.ui.theme.AppTheme
+import plus.vplan.app.core.ui.theme.AppTheme
 
 class ErrorActivity : FragmentActivity() {
     var error by mutableStateOf<Error?>(null)

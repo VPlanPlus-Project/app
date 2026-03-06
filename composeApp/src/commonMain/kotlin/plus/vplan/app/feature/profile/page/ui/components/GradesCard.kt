@@ -42,17 +42,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import org.jetbrains.compose.resources.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.toDp
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.lock
 import kotlin.math.roundToInt
 
 /**
@@ -169,7 +168,7 @@ fun GradesCard(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.lock),
+                                painter = painterResource(CoreUiRes.drawable.lock),
                                 contentDescription = null,
                                 modifier = Modifier.size(12.dp)
                             )

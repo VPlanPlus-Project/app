@@ -7,22 +7,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import kotlinx.datetime.LocalDate
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.core.model.Alias
+import plus.vplan.app.core.model.application.StartTaskJson
+import plus.vplan.app.core.ui.theme.AppTheme
 import plus.vplan.app.feature.host.ui.NavigationHost
 import plus.vplan.app.feature.settings.page.info.domain.usecase.getSystemInfo
-import plus.vplan.app.ui.theme.AppTheme
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 const val APP_ID = "4"
-const val APP_SECRET = "crawling-mom-yesterday-jazz-populace-napkin"
 const val APP_REDIRECT_URI = "vpp://app/auth/"
 val VPP_ID_AUTH_URL = URLBuilder(currentConfiguration.authUrl).apply {
     appendPathSegments("authorize")
@@ -31,16 +28,7 @@ val VPP_ID_AUTH_URL = URLBuilder(currentConfiguration.authUrl).apply {
     parameters.append("device_name", getSystemInfo().deviceName)
 }.buildString()
 
-object PostHogConfig {
-    const val API_KEY = AppBuildConfig.POSTHOG_API_KEY
-}
-
-object AppConfig {
-    const val VERSION_CODE = AppBuildConfig.APP_VERSION_CODE
-}
-
 @Composable
-@Preview
 fun App(task: StartTask?) {
     AppTheme(dynamicColor = false) {
         Surface(
@@ -71,60 +59,6 @@ sealed class StartTask(val profileId: Uuid? = null) {
         class Homework(profileId: Uuid?, val homeworkId: Int): Open(profileId)
         class Assessment(profileId: Uuid?, val assessmentId: Int): Open(profileId)
         class Grade(profileId: Uuid?, val gradeId: Int): Open(profileId)
-    }
-}
-
-@Serializable
-data class StartTaskJson(
-    @SerialName("type") val type: String,
-    @SerialName("profile_id") val profileId: String? = null,
-    @SerialName("value") val value: String
-) {
-    @Serializable
-    data class StartTaskOpen(
-        @SerialName("type") val type: String,
-        @SerialName("payload") val value: String
-    ) {
-        @Serializable
-        data class Homework(
-            @SerialName("homework_id") val homeworkId: Int
-        )
-
-        @Serializable
-        data class SchulverwalterReauth(
-            @SerialName("user_id") val userId: Int,
-        )
-
-        @Serializable
-        data class Assessment(
-            @SerialName("assessment_id") val assessmentId: Int
-        )
-
-        @Serializable
-        data class Grade(
-            @SerialName("grade_id") val gradeId: Int
-        )
-    }
-
-    @Serializable
-    data class StartTaskNavigateTo(
-        @SerialName("screen") val screen: String,
-        @SerialName("payload") val value: String?
-    ) {
-        @Serializable
-        data class StartTaskCalendar(
-            @SerialName("date") val date: String
-        )
-
-        @Serializable
-        data class SchoolSettings(
-            @SerialName("open_school_alias") val openIndiwareSettingsSchool: Alias? = null,
-        )
-
-        @Serializable
-        data class Grades(
-            @SerialName("vpp_id") val vppId: Int
-        )
     }
 }
 
@@ -176,27 +110,3 @@ fun getTaskFromNotificationString(data: String): StartTask? {
     }
     return null
 }
-
-enum class Platform {
-    Android, iOS
-}
-
-expect fun getPlatform(): Platform
-expect fun capture(event: String, properties: Map<String, Any>?)
-fun captureError(location: String, message: String) {
-    capture("error", mapOf("location" to location, "message" to message))
-}
-expect fun setPostHogProperty(key: String, value: String)
-expect fun isDebug(): Boolean
-expect fun posthogIdentify(
-    distinctId: String,
-    userProperties: Map<String, Any>?,
-    userPropertiesSetOnce: Map<String, Any>?,
-)
-expect fun firebaseIdentify(
-    id: String,
-)
-expect fun isFeatureEnabled(
-    key: String,
-    defaultValue: Boolean
-): Boolean

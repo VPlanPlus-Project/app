@@ -9,8 +9,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
-import plus.vplan.app.capture
-import plus.vplan.app.captureError
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.group.GroupRepository
@@ -26,20 +25,19 @@ import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.SendInvalidSp24CredentialsNotification
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.Sp24CredentialsValidity
-import plus.vplan.app.isFeatureEnabled
 import plus.vplan.app.utils.plus
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Response
@@ -67,6 +65,7 @@ class FullSyncUseCase(
     private val roomRepository: RoomRepository,
     private val teacherRepository: TeacherRepository,
     private val sendInvalidSp24CredentialsNotification: SendInvalidSp24CredentialsNotification,
+    private val analyticsRepository: AnalyticsRepository,
 ) {
     private val logger = Logger.withTag("FullSync")
     private var isRunning = false
@@ -91,23 +90,23 @@ class FullSyncUseCase(
             }
 
             isRunning = true
-            capture("FullSync.Start", mapOf("cause" to cause.name))
+            analyticsRepository.capture("FullSync.Start", mapOf("cause" to cause.name))
             try {
                 logger.i { "Performing FullSync" }
 
                 val cloudDataUpdate = CoroutineScope(Dispatchers.IO).launch {
-                    if (isFeatureEnabled("fullsync_update-homework", true)) try {
+                    if (analyticsRepository.isFeatureEnabled("fullsync_update-homework", true)) try {
                         updateHomeworkUseCase(true)
                     } catch (e: Exception) {
                         logger.e(e) { "Error during homework update" }
-                        captureError("FullSync.HomeworkUpdate", "Error during homework update: ${e.stackTraceToString()}")
+                        analyticsRepository.captureError("FullSync.HomeworkUpdate", "Error during homework update: ${e.stackTraceToString()}")
                     }
 
-                    if (isFeatureEnabled("fullsync_update-assessments", true)) try {
+                    if (analyticsRepository.isFeatureEnabled("fullsync_update-assessments", true)) try {
                         updateAssessmentsUseCase(true)
                     } catch (e: Exception) {
                         logger.e(e) { "Error during assessments update" }
-                        captureError("FullSync.AssessmentsUpdate", "Error during assessments update: ${e.stackTraceToString()}")
+                        analyticsRepository.captureError("FullSync.AssessmentsUpdate", "Error during assessments update: ${e.stackTraceToString()}")
                     }
 
                     try {
@@ -139,7 +138,7 @@ class FullSyncUseCase(
                                     logger.w { "No internet connection: $result, aborting" }
                                     return@forEachSchool
                                 }
-                                captureError("FullSync.CheckSp24Credentials", "Failed to check credentials: $result")
+                                analyticsRepository.captureError("FullSync.CheckSp24Credentials", "Failed to check credentials: $result")
                                 return@forEachSchool
                             }
 

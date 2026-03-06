@@ -11,13 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonSize
-import plus.vplan.app.ui.components.ButtonState
-import plus.vplan.app.ui.components.ButtonType
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.file_text
-import vplanplus.composeapp.generated.resources.image
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Button
+import plus.vplan.app.core.ui.components.ButtonSize
+import plus.vplan.app.core.ui.components.ButtonState
+import plus.vplan.app.core.ui.components.ButtonType
+
 
 @Composable
 fun FileButtons(
@@ -40,7 +39,7 @@ fun FileButtons(
         Button(
             modifier = Modifier.fillMaxWidth(),
             text = "Dokument anhängen",
-            icon = Res.drawable.file_text,
+            icon = CoreUiRes.drawable.file_text,
             state = ButtonState.Enabled,
             size = ButtonSize.Normal,
             type = ButtonType.Secondary,
@@ -49,7 +48,7 @@ fun FileButtons(
         Button(
             modifier = Modifier.fillMaxWidth(),
             text = "Bild anhängen",
-            icon = Res.drawable.image,
+            icon = CoreUiRes.drawable.image,
             state = ButtonState.Enabled,
             size = ButtonSize.Normal,
             type = ButtonType.Secondary,

@@ -32,13 +32,13 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.ui.theme.CustomColor
+import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.utils.date.regularDateFormat
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectColor
-import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.blendColor
-import plus.vplan.app.utils.regularDateFormat
 import plus.vplan.app.utils.toDp
 
 @Composable

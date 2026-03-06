@@ -10,6 +10,6 @@ class GetSchoolsUseCase(
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke() = profileRepository.getAll().flatMapLatest { profiles ->
-        flowOf(profiles.map { it.school })
+        flowOf(profiles.map { it.school }.distinct())
     }
 }

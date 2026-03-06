@@ -26,15 +26,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonType
-import plus.vplan.app.ui.theme.monospaceFontFamily
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Button
+import plus.vplan.app.core.ui.components.ButtonType
+import plus.vplan.app.core.ui.theme.monospaceFontFamily
 import plus.vplan.app.utils.copyToClipboard
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.copy
-import vplanplus.composeapp.generated.resources.info
-import vplanplus.composeapp.generated.resources.rotate_cw
-import vplanplus.composeapp.generated.resources.triangle_alert
+
 
 @Composable
 fun ErrorPage(
@@ -49,7 +46,7 @@ fun ErrorPage(
             .padding(horizontal = 16.dp)
     ) {
         Icon(
-            painter = painterResource(Res.drawable.triangle_alert),
+            painter = painterResource(CoreUiRes.drawable.triangle_alert),
             contentDescription = "Error",
             tint = MaterialTheme.colorScheme.error,
             modifier = Modifier
@@ -108,7 +105,7 @@ fun ErrorPage(
                 onClick = { copyToClipboard("Stacktrace", error.stacktrace) }
             ) {
                 Icon(
-                    painter = painterResource(Res.drawable.copy),
+                    painter = painterResource(CoreUiRes.drawable.copy),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp).padding(2.dp),
                 )
@@ -123,7 +120,7 @@ fun ErrorPage(
         ) {
             Button(
                 text = "Neustarten",
-                icon = Res.drawable.rotate_cw,
+                icon = CoreUiRes.drawable.rotate_cw,
                 modifier = Modifier.weight(1f),
                 onClick = onRestartApp
             )
@@ -131,7 +128,7 @@ fun ErrorPage(
             Button(
                 text = "App-Info",
                 type = ButtonType.Secondary,
-                icon = Res.drawable.info,
+                icon = CoreUiRes.drawable.info,
                 modifier = Modifier.weight(1f),
                 onClick = onOpenAppInfo
             )

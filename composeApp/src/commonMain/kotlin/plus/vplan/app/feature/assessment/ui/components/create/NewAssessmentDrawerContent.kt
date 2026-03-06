@@ -45,6 +45,10 @@ import io.github.vinceglb.filekit.path
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Button
+import plus.vplan.app.core.ui.components.ButtonSize
+import plus.vplan.app.core.ui.components.ButtonState
 import plus.vplan.app.feature.homework.ui.components.create.FileButtons
 import plus.vplan.app.feature.homework.ui.components.create.FileItem
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
@@ -54,17 +58,11 @@ import plus.vplan.app.feature.homework.ui.components.create.VisibilityTile
 import plus.vplan.app.feature.homework.ui.components.create.VppIdBanner
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonSize
-import plus.vplan.app.ui.components.ButtonState
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.FullscreenDrawerContext
 import plus.vplan.app.utils.toName
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.shapes
-import vplanplus.composeapp.generated.resources.triangle_alert
+
 
 @Composable
 fun NewAssessmentDrawerContent(
@@ -82,7 +80,7 @@ fun NewAssessmentDrawerContent(
         AlertDialog(
             icon = {
                 Icon(
-                    painter = painterResource(Res.drawable.triangle_alert),
+                    painter = painterResource(CoreUiRes.drawable.triangle_alert),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )
@@ -249,7 +247,7 @@ fun NewAssessmentDrawerContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    painter = painterResource(Res.drawable.shapes),
+                    painter = painterResource(CoreUiRes.drawable.shapes),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                 )
@@ -303,7 +301,7 @@ fun NewAssessmentDrawerContent(
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp),
             text = "Speichern",
-            icon = Res.drawable.check,
+            icon = CoreUiRes.drawable.check,
             state = if (state.savingState == UnoptimisticTaskState.InProgress) ButtonState.Loading else ButtonState.Enabled,
             size = ButtonSize.Normal,
             onlyEventOnActive = true,

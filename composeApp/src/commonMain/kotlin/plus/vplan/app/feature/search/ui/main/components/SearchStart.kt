@@ -37,21 +37,17 @@ import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
+import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.feature.search.ui.main.NewItem
 import plus.vplan.app.ui.components.Grid
 import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.utils.blendColor
-import plus.vplan.app.utils.regularDateFormatWithoutYear
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
-import plus.vplan.app.utils.untilRelativeText
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.badge_check
-import vplanplus.composeapp.generated.resources.badge_plus
-import vplanplus.composeapp.generated.resources.door_open
-import vplanplus.composeapp.generated.resources.search
 
 @Composable
 private fun sectionTitleFont() = MaterialTheme.typography.titleMedium.copy(fontFamily = displayFontFamily())
@@ -79,7 +75,7 @@ fun SearchStart(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    painter = painterResource(Res.drawable.badge_plus),
+                    painter = painterResource(CoreUiRes.drawable.badge_plus),
                     contentDescription = null,
                     modifier = Modifier.size(sectionTitleFont().lineHeight.toDp())
                 )
@@ -241,7 +237,7 @@ fun SearchStart(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
-                painter = painterResource(Res.drawable.badge_check),
+                painter = painterResource(CoreUiRes.drawable.badge_check),
                 contentDescription = null,
                 modifier = Modifier.size(sectionTitleFont().lineHeight.toDp())
             )
@@ -273,8 +269,8 @@ fun SearchStart(
                 ) {
                     Icon(
                         painter = painterResource(when (index) {
-                            0 -> Res.drawable.door_open
-                            else -> Res.drawable.search
+                            0 -> CoreUiRes.drawable.door_open
+                            else -> CoreUiRes.drawable.search
                         }),
                         contentDescription = null,
                         modifier = Modifier

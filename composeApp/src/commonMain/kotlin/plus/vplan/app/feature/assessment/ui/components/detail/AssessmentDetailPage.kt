@@ -2,6 +2,7 @@
 
 package plus.vplan.app.feature.assessment.ui.components.detail
 
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,11 @@ import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Button
+import plus.vplan.app.core.ui.components.ButtonSize
+import plus.vplan.app.core.ui.components.ButtonState
+import plus.vplan.app.core.ui.components.ButtonType
 import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
@@ -52,21 +58,10 @@ import plus.vplan.app.feature.homework.ui.components.detail.components.SavedLoca
 import plus.vplan.app.feature.homework.ui.components.detail.components.ShareStatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
 import plus.vplan.app.ui.common.AttachedFile
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonSize
-import plus.vplan.app.ui.components.ButtonState
-import plus.vplan.app.ui.components.ButtonType
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.file.FileRowWithThumbnail
 import plus.vplan.app.utils.safeBottomPadding
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.check
-import vplanplus.composeapp.generated.resources.file
-import vplanplus.composeapp.generated.resources.image
-import vplanplus.composeapp.generated.resources.info
-import vplanplus.composeapp.generated.resources.rotate_cw
-import vplanplus.composeapp.generated.resources.trash_2
 import kotlin.time.ExperimentalTime
 
 @Composable
@@ -137,17 +132,17 @@ fun DetailPage(
                                     strokeWidth = 2.dp
                                 )
                                 UnoptimisticTaskState.Error -> Icon(
-                                    painter = painterResource(Res.drawable.info),
+                                    painter = painterResource(CoreUiRes.drawable.info),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp).padding(2.dp)
                                 )
                                 UnoptimisticTaskState.Success -> Icon(
-                                    painter = painterResource(Res.drawable.check),
+                                    painter = painterResource(CoreUiRes.drawable.check),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp).padding(2.dp)
                                 )
                                 null -> Icon(
-                                    painter = painterResource(Res.drawable.trash_2),
+                                    painter = painterResource(CoreUiRes.drawable.trash_2),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp).padding(2.dp)
                                 )
@@ -168,17 +163,17 @@ fun DetailPage(
                                 strokeWidth = 2.dp
                             )
                             UnoptimisticTaskState.Error -> Icon(
-                                painter = painterResource(Res.drawable.info),
+                                painter = painterResource(CoreUiRes.drawable.info),
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp).padding(2.dp)
                             )
                             UnoptimisticTaskState.Success -> Icon(
-                                painter = painterResource(Res.drawable.check),
+                                painter = painterResource(CoreUiRes.drawable.check),
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp).padding(2.dp)
                             )
                             null -> Icon(
-                                painter = painterResource(Res.drawable.rotate_cw),
+                                painter = painterResource(CoreUiRes.drawable.rotate_cw),
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp).padding(2.dp)
                             )
@@ -269,7 +264,7 @@ fun DetailPage(
                 Button(
                     modifier = Modifier.weight(1f).height(64.dp),
                     text = "Aus Dateien hinzufügen",
-                    icon = Res.drawable.file,
+                    icon = CoreUiRes.drawable.file,
                     state = ButtonState.Enabled,
                     size = ButtonSize.Small,
                     type = ButtonType.Secondary,
@@ -278,7 +273,7 @@ fun DetailPage(
                 Button(
                     modifier = Modifier.weight(1f).height(64.dp),
                     text = "Aus Galerie hinzufügen",
-                    icon = Res.drawable.image,
+                    icon = CoreUiRes.drawable.image,
                     state = ButtonState.Enabled,
                     size = ButtonSize.Small,
                     type = ButtonType.Secondary,
@@ -310,7 +305,7 @@ fun DetailPage(
             onDismissRequest = { showDeleteDialog = false },
             icon = {
                 Icon(
-                    painter = painterResource(Res.drawable.trash_2),
+                    painter = painterResource(CoreUiRes.drawable.trash_2),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )

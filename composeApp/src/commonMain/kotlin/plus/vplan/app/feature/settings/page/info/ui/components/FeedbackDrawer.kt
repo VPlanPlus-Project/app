@@ -56,18 +56,14 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppSchoolAuthentication
-import plus.vplan.app.ui.components.Button
-import plus.vplan.app.ui.components.ButtonSize
-import plus.vplan.app.ui.components.ButtonState
-import plus.vplan.app.ui.components.ButtonType
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Button
+import plus.vplan.app.core.ui.components.ButtonSize
+import plus.vplan.app.core.ui.components.ButtonState
+import plus.vplan.app.core.ui.components.ButtonType
 import plus.vplan.app.ui.keyboardAsState
 import plus.vplan.app.utils.safeBottomPadding
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.circle_user_round
-import vplanplus.composeapp.generated.resources.message_circle_heart
-import vplanplus.composeapp.generated.resources.message_circle_warning
-import vplanplus.composeapp.generated.resources.send_horizontal
-import vplanplus.composeapp.generated.resources.smartphone
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,7 +142,7 @@ private fun FeedbackDrawerContent(
                         enter = scaleIn() + fadeIn()
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.message_circle_warning),
+                            painter = painterResource(CoreUiRes.drawable.message_circle_warning),
                             contentDescription = null,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -160,7 +156,7 @@ private fun FeedbackDrawerContent(
                         enter = scaleIn() + fadeIn()
                     ) {
                         Icon(
-                            painter = painterResource(Res.drawable.message_circle_heart),
+                            painter = painterResource(CoreUiRes.drawable.message_circle_heart),
                             contentDescription = null,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -265,7 +261,7 @@ private fun FeedbackDrawerContent(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.circle_user_round),
+                                painter = painterResource(CoreUiRes.drawable.circle_user_round),
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -280,7 +276,7 @@ private fun FeedbackDrawerContent(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Absenden",
-                    icon = Res.drawable.send_horizontal,
+                    icon = CoreUiRes.drawable.send_horizontal,
                     state = if (state.isLoading) ButtonState.Loading else ButtonState.Enabled,
                     size = ButtonSize.Big,
                     type = ButtonType.Primary,
@@ -296,7 +292,7 @@ private fun FeedbackDrawerContent(
         onDismissRequest = { showSystemInfoDialog = false },
         icon = {
             Icon(
-                painter = painterResource(Res.drawable.smartphone),
+                painter = painterResource(CoreUiRes.drawable.smartphone),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.onSurface

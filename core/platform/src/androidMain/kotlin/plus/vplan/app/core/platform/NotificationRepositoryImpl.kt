@@ -29,9 +29,18 @@ class NotificationRepositoryImpl(
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val mChannel = NotificationChannel(VPLANPLUS, name, importance)
             mChannel.description = descriptionText
-            val notificationManager = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager =
+                context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(mChannel)
         }
+    }
+
+    override suspend fun isNotificationPermissionGranted(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ActivityCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     @SuppressLint("MissingPermission")
@@ -43,7 +52,11 @@ class NotificationRepositoryImpl(
         largeText: String?,
         onClickData: String?
     ) {
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return
 
         val builder = NotificationCompat.Builder(context, VPLANPLUS)
             .setSmallIcon(smallIconResId)
@@ -63,7 +76,12 @@ class NotificationRepositoryImpl(
                 putExtra("onClickData", onClickData)
             }
 
-            val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
             builder.setContentIntent(pendingIntent)
         }
 

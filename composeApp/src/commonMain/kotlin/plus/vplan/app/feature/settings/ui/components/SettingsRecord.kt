@@ -25,9 +25,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.utils.blendColor
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.chevron_right
+
 
 @Composable
 fun SettingsRecord(
@@ -49,7 +49,7 @@ fun SettingsRecord(
         endContent = if (showArrow) {
             {
                 Icon(
-                    painter = painterResource(Res.drawable.chevron_right),
+                    painter = painterResource(CoreUiRes.drawable.chevron_right),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )

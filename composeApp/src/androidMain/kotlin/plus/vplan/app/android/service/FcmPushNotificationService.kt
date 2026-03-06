@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.capture
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.FcmRepository
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
@@ -21,6 +21,7 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
     val handlePushNotificationService: HandlePushNotificationUseCase by inject()
     val keyValueRepository: KeyValueRepository by inject()
     val fcmRepository: FcmRepository by inject()
+    val analyticsRepository: AnalyticsRepository by inject()
 
     private val logger = Logger.withTag("FcmPushNotificationService")
 
@@ -40,7 +41,7 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
                     Logger.w { "No type found in FCM message, ignoring" }
                     return@launch
                 }).let {
-                    capture("FCM.Message", mapOf("Type" to it))
+                    analyticsRepository.capture("FCM.Message", mapOf("Type" to it))
                     fcmRepository.log(
                         topic = it,
                         message = message.data["data"].orEmpty()
@@ -57,7 +58,7 @@ class FcmPushNotificationService : FirebaseMessagingService(), KoinComponent {
                 handlePushNotificationService(type, message.data["data"].orEmpty())
             } catch (e: Exception) {
                 logger.e(e) { "Error processing FCM message" }
-                capture("FCM.Error", mapOf("Error" to e.stackTraceToString()))
+                analyticsRepository.capture("FCM.Error", mapOf("Error" to e.stackTraceToString()))
             }
         }
     }

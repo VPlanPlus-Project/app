@@ -58,18 +58,15 @@ import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.CustomColor
+import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.feature.grades.page.view.ui.components.SelectIntervalDrawer
 import plus.vplan.app.ui.animatePlacement
 import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.colors
 import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.safeBottomPadding
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
-import vplanplus.composeapp.generated.resources.chevron_down
-import vplanplus.composeapp.generated.resources.filter
-import vplanplus.composeapp.generated.resources.x
+
 
 @Composable
 fun AnalyticsScreen(
@@ -110,7 +107,7 @@ private fun AnalyticsContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -119,7 +116,7 @@ private fun AnalyticsContent(
                 actions = {
                     IconButton(onClick = { showIntervalFilterDrawer = true }) {
                         Icon(
-                            painter = painterResource(Res.drawable.filter),
+                            painter = painterResource(CoreUiRes.drawable.filter),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
@@ -156,8 +153,8 @@ private fun AnalyticsContent(
                             selected = isFilterActive,
                             onClick = { showFilterDrawer = true },
                             label = { Text("Filter") },
-                            leadingIcon = { Icon(painter = painterResource(Res.drawable.filter), contentDescription = null, modifier = Modifier.size(18.dp)) },
-                            trailingIcon = { Icon(painter = painterResource(Res.drawable.chevron_down), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                            leadingIcon = { Icon(painter = painterResource(CoreUiRes.drawable.filter), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                            trailingIcon = { Icon(painter = painterResource(CoreUiRes.drawable.chevron_down), contentDescription = null, modifier = Modifier.size(18.dp)) },
                         )
                     }
                 }
@@ -273,7 +270,7 @@ private fun AnalyticsContent(
                                     exit = shrinkHorizontally(shrinkTowards = Alignment.CenterHorizontally)
                                 ) {
                                     Icon(
-                                        painter = painterResource(Res.drawable.x),
+                                        painter = painterResource(CoreUiRes.drawable.x),
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp)
                                     )

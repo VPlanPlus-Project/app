@@ -33,13 +33,11 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.model.File
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.domain.usecase.file.GetFileThumbnailUseCase
 import plus.vplan.app.feature.homework.ui.components.create.RenameFileDialog
 import plus.vplan.app.utils.toHumanSize
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.ellipsis_vertical
-import vplanplus.composeapp.generated.resources.pencil
-import vplanplus.composeapp.generated.resources.trash_2
+
 
 /**
  * Enhanced file row component with thumbnail support and progress tracking.
@@ -113,7 +111,7 @@ fun FileRowWithThumbnail(
             if (canEdit) {
                 IconButton(onClick = { isDropdownOpen = true }) {
                     Icon(
-                        painter = painterResource(Res.drawable.ellipsis_vertical),
+                        painter = painterResource(CoreUiRes.drawable.ellipsis_vertical),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp).padding(2.dp)
                     )
@@ -138,7 +136,7 @@ fun FileRowWithThumbnail(
             text = { Text("Umbenennen") },
             leadingIcon = {
                 Icon(
-                    painter = painterResource(Res.drawable.pencil),
+                    painter = painterResource(CoreUiRes.drawable.pencil),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )
@@ -157,7 +155,7 @@ fun FileRowWithThumbnail(
             },
             leadingIcon = {
                 Icon(
-                    painter = painterResource(Res.drawable.trash_2),
+                    painter = painterResource(CoreUiRes.drawable.trash_2),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.error
@@ -188,7 +186,7 @@ fun FileRowWithThumbnail(
             onDismissRequest = { showDeleteDialog = false },
             icon = {
                 Icon(
-                    painter = painterResource(Res.drawable.trash_2),
+                    painter = painterResource(CoreUiRes.drawable.trash_2),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )

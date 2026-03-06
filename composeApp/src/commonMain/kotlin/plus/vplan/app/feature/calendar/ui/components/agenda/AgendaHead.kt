@@ -31,14 +31,14 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Day
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.grayScale
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.chevron_down
+
 
 @Composable
 fun AgendaHead(
@@ -112,7 +112,7 @@ fun AgendaHead(
                         }
                         val iconRotation by animateFloatAsState(if (showLessons) 1f else 0f, label = "rotation animation")
                         Icon(
-                            painter = painterResource(Res.drawable.chevron_down),
+                            painter = painterResource(CoreUiRes.drawable.chevron_down),
                             modifier = Modifier
                                 .size(24.dp)
                                 .rotate(-180*iconRotation),

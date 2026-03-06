@@ -11,8 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.fingerprint_pattern
+import plus.vplan.app.core.ui.CoreUiRes
+
 
 @Composable
 fun EnrollBiometricAuthenticationDialog(
@@ -23,7 +23,7 @@ fun EnrollBiometricAuthenticationDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                painter = painterResource(Res.drawable.fingerprint_pattern),
+                painter = painterResource(CoreUiRes.drawable.fingerprint_pattern),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )

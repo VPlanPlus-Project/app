@@ -44,25 +44,13 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.AppBuildConfig
 import plus.vplan.app.Platform
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import plus.vplan.app.ui.components.noRippleClickable
-import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.utils.openUrl
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.arrow_left
-import vplanplus.composeapp.generated.resources.chevron_right
-import vplanplus.composeapp.generated.resources.github
-import vplanplus.composeapp.generated.resources.globe
-import vplanplus.composeapp.generated.resources.google_play
-import vplanplus.composeapp.generated.resources.handshake
-import vplanplus.composeapp.generated.resources.instagram
-import vplanplus.composeapp.generated.resources.logo
-import vplanplus.composeapp.generated.resources.mastodon
-import vplanplus.composeapp.generated.resources.message_circle_warning
-import vplanplus.composeapp.generated.resources.shield_user
-import vplanplus.composeapp.generated.resources.threads
-import vplanplus.composeapp.generated.resources.whatsapp
+
 
 expect fun getPlatform(): String
 
@@ -95,7 +83,7 @@ private fun InfoContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(Res.drawable.arrow_left),
+                            painter = painterResource(CoreUiRes.drawable.arrow_left),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -121,7 +109,7 @@ private fun InfoContent(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Image(
-                    painter = painterResource(Res.drawable.logo),
+                    painter = painterResource(CoreUiRes.drawable.logo),
                     contentDescription = null,
                     modifier = Modifier
                         .size(64.dp)
@@ -163,7 +151,7 @@ private fun InfoContent(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) feedbackButton@{
                 Icon(
-                    painter = painterResource(Res.drawable.message_circle_warning),
+                    painter = painterResource(CoreUiRes.drawable.message_circle_warning),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -181,7 +169,7 @@ private fun InfoContent(
                     )
                 }
                 Icon(
-                    painter = painterResource(Res.drawable.chevron_right),
+                    painter = painterResource(CoreUiRes.drawable.chevron_right),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -196,21 +184,21 @@ private fun InfoContent(
             SettingsRecord(
                 title = "Internetseite",
                 subtitle = "vplan.plus",
-                icon = painterResource(Res.drawable.globe),
+                icon = painterResource(CoreUiRes.drawable.globe),
                 onClick = { openUrl("https://vplan.plus") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "Datenschutzerklärung",
                 subtitle = "für VPlanPlus und vpp.ID",
-                icon = painterResource(Res.drawable.shield_user),
+                icon = painterResource(CoreUiRes.drawable.shield_user),
                 onClick = { openUrl("https://vplan.plus/about/privacy") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "Nutzungsbedingungen",
                 subtitle = "für VPlanPlus und vpp.ID",
-                icon = painterResource(Res.drawable.handshake),
+                icon = painterResource(CoreUiRes.drawable.handshake),
                 onClick = { openUrl("https://vplan.plus/about/tos") },
                 showArrow = true,
             )
@@ -218,7 +206,7 @@ private fun InfoContent(
                 Platform.Android -> SettingsRecord(
                     title = "Google Play Store",
                     subtitle = "VPlanPlus für stundenplan24.de",
-                    icon = painterResource(Res.drawable.google_play),
+                    icon = painterResource(CoreUiRes.drawable.google_play),
                     onClick = { openUrl("https://play.google.com/store/apps/details?id=plus.vplan.app") },
                     showArrow = true,
                 )
@@ -227,7 +215,7 @@ private fun InfoContent(
             SettingsRecord(
                 title = "GitHub-Repository",
                 subtitle = "VPlanPlusProject/app",
-                icon = painterResource(Res.drawable.github),
+                icon = painterResource(CoreUiRes.drawable.github),
                 onClick = { openUrl("https://github.com/VPlanPlus-Project/app") },
                 showArrow = true,
             )
@@ -241,28 +229,28 @@ private fun InfoContent(
             SettingsRecord(
                 title = "Instagram",
                 subtitle = "@vplanplus",
-                icon = painterResource(Res.drawable.instagram),
+                icon = painterResource(CoreUiRes.drawable.instagram),
                 onClick = { openUrl("https://www.instagram.com/vplanplus") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "Threads",
                 subtitle = "@vplanplus",
-                icon = painterResource(Res.drawable.threads),
+                icon = painterResource(CoreUiRes.drawable.threads),
                 onClick = { openUrl("https://www.threads.net/@vplanplus") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "Mastodon",
                 subtitle = "@vpp_app@mastodon.social",
-                icon = painterResource(Res.drawable.mastodon),
+                icon = painterResource(CoreUiRes.drawable.mastodon),
                 onClick = { openUrl("https://mastodon.social/@vpp_app") },
                 showArrow = true,
             )
             SettingsRecord(
                 title = "WhatsApp-Kanal",
                 subtitle = "Erhalte Statusupdates und Infos in WhatsApp",
-                icon = painterResource(Res.drawable.whatsapp),
+                icon = painterResource(CoreUiRes.drawable.whatsapp),
                 onClick = { openUrl("https://whatsapp.com/channel/0029Vagcelf5q08Vjjc7Of1o") },
                 showArrow = true,
             )

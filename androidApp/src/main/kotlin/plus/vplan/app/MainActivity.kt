@@ -11,15 +11,18 @@ import androidx.fragment.app.FragmentActivity
 import co.touchlab.kermit.Logger
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
-import com.posthog.PostHog
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.manualFileKitCoreInitialization
 import io.ktor.http.URLBuilder
+import org.koin.android.ext.android.inject
+import plus.vplan.app.core.analytics.AnalyticsRepository
 
 class MainActivity : FragmentActivity() {
 
     private var task: StartTask? by mutableStateOf(null)
     private var canStart by mutableStateOf(true)
+
+    private val analyticsRepository: AnalyticsRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,7 +32,7 @@ class MainActivity : FragmentActivity() {
         FileKit.manualFileKitCoreInitialization(this)
         enableEdgeToEdge()
 
-        PostHog.capture("App.Start")
+        analyticsRepository.capture("App.Start")
 
         setContent {
             if (canStart) App(task)
@@ -45,7 +48,7 @@ class MainActivity : FragmentActivity() {
                 Logger.e(throwable) { "Uncaught exception" }
                 startActivity(intent)
                 Firebase.crashlytics.recordException(throwable)
-                captureError("UncaughtException", throwable.stackTraceToString())
+                analyticsRepository.captureError("UncaughtException", throwable.stackTraceToString())
 
                 this.runOnUiThread { this.finish() }
             }.start()

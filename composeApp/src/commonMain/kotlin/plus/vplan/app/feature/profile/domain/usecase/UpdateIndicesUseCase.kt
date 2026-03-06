@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.first
 import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.sync.domain.usecase.UpdateProfileLessonIndexUseCase
 
 class UpdateIndicesUseCase(
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,

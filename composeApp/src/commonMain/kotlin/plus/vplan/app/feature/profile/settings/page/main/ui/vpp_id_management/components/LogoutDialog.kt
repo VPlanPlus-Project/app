@@ -29,9 +29,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.VppIdManagementEvent
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.logout
+
 
 @Composable
 fun LogoutDialog(
@@ -76,7 +76,7 @@ fun LogoutDialog(
         },
         icon = {
             Icon(
-                painter = painterResource(Res.drawable.logout),
+                painter = painterResource(CoreUiRes.drawable.logout),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )

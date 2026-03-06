@@ -51,20 +51,16 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Assessment
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.utils.date.dateFormatDDMMMYY
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
 import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.utils.dateFormatDDMMMYY
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
-import plus.vplan.app.utils.untilRelativeText
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.calendar
-import vplanplus.composeapp.generated.resources.chevron_down
-import vplanplus.composeapp.generated.resources.filter
-import vplanplus.composeapp.generated.resources.search
-import vplanplus.composeapp.generated.resources.x
+
 
 @Composable
 fun SearchBar(
@@ -108,14 +104,14 @@ fun SearchBar(
                     ) { Text(it) } },
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(Res.drawable.calendar),
+                            painter = painterResource(CoreUiRes.drawable.calendar),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
                     },
                     trailingIcon = {
                         Icon(
-                            painter = painterResource(Res.drawable.chevron_down),
+                            painter = painterResource(CoreUiRes.drawable.chevron_down),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -135,7 +131,7 @@ fun SearchBar(
                     onClick = { onSelectSubject(null) },
                     trailingIcon = {
                         Icon(
-                            painter = painterResource(Res.drawable.x),
+                            painter = painterResource(CoreUiRes.drawable.x),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -149,7 +145,7 @@ fun SearchBar(
                     onClick = { onSelectAssessmentType(null) },
                     trailingIcon = {
                         Icon(
-                            painter = painterResource(Res.drawable.x),
+                            painter = painterResource(CoreUiRes.drawable.x),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -183,7 +179,7 @@ fun SearchBar(
                     ) {
                         CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium) {
                             Icon(
-                                painter = painterResource(Res.drawable.filter),
+                                painter = painterResource(CoreUiRes.drawable.filter),
                                 contentDescription = null,
                                 modifier = Modifier
                                     .padding(end = 8.dp)
@@ -211,7 +207,7 @@ fun SearchBar(
                     ) {
                         CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium) {
                             Icon(
-                                painter = painterResource(Res.drawable.filter),
+                                painter = painterResource(CoreUiRes.drawable.filter),
                                 contentDescription = null,
                                 modifier = Modifier
                                     .padding(end = 8.dp)
@@ -253,7 +249,7 @@ fun SearchBar(
                 singleLine = true,
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(Res.drawable.search),
+                        painter = painterResource(CoreUiRes.drawable.search),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp)
                     )
@@ -271,7 +267,7 @@ fun SearchBar(
                             }
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.x),
+                                painter = painterResource(CoreUiRes.drawable.x),
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp)
                             )

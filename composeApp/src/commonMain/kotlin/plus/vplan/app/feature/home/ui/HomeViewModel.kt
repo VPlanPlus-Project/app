@@ -35,6 +35,9 @@ import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.PopulatedDay
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
@@ -42,9 +45,6 @@ import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetNewsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
-import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.utils.sortedBySuspending
 import plus.vplan.lib.sp24.source.Authentication
 

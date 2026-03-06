@@ -1,5 +1,6 @@
 package plus.vplan.app.feature.calendar.ui
 
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -92,6 +93,10 @@ import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.CustomColor
+import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
@@ -110,16 +115,9 @@ import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.ui.components.MultiFab
 import plus.vplan.app.ui.components.MultiFabItem
-import plus.vplan.app.ui.theme.CustomColor
-import plus.vplan.app.ui.theme.colors
-import plus.vplan.app.ui.theme.displayFontFamily
 import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.shortDayOfWeekNames
 import plus.vplan.app.utils.untilText
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.book_marked
-import vplanplus.composeapp.generated.resources.calendar
-import vplanplus.composeapp.generated.resources.info
 import kotlin.math.roundToInt
 
 private const val CONTENT_PAGER_SIZE = 800
@@ -304,7 +302,7 @@ private fun CalendarScreenContent(
                             enabled = state.selectedDate != LocalDate.now()
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.calendar),
+                                painter = painterResource(CoreUiRes.drawable.calendar),
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -514,7 +512,7 @@ private fun CalendarScreenContent(
                                                 InfoCard(
                                                     modifier = Modifier
                                                         .padding(vertical = 4.dp, horizontal = 8.dp),
-                                                    imageVector = Res.drawable.info,
+                                                    imageVector = CoreUiRes.drawable.info,
                                                     title = "Informationen deiner Schule",
                                                     text = day.info,
                                                 )
@@ -582,7 +580,7 @@ private fun CalendarScreenContent(
         isVisible = isMultiFabExpanded,
         items = listOfNotNull(
             if (state.currentProfile is Profile.StudentProfile) MultiFabItem(
-                icon = { Icon(painter = painterResource(Res.drawable.book_marked), contentDescription = null, modifier = Modifier.size(24.dp)) },
+                icon = { Icon(painter = painterResource(CoreUiRes.drawable.book_marked), contentDescription = null, modifier = Modifier.size(24.dp)) },
                 text = "Neue Hausaufgabe",
                 textSuffix = { Spacer(Modifier.size(8.dp)) },
                 onClick = { isMultiFabExpanded = false; isNewHomeworkDrawerOpen = true }

@@ -10,9 +10,6 @@ import androidx.work.WorkManager
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.crashlytics
-import com.posthog.PostHog
-import com.posthog.android.PostHogAndroid
-import com.posthog.android.PostHogAndroidConfig
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.androidx.workmanager.koin.workManagerFactory
@@ -24,31 +21,8 @@ import java.util.concurrent.TimeUnit
 
 class MainApplication : Application() {
 
-    companion object {
-        const val POSTHOG_HOST = "https://eu.i.posthog.com"
-    }
-
     override fun onCreate() {
         super.onCreate()
-
-        val config = PostHogAndroidConfig(
-            apiKey = PostHogConfig.API_KEY,
-            host = POSTHOG_HOST
-        ).apply {
-            if (isDebug()) {
-                flushAt = 1
-                flushIntervalSeconds = 20
-            } else {
-                flushAt = 5
-                flushIntervalSeconds = 30
-            }
-        }
-
-        // Setup PostHog with the given Context and Config
-        PostHogAndroid.setup(this, config)
-        PostHog.register("\$app_build", AppConfig.VERSION_CODE)
-        PostHog.register("\$os_name", "Android")
-        PostHog.register("debug_mode", isDebug().toString())
 
         FirebaseApp.initializeApp(this)
         Firebase.crashlytics.isCrashlyticsCollectionEnabled = false

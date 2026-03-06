@@ -10,10 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.calendar.ui.DisplayType
-import vplanplus.composeapp.generated.resources.Res
-import vplanplus.composeapp.generated.resources.sheet
-import vplanplus.composeapp.generated.resources.table_properties
+
 
 @Composable
 fun DisplaySelectType(
@@ -27,7 +26,7 @@ fun DisplaySelectType(
             onClick = { onSelectType(DisplayType.Calendar) },
             selected = displayType == DisplayType.Calendar
         ) { Icon(
-            painter = painterResource(Res.drawable.sheet),
+            painter = painterResource(CoreUiRes.drawable.sheet),
             modifier = Modifier.size(18.dp),
             contentDescription = null
         ) }
@@ -36,7 +35,7 @@ fun DisplaySelectType(
             onClick = { onSelectType(DisplayType.Agenda) },
             selected = displayType == DisplayType.Agenda
         ) { Icon(
-            painter = painterResource(Res.drawable.table_properties),
+            painter = painterResource(CoreUiRes.drawable.table_properties),
             modifier = Modifier.size(18.dp).rotate(180f),
             contentDescription = null
         ) }
