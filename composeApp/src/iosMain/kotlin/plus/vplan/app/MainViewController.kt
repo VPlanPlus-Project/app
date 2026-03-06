@@ -8,7 +8,7 @@ import co.touchlab.kermit.Logger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import platform.UIKit.UIViewController
-import plus.vplan.app.domain.model.OpenQuicklook
+import plus.vplan.app.core.data.file.OpenQuicklook
 
 @Suppress("unused") // Is called in SwiftUI
 fun initKoin() {

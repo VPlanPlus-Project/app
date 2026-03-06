@@ -8,6 +8,7 @@ import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
 import plus.vplan.app.core.data.file.FileOpener
+import plus.vplan.app.core.data.file.OpenQuicklook
 import plus.vplan.app.core.data.file.ThumbnailGenerator
 import plus.vplan.app.core.platform.AuthenticationRepository
 import plus.vplan.app.core.platform.AuthenticationRepositoryImpl
@@ -17,6 +18,7 @@ import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.platform.NotificationRepositoryImpl
 import plus.vplan.app.core.platform.PermissionRepository
 import plus.vplan.app.core.platform.PermissionRepositoryImpl
+import plus.vplan.app.quicklook
 
 @OptIn(ExperimentalForeignApi::class)
 actual val platformModule: Module = module {
