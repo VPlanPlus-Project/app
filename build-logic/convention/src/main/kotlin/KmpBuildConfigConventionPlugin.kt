@@ -13,10 +13,8 @@ import org.gradle.kotlin.dsl.configure
  * The generated class is placed in the module's own package under the name
  * "AppBuildConfig", so each module gets e.g.
  *   plus.vplan.app.feature.onboarding.AppBuildConfig
- *
- * Modules that need additional fields (e.g. POSTHOG_API_KEY) should configure
- * the buildConfig { } block themselves after applying this plugin.
  */
+@Suppress("unused")
 class KmpBuildConfigConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         pluginManager.apply("com.github.gmazzo.buildconfig")

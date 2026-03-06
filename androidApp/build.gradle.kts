@@ -140,7 +140,6 @@ dependencies {
     implementation(libs.filekit.core)
     implementation(libs.filekit.dialogs.compose)
     implementation(libs.kermit)
-    implementation(libs.posthog.android)
 
     debugImplementation(libs.androidx.ui.tooling)
 }

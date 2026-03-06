@@ -21,7 +21,6 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 const val APP_ID = "4"
-const val APP_SECRET = "crawling-mom-yesterday-jazz-populace-napkin"
 const val APP_REDIRECT_URI = "vpp://app/auth/"
 val VPP_ID_AUTH_URL = URLBuilder(currentConfiguration.authUrl).apply {
     appendPathSegments("authorize")
@@ -29,14 +28,6 @@ val VPP_ID_AUTH_URL = URLBuilder(currentConfiguration.authUrl).apply {
     parameters.append("redirect_uri", APP_REDIRECT_URI)
     parameters.append("device_name", getSystemInfo().deviceName)
 }.buildString()
-
-object PostHogConfig {
-    const val API_KEY = AppBuildConfig.POSTHOG_API_KEY
-}
-
-object AppConfig {
-    const val VERSION_CODE = AppBuildConfig.APP_VERSION_CODE
-}
 
 @Composable
 fun App(task: StartTask?) {

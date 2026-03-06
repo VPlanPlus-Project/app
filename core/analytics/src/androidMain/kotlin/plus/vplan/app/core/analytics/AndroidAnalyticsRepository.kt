@@ -1,13 +1,41 @@
 package plus.vplan.app.core.analytics
 
+import android.app.Application
+import android.content.Context
 import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
 import com.posthog.PostHog
+import com.posthog.android.PostHogAndroid
+import com.posthog.android.PostHogAndroidConfig
+
+private const val POSTHOG_HOST = "https://eu.i.posthog.com"
 
 class AndroidAnalyticsRepository(
     private val isDebug: Boolean,
+    context: Context,
+    posthogApiKey: String,
+    versionCode: Int,
 ) : AnalyticsRepository {
+
+    init {
+        val config = PostHogAndroidConfig(
+            apiKey = posthogApiKey,
+            host = POSTHOG_HOST
+        ).apply {
+            if (isDebug) {
+                flushAt = 1
+                flushIntervalSeconds = 20
+            } else {
+                flushAt = 5
+                flushIntervalSeconds = 30
+            }
+        }
+        PostHogAndroid.setup(context.applicationContext as Application, config)
+        PostHog.register($$"$app_build", versionCode)
+        PostHog.register($$"$os_name", "Android")
+        PostHog.register("debug_mode", isDebug.toString())
+    }
 
     override fun capture(event: String, properties: Map<String, Any>?) {
         if (isDebug) {
