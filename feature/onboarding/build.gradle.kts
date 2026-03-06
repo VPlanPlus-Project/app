@@ -31,6 +31,7 @@ kotlin {
             implementation(project(":core:ui"))
             implementation(project(":core:utils"))
             implementation(project(":core:sync"))
+            implementation(project(":core:analytics"))
 
             // Navigation
             implementation(libs.navigation.compose)

@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.group.GroupRepository
@@ -30,6 +31,7 @@ class SelectProfileUseCase(
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val analyticsRepository: AnalyticsRepository,
     private val appScope: CoroutineScope,
 ) {
     suspend operator fun invoke(
@@ -56,6 +58,17 @@ class SelectProfileUseCase(
                 ).also { profileRepository.save(it) }
             }
         }
+
+        analyticsRepository.capture(
+            event = "CreateProfile",
+            properties = mapOf(
+                "school_id" to profile.school.aliases.joinToString(),
+                "school_name" to profile.school.name,
+                "profile_type" to profile.profileType.name,
+                "entity_id" to onboardingProfile.alias
+            )
+        )
+
         keyValueRepository.set(Keys.CURRENT_PROFILE, profile.id.toHexString())
 
         // Build the lesson index immediately from whatever data is already in the DB
@@ -63,8 +76,6 @@ class SelectProfileUseCase(
         val currentTimetableVersion = timetableRepository.getCurrentVersion().first()
         val currentSubstitutionPlanVersion = substitutionPlanRepository.getCurrentVersion().first()
         updateProfileLessonIndexUseCase(profile, currentSubstitutionPlanVersion, currentTimetableVersion)
-
-        // TODO: sendSp24CredentialsToServerUseCase()
 
         // Launch timetable and substitution plan sync in the app scope so it is
         // not cancelled when the onboarding ViewModel is cleared.
