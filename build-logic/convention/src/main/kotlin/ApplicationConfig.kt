@@ -5,6 +5,7 @@ val applicationConfig = ApplicationConfig(
     versionMajor = 0,
     versionMinor = 4,
     versionPatch = 5,
+    build = 1,
     versionSuffix = "internal",
     android = ApplicationConfig.Android(
         minSdk = 24,
@@ -16,6 +17,7 @@ class ApplicationConfig(
     versionMajor: Int,
     versionMinor: Int,
     versionPatch: Int,
+    build: Int,
     versionSuffix: String? = null,
     val android: Android
 ) {
@@ -26,12 +28,13 @@ class ApplicationConfig(
         "internal" -> 3
         else -> throw Exception("Unknown Version suffix")
     }
-    val versionCode = versionMajor * 100000 +
-            versionMinor * 1000 +
-            versionPatch * 10 +
+    val versionCode = versionMajor * 10000000 +
+            versionMinor * 100000 +
+            versionPatch * 1000 +
+            build * 10 +
             versionVariantCode
 
-    val versionName = "${versionMajor}.${versionMinor}.${versionPatch}" +
+    val versionName = "${versionMajor}.${versionMinor}.${versionPatch}.${build}" +
             versionSuffix?.ifBlank { null }?.let { "-$it" }.orEmpty()
 
     val cfBundleShortVersionString = "${versionMajor}.${versionMinor}.${versionPatch}"
