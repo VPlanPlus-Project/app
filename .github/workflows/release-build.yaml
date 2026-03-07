@@ -10,7 +10,7 @@ env:
     TAG_NAME: ${{ github.ref_name }}
 
 jobs:
-    build:
+    build-android:
         runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
             -   name: Checkout sources
@@ -115,6 +115,9 @@ jobs:
             -   name: Disable debug mode
                 run: echo "app.debug=false" >> local.properties
 
+            -   name: Generate Version.xcconfig
+                run: ./gradlew :composeApp:generateXcodeVersionConfig
+
             -   name: Decode certificate
                 run: echo "${{ secrets.IOS_CERTIFICATE_P12 }}" | base64 -d > iosApp/ci_certificate.p12
 
@@ -134,7 +137,7 @@ jobs:
                     path: iosApp/build/VPlanPlus.ipa
 
     release:
-        needs: [build, build-ios]
+        needs: [build-android, build-ios]
         runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
             -   name: Download Android build artifacts
