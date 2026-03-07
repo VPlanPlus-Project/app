@@ -26,7 +26,7 @@ class ApplicationConfig(
         "internal" -> "3"
         else -> throw Exception("Unknown Version suffix")
     }
-    val versionCode = "1${versionMajor.toString().padStart(3, '0')}${versionMinor.toString().padStart(3, '0')}${versionPatch.toString().padStart(3, '0')}$versionVariantCode".toInt()
+    val versionCode = "1${versionMajor.toString().padStart(3, '0')}${versionMinor.toString().padStart(3, '0')}${versionPatch.toString().padStart(3, '0')}$versionVariantCode".toLong()
 
     val versionName = "${versionMajor}.${versionMinor}.${versionPatch}" +
             versionSuffix?.ifBlank { null }?.let { "-$it" }.orEmpty()
