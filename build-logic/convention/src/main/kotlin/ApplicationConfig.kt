@@ -20,13 +20,16 @@ class ApplicationConfig(
     val android: Android
 ) {
     val versionVariantCode = when (versionSuffix) {
-        null -> "0"
-        "production" -> "1"
-        "closed" -> "2"
-        "internal" -> "3"
+        null -> 0
+        "production" -> 1
+        "closed" -> 2
+        "internal" -> 3
         else -> throw Exception("Unknown Version suffix")
     }
-    val versionCode = "1${versionMajor.toString().padStart(3, '0')}${versionMinor.toString().padStart(3, '0')}${versionPatch.toString().padStart(3, '0')}$versionVariantCode".toLong()
+    val versionCode = versionMajor * 100000 +
+            versionMinor * 1000 +
+            versionPatch * 10 +
+            versionVariantCode
 
     val versionName = "${versionMajor}.${versionMinor}.${versionPatch}" +
             versionSuffix?.ifBlank { null }?.let { "-$it" }.orEmpty()
