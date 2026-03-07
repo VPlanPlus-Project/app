@@ -7,7 +7,6 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.core.database.model.database.DbProfileTimetableCache
 import plus.vplan.app.core.database.model.database.DbTimetable
@@ -61,7 +60,7 @@ interface TimetableDao {
         weekLimitations: List<DbTimetableWeekLimitation>
     ) {
         Logger.d { "Start replacing" }
-        val oldLessons = getByTimetable(timetableId).first().map { it.timetableLesson.id }
+        val oldLessons = getLessonIdsByTimetable(timetableId)
         Logger.d { "Old lessons: ${oldLessons.size}x" }
         if (oldLessons.isNotEmpty()) deleteTimetableByIds(oldLessons)
         Logger.d { "Deleted old lessons" }
@@ -86,6 +85,9 @@ interface TimetableDao {
     @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM timetable_lessons WHERE timetable_id = :timetableId")
     fun getByTimetable(timetableId: Uuid): Flow<List<EmbeddedTimetableLesson>>
+
+    @Query("SELECT id FROM timetable_lessons WHERE timetable_id = :timetableId")
+    suspend fun getLessonIdsByTimetable(timetableId: Uuid): List<Uuid>
 
     @Transaction
     @Query("""
