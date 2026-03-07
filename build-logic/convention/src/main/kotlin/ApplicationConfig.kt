@@ -34,7 +34,7 @@ class ApplicationConfig(
     val versionName = "${versionMajor}.${versionMinor}.${versionPatch}" +
             versionSuffix?.ifBlank { null }?.let { "-$it" }.orEmpty()
 
-    val cfBundleShortVersionString = "${versionMajor}.${versionMinor}.${versionPatch}.${versionVariantCode}"
+    val cfBundleShortVersionString = "${versionMajor}.${versionMinor}.${versionPatch}"
     val cfBundleVersion = versionCode
 
     data class Android(
