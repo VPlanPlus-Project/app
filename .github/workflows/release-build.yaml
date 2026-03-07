@@ -121,16 +121,11 @@ jobs:
             -   name: Decode provisioning profile
                 run: echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 -d > iosApp/ci_profile.mobileprovision
 
-            -   name: Build & upload to TestFlight
+            -   name: Build IPA
                 working-directory: iosApp
                 env:
                     IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-                    APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
-                    APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
-                    APP_STORE_KEY_CONTENT: ${{ secrets.APP_STORE_KEY_CONTENT }}
-                    TAG_NAME: ${{ env.TAG_NAME }}
-                    GITHUB_RUN_NUMBER: ${{ github.run_number }}
-                run: fastlane ios beta tag:${{ env.TAG_NAME }}
+                run: fastlane ios build
 
             -   name: Upload IPA artifact
                 uses: actions/upload-artifact@v4
@@ -167,6 +162,16 @@ jobs:
                     make_latest: true
                     name: VPlanPlus ${{ env.TAG_NAME }}
                     fail_on_unmatched_files: true
+
+    deploy-android:
+        needs: release
+        runs-on: blacksmith-4vcpu-ubuntu-2404
+        steps:
+            -   name: Download Android build artifacts
+                uses: actions/download-artifact@v4
+                with:
+                    name: build-artifacts
+
             -   name: Deploy on Google Play
                 uses: r0adkll/upload-google-play@v1
                 with:
@@ -175,3 +180,20 @@ jobs:
                     releaseFiles: ${{ env.TAG_NAME }}.aab
                     track: ${{ endsWith(env.TAG_NAME, '-internal') && 'internal' || endsWith(env.TAG_NAME, '-closed') && 'alpha' || endsWith(env.TAG_NAME, '-open') && 'beta' || 'production' }}
                     releaseName: ${{ env.TAG_NAME }}
+
+    deploy-ios:
+        needs: release
+        runs-on: macos-self
+        steps:
+            -   name: Download iOS build artifacts
+                uses: actions/download-artifact@v4
+                with:
+                    name: ios-build-artifacts
+
+            -   name: Upload to TestFlight
+                working-directory: iosApp
+                env:
+                    APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+                    APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+                    APP_STORE_KEY_CONTENT: ${{ secrets.APP_STORE_KEY_CONTENT }}
+                run: fastlane ios upload

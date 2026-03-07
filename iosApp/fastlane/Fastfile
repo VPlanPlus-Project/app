@@ -12,24 +12,17 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Build and upload a new beta build to TestFlight"
-  lane :beta do |options|
-    # ── API key for App Store Connect ──────────────────────────────────────
-    app_store_connect_api_key(
-      key_id:        ENV["APP_STORE_KEY_ID"],
-      issuer_id:     ENV["APP_STORE_ISSUER_ID"],
-      key_content:   ENV["APP_STORE_KEY_CONTENT"],
-      is_key_content_base64: true
-    )
-
+  desc "Build the app and produce a signed .ipa"
+  lane :build do
     # ── Install certificate & provisioning profile ─────────────────────────
-    # Resolve absolute paths up-front; fastlane actions and sh() may resolve
-    # relative paths from different working directories.
     cert_path    = File.expand_path("../ci_certificate.p12", Dir.pwd)
     profile_path = File.expand_path("../ci_profile.mobileprovision", Dir.pwd)
 
     keychain_name     = "ci_keychain"
     keychain_password = SecureRandom.hex
+
+    # Delete any leftover keychain from a previous run before creating a fresh one.
+    delete_keychain(name: keychain_name) if File.exist?(File.expand_path("~/Library/Keychains/#{keychain_name}-db"))
 
     create_keychain(
       name:            keychain_name,
@@ -50,7 +43,6 @@ platform :ios do
     install_provisioning_profile(path: profile_path)
 
     # ── Resolve the provisioning profile UUID so we can pass it to xcodebuild
-    # Use the absolute path — sh() runs from the repo root, not iosApp/.
     profile_uuid = sh(
       "security cms -D -i #{profile_path.shellescape} | " \
       "plutil -extract UUID xml1 -o - - | " \
@@ -83,10 +75,29 @@ platform :ios do
       }
     )
 
-    # ── Upload to TestFlight ───────────────────────────────────────────────
+    # ── Cleanup ────────────────────────────────────────────────────────────
+    delete_keychain(name: keychain_name)
+  end
+
+  desc "Upload an existing .ipa to TestFlight"
+  lane :upload do
+    # ── API key for App Store Connect ──────────────────────────────────────
+    app_store_connect_api_key(
+      key_id:        ENV["APP_STORE_KEY_ID"],
+      issuer_id:     ENV["APP_STORE_ISSUER_ID"],
+      key_content:   ENV["APP_STORE_KEY_CONTENT"],
+      is_key_content_base64: true
+    )
+
     upload_to_testflight(
       ipa:             "./build/VPlanPlus.ipa",
       skip_waiting_for_build_processing: true
     )
+  end
+
+  desc "Build and upload a new beta build to TestFlight"
+  lane :beta do
+    build
+    upload
   end
 end
