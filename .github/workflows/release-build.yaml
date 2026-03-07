@@ -100,10 +100,6 @@ jobs:
                 with:
                     distribution: 'temurin'
                     java-version: 17
-                    cache: 'gradle'
-                    cache-dependency-path: |
-                        ${{ github.workspace }}/gradle/wrapper/gradle-wrapper.properties
-                        ${{ github.workspace }}/**/*.versions.toml
 
             -   name: Make gradlew executable
                 run: chmod +x ./gradlew
