@@ -152,8 +152,8 @@ val generateXcodeVersionConfig by tasks.registering {
     outputs.file(outFile)
     doLast {
         outFile.writeText(
-            "MARKETING_VERSION = ${applicationConfig.versionName}\n" +
-            "CURRENT_PROJECT_VERSION = ${applicationConfig.versionCode}\n"
+            "MARKETING_VERSION = ${applicationConfig.cfBundleShortVersionString}\n" +
+            "CURRENT_PROJECT_VERSION = ${applicationConfig.cfBundleVersion}\n"
         )
     }
 }
