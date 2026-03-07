@@ -147,8 +147,8 @@ kotlin {
 // CURRENT_PROJECT_VERSION are always in sync with ApplicationConfig.
 val generateXcodeVersionConfig by tasks.registering {
     group = "build"
-    description = "Writes app/app.xcodeproj/Version.xcconfig from ApplicationConfig"
-    val outFile = rootProject.file("app/app.xcodeproj/Version.xcconfig")
+    description = "Writes iosApp/Configuration/Version.xcconfig from ApplicationConfig"
+    val outFile = rootProject.file("iosApp/Configuration/Version.xcconfig")
     outputs.file(outFile)
     doLast {
         outFile.writeText(
