@@ -8,14 +8,10 @@
 
 import ComposeApp
 
-class QuickLookImpl : OpenQuicklook {
-    let onQuicklook: (String) -> ()
-    
-    init(onQuicklook: @escaping (String) -> Void) {
-        self.onQuicklook = onQuicklook
-    }
+class QuickLookImpl : DataOpenQuicklook {
+    var onQuicklook: ((String) -> ())?
     
     func open(path: String) {
-        onQuicklook(path)
+        onQuicklook?(path)
     }
 }

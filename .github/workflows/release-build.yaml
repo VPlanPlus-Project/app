@@ -10,7 +10,7 @@ env:
     TAG_NAME: ${{ github.ref_name }}
 
 jobs:
-    build:
+    build-android:
         runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
             -   name: Checkout sources
@@ -89,14 +89,69 @@ jobs:
                         ${{ env.TAG_NAME }}.apk
                         ${{ env.TAG_NAME }}.aab
 
+    build-ios:
+        runs-on: macos-self
+        steps:
+            -   name: Checkout sources
+                uses: actions/checkout@v4
+
+            -   name: Setup Java
+                uses: actions/setup-java@v4
+                with:
+                    distribution: 'temurin'
+                    java-version: 17
+
+            -   name: Make gradlew executable
+                run: chmod +x ./gradlew
+
+            -   name: Add GitLab credentials to local.properties
+                run: |
+                    echo "GROUP_MAVEN_USERNAME=${{ secrets.GITLAB_USER }}" >> local.properties
+                    echo "GROUP_MAVEN_PASSWORD=${{ secrets.GITLAB_PASSWORD }}" >> local.properties
+
+            -   name: Use PostHog API-Key
+                run: echo "posthog.api.key=${{ secrets.POSTHOG_API_KEY }}" >> local.properties
+
+            -   name: Disable debug mode
+                run: echo "app.debug=false" >> local.properties
+
+            -   name: Generate Version.xcconfig
+                run: ./gradlew :composeApp:generateXcodeVersionConfig
+
+            -   name: Decode certificate
+                run: echo "${{ secrets.IOS_CERTIFICATE_P12 }}" | base64 -d > iosApp/ci_certificate.p12
+
+            -   name: Decode provisioning profile
+                run: echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 -d > iosApp/ci_profile.mobileprovision
+
+            -   name: Build IPA
+                working-directory: iosApp
+                env:
+                    IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+                run: fastlane ios build
+
+            -   name: Upload IPA artifact
+                uses: actions/upload-artifact@v4
+                with:
+                    name: ios-build-artifacts
+                    path: iosApp/build/VPlanPlus.ipa
+
     release:
-        needs: build
+        needs: [build-android, build-ios]
         runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
-            -   name: Download build artifacts
+            -   name: Download Android build artifacts
                 uses: actions/download-artifact@v4
                 with:
                     name: build-artifacts
+
+            -   name: Download iOS build artifacts
+                uses: actions/download-artifact@v4
+                with:
+                    name: ios-build-artifacts
+
+            -   name: Rename IPA
+                run: mv VPlanPlus.ipa ${{ env.TAG_NAME }}.ipa
 
             -   name: Create release
                 uses: softprops/action-gh-release@v2
@@ -104,11 +159,22 @@ jobs:
                     files: |
                         ${{ env.TAG_NAME }}.apk
                         ${{ env.TAG_NAME }}.aab
+                        ${{ env.TAG_NAME }}.ipa
                     draft: false
                     prerelease: ${{ endsWith(env.TAG_NAME, '-closed') || endsWith(env.TAG_NAME, '-open') || endsWith(env.TAG_NAME, '-internal') }}
                     make_latest: true
                     name: VPlanPlus ${{ env.TAG_NAME }}
                     fail_on_unmatched_files: true
+
+    deploy-android:
+        needs: release
+        runs-on: blacksmith-4vcpu-ubuntu-2404
+        steps:
+            -   name: Download Android build artifacts
+                uses: actions/download-artifact@v4
+                with:
+                    name: build-artifacts
+
             -   name: Deploy on Google Play
                 uses: r0adkll/upload-google-play@v1
                 with:
@@ -117,3 +183,20 @@ jobs:
                     releaseFiles: ${{ env.TAG_NAME }}.aab
                     track: ${{ endsWith(env.TAG_NAME, '-internal') && 'internal' || endsWith(env.TAG_NAME, '-closed') && 'alpha' || endsWith(env.TAG_NAME, '-open') && 'beta' || 'production' }}
                     releaseName: ${{ env.TAG_NAME }}
+
+    deploy-ios:
+        needs: release
+        runs-on: macos-self
+        steps:
+            -   name: Download iOS build artifacts
+                uses: actions/download-artifact@v4
+                with:
+                    name: ios-build-artifacts
+
+            -   name: Upload to TestFlight
+                working-directory: iosApp
+                env:
+                    APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+                    APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+                    APP_STORE_KEY_CONTENT: ${{ secrets.APP_STORE_KEY_CONTENT }}
+                run: fastlane ios upload

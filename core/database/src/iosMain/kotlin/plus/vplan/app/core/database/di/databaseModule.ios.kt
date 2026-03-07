@@ -2,8 +2,7 @@ package plus.vplan.app.core.database.di
 
 import androidx.room.Room
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import kotlinx.coroutines.newSingleThreadContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import platform.Foundation.NSDocumentDirectory
@@ -21,7 +20,7 @@ actual val roomModule: Module = module {
         )
             .fallbackToDestructiveMigrationOnDowngrade(true)
             .setDriver(androidx.sqlite.driver.bundled.BundledSQLiteDriver()) // Very important
-            .setQueryCoroutineContext(Dispatchers.IO)
+            .setQueryCoroutineContext(newSingleThreadContext("RoomQuery"))
             .build()
     }
 }

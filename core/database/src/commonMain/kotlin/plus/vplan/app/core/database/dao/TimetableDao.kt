@@ -7,7 +7,6 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.datetime.DayOfWeek
 import plus.vplan.app.core.database.model.database.DbProfileTimetableCache
 import plus.vplan.app.core.database.model.database.DbTimetable
@@ -61,7 +60,7 @@ interface TimetableDao {
         weekLimitations: List<DbTimetableWeekLimitation>
     ) {
         Logger.d { "Start replacing" }
-        val oldLessons = getByTimetable(timetableId).first().map { it.timetableLesson.id }
+        val oldLessons = getLessonIdsByTimetable(timetableId)
         Logger.d { "Old lessons: ${oldLessons.size}x" }
         if (oldLessons.isNotEmpty()) deleteTimetableByIds(oldLessons)
         Logger.d { "Deleted old lessons" }
@@ -82,10 +81,19 @@ interface TimetableDao {
     @Query("SELECT * FROM timetable_lessons LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id WHERE school_groups.school_id = :schoolId AND version = :version GROUP BY timetable_lessons.id")
     fun getBySchool(schoolId: Uuid, version: Int): Flow<List<EmbeddedTimetableLesson>>
 
+    @Query("SELECT timetable_lessons.id FROM timetable_lessons JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id WHERE timetable_group_crossover.group_id = :groupId AND timetable_lessons.version = :version GROUP BY timetable_lessons.id")
+    suspend fun getLessonIdsByGroupAndVersion(groupId: Uuid, version: Int): List<Uuid>
+
+    @Query("SELECT timetable_lessons.id FROM timetable_lessons JOIN timetable_teacher_crossover ON timetable_teacher_crossover.timetable_lesson_id = timetable_lessons.id WHERE timetable_teacher_crossover.teacher_id = :teacherId AND timetable_lessons.version = :version GROUP BY timetable_lessons.id")
+    suspend fun getLessonIdsByTeacherAndVersion(teacherId: Uuid, version: Int): List<Uuid>
+
     @Transaction
     @RewriteQueriesToDropUnusedColumns
     @Query("SELECT * FROM timetable_lessons WHERE timetable_id = :timetableId")
     fun getByTimetable(timetableId: Uuid): Flow<List<EmbeddedTimetableLesson>>
+
+    @Query("SELECT id FROM timetable_lessons WHERE timetable_id = :timetableId")
+    suspend fun getLessonIdsByTimetable(timetableId: Uuid): List<Uuid>
 
     @Transaction
     @Query("""

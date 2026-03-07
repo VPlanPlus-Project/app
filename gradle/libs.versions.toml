@@ -36,7 +36,7 @@ firebase-bom = "34.10.0"
 google-gms = "4.4.4"
 
 # Third-party
-cmpEasyPermission = "1.0.3"
+moko-permissions = "0.20.1"
 filekitCompose = "0.13.0"
 gradle-buildconfig-plugin = "6.0.7"
 kermit = "2.1.0"
@@ -128,7 +128,6 @@ navigation3-material3-adaptive = { module = "org.jetbrains.compose.material3.ada
 navigation3-lifecycle = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "navigation3-lifecycle" }
 
 # Third-party
-cmp-easy-permission = { module = "network.chaintech:cmp-easy-permission", version.ref = "cmpEasyPermission" }
 filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekitCompose" }
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekitCompose" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
@@ -136,6 +135,11 @@ posthog-android = { module = "com.posthog:posthog-android", version.ref = "posth
 
 # VPlanPlus
 vpp-sp24 = { module = "plus.vplan.lib:sp24-kt", version.ref = "sp24-kt" }
+
+# Permissions
+moko-permissions-core = { module = "dev.icerock.moko:permissions-compose", version.ref = "moko-permissions" }
+moko-permissions-compose = { module = "dev.icerock.moko:permissions", version.ref = "moko-permissions" }
+moko-permissions-notifications = { module = "dev.icerock.moko:permissions-notifications", version.ref = "moko-permissions" }
 
 # Gradle plugins (for build-logic)
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }

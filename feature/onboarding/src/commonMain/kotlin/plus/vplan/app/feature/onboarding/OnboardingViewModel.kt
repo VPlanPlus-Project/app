@@ -8,7 +8,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
 import plus.vplan.app.core.model.School
+import plus.vplan.app.core.platform.AppPlatform
+import plus.vplan.app.core.platform.PlatformRepository
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.loading_data.domain.usecase.FetchAndStoreSchoolDataUseCase
 import plus.vplan.app.feature.onboarding.stage.profile_selection.domain.usecase.BuildProfileOptionsFromLocalDataUseCase
@@ -16,6 +19,7 @@ import plus.vplan.app.feature.onboarding.stage.profile_selection.domain.usecase.
 import plus.vplan.app.feature.onboarding.stage.school_select.domain.usecase.OnboardingSchoolOption
 
 internal class OnboardingViewModel(
+    private val platformRepository: PlatformRepository,
     private val fetchAndStoreSchoolDataUseCase: FetchAndStoreSchoolDataUseCase,
     private val buildProfileOptionsFromLocalDataUseCase: BuildProfileOptionsFromLocalDataUseCase,
     private val selectProfileUseCase: SelectProfileUseCase,
@@ -125,9 +129,22 @@ internal class OnboardingViewModel(
         if (profile is OnboardingProfile.TeacherProfile) {
             viewModelScope.launch {
                 selectProfileUseCase(profile)
-                backStack.add(Onboarding.Finished)
+                this@OnboardingViewModel.showIosFinishSheetOrFinish()
             }
         } else {
+            this.showIosFinishSheetOrFinish()
+        }
+    }
+
+    private fun showIosFinishSheetOrFinish() {
+        if (platformRepository.getPlatform() != AppPlatform.iOS) {
+            backStack.add(Onboarding.Finished)
+            return
+        }
+
+        viewModelScope.launch {
+            val iosDevInfoSheetHandler = (object : KoinComponent {}).getKoin().get<IosDevInfoSheetHandler>()
+            iosDevInfoSheetHandler.awaitSheet()
             backStack.add(Onboarding.Finished)
         }
     }

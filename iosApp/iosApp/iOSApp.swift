@@ -1,6 +1,7 @@
 import SwiftUI
 import SafariServices
 import ComposeApp
+import Onboarding
 import QuickLook
 import BackgroundTasks
 
@@ -8,8 +9,14 @@ import BackgroundTasks
 struct iOSApp: SwiftUI.App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
+    let quickLookImpl = QuickLookImpl()
+    let sheetCoordinator = IosDevInfoSheetCoordinator()
+
     init() {
-        MainViewControllerKt.doInitKoin()
+        MainViewControllerKt.doInitKoin(
+            quicklookImpl: quickLookImpl,
+            iosDevInfoSheetHandlerImpl: sheetCoordinator
+        )
     }
     
     @State private var launchUrl: String? = nil
@@ -21,19 +28,24 @@ struct iOSApp: SwiftUI.App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView(
-                url: launchUrl ?? "",
-                notificationTask: notificationManager.notificationData,
-                onQuicklook: { path in quickLookUrl = URL(string: path) }
-            )
+            VStack {
+                let _ = { quickLookImpl.onQuicklook = { path in quickLookUrl = URL(string: path) } }()
+                ContentView(
+                    url: launchUrl ?? "",
+                    notificationTask: notificationManager.notificationData,
+                    sheetCoordinator: sheetCoordinator
+                )
                 .onOpenURL { url in
-                    (getVisibleViewController(UIApplication.shared.keyWindow?.rootViewController) as! SFSafariViewController).dismiss(animated: true)
+                    if let safariVC = getVisibleViewController(UIApplication.shared.keyWindow?.rootViewController) as? SFSafariViewController {
+                        safariVC.dismiss(animated: true)
+                    }
                     
                     if url.scheme == "vpp" && url.host == "app" && url.pathComponents[1] == "auth" {
                         launchUrl = url.absoluteString
                     }
                 }
                 .quickLookPreview($quickLookUrl)
+            }
         }.onChange(of: phase) { newPhase in
             switch newPhase {
             case .background: scheduleAppRefresh()
@@ -91,10 +103,10 @@ func getVisibleViewController(_ rootViewController: UIViewController?) -> UIView
 }
 
 public func scheduleAppRefresh() {
-    let request = BGAppRefreshTaskRequest(identifier: "plus.vplan.app.sync.task") // Mark 1
-    request.earliestBeginDate = Calendar.current.date(byAdding: .second, value: 30, to: Date()) // Mark 2
+    let request = BGAppRefreshTaskRequest(identifier: "plus.vplan.app.sync.task")
+    request.earliestBeginDate = Calendar.current.date(byAdding: .second, value: 30, to: Date())
     do {
-        try BGTaskScheduler.shared.submit(request) // Mark 3
+        try BGTaskScheduler.shared.submit(request)
         print("Background Task Scheduled!")
     } catch (let error) {
         print("Scheduling error: ", error)
@@ -133,6 +145,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 }
 
 class NotificationManager: ObservableObject {
-    static let shared = NotificationManager() // Singleton für globale Nutzung
-    @Published var notificationData: String? // Speichert die Item-ID aus der Benachrichtigung
+    static let shared = NotificationManager()
+    @Published var notificationData: String?
 }

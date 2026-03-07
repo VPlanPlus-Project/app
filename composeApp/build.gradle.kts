@@ -29,11 +29,11 @@ kotlin {
 
     compilerOptions {
         optIn.add("kotlin.uuid.ExperimentalUuidApi")
-        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
         freeCompilerArgs.add("-Xcontext-parameters")
         freeCompilerArgs.add("-Xnested-type-aliases")
         freeCompilerArgs.add("-Xexplicit-backing-fields")
         freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
+        optIn.add("kotlin.time.ExperimentalTime")
     }
 
     listOf(
@@ -98,6 +98,7 @@ kotlin {
             implementation(libs.compose.components.resources)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(libs.compose.runtime)
             implementation(libs.compose.ui)
             implementation(libs.compose.ui.tooling.preview)
@@ -123,8 +124,11 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.ktor.client.serialization.json)
 
+            // Permissions
+            implementation(libs.moko.permissions.compose)
+            implementation(libs.moko.permissions.notifications)
+
             // Third-party
-            implementation(libs.cmp.easy.permission)
             implementation(libs.filekit.core)
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.kermit)
@@ -137,6 +141,25 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
     }
+}
+
+// Generate a Version.xcconfig that Xcode includes so MARKETING_VERSION and
+// CURRENT_PROJECT_VERSION are always in sync with ApplicationConfig.
+val generateXcodeVersionConfig by tasks.registering {
+    group = "build"
+    description = "Writes iosApp/Configuration/Version.xcconfig from ApplicationConfig"
+    val outFile = rootProject.file("iosApp/Configuration/Version.xcconfig")
+    outputs.file(outFile)
+    doLast {
+        outFile.writeText(
+            "MARKETING_VERSION = ${applicationConfig.cfBundleShortVersionString}\n" +
+            "CURRENT_PROJECT_VERSION = ${applicationConfig.cfBundleVersion}\n"
+        )
+    }
+}
+
+tasks.named("embedAndSignAppleFrameworkForXcode") {
+    dependsOn(generateXcodeVersionConfig)
 }
 
 buildConfig {

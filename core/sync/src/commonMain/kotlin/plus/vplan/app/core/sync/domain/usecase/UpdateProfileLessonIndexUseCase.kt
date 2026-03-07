@@ -25,18 +25,10 @@ class UpdateProfileLessonIndexUseCase(
         }
         substitutionPlanRepository.replaceLessonIndex(profile.id, substitutionPlanLessons.map { it.id }.toSet())
 
-        val timetableLessons = timetableRepository.getTimetableForSchool(
-            schoolId = profile.school.id,
+        val timetableLessonIds = timetableRepository.getTimetableLessonIdsForProfile(
+            profile = profile,
             version = timetableVersion
-        ).first().filter { lesson ->
-            if (profile is Profile.StudentProfile) {
-                if (profile.group.id !in lesson.groups.map { it.id }) return@filter false
-            } else if (profile is Profile.TeacherProfile) {
-                if (profile.teacher.id !in lesson.teachers.map { it.id }) return@filter false
-            }
-
-            return@filter true
-        }
-        timetableRepository.replaceLessonIndex(profile.id, timetableLessons.map { it.id }.toSet())
+        )
+        timetableRepository.replaceLessonIndex(profile.id, timetableLessonIds)
     }
 }
