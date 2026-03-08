@@ -38,7 +38,6 @@ struct IosDevInfoSheet: View {
             iconColor: .green
         ),
     ]
-    ]
     
     func openDonatePage() {
         if let url = URL(string: "https://vplan.plus/donate?ref=ios_donate_sheet") {
