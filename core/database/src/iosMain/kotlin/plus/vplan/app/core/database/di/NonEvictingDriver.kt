@@ -62,7 +62,15 @@ private class NonEvictingStatement(
         // SQLITE_BUSY "cannot commit – SQL statements in progress"), but do NOT call
         // delegate.close() (which would sqlite3_finalize the handle and cause error 21
         // "statement is closed" when the still-live CachedStatement later calls reset()).
-        delegate.reset()
-        delegate.clearBindings()
+        //
+        // NativeSQLiteStatement.reset() propagates the *last step's* result code, which
+        // may be non-OK (e.g. SQLITE_BUSY from a prior failed step). That is harmless at
+        // the C level but would throw here, killing the LruCache eviction path and
+        // propagating up through PreparedStatementCache.entryRemoved (no try/catch) into
+        // ConnectionWithLock.prepare(), which would then crash the invalidation-tracker
+        // Flow and leave all observers silent forever. Swallow any exception here — the
+        // sole purpose is to deactivate the statement, not to surface an error.
+        try { delegate.reset() } catch (_: Exception) {}
+        try { delegate.clearBindings() } catch (_: Exception) {}
     }
 }

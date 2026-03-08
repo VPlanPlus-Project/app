@@ -13,10 +13,31 @@ struct IosDevInfoSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     let items = [
-        ModalItem(title: "Freiwillige Arbeit", description: "VPlanPlus wird von Freiwilligen als Hobbyprojekt entwickelt. Dabei ist die iOS-Version schon immer ein Ziel gewesen, um die App noch mehr Schülerinnen und Schülern zu Verfügung stellen zu können.", iconName: "heart.fill", iconColor: .red),
-        ModalItem(title: "Wir brauchen Unterstützung", description: "Entwicklung für iOS ist für uns sehr teuer: Zum Einen wurde ein MacBook angeschaft, damit überhaupt für Apple-Geräte entwickelt werden kann. Eine Lizenz, mit welcher wir Apps in den AppStore einbringen dürfen, kostst uns circa 100 Euro pro Jahr. Zum besseren Testen wurde ein gebrauchtes iPhone beschafft. Daher freuen wir uns riesig über jede Spende, die diese Kosten für uns reduziert.", iconName: "wallet.bifold.fill", iconColor: .blue),
-        ModalItem(title: "Spätere Updates", description: "Jedes Update wird von Apple überprüft. Dies kann erfahrungsgemäß sehr lange dauern. Daher kommen wichtige Bugfixes oder neue Funktionen unter Umständen erst später, als auf anderen Plattformen. Keine Sorge, wir haben euch nicht vergessen.", iconName: "arrow.trianglehead.2.clockwise.rotate.90", iconColor: .yellow),
-        ModalItem(title: "Gib uns Feedback", description: "Es ist etwas komplexer, die iOS-Versionen gründlich zu testen. Daher freuen wir uns über jede Fehlerbenachrichtigung, um die Bugs besser beheben zu können.", iconName: "ellipsis.bubble", iconColor: .green),
+        ModalItem(
+            title: "Ein Herzensprojekt",
+            description: "VPlanPlus wird mit viel Leidenschaft von Freiwilligen in ihrer Freizeit entwickelt. Die iOS-Version war dabei von Anfang an ein wichtiges Ziel – damit noch mehr Schülerinnen und Schüler von der App profitieren können.",
+            iconName: "heart.fill",
+            iconColor: .red
+        ),
+        ModalItem(
+            title: "Deine Unterstützung zählt",
+            description: "iOS-Entwicklung ist für uns als Freiwillige mit echten Kosten verbunden: Ein MacBook, ein gebrauchtes iPhone zum Testen und die Apple-Entwicklerlizenz schlagen jährlich mit rund 100 € zu Buche. Jede Spende hilft uns direkt, diese Kosten zu stemmen – und die App am Leben zu halten.",
+            iconName: "wallet.bifold.fill",
+            iconColor: .blue
+        ),
+        ModalItem(
+            title: "Updates kommen – versprochen",
+            description: "Jede neue Version muss zunächst Apples Prüfprozess durchlaufen, was manchmal etwas Zeit in Anspruch nimmt. Bugfixes oder neue Features können dadurch etwas später erscheinen als auf anderen Plattformen. Wir arbeiten stets daran, die Wartezeit so kurz wie möglich zu halten.",
+            iconName: "arrow.trianglehead.2.clockwise.rotate.90",
+            iconColor: .yellow
+        ),
+        ModalItem(
+            title: "Sag uns, was nicht stimmt",
+            description: "iOS gründlich zu testen ist eine echte Herausforderung. Wenn dir ein Fehler auffällt, freuen wir uns sehr über dein Feedback – so können wir Bugs schneller finden und beheben.",
+            iconName: "ellipsis.bubble",
+            iconColor: .green
+        ),
+    ]
     ]
     
     func openDonatePage() {
@@ -80,7 +101,7 @@ struct IosDevInfoSheet: View {
                     .buttonStyle(.plain)
                     .foregroundColor(.secondary)
                 } else {
-                    Button("Schließen") {
+                    Button("Weiter ohne Spende") {
                         dismiss()
                     }
                     .buttonStyle(.plain)
