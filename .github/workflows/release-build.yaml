@@ -130,6 +130,10 @@ jobs:
                     IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
                 run: fastlane ios build
 
+            -   name: Cleanup sensitive files
+                if: always()
+                run: rm -f iosApp/ci_certificate.p12 iosApp/ci_profile.mobileprovision
+
             -   name: Upload IPA artifact
                 uses: actions/upload-artifact@v4
                 with:

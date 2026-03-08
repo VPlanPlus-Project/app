@@ -79,6 +79,10 @@ platform :ios do
     delete_keychain(name: keychain_name)
   end
 
+  error do |lane, exception|
+    delete_keychain(name: "ci_keychain") if File.exist?(File.expand_path("~/Library/Keychains/ci_keychain-db"))
+  end
+
   desc "Upload an existing .ipa to TestFlight"
   lane :upload do
     # ── API key for App Store Connect ──────────────────────────────────────
