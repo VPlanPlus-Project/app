@@ -1,7 +1,11 @@
+@file:OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+
 package plus.vplan.app.core.database.di
 
 import androidx.room.Room
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.newSingleThreadContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -19,7 +23,7 @@ actual val roomModule: Module = module {
             factory = { VppDatabaseConstructor.initialize() }
         )
             .fallbackToDestructiveMigrationOnDowngrade(true)
-            .setDriver(androidx.sqlite.driver.bundled.BundledSQLiteDriver()) // Very important
+            .setDriver(NonEvictingDriver(androidx.sqlite.driver.bundled.BundledSQLiteDriver()))
             .setQueryCoroutineContext(newSingleThreadContext("RoomQuery"))
             .build()
     }
