@@ -3,6 +3,7 @@
 package plus.vplan.app.core.database.di
 
 import androidx.room.Room
+import androidx.sqlite.driver.NativeSQLiteDriver
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,7 +24,7 @@ actual val roomModule: Module = module {
             factory = { VppDatabaseConstructor.initialize() }
         )
             .fallbackToDestructiveMigrationOnDowngrade(true)
-            .setDriver(NonEvictingDriver(androidx.sqlite.driver.bundled.BundledSQLiteDriver()))
+            .setDriver(NativeSQLiteDriver())
             .setQueryCoroutineContext(newSingleThreadContext("RoomQuery"))
             .build()
     }

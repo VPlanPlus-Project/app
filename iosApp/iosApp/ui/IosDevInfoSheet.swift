@@ -94,7 +94,7 @@ struct IosDevInfoSheet: View {
                 }
 
                 if #available(iOS 26.0, *) {
-                    Button("Schließen") {
+                    Button("Weiter ohne Spende") {
                         dismiss()
                     }
                     .buttonStyle(.plain)
