@@ -8,7 +8,7 @@ import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 
 class OpenBiometricSettingsImpl(
     private val context: Context
-) : OpenBiometricSettings() {
+) : OpenBiometricSettings {
     override fun run() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val enrollIntent = Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {

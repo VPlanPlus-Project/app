@@ -25,6 +25,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -37,13 +38,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.AppBuildConfig
-import plus.vplan.app.Platform
+import plus.vplan.app.core.platform.AppPlatform
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
@@ -52,16 +54,16 @@ import plus.vplan.app.ui.components.noRippleClickable
 import plus.vplan.app.utils.openUrl
 
 
-expect fun getPlatform(): String
-
 @Composable
 fun InfoScreen(
     navHostController: NavHostController
 ) {
 
     val viewModel = koinViewModel<InfoViewModel>()
+    val state by viewModel.state.collectAsState()
 
     InfoContent(
+        state = state,
         onBack = remember { { navHostController.navigateUp() } },
         onEvent = viewModel::handleEvent
     )
@@ -70,6 +72,7 @@ fun InfoScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InfoContent(
+    state: InfoState,
     onBack: () -> Unit,
     onEvent: (InfoEvent) -> Unit
 ) {
@@ -117,8 +120,12 @@ private fun InfoContent(
                         .clip(RoundedCornerShape(8.dp))
                 )
                 Column {
+                    val platformName = when (state.platform) {
+                        AppPlatform.Android -> "Android"
+                        AppPlatform.iOS -> "iOS"
+                    }
                     Text(
-                        text = "VPlanPlus für ${getPlatform()}",
+                        text = "VPlanPlus für $platformName",
                         style = MaterialTheme.typography.headlineSmall,
                         fontFamily = displayFontFamily(),
                     )
@@ -189,6 +196,13 @@ private fun InfoContent(
                 showArrow = true,
             )
             SettingsRecord(
+                title = "Entwicklung unterstützen",
+                subtitle = "Wir freuen uns riesig über jede Spende",
+                icon = painterResource(CoreUiRes.drawable.hand_coins),
+                onClick = { openUrl("https://vplan.plus/donate?ref=app_info_page") },
+                showArrow = true,
+            )
+            SettingsRecord(
                 title = "Datenschutzerklärung",
                 subtitle = "für VPlanPlus und vpp.ID",
                 icon = painterResource(CoreUiRes.drawable.shield_user),
@@ -202,15 +216,14 @@ private fun InfoContent(
                 onClick = { openUrl("https://vplan.plus/about/tos") },
                 showArrow = true,
             )
-            when (plus.vplan.app.getPlatform()) {
-                Platform.Android -> SettingsRecord(
+            if (state.platform == AppPlatform.Android) {
+                SettingsRecord(
                     title = "Google Play Store",
                     subtitle = "VPlanPlus für stundenplan24.de",
                     icon = painterResource(CoreUiRes.drawable.google_play),
                     onClick = { openUrl("https://play.google.com/store/apps/details?id=plus.vplan.app") },
                     showArrow = true,
                 )
-                else -> Unit
             }
             SettingsRecord(
                 title = "GitHub-Repository",
@@ -266,4 +279,14 @@ private fun InfoContent(
     }
 
     if (showFeedbackDrawer) FeedbackDrawer(null) { showFeedbackDrawer = false }
+}
+
+@Composable
+@Preview
+private fun InfoPreview() {
+    InfoContent(
+        state = InfoState(platform = AppPlatform.iOS),
+        onBack = {},
+        onEvent = {},
+    )
 }

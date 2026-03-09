@@ -1,4 +1,3 @@
-import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
@@ -30,7 +29,7 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
             ).forEach { iosTarget ->
                 iosTarget.binaries.framework {
                     baseName = project.name.replaceFirstChar { it.uppercase() }
-                    isStatic = true
+                    isStatic = false
                 }
             }
 

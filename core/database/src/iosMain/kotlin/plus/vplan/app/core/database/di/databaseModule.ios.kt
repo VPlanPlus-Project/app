@@ -1,6 +1,7 @@
 package plus.vplan.app.core.database.di
 
 import androidx.room.Room
+import androidx.sqlite.driver.NativeSQLiteDriver
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -20,7 +21,7 @@ actual val roomModule: Module = module {
             factory = { VppDatabaseConstructor.initialize() }
         )
             .fallbackToDestructiveMigrationOnDowngrade(true)
-            .setDriver(androidx.sqlite.driver.bundled.BundledSQLiteDriver()) // Very important
+            .setDriver(NativeSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()
     }

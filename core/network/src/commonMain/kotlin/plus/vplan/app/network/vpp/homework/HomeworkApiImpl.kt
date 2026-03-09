@@ -12,6 +12,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.network.besteschule.NetworkRequestUnsuccessfulException
 import plus.vplan.app.network.besteschule.ResponseDataWrapper
 
@@ -20,16 +21,16 @@ class HomeworkApiImpl(
 ) : HomeworkApi {
     private val baseUrl = "https://vplan.plus/api/app/homework/v1"
 
-    override suspend fun getHomeworks(
-        vppId: VppId.Active,
+    override suspend fun getHomeworkItems(
+        access: VppSchoolAuthentication,
         filterGroups: List<String>?,
         filterSubjectInstances: List<String>?
     ): List<ApiHomeworkDto> {
         val response = httpClient.get(baseUrl) {
-            bearerAuth(vppId.accessToken)
+            access.authentication(this)
             url {
-                filterGroups?.let { parameters.append("filter_groups", it.joinToString(",")) }
-                filterSubjectInstances?.let { parameters.append("filter_subject_instances", it.joinToString(",")) }
+                filterGroups.orEmpty().let { parameters.append("filter_groups", it.joinToString(",")) }
+                filterSubjectInstances.orEmpty().let { parameters.append("filter_subject_instances", it.joinToString(",")) }
                 parameters.append("include_tasks", "true")
                 parameters.append("include_files", "true")
                 parameters.append("include_subject_instances", "true")

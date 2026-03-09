@@ -8,9 +8,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.homework.HomeworkRepository
+import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
@@ -23,6 +25,7 @@ class HandlePushNotificationUseCase(
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val analyticsRepository: AnalyticsRepository,
+    private val profileRepository: ProfileRepository,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
     private val logger = Logger.withTag("HandlePushNotificationUseCase")
@@ -32,7 +35,14 @@ class HandlePushNotificationUseCase(
             "HOMEWORK_UPDATE" -> {
                 val data = json.decodeFromString<HomeworkUpdate>(payload)
                 // Sync homework when push notification is received
-                homeworkRepository.sync()
+                data.homeworkIds.forEach {
+                    profileRepository.getAll().first()
+                        .filterIsInstance<Profile.StudentProfile>()
+                        .mapNotNull { it.vppId }
+                        .forEach { vppId ->
+                            homeworkRepository.syncById(vppId, it, forceReload = true)
+                        }
+                }
             }
             "ASSESSMENT_UPDATE" -> {
                 val data = json.decodeFromString<AssessmentUpdate>(payload)

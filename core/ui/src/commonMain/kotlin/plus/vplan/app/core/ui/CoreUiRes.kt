@@ -66,6 +66,7 @@ import vplanplus.core.ui.generated.resources.github
 import vplanplus.core.ui.generated.resources.globe
 import vplanplus.core.ui.generated.resources.google_play
 import vplanplus.core.ui.generated.resources.graduation_cap
+import vplanplus.core.ui.generated.resources.hand_coins
 import vplanplus.core.ui.generated.resources.handshake
 import vplanplus.core.ui.generated.resources.heart_handshake
 import vplanplus.core.ui.generated.resources.house
@@ -188,6 +189,7 @@ object CoreUiRes {
         val copy: DrawableResource get() = Res.drawable.copy
         val download: DrawableResource get() = Res.drawable.download
         val filter: DrawableResource get() = Res.drawable.filter
+        val hand_coins: DrawableResource get() = Res.drawable.hand_coins
         val log_in: DrawableResource get() = Res.drawable.log_in
         val logout: DrawableResource get() = Res.drawable.logout
         val minus: DrawableResource get() = Res.drawable.minus

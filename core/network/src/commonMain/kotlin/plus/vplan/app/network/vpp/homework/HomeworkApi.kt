@@ -3,10 +3,11 @@ package plus.vplan.app.network.vpp.homework
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.VppSchoolAuthentication
 
 interface HomeworkApi {
-    suspend fun getHomeworks(
-        vppId: VppId.Active,
+    suspend fun getHomeworkItems(
+        access: VppSchoolAuthentication,
         filterGroups: List<String>? = null,
         filterSubjectInstances: List<String>? = null
     ): List<ApiHomeworkDto>

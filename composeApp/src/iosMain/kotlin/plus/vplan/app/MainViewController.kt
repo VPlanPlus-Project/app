@@ -8,15 +8,19 @@ import co.touchlab.kermit.Logger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import platform.UIKit.UIViewController
-import plus.vplan.app.domain.model.OpenQuicklook
+import plus.vplan.app.core.data.file.OpenQuicklook
+import plus.vplan.app.feature.onboarding.IosDevInfoSheetHandler
 
 @Suppress("unused") // Is called in SwiftUI
-fun initKoin() {
+fun initKoin(quicklookImpl: OpenQuicklook, iosDevInfoSheetHandlerImpl: IosDevInfoSheetHandler) {
+    quicklook = quicklookImpl
+    iosDevInfoSheetHandler = iosDevInfoSheetHandlerImpl
     plus.vplan.app.di.initKoin()
 }
 
 lateinit var mainViewController: UIViewController
 lateinit var quicklook: OpenQuicklook
+lateinit var iosDevInfoSheetHandler: IosDevInfoSheetHandler
 
 inline fun <reified T : Any> getKoinInstance(): T {
     return object : KoinComponent {
@@ -29,10 +33,8 @@ var task: StartTask? by mutableStateOf(null)
 @Suppress("unused") // Is called in SwiftUI
 fun mainViewController(
     url: String,
-    notificationTask: String?,
-    quicklookImpl: OpenQuicklook
+    notificationTask: String?
 ): UIViewController {
-    quicklook = quicklookImpl
     updateTaskFromUrl(url)
     updateTaskFromNotification(notificationTask)
 

@@ -92,8 +92,16 @@ class TimetableRepositoryImpl(
         vppDatabase.timetableDao.deleteAll()
     }
 
-    override suspend fun getTimetableForSchool(schoolId: Uuid, version: Int): Flow<List<Lesson.TimetableLesson>> {
+    override fun getTimetableForSchool(schoolId: Uuid, version: Int): Flow<List<Lesson.TimetableLesson>> {
         return vppDatabase.timetableDao.getBySchool(schoolId, version).map { it.map { l -> l.toModel() } }
+    }
+
+    override suspend fun getTimetableLessonIdsForProfile(profile: Profile, version: Int): Set<Uuid> {
+        return when (profile) {
+            is Profile.StudentProfile -> vppDatabase.timetableDao.getLessonIdsByGroupAndVersion(profile.group.id, version)
+            is Profile.TeacherProfile -> vppDatabase.timetableDao.getLessonIdsByTeacherAndVersion(profile.teacher.id, version)
+            else -> throw Exception("Not possible")
+        }.toSet()
     }
 
     override fun getById(id: Uuid): Flow<Lesson.TimetableLesson?> {

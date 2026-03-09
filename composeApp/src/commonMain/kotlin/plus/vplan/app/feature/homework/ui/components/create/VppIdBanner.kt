@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.ColorToken
 import plus.vplan.app.core.ui.theme.customColors
+import plus.vplan.app.getVppIdAuthUrl
 import plus.vplan.app.ui.components.InfoCard
 import plus.vplan.app.utils.openUrl
 
@@ -40,7 +40,7 @@ fun VppIdBanner(
             buttonText1 = "Ignorieren",
             buttonAction1 = onHide,
             buttonText2 = "Anmelden",
-            buttonAction2 = { openUrl(VPP_ID_AUTH_URL) },
+            buttonAction2 = { openUrl(getVppIdAuthUrl()) },
             backgroundColor = customColors[ColorToken.YellowContainer]!!.get(),
             textColor = customColors[ColorToken.OnYellowContainer]!!.get()
         )

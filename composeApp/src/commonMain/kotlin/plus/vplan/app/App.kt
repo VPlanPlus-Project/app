@@ -21,7 +21,7 @@ import kotlin.uuid.Uuid
 
 const val APP_ID = "4"
 const val APP_REDIRECT_URI = "vpp://app/auth/"
-val VPP_ID_AUTH_URL = URLBuilder(currentConfiguration.authUrl).apply {
+fun getVppIdAuthUrl() = URLBuilder(currentConfiguration.authUrl).apply {
     appendPathSegments("authorize")
     parameters.append("client_id", APP_ID)
     parameters.append("redirect_uri", APP_REDIRECT_URI)

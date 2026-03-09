@@ -4,8 +4,8 @@ import org.gradle.api.Project
 val applicationConfig = ApplicationConfig(
     versionMajor = 0,
     versionMinor = 4,
-    versionPatch = 0,
-    versionCode = 419,
+    versionPatch = 5,
+    build = 11,
     versionSuffix = "internal",
     android = ApplicationConfig.Android(
         minSdk = 24,
@@ -17,12 +17,28 @@ class ApplicationConfig(
     versionMajor: Int,
     versionMinor: Int,
     versionPatch: Int,
+    build: Int,
     versionSuffix: String? = null,
-    val versionCode: Int,
     val android: Android
 ) {
-    val versionName = "${versionMajor}.${versionMinor}.${versionPatch}" +
+    val versionVariantCode = when (versionSuffix) {
+        null -> 0
+        "production" -> 1
+        "closed" -> 2
+        "internal" -> 3
+        else -> throw Exception("Unknown Version suffix")
+    }
+    val versionCode = versionMajor * 10000000 +
+            versionMinor * 100000 +
+            versionPatch * 1000 +
+            build * 10 +
+            versionVariantCode
+
+    val versionName = "${versionMajor}.${versionMinor}.${versionPatch}.${build}" +
             versionSuffix?.ifBlank { null }?.let { "-$it" }.orEmpty()
+
+    val cfBundleShortVersionString = "${versionMajor}.${versionMinor}.${versionPatch}"
+    val cfBundleVersion = versionCode
 
     data class Android(
         val minSdk: Int,

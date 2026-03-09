@@ -25,7 +25,7 @@ interface HomeworkRepository {
     suspend fun delete(homework: Homework)
     suspend fun deleteById(id: Int)
     suspend fun deleteById(ids: List<Int>)
-    suspend fun sync(vppId: VppId.Active? = null)
+    suspend fun sync(profile: Profile.StudentProfile)
     suspend fun syncById(vppId: VppId.Active, homeworkId: Int, forceReload: Boolean = false): Boolean
 
     suspend fun getIdForNewLocalHomework(): Int

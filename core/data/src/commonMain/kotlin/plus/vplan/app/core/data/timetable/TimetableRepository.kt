@@ -19,7 +19,8 @@ interface TimetableRepository {
 
     fun getCurrentVersion(): Flow<Int>
 
-    suspend fun getTimetableForSchool(schoolId: Uuid, version: Int): Flow<List<Lesson.TimetableLesson>>
+    fun getTimetableForSchool(schoolId: Uuid, version: Int): Flow<List<Lesson.TimetableLesson>>
+    suspend fun getTimetableLessonIdsForProfile(profile: Profile, version: Int): Set<Uuid>
     fun getById(id: Uuid): Flow<Lesson.TimetableLesson?>
     fun getForSchool(schoolId: Uuid, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Lesson.TimetableLesson>>
     fun getForProfile(profile: Profile, weekIndex: Int, dayOfWeek: DayOfWeek): Flow<Set<Lesson.TimetableLesson>>

@@ -54,7 +54,6 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
-import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.ui.CoreUiRes
@@ -87,6 +86,7 @@ import plus.vplan.app.feature.settings.page.school.ui.SchoolSettingsScreen
 import plus.vplan.app.feature.settings.page.security.ui.SecuritySettingsScreen
 import plus.vplan.app.feature.settings.ui.SettingsScreen
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateNewsUseCase
+import plus.vplan.app.getVppIdAuthUrl
 import plus.vplan.app.utils.openUrl
 import kotlin.uuid.Uuid
 
@@ -372,7 +372,7 @@ fun MainScreenHost(
             onSelectProfile = { profileViewModel.onEvent(ProfileScreenEvent.SetActiveProfile(it)) },
             onDismiss = { profileViewModel.onEvent(ProfileScreenEvent.SetProfileSwitcherVisibility(false)) },
             onCreateNewProfile = onNavigateToOnboarding,
-            onConnectVppId = { openUrl(VPP_ID_AUTH_URL) },
+            onConnectVppId = { openUrl(getVppIdAuthUrl()) },
             onOpenProfileSettings = {
                 navController.navigate(MainScreen.ProfileSettings(activeProfile.id.toString()))
             }

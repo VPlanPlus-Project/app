@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.VPP_ID_AUTH_URL
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.ui.CoreUiRes
@@ -46,6 +45,7 @@ import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.page.ui.components.GradesCard
 import plus.vplan.app.feature.profile.page.ui.components.GradesCardFeaturedGrade
 import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
+import plus.vplan.app.getVppIdAuthUrl
 import plus.vplan.app.utils.openUrl
 import plus.vplan.app.utils.roundTo
 
@@ -130,7 +130,7 @@ private fun ProfileContent(
                     )
                     Spacer(Modifier.height(8.dp))
                     TextButton(
-                        onClick = { openUrl(VPP_ID_AUTH_URL) },
+                        onClick = { openUrl(getVppIdAuthUrl()) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(

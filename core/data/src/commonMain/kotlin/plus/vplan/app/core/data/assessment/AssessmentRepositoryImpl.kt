@@ -4,10 +4,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.database.dao.AssessmentDao
 import plus.vplan.app.core.database.model.database.DbAssessment
@@ -22,11 +20,11 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
-import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.network.vpp.assessment.AssessmentApi
 import plus.vplan.app.network.vpp.assessment.AssessmentPatchRequest
 import plus.vplan.app.network.vpp.assessment.AssessmentPostRequest
 import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 class AssessmentRepositoryImpl(
@@ -116,7 +114,7 @@ class AssessmentRepositoryImpl(
                         subjectInstanceId = subjectInstance.id,
                         date = LocalDate.parse(dto.date),
                         isPublic = dto.isPublic,
-                        createdAt = kotlinx.datetime.Instant.fromEpochMilliseconds(dto.createdAt),
+                        createdAt = Instant.fromEpochMilliseconds(dto.createdAt),
                         createdBy = dto.createdBy.id,
                         createdByProfile = null,
                         description = dto.description,
@@ -169,7 +167,7 @@ class AssessmentRepositoryImpl(
                 subjectInstanceId = subjectInstance.id,
                 date = LocalDate.parse(dto.date),
                 isPublic = dto.isPublic,
-                createdAt = kotlinx.datetime.Instant.fromEpochMilliseconds(dto.createdAt),
+                createdAt = Instant.fromEpochMilliseconds(dto.createdAt),
                 createdBy = dto.createdBy.id,
                 createdByProfile = null,
                 description = dto.description,

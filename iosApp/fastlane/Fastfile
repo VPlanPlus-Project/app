@@ -1,0 +1,107 @@
+# frozen_string_literal: true
+
+# Required secrets (GitHub Actions):
+#   IOS_CERTIFICATE_P12       – base64-encoded Apple Distribution .p12
+#   IOS_CERTIFICATE_PASSWORD  – password for the .p12
+#   IOS_PROVISIONING_PROFILE  – base64-encoded App Store provisioning profile (.mobileprovision)
+#   APP_STORE_KEY_ID          – App Store Connect API key ID
+#   APP_STORE_ISSUER_ID       – App Store Connect API issuer ID
+#   APP_STORE_KEY_CONTENT     – base64-encoded contents of the .p8 API key file
+#                               Encode with: base64 -i AuthKey_XXXXXX.p8 | pbcopy
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Build the app and produce a signed .ipa"
+  lane :build do
+    # ── Install certificate & provisioning profile ─────────────────────────
+    cert_path    = File.expand_path("../ci_certificate.p12", Dir.pwd)
+    profile_path = File.expand_path("../ci_profile.mobileprovision", Dir.pwd)
+
+    keychain_name     = "ci_keychain"
+    keychain_password = SecureRandom.hex
+
+    # Delete any leftover keychain from a previous run before creating a fresh one.
+    delete_keychain(name: keychain_name) if File.exist?(File.expand_path("~/Library/Keychains/#{keychain_name}-db"))
+
+    create_keychain(
+      name:            keychain_name,
+      password:        keychain_password,
+      default_keychain: true,
+      unlock:          true,
+      timeout:         3600,
+      lock_when_sleeps: false
+    )
+
+    import_certificate(
+      certificate_path:     cert_path,
+      certificate_password: ENV["IOS_CERTIFICATE_PASSWORD"],
+      keychain_name:        keychain_name,
+      keychain_password:    keychain_password
+    )
+
+    install_provisioning_profile(path: profile_path)
+
+    # ── Resolve the provisioning profile UUID so we can pass it to xcodebuild
+    profile_uuid = sh(
+      "security cms -D -i #{profile_path.shellescape} | " \
+      "plutil -extract UUID xml1 -o - - | " \
+      "sed -n 's/.*<string>\\(.*\\)<\\/string>.*/\\1/p'",
+      log: false
+    ).strip
+
+    UI.user_error!("Could not read provisioning profile UUID from #{profile_path}") if profile_uuid.empty?
+
+    # ── Build ──────────────────────────────────────────────────────────────
+    build_app(
+      scheme:                      "iosApp",
+      project:                     "iosApp.xcodeproj",
+      configuration:               "Release",
+      export_method:               "app-store",
+      clean:                       true,
+      output_directory:            "./build",
+      output_name:                 "VPlanPlus.ipa",
+      xcargs:                      "CODE_SIGN_STYLE=Manual " \
+                                   "DEVELOPMENT_TEAM=BYCH2H5X5G " \
+                                   "PROVISIONING_PROFILE_SPECIFIER=#{profile_uuid} " \
+                                   "CODE_SIGN_IDENTITY=\"Apple Distribution\"",
+      export_options: {
+        method:                    "app-store",
+        teamID:                    "BYCH2H5X5G",
+        signingStyle:              "manual",
+        provisioningProfiles: {
+          "plus.vplan.app.VPlanPlus" => profile_uuid
+        }
+      }
+    )
+
+    # ── Cleanup ────────────────────────────────────────────────────────────
+    delete_keychain(name: keychain_name)
+  end
+
+  error do |lane, exception|
+    delete_keychain(name: "ci_keychain") if File.exist?(File.expand_path("~/Library/Keychains/ci_keychain-db"))
+  end
+
+  desc "Upload an existing .ipa to TestFlight"
+  lane :upload do
+    # ── API key for App Store Connect ──────────────────────────────────────
+    app_store_connect_api_key(
+      key_id:        ENV["APP_STORE_KEY_ID"],
+      issuer_id:     ENV["APP_STORE_ISSUER_ID"],
+      key_content:   ENV["APP_STORE_KEY_CONTENT"],
+      is_key_content_base64: true
+    )
+
+    upload_to_testflight(
+      ipa:             "./build/VPlanPlus.ipa",
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Build and upload a new beta build to TestFlight"
+  lane :beta do
+    build
+    upload
+  end
+end
