@@ -649,19 +649,15 @@ abstract class VppDatabase : RoomDatabase() {
 
     class Migration13to14: AutoMigrationSpec {
         override fun onPostMigrate(connection: SQLiteConnection) {
-            connection.execSQL("""
-                UPDATE homework SET subject_instance_id = (SELECT subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = homework.subject_instance_id);
-                UPDATE homework SET group_id = (SELECT group_id FROM groups_aliases WHERE groups_aliases.alias_type = 'vpp' AND groups_aliases.alias = homework.group_id);
-            """.trimIndent())
+            connection.execSQL("""UPDATE homework SET subject_instance_id = (SELECT subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = homework.subject_instance_id);""")
+            connection.execSQL("""UPDATE homework SET group_id = (SELECT group_id FROM groups_aliases WHERE groups_aliases.alias_type = 'vpp' AND groups_aliases.alias = homework.group_id);""")
         }
     }
 
     class Migration14to15: AutoMigrationSpec {
         override fun onPostMigrate(connection: SQLiteConnection) {
-            connection.execSQL("""
-                DELETE FROM assessments WHERE subject_instance_id NOT IN (SELECT alias FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp');
-                UPDATE assessments SET assessments.subject_instance_id = (SELECT subject_instances_aliases.subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = assessments.subject_instance_id);
-            """.trimIndent())
+            connection.execSQL("""DELETE FROM assessments WHERE subject_instance_id NOT IN (SELECT alias FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp');""")
+            connection.execSQL("""UPDATE assessments SET subject_instance_id = (SELECT subject_instances_aliases.subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = assessments.subject_instance_id);""")
         }
     }
 
