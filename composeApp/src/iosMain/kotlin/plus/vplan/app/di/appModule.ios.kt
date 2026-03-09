@@ -23,6 +23,8 @@ import plus.vplan.app.core.platform.PlatformRepositoryImpl
 import plus.vplan.app.feature.onboarding.IosDevInfoSheetHandler
 import plus.vplan.app.iosDevInfoSheetHandler
 import plus.vplan.app.quicklook
+import plus.vplan.app.ui.platform.OpenBiometricSettings
+import plus.vplan.app.ui.platform.OpenBiometricSettingsIos
 
 @OptIn(ExperimentalForeignApi::class)
 actual val platformModule: Module = module {
@@ -32,6 +34,7 @@ actual val platformModule: Module = module {
     single<BiometricAuthentication> { BiometricAuthenticationImpl() }
     factory<PermissionRepository> { (controller: PermissionsController) -> PermissionRepositoryImpl(controller) }
     single<PlatformRepository> { PlatformRepositoryImpl() }
+    single<OpenBiometricSettings> { OpenBiometricSettingsIos() }
 
     // New file infrastructure
     single<ThumbnailGenerator> { ThumbnailGenerator() }
