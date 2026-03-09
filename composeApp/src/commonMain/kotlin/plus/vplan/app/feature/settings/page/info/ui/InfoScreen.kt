@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
@@ -195,6 +196,13 @@ private fun InfoContent(
                 showArrow = true,
             )
             SettingsRecord(
+                title = "Entwicklung unterstützen",
+                subtitle = "Wir freuen uns riesig über jede Spende",
+                icon = painterResource(CoreUiRes.drawable.hand_coins),
+                onClick = { openUrl("https://vplan.plus/donate?ref=app_info_page") },
+                showArrow = true,
+            )
+            SettingsRecord(
                 title = "Datenschutzerklärung",
                 subtitle = "für VPlanPlus und vpp.ID",
                 icon = painterResource(CoreUiRes.drawable.shield_user),
@@ -271,4 +279,14 @@ private fun InfoContent(
     }
 
     if (showFeedbackDrawer) FeedbackDrawer(null) { showFeedbackDrawer = false }
+}
+
+@Composable
+@Preview
+private fun InfoPreview() {
+    InfoContent(
+        state = InfoState(platform = AppPlatform.iOS),
+        onBack = {},
+        onEvent = {},
+    )
 }
