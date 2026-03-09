@@ -140,9 +140,16 @@ class HomeworkRepositoryImpl(
         return (homeworkDao.getMinFileId().first() ?: 0).coerceAtMost(-1) - 1
     }
 
-    override suspend fun sync(vppId: VppId.Active?) {
-        if (vppId == null) return
-        val apiHomeworks = homeworkApi.getHomeworks(vppId)
+    override suspend fun sync(profile: Profile.StudentProfile) {
+        val apiHomeworks = homeworkApi.getHomeworkItems(
+            access = profile.vppId?.buildVppSchoolAuthentication() ?: profile.school.buildSp24AppAuthentication(),
+            filterGroups = listOfNotNull(profile.group.aliases.firstOrNull()?.toUrlString()),
+            filterSubjectInstances = profile
+                .subjectInstanceConfiguration
+                .filterValues { true }
+                .keys
+                .mapNotNull { it.aliases.firstOrNull()?.toUrlString() }
+        )
         apiHomeworks.forEach { dto ->
             // Resolve group and subject instance IDs from API to local UUIDs via aliases
             val groupId = dto.group?.let { groupEntity ->
@@ -176,10 +183,11 @@ class HomeworkRepositoryImpl(
             }
             
             val tasksDoneAccount = dto.tasks.mapNotNull { taskWrapper ->
+                if (profile.vppId == null) return@mapNotNull null
                 taskWrapper.value.done?.let { isDone ->
                     DbHomeworkTaskDoneAccount(
                         taskId = taskWrapper.value.id,
-                        vppId = vppId.id,
+                        vppId = profile.vppId!!.id,
                         isDone = isDone
                     )
                 }

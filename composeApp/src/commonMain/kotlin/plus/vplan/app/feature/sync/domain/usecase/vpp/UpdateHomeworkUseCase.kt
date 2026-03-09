@@ -50,15 +50,9 @@ class UpdateHomeworkUseCase(
             existingIdsByProfile[studentProfile] = existingHomeworkIds
 
             // Sync homework for this profile's VPP ID
-            val vppId = studentProfile.vppId
-            if (vppId == null) {
-                logger.e { "No active VPP ID for profile ${studentProfile.name} (${studentProfile.id})" }
-                return@forEachProfile
-            }
-
             logger.d { "Syncing homework for ${studentProfile.group.name}" }
             try {
-                homeworkRepository.sync(vppId)
+                homeworkRepository.sync(studentProfile)
             } catch (e: Exception) {
                 logger.e(e) { "Failed to sync homework for profile ${studentProfile.name} (${studentProfile.id})" }
                 return@forEachProfile
