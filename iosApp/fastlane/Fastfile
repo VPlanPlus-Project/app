@@ -9,8 +9,9 @@
 #   APP_STORE_KEY_CONTENT     – base64-encoded contents of the .p8 API key file
 #                               Encode with: base64 -i AuthKey_XXXXXX.p8 | pbcopy
 
-# Load version from generated file
-require_relative 'version.rb'
+# Load version from generated file if it exists
+version_file = File.expand_path("version.rb", __dir__)
+require_relative 'version.rb' if File.exist?(version_file)
 
 default_platform(:ios)
 
@@ -118,7 +119,6 @@ platform :ios do
 
   desc "Release for internal testers"
   lane :internal do
-    build_ipa
     authenticate_api
     upload_to_testflight(
       ipa: "./build/VPlanPlus.ipa",
@@ -129,7 +129,6 @@ platform :ios do
 
   desc "Closed testing"
   lane :closed do
-    build_ipa
     authenticate_api
     upload_to_testflight(
       ipa: "./build/VPlanPlus.ipa",
@@ -140,7 +139,6 @@ platform :ios do
 
   desc "Open testing"
   lane :open do
-    build_ipa
     authenticate_api
     upload_to_testflight(
       ipa: "./build/VPlanPlus.ipa",
@@ -151,7 +149,6 @@ platform :ios do
 
   desc "Production"
   lane :production do
-    build_ipa
     authenticate_api
     upload_to_testflight(
       ipa: "./build/VPlanPlus.ipa",
@@ -169,6 +166,15 @@ platform :ios do
   desc "Build and upload a new beta build to TestFlight"
   lane :beta do
     build_ipa
+    authenticate_api
+    upload_to_testflight(
+      ipa: "./build/VPlanPlus.ipa",
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Upload an existing .ipa to TestFlight"
+  lane :upload do
     authenticate_api
     upload_to_testflight(
       ipa: "./build/VPlanPlus.ipa",

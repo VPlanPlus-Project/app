@@ -115,9 +115,6 @@ jobs:
             -   name: Disable debug mode
                 run: echo "app.debug=false" >> local.properties
 
-            -   name: Generate Version.xcconfig
-                run: ./gradlew :composeApp:generateXcodeVersionConfig
-
             -   name: Generate Fastlane version config
                 run: ./gradlew :composeApp:generateFastlaneVersionConfig
 
