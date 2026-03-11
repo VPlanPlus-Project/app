@@ -18,17 +18,18 @@ import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.CacheState
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Homework
-import plus.vplan.app.core.model.Optional
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.utils.Optional
 import plus.vplan.app.network.vpp.homework.HomeworkApi
 import plus.vplan.app.network.vpp.homework.HomeworkPatchRequest
 import plus.vplan.app.network.vpp.homework.HomeworkPostRequest
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
+import plus.vplan.app.core.model.Optional as ModelOptional
 
 class HomeworkRepositoryImpl(
     private val homeworkDao: HomeworkDao,
@@ -341,10 +342,10 @@ class HomeworkRepositoryImpl(
 
     override suspend fun updateHomeworkMetadata(
         homework: Homework,
-        dueTo: Optional<LocalDate>,
-        subjectInstance: Optional<SubjectInstance?>,
-        group: Optional<Group?>,
-        isPublic: Optional<Boolean>,
+        dueTo: ModelOptional<LocalDate>,
+        subjectInstance: ModelOptional<SubjectInstance?>,
+        group: ModelOptional<Group?>,
+        isPublic: ModelOptional<Boolean>,
         profile: Profile.StudentProfile
     ) {
         val activeVppId = profile.vppId?.asActive()
@@ -356,39 +357,39 @@ class HomeworkRepositoryImpl(
                     homework.id,
                     HomeworkPatchRequest(
                         subjectInstanceId = if (subjectInstance.isPresent()) 
-                            (subjectInstance as Optional.Present).value?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toIntOrNull()
-                        else null,
+                            Optional.Defined((subjectInstance as ModelOptional.Present).value?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toIntOrNull())
+                        else Optional.Undefined(),
                         groupId = if (group.isPresent())
-                            (group as Optional.Present).value?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toIntOrNull()
-                        else null,
+                            Optional.Defined((group as ModelOptional.Present).value?.aliases?.getByProvider(AliasProvider.Vpp)?.value?.toIntOrNull())
+                        else Optional.Undefined(),
                         dueTo = if (dueTo.isPresent())
-                            (dueTo as Optional.Present).value.toString()
-                        else null,
+                            Optional.Defined((dueTo as ModelOptional.Present).value.toString())
+                        else Optional.Undefined(),
                         isPublic = if (isPublic.isPresent())
-                            (isPublic as Optional.Present).value
-                        else null
+                            Optional.Defined((isPublic as ModelOptional.Present).value)
+                        else Optional.Undefined()
                     )
                 )
             }
         }
         
         // Update local database
-        if (dueTo is Optional.Present) {
+        if (dueTo is ModelOptional.Present) {
             homeworkDao.updateDueTo(homework.id, dueTo.value)
         }
-        if (subjectInstance is Optional.Present || group is Optional.Present) {
+        if (subjectInstance is ModelOptional.Present || group is ModelOptional.Present) {
             // Only update the fields that were provided
             val subjectInstanceId = when {
-                subjectInstance is Optional.Present -> subjectInstance.value?.id
+                subjectInstance is ModelOptional.Present -> subjectInstance.value?.id
                 else -> homework.subjectInstance?.id
             }
             val groupId = when {
-                group is Optional.Present -> group.value?.id
+                group is ModelOptional.Present -> group.value?.id
                 else -> homework.group?.id
             }
             homeworkDao.updateSubjectInstanceAndGroup(homework.id, subjectInstanceId, groupId)
         }
-        if (isPublic is Optional.Present) {
+        if (isPublic is ModelOptional.Present) {
             homeworkDao.updateVisibility(homework.id, isPublic.value)
         }
     }

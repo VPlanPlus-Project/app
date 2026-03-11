@@ -8,15 +8,29 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.OutgoingContent
+import io.ktor.http.content.TextContent
 import io.ktor.http.isSuccess
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.http.withCharset
+import io.ktor.serialization.ContentConverter
+import io.ktor.util.reflect.TypeInfo
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.charsets.Charset
+import io.ktor.utils.io.readRemaining
+import io.ktor.utils.io.readText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.serializer
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -135,6 +149,42 @@ import kotlin.time.Instant
 
 expect val platformModule: Module
 
+val appJson = Json {
+    ignoreUnknownKeys = true
+    classDiscriminator = "type"
+    encodeDefaults = true
+}
+
+val UNDEFINED_SENTINEL = JsonPrimitive("__undefined__")
+
+fun JsonElement.stripUndefined(): JsonElement = when (this) {
+    is JsonObject -> JsonObject(
+        entries
+            .associate { it.toPair() }
+            .filter { (_, v) -> v != UNDEFINED_SENTINEL }
+            .mapValues { (_, v) -> v.stripUndefined() }
+    )
+    is JsonArray -> JsonArray(map { it.stripUndefined() })
+    else -> this
+}
+
+class UndefinedStrippingConverter(private val json: Json) : ContentConverter {
+    override suspend fun serialize(contentType: ContentType, charset: Charset, typeInfo: TypeInfo, value: Any?): OutgoingContent? {
+        val serializer = json.serializersModule.serializer(typeInfo.kotlinType ?: return null)
+        val element = json.encodeToJsonElement(serializer, value ?: return null)
+        return TextContent(
+            json.encodeToString(element.stripUndefined()),
+            contentType.withCharset(charset)
+        )
+    }
+
+    override suspend fun deserialize(charset: Charset, typeInfo: TypeInfo, content: ByteReadChannel): Any? {
+        val serializer = json.serializersModule.serializer(typeInfo.kotlinType ?: return null)
+        val text = content.readRemaining().readText()
+        return json.decodeFromString(serializer, text)
+    }
+}
+
 val appModule = module(createdAtStart = true) {
     single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
 
@@ -142,11 +192,7 @@ val appModule = module(createdAtStart = true) {
         val appLogger = co.touchlab.kermit.Logger.withTag("Ktor Client")
         HttpClient {
             install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    classDiscriminator = "type"
-                    encodeDefaults = true
-                })
+                register(ContentType.Application.Json, UndefinedStrippingConverter(appJson))
             }
 
             install(HttpRequestRetry) {

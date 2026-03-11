@@ -16,6 +16,7 @@ kotlin {
             // Project modules
             implementation(project(":core:database"))
             implementation(project(":core:model"))
+            implementation(project(":core:utils"))
 
             // KotlinX
             implementation(libs.kotlinx.serialization.json)
