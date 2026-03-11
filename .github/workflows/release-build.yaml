@@ -131,6 +131,9 @@ jobs:
                 working-directory: iosApp
                 env:
                     IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+                    APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+                    APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+                    APP_STORE_KEY_CONTENT: ${{ secrets.APP_STORE_KEY_CONTENT }}
                 run: fastlane ios build_ipa
 
             -   name: Cleanup sensitive files
@@ -194,7 +197,7 @@ jobs:
     deploy-ios:
         needs: release
         runs-on: macos-self
-        if: ${{ !endsWith(env.TAG_NAME, '-production') }}
+        if: ${{ !endsWith(github.ref_name, '-production') }}
         steps:
             -   name: Checkout sources
                 uses: actions/checkout@v4

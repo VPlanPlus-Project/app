@@ -26,20 +26,23 @@ platform :ios do
 
   desc "Sync build number and marketing version"
   lane :sync_version do
-    authenticate_api
-    
     # Set marketing version from ApplicationConfig
     increment_version_number(
       version_number: MARKETING_VERSION,
       xcodeproj: "iosApp.xcodeproj"
     )
     
-    # Sync build number with latest TestFlight build
-    new_build = latest_testflight_build_number(initial_build_number: 1) + 1
-    increment_build_number(
-      build_number: new_build,
-      xcodeproj: "iosApp.xcodeproj"
-    )
+    # Only sync build number with TestFlight if API credentials are available
+    if ENV["APP_STORE_KEY_ID"] && ENV["APP_STORE_ISSUER_ID"] && ENV["APP_STORE_KEY_CONTENT"]
+      authenticate_api
+      new_build = latest_testflight_build_number(initial_build_number: 1) + 1
+      increment_build_number(
+        build_number: new_build,
+        xcodeproj: "iosApp.xcodeproj"
+      )
+    else
+      UI.important("Skipping TestFlight build number sync (API credentials not available)")
+    end
   end
 
   desc "Build the app and produce a signed .ipa"
