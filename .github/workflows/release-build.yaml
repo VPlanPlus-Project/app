@@ -115,8 +115,8 @@ jobs:
             -   name: Disable debug mode
                 run: echo "app.debug=false" >> local.properties
 
-            -   name: Generate Fastlane version config
-                run: ./gradlew :composeApp:generateFastlaneVersionConfig
+            -   name: Generate iOS version configuration
+                run: ./gradlew :composeApp:generateXcodeVersionConfig
 
             -   name: Decode certificate
                 run: echo "${{ secrets.IOS_CERTIFICATE_P12 }}" | base64 -d > iosApp/ci_certificate.p12

@@ -153,24 +153,11 @@ val generateXcodeVersionConfig by tasks.registering {
     val outFile = rootProject.file("iosApp/Configuration/Version.xcconfig")
     outputs.file(outFile)
     doLast {
+        outFile.parentFile.mkdirs()
         outFile.writeText(
+            "// Auto-generated from ApplicationConfig - do not edit manually\n" +
             "MARKETING_VERSION = ${applicationConfig.cfBundleShortVersionString}\n" +
-            "CURRENT_PROJECT_VERSION = ${applicationConfig.cfBundleVersion}\n"
-        )
-    }
-}
-
-// Generate a version.rb file for Fastlane to use the marketing version from ApplicationConfig
-val generateFastlaneVersionConfig by tasks.registering {
-    group = "build"
-    description = "Writes iosApp/fastlane/version.rb from ApplicationConfig"
-    val outFile = rootProject.file("iosApp/fastlane/version.rb")
-    outputs.file(outFile)
-    doLast {
-        outFile.writeText(
-            "# Auto-generated from ApplicationConfig - do not edit manually\n" +
-            "MARKETING_VERSION = \"${applicationConfig.cfBundleShortVersionString}\"\n" +
-            "CURRENT_PROJECT_VERSION = \"${applicationConfig.cfBundleVersion}\"\n"
+            "CURRENT_PROJECT_VERSION = 1\n"
         )
     }
 }

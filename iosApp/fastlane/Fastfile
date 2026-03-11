@@ -9,10 +9,6 @@
 #   APP_STORE_KEY_CONTENT     – base64-encoded contents of the .p8 API key file
 #                               Encode with: base64 -i AuthKey_XXXXXX.p8 | pbcopy
 
-# Load version from generated file if it exists
-version_file = File.expand_path("version.rb", __dir__)
-require_relative 'version.rb' if File.exist?(version_file)
-
 default_platform(:ios)
 
 platform :ios do
@@ -25,30 +21,30 @@ platform :ios do
     )
   end
 
-  desc "Sync build number and marketing version"
-  lane :sync_version do
-    # Set marketing version from ApplicationConfig
-    increment_version_number(
-      version_number: MARKETING_VERSION,
+  desc "Sync build number with TestFlight"
+  lane :sync_build_number do
+    authenticate_api
+    
+    # Get marketing version from Xcode project (set by Version.xcconfig)
+    marketing_version = get_version_number(xcodeproj: "iosApp.xcodeproj")
+    
+    # Sync build number with latest TestFlight build for this marketing version
+    new_build = latest_testflight_build_number(
+      initial_build_number: 0,
+      version: marketing_version
+    ) + 1
+    
+    increment_build_number(
+      build_number: new_build,
       xcodeproj: "iosApp.xcodeproj"
     )
     
-    # Only sync build number with TestFlight if API credentials are available
-    if ENV["APP_STORE_KEY_ID"] && ENV["APP_STORE_ISSUER_ID"] && ENV["APP_STORE_KEY_CONTENT"]
-      authenticate_api
-      new_build = latest_testflight_build_number(initial_build_number: 1) + 1
-      increment_build_number(
-        build_number: new_build,
-        xcodeproj: "iosApp.xcodeproj"
-      )
-    else
-      UI.important("Skipping TestFlight build number sync (API credentials not available)")
-    end
+    UI.success("Version set to #{marketing_version} (#{new_build})")
   end
 
   desc "Build the app and produce a signed .ipa"
   lane :build_ipa do
-    sync_version
+    sync_build_number
     
     # ── Install certificate & provisioning profile ─────────────────────────
     cert_path    = File.expand_path("../ci_certificate.p12", Dir.pwd)
