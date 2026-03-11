@@ -91,7 +91,7 @@ platform :ios do
       configuration:               "Release",
       export_method:               "app-store",
       clean:                       true,
-      output_directory:            "./build",
+      output_directory:            "../build",
       output_name:                 "VPlanPlus.ipa",
       xcargs:                      "CODE_SIGN_STYLE=Manual " \
                                    "DEVELOPMENT_TEAM=BYCH2H5X5G " \
@@ -117,7 +117,7 @@ platform :ios do
   lane :internal do
     authenticate_api
     upload_to_testflight(
-      ipa: "./build/VPlanPlus.ipa",
+      ipa: "../VPlanPlus.ipa",
       groups: ["Internal"],
       skip_waiting_for_build_processing: true
     )
@@ -127,7 +127,7 @@ platform :ios do
   lane :closed do
     authenticate_api
     upload_to_testflight(
-      ipa: "./build/VPlanPlus.ipa",
+      ipa: "../VPlanPlus.ipa",
       groups: ["Closed"],
       skip_waiting_for_build_processing: true
     )
@@ -137,7 +137,7 @@ platform :ios do
   lane :open do
     authenticate_api
     upload_to_testflight(
-      ipa: "./build/VPlanPlus.ipa",
+      ipa: "../VPlanPlus.ipa",
       groups: ["Open"],
       skip_waiting_for_build_processing: true
     )
@@ -147,7 +147,7 @@ platform :ios do
   lane :production do
     authenticate_api
     upload_to_testflight(
-      ipa: "./build/VPlanPlus.ipa",
+      ipa: "../VPlanPlus.ipa",
       skip_submission: true,
       distribute_external: false,
       skip_waiting_for_build_processing: true
@@ -164,7 +164,7 @@ platform :ios do
     build_ipa
     authenticate_api
     upload_to_testflight(
-      ipa: "./build/VPlanPlus.ipa",
+      ipa: "../build/VPlanPlus.ipa",
       skip_waiting_for_build_processing: true
     )
   end
@@ -173,7 +173,7 @@ platform :ios do
   lane :upload do
     authenticate_api
     upload_to_testflight(
-      ipa: "./build/VPlanPlus.ipa",
+      ipa: "../VPlanPlus.ipa",
       skip_waiting_for_build_processing: true
     )
   end
