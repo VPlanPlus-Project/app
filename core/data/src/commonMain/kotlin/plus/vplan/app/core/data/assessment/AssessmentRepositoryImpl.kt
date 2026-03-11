@@ -15,17 +15,18 @@ import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.core.model.Optional
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
+import plus.vplan.app.core.utils.Optional
 import plus.vplan.app.network.vpp.assessment.AssessmentApi
 import plus.vplan.app.network.vpp.assessment.AssessmentPatchRequest
 import plus.vplan.app.network.vpp.assessment.AssessmentPostRequest
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+import plus.vplan.app.core.model.Optional as ModelOptional
 
 class AssessmentRepositoryImpl(
     private val assessmentDao: AssessmentDao,
@@ -190,10 +191,10 @@ class AssessmentRepositoryImpl(
 
     override suspend fun updateAssessmentMetadata(
         assessment: Assessment,
-        date: Optional<LocalDate>,
-        type: Optional<Assessment.Type>,
-        isPublic: Optional<Boolean>,
-        content: Optional<String>,
+        date: ModelOptional<LocalDate>,
+        type: ModelOptional<Assessment.Type>,
+        isPublic: ModelOptional<Boolean>,
+        content: ModelOptional<String>,
         profile: Profile.StudentProfile
     ) {
         val activeVppId = profile.vppId?.asActive()
@@ -206,10 +207,10 @@ class AssessmentRepositoryImpl(
                         activeVppId,
                         assessment.id,
                         AssessmentPatchRequest(
-                            type = if (type is Optional.Present) type.value.name else null,
-                            date = if (date is Optional.Present) date.value.toString() else null,
-                            isPublic = if (isPublic is Optional.Present) isPublic.value else null,
-                            content = if (content is Optional.Present) content.value else null
+                            type = if (type is ModelOptional.Present) Optional.Defined(type.value.name) else Optional.Undefined(),
+                            date = if (date is ModelOptional.Present) Optional.Defined(date.value.toString()) else Optional.Undefined(),
+                            isPublic = if (isPublic is ModelOptional.Present) Optional.Defined(isPublic.value) else Optional.Undefined(),
+                            content = if (content is ModelOptional.Present) Optional.Defined(content.value) else Optional.Undefined(),
                         )
                     )
                 } catch (e: Exception) {
@@ -220,16 +221,16 @@ class AssessmentRepositoryImpl(
         }
 
         // Update local database
-        if (date is Optional.Present) {
+        if (date is ModelOptional.Present) {
             assessmentDao.updateDate(assessment.id, date.value)
         }
-        if (type is Optional.Present) {
+        if (type is ModelOptional.Present) {
             assessmentDao.updateType(assessment.id, type.value.ordinal)
         }
-        if (isPublic is Optional.Present) {
+        if (isPublic is ModelOptional.Present) {
             assessmentDao.updateVisibility(assessment.id, isPublic.value)
         }
-        if (content is Optional.Present) {
+        if (content is ModelOptional.Present) {
             assessmentDao.updateContent(assessment.id, content.value)
         }
     }

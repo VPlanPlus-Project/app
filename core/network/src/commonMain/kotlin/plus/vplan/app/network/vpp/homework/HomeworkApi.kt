@@ -1,9 +1,11 @@
 package plus.vplan.app.network.vpp.homework
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
+import plus.vplan.app.core.utils.Optional
 
 interface HomeworkApi {
     suspend fun getHomeworkItems(
@@ -119,10 +121,10 @@ data class HomeworkPostResponseItem(
 
 @Serializable
 data class HomeworkPatchRequest(
-    @SerialName("subject_instance_id") val subjectInstanceId: Int? = null,
-    @SerialName("group_id") val groupId: Int? = null,
-    @SerialName("due_to") val dueTo: String? = null,
-    @SerialName("is_public") val isPublic: Boolean? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("subject_instance_id") val subjectInstanceId: Optional<Int?> = Optional.Undefined(),
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("group_id") val groupId: Optional<Int?> = Optional.Undefined(),
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("due_to") val dueTo: Optional<String> = Optional.Undefined(),
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("is_public") val isPublic: Optional<Boolean> = Optional.Undefined(),
 )
 
 @Serializable
