@@ -33,30 +33,43 @@ jobs:
                 run: chmod +x ./gradlew
 
             -   name: Restore google-services.json
-                run: echo ${{ secrets.GOOGLE_SERVICES }} | base64 -d > ${GITHUB_WORKSPACE}/androidApp/google-services.json
+                env:
+                    GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
+                run: echo "$GOOGLE_SERVICES" | base64 -d > ${GITHUB_WORKSPACE}/androidApp/google-services.json
 
             -   name: Restore playstore.keystore.jks
-                run: echo ${{ secrets.KEYSTORE_FILE }} | base64 -d > ${GITHUB_WORKSPACE}/keystore.jks
+                env:
+                    KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+                run: echo "$KEYSTORE_FILE" | base64 -d > ${GITHUB_WORKSPACE}/keystore.jks
 
             -   name: Add keystore information to local.properties
                 run: echo "signing.default.file=${GITHUB_WORKSPACE}/keystore.jks" >> local.properties
 
             -   name: Add keystore password to local.properties
-                run: echo "signing.default.storepassword=${{secrets.KEYSTORE_PASSWORD}}" >> local.properties
+                env:
+                    KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+                run: echo "signing.default.storepassword=$KEYSTORE_PASSWORD" >> local.properties
 
             -   name: Add keystore alias to local.properties
                 run: echo "signing.default.keyalias=key0" >> local.properties
 
             -   name: Add keystore key password to local.properties
-                run: echo "signing.default.keypassword=${{secrets.KEYSTORE_PASSWORD}}" >> local.properties
+                env:
+                    KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+                run: echo "signing.default.keypassword=$KEYSTORE_PASSWORD" >> local.properties
 
             -   name: Use PostHog API-Key
-                run: echo "posthog.api.key=${{ secrets.POSTHOG_API_KEY }}" >> local.properties
+                env:
+                    POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+                run: echo "posthog.api.key=$POSTHOG_API_KEY" >> local.properties
 
             -   name: Add GitLab credentials to local.properties
+                env:
+                    GITLAB_USER: ${{ secrets.GITLAB_USER }}
+                    GITLAB_PASSWORD: ${{ secrets.GITLAB_PASSWORD }}
                 run: |
-                  echo "GROUP_MAVEN_USERNAME=${{ secrets.GITLAB_USER }}" >> local.properties
-                  echo "GROUP_MAVEN_PASSWORD=${{ secrets.GITLAB_PASSWORD }}" >> local.properties
+                  echo "GROUP_MAVEN_USERNAME=$GITLAB_USER" >> local.properties
+                  echo "GROUP_MAVEN_PASSWORD=$GITLAB_PASSWORD" >> local.properties
 
             -   name: Disable debug mode
                 run: echo "app.debug=false" >> local.properties
@@ -105,12 +118,17 @@ jobs:
                 run: chmod +x ./gradlew
 
             -   name: Add GitLab credentials to local.properties
+                env:
+                    GITLAB_USER: ${{ secrets.GITLAB_USER }}
+                    GITLAB_PASSWORD: ${{ secrets.GITLAB_PASSWORD }}
                 run: |
-                    echo "GROUP_MAVEN_USERNAME=${{ secrets.GITLAB_USER }}" >> local.properties
-                    echo "GROUP_MAVEN_PASSWORD=${{ secrets.GITLAB_PASSWORD }}" >> local.properties
+                    echo "GROUP_MAVEN_USERNAME=$GITLAB_USER" >> local.properties
+                    echo "GROUP_MAVEN_PASSWORD=$GITLAB_PASSWORD" >> local.properties
 
             -   name: Use PostHog API-Key
-                run: echo "posthog.api.key=${{ secrets.POSTHOG_API_KEY }}" >> local.properties
+                env:
+                    POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+                run: echo "posthog.api.key=$POSTHOG_API_KEY" >> local.properties
 
             -   name: Disable debug mode
                 run: echo "app.debug=false" >> local.properties
@@ -203,6 +221,7 @@ jobs:
                 uses: actions/download-artifact@v4
                 with:
                     name: ios-build-artifacts
+                    path: iosApp/build
 
             -   name: Determine lane and upload to TestFlight
                 working-directory: iosApp
@@ -217,8 +236,6 @@ jobs:
                       fastlane ios closed
                     elif [[ "${{ env.TAG_NAME }}" == *-open ]]; then
                       fastlane ios open
-                    elif [[ "${{ env.TAG_NAME }}" == *-production ]]; then
-                      fastlane ios production
                     else
                       echo "No matching lane for tag ${{ env.TAG_NAME }}"
                       exit 1

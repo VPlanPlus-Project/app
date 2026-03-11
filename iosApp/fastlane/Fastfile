@@ -11,6 +11,8 @@
 
 default_platform(:ios)
 
+CI_KEYCHAIN_NAME = "ci_keychain"
+
 platform :ios do
   def authenticate_api
     app_store_connect_api_key(
@@ -47,10 +49,10 @@ platform :ios do
     sync_build_number
     
     # ── Install certificate & provisioning profile ─────────────────────────
-    cert_path    = File.expand_path("../ci_certificate.p12", Dir.pwd)
-    profile_path = File.expand_path("../ci_profile.mobileprovision", Dir.pwd)
+    cert_path    = File.expand_path("../../ci_certificate.p12", __dir__)
+    profile_path = File.expand_path("../../ci_profile.mobileprovision", __dir__)
 
-    keychain_name     = "ci_keychain"
+    keychain_name     = CI_KEYCHAIN_NAME
     keychain_password = SecureRandom.hex
 
     # Delete any leftover keychain from a previous run before creating a fresh one.
@@ -117,7 +119,7 @@ platform :ios do
   lane :internal do
     authenticate_api
     upload_to_testflight(
-      ipa: "../VPlanPlus.ipa",
+      ipa: "../build/VPlanPlus.ipa",
       groups: ["Internal"],
       skip_waiting_for_build_processing: true
     )
@@ -127,7 +129,7 @@ platform :ios do
   lane :closed do
     authenticate_api
     upload_to_testflight(
-      ipa: "../VPlanPlus.ipa",
+      ipa: "../build/VPlanPlus.ipa",
       groups: ["Closed"],
       skip_waiting_for_build_processing: true
     )
@@ -137,7 +139,7 @@ platform :ios do
   lane :open do
     authenticate_api
     upload_to_testflight(
-      ipa: "../VPlanPlus.ipa",
+      ipa: "../build/VPlanPlus.ipa",
       groups: ["Open"],
       skip_waiting_for_build_processing: true
     )
@@ -147,7 +149,7 @@ platform :ios do
   lane :production do
     authenticate_api
     upload_to_testflight(
-      ipa: "../VPlanPlus.ipa",
+      ipa: "../build/VPlanPlus.ipa",
       skip_submission: true,
       distribute_external: false,
       skip_waiting_for_build_processing: true
@@ -155,7 +157,7 @@ platform :ios do
   end
 
   error do |lane, exception|
-    delete_keychain(name: "ci_keychain") if File.exist?(File.expand_path("~/Library/Keychains/ci_keychain-db"))
+    delete_keychain(name: CI_KEYCHAIN_NAME) if File.exist?(File.expand_path("~/Library/Keychains/#{CI_KEYCHAIN_NAME}-db"))
   end
 
   # Legacy lanes for backwards compatibility
@@ -173,7 +175,7 @@ platform :ios do
   lane :upload do
     authenticate_api
     upload_to_testflight(
-      ipa: "../VPlanPlus.ipa",
+      ipa: "../build/VPlanPlus.ipa",
       skip_waiting_for_build_processing: true
     )
   end
