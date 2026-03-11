@@ -9,11 +9,43 @@
 #   APP_STORE_KEY_CONTENT     – base64-encoded contents of the .p8 API key file
 #                               Encode with: base64 -i AuthKey_XXXXXX.p8 | pbcopy
 
+# Load version from generated file
+require_relative 'version.rb'
+
 default_platform(:ios)
 
 platform :ios do
+  def authenticate_api
+    app_store_connect_api_key(
+      key_id:        ENV["APP_STORE_KEY_ID"],
+      issuer_id:     ENV["APP_STORE_ISSUER_ID"],
+      key_content:   ENV["APP_STORE_KEY_CONTENT"],
+      is_key_content_base64: true
+    )
+  end
+
+  desc "Sync build number and marketing version"
+  lane :sync_version do
+    authenticate_api
+    
+    # Set marketing version from ApplicationConfig
+    increment_version_number(
+      version_number: MARKETING_VERSION,
+      xcodeproj: "iosApp.xcodeproj"
+    )
+    
+    # Sync build number with latest TestFlight build
+    new_build = latest_testflight_build_number(initial_build_number: 1) + 1
+    increment_build_number(
+      build_number: new_build,
+      xcodeproj: "iosApp.xcodeproj"
+    )
+  end
+
   desc "Build the app and produce a signed .ipa"
-  lane :build do
+  lane :build_ipa do
+    sync_version
+    
     # ── Install certificate & provisioning profile ─────────────────────────
     cert_path    = File.expand_path("../ci_certificate.p12", Dir.pwd)
     profile_path = File.expand_path("../ci_profile.mobileprovision", Dir.pwd)
@@ -79,29 +111,65 @@ platform :ios do
     delete_keychain(name: keychain_name)
   end
 
-  error do |lane, exception|
-    delete_keychain(name: "ci_keychain") if File.exist?(File.expand_path("~/Library/Keychains/ci_keychain-db"))
-  end
+  # --- Channel Lanes ---
 
-  desc "Upload an existing .ipa to TestFlight"
-  lane :upload do
-    # ── API key for App Store Connect ──────────────────────────────────────
-    app_store_connect_api_key(
-      key_id:        ENV["APP_STORE_KEY_ID"],
-      issuer_id:     ENV["APP_STORE_ISSUER_ID"],
-      key_content:   ENV["APP_STORE_KEY_CONTENT"],
-      is_key_content_base64: true
-    )
-
+  desc "Release for internal testers"
+  lane :internal do
+    build_ipa
+    authenticate_api
     upload_to_testflight(
-      ipa:             "./build/VPlanPlus.ipa",
+      ipa: "./build/VPlanPlus.ipa",
+      groups: ["Internal"],
       skip_waiting_for_build_processing: true
     )
   end
 
+  desc "Closed testing"
+  lane :closed do
+    build_ipa
+    authenticate_api
+    upload_to_testflight(
+      ipa: "./build/VPlanPlus.ipa",
+      groups: ["Closed"],
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Open testing"
+  lane :open do
+    build_ipa
+    authenticate_api
+    upload_to_testflight(
+      ipa: "./build/VPlanPlus.ipa",
+      groups: ["Open"],
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Production"
+  lane :production do
+    build_ipa
+    authenticate_api
+    upload_to_testflight(
+      ipa: "./build/VPlanPlus.ipa",
+      skip_submission: true,
+      distribute_external: false,
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  error do |lane, exception|
+    delete_keychain(name: "ci_keychain") if File.exist?(File.expand_path("~/Library/Keychains/ci_keychain-db"))
+  end
+
+  # Legacy lanes for backwards compatibility
   desc "Build and upload a new beta build to TestFlight"
   lane :beta do
-    build
-    upload
+    build_ipa
+    authenticate_api
+    upload_to_testflight(
+      ipa: "./build/VPlanPlus.ipa",
+      skip_waiting_for_build_processing: true
+    )
   end
 end
