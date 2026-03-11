@@ -1,5 +1,6 @@
-#include "Version.xcconfig"
-
 TEAM_ID=
 BUNDLE_ID=plus.vplan.app.VPlanPlus
 APP_NAME=VPlanPlus
+
+MARKETING_VERSION = 0.1
+CURRENT_PROJECT_VERSION = 1
