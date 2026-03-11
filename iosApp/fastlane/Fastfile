@@ -49,8 +49,8 @@ platform :ios do
     sync_build_number
     
     # ── Install certificate & provisioning profile ─────────────────────────
-    cert_path    = File.expand_path("../../ci_certificate.p12", __dir__)
-    profile_path = File.expand_path("../../ci_profile.mobileprovision", __dir__)
+    cert_path    = File.expand_path("../ci_certificate.p12", __dir__)
+    profile_path = File.expand_path("../ci_profile.mobileprovision", __dir__)
 
     keychain_name     = CI_KEYCHAIN_NAME
     keychain_password = SecureRandom.hex
