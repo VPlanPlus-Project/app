@@ -118,6 +118,9 @@ jobs:
             -   name: Generate Version.xcconfig
                 run: ./gradlew :composeApp:generateXcodeVersionConfig
 
+            -   name: Generate Fastlane version config
+                run: ./gradlew :composeApp:generateFastlaneVersionConfig
+
             -   name: Decode certificate
                 run: echo "${{ secrets.IOS_CERTIFICATE_P12 }}" | base64 -d > iosApp/ci_certificate.p12
 
@@ -128,7 +131,7 @@ jobs:
                 working-directory: iosApp
                 env:
                     IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-                run: fastlane ios build
+                run: fastlane ios build_ipa
 
             -   name: Cleanup sensitive files
                 if: always()
@@ -191,16 +194,32 @@ jobs:
     deploy-ios:
         needs: release
         runs-on: macos-self
+        if: ${{ !endsWith(env.TAG_NAME, '-production') }}
         steps:
+            -   name: Checkout sources
+                uses: actions/checkout@v4
+
             -   name: Download iOS build artifacts
                 uses: actions/download-artifact@v4
                 with:
                     name: ios-build-artifacts
 
-            -   name: Upload to TestFlight
+            -   name: Determine lane and upload to TestFlight
                 working-directory: iosApp
                 env:
                     APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
                     APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
                     APP_STORE_KEY_CONTENT: ${{ secrets.APP_STORE_KEY_CONTENT }}
-                run: fastlane ios upload
+                run: |
+                    if [[ "${{ env.TAG_NAME }}" == *-internal ]]; then
+                      fastlane ios internal
+                    elif [[ "${{ env.TAG_NAME }}" == *-closed ]]; then
+                      fastlane ios closed
+                    elif [[ "${{ env.TAG_NAME }}" == *-open ]]; then
+                      fastlane ios open
+                    elif [[ "${{ env.TAG_NAME }}" == *-production ]]; then
+                      fastlane ios production
+                    else
+                      echo "No matching lane for tag ${{ env.TAG_NAME }}"
+                      exit 1
+                    fi
