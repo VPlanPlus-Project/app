@@ -149,6 +149,7 @@ jobs:
                     APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
                     APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
                     APP_STORE_KEY_CONTENT: ${{ secrets.APP_STORE_KEY_CONTENT }}
+                    IPA_OUTPUT_DIR: ${{ github.workspace }}/iosApp/build
                 run: fastlane ios build_ipa
 
             -   name: Cleanup sensitive files

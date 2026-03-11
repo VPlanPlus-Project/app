@@ -93,7 +93,7 @@ platform :ios do
       configuration:               "Release",
       export_method:               "app-store",
       clean:                       true,
-      output_directory:            "../build",
+      output_directory:            ENV["IPA_OUTPUT_DIR"] || File.expand_path("../build", __dir__),
       output_name:                 "VPlanPlus.ipa",
       xcargs:                      "CODE_SIGN_STYLE=Manual " \
                                    "DEVELOPMENT_TEAM=BYCH2H5X5G " \
