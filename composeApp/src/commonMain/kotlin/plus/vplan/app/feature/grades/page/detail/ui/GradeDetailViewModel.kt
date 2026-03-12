@@ -11,25 +11,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plus.vplan.app.core.data.besteschule.CollectionsRepository
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
-import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
-import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
-import plus.vplan.app.domain.model.populated.besteschule.PopulatedCollection
-import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
@@ -44,10 +35,7 @@ class GradeDetailViewModel(
     private val updateGradeUseCase: UpdateGradeUseCase,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
-    private val besteSchuleCollectionsRepository: CollectionsRepository,
     private val lockGradesUseCase: LockGradesUseCase,
-    private val intervalPopulator: IntervalPopulator,
-    private val collectionPopulator: CollectionPopulator,
 ) : ViewModel(), KoinComponent {
     val state: StateFlow<GradeDetailState>
         field = MutableStateFlow(GradeDetailState())
@@ -71,8 +59,6 @@ class GradeDetailViewModel(
         state.update { state ->
             state.copy(
                 grade = null,
-                gradeCollection = null,
-                gradeInterval = null,
                 gradeUser = null,
             )
         }
@@ -99,25 +85,6 @@ class GradeDetailViewModel(
                                             gradeUser = user,
                                             initDone = true,
                                         )
-                                    }
-                                }
-
-                            besteSchuleCollectionsRepository.getById(grade.collectionId)
-                                .filterNotNull()
-                                .flatMapLatest { collectionPopulator.populateSingle(it) }
-                                .collectLatest { collection ->
-                                    state.update { state ->
-                                        state.copy(gradeCollection = collection)
-                                    }
-
-                                    coroutineScope {
-                                        intervalPopulator.populateSingle(collection.collection.interval)
-                                            .onEach { interval ->
-                                                state.update { state ->
-                                                    state.copy(gradeInterval = interval)
-                                                }
-                                            }
-                                            .launchIn(this)
                                     }
                                 }
                         }
@@ -170,8 +137,6 @@ class GradeDetailViewModel(
 
 data class GradeDetailState(
     val grade: BesteSchuleGrade? = null,
-    val gradeCollection: PopulatedCollection? = null,
-    val gradeInterval: PopulatedInterval? = null,
     val gradeUser: VppId.Active? = null,
     val profile: Profile.StudentProfile? = null,
     val initDone: Boolean = false,

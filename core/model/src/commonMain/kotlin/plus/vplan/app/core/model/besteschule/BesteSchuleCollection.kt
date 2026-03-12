@@ -10,6 +10,6 @@ data class BesteSchuleCollection(
     val subject: BesteSchuleSubject,
     val givenAt: LocalDate,
     val interval: BesteSchuleInterval,
-    val teacherId: Int,
+    val teacher: BesteSchuleTeacher,
     val cachedAt: Instant
 )

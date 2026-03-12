@@ -20,7 +20,6 @@ import plus.vplan.app.core.model.application.StartTaskJson
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.until
-import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.atStartOfDay
 import kotlin.time.Duration.Companion.days
@@ -35,8 +34,6 @@ class SyncGradesUseCase(
     private val besteSchuleGradesRepository by inject<GradesRepository>()
 
     private val besteSchuleRepository by inject<BesteSchuleRepository>()
-
-    private val gradesPopulator by inject<GradesPopulator>()
 
     private val profileRepository by inject<ProfileRepository>()
     private val platformNotificationRepository by inject<NotificationRepository>()
@@ -158,7 +155,6 @@ class SyncGradesUseCase(
                 .filter { it.id !in existingGradeIdsBeforeUpdate }
                 .filter { it.value != null }
                 .filter { it.givenAt.atStartOfDay() until LocalDate.now().atStartOfDay() <= 2.days }
-                .let { grades -> gradesPopulator.populateMultiple(grades).first() }
 
             if (yearId == null && allowNotifications && gradesEligibleForNotification.isNotEmpty()) {
                 if (gradesEligibleForNotification.size == 1) {
@@ -166,14 +162,14 @@ class SyncGradesUseCase(
                     val gradeReceiverVppId = profileRepository.getAll().first()
                         .filterIsInstance<Profile.StudentProfile>()
                         .mapNotNull { it.vppId }
-                        .firstOrNull { it.schulverwalterConnection?.userId == newGrade.grade.schulverwalterUserId }
+                        .firstOrNull { it.schulverwalterConnection?.userId == newGrade.schulverwalterUserId }
 
                     platformNotificationRepository.sendNotification(
                         title = "Neue Note",
                         category = gradeReceiverVppId?.name ?: "Unbekannter Nutzer",
                         message = buildString {
                             append("Du hast eine ")
-                            if (getGradeLockStateUseCase().first().canAccess) append(newGrade.grade.value)
+                            if (getGradeLockStateUseCase().first().canAccess) append(newGrade.value)
                             else append("neue Note")
                             append(" in ")
                             append(newGrade.collection.subject.fullName)
@@ -192,7 +188,7 @@ class SyncGradesUseCase(
                                         type = "grade",
                                         value = Json.encodeToString(
                                             StartTaskJson.StartTaskOpen.Grade(
-                                                gradeId = newGrade.grade.id
+                                                gradeId = newGrade.id
                                             )
                                         )
                                     )
@@ -202,7 +198,7 @@ class SyncGradesUseCase(
                     )
                 } else if (gradesEligibleForNotification.size > 1) {
                     val schulverwalterUserIdsThatGotNewGrades = gradesEligibleForNotification
-                        .map { it.grade.schulverwalterUserId }
+                        .map { it.schulverwalterUserId }
                         .toSet()
 
                     val gradeReceiverVppIds = profileRepository.getAll().first()

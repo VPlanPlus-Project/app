@@ -5,6 +5,7 @@ import androidx.room.Relation
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleCollection
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleInterval
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleSubject
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleTeacher
 import plus.vplan.app.core.model.besteschule.BesteSchuleCollection
 
 data class EmbeddedBesteSchuleCollection(
@@ -19,6 +20,11 @@ data class EmbeddedBesteSchuleCollection(
         entityColumn = "id",
         entity = DbBesteSchuleInterval::class
     ) val interval: EmbeddedBesteSchuleInterval,
+    @Relation(
+        parentColumn = "teacher_id",
+        entityColumn = "id",
+        entity = DbBesteSchuleTeacher::class
+    ) val teacher: DbBesteSchuleTeacher,
 ) {
     fun toModel() = BesteSchuleCollection(
         id = this.collection.id,
@@ -27,7 +33,7 @@ data class EmbeddedBesteSchuleCollection(
         subject = this.subject.toModel(),
         givenAt = this.collection.givenAt,
         interval = this.interval.toModel(),
-        teacherId = this.collection.teacherId,
+        teacher = this.teacher.toModel(),
         cachedAt = this.collection.cachedAt,
     )
 }

@@ -31,7 +31,7 @@ import kotlin.time.Instant
             onDelete = CASCADE
         ),
         ForeignKey(
-            entity = DbBesteschuleTeacher::class,
+            entity = DbBesteSchuleTeacher::class,
             parentColumns = ["id"],
             childColumns = ["teacher_id"],
             onDelete = CASCADE

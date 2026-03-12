@@ -92,8 +92,8 @@ import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleColl
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleGrade
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleInterval
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleSubject
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleTeacher
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleIntervalUser
-import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleTeacher
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleYear
 import plus.vplan.app.core.database.model.database.crossovers.DbCourseGroupCrossover
 import plus.vplan.app.core.database.model.database.crossovers.DbSubstitutionPlanGroupCrossover
@@ -188,7 +188,7 @@ import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstance
         DbBesteschuleYear::class,
         DbBesteSchuleInterval::class,
         DbBesteschuleIntervalUser::class,
-        DbBesteschuleTeacher::class,
+        DbBesteSchuleTeacher::class,
         DbBesteSchuleCollection::class,
         DbBesteSchuleGrade::class,
     ],

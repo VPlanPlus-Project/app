@@ -47,9 +47,6 @@ fun GradeDetailPage(
 ) {
     val grade = state.grade ?: return
     val vppId = state.gradeUser
-    val collection = state.gradeCollection
-    val teacher = collection?.teacher
-    val interval = state.gradeInterval
 
     AnimatedContent(
         targetState = state.lockState!!.canAccess
@@ -108,8 +105,7 @@ fun GradeDetailPage(
                     Text(
                         text = buildString {
                             val value = if (grade.isOptional) "(${grade.value})" else grade.value
-                            when (interval?.interval?.type) {
-                                null -> Unit
+                            when (grade.collection.interval.type) {
                                 is BesteSchuleInterval.Type.Sek2 -> {
                                     if (grade.value == null) append("Note")
                                     else append("$value Notenpunkte")
@@ -170,30 +166,30 @@ fun GradeDetailPage(
                         }
                     }
                 }
-                if (collection?.collection?.subject != null) Text(
-                    text = collection.collection.subject.fullName,
+                Text(
+                    text = grade.collection.subject.fullName,
                     style = MaterialTheme.typography.labelLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(Modifier.height(16.dp))
-                if (collection?.collection?.subject != null) SubjectGroupRow(
+                SubjectGroupRow(
                     canEdit = false,
                     allowGroup = false,
-                    subject = collection.collection.subject.shortName,
+                    subject = grade.collection.subject.shortName,
                     onClick = {}
                 )
-                if (collection != null) TypeRow(type = collection.collection.type)
-                if (interval != null) IntervalRow(schoolYearName = interval.interval.year.name, intervalName = interval.interval.name)
+                TypeRow(type = grade.collection.type)
+                IntervalRow(schoolYearName = grade.collection.interval.year.name, intervalName = grade.collection.interval.name)
                 GivenAtRow(grade.givenAt)
-                if (teacher != null) GivenByRow("${teacher.forename} ${teacher.surname}")
+                GivenByRow("${grade.collection.teacher.forename} ${grade.collection.teacher.surname}")
                 if (vppId != null) UserRow(vppId.name)
                 OptionalRow(grade.isOptional)
                 UseForFinalGradeRow(grade.isSelectedForFinalGrade, grade.value == null) { onEvent(GradeDetailEvent.ToggleConsiderForFinalGrade) }
 
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                if (collection != null) Text(text = collection.collection.name)
+                Text(text = grade.collection.name)
             }
         }
     }

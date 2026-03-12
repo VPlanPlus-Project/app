@@ -5,7 +5,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import kotlin.time.Instant
 
 @Entity(
@@ -34,15 +33,4 @@ data class DbBesteSchuleGrade(
     @ColumnInfo(name = "collection_id") val collectionId: Int,
     @ColumnInfo(name = "given_at") val givenAt: LocalDate,
     @ColumnInfo(name = "cached_at") val cachedAt: Instant
-) {
-    fun toModel() = BesteSchuleGrade(
-        id = this.id,
-        value = this.value,
-        isOptional = this.isOptional,
-        isSelectedForFinalGrade = this.isSelectedForFinalGrade,
-        schulverwalterUserId = this.schulverwalterUserId,
-        collectionId = this.collectionId,
-        givenAt = this.givenAt,
-        cachedAt = this.cachedAt
-    )
-}
+)

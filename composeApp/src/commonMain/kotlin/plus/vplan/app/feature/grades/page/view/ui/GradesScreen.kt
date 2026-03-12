@@ -544,20 +544,20 @@ private fun GradesContent(
                                                     ) {
                                                         val red = colors[CustomColor.Red]!!.getGroup()
                                                         val green = colors[CustomColor.Green]!!.getGroup()
-                                                        val value = item.grade.grade.value
+                                                        val value = item.grade.value
                                                         val backgroundColor by animateColorAsState(
                                                             if (isSelectedForFinalGrade != true || value == null || value.startsWith('+') || value.startsWith('-')) Color.Gray
                                                             else when (item.grade.collection.interval.type) {
-                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (item.grade.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
-                                                                else -> blendColor(blendColor(green.container, red.container, ((item.grade.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (item.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
+                                                                else -> blendColor(blendColor(green.container, red.container, ((item.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                             }
                                                         )
 
                                                         val textColor by animateColorAsState(
                                                             if (isSelectedForFinalGrade != true || value == null || value.startsWith('+') || value.startsWith('-')) Color.White
                                                             else when (item.grade.collection.interval.type) {
-                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (item.grade.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
-                                                                else -> blendColor(blendColor(green.onContainer, red.onContainer, ((item.grade.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                                is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (item.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
+                                                                else -> blendColor(blendColor(green.onContainer, red.onContainer, ((item.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                             }
                                                         )
 
@@ -574,10 +574,10 @@ private fun GradesContent(
                                                         ) {
                                                             Text(
                                                                 text = buildString {
-                                                                    if (item.grade.grade.isOptional) append("(")
+                                                                    if (item.grade.isOptional) append("(")
                                                                     if (value != null) append(value)
                                                                     else append("-")
-                                                                    if (item.grade.grade.isOptional) append(")")
+                                                                    if (item.grade.isOptional) append(")")
                                                                 },
                                                                 style = MaterialTheme.typography.bodyLarge,
                                                                 color = textColor
@@ -588,12 +588,12 @@ private fun GradesContent(
                                                             modifier = Modifier
                                                                 .fillMaxWidth()
                                                                 .clip(RoundedCornerShape(8.dp))
-                                                                .clickable { gradeDrawerId = item.grade.grade.id }
+                                                                .clickable { gradeDrawerId = item.grade.id }
                                                                 .padding(4.dp),
                                                             verticalArrangement = Arrangement.spacedBy(2.dp)
                                                         ) {
                                                             AnimatedContent(
-                                                                targetState = item.collection.collection.name,
+                                                                targetState = item.grade.collection.name,
                                                                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                                                                 modifier = Modifier.fillMaxWidth()
                                                             ) { collectionName ->
@@ -608,7 +608,7 @@ private fun GradesContent(
                                                                 )
                                                             }
                                                             AnimatedContent(
-                                                                targetState = item.collection.teacher.let { "${it.forename} ${it.surname}" },
+                                                                targetState = item.grade.collection.teacher.let { "${it.forename} ${it.surname}" },
                                                                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                                                                 modifier = Modifier.fillMaxWidth()
                                                             ) { teacherName ->
