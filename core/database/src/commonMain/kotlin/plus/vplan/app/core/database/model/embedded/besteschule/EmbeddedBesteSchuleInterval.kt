@@ -5,9 +5,10 @@ import androidx.room.Relation
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleCollection
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleInterval
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleIntervalUser
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleYear
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 
-data class EmbeddedBesteschuleInterval(
+data class EmbeddedBesteSchuleInterval(
     @Embedded val interval: DbBesteSchuleInterval,
     @Relation(
         parentColumn = "id",
@@ -18,7 +19,12 @@ data class EmbeddedBesteschuleInterval(
         parentColumn = "id",
         entityColumn = "interval_id",
         entity = DbBesteSchuleCollection::class
-    ) val collections: List<DbBesteSchuleCollection>
+    ) val collections: List<DbBesteSchuleCollection>,
+    @Relation(
+        parentColumn = "year_id",
+        entityColumn = "id",
+        entity = DbBesteschuleYear::class
+    ) val year: DbBesteschuleYear
 ) {
     fun toModel() = BesteSchuleInterval(
         id = this.interval.id,
@@ -27,7 +33,7 @@ data class EmbeddedBesteschuleInterval(
         from = this.interval.from,
         to = this.interval.to,
         includedIntervalId = this.interval.includedIntervalId,
-        yearId = this.interval.yearId,
+        year = this.year.toModel(),
         linkedToSchulverwalterAccountIds = this.linkedAccountIds.map { it.schulverwalterUserId }
             .toSet(),
         collectionIds = collections.map { it.id }.toSet(),

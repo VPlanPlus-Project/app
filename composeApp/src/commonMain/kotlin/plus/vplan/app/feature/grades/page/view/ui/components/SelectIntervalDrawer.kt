@@ -34,7 +34,7 @@ private fun SelectIntervalDrawerContent(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         intervals
-            .groupBy { it.year.id }
+            .groupBy { it.interval.year.id }
             .forEach { (_, intervals) ->
                 SelectContainer {
                     intervals.forEach { interval ->
@@ -42,7 +42,7 @@ private fun SelectIntervalDrawerContent(
                             icon = null,
                             title = buildString {
                                 append(interval.interval.name)
-                                append(" $DOT ${interval.year.name}")
+                                append(" $DOT ${interval.interval.year.name}")
                             },
                             subtitle = buildString {
                                 val parts = mutableListOf<String>()

@@ -368,7 +368,7 @@ class GradesViewModel(
                 is GradeDetailEvent.Refresh -> {
                     gradeState.update { it.copy(isUpdating = true) }
                     try {
-                        val selectedYearId = state.value.selectedInterval?.year?.id
+                        val selectedYearId = state.value.selectedInterval?.interval?.year?.id
                         syncGradesUseCase(
                             allowNotifications = true,
                             yearId = selectedYearId

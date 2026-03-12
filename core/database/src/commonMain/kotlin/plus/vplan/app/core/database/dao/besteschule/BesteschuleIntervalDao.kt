@@ -7,7 +7,7 @@ import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleInterval
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleIntervalUser
-import plus.vplan.app.core.database.model.embedded.besteschule.EmbeddedBesteschuleInterval
+import plus.vplan.app.core.database.model.embedded.besteschule.EmbeddedBesteSchuleInterval
 
 @Dao
 interface BesteschuleIntervalDao {
@@ -19,13 +19,13 @@ interface BesteschuleIntervalDao {
 
     @Transaction
     @Query("SELECT * FROM besteschule_intervals")
-    fun getAll(): Flow<List<EmbeddedBesteschuleInterval>>
+    fun getAll(): Flow<List<EmbeddedBesteSchuleInterval>>
 
     @Transaction
     @Query("SELECT * FROM besteschule_intervals WHERE id = :id")
-    fun getById(id: Int): Flow<EmbeddedBesteschuleInterval?>
+    fun getById(id: Int): Flow<EmbeddedBesteSchuleInterval?>
 
     @Transaction
     @Query("SELECT * FROM besteschule_intervals LEFT JOIN besteschule_interval_user ON besteschule_intervals.id = besteschule_interval_user.interval_id WHERE besteschule_interval_user.schulverwalter_user_id = :userId")
-    fun getIntervalsForUser(userId: Int): Flow<List<EmbeddedBesteschuleInterval>>
+    fun getIntervalsForUser(userId: Int): Flow<List<EmbeddedBesteSchuleInterval>>
 }

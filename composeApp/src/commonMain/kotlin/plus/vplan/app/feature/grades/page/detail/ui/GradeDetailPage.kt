@@ -51,7 +51,6 @@ fun GradeDetailPage(
     val teacher = collection?.teacher
     val subject = collection?.subject
     val interval = state.gradeInterval
-    val year = interval?.year
 
     AnimatedContent(
         targetState = state.lockState!!.canAccess
@@ -187,7 +186,7 @@ fun GradeDetailPage(
                     onClick = {}
                 )
                 if (collection != null) TypeRow(type = collection.collection.type)
-                if (interval != null) IntervalRow(schoolYearName = year?.name ?: "?", intervalName = interval.interval.name)
+                if (interval != null) IntervalRow(schoolYearName = interval.interval.year.name, intervalName = interval.interval.name)
                 GivenAtRow(grade.givenAt)
                 if (teacher != null) GivenByRow("${teacher.forename} ${teacher.surname}")
                 if (vppId != null) UserRow(vppId.name)
