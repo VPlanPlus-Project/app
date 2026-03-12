@@ -9,6 +9,10 @@ permissions:
 env:
     TAG_NAME: ${{ github.ref_name }}
 
+concurrency:
+    group: production-upload-${{ github.workflow }}
+    cancel-in-progress: false
+
 jobs:
     build-android:
         runs-on: blacksmith-4vcpu-ubuntu-2404
