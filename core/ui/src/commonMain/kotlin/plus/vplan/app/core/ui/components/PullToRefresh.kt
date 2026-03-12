@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeGestures
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import plus.vplan.app.core.model.application.AppPlatform
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.AppTheme
 import kotlin.math.exp
@@ -59,6 +60,7 @@ val PULL_THRESHOLD = 72.dp
 
 @Composable
 fun InformativePullToRefresh(
+    platform: AppPlatform,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
@@ -187,7 +189,10 @@ fun InformativePullToRefresh(
         }
 
         // Indicator Layer
-        val safeTopPadding = WindowInsets.safeGestures.asPaddingValues().calculateTopPadding()
+        val safeTopPadding = WindowInsets.safeContent.asPaddingValues().calculateTopPadding().let { baseTop ->
+            if (platform == AppPlatform.iOS) baseTop + 16.dp
+            else baseTop
+        }
         val actualSafeTopPadding = safeTopPadding * (rawPullY.value / maxOffsetPx).coerceIn(0f, 1f)
         Box(
             modifier = Modifier

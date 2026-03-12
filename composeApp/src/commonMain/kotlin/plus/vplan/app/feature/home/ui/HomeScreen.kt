@@ -160,6 +160,7 @@ private fun HomeContent(
             .padding(bottom = contentPadding.calculateBottomPadding())
             .fillMaxSize(),
         isRefreshing = state.currentUpdateStage != null,
+        platform = state.platform,
         onRefresh = { onEvent(HomeEvent.OnRefresh) },
         refreshingContent = {
             Box(

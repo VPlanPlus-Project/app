@@ -38,6 +38,8 @@ import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.application.AppPlatform
+import plus.vplan.app.core.platform.PlatformRepository
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
@@ -62,13 +64,16 @@ class HomeViewModel(
     private val getNewsUseCase: GetNewsUseCase,
     private val keyValueRepository: KeyValueRepository,
     private val stundenplan24Repository: Stundenplan24Repository,
+    platformRepository: PlatformRepository,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
 ) : ViewModel() {
     val state: StateFlow<HomeState>
-        field = MutableStateFlow(HomeState())
+        field = MutableStateFlow(HomeState(
+            platform = platformRepository.getPlatform(),
+        ))
 
     private var newsJob: Job? = null
 
@@ -277,6 +282,7 @@ class HomeViewModel(
 data class HomeState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = LocalDateTime.now(),
+    val platform: AppPlatform,
     val initDone: Boolean = false,
     val day: PopulatedDay? = null,
     val isUpdating: Boolean = false,
