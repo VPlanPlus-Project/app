@@ -6,8 +6,8 @@ import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.isSuccess
-import plus.vplan.app.network.ApiException
-import plus.vplan.app.network.NetworkRequestUnsuccessfulException
+import plus.vplan.app.core.model.application.network.ApiException
+import plus.vplan.app.core.model.application.network.NetworkRequestUnsuccessfulException
 
 class BesteSchuleApiImpl(
     private val httpClient: HttpClient,

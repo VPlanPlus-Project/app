@@ -6,7 +6,7 @@ import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import plus.vplan.app.network.NetworkRequestUnsuccessfulException
+import plus.vplan.app.core.model.application.network.NetworkRequestUnsuccessfulException
 import plus.vplan.app.network.besteschule.ResponseDataWrapper
 
 suspend fun getAuthenticationOptionsForRestrictedEntity(

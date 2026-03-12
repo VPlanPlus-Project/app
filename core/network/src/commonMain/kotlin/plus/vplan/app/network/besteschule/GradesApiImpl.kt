@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.database.dao.VppIdDao
-import plus.vplan.app.network.ApiException
-import plus.vplan.app.network.NetworkRequestUnsuccessfulException
+import plus.vplan.app.core.model.application.network.ApiException
+import plus.vplan.app.core.model.application.network.NetworkRequestUnsuccessfulException
 
 class GradesApiImpl(
     private val httpClient: HttpClient,

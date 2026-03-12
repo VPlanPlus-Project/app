@@ -9,8 +9,8 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.model.Alias
-import plus.vplan.app.network.ApiException
-import plus.vplan.app.network.NetworkRequestUnsuccessfulException
+import plus.vplan.app.core.model.application.network.ApiException
+import plus.vplan.app.core.model.application.network.NetworkRequestUnsuccessfulException
 import plus.vplan.app.network.besteschule.ResponseDataWrapper
 import plus.vplan.app.network.vpp.GenericAuthenticationProvider
 import plus.vplan.app.network.vpp.getAuthenticationOptionsForRestrictedEntity
