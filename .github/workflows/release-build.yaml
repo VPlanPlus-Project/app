@@ -99,7 +99,7 @@ jobs:
                     mv androidApp/build/outputs/bundle/release/androidApp-release.aab ${{ env.TAG_NAME }}.aab
 
             -   name: Upload build artifacts
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v6
                 with:
                     name: build-artifacts
                     path: |
@@ -161,7 +161,7 @@ jobs:
                 run: rm -f iosApp/ci_certificate.p12 iosApp/ci_profile.mobileprovision
 
             -   name: Upload IPA artifact
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v6
                 with:
                     name: ios-build-artifacts
                     path: iosApp/build/VPlanPlus.ipa
