@@ -12,7 +12,8 @@ import kotlinx.serialization.Serializable
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.School
-import plus.vplan.app.network.besteschule.NetworkRequestUnsuccessfulException
+import plus.vplan.app.core.model.application.network.ApiException
+import plus.vplan.app.core.model.application.network.NetworkRequestUnsuccessfulException
 import plus.vplan.app.network.besteschule.ResponseDataWrapper
 import plus.vplan.app.network.vpp.model.IncludedModel
 import kotlin.time.Instant
@@ -21,24 +22,28 @@ class NewsApiImpl(
     private val httpClient: HttpClient,
 ): NewsApi {
     override suspend fun getBySchool(school: School.AppSchool): List<NewsDto> {
-        val response = httpClient.get {
-            url(URLBuilder().apply {
-                appendPathSegments("app", "v1", "news")
-                parameters.append("school_id", school.toString())
-            }.build())
+        try {
+            val response = httpClient.get {
+                url(URLBuilder().apply {
+                    appendPathSegments("app", "v1", "news")
+                    parameters.append("school_id", school.toString())
+                }.build())
 
-            url(URLBuilder("https://vplan.plus/api/app").apply {
-                appendPathSegments("app", "v1", "news")
-                parameters.append("school_id", "sp24.${school.buildSp24AppAuthentication().sp24SchoolId}.1")
-            }.build())
+                url(URLBuilder("https://vplan.plus/api/app").apply {
+                    appendPathSegments("app", "v1", "news")
+                    parameters.append("school_id", "sp24.${school.buildSp24AppAuthentication().sp24SchoolId}.1")
+                }.build())
 
-            school.buildSp24AppAuthentication().authentication(this)
+                school.buildSp24AppAuthentication().authentication(this)
+            }
+
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+
+            return response.body<ResponseDataWrapper<List<ApiNewsResponse>>>().data
+                .map { it.toDto() }
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
-
-        return response.body<ResponseDataWrapper<List<ApiNewsResponse>>>().data
-            .map { it.toDto() }
     }
 }
 

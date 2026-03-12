@@ -9,7 +9,8 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.model.Alias
-import plus.vplan.app.network.besteschule.NetworkRequestUnsuccessfulException
+import plus.vplan.app.core.model.application.network.ApiException
+import plus.vplan.app.core.model.application.network.NetworkRequestUnsuccessfulException
 import plus.vplan.app.network.besteschule.ResponseDataWrapper
 import plus.vplan.app.network.vpp.model.ApiAlias
 
@@ -17,33 +18,41 @@ class SchoolApiImpl(
     private val httpClient: HttpClient,
 ): SchoolApi {
     override suspend fun getAll(): List<SchoolDto> {
-        val response = httpClient.get {
-            url {
-                protocol = URLProtocol.HTTPS
-                host = "vplan.plus"
-                pathSegments = listOf("api", "app", "school", "v1", "list")
+        try {
+            val response = httpClient.get {
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = "vplan.plus"
+                    pathSegments = listOf("api", "app", "school", "v1", "list")
+                }
             }
+
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+
+            return response.body<ResponseDataWrapper<List<ApiSchoolResponse>>>().data
+                .map { it.toDto() }
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
-
-        return response.body<ResponseDataWrapper<List<ApiSchoolResponse>>>().data
-            .map { it.toDto() }
     }
 
     override suspend fun getByAlias(alias: Alias): SchoolDto? {
-        val response = httpClient.get {
-            url {
-                protocol = URLProtocol.HTTPS
-                host = "vplan.plus"
-                pathSegments = listOf("api", "app", "school", "v1", "by-id", alias.toString())
+        try {
+            val response = httpClient.get {
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = "vplan.plus"
+                    pathSegments = listOf("api", "app", "school", "v1", "by-id", alias.toString())
+                }
             }
+
+            if (response.status == HttpStatusCode.NotFound) return null
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+
+            return response.body<ResponseDataWrapper<ApiSchoolResponse>>().data.toDto()
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-
-        if (response.status == HttpStatusCode.NotFound) return null
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
-
-        return response.body<ResponseDataWrapper<ApiSchoolResponse>>().data.toDto()
     }
 }
 
