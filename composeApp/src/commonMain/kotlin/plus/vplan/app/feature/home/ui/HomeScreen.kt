@@ -33,8 +33,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -79,6 +77,7 @@ import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.InformativePullToRefresh
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.utils.date.longMonthNames
@@ -146,20 +145,7 @@ private fun HomeContent(
 
     val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppId
 
-    PullToRefreshBox(
-        state = pullToRefreshState,
-        onRefresh = { onEvent(HomeEvent.OnRefresh) },
-        isRefreshing = state.isUpdating,
-        indicator = {
-            LoadingIndicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter),
-                isRefreshing = state.isUpdating,
-                state = pullToRefreshState,
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
+    InformativePullToRefresh(
         modifier = Modifier
             .padding(bottom = contentPadding.calculateBottomPadding())
             .fillMaxSize()
@@ -333,7 +319,7 @@ private fun HomeContent(
                                 }
                             )
                             val info = state.day.day.info
-                            if (info != null) DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = info)
+                            if (info != null) repeat(20) { DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = info) }
                             if (state.day.substitution.isEmpty()) InfoCard(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                                 imageVector = CoreUiRes.drawable.triangle_alert,
