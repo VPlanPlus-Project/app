@@ -13,6 +13,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -60,7 +61,7 @@ fun InformativePullToRefresh(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
     refreshingContent: @Composable () -> Unit,
-    content: @Composable () -> Unit,
+    content: @Composable (contentPadding: PaddingValues) -> Unit,
 ) {
     val localDensity = LocalDensity.current
     val haptic = LocalHapticFeedback.current
@@ -107,10 +108,13 @@ fun InformativePullToRefresh(
         }
     }
 
-    val scrollConnection = remember {
+    val scrollConnection = remember(isRefreshing) { // Add isRefreshing to keys
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (isRefreshing) return super.onPreScroll(available, source)
+                // If refreshing, we consume NOTHING.
+                // This allows the scroll to pass through to the content (LazyColumn, etc.)
+                if (isRefreshing) return Offset.Zero
+
                 return if (source == NestedScrollSource.UserInput && available.y < 0 && rawPullY.value > 0) {
                     val newTarget = (rawPullY.value + available.y).coerceAtLeast(0f)
                     scope.launch { rawPullY.snapTo(newTarget) }
@@ -119,7 +123,8 @@ fun InformativePullToRefresh(
             }
 
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-                if (isRefreshing) return super.onPostScroll(consumed, available, source)
+                if (isRefreshing) return Offset.Zero
+
                 if (source == NestedScrollSource.UserInput && available.y > 0) {
                     val newTarget = rawPullY.value + available.y
                     scope.launch { rawPullY.snapTo(newTarget) }
@@ -129,10 +134,8 @@ fun InformativePullToRefresh(
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity {
-                if (isRefreshing) return super.onPreFling(available)
-                // Once the finger is lifted, we always animate back to 0.
-                // We "consume" 0 velocity so the list below can still finish its fling
-                // if it wasn't the thing that triggered the pull.
+                if (isRefreshing) return Velocity.Zero
+
                 scope.launch {
                     rawPullY.animateTo(
                         targetValue = 0f,
@@ -170,12 +173,8 @@ fun InformativePullToRefresh(
             .clipToBounds()
     ) {
         // Content Layer
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = yOffset)
-        ) {
-            content()
+        Box(Modifier.fillMaxSize()) {
+            content(PaddingValues(top = yOffset))
         }
 
         // Indicator Layer

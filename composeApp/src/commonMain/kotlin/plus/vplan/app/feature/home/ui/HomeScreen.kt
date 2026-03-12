@@ -91,6 +91,7 @@ import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
 import plus.vplan.app.core.utils.date.untilRelativeText
+import plus.vplan.app.core.utils.ui.plus
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
@@ -194,7 +195,16 @@ private fun HomeContent(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CircularProgressIndicator(Modifier.size(24.dp))
+                    AnimatedContent(
+                        targetState = refreshingStage == stages.size - 1
+                    ) { isDone ->
+                        if (isDone) Icon(
+                            painter = painterResource(CoreUiRes.drawable.check),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        else CircularProgressIndicator(Modifier.size(24.dp))
+                    }
                     Column {
                         Text(
                             text = "Aktualisieren",
@@ -220,7 +230,7 @@ private fun HomeContent(
                 }
             }
         }
-    ) {
+    ) { innerContentPadding ->
         Column(
             modifier = Modifier
                 .padding(top = 8.dp)
@@ -242,7 +252,7 @@ private fun HomeContent(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = contentPadding
+                    contentPadding = contentPadding + innerContentPadding
                 ) {
                     item {
                         Greeting(
