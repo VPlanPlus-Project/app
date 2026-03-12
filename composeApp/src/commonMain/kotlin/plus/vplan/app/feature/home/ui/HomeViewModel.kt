@@ -47,6 +47,8 @@ import plus.vplan.app.feature.home.domain.usecase.GetNewsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.utils.sortedBySuspending
 import plus.vplan.lib.sp24.source.Authentication
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
@@ -181,6 +183,18 @@ class HomeViewModel(
                     }
                 }
         }
+
+        viewModelScope.launch {
+            keyValueRepository.get(Keys.LAST_PLAN_UPDATE).collectLatest { lastUpdateTimestamp ->
+                if (lastUpdateTimestamp == null) {
+                    state.update { state -> state.copy(lastPlanUpdate = null) }
+                    return@collectLatest
+                }
+
+                val lastUpdate = Instant.fromEpochSeconds(lastUpdateTimestamp.toLong())
+                state.update { state -> state.copy(lastPlanUpdate = lastUpdate) }
+            }
+        }
     }
 
     private fun launchNews(profile: Profile) {
@@ -233,6 +247,7 @@ class HomeViewModel(
                                 allowNotification = false,
                                 providedClient = client
                             )
+                            keyValueRepository.set(Keys.LAST_PLAN_UPDATE, Clock.System.now().epochSeconds.toString())
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -256,7 +271,8 @@ data class HomeState(
     val hasInterpolatedLessonTimes: Boolean = false,
     val currentLessons: List<CurrentLesson> = emptyList(),
     val nextLessons: List<Lesson> = emptyList(),
-    val remainingLessons: Map<Int, List<Lesson>> = emptyMap()
+    val remainingLessons: Map<Int, List<Lesson>> = emptyMap(),
+    val lastPlanUpdate: Instant? = null,
 )
 
 sealed class HomeEvent {
