@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,8 +29,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -66,6 +68,8 @@ fun InformativePullToRefresh(
     val localDensity = LocalDensity.current
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
+
+    var hideIndicatorHint by remember { mutableStateOf(false) }
 
     val maxOffsetDp = 192.dp
     val maxOffsetPx = with(localDensity) { maxOffsetDp.toPx() }
@@ -104,6 +108,7 @@ fun InformativePullToRefresh(
                 animationSpec = spring(dampingRatio = dampingRatioContent)
             )
         } else {
+            hideIndicatorHint = true
             rawPullY.animateTo(0f)
         }
     }
@@ -114,6 +119,7 @@ fun InformativePullToRefresh(
                 // If refreshing, we consume NOTHING.
                 // This allows the scroll to pass through to the content (LazyColumn, etc.)
                 if (isRefreshing) return Offset.Zero
+                hideIndicatorHint = false
 
                 return if (source == NestedScrollSource.UserInput && available.y < 0 && rawPullY.value > 0) {
                     val newTarget = (rawPullY.value + available.y).coerceAtLeast(0f)
@@ -124,6 +130,7 @@ fun InformativePullToRefresh(
 
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                 if (isRefreshing) return Offset.Zero
+                hideIndicatorHint = false
 
                 if (source == NestedScrollSource.UserInput && available.y > 0) {
                     val newTarget = rawPullY.value + available.y
@@ -135,6 +142,7 @@ fun InformativePullToRefresh(
 
             override suspend fun onPreFling(available: Velocity): Velocity {
                 if (isRefreshing) return Velocity.Zero
+                hideIndicatorHint = false
 
                 scope.launch {
                     rawPullY.animateTo(
@@ -156,6 +164,7 @@ fun InformativePullToRefresh(
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent()
+                        hideIndicatorHint = false
                         val allPointersUp = event.changes.all { !it.pressed }
 
                         if (allPointersUp) {
@@ -178,7 +187,7 @@ fun InformativePullToRefresh(
         }
 
         // Indicator Layer
-        val safeTopPadding = WindowInsets.safeContent.asPaddingValues().calculateTopPadding()
+        val safeTopPadding = WindowInsets.safeGestures.asPaddingValues().calculateTopPadding()
         val actualSafeTopPadding = safeTopPadding * (rawPullY.value / maxOffsetPx).coerceIn(0f, 1f)
         Box(
             modifier = Modifier
@@ -201,7 +210,7 @@ fun InformativePullToRefresh(
             ) { isRefreshing ->
                 if (isRefreshing) {
                     refreshingContent()
-                } else {
+                } else if (!hideIndicatorHint) {
                     PullIndicator(
                         yOffset = yOffset.value,
                         isPullThresholdReached = isPullThresholdReached

@@ -52,11 +52,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -83,6 +87,7 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.InformativePullToRefresh
+import plus.vplan.app.core.ui.theme.AppTheme
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.ui.theme.displayFontFamily
@@ -110,7 +115,6 @@ import plus.vplan.app.utils.progressIn
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.transparent
-import kotlin.uuid.ExperimentalUuidApi
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp
 private val LESSON_NUMBER_SIZE = 32.dp
@@ -130,7 +134,7 @@ fun HomeScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HomeContent(
     state: HomeState,
@@ -162,50 +166,9 @@ private fun HomeContent(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .wrapContentWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .animateContentSize()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    AnimatedContent(
-                        targetState = state.currentUpdateStage == HomeState.CurrentUpdateStage.Done
-                    ) { isDone ->
-                        if (isDone) Icon(
-                            painter = painterResource(CoreUiRes.drawable.check),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        else CircularProgressIndicator(Modifier.size(24.dp))
-                    }
-                    Column {
-                        Text(
-                            text = "Aktualisieren",
-                            style = MaterialTheme.typography.titleSmallEmphasized,
-                            fontFamily = displayFontFamily(),
-                        )
-                        AnimatedContent(
-                            targetState = state.currentUpdateStage ?: HomeState.CurrentUpdateStage.Done,
-                            modifier = Modifier.clipToBounds(),
-                            transitionSpec = {
-                                fadeIn() + slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Up) togetherWith
-                                        fadeOut() + slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Up)
-                            }
-                        ) { stage ->
-                            Text(
-                                text = stage.title,
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                }
+                RefreshIndicator(
+                    currentUpdateStage = state.currentUpdateStage ?: HomeState.CurrentUpdateStage.Done,
+                )
             }
         }
     ) { innerContentPadding ->
@@ -950,6 +913,86 @@ private fun CurrentOrNextLesson(
         } else {
             Spacer(Modifier.size(8.dp))
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun RefreshIndicator(
+    currentUpdateStage: HomeState.CurrentUpdateStage,
+) {
+    val shape = RoundedCornerShape(8.dp)
+    Row(
+        modifier = Modifier
+            .padding(16.dp)
+            .wrapContentWidth()
+            .dropShadow(
+                shape = shape,
+                shadow = Shadow(
+                    offset = DpOffset(0.dp, 8.dp),
+                    radius = 16.dp,
+                    spread = 0.dp,
+                    alpha = 0.12f
+                )
+            )
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .animateContentSize()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AnimatedContent(
+            targetState = currentUpdateStage == HomeState.CurrentUpdateStage.Done
+        ) { isDone ->
+            if (isDone) Icon(
+                modifier = Modifier.size(24.dp),
+                painter = painterResource(CoreUiRes.drawable.check),
+                contentDescription = null,
+            )
+            else CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                strokeWidth = (2.5).dp,
+            )
+        }
+        Column {
+            Text(
+                text = "Aktualisieren",
+                style = MaterialTheme.typography.titleSmallEmphasized,
+                fontFamily = displayFontFamily(),
+            )
+            AnimatedContent(
+                targetState = currentUpdateStage,
+                modifier = Modifier.clipToBounds(),
+                transitionSpec = {
+                    fadeIn() + slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Up) togetherWith
+                            fadeOut() + slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Up)
+                }
+            ) { stage ->
+                Text(
+                    text = stage.title,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RefreshIndicatorPreview() {
+    AppTheme(dynamicColor = false) {
+        RefreshIndicator(HomeState.CurrentUpdateStage.Timetable)
+    }
+}
+
+@Preview
+@Composable
+private fun RefreshIndicatorPreviewDone() {
+    AppTheme(dynamicColor = false) {
+        RefreshIndicator(HomeState.CurrentUpdateStage.Done)
     }
 }
 
