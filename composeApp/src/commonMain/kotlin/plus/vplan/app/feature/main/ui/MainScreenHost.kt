@@ -48,6 +48,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import co.touchlab.kermit.Logger
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
@@ -56,6 +57,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.StartTask
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.School
+import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDrawer
 import plus.vplan.app.feature.calendar.ui.CalendarEvent
@@ -93,6 +95,8 @@ import kotlin.uuid.Uuid
 const val ANIMATION_DURATION = 150
 val easingMove = EaseInOut
 val easingFade = EaseInOutQuint
+
+private val logger = Logger.withTag("MainScreenHost")
 
 val defaultEnterAnimation: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition) = {
     slideInHorizontally(
@@ -144,7 +148,13 @@ fun MainScreenHost(
     }
 
     val syncNewsUseCase = koinInject<UpdateNewsUseCase>()
-    LaunchedEffect(Unit) { syncNewsUseCase() }
+    LaunchedEffect(Unit) {
+        try {
+            syncNewsUseCase()
+        } catch (e: ApiException) {
+            logger.w { "Failed to update news (maybe offline): ${e.stackTraceToString()}" }
+        }
+    }
 
     val homeViewModel = koinViewModel<HomeViewModel>()
     val calendarViewModel = koinViewModel<CalendarViewModel>()
