@@ -250,6 +250,7 @@ class FullSyncUseCase(
                 cloudDataUpdate.join()
                 schoolDataUpdate.join()
 
+                keyValueRepository.set(Keys.LAST_PLAN_UPDATE, Clock.System.now().epochSeconds.toString())
                 logger.i { "FullSync done" }
             } finally {
                 isRunning = false

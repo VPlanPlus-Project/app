@@ -62,9 +62,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
+import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import plus.vplan.app.core.model.Alias
@@ -86,6 +88,7 @@ import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawe
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
 import plus.vplan.app.feature.home.ui.components.Greeting
+import plus.vplan.app.feature.home.ui.components.LastUpdated
 import plus.vplan.app.feature.home.ui.components.QuickActions
 import plus.vplan.app.feature.homework.ui.components.NewHomeworkDrawer
 import plus.vplan.app.feature.main.ui.MainScreen
@@ -719,6 +722,15 @@ private fun HomeContent(
                                 }
                             }
                         }
+                    }
+                    if (state.lastPlanUpdate != null) item {
+                        LastUpdated(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            currentTime = state.currentTime.toInstant(TimeZone.currentSystemDefault()),
+                            lastUpdated = state.lastPlanUpdate
+                        )
                     }
                     item bottomSpacer@{  }
                 }

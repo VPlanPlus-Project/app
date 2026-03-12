@@ -34,6 +34,11 @@ object Keys {
     const val DEVELOPER_SETTINGS_DISABLE_AUTO_SYNC = "developer_settings_disable_auto_sync"
 
     /**
+     * Relevant for showing the user when the app fetched the last timetable and substitution plan
+     */
+    const val LAST_PLAN_UPDATE = "LAST_PLAN_UPDATE"
+
+    /**
      * If true, the calendar view will always use the list view instead of the default calendar view.
      * This view is also used if there are not enough lesson times.
      */
