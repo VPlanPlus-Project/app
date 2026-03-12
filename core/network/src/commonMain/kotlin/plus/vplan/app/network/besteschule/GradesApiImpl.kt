@@ -11,85 +11,99 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.database.dao.VppIdDao
+import plus.vplan.app.network.ApiException
+import plus.vplan.app.network.NetworkRequestUnsuccessfulException
 
 class GradesApiImpl(
     private val httpClient: HttpClient,
     private val vppIdDao: VppIdDao,
 ): GradesApi {
     override suspend fun getAll(): List<GradesDto> {
-        val accesses = vppIdDao.getSchulverwalterAccess().first()
-        val items = mutableListOf<GradesDto>()
+        try {
+            val accesses = vppIdDao.getSchulverwalterAccess().first()
+            val items = mutableListOf<GradesDto>()
 
-        for (access in accesses) {
+            for (access in accesses) {
+                val response = httpClient.get {
+                    url {
+                        protocol = URLProtocol.HTTPS
+                        host = "beste.schule"
+                        pathSegments = listOf("api", "grades")
+                    }
+
+                    bearerAuth(access.schulverwalterAccessToken)
+                }
+
+                if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+
+                response.body<ResponseDataWrapper<List<ApiGradeResponse>>>().data
+                    .map { it.toDto(access.schulverwalterUserId) }
+                    .let(items::addAll)
+            }
+
+            return items.distinctBy { it.id }
+        } catch (e: Exception) {
+            throw ApiException(e)
+        }
+    }
+
+    override suspend fun getAllForUser(userId: Int): List<GradesDto> {
+        try {
+            val access = vppIdDao.getSchulverwalterAccess().first().firstOrNull { it.schulverwalterUserId == userId }!!
+
             val response = httpClient.get {
                 url {
                     protocol = URLProtocol.HTTPS
                     host = "beste.schule"
                     pathSegments = listOf("api", "grades")
-                }
-
-                bearerAuth(access.schulverwalterAccessToken)
-            }
-
-            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
-
-            response.body<ResponseDataWrapper<List<ApiGradeResponse>>>().data
-                .map { it.toDto(access.schulverwalterUserId) }
-                .let(items::addAll)
-        }
-
-        return items.distinctBy { it.id }
-    }
-
-    override suspend fun getAllForUser(userId: Int): List<GradesDto> {
-        val access = vppIdDao.getSchulverwalterAccess().first().firstOrNull { it.schulverwalterUserId == userId }!!
-
-        val response = httpClient.get {
-            url {
-                protocol = URLProtocol.HTTPS
-                host = "beste.schule"
-                pathSegments = listOf("api", "grades")
-                parameters.append("include", "collection")
-            }
-
-            bearerAuth(access.schulverwalterAccessToken)
-        }
-
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
-
-        return response.body<ResponseDataWrapper<List<ApiGradeResponse>>>().data
-            .map { it.toDto(access.schulverwalterUserId) }
-    }
-
-    override suspend fun getById(id: Int): GradesDto? {
-        val accesses = vppIdDao.getSchulverwalterAccess().first()
-
-        for (access in accesses) {
-            val response = httpClient.get {
-                url {
-                    protocol = URLProtocol.HTTPS
-                    host = "beste.schule"
-                    pathSegments = listOf("api", "grades", id.toString())
                     parameters.append("include", "collection")
                 }
 
                 bearerAuth(access.schulverwalterAccessToken)
             }
 
-            if (response.status in setOf(
-                HttpStatusCode.Unauthorized,
-                HttpStatusCode.Forbidden,
-                HttpStatusCode.NotFound
-            )) continue
-
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
 
-            val grade = response.body<ResponseDataWrapper<ApiGradeResponse>>().data
-
-            return grade.toDto(access.schulverwalterUserId)
+            return response.body<ResponseDataWrapper<List<ApiGradeResponse>>>().data
+                .map { it.toDto(access.schulverwalterUserId) }
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
+    }
 
-        return null
+    override suspend fun getById(id: Int): GradesDto? {
+        try {
+            val accesses = vppIdDao.getSchulverwalterAccess().first()
+
+            for (access in accesses) {
+                val response = httpClient.get {
+                    url {
+                        protocol = URLProtocol.HTTPS
+                        host = "beste.schule"
+                        pathSegments = listOf("api", "grades", id.toString())
+                        parameters.append("include", "collection")
+                    }
+
+                    bearerAuth(access.schulverwalterAccessToken)
+                }
+
+                if (response.status in setOf(
+                        HttpStatusCode.Unauthorized,
+                        HttpStatusCode.Forbidden,
+                        HttpStatusCode.NotFound
+                    )) continue
+
+                if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+
+                val grade = response.body<ResponseDataWrapper<ApiGradeResponse>>().data
+
+                return grade.toDto(access.schulverwalterUserId)
+            }
+
+            return null
+        } catch (e: Exception) {
+            throw ApiException(e)
+        }
     }
 }
 

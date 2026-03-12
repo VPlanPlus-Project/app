@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.database.dao.VppIdDao
+import plus.vplan.app.network.NetworkRequestUnsuccessfulException
 
 class YearApiImpl(
     private val httpClient: HttpClient,
