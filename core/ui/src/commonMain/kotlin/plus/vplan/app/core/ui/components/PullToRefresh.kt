@@ -2,10 +2,15 @@ package plus.vplan.app.core.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -23,178 +28,254 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.theme.AppTheme
 import kotlin.math.exp
 
-val PULL_THRESHOLD = 64.dp
+val PULL_THRESHOLD = 72.dp
 
 @Composable
 fun InformativePullToRefresh(
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
+    refreshingContent: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
     val localDensity = LocalDensity.current
+    val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
-    val maxOffsetDp = 128.dp
-    var yOffsetPulled by remember { mutableStateOf(0.dp) }
-    // Rubber-band curve: grows quickly at first, then decelerates asymptotically toward maxOffsetDp.
-    // Formula: maxOffset * (1 - e^(-pull / maxOffset))
-    val yOffsetCurved = remember(yOffsetPulled) {
-        val pull = yOffsetPulled.value.coerceAtLeast(0f)
-        val max = maxOffsetDp.value
-        (max * (1f - exp(-pull / max))).dp
+    val maxOffsetDp = 192.dp
+    val maxOffsetPx = with(localDensity) { maxOffsetDp.toPx() }
+    val thresholdPx = with(localDensity) { PULL_THRESHOLD.toPx() }
+
+    val rawPullY = remember { Animatable(0f) }
+    val yOffset = with(localDensity) {
+        val pull = rawPullY.value.coerceAtLeast(0f)
+        (maxOffsetPx * (1f - exp(-pull / maxOffsetPx))).toDp()
     }
-    val animatable = remember { Animatable(0.dp, Dp.VectorConverter) }
-    var isUserTouching by remember { mutableStateOf(false) }
-    val yOffset = if (isUserTouching) yOffsetCurved else animatable.value
+
     val isPullThresholdReached = yOffset >= PULL_THRESHOLD
 
-    val scrollConnection = object : NestedScrollConnection {
-        override fun onPostScroll(
-            consumed: Offset,
-            available: Offset,
-            source: NestedScrollSource
-        ): Offset {
-            Logger.d { "onPostScroll: $consumed, $available, $source" }
-            if (consumed.y == 0f) {
-                val availableDp = with(localDensity) { available.y.toDp() }
-                yOffsetPulled = (yOffsetPulled + availableDp).coerceAtLeast(0.dp)
-                scope.launch { animatable.snapTo(yOffsetCurved) }
-                return Offset.Zero
-            }
-            return super.onPostScroll(consumed, available, source)
-        }
-
-        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-            Logger.d { "onPreScroll: $available, $source" }
-            if (yOffsetPulled > 0.dp) {
-                val availableDp = with(localDensity) { available.y.toDp() }
-                yOffsetPulled = (yOffsetPulled + availableDp).coerceAtLeast(0.dp)
-                scope.launch { animatable.snapTo(yOffsetCurved) }
-                return available
-            }
-            return super.onPreScroll(available, source)
+    // Haptic Feedback
+    LaunchedEffect(isPullThresholdReached) {
+        if (isPullThresholdReached && !isRefreshing) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     }
 
-    LaunchedEffect(isUserTouching) {
-        if (isUserTouching) {
-            animatable.stop()
-            yOffsetPulled = animatable.value
-            return@LaunchedEffect
-        }
+    val dampingRatioRefreshingContent = remember(isRefreshing) {
+        if (with(localDensity) { yOffset.toPx() } >= thresholdPx + (0.25 * maxOffsetPx - thresholdPx)) Spring.DampingRatioLowBouncy
+        else Spring.DampingRatioMediumBouncy
+    }
 
-        if (isPullThresholdReached) {
-            // Start
-        }
+    val dampingRatioContent = remember(isRefreshing) {
+        if (with(localDensity) { yOffset.toPx() } < thresholdPx + (0.25 * maxOffsetPx - thresholdPx)) Spring.DampingRatioLowBouncy
+        else Spring.DampingRatioMediumBouncy
+    }
 
-        animatable.snapTo(yOffsetCurved)
-        animatable.animateTo(0.dp, animationSpec = tween())
-        yOffsetPulled = 0.dp
+    // Handle the visual state when refreshing changes externally
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            rawPullY.animateTo(
+                targetValue = thresholdPx,
+                animationSpec = spring(dampingRatio = dampingRatioContent)
+            )
+        } else {
+            rawPullY.animateTo(0f)
+        }
+    }
+
+    val scrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (isRefreshing) return super.onPreScroll(available, source)
+                return if (source == NestedScrollSource.UserInput && available.y < 0 && rawPullY.value > 0) {
+                    val newTarget = (rawPullY.value + available.y).coerceAtLeast(0f)
+                    scope.launch { rawPullY.snapTo(newTarget) }
+                    Offset(0f, available.y)
+                } else Offset.Zero
+            }
+
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (isRefreshing) return super.onPostScroll(consumed, available, source)
+                if (source == NestedScrollSource.UserInput && available.y > 0) {
+                    val newTarget = rawPullY.value + available.y
+                    scope.launch { rawPullY.snapTo(newTarget) }
+                    return Offset(0f, available.y)
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (isRefreshing) return super.onPreFling(available)
+                // Once the finger is lifted, we always animate back to 0.
+                // We "consume" 0 velocity so the list below can still finish its fling
+                // if it wasn't the thing that triggered the pull.
+                scope.launch {
+                    rawPullY.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = 400)
+                    )
+                }
+                return Velocity.Zero
+            }
+        }
     }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    awaitPointerEvent() // first DOWN event
-                    isUserTouching = true
-                    do {
+            .nestedScroll(scrollConnection)
+            // Use pointerInput to detect the release (UP event)
+            .pointerInput(isRefreshing, isPullThresholdReached) {
+                awaitPointerEventScope {
+                    while (true) {
                         val event = awaitPointerEvent()
-                    } while (event.changes.any { it.pressed })
-                    isUserTouching = false
+                        val allPointersUp = event.changes.all { !it.pressed }
+
+                        if (allPointersUp) {
+                            if (isPullThresholdReached && !isRefreshing) {
+                                onRefresh()
+                            } else if (!isRefreshing) {
+                                scope.launch {
+                                    rawPullY.animateTo(0f, tween(300))
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            .nestedScroll(scrollConnection)
             .clipToBounds()
     ) {
+        // Content Layer
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = yOffset)
-        ) content@{
+        ) {
             content()
         }
 
-        val minHeight = 24.dp
-
+        // Indicator Layer
+        val safeTopPadding = WindowInsets.safeContent.asPaddingValues().calculateTopPadding()
+        val actualSafeTopPadding = safeTopPadding * (rawPullY.value / maxOffsetPx).coerceIn(0f, 1f)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = WindowInsets.safeContent.asPaddingValues().calculateTopPadding() * (yOffset.coerceAtMost(minHeight)/minHeight))
-                .height(yOffset.coerceAtLeast(minHeight))
+                .height(yOffset + safeTopPadding)
+                .padding(top = actualSafeTopPadding),
+            contentAlignment = Alignment.Center
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(yOffset.coerceAtMost(48.dp) / 48.dp)
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            ) {
-                val iconRotation by animateFloatAsState(if (isPullThresholdReached) 0f else 180f)
-                Icon(
-                    painter = painterResource(CoreUiRes.drawable.arrow_up),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .rotate(iconRotation),
-                    tint = MaterialTheme.colorScheme.tertiary,
-                )
-                Row {
-                    AnimatedContent(
-                        targetState = isPullThresholdReached,
-                        label = "Pull threshold reached"
-                    ) { isPullThresholdReached ->
-                        Text(
-                            text =
-                                if (!isPullThresholdReached) "Ziehe"
-                                else "Loslassen"
-                            ,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.tertiary,
-                        )
+            AnimatedContent(
+                targetState = isRefreshing,
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+                transitionSpec = {
+                    if (isRefreshing) {
+                        fadeIn() + scaleIn(spring(dampingRatio = dampingRatioRefreshingContent)) togetherWith fadeOut()
+                    } else {
+                        fadeIn() togetherWith fadeOut() + scaleOut(spring(dampingRatio = dampingRatioRefreshingContent))
                     }
-                    Text(
-                        text =
-                            if (!isPullThresholdReached) " zum Aktualisieren"
-                            else ", um zu aktualisieren"
-                        ,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.tertiary,
+                }
+            ) { isRefreshing ->
+                if (isRefreshing) {
+                    refreshingContent()
+                } else {
+                    PullIndicator(
+                        yOffset = yOffset.value,
+                        isPullThresholdReached = isPullThresholdReached
                     )
                 }
-                Icon(
-                    painter = painterResource(CoreUiRes.drawable.arrow_up),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .rotate(-iconRotation),
-                    tint = MaterialTheme.colorScheme.tertiary,
-                )
             }
         }
+    }
+}
+
+@Composable
+private fun PullIndicator(
+    yOffset: Float,
+    isPullThresholdReached: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha((yOffset / 48f).coerceIn(0f, 1f))
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+    ) {
+        val iconRotation by animateFloatAsState(if (isPullThresholdReached) 0f else 180f)
+        Icon(
+            painter = painterResource(CoreUiRes.drawable.arrow_up),
+            contentDescription = null,
+            modifier = Modifier.size(24.dp).rotate(iconRotation),
+            tint = MaterialTheme.colorScheme.tertiary,
+        )
+        Row {
+            AnimatedContent(targetState = isPullThresholdReached) { reached ->
+                Text(
+                    text = if (!reached) "Ziehen" else "Loslassen",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
+            Text(
+                text = " zum Aktualisieren",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        }
+        Icon(
+            painter = painterResource(CoreUiRes.drawable.arrow_up),
+            contentDescription = null,
+            modifier = Modifier.size(24.dp).rotate(-iconRotation),
+            tint = MaterialTheme.colorScheme.tertiary,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PullIndicatorPreviewPreThreshold() {
+    AppTheme(dynamicColor = false) {
+        val localDensity = LocalDensity.current
+        PullIndicator(
+            yOffset = with(localDensity) { PULL_THRESHOLD.toPx() } / 2,
+            isPullThresholdReached = false
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PullIndicatorPreviewPostThreshold() {
+    AppTheme(dynamicColor = false) {
+        val localDensity = LocalDensity.current
+        PullIndicator(
+            yOffset = with(localDensity) { PULL_THRESHOLD.toPx() },
+            isPullThresholdReached = true
+        )
     }
 }

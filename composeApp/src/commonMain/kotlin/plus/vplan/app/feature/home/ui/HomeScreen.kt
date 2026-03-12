@@ -4,10 +4,13 @@ package plus.vplan.app.feature.home.ui
 
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,9 +25,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -46,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -57,6 +63,7 @@ import androidx.compose.ui.unit.min
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -80,6 +87,7 @@ import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.InformativePullToRefresh
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
 import plus.vplan.app.core.utils.date.untilRelativeText
@@ -103,6 +111,8 @@ import plus.vplan.app.utils.progressIn
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.transparent
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp
@@ -145,10 +155,71 @@ private fun HomeContent(
 
     val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppId
 
+    var refreshingStage by remember { mutableStateOf<Int?>(null) }
+    val stages = mapOf(
+        "Prüfe Zugangsdaten" to 500.milliseconds,
+        "Stundenplan" to 2.seconds,
+        "Vertretungsplan heute" to 1.seconds,
+        "Vertretungsplan morgen" to 2.seconds,
+        "Fertig" to 1.seconds
+    )
     InformativePullToRefresh(
         modifier = Modifier
             .padding(bottom = contentPadding.calculateBottomPadding())
-            .fillMaxSize()
+            .fillMaxSize(),
+        isRefreshing = refreshingStage != null,
+        onRefresh = {
+            scope.launch {
+                refreshingStage = 0
+                while (refreshingStage!! < stages.size) {
+                    delay(stages.values.elementAt(refreshingStage!!))
+                    refreshingStage = refreshingStage!! + 1
+                }
+                refreshingStage = null
+            }
+        },
+        refreshingContent = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .wrapContentWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .animateContentSize()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(Modifier.size(24.dp))
+                    Column {
+                        Text(
+                            text = "Aktualisieren",
+                            style = MaterialTheme.typography.titleSmallEmphasized,
+                            fontFamily = displayFontFamily(),
+                        )
+                        AnimatedContent(
+                            targetState = refreshingStage ?: (stages.size - 1),
+                            modifier = Modifier.clipToBounds(),
+                            transitionSpec = {
+                                fadeIn() + slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Up) togetherWith
+                                        fadeOut() + slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Up)
+                            }
+                        ) { stage ->
+                            Text(
+                                text = stages.toList()[stage].first,
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+            }
+        }
     ) {
         Column(
             modifier = Modifier
