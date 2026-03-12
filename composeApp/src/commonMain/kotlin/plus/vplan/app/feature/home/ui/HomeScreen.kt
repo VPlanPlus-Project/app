@@ -38,7 +38,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -63,7 +62,6 @@ import androidx.compose.ui.unit.min
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -112,8 +110,6 @@ import plus.vplan.app.utils.progressIn
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.transparent
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp
@@ -145,7 +141,6 @@ private fun HomeContent(
 ) {
     val scope = rememberCoroutineScope()
     val localDensity = LocalDensity.current
-    val pullToRefreshState = rememberPullToRefreshState()
     val initializeSchulverwalterReauthUseCase = koinInject<InitializeSchulverwalterReauthUseCase>()
 
     var isNewHomeworkDrawerVisible by rememberSaveable { mutableStateOf(false) }
@@ -156,29 +151,12 @@ private fun HomeContent(
 
     val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppId
 
-    var refreshingStage by remember { mutableStateOf<Int?>(null) }
-    val stages = mapOf(
-        "Prüfe Zugangsdaten" to 500.milliseconds,
-        "Stundenplan" to 2.seconds,
-        "Vertretungsplan heute" to 1.seconds,
-        "Vertretungsplan morgen" to 2.seconds,
-        "Fertig" to 1.seconds
-    )
     InformativePullToRefresh(
         modifier = Modifier
             .padding(bottom = contentPadding.calculateBottomPadding())
             .fillMaxSize(),
-        isRefreshing = refreshingStage != null,
-        onRefresh = {
-            scope.launch {
-                refreshingStage = 0
-                while (refreshingStage!! < stages.size) {
-                    delay(stages.values.elementAt(refreshingStage!!))
-                    refreshingStage = refreshingStage!! + 1
-                }
-                refreshingStage = null
-            }
-        },
+        isRefreshing = state.currentUpdateStage != null,
+        onRefresh = { onEvent(HomeEvent.OnRefresh) },
         refreshingContent = {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -196,7 +174,7 @@ private fun HomeContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     AnimatedContent(
-                        targetState = refreshingStage == stages.size - 1
+                        targetState = state.currentUpdateStage == HomeState.CurrentUpdateStage.Done
                     ) { isDone ->
                         if (isDone) Icon(
                             painter = painterResource(CoreUiRes.drawable.check),
@@ -212,7 +190,7 @@ private fun HomeContent(
                             fontFamily = displayFontFamily(),
                         )
                         AnimatedContent(
-                            targetState = refreshingStage ?: (stages.size - 1),
+                            targetState = state.currentUpdateStage ?: HomeState.CurrentUpdateStage.Done,
                             modifier = Modifier.clipToBounds(),
                             transitionSpec = {
                                 fadeIn() + slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Up) togetherWith
@@ -220,7 +198,7 @@ private fun HomeContent(
                             }
                         ) { stage ->
                             Text(
-                                text = stages.toList()[stage].first,
+                                text = stage.title,
                                 style = MaterialTheme.typography.bodySmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
