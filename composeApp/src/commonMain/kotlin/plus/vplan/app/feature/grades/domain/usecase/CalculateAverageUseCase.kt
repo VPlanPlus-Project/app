@@ -1,13 +1,13 @@
 package plus.vplan.app.feature.grades.domain.usecase
 
-import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
+import plus.vplan.app.core.model.besteschule.BesteSchuleCollection
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
-import plus.vplan.app.domain.model.populated.besteschule.PopulatedCollection
+import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedGrade
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 
 class CalculateAverageUseCase {
-    suspend operator fun invoke(grades: List<GradesItem>, interval: BesteSchuleInterval, additionalGrades: List<CalculatorGrade> = emptyList()) = invoke(grades.map { CalculatorGrade.ActualGrade(it.grade, it.collection) } + additionalGrades, interval)
+    suspend operator fun invoke(grades: List<GradesItem>, interval: BesteSchuleInterval, additionalGrades: List<CalculatorGrade> = emptyList()) = invoke(grades.map { CalculatorGrade.ActualGrade(it.grade, it.collection.collection) } + additionalGrades, interval)
 
     suspend operator fun invoke(grades: List<CalculatorGrade>, interval: BesteSchuleInterval): Double {
         val gradesForInterval = grades.filter {
@@ -75,7 +75,7 @@ sealed class CalculatorGrade {
     abstract suspend fun getType(): String
     abstract fun getValue(): Int?
 
-    data class ActualGrade(val grade: PopulatedGrade, val collection: PopulatedCollection): CalculatorGrade() {
+    data class ActualGrade(val grade: PopulatedGrade, val collection: BesteSchuleCollection): CalculatorGrade() {
         override suspend fun getSubject(): BesteSchuleSubject = collection.subject
         override suspend fun getType(): String = grade.collection.type
         override fun getValue(): Int? = grade.grade.numericValue

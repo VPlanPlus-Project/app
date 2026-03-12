@@ -24,7 +24,6 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
-import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.utils.date.now
@@ -58,7 +57,6 @@ class GradesViewModel(
 
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleGradesRepository by inject<GradesRepository>()
-    private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
 
     private var updateFullAverageJob: Job? = null
     private val updateAverageForSubjectJobs = mutableMapOf<Int, Job>()
@@ -69,17 +67,16 @@ class GradesViewModel(
     private suspend fun setGrades() {
         grades
             .filter { grade ->
-                grade.collection.intervalId in listOfNotNull(
+                grade.collection.interval.id in listOfNotNull(
                     gradeState.value.selectedInterval?.interval?.id,
                     gradeState.value.selectedInterval?.includedInterval?.id
                 )
             }
-            .groupBy { grade -> grade.collection.subjectId }
-            .map { (subjectId, gradesForSubject) ->
-                val subject = besteSchuleSubjectsRepository.getById(subjectId).first()!!
+            .groupBy { grade -> grade.collection.subject }
+            .map { (subject, gradesForSubject) ->
                 val calculationRule = null // fixme subject.finalGrade?.first()?.calculationRule
                 Subject(
-                    id = subjectId,
+                    id = subject.id,
                     average = null,
                     name = subject.fullName,
                     categories = gradesForSubject.groupBy { grade -> grade.collection.type }
@@ -92,7 +89,7 @@ class GradesViewModel(
                             } else 1.0
 
                             Subject.Category(
-                                id = (subjectId.toString() + type).hashCode(),
+                                id = (subject.id.toString() + type).hashCode(),
                                 name = type,
                                 average = null,
                                 count = gradesForType.size,
@@ -112,7 +109,7 @@ class GradesViewModel(
                                     .toList()
                                     .sortedBy { it.first.grade.grade.givenAt }
                                     .toMap(),
-                                calculatorGrades = gradeState.value.subjects.find { it.id == subjectId }?.categories?.find { it.name == type }?.calculatorGrades
+                                calculatorGrades = gradeState.value.subjects.find { it.id == subject.id }?.categories?.find { it.name == type }?.calculatorGrades
                                     ?: emptyList()
                             )
                         }.sortedBy { it.name }
@@ -196,7 +193,7 @@ class GradesViewModel(
                         category.calculatorGrades.map { calculatorGradeValue ->
                             CalculatorGrade.CustomGrade(
                                 grade = calculatorGradeValue,
-                                subject = gradeState.value.allGrades.first { grade -> grade.collection.subject.id == subject.id }.collection.subject,
+                                subject = gradeState.value.allGrades.first { grade -> grade.collection.collection.subject.id == subject.id }.collection.collection.subject,
                                 type = category.name
                             )
                         }
@@ -235,7 +232,7 @@ class GradesViewModel(
                     category.calculatorGrades.map { calculatorGradeValue ->
                         CalculatorGrade.CustomGrade(
                             grade = calculatorGradeValue,
-                            subject = gradeState.value.allGrades.first { grade -> grade.collection.subject.id == subject.id }.collection.subject,
+                            subject = gradeState.value.allGrades.first { grade -> grade.collection.collection.subject.id == subject.id }.collection.collection.subject,
                             type = category.name
                         )
                     }
@@ -283,7 +280,7 @@ class GradesViewModel(
                     category.calculatorGrades.map { calculatorGradeValue ->
                         CalculatorGrade.CustomGrade(
                             grade = calculatorGradeValue,
-                            subject = gradeState.value.allGrades.first { grade -> grade.collection.subject.id == subject.id }.collection.subject,
+                            subject = gradeState.value.allGrades.first { grade -> grade.collection.collection.subject.id == subject.id }.collection.collection.subject,
                             type = category.name
                         )
                     }
@@ -319,7 +316,7 @@ class GradesViewModel(
                         }
                         gradeState.update { it.copy(subjects = subjects) }
                     }
-                    updateAverageForSubject(event.grade.collection.subject.id)
+                    updateAverageForSubject(event.grade.collection.collection.subject.id)
                     updateFullAverage(false)
                 }
 

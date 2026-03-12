@@ -10,12 +10,11 @@ import plus.vplan.app.core.database.dao.besteschule.BesteschuleSubjectDao
 import plus.vplan.app.core.database.dao.besteschule.BesteschuleTeacherDao
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleCollection
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleGrade
-import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleSubject
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleSubject
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleTeacher
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.network.besteschule.GradesApi
 import plus.vplan.app.network.besteschule.GradesDto
-import kotlin.collections.map
 import kotlin.time.Clock
 
 class GradesRepositoryImpl(
@@ -106,7 +105,7 @@ private fun GradesDto.Teacher.toEntity() = DbBesteschuleTeacher(
     cachedAt = Clock.System.now(),
 )
 
-private fun GradesDto.Subject.toEntity() = DbBesteschuleSubject(
+private fun GradesDto.Subject.toEntity() = DbBesteSchuleSubject(
     id = this.id,
     shortName = this.localId,
     longName = this.name,

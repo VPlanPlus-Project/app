@@ -91,8 +91,8 @@ import plus.vplan.app.core.database.model.database.DbWeek
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleCollection
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleGrade
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleInterval
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleSubject
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleIntervalUser
-import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleSubject
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleTeacher
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleYear
 import plus.vplan.app.core.database.model.database.crossovers.DbCourseGroupCrossover
@@ -184,7 +184,7 @@ import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstance
         DbNews::class,
         DbNewsSchools::class,
 
-        DbBesteschuleSubject::class,
+        DbBesteSchuleSubject::class,
         DbBesteschuleYear::class,
         DbBesteSchuleInterval::class,
         DbBesteschuleIntervalUser::class,

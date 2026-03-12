@@ -82,9 +82,9 @@ class AnalyticsViewModel(
                                     grades = grades,
                                     filteredGrades = emptyList(),
                                     availableSubjectFilters = grades
-                                        .map { it.collection.subjectId }
+                                        .map { it.collection.subject }
                                         .distinct()
-                                        .let { subjects.filter { subject -> subject.id in it } }
+                                        .let { schuleSubjects -> subjects.filter { subject -> subject.id in schuleSubjects.map { it.id } } }
                                         .sortedBy { it.shortName },
                                     filteredSubjects = emptyList()
                                 )
@@ -115,9 +115,9 @@ class AnalyticsViewModel(
     private fun updateFiltered() {
         state = state.copy(filteredGrades = state.grades
             .filter { grade ->
-                state.filteredSubjects.any { subject -> grade.collection.subjectId == subject.id } || state.filteredSubjects.isEmpty()
+                state.filteredSubjects.any { subject -> grade.collection.subject.id == subject.id } || state.filteredSubjects.isEmpty()
             }
-            .filter { it.collection.intervalId in listOfNotNull(state.interval?.interval?.id, state.interval?.includedInterval?.id) }
+            .filter { it.collection.interval.id in listOfNotNull(state.interval?.interval?.id, state.interval?.includedInterval?.id) }
         )
     }
 }

@@ -93,7 +93,7 @@ class ProfileViewModel(
                             state = state.copy(
                                 averageGrade = calculateAverageUseCase(grades, interval),
                                 latestGrade = grades
-                                    .filter { grade -> grade.collection.interval.id == interval.id }
+                                    .filter { grade -> grade.collection.collection.interval.id == interval.id }
                                     .filterNot { grade -> grade.grade.grade.value == null }
                                     .maxByOrNull { grade -> grade.grade.grade.givenAt }
                                     ?.let { grade -> LatestGrade.Value(grade.grade.grade.value!!) }

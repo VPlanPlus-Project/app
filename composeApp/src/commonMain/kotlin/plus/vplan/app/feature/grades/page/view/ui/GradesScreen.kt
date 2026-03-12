@@ -547,7 +547,7 @@ private fun GradesContent(
                                                         val value = item.grade.grade.value
                                                         val backgroundColor by animateColorAsState(
                                                             if (isSelectedForFinalGrade != true || value == null || value.startsWith('+') || value.startsWith('-')) Color.Gray
-                                                            else when (item.grade.interval.type) {
+                                                            else when (item.grade.collection.interval.type) {
                                                                 is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (item.grade.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                                 else -> blendColor(blendColor(green.container, red.container, ((item.grade.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                                                             }
@@ -555,7 +555,7 @@ private fun GradesContent(
 
                                                         val textColor by animateColorAsState(
                                                             if (isSelectedForFinalGrade != true || value == null || value.startsWith('+') || value.startsWith('-')) Color.White
-                                                            else when (item.grade.interval.type) {
+                                                            else when (item.grade.collection.interval.type) {
                                                                 is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (item.grade.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                                 else -> blendColor(blendColor(green.onContainer, red.onContainer, ((item.grade.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                                                             }

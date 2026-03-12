@@ -11,7 +11,6 @@ import plus.vplan.app.core.data.besteschule.BesteSchuleRepository
 import plus.vplan.app.core.data.besteschule.CollectionsRepository
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
-import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.data.besteschule.YearsRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
@@ -33,7 +32,6 @@ class SyncGradesUseCase(
     private val besteSchuleCollectionsRepository by inject<CollectionsRepository>()
     private val besteSchuleYearsRepository by inject<YearsRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
-    private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
     private val besteSchuleGradesRepository by inject<GradesRepository>()
 
     private val besteSchuleRepository by inject<BesteSchuleRepository>()
@@ -170,8 +168,6 @@ class SyncGradesUseCase(
                         .mapNotNull { it.vppId }
                         .firstOrNull { it.schulverwalterConnection?.userId == newGrade.grade.schulverwalterUserId }
 
-                    val subject = besteSchuleSubjectsRepository.getById(newGrade.collection.subjectId).first()
-
                     platformNotificationRepository.sendNotification(
                         title = "Neue Note",
                         category = gradeReceiverVppId?.name ?: "Unbekannter Nutzer",
@@ -180,7 +176,7 @@ class SyncGradesUseCase(
                             if (getGradeLockStateUseCase().first().canAccess) append(newGrade.grade.value)
                             else append("neue Note")
                             append(" in ")
-                            append(subject?.fullName ?: "Unbekanntes Fach")
+                            append(newGrade.collection.subject.fullName)
                             append(" für ")
                             append(newGrade.collection.name)
                             append(" (")

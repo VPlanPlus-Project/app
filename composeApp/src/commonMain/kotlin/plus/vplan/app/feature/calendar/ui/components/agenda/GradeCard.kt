@@ -63,7 +63,7 @@ fun GradeCard(
                 .width(4.dp)
                 .height((boxHeight - 32.dp).coerceAtLeast(0.dp))
                 .clip(RoundedCornerShape(0, 50, 50, 0))
-                .background(grade.collection.subject.shortName.subjectColor().getGroup().color)
+                .background(grade.collection.collection.subject.shortName.subjectColor().getGroup().color)
         )
         Column(
             modifier = Modifier
@@ -75,13 +75,13 @@ fun GradeCard(
             ) {
                 SubjectIcon(
                     modifier = Modifier.size(MaterialTheme.typography.titleLarge.lineHeight.toDp()),
-                    subject = grade.collection.subject.shortName
+                    subject = grade.collection.collection.subject.shortName
                 )
                 Column(Modifier.weight(1f, true)) {
                     Text(
                         text = buildString {
                             append("Note in ")
-                            append(grade.collection.subject.shortName)
+                            append(grade.collection.collection.subject.shortName)
                         },
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -96,7 +96,7 @@ fun GradeCard(
                 val value = grade.grade.grade.value
                 val backgroundColor by animateColorAsState(
                     if (!grade.grade.grade.isSelectedForFinalGrade || value == null || value.startsWith('+') || value.startsWith('-')) Color.Gray
-                    else when (grade.collection.interval.type) {
+                    else when (grade.collection.collection.interval.type) {
                         is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.container, green.container, (grade.grade.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                         else -> blendColor(blendColor(green.container, red.container, ((grade.grade.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.surfaceVariant, .7f)
                     }
@@ -104,7 +104,7 @@ fun GradeCard(
 
                 val textColor by animateColorAsState(
                     if (!grade.grade.grade.isSelectedForFinalGrade || value == null || value.startsWith('+') || value.startsWith('-')) Color.White
-                    else when (grade.collection.interval.type) {
+                    else when (grade.collection.collection.interval.type) {
                         is BesteSchuleInterval.Type.Sek2 -> blendColor(blendColor(red.onContainer, green.onContainer, (grade.grade.grade.numericValue?:0)/15f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                         else -> blendColor(blendColor(green.onContainer, red.onContainer, ((grade.grade.grade.numericValue?:1)-1)/5f), MaterialTheme.colorScheme.onSurfaceVariant, .7f)
                     }

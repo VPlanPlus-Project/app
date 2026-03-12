@@ -49,7 +49,6 @@ fun GradeDetailPage(
     val vppId = state.gradeUser
     val collection = state.gradeCollection
     val teacher = collection?.teacher
-    val subject = collection?.subject
     val interval = state.gradeInterval
 
     AnimatedContent(
@@ -171,18 +170,18 @@ fun GradeDetailPage(
                         }
                     }
                 }
-                if (subject != null) Text(
-                    text = subject.fullName,
+                if (collection?.collection?.subject != null) Text(
+                    text = collection.collection.subject.fullName,
                     style = MaterialTheme.typography.labelLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(Modifier.height(16.dp))
-                if (subject != null) SubjectGroupRow(
+                if (collection?.collection?.subject != null) SubjectGroupRow(
                     canEdit = false,
                     allowGroup = false,
-                    subject = subject.shortName,
+                    subject = collection.collection.subject.shortName,
                     onClick = {}
                 )
                 if (collection != null) TypeRow(type = collection.collection.type)

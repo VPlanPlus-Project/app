@@ -111,7 +111,7 @@ class GradeDetailViewModel(
                                     }
 
                                     coroutineScope {
-                                        intervalPopulator.populateSingle(collection.interval)
+                                        intervalPopulator.populateSingle(collection.collection.interval)
                                             .onEach { interval ->
                                                 state.update { state ->
                                                     state.copy(gradeInterval = interval)

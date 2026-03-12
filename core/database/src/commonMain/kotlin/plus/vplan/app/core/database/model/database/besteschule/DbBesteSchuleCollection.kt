@@ -6,7 +6,6 @@ import androidx.room.ForeignKey
 import androidx.room.ForeignKey.Companion.CASCADE
 import androidx.room.Index
 import kotlinx.datetime.LocalDate
-import plus.vplan.app.core.model.besteschule.BesteSchuleCollection
 import kotlin.time.Instant
 
 @Entity(
@@ -20,7 +19,7 @@ import kotlin.time.Instant
     ],
     foreignKeys = [
         ForeignKey(
-            entity = DbBesteschuleSubject::class,
+            entity = DbBesteSchuleSubject::class,
             parentColumns = ["id"],
             childColumns = ["subject_id"],
             onDelete = CASCADE
@@ -48,15 +47,4 @@ data class DbBesteSchuleCollection(
     @ColumnInfo("interval_id") val intervalId: Int,
     @ColumnInfo("teacher_id") val teacherId: Int,
     @ColumnInfo("cached_at") val cachedAt: Instant
-) {
-    fun toModel() = BesteSchuleCollection(
-        id = this.id,
-        type = this.type,
-        name = this.name,
-        subjectId = this.subjectId,
-        givenAt = this.givenAt,
-        intervalId = this.intervalId,
-        teacherId = this.teacherId,
-        cachedAt = this.cachedAt
-    )
-}
+)
