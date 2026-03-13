@@ -5,10 +5,12 @@ package plus.vplan.app.feature.home.ui
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,6 +27,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
@@ -35,6 +38,8 @@ import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.News
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.application.AppPlatform
+import plus.vplan.app.core.platform.PlatformRepository
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
@@ -48,6 +53,7 @@ import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.utils.sortedBySuspending
 import plus.vplan.lib.sp24.source.Authentication
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -58,13 +64,16 @@ class HomeViewModel(
     private val getNewsUseCase: GetNewsUseCase,
     private val keyValueRepository: KeyValueRepository,
     private val stundenplan24Repository: Stundenplan24Repository,
+    platformRepository: PlatformRepository,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateHolidaysUseCase: UpdateHolidaysUseCase,
     private val updateLessonTimesUseCase: UpdateLessonTimesUseCase,
 ) : ViewModel() {
     val state: StateFlow<HomeState>
-        field = MutableStateFlow(HomeState())
+        field = MutableStateFlow(HomeState(
+            platform = platformRepository.getPlatform(),
+        ))
 
     private var newsJob: Job? = null
 
@@ -234,19 +243,28 @@ class HomeViewModel(
                                 Authentication(school.sp24Id, school.username, school.password),
                                 true
                             )
-                            updateLessonTimesUseCase(school, client)
-                            updateHolidaysUseCase(school, client)
-                            updateTimetableUseCase(school, forceUpdate = false, client = client)
-                            updateSubstitutionPlanUseCase(
-                                school,
-                                setOfNotNull(
-                                    LocalDate.now(),
-                                    state.value.day?.day?.date,
-                                    state.value.day?.day?.nextSchoolDay
-                                ).sorted(),
-                                allowNotification = false,
-                                providedClient = client
-                            )
+                            state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.LessonTimes) }
+                            withContext(Dispatchers.Default) { updateLessonTimesUseCase(school, client) }
+                            state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Holidays) }
+                            withContext(Dispatchers.Default) { updateHolidaysUseCase(school, client) }
+                            state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Timetable) }
+                            withContext(Dispatchers.Default) { updateTimetableUseCase(school, forceUpdate = false, client = client) }
+                            state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.SubstitutionPlan) }
+                            withContext(Dispatchers.Default) {
+                                updateSubstitutionPlanUseCase(
+                                    school,
+                                    setOfNotNull(
+                                        LocalDate.now(),
+                                        state.value.day?.day?.date,
+                                        state.value.day?.day?.nextSchoolDay
+                                    ).sorted(),
+                                    allowNotification = false,
+                                    providedClient = client
+                                )
+                            }
+                            state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Done) }
+                            delay(1.seconds)
+                            state.update { state -> state.copy(currentUpdateStage = null) }
                             keyValueRepository.set(Keys.LAST_PLAN_UPDATE, Clock.System.now().epochSeconds.toString())
                         }
                     } catch (e: Exception) {
@@ -264,6 +282,7 @@ class HomeViewModel(
 data class HomeState(
     val currentProfile: Profile? = null,
     val currentTime: LocalDateTime = LocalDateTime.now(),
+    val platform: AppPlatform,
     val initDone: Boolean = false,
     val day: PopulatedDay? = null,
     val isUpdating: Boolean = false,
@@ -273,7 +292,16 @@ data class HomeState(
     val nextLessons: List<Lesson> = emptyList(),
     val remainingLessons: Map<Int, List<Lesson>> = emptyMap(),
     val lastPlanUpdate: Instant? = null,
-)
+    val currentUpdateStage: CurrentUpdateStage? = null,
+) {
+    enum class CurrentUpdateStage(val title: String) {
+        LessonTimes("Stundenzeiten"),
+        Holidays("Ferien/Feiertage"),
+        SubstitutionPlan("Vertretungsplan"),
+        Timetable("Stundenplan"),
+        Done("Fertig")
+    }
+}
 
 sealed class HomeEvent {
     data object OnRefresh : HomeEvent()
