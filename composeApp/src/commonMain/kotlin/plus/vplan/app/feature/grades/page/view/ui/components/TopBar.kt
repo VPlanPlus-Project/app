@@ -2,6 +2,7 @@
 
 package plus.vplan.app.feature.grades.page.view.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
@@ -12,6 +13,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,7 +41,9 @@ fun TopBar(
     subtitle: String?,
     gradesLockState: GradeLockState,
     topScrollBehavior: TopAppBarScrollBehavior?,
+    isEditModeActive: Boolean,
     onBack: () -> Unit,
+    onToggleEditMode: () -> Unit,
     onRequestGradeLock: () -> Unit,
     onOpenGradesAnalytics: () -> Unit,
     onOpenYearSelector: () -> Unit,
@@ -69,6 +73,27 @@ fun TopBar(
             }
         },
         actions = {
+            AnimatedContent(
+                targetState = isEditModeActive,
+            ) { isEditModeActive ->
+                if (isEditModeActive) FilledIconButton(
+                    onClick = onToggleEditMode,
+                ) {
+                    Icon(
+                        painterResource(CoreUiRes.drawable.calculator),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                } else IconButton(
+                    onClick = onToggleEditMode,
+                ) {
+                    Icon(
+                        painterResource(CoreUiRes.drawable.calculator),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
             RequestLockButton(
                 visible = gradesLockState == GradeLockState.Unlocked,
                 onRequestGradeLock = onRequestGradeLock
@@ -134,6 +159,8 @@ private fun TopBarPreview() {
         subtitle = "2025/2026",
         gradesLockState = GradeLockState.Unlocked,
         topScrollBehavior = null,
+        isEditModeActive = true,
+        onToggleEditMode = {},
         onBack = {},
         onRequestGradeLock = {},
         onOpenGradesAnalytics = {},

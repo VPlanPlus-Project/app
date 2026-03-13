@@ -26,6 +26,7 @@ import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.core.utils.date.longMonthNames
+import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
 import plus.vplan.app.feature.grades.page.view.ui.components.GradeValue
 import plus.vplan.app.ui.components.SubjectIcon
 
@@ -98,7 +99,7 @@ fun LatestGradeItem(
 
         Column {
             GradeValue(
-                grade = grade,
+                grade = GradeUiItem.ActualGrade(grade),
                 isSelected = isSelectedForAverage,
                 onClick = null
             )

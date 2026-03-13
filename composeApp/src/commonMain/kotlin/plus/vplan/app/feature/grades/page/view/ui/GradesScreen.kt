@@ -3,6 +3,15 @@
 package plus.vplan.app.feature.grades.page.view.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,22 +23,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,16 +57,21 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
@@ -62,7 +84,10 @@ import plus.vplan.app.feature.grades.page.view.ui.components.TopBar
 import plus.vplan.app.feature.grades.page.view.ui.components.latest.LatestGrades
 import plus.vplan.app.feature.grades.page.view.ui.components.subject.Subjects
 import plus.vplan.app.feature.main.ui.MainScreen
+import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.components.Switcher
+import plus.vplan.app.utils.toDp
+import kotlin.math.roundToInt
 
 @Composable
 fun GradesScreen(
@@ -130,7 +155,9 @@ private fun GradesContent(
                 subtitle = state.selectedYear?.name,
                 gradesLockState = state.gradeLockState,
                 topScrollBehavior = topScrollBehavior,
+                isEditModeActive = state.isInEditMode,
                 onBack = onBack,
+                onToggleEditMode = { onEvent(GradeDetailEvent.ToggleEditMode) },
                 onRequestGradeLock = { onEvent(GradeDetailEvent.RequestGradeLock) },
                 onOpenGradesAnalytics = onOpenAnalytics,
                 onOpenYearSelector = { showIntervalFilterDrawer = true },
@@ -259,7 +286,10 @@ private fun GradesContent(
                                             Subjects(
                                                 intervalType = interval.type,
                                                 subjects = intervalData.subjects,
-                                                onOpenGrade = { gradeDrawerId = it }
+                                                isEditModeActive = state.isInEditMode,
+                                                onNewGradeClicked = { addGradeToCategoryId = it },
+                                                onOpenGrade = { gradeDrawerId = it },
+                                                onDeleteGrade = { onEvent(GradeDetailEvent.RemoveGrade(it)) }
                                             )
                                         }
                                     }
@@ -283,6 +313,93 @@ private fun GradesContent(
                                     text = item.name,
                                     style = MaterialTheme.typography.labelMedium
                                 )
+                            }
+
+                            AnimatedVisibility(
+                                visible = verticalScrollState.value > with (localDensity) { 128.dp.toPx() } || state.isInEditMode,
+                                enter = fadeIn() + scaleIn(animationSpec = spring(stiffness = Spring.StiffnessHigh)),
+                                exit = fadeOut() + scaleOut(animationSpec = spring(stiffness = Spring.StiffnessHigh)),
+                                modifier = Modifier.align(Alignment.TopCenter)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(top = 16.dp)
+                                        .padding(top = (92.dp - with(localDensity) { verticalScrollState.value.toDp() }).coerceAtLeast(0.dp))
+                                        .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp))
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                        .padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = "∅",
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                    val selectedInterval = state.intervalsForSelectedYear.entries.sortedBy { it.key.from }[pagerState.currentPage]
+                                    AnimatedContent(
+                                        targetState = selectedInterval.value.avg,
+                                    ) { average ->
+                                        if (average == null) ShimmerLoader(
+                                            modifier = Modifier
+                                                .height(MaterialTheme.typography.headlineSmall.lineHeight.toDp())
+                                                .width(32.dp)
+                                                .clip(RoundedCornerShape(8.dp)),
+                                        ) else Text(
+                                            text = if (average.isNaN()) "-" else ((average * 100).roundToInt() / 100.0).toString(),
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                        )
+                                    }
+                                    VerticalDivider(Modifier.height(32.dp))
+                                    AnimatedContent(
+                                        targetState = state.isInEditMode,
+                                    ) { editMode ->
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(50))
+                                                    .background(
+                                                        if (editMode) MaterialTheme.colorScheme.primaryContainer
+                                                        else MaterialTheme.colorScheme.surfaceVariant
+                                                    )
+                                                    .clickable { onEvent(GradeDetailEvent.ToggleEditMode) }
+                                                    .padding(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                CompositionLocalProvider(LocalContentColor provides if (editMode) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant) {
+                                                    Icon(
+                                                        painter = painterResource(CoreUiRes.drawable.calculator),
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                    if (editMode) {
+                                                        VerticalDivider(Modifier.height(16.dp))
+                                                        Icon(
+                                                            painter = painterResource(CoreUiRes.drawable.x),
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(24.dp).padding(4.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            if (editMode) IconButton(
+                                                onClick = { onEvent(GradeDetailEvent.ResetAdditionalGrades) },
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(CoreUiRes.drawable.undo_2),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -810,91 +927,7 @@ private fun GradesContent(
 //                            }
 //                        }
 //
-//                        AnimatedVisibility(
-//                            visible = scrollState.value > with (localDensity) { 128.dp.toPx() } || state.isInEditMode,
-//                            enter = fadeIn() + scaleIn(animationSpec = spring(stiffness = Spring.StiffnessHigh)),
-//                            exit = fadeOut() + scaleOut(animationSpec = spring(stiffness = Spring.StiffnessHigh)),
-//                            modifier = Modifier.align(Alignment.TopCenter)
-//                        ) {
-//                            Row(
-//                                modifier = Modifier
-//                                    .padding(top = 16.dp)
-//                                    .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp))
-//                                    .clip(RoundedCornerShape(16.dp))
-//                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-//                                    .padding(8.dp),
-//                                verticalAlignment = Alignment.CenterVertically,
-//                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-//                            ) {
-//                                Text(
-//                                    text = "∅",
-//                                    style = MaterialTheme.typography.headlineSmall,
-//                                    color = MaterialTheme.colorScheme.onSurface,
-//                                )
-//                                AnimatedContent(
-//                                    targetState = state.fullAverage,
-//                                ) { average ->
-//                                    if (average == null) ShimmerLoader(
-//                                        modifier = Modifier
-//                                            .height(MaterialTheme.typography.headlineSmall.lineHeight.toDp())
-//                                            .width(32.dp)
-//                                            .clip(RoundedCornerShape(8.dp)),
-//                                        infiniteTransition = infiniteTransition
-//                                    ) else Text(
-//                                        text = if (average.isNaN()) "-" else ((average * 100).roundToInt() / 100.0).toString(),
-//                                        style = MaterialTheme.typography.headlineSmall,
-//                                        color = MaterialTheme.colorScheme.onSurface,
-//                                    )
-//                                }
-//                                VerticalDivider(Modifier.height(32.dp))
-//                                AnimatedContent(
-//                                    targetState = state.isInEditMode,
-//                                ) { editMode ->
-//                                    Row(
-//                                        verticalAlignment = Alignment.CenterVertically,
-//                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-//                                    ) {
-//                                        Row(
-//                                            modifier = Modifier
-//                                                .clip(RoundedCornerShape(50))
-//                                                .background(
-//                                                    if (editMode) MaterialTheme.colorScheme.primaryContainer
-//                                                    else MaterialTheme.colorScheme.surfaceVariant
-//                                                )
-//                                                .clickable { onEvent(GradeDetailEvent.ToggleEditMode) }
-//                                                .padding(8.dp),
-//                                            verticalAlignment = Alignment.CenterVertically,
-//                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-//                                        ) {
-//                                            CompositionLocalProvider(LocalContentColor provides if (editMode) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant) {
-//                                                Icon(
-//                                                    painter = painterResource(Res.drawable.calculator),
-//                                                    contentDescription = null,
-//                                                    modifier = Modifier.size(24.dp)
-//                                                )
-//                                                if (editMode) {
-//                                                    VerticalDivider(Modifier.height(16.dp))
-//                                                    Icon(
-//                                                        painter = painterResource(Res.drawable.x),
-//                                                        contentDescription = null,
-//                                                        modifier = Modifier.size(24.dp).padding(4.dp)
-//                                                    )
-//                                                }
-//                                            }
-//                                        }
-//                                        if (editMode) IconButton(
-//                                            onClick = { onEvent(GradeDetailEvent.ResetAdditionalGrades) },
-//                                        ) {
-//                                            Icon(
-//                                                painter = painterResource(Res.drawable.undo_2),
-//                                                contentDescription = null,
-//                                                modifier = Modifier.size(24.dp)
-//                                            )
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
+
 //                    }
 //                }
 //            }

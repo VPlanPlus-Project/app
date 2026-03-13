@@ -25,6 +25,7 @@ import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.feature.profile.page.domain.usecase.GetCurrentProfileUseCase
@@ -87,7 +88,9 @@ class ProfileViewModel(
 
                         state.currentInterval?.let { interval ->
                             state = state.copy(
-                                averageGrade = calculateAverageUseCase(grades, interval),
+                                averageGrade = calculateAverageUseCase(grades.map {
+                                    GradeUiItem.ActualGrade(it.grade)
+                                }, interval),
                                 latestGrade = grades
                                     .filter { grade -> grade.grade.collection.interval.id == interval.id }
                                     .filterNot { grade -> grade.grade.value == null }

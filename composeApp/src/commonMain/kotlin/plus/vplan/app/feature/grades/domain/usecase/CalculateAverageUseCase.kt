@@ -2,22 +2,18 @@ package plus.vplan.app.feature.grades.domain.usecase
 
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
-import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
-import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 
 class CalculateAverageUseCase {
-    suspend operator fun invoke(grades: List<GradesItem>, interval: BesteSchuleInterval, additionalGrades: List<CalculatorGrade> = emptyList()) = invoke(grades.map { CalculatorGrade.ActualGrade(it.grade) } + additionalGrades, interval)
-
-    suspend operator fun invoke(grades: List<CalculatorGrade>, interval: BesteSchuleInterval): Double {
+    suspend operator fun invoke(grades: List<GradeUiItem>, interval: BesteSchuleInterval): Double {
         val gradesForInterval = grades.filter {
             val intervalForGrade = when (it) {
-                is CalculatorGrade.ActualGrade -> it.grade.collection.interval
+                is GradeUiItem.ActualGrade -> it.grade.collection.interval
                 else -> interval
             }
             intervalForGrade.id == interval.id || intervalForGrade.includedIntervalId == interval.id
         }
 
-        val gradesBySubject = gradesForInterval.groupBy { it.getSubject() }
+        val gradesBySubject = gradesForInterval.groupBy { it.getSubjectId() }
         val subjectAverages = mutableListOf<Double>()
 
         gradesBySubject.forEach { (_, gradesForSubject) ->
@@ -28,7 +24,7 @@ class CalculateAverageUseCase {
 
             val categories = gradesForIntervalByType.mapNotNull { (categoryType, gradesForCategory) ->
                 val gradesToConsider = gradesForCategory
-                    .filter { (it is CalculatorGrade.ActualGrade && it.grade.isSelectedForFinalGrade) || it is CalculatorGrade.CustomGrade }
+                    .filter { (it is GradeUiItem.ActualGrade && it.grade.isSelectedForFinalGrade) || it is GradeUiItem.CustomGrade }
                     .filter { it.getValue() != null }
                     .mapNotNull { it.getValue() }
 
@@ -68,19 +64,21 @@ private data class Category(
     val weight: Double
 )
 
-sealed class CalculatorGrade {
+sealed class GradeUiItem {
 
-    abstract suspend fun getSubject(): BesteSchuleSubject
+    abstract suspend fun getSubjectId(): Int
     abstract suspend fun getType(): String
     abstract fun getValue(): Int?
+    abstract val intervalType: BesteSchuleInterval.Type
 
-    data class ActualGrade(val grade: BesteSchuleGrade): CalculatorGrade() {
-        override suspend fun getSubject(): BesteSchuleSubject = grade.collection.subject
+    data class ActualGrade(val grade: BesteSchuleGrade): GradeUiItem() {
+        override suspend fun getSubjectId(): Int = grade.collection.subject.id
         override suspend fun getType(): String = grade.collection.type
         override fun getValue(): Int? = grade.numericValue
+        override val intervalType: BesteSchuleInterval.Type = grade.collection.interval.type
     }
-    data class CustomGrade(val grade: Int, val subject: BesteSchuleSubject, val type: String): CalculatorGrade() {
-        override suspend fun getSubject(): BesteSchuleSubject = subject
+    data class CustomGrade(val grade: Int, val subjectId: Int, val type: String, override val intervalType: BesteSchuleInterval.Type): GradeUiItem() {
+        override suspend fun getSubjectId(): Int = subjectId
         override suspend fun getType(): String = type
         override fun getValue(): Int = grade
     }

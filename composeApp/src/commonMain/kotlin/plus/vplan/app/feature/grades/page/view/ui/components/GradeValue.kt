@@ -21,28 +21,32 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
 import plus.vplan.app.utils.blendColor
 
 @Composable
 fun GradeValue(
-    grade: BesteSchuleGrade,
+    grade: GradeUiItem,
     isSelected: Boolean,
     onClick: (() -> Unit)?,
 ) {
     GradeValue(
         gradeString = buildString {
-            if (grade.isOptional) append("(")
-            if (grade.value != null) append(grade.value)
+            val isOptional = grade is GradeUiItem.ActualGrade && grade.grade.isOptional
+            if (isOptional) append("(")
+            if (grade.getValue() != null) append(grade.getValue())
             else append("-")
-            if (grade.isOptional) append(")")
+            if (isOptional) append(")")
         },
         isSelected = isSelected,
-        intervalType = grade.collection.interval.type,
-        numericValue = grade.numericValue,
+        intervalType = grade.intervalType,
+        numericValue = when (grade) {
+            is GradeUiItem.ActualGrade -> grade.grade.numericValue
+            is GradeUiItem.CustomGrade -> grade.grade
+        },
         onClick = onClick
     )
 }
