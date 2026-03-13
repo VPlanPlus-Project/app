@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.utils.roundTo
 import plus.vplan.app.utils.toDp
@@ -49,7 +50,8 @@ fun AverageCard(
             ) {
                 Text(
                     text = "∅",
-                    style = MaterialTheme.typography.displaySmall
+                    style = MaterialTheme.typography.displaySmall,
+                    fontFamily = displayFontFamily(),
                 )
 
                 AnimatedContent(
@@ -64,7 +66,8 @@ fun AverageCard(
                             text =
                                 if (it.isNaN()) "-"
                                 else it.roundTo(2).toString(),
-                            style = MaterialTheme.typography.displaySmall
+                            style = MaterialTheme.typography.displaySmall,
+                            fontFamily = displayFontFamily(),
                         )
                     }
                 }
