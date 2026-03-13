@@ -18,10 +18,10 @@ jobs:
         runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
             -   name: Checkout sources
-                uses: actions/checkout@v4
+                uses: actions/checkout@v5
 
             -   name: Setup Java
-                uses: actions/setup-java@v4
+                uses: actions/setup-java@v5
                 with:
                     distribution: 'temurin'
                     java-version: 17
@@ -78,7 +78,7 @@ jobs:
             -   name: Disable debug mode
                 run: echo "app.debug=false" >> local.properties
 
-            -   uses: actions/cache@v4
+            -   uses: actions/cache@v5
                 with:
                     path: |
                         ~/.gradle/caches
@@ -99,7 +99,7 @@ jobs:
                     mv androidApp/build/outputs/bundle/release/androidApp-release.aab ${{ env.TAG_NAME }}.aab
 
             -   name: Upload build artifacts
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v6
                 with:
                     name: build-artifacts
                     path: |
@@ -110,10 +110,10 @@ jobs:
         runs-on: macos-self
         steps:
             -   name: Checkout sources
-                uses: actions/checkout@v4
+                uses: actions/checkout@v5
 
             -   name: Setup Java
-                uses: actions/setup-java@v4
+                uses: actions/setup-java@v5
                 with:
                     distribution: 'temurin'
                     java-version: 17
@@ -161,7 +161,7 @@ jobs:
                 run: rm -f iosApp/ci_certificate.p12 iosApp/ci_profile.mobileprovision
 
             -   name: Upload IPA artifact
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v6
                 with:
                     name: ios-build-artifacts
                     path: iosApp/build/VPlanPlus.ipa
@@ -220,7 +220,7 @@ jobs:
         if: ${{ !endsWith(github.ref_name, '-production') }}
         steps:
             -   name: Checkout sources
-                uses: actions/checkout@v4
+                uses: actions/checkout@v5
 
             -   name: Download iOS build artifacts
                 uses: actions/download-artifact@v4
