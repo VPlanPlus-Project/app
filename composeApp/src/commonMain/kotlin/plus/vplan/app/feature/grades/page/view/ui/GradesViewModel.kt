@@ -237,7 +237,7 @@ class GradesViewModel(
                     grades = gradesForSubject,
                     interval = interval,
                     additionalGrades = emptyList()
-                )
+                ).let { if (it.isNaN()) null else it }
             } else null
 
             val categoriesWithAverages = subject.categories.map { category ->

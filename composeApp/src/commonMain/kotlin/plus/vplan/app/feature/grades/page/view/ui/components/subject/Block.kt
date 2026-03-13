@@ -78,7 +78,7 @@ fun Subjects(
                 if (category.average != null) Text(
                     text = buildString {
                         append("∅ ")
-                        append(category.average.roundTo(1))
+                        if (!category.average.isNaN()) append(category.average.roundTo(1))
                         append(" × ")
                         append((category.weight / categoryWeightSum * 100).roundTo(1))
                         append("%")
