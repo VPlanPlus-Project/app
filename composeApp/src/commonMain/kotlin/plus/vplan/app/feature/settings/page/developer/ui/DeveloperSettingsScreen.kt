@@ -34,7 +34,6 @@ import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.settings.ui.components.SettingsRecord
 import plus.vplan.app.ui.components.TopToggle
 
-
 @Composable
 fun DeveloperSettingsScreen(
     navHostController: NavHostController,

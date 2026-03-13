@@ -10,7 +10,7 @@ data class BesteSchuleInterval(
     val from: LocalDate,
     val to: LocalDate,
     val includedIntervalId: Int?,
-    val yearId: Int,
+    val year: BesteSchuleYear,
     val linkedToSchulverwalterAccountIds: Set<Int>,
     val collectionIds: Set<Int> = emptySet(),
     val cachedAt: Instant

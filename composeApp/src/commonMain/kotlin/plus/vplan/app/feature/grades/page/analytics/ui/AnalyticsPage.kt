@@ -162,8 +162,8 @@ private fun AnalyticsContent(
                 val map = remember(state.filteredGrades) {
                     var max = 0
                     when (state.interval.interval.type) {
-                        is BesteSchuleInterval.Type.Sek2 -> (0..15).toList().associateWith { grade -> state.filteredGrades.count { it.grade.numericValue == grade } }
-                        else -> (1..6).toList().associateWith { grade -> state.filteredGrades.count { it.grade.numericValue == grade } }
+                        is BesteSchuleInterval.Type.Sek2 -> (0..15).toList().associateWith { grade -> state.filteredGrades.count { it.numericValue == grade } }
+                        else -> (1..6).toList().associateWith { grade -> state.filteredGrades.count { it.numericValue == grade } }
                     }
                         .also { max = it.maxOf { gradeByGrade -> gradeByGrade.value } }
                         .map {

@@ -13,7 +13,7 @@ import kotlin.time.Instant
         Index(value = ["id"], unique = true)
     ]
 )
-data class DbBesteschuleSubject(
+data class DbBesteSchuleSubject(
     @ColumnInfo("id") val id: Int,
     @ColumnInfo("short_name") val shortName: String,
     @ColumnInfo("long_name") val longName: String,

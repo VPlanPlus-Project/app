@@ -26,11 +26,10 @@ import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
-import plus.vplan.app.domain.model.populated.besteschule.PopulatedGrade
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 
 class AnalyticsViewModel(
@@ -43,7 +42,6 @@ class AnalyticsViewModel(
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
 
-    private val gradesPopulator by inject<GradesPopulator>()
     private val intervalPopulator by inject<IntervalPopulator>()
 
     private var mainJob: Job? = null
@@ -75,16 +73,15 @@ class AnalyticsViewModel(
 
                     launch {
                         besteSchuleGradesRepository.getAllForUser(vppId.schulverwalterConnection!!.userId)
-                            .flatMapLatest { grades -> gradesPopulator.populateMultiple(grades) }
                             .collectLatest { grades ->
                                 val subjects = besteSchuleSubjectsRepository.getAll().first()
                                 state = state.copy(
                                     grades = grades,
                                     filteredGrades = emptyList(),
                                     availableSubjectFilters = grades
-                                        .map { it.collection.subjectId }
+                                        .map { it.collection.subject }
                                         .distinct()
-                                        .let { subjects.filter { subject -> subject.id in it } }
+                                        .let { schuleSubjects -> subjects.filter { subject -> subject.id in schuleSubjects.map { it.id } } }
                                         .sortedBy { it.shortName },
                                     filteredSubjects = emptyList()
                                 )
@@ -115,9 +112,9 @@ class AnalyticsViewModel(
     private fun updateFiltered() {
         state = state.copy(filteredGrades = state.grades
             .filter { grade ->
-                state.filteredSubjects.any { subject -> grade.collection.subjectId == subject.id } || state.filteredSubjects.isEmpty()
+                state.filteredSubjects.any { subject -> grade.collection.subject.id == subject.id } || state.filteredSubjects.isEmpty()
             }
-            .filter { it.collection.intervalId in listOfNotNull(state.interval?.interval?.id, state.interval?.includedInterval?.id) }
+            .filter { it.collection.interval.id in listOfNotNull(state.interval?.interval?.id, state.interval?.includedInterval?.id) }
         )
     }
 }
@@ -126,8 +123,8 @@ data class AnalyticsState(
     val vppId: VppId? = null,
     val interval: PopulatedInterval? = null,
     val intervals: List<PopulatedInterval> = emptyList(),
-    val grades: List<PopulatedGrade> = emptyList(),
-    val filteredGrades: List<PopulatedGrade> = emptyList(),
+    val grades: List<BesteSchuleGrade> = emptyList(),
+    val filteredGrades: List<BesteSchuleGrade> = emptyList(),
 
     val availableSubjectFilters: List<BesteSchuleSubject> = emptyList(),
     val filteredSubjects: List<BesteSchuleSubject> = emptyList(),

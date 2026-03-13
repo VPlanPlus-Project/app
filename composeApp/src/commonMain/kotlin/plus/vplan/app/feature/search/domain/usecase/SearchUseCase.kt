@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -24,8 +23,7 @@ import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
-import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
+import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem
@@ -41,8 +39,8 @@ class SearchUseCase(
     private val assessmentRepository: AssessmentRepository,
 ): KoinComponent {
     private val besteSchuleGradesRepository by inject<GradesRepository>()
-    private val gradesPopulator by inject<GradesPopulator>()
-    private val collectionPopulator by inject<CollectionPopulator>()
+
+    private val intervalPopulator by inject<IntervalPopulator>()
 
     operator fun invoke(searchRequest: SearchRequest) = channelFlow {
         if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap())
@@ -109,13 +107,12 @@ class SearchUseCase(
 
                     if (searchRequest.assessmentType == null) launch {
                         besteSchuleGradesRepository.getAll()
-                            .flatMapLatest { gradesPopulator.populateMultiple(it) }
                             .map { response -> response.filter { grade -> query.lowercase() in grade.collection.name } }
                             .map { grades ->
                                 grades.map { grade ->
                                     GradesItem(
                                         grade = grade,
-                                        collection = collectionPopulator.populateSingle(grade.collection).first()
+                                        interval = intervalPopulator.populateSingle(grade.collection.interval).first()
                                     )
                                 }
                             }

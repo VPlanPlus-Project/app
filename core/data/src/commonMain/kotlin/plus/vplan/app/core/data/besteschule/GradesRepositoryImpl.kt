@@ -10,12 +10,11 @@ import plus.vplan.app.core.database.dao.besteschule.BesteschuleSubjectDao
 import plus.vplan.app.core.database.dao.besteschule.BesteschuleTeacherDao
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleCollection
 import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleGrade
-import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleSubject
-import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleTeacher
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleSubject
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleTeacher
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.network.besteschule.GradesApi
 import plus.vplan.app.network.besteschule.GradesDto
-import kotlin.collections.map
 import kotlin.time.Clock
 
 class GradesRepositoryImpl(
@@ -37,7 +36,7 @@ class GradesRepositoryImpl(
                     subjectDao.upsert(listOf(result.subject.toEntity()))
                     intervalsRepository.getById(result.collection.intervalId).first()
                     collectionsDao.upsert(listOf(result.collection.toEntity().copy(teacherId = result.teacher.id)))
-                    gradesDao.upsert(listOf(result.toEntity(existing)))
+                    gradesDao.upsert(listOf(result.toEntity(existing.map { existingItem -> existingItem.grade })))
                 } catch (e: Exception) {
                     throw RuntimeException("Failed to getById", e)
                 }
@@ -55,7 +54,7 @@ class GradesRepositoryImpl(
                     subjectDao.upsert(result.map { it.subject.toEntity() }.distinctBy { it.id })
                     result.map { it.collection.intervalId }.distinct().forEach { intervalsRepository.getById(it).first() }
                     collectionsDao.upsert(result.map { it.collection.toEntity().copy(teacherId = it.teacher.id) }.distinctBy { it.id })
-                    gradesDao.upsert(result.map { it.toEntity(items) })
+                    gradesDao.upsert(result.map { it.toEntity(items.map { grade -> grade.grade }) })
                     gradesDao.getAll().first().map { it.toModel() }
                 } catch (e: Exception) {
                     throw RuntimeException("Failed to getAll", e)
@@ -78,7 +77,7 @@ class GradesRepositoryImpl(
                     subjectDao.upsert(result.map { it.subject.toEntity() }.distinctBy { it.id })
                     result.map { it.collection.intervalId }.distinct().forEach { intervalsRepository.getById(it).first() }
                     collectionsDao.upsert(result.map { it.collection.toEntity().copy(teacherId = it.teacher.id) }.distinctBy { it.id })
-                    gradesDao.upsert(result.map { it.toEntity(items) })
+                    gradesDao.upsert(result.map { it.toEntity(items.map { grade -> grade.grade }) })
                 } catch (e: Exception) {
                     throw RuntimeException("Failed to getAllForUser", e)
                 }
@@ -98,7 +97,7 @@ class GradesRepositoryImpl(
     }
 }
 
-private fun GradesDto.Teacher.toEntity() = DbBesteschuleTeacher(
+private fun GradesDto.Teacher.toEntity() = DbBesteSchuleTeacher(
     id = this.id,
     localId = this.localId,
     forename = this.forename,
@@ -106,7 +105,7 @@ private fun GradesDto.Teacher.toEntity() = DbBesteschuleTeacher(
     cachedAt = Clock.System.now(),
 )
 
-private fun GradesDto.Subject.toEntity() = DbBesteschuleSubject(
+private fun GradesDto.Subject.toEntity() = DbBesteSchuleSubject(
     id = this.id,
     shortName = this.localId,
     longName = this.name,
@@ -156,7 +155,7 @@ private fun BesteSchuleGrade.toEntity() = DbBesteSchuleGrade(
     isOptional = this.isOptional,
     isSelectedForFinalGrade = this.isSelectedForFinalGrade,
     schulverwalterUserId = this.schulverwalterUserId,
-    collectionId = this.collectionId,
+    collectionId = this.collection.id,
     givenAt = this.givenAt,
     cachedAt = Clock.System.now(),
 )

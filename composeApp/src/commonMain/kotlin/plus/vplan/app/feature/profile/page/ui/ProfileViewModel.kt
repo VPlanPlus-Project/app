@@ -11,7 +11,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
@@ -22,11 +21,11 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
-import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
+import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.feature.profile.page.domain.usecase.GetCurrentProfileUseCase
@@ -48,8 +47,7 @@ class ProfileViewModel(
     private val besteSchuleGradesRepository by inject<GradesRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
 
-    private val gradesPopulator by inject<GradesPopulator>()
-    private val collectionPopulator by inject<CollectionPopulator>()
+    private val intervalPopulator by inject<IntervalPopulator>()
 
     init {
         viewModelScope.launch {
@@ -80,23 +78,24 @@ class ProfileViewModel(
                         )
 
                         val grades = besteSchuleGradesRepository.getAllForUser(schulverwalterUserId = vppId.schulverwalterConnection!!.userId)
-                            .flatMapLatest { grades -> gradesPopulator.populateMultiple(grades) }
                             .first()
                             .map { grade ->
                                 GradesItem(
                                     grade = grade,
-                                    collection = collectionPopulator.populateSingle(grade.collection).first()
+                                    interval = intervalPopulator.populateSingle(grade.collection.interval).first()
                                 )
                             }
 
                         state.currentInterval?.let { interval ->
                             state = state.copy(
-                                averageGrade = calculateAverageUseCase(grades, interval),
+                                averageGrade = calculateAverageUseCase(grades.map {
+                                    GradeUiItem.ActualGrade(it.grade)
+                                }, interval),
                                 latestGrade = grades
-                                    .filter { grade -> grade.collection.interval.id == interval.id }
-                                    .filterNot { grade -> grade.grade.grade.value == null }
-                                    .maxByOrNull { grade -> grade.grade.grade.givenAt }
-                                    ?.let { grade -> LatestGrade.Value(grade.grade.grade.value!!) }
+                                    .filter { grade -> grade.grade.collection.interval.id == interval.id }
+                                    .filterNot { grade -> grade.grade.value == null }
+                                    .maxByOrNull { grade -> grade.grade.givenAt }
+                                    ?.let { grade -> LatestGrade.Value(grade.grade.value!!) }
                                     ?: LatestGrade.NotExisting
                             )
                         }
