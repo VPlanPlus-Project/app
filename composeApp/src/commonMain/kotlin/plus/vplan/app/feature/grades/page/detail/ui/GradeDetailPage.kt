@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,8 +29,6 @@ import plus.vplan.app.feature.grades.detail.ui.components.OptionalRow
 import plus.vplan.app.feature.grades.detail.ui.components.TypeRow
 import plus.vplan.app.feature.grades.detail.ui.components.UseForFinalGradeRow
 import plus.vplan.app.feature.grades.detail.ui.components.UserRow
-import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
-import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
 import plus.vplan.app.utils.safeBottomPadding
 
@@ -93,57 +89,6 @@ fun GradeDetailPage(
                     .padding(horizontal = 16.dp)
                     .fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (state.lockState == GradeLockState.Unlocked) FilledTonalIconButton(
-                        enabled = state.reloadingState != UnoptimisticTaskState.InProgress,
-                        onClick = { onEvent(GradeDetailEvent.LockGrades) }
-                    ) {
-                        Icon(
-                            painter = painterResource(CoreUiRes.drawable.lock),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp).padding(2.dp)
-                        )
-                    }
-
-                    FilledTonalIconButton(
-                        enabled = state.reloadingState != UnoptimisticTaskState.InProgress,
-                        onClick = { onEvent(GradeDetailEvent.Reload) }
-                    ) {
-                        AnimatedContent(
-                            targetState = state.reloadingState,
-                        ) { reloadingState ->
-                            when (reloadingState) {
-                                UnoptimisticTaskState.InProgress -> CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp).padding(2.dp),
-                                    strokeWidth = 2.dp
-                                )
-
-                                UnoptimisticTaskState.Error -> Icon(
-                                    painter = painterResource(CoreUiRes.drawable.info),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp).padding(2.dp)
-                                )
-
-                                UnoptimisticTaskState.Success -> Icon(
-                                    painter = painterResource(CoreUiRes.drawable.check),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp).padding(2.dp)
-                                )
-
-                                null -> Icon(
-                                    painter = painterResource(CoreUiRes.drawable.rotate_cw),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp).padding(2.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
                 SubjectGroupRow(
                     canEdit = false,
                     allowGroup = false,

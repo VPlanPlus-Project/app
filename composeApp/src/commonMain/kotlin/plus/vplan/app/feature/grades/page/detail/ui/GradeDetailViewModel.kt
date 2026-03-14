@@ -2,6 +2,7 @@
 
 package plus.vplan.app.feature.grades.page.detail.ui
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -135,6 +136,7 @@ class GradeDetailViewModel(
     }
 }
 
+@Immutable
 data class GradeDetailState(
     val grade: BesteSchuleGrade? = null,
     val gradeUser: VppId.Active? = null,

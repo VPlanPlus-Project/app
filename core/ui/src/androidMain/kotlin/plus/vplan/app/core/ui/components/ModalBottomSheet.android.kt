@@ -2,6 +2,7 @@
 
 package plus.vplan.app.core.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -79,7 +81,7 @@ actual fun ModalBottomSheet(
 @Composable
 private fun SheetHeader(configuration: SheetConfiguration) {
     val hasTitle   = configuration.title != null || configuration.subtitle != null
-    val hasActions = configuration.showCloseButton
+    val hasActions = configuration.showCloseButton || configuration.actions.isNotEmpty()
 
     if (!hasTitle && !hasActions) return
 
@@ -112,19 +114,54 @@ private fun SheetHeader(configuration: SheetConfiguration) {
                 }
             }
 
-            if (configuration.showCloseButton) {
-                FilledTonalIconButton(
-                    onClick = configuration.closeButtonAction
-                ) {
-                    Icon(
-                        painter = painterResource(CoreUiRes.drawable.x),
-                        contentDescription = "Schließen",
-                        modifier = Modifier.size(20.dp),
-                    )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                configuration.actions.forEach { action ->
+                    SheetActionButton(action = action)
+                }
+
+                if (configuration.showCloseButton) {
+                    FilledTonalIconButton(
+                        onClick = configuration.closeButtonAction
+                    ) {
+                        Icon(
+                            painter = painterResource(CoreUiRes.drawable.x),
+                            contentDescription = "Schließen",
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
             }
         }
 
         HorizontalDivider()
+    }
+}
+
+@Composable
+private fun SheetActionButton(action: SheetActionItem) {
+    FilledTonalIconButton(
+        onClick = action.onClick,
+        enabled = action.enabled && !action.isLoading,
+    ) {
+        AnimatedContent(
+            targetState = action.isLoading,
+            label = "SheetActionButtonContent",
+        ) { isLoading ->
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp).padding(2.dp),
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Icon(
+                    painter = action.icon.painter,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
     }
 }

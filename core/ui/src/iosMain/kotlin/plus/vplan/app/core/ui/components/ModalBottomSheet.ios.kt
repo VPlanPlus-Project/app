@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.unit.dp
@@ -21,6 +22,8 @@ import platform.Foundation.NSSelectorFromString
 import platform.UIKit.NSLayoutConstraint
 import platform.UIKit.NSTextAlignmentCenter
 import platform.UIKit.UIAction
+import platform.UIKit.UIActivityIndicatorViewStyleMedium
+import platform.UIKit.UIAdaptivePresentationControllerDelegateProtocol
 import platform.UIKit.UIBarButtonItem
 import platform.UIKit.UIBarButtonSystemItem
 import platform.UIKit.UIColor
@@ -35,6 +38,7 @@ import platform.UIKit.UILabel
 import platform.UIKit.UILayoutConstraintAxisVertical
 import platform.UIKit.UINavigationController
 import platform.UIKit.UIPanGestureRecognizer
+import platform.UIKit.UIPresentationController
 import platform.UIKit.UISheetPresentationControllerDetent
 import platform.UIKit.UIStackView
 import platform.UIKit.UIStackViewAlignmentCenter
@@ -44,6 +48,7 @@ import platform.UIKit.UIViewController
 import platform.UIKit.addChildViewController
 import platform.UIKit.didMoveToParentViewController
 import platform.UIKit.isModalInPresentation
+import platform.UIKit.navigationController
 import platform.UIKit.navigationItem
 import platform.UIKit.presentationController
 import platform.UIKit.secondaryLabelColor
@@ -62,36 +67,7 @@ actual fun ModalBottomSheet(
     val grabberHandler = remember { GrabberDismissHandler(onDismiss = onDismissRequest) }
 
     val contentController = remember {
-        ComposeSheetViewController(
-            contentProvider = content,
-        ).also { vc ->
-            when {
-                configuration.title != null && configuration.subtitle != null ->
-                    vc.navigationItem.titleView = buildTitleView(
-                        configuration.title,
-                        configuration.subtitle
-                    )
-                configuration.title != null ->
-                    vc.navigationItem.title = configuration.title
-                configuration.subtitle != null ->
-                    vc.navigationItem.titleView = buildTitleView(
-                        title = null,
-                        subtitle = configuration.subtitle
-                    )
-            }
-
-            if (configuration.showCloseButton) {
-                vc.navigationItem.leftBarButtonItem = UIBarButtonItem(
-                    barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemClose,
-                    target = null,
-                    action = null
-                ).apply {
-                    primaryAction = UIAction.actionWithHandler { _ ->
-                        configuration.closeButtonAction()
-                    }
-                }
-            }
-        }
+        ComposeSheetViewController(contentProvider = content)
     }
 
     val navController = remember {
@@ -108,11 +84,29 @@ actual fun ModalBottomSheet(
         }
     }
 
+    val dismissDelegate = remember {
+        object : NSObject(), UIAdaptivePresentationControllerDelegateProtocol {
+            override fun presentationControllerDidDismiss(
+                presentationController: UIPresentationController
+            ) {
+                onDismissRequest()
+            }
+        }
+    }
+
+    LaunchedEffect(configuration) {
+        applyConfiguration(contentController, configuration)
+    }
+
     LaunchedEffect(Unit) {
+        navController.presentationController?.delegate = dismissDelegate
+
         rootController.presentViewController(
             viewControllerToPresent = navController,
             animated = true,
             completion = {
+                navController.presentationController?.delegate = dismissDelegate
+
                 navController.presentationController?.presentedView?.let { sheetView ->
                     grabberHandler.attach(sheetView)
                 }
@@ -122,8 +116,30 @@ actual fun ModalBottomSheet(
 
     DisposableEffect(Unit) {
         onDispose {
-            navController.dismissViewControllerAnimated(true) {
-                onDismissRequest()
+            if (navController.presentingViewController != null) {
+                navController.dismissViewControllerAnimated(false, completion = null)
+            }
+        }
+    }
+}
+
+private fun buildActionButton(action: SheetActionItem): UIBarButtonItem {
+    return if (action.isLoading) {
+        // Show a spinner instead of the icon while loading
+        val spinner = platform.UIKit.UIActivityIndicatorView(
+            activityIndicatorStyle = UIActivityIndicatorViewStyleMedium
+        ).also { it.startAnimating() }
+        UIBarButtonItem(customView = spinner)
+    } else {
+        UIBarButtonItem(
+            image = platform.UIKit.UIImage.systemImageNamed(action.icon.sfName),
+            style = platform.UIKit.UIBarButtonItemStyle.UIBarButtonItemStylePlain,
+            target = null,
+            action = null
+        ).apply {
+            enabled = action.enabled
+            primaryAction = UIAction.actionWithHandler { _ ->
+                action.onClick()
             }
         }
     }
@@ -172,13 +188,13 @@ internal class ComposeSheetViewController(
     private val contentProvider: @Composable (PaddingValues) -> Unit,
 ) : UIViewController(nibName = null, bundle = null) {
 
-    private var currentPadding = PaddingValues(0.dp)
+    private val paddingState = mutableStateOf(PaddingValues(0.dp))
 
     override fun viewDidLoad() {
         super.viewDidLoad()
 
         val composeVC = ComposeUIViewController {
-            contentProvider(currentPadding)
+            contentProvider(paddingState.value)
         }
 
         addChildViewController(composeVC)
@@ -196,22 +212,68 @@ internal class ComposeSheetViewController(
         composeVC.didMoveToParentViewController(this)
     }
 
-    override fun viewDidAppear(animated: Boolean) {
-        super.viewDidAppear(animated)
+    private var lastTop = -1.0
+    private var lastBottom = -1.0
+    override fun viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
 
-        val navBarHeight = (parentViewController as? UINavigationController)
-            ?.navigationBar
-            ?.frame
-            ?.useContents { size.height }
-            ?: 0.0
+        val top = view.safeAreaInsets.useContents { top }
+        val bottom = view.safeAreaInsets.useContents { bottom }
 
-        val safeAreaBottom = view.safeAreaInsets.useContents { bottom }
-
-        currentPadding = PaddingValues(
-            top = navBarHeight.dp,
-            bottom = safeAreaBottom.dp,
-        )
+        if (top != lastTop || bottom != lastBottom) {
+            lastTop = top
+            lastBottom = bottom
+            paddingState.value = PaddingValues(
+                top = top.dp,
+                bottom = bottom.dp,
+            )
+        }
     }
+
+}
+
+private fun applyConfiguration(
+    vc: ComposeSheetViewController,
+    configuration: SheetConfiguration
+) {
+    // Title
+    when {
+        configuration.title != null && configuration.subtitle != null ->
+            vc.navigationItem.titleView = buildTitleView(configuration.title, configuration.subtitle)
+        configuration.title != null -> {
+            vc.navigationItem.titleView = null
+            vc.navigationItem.title = configuration.title
+        }
+        configuration.subtitle != null ->
+            vc.navigationItem.titleView = buildTitleView(null, configuration.subtitle)
+        else -> {
+            vc.navigationItem.titleView = null
+            vc.navigationItem.title = null
+        }
+    }
+
+    // Bar button items
+    val rightItems = mutableListOf<UIBarButtonItem>()
+
+    if (configuration.showCloseButton) {
+        vc.navigationItem.leftBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemClose,
+            target = null,
+            action = null
+        ).apply {
+            primaryAction = UIAction.actionWithHandler { _ ->
+                vc.navigationController?.dismissViewControllerAnimated(true) {
+                    configuration.closeButtonAction()
+                }
+            }
+        }
+    }
+
+    configuration.actions.forEach { action ->
+        rightItems += buildActionButton(action)
+    }
+
+    vc.navigationItem.rightBarButtonItems = rightItems.ifEmpty { null }
 }
 
 @OptIn(BetaInteropApi::class)
