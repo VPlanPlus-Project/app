@@ -5,6 +5,7 @@ package plus.vplan.app.feature.grades.detail.ui
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.GradesRepository
@@ -62,7 +64,7 @@ class GradeDetailViewModel(
             )
         }
         mainJob?.cancel()
-        mainJob = viewModelScope.launch {
+        mainJob = viewModelScope.launch(Dispatchers.Default) {
             besteSchuleGradesRepository.getById(gradeId)
                 .collectLatest { grade ->
                     if (grade == null) return@collectLatest
@@ -75,12 +77,14 @@ class GradeDetailViewModel(
                             .filter { it.schulverwalterConnection != null }
                             .firstOrNull { it.schulverwalterConnection?.userId == grade.schulverwalterUserId }
                             ?.let { user ->
-                                state.update { state ->
-                                    state.copy(
-                                        grade = grade,
-                                        gradeUser = user,
-                                        initDone = true,
-                                    )
+                                withContext(Dispatchers.Main) {
+                                    state.update { state ->
+                                        state.copy(
+                                            grade = grade,
+                                            gradeUser = user,
+                                            initDone = true,
+                                        )
+                                    }
                                 }
                             }
                     }
@@ -92,11 +96,13 @@ class GradeDetailViewModel(
         viewModelScope.launch {
             when (event) {
                 is GradeDetailEvent.ToggleConsiderForFinalGrade -> {
-                    besteSchuleGradesRepository.save(
-                        state.value.grade!!.copy(
-                            isSelectedForFinalGrade = !state.value.grade!!.isSelectedForFinalGrade
+                    withContext(Dispatchers.Default) {
+                        besteSchuleGradesRepository.save(
+                            state.value.grade!!.copy(
+                                isSelectedForFinalGrade = !state.value.grade!!.isSelectedForFinalGrade
+                            )
                         )
-                    )
+                    }
                 }
 
                 is GradeDetailEvent.Reload -> {
