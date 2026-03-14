@@ -33,12 +33,12 @@ import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.until
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
+import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
+import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
-import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
-import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.utils.atStartOfDay
 import kotlin.time.Duration.Companion.days

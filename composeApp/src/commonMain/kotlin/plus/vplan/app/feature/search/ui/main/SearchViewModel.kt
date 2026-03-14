@@ -25,10 +25,10 @@ import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
-import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
-import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
+import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
+import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.GetAssessmentsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase

@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.domain.usecase
+package plus.vplan.app.feature.grades.common.domain.usecase
 
 import kotlinx.coroutines.runBlocking
 import plus.vplan.app.core.data.KeyValueRepository

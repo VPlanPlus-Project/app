@@ -31,7 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
+import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 
 /**
  * @param onRequestGradeLock Callback to request locking the grades

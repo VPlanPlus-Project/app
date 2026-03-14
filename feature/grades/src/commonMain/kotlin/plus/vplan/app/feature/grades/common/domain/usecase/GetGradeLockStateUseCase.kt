@@ -1,11 +1,11 @@
-package plus.vplan.app.feature.grades.domain.usecase
+package plus.vplan.app.feature.grades.common.domain.usecase
 
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
+import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 import plus.vplan.app.feature.grades.common.domain.model.GradeProtectLevel
-import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeProtectionLevelUseCase
 
 class GetGradeLockStateUseCase(
     private val getGradeProtectionLevelUseCase: GetGradeProtectionLevelUseCase,
@@ -19,8 +19,4 @@ class GetGradeLockStateUseCase(
          else if (locked) GradeLockState.Locked
          else GradeLockState.Unlocked
      }
-}
-
-enum class GradeLockState(val canAccess: Boolean) {
-    Locked(false), Unlocked(true), NotConfigured(true)
 }

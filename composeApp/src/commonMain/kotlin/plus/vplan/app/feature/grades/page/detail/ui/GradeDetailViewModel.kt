@@ -23,11 +23,11 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.application.UpdateResult
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
+import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.UpdateGradeUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
-import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
-import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 
 class GradeDetailViewModel(

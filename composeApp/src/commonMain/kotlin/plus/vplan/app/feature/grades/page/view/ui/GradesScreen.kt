@@ -74,7 +74,7 @@ import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.Switcher
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
+import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.components.AddGradeDialog
 import plus.vplan.app.feature.grades.page.view.ui.components.AverageCard

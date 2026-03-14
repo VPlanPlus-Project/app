@@ -18,7 +18,7 @@ import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.ModalBottomSheet
 import plus.vplan.app.core.ui.components.SheetActionItem
 import plus.vplan.app.core.ui.components.SheetConfiguration
-import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
+import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 
 @OptIn(ExperimentalMaterial3Api::class)

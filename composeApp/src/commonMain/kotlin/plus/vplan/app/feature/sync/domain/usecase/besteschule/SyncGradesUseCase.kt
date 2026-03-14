@@ -20,7 +20,7 @@ import plus.vplan.app.core.model.application.StartTaskJson
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.until
-import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.utils.atStartOfDay
 import kotlin.time.Duration.Companion.days
 
