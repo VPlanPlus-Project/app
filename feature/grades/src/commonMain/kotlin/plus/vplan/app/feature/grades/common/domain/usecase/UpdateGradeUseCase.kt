@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.domain.usecase
+package plus.vplan.app.feature.grades.common.domain.usecase
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.map
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.GradesRepository
-import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
+import plus.vplan.app.core.model.application.UpdateResult
 
 class UpdateGradeUseCase: KoinComponent {
     private val besteSchuleGradesRepository by inject<GradesRepository>()

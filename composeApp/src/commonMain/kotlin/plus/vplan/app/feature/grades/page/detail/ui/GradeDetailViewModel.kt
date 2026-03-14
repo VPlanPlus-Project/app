@@ -21,18 +21,16 @@ import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.application.UpdateResult
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
+import plus.vplan.app.feature.grades.common.domain.usecase.UpdateGradeUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
-import plus.vplan.app.feature.grades.domain.usecase.UpdateGradeUseCase
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 
 class GradeDetailViewModel(
-    private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateGradeUseCase: UpdateGradeUseCase,
     private val getGradeLockStateUseCase: GetGradeLockStateUseCase,
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
@@ -65,32 +63,28 @@ class GradeDetailViewModel(
         }
         mainJob?.cancel()
         mainJob = viewModelScope.launch {
-            getCurrentProfileUseCase().collectLatest { profile ->
-                if (profile !is Profile.StudentProfile) return@collectLatest
+            besteSchuleGradesRepository.getById(gradeId)
+                .collectLatest { grade ->
+                    if (grade == null) return@collectLatest
 
-                besteSchuleGradesRepository.getById(gradeId)
-                    .collectLatest { grade ->
-                        if (grade == null) return@collectLatest
-
-                        coroutineScope {
-                            profileRepository.getAll()
-                                .first()
-                                .filterIsInstance<Profile.StudentProfile>()
-                                .mapNotNull { it.vppId }
-                                .filter { it.schulverwalterConnection != null }
-                                .firstOrNull { it.schulverwalterConnection?.userId == grade.schulverwalterUserId }
-                                ?.let { user ->
-                                    state.update { state ->
-                                        state.copy(
-                                            grade = grade,
-                                            gradeUser = user,
-                                            initDone = true,
-                                        )
-                                    }
+                    coroutineScope {
+                        profileRepository.getAll()
+                            .first()
+                            .filterIsInstance<Profile.StudentProfile>()
+                            .mapNotNull { it.vppId }
+                            .filter { it.schulverwalterConnection != null }
+                            .firstOrNull { it.schulverwalterConnection?.userId == grade.schulverwalterUserId }
+                            ?.let { user ->
+                                state.update { state ->
+                                    state.copy(
+                                        grade = grade,
+                                        gradeUser = user,
+                                        initDone = true,
+                                    )
                                 }
-                        }
+                            }
                     }
-            }
+                }
         }
     }
 
@@ -104,6 +98,7 @@ class GradeDetailViewModel(
                         )
                     )
                 }
+
                 is GradeDetailEvent.Reload -> {
                     state.update { state ->
                         state.copy(reloadingState = UnoptimisticTaskState.InProgress)
@@ -121,14 +116,17 @@ class GradeDetailViewModel(
                                 }
                             }
                         }
+
                         UpdateResult.ERROR -> {
                             state.update { state ->
                                 state.copy(reloadingState = UnoptimisticTaskState.Error)
                             }
                         }
+
                         else -> Unit
                     }
                 }
+
                 is GradeDetailEvent.RequestGradesUnlock -> requestGradeUnlockUseCase()
                 is GradeDetailEvent.LockGrades -> lockGradesUseCase()
             }
@@ -150,6 +148,6 @@ sealed class GradeDetailEvent {
     data object ToggleConsiderForFinalGrade : GradeDetailEvent()
     data object Reload : GradeDetailEvent()
 
-    data object RequestGradesUnlock: GradeDetailEvent()
-    data object LockGrades: GradeDetailEvent()
+    data object RequestGradesUnlock : GradeDetailEvent()
+    data object LockGrades : GradeDetailEvent()
 }

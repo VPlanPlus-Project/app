@@ -14,10 +14,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkResult
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase

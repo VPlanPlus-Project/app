@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.file.FileOperationProgress
@@ -31,14 +32,13 @@ import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.model.application.UpdateResult
 import plus.vplan.app.domain.usecase.file.DeleteFileUseCase
 import plus.vplan.app.domain.usecase.file.DownloadFileUseCase
 import plus.vplan.app.domain.usecase.file.GetFileThumbnailUseCase
 import plus.vplan.app.domain.usecase.file.OpenFileUseCase
 import plus.vplan.app.domain.usecase.file.RenameFileUseCase
 import plus.vplan.app.domain.usecase.file.UploadFileUseCase
-import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
 import plus.vplan.app.feature.homework.domain.usecase.AddTaskUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.DeleteTaskUseCase

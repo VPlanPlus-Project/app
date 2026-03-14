@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.model.Profile
@@ -28,7 +29,6 @@ import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
 import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem
-import plus.vplan.app.feature.profile.page.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
 

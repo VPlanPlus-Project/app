@@ -8,12 +8,14 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.group.GroupRepository
@@ -24,7 +26,6 @@ import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.feature.search.domain.model.SearchResult
@@ -45,7 +46,7 @@ class SearchUseCase(
     operator fun invoke(searchRequest: SearchRequest) = channelFlow {
         if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap())
         val query = searchRequest.query.lowercase().trim()
-        val profile = getCurrentProfileUseCase().first()
+        val profile = getCurrentProfileUseCase().filterNotNull().first()
 
         launch {
             substitutionPlanRepository.getCurrentVersion().collectLatest { substitutionPlanVersion ->
