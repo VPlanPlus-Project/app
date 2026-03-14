@@ -29,11 +29,11 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.format
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Lesson
+import plus.vplan.app.core.ui.components.LineShimmer
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarView
 import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLessons
 import plus.vplan.app.feature.search.domain.model.SearchResult
-import plus.vplan.app.ui.components.LineShimmer
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.findCurrentLessons
 import plus.vplan.app.utils.getNextLessonStart

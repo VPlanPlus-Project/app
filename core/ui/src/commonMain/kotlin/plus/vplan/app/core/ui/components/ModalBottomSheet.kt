@@ -1,6 +1,11 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package plus.vplan.app.core.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.painter.Painter
@@ -11,6 +16,7 @@ expect fun ModalBottomSheet(
     configuration: SheetConfiguration = SheetConfiguration(
         closeButtonAction = onDismissRequest
     ),
+    sheetState: SheetState = rememberModalBottomSheetState(),
     content: @Composable (contentPadding: PaddingValues) -> Unit
 )
 

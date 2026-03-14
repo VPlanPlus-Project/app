@@ -53,12 +53,12 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.SubjectIcon
+import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.dateFormatDDMMMYY
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer
-import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
 
 

@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.page.view.ui.components
+package plus.vplan.app.feature.grades.common.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background

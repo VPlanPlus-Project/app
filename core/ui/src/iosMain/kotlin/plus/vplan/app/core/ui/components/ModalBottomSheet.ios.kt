@@ -1,13 +1,17 @@
-@file:OptIn(ExperimentalForeignApi::class)
+@file:OptIn(ExperimentalForeignApi::class, ExperimentalMaterial3Api::class, BetaInteropApi::class)
 
 package plus.vplan.app.core.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeUIViewController
@@ -16,6 +20,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.useContents
+import kotlinx.coroutines.flow.distinctUntilChanged
 import platform.CoreGraphics.CGAffineTransformIdentity
 import platform.CoreGraphics.CGAffineTransformMakeTranslation
 import platform.Foundation.NSSelectorFromString
@@ -56,11 +61,12 @@ import platform.UIKit.sheetPresentationController
 import platform.darwin.NSObject
 import plus.vplan.app.core.ui.theme.AppTheme
 
-@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+
 @Composable
 actual fun ModalBottomSheet(
     onDismissRequest: () -> Unit,
     configuration: SheetConfiguration,
+    sheetState: SheetState,
     content: @Composable (contentPadding: PaddingValues) -> Unit
 ) {
     val rootController = LocalUIViewController.current
@@ -99,6 +105,39 @@ actual fun ModalBottomSheet(
         applyConfiguration(contentController, configuration)
     }
 
+    // Bridge SheetState → UISheetPresentationController
+    LaunchedEffect(sheetState) {
+        snapshotFlow { sheetState.currentValue }
+            .distinctUntilChanged()
+            .collect { value ->
+                when (value) {
+                    SheetValue.Hidden -> {
+                        // Only dismiss if the native sheet is still on screen,
+                        // otherwise we'd double-call after a swipe-dismiss.
+                        if (navController.presentingViewController != null) {
+                            navController.dismissViewControllerAnimated(true, completion = null)
+                        }
+                    }
+                    SheetValue.Expanded -> {
+                        navController.sheetPresentationController
+                            ?.animateChanges {
+                                navController.sheetPresentationController
+                                    ?.selectedDetentIdentifier =
+                                    UISheetPresentationControllerDetent.largeDetent().identifier
+                            }
+                    }
+                    SheetValue.PartiallyExpanded -> {
+                        navController.sheetPresentationController
+                            ?.animateChanges {
+                                navController.sheetPresentationController
+                                    ?.selectedDetentIdentifier =
+                                    UISheetPresentationControllerDetent.mediumDetent().identifier
+                            }
+                    }
+                }
+            }
+    }
+
     LaunchedEffect(Unit) {
         navController.presentationController?.delegate = dismissDelegate
 
@@ -111,6 +150,14 @@ actual fun ModalBottomSheet(
                 navController.presentationController?.presentedView?.let { sheetView ->
                     grabberHandler.attach(sheetView)
                 }
+
+                // Sync initial detent with the SheetState value that was set
+                // before the sheet finished presenting.
+                val initialDetent = when (sheetState.currentValue) {
+                    SheetValue.Expanded -> UISheetPresentationControllerDetent.largeDetent().identifier
+                    else -> UISheetPresentationControllerDetent.mediumDetent().identifier
+                }
+                navController.sheetPresentationController?.selectedDetentIdentifier = initialDetent
             }
         )
     }
@@ -242,13 +289,17 @@ private fun applyConfiguration(
     // Title
     when {
         configuration.title != null && configuration.subtitle != null ->
-            vc.navigationItem.titleView = buildTitleView(configuration.title, configuration.subtitle)
+            vc.navigationItem.titleView =
+                buildTitleView(configuration.title, configuration.subtitle)
+
         configuration.title != null -> {
             vc.navigationItem.titleView = null
             vc.navigationItem.title = configuration.title
         }
+
         configuration.subtitle != null ->
             vc.navigationItem.titleView = buildTitleView(null, configuration.subtitle)
+
         else -> {
             vc.navigationItem.titleView = null
             vc.navigationItem.title = null
@@ -307,11 +358,13 @@ private class GrabberDismissHandler(
             UIGestureRecognizerStateBegan -> {
                 startY = recognizer.locationInView(view).useContents { y }
             }
+
             UIGestureRecognizerStateChanged -> {
                 if (startY < 44.0 && translationY > 0) {
                     view.transform = CGAffineTransformMakeTranslation(0.0, translationY)
                 }
             }
+
             UIGestureRecognizerStateEnded -> {
                 if (startY < 44.0 && translationY > dismissThreshold) {
                     onDismiss()
@@ -329,9 +382,11 @@ private class GrabberDismissHandler(
                     )
                 }
             }
+
             UIGestureRecognizerStateCancelled -> {
                 view.transform = CGAffineTransformIdentity.readValue()
             }
+
             else -> {}
         }
     }

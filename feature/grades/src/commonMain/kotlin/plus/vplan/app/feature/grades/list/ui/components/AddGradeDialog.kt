@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.page.view.ui.components
+package plus.vplan.app.feature.grades.list.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,14 +13,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.ui.components.Grid
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.ui.util.blendColor
-import plus.vplan.app.ui.components.Grid
 
 @Composable
 fun AddGradeDialog(
@@ -63,7 +64,7 @@ fun AddGradeDialog(
                                     .clickable { onSelectGrade(grade) }
                                     .background(background)
                                     .padding(4.dp),
-                                contentAlignment = androidx.compose.ui.Alignment.Center
+                                contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = grade.toString(),

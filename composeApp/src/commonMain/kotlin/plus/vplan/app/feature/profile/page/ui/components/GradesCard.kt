@@ -49,9 +49,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.ShimmerLoader
 import plus.vplan.app.core.ui.components.SubjectIcon
-import plus.vplan.app.ui.components.ShimmerLoader
-import plus.vplan.app.utils.toDp
+import plus.vplan.app.core.ui.util.textunit.toDp
 import kotlin.math.roundToInt
 
 /**

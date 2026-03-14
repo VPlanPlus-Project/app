@@ -21,8 +21,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,10 +43,10 @@ import plus.vplan.app.core.ui.util.paddingvalues.plus
 actual fun ModalBottomSheet(
     onDismissRequest: () -> Unit,
     configuration: SheetConfiguration,
+    sheetState: SheetState,
     content: @Composable (contentPadding: PaddingValues) -> Unit
 ) {
     val density = LocalDensity.current
-    val sheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -61,7 +61,7 @@ actual fun ModalBottomSheet(
 
             if (headerHeight != null) content(
                 WindowInsets.navigationBars.asPaddingValues() + PaddingValues(
-                    top = headerHeight!!,
+                    top = headerHeight!! + 16.dp,
                 )
             )
 

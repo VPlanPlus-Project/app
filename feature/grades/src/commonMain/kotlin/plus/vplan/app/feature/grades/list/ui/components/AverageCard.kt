@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.page.view.ui.components
+package plus.vplan.app.feature.grades.list.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.InfiniteTransition
@@ -20,12 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import plus.vplan.app.core.ui.components.ShimmerLoader
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.ui.theme.displayFontFamily
-import plus.vplan.app.ui.components.ShimmerLoader
-import plus.vplan.app.utils.roundTo
-import plus.vplan.app.utils.toDp
+import plus.vplan.app.core.ui.util.textunit.toDp
+import plus.vplan.app.core.utils.number.roundTo
 
 @Composable
 fun AverageCard(

@@ -1,4 +1,4 @@
-package plus.vplan.app.ui.components
+package plus.vplan.app.core.ui.components
 
 import androidx.compose.animation.core.EaseOutCirc
 import androidx.compose.animation.core.InfiniteTransition
@@ -24,7 +24,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import plus.vplan.app.utils.toDp
+import plus.vplan.app.core.ui.util.textunit.toDp
 
 @Composable
 fun ShimmerLoader(

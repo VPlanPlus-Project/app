@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.displayFontFamily
-import plus.vplan.app.utils.toDp
+import plus.vplan.app.core.ui.util.textunit.toDp
 
 @Composable
 private fun sectionTitleFont() = MaterialTheme.typography.titleMediumEmphasized

@@ -72,21 +72,21 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.ShimmerLoader
 import plus.vplan.app.core.ui.components.Switcher
+import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 import plus.vplan.app.feature.grades.detail.ui.GradeDetailDrawer
-import plus.vplan.app.feature.grades.page.view.ui.components.AddGradeDialog
-import plus.vplan.app.feature.grades.page.view.ui.components.AverageCard
-import plus.vplan.app.feature.grades.page.view.ui.components.GradesLocked
-import plus.vplan.app.feature.grades.page.view.ui.components.NoGradesForInterval
-import plus.vplan.app.feature.grades.page.view.ui.components.SelectYearDrawer
-import plus.vplan.app.feature.grades.page.view.ui.components.TopBar
+import plus.vplan.app.feature.grades.list.ui.components.AddGradeDialog
+import plus.vplan.app.feature.grades.list.ui.components.AverageCard
+import plus.vplan.app.feature.grades.list.ui.components.GradesLocked
+import plus.vplan.app.feature.grades.list.ui.components.NoGradesForInterval
+import plus.vplan.app.feature.grades.list.ui.components.SelectYearDrawer
+import plus.vplan.app.feature.grades.list.ui.components.TopBar
 import plus.vplan.app.feature.grades.page.view.ui.components.latest.LatestGrades
 import plus.vplan.app.feature.grades.page.view.ui.components.subject.Subjects
 import plus.vplan.app.feature.main.ui.MainScreen
-import plus.vplan.app.ui.components.ShimmerLoader
-import plus.vplan.app.utils.toDp
 import kotlin.math.roundToInt
 
 @Composable

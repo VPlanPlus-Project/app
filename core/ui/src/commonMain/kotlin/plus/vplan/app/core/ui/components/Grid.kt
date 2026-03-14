@@ -1,4 +1,4 @@
-package plus.vplan.app.ui.components
+package plus.vplan.app.core.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

@@ -82,6 +82,7 @@ import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
 import plus.vplan.app.core.utils.date.untilRelativeText
@@ -102,7 +103,6 @@ import plus.vplan.app.utils.longDayOfWeekNames
 import plus.vplan.app.utils.openUrl
 import plus.vplan.app.utils.progressIn
 import plus.vplan.app.utils.regularTimeFormat
-import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.transparent
 import kotlin.uuid.ExperimentalUuidApi
 

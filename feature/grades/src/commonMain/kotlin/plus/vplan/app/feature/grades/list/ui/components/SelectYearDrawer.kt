@@ -1,30 +1,23 @@
-package plus.vplan.app.feature.grades.page.view.ui.components
+package plus.vplan.app.feature.grades.list.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import plus.vplan.app.core.model.besteschule.BesteSchuleYear
-import plus.vplan.app.ui.components.SelectContainer
-import plus.vplan.app.ui.components.SelectItem
-import plus.vplan.app.utils.safeBottomPadding
+import plus.vplan.app.core.ui.components.ModalBottomSheet
+import plus.vplan.app.core.ui.components.SelectContainer
+import plus.vplan.app.core.ui.components.SelectItem
+import plus.vplan.app.core.ui.components.SheetConfiguration
 
 private val dateFormat = LocalDate.Format {
     day(Padding.ZERO)
@@ -74,26 +67,24 @@ fun SelectYearDrawer(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(true)
-    val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        contentWindowInsets = { WindowInsets(0.dp) },
-        sheetState = sheetState
-    ) {
+        sheetState = sheetState,
+        configuration = SheetConfiguration(
+            title = "Schuljahr auswählen",
+            showCloseButton = true,
+            closeButtonAction = onDismiss
+        )
+    ) { contentPadding ->
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .padding(bottom = safeBottomPadding())
+                .padding(contentPadding)
         ) {
-            Text(
-                text = "Schuljahr auswählen",
-                style = MaterialTheme.typography.headlineLarge,
-            )
-            Spacer(Modifier.height(8.dp))
             SelectYearDrawerContent(years, selectedYear) {
                 onClickYear(it)
-                scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
+                onDismiss()
             }
         }
     }

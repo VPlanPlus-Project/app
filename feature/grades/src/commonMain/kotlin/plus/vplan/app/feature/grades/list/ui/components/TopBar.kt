@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
-package plus.vplan.app.feature.grades.page.view.ui.components
+package plus.vplan.app.feature.grades.list.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -73,32 +73,40 @@ fun TopBar(
             }
         },
         actions = {
-            AnimatedContent(
-                targetState = isEditModeActive,
-            ) { isEditModeActive ->
-                if (isEditModeActive) FilledIconButton(
-                    onClick = onToggleEditMode,
-                ) {
-                    Icon(
-                        painterResource(CoreUiRes.drawable.calculator),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                } else IconButton(
-                    onClick = onToggleEditMode,
-                ) {
-                    Icon(
-                        painterResource(CoreUiRes.drawable.calculator),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
+            AnimatedVisibility(
+                visible = gradesLockState.canAccess,
+                enter = expandHorizontally(expandFrom = Alignment.CenterHorizontally) + fadeIn(),
+                exit = shrinkHorizontally(shrinkTowards = Alignment.CenterHorizontally) + fadeOut(),
+            ) {
+                AnimatedContent(
+                    targetState = isEditModeActive,
+                ) { isEditModeActive ->
+                    if (isEditModeActive) FilledIconButton(
+                        onClick = onToggleEditMode,
+                    ) {
+                        Icon(
+                            painterResource(CoreUiRes.drawable.calculator),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else IconButton(
+                        onClick = onToggleEditMode,
+                    ) {
+                        Icon(
+                            painterResource(CoreUiRes.drawable.calculator),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
+
             RequestLockButton(
                 visible = gradesLockState == GradeLockState.Unlocked,
                 onRequestGradeLock = onRequestGradeLock
             )
-            androidx.compose.animation.AnimatedVisibility(
+
+            AnimatedVisibility(
                 visible = gradesLockState.canAccess && showGradesAnalytics,
                 enter = expandHorizontally(expandFrom = Alignment.CenterHorizontally) + fadeIn(),
                 exit = shrinkHorizontally(shrinkTowards = Alignment.CenterHorizontally) + fadeOut(),
@@ -112,7 +120,8 @@ fun TopBar(
                     )
                 }
             }
-            androidx.compose.animation.AnimatedVisibility(
+
+            AnimatedVisibility(
                 visible = gradesLockState != GradeLockState.Locked,
                 enter = expandHorizontally(expandFrom = Alignment.CenterHorizontally) + fadeIn(),
                 exit = shrinkHorizontally(shrinkTowards = Alignment.CenterHorizontally) + fadeOut()

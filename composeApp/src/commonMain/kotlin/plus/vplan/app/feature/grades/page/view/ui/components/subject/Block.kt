@@ -23,9 +23,9 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.utils.number.roundTo
 import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
 import plus.vplan.app.feature.grades.page.view.ui.Subject
-import plus.vplan.app.utils.roundTo
 import kotlin.math.floor
 
 @Composable

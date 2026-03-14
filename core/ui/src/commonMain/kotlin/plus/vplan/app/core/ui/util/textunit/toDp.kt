@@ -1,4 +1,4 @@
-package plus.vplan.app.utils
+package plus.vplan.app.core.ui.util.textunit
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity

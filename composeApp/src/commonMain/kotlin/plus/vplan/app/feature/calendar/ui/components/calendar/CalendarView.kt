@@ -68,6 +68,7 @@ import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.SubjectIcon
+import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.until
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
@@ -83,7 +84,6 @@ import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.minusWithCapAtMidnight
 import plus.vplan.app.utils.plusWithCapAtMidnight
 import plus.vplan.app.utils.regularTimeFormat
-import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.transparent
 import kotlin.time.Duration.Companion.minutes
 

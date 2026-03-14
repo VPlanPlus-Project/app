@@ -28,7 +28,7 @@ import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
-import plus.vplan.app.feature.grades.page.view.ui.components.GradeValue
+import plus.vplan.app.feature.grades.common.ui.GradeValue
 
 @Composable
 fun LatestGradeItem(

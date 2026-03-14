@@ -47,8 +47,8 @@ import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.subjectColor
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.regularDateFormat
-import plus.vplan.app.utils.toDp
 
 
 @Composable

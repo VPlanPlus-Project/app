@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.dp
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.theme.displayFontFamily
-import plus.vplan.app.feature.grades.page.view.ui.components.GradeValue
-import plus.vplan.app.utils.roundTo
-import plus.vplan.app.utils.toDp
+import plus.vplan.app.core.ui.util.textunit.toDp
+import plus.vplan.app.core.utils.number.roundTo
+import plus.vplan.app.feature.grades.common.ui.GradeValue
 import kotlin.math.roundToInt
 
 @Composable
