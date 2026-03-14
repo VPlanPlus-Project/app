@@ -62,6 +62,8 @@ class KmpComposeLibraryConventionPlugin : Plugin<Project> {
                 implementation(libs.findLibrary("koin-core").get())
                 implementation(libs.findLibrary("koin-compose").get())
                 implementation(libs.findLibrary("koin-compose-viewmodel").get())
+
+                implementation(libs.findLibrary("kermit").get())
             }
             sourceSets.commonTest.dependencies {
                 implementation(kotlin("test"))

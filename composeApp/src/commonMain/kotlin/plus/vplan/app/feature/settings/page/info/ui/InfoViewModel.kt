@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
-import plus.vplan.app.core.platform.AppPlatform
+import plus.vplan.app.core.model.application.AppPlatform
 import plus.vplan.app.core.platform.PlatformRepository
 
 class InfoViewModel(

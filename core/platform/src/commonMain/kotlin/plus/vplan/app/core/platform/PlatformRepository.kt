@@ -1,8 +1,6 @@
 package plus.vplan.app.core.platform
 
-enum class AppPlatform {
-    Android, iOS
-}
+import plus.vplan.app.core.model.application.AppPlatform
 
 interface PlatformRepository {
     fun getPlatform(): AppPlatform
