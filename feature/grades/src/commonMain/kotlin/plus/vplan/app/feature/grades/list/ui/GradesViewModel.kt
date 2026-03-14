@@ -1,0 +1,442 @@
+package plus.vplan.app.feature.grades.list.ui
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import plus.vplan.app.core.data.KeyValueRepository
+import plus.vplan.app.core.data.Keys
+import plus.vplan.app.core.data.besteschule.GradesRepository
+import plus.vplan.app.core.data.besteschule.IntervalsRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
+import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleYear
+import plus.vplan.app.core.utils.date.atStartOfDay
+import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.until
+import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
+import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
+import plus.vplan.app.feature.grades.common.domain.usecase.CalculateAverageUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.SyncGradesUseCase
+import plus.vplan.app.feature.grades.list.domain.model.Subject
+import kotlin.time.Duration.Companion.days
+
+class GradesViewModel(
+    private val calculateAverageUseCase: CalculateAverageUseCase,
+    private val syncGradesUseCase: SyncGradesUseCase,
+    private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
+    private val lockUseCase: LockGradesUseCase,
+    private val vppIdRepository: VppIdRepository,
+) : ViewModel(), KoinComponent {
+    private val gradeState = MutableStateFlow(GradesState())
+    val state = gradeState.asStateFlow()
+
+    private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
+    private val besteSchuleGradesRepository by inject<GradesRepository>()
+
+    private val getGradeLockStateUseCase by inject<GetGradeLockStateUseCase>()
+
+    private val keyValueRepository by inject<KeyValueRepository>()
+
+    private val currentSchulverwalterUser =
+        MutableStateFlow<VppId.Active.SchulverwalterConnection?>(null)
+
+    init {
+        viewModelScope.launch subscribeToGradeLock@{
+            getGradeLockStateUseCase().collectLatest { lockState ->
+                gradeState.update { it.copy(gradeLockState = lockState) }
+            }
+        }
+
+        viewModelScope.launch subscribeToSelectedYearAndIntervals@{
+            combine(
+                gradeState.map { it.selectedYear },
+                gradeState.map { it.availableIntervals },
+                currentSchulverwalterUser
+            ) { selectedYear, intervals, schulverwalterUser ->
+                Triple(selectedYear, intervals, schulverwalterUser)
+            }
+                .distinctUntilChangedBy { (year, intervals, user) ->
+                    year?.id.hashCode() + intervals.map { it.id }.sorted().hashCode() + user?.userId.hashCode()
+                }
+                .collectLatest { (selectedYear, allIntervals, schulverwalterUser) ->
+                    if (selectedYear == null || schulverwalterUser == null) {
+                        gradeState.update { it.copy(intervalsForSelectedYear = emptyMap()) }
+                        return@collectLatest
+                    }
+
+                    val intervalsForYear = allIntervals.filter { it.year.id == selectedYear.id }
+
+                    if (!getGradeLockStateUseCase().first().canAccess) {
+                        gradeState.update {
+                            it.copy(
+                                intervalsForSelectedYear = intervalsForYear.associateWith { _ ->
+                                    IntervalData(
+                                        avg = null,
+                                        subjects = emptyList(),
+                                        latestGrades = emptyList()
+                                    )
+                                }
+                            )
+                        }
+                        return@collectLatest
+                    }
+
+                    besteSchuleGradesRepository.getAllForUser(schulverwalterUserId = schulverwalterUser.userId)
+                        .collectLatest { allGrades ->
+                            val intervalDataMap = intervalsForYear.associateWith { interval ->
+                                calculateIntervalData(interval, intervalsForYear, allGrades)
+                            }
+
+                            gradeState.update { it.copy(intervalsForSelectedYear = intervalDataMap) }
+                        }
+                }
+        }
+
+        viewModelScope.launch {
+            currentSchulverwalterUser
+                .distinctUntilChangedBy { it?.userId }
+                .collectLatest collectUser@{ currentSchulverwalterUser ->
+                    gradeState.update { GradesState(gradeLockState = it.gradeLockState) }
+                    Logger.d { "Switching to schulverwalter user ${currentSchulverwalterUser?.userId}" }
+
+                    if (currentSchulverwalterUser == null) return@collectUser
+
+                    besteSchuleIntervalsRepository.getAll()
+                        .collectLatest { intervals ->
+                            val years = intervals
+                                .map { it.year }
+                                .distinct()
+                                .sortedBy { it.from }
+
+                            gradeState.update { gradesState ->
+                                val isFirstLoad = gradesState.isLoading
+                                val selectedYear =
+                                    if (isFirstLoad) years.firstOrNull { year -> LocalDate.now() in year.from..year.to } ?: years.maxByOrNull { it.to }
+                                    else gradesState.selectedYear
+
+                                gradesState.copy(
+                                    availableYears = years,
+                                    selectedYear = selectedYear,
+                                    availableIntervals = intervals,
+                                    isLoading = false
+                                )
+                            }
+                        }
+                }
+        }
+
+        viewModelScope.launch subscribeToAnalyticsState@{
+            keyValueRepository
+                .getBooleanOrDefault(Keys.enableGradeAnalytics.key, Keys.enableGradeAnalytics.default)
+                .collectLatest { isEnabled ->
+                    gradeState.update { it.copy(isGradeAnalyticsEnabled = isEnabled) }
+                }
+        }
+    }
+
+    private suspend fun calculateIntervalData(
+        interval: BesteSchuleInterval,
+        allIntervalsInYear: List<BesteSchuleInterval>,
+        allGrades: List<BesteSchuleGrade>
+    ): IntervalData {
+        val relevantIntervalIds = buildSet {
+            add(interval.id)
+            interval.includedIntervalId?.let { add(it) }
+
+            allIntervalsInYear
+                .filter { it.includedIntervalId == interval.id }
+                .forEach { add(it.id) }
+        }
+
+        val gradesForInterval = allGrades.filter { grade ->
+            grade.collection.interval.id in relevantIntervalIds
+        }
+
+        if (gradesForInterval.isEmpty()) {
+            return IntervalData(
+                avg = Double.NaN,
+                subjects = emptyList(),
+                latestGrades = emptyList()
+            )
+        }
+
+        val subjects = gradesForInterval
+            .groupBy { grade -> grade.collection.subject }
+            .mapNotNull { (subject, gradesForSubject) ->
+
+                val categoriesMap = gradesForSubject.groupBy { grade ->
+                    grade.collection.type
+                }
+
+                val categories = categoriesMap.map { (type, gradesForType) ->
+                    val weight = 1.0
+
+                    val customGrades = state.value.intervalsForSelectedYear[interval]?.subjects
+                        ?.firstOrNull { it.id == subject.id }
+                        ?.categories
+                        ?.firstOrNull { it.id == (subject.id.toString() + type).hashCode() }
+                        ?.grades.orEmpty()
+                        .filterIsInstance<GradeUiItem.CustomGrade>()
+
+                    Subject.Category(
+                        id = (subject.id.toString() + type).hashCode(),
+                        name = type,
+                        average = null,
+                        count = gradesForType.size,
+                        weight = weight,
+                        grades = gradesForType
+                            .filter { it.value != null }
+                            .map { GradeUiItem.ActualGrade(it) }
+                            .plus(customGrades),
+                    )
+                }.sortedBy { it.name }
+
+                Subject(
+                    id = subject.id,
+                    average = null,
+                    name = subject.fullName,
+                    categories = categories
+                )
+            }
+            .sortedBy { it.name }
+
+        val subjectsWithAverages = subjects.map { subject ->
+            val gradesForSubject = subject.categories
+                .flatMap {
+                    it.grades.filter { grade ->
+                        if (grade is GradeUiItem.CustomGrade) return@filter true
+                        grade is GradeUiItem.ActualGrade && grade.grade.isSelectedForFinalGrade
+                    }
+                }
+
+            val subjectAverage = if (gradesForSubject.isNotEmpty()) {
+                calculateAverageUseCase(
+                    grades = gradesForSubject,
+                    interval = interval,
+                ).let { if (it.isNaN()) null else it }
+            } else null
+
+            val categoriesWithAverages = subject.categories.map { category ->
+                val gradesForCategory = category.grades
+                    .filter { it is GradeUiItem.CustomGrade || (it is GradeUiItem.ActualGrade && it.grade.isSelectedForFinalGrade) }
+                val categoryAverage = if (gradesForCategory.isNotEmpty()) {
+                    calculateAverageUseCase(
+                        grades = gradesForCategory,
+                        interval = interval,
+                    )
+                } else null
+
+                category.copy(average = categoryAverage)
+            }
+
+            subject.copy(
+                average = subjectAverage,
+                categories = categoriesWithAverages
+            )
+        }
+
+        val fullAverage = if (subjectsWithAverages.isNotEmpty()) {
+            val allSelectedGrades = subjectsWithAverages
+                .flatMap { it.categories.flatMap {
+                    category -> category.grades.filter { it is GradeUiItem.CustomGrade || (it is GradeUiItem.ActualGrade && it.grade.isSelectedForFinalGrade) }
+                } }
+
+            if (allSelectedGrades.isNotEmpty()) {
+                calculateAverageUseCase(
+                    grades = allSelectedGrades,
+                    interval = interval,
+                )
+            } else null
+        } else null
+
+        return IntervalData(
+            avg = fullAverage,
+            subjects = subjectsWithAverages,
+            latestGrades = gradesForInterval
+                .filter { it.givenAt.atStartOfDay() until LocalDateTime.now() < 14.days }
+                .sortedByDescending { it.givenAt }
+                .take(4)
+        )
+    }
+
+    fun init(vppIdId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val vppId = vppIdRepository.getById(vppIdId).first() as? VppId.Active
+            val schulverwalterConnection = vppId?.schulverwalterConnection ?: return@launch
+            currentSchulverwalterUser.value = schulverwalterConnection
+        }
+    }
+
+    fun onEvent(event: GradeDetailEvent) {
+        viewModelScope.launch {
+            when (event) {
+                is GradeDetailEvent.ToggleEditMode -> {
+                    gradeState.update { it.copy(isInEditMode = !it.isInEditMode) }
+                }
+
+                is GradeDetailEvent.AddGrade -> {
+                    gradeState.update { state ->
+                        val updatedIntervalsMap = state.intervalsForSelectedYear.mapValues { (_, data) ->
+                            val updatedSubjects = data.subjects.map { subject ->
+                                subject.copy(
+                                    categories = subject.categories.map { category ->
+                                        if (category.id == event.categoryId) {
+                                            category.copy(grades = category.grades + GradeUiItem.CustomGrade(
+                                                grade = event.grade,
+                                                subjectId = subject.id,
+                                                type = category.name,
+                                                intervalType = state.intervalsForSelectedYear.keys.first().type
+                                            ))
+                                        } else category
+                                    }
+                                )
+                            }
+                            data.copy(subjects = updatedSubjects)
+                        }
+                        state.copy(intervalsForSelectedYear = updatedIntervalsMap)
+                    }
+
+                    recalculateAllIntervals()
+                }
+
+                is GradeDetailEvent.RemoveGrade -> {
+                    gradeState.update { state ->
+                        val updatedIntervalsMap = state.intervalsForSelectedYear.mapValues { (_, data) ->
+                            val updatedSubjects = data.subjects.map { subject ->
+                                subject.copy(
+                                    categories = subject.categories.map { category ->
+                                        category.copy(grades = category.grades.filter { it !is GradeUiItem.CustomGrade || it != event.grade })
+                                    }
+                                )
+                            }
+                            data.copy(subjects = updatedSubjects)
+                        }
+                        state.copy(intervalsForSelectedYear = updatedIntervalsMap)
+                    }
+
+                    recalculateAllIntervals()
+                }
+
+                is GradeDetailEvent.ResetAdditionalGrades -> {
+                    gradeState.update { state ->
+                        val updatedIntervalsMap = state.intervalsForSelectedYear.mapValues { (_, data) ->
+                            val updatedSubjects = data.subjects.map { subject ->
+                                subject.copy(
+                                    categories = subject.categories.map { category ->
+                                        category.copy(grades = category.grades.filterIsInstance<GradeUiItem.ActualGrade>())
+                                    }
+                                )
+                            }
+                            data.copy(subjects = updatedSubjects)
+                        }
+                        state.copy(intervalsForSelectedYear = updatedIntervalsMap)
+                    }
+
+                    recalculateAllIntervals()
+                }
+
+                is GradeDetailEvent.Refresh -> {
+                    gradeState.update { it.copy(isUpdating = true) }
+                    try {
+                        syncGradesUseCase(
+                            allowNotifications = true,
+                            yearId = state.value.selectedYear?.id
+                        )
+                    } finally {
+                        gradeState.update { it.copy(isUpdating = false) }
+                    }
+                }
+
+                is GradeDetailEvent.RequestGradeUnlock -> requestGradeUnlockUseCase()
+                is GradeDetailEvent.RequestGradeLock -> lockUseCase()
+                is GradeDetailEvent.SelectYear -> {
+                    gradeState.update { it.copy(selectedYear = event.year) }
+                }
+            }
+        }
+    }
+
+    private suspend fun recalculateAllIntervals() {
+        val updatedIntervalsMap = withContext(Dispatchers.Main) {
+            val currentState = gradeState.value
+            val allIntervalsInYear = currentState.intervalsForSelectedYear.keys.toList()
+            val schulverwalterUser = currentSchulverwalterUser.value ?: return@withContext null
+
+            val allGrades = besteSchuleGradesRepository
+                .getAllForUser(schulverwalterUserId = schulverwalterUser.userId)
+                .first()
+
+            return@withContext allIntervalsInYear.associateWith { interval ->
+                calculateIntervalData(interval, allIntervalsInYear, allGrades)
+            }
+        } ?: return
+
+        gradeState.update { it.copy(intervalsForSelectedYear = updatedIntervalsMap) }
+    }
+}
+
+/**
+ * @param isLoading If the ViewModel is preparing the data to be shown. If true, don't show content in UI.
+ * @param availableYears All years that can be viewed by the current user.
+ * @param selectedYear The year that has been selected by the drawer.
+ * @param availableIntervals All available intervals for the current user.
+ * @param intervalsForSelectedYear Map of intervals to their data for the selected year.
+ * @param isInEditMode Whether the user is in edit mode (for calculator grades).
+ * @param isUpdating Whether a refresh is currently in progress.
+ * @param gradeLockState The current lock state of grades.
+ */
+data class GradesState(
+    val isLoading: Boolean = true,
+    val availableYears: List<BesteSchuleYear> = emptyList(),
+    val selectedYear: BesteSchuleYear? = null,
+    val availableIntervals: List<BesteSchuleInterval> = emptyList(),
+    val intervalsForSelectedYear: Map<BesteSchuleInterval, IntervalData> = emptyMap(),
+    val isInEditMode: Boolean = false,
+    val isUpdating: Boolean = false,
+    val gradeLockState: GradeLockState? = null,
+
+    val isGradeAnalyticsEnabled: Boolean = false,
+)
+
+data class IntervalData(
+    val avg: Double?,
+    val subjects: List<Subject>,
+    val latestGrades: List<BesteSchuleGrade>
+)
+
+sealed class GradeDetailEvent {
+    data object ToggleEditMode : GradeDetailEvent()
+
+    data class AddGrade(val categoryId: Int, val grade: Int) : GradeDetailEvent()
+    data class RemoveGrade(val grade: GradeUiItem.CustomGrade) : GradeDetailEvent()
+
+    data object Refresh : GradeDetailEvent()
+
+    data object ResetAdditionalGrades : GradeDetailEvent()
+
+    data object RequestGradeUnlock : GradeDetailEvent()
+    data object RequestGradeLock : GradeDetailEvent()
+
+    data class SelectYear(val year: BesteSchuleYear) : GradeDetailEvent()
+}

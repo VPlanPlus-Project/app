@@ -7,9 +7,9 @@ data class BesteSchuleCollection(
     val id: Int,
     val type: String,
     val name: String,
-    val subjectId: Int,
+    val subject: BesteSchuleSubject,
     val givenAt: LocalDate,
-    val intervalId: Int,
-    val teacherId: Int,
+    val interval: BesteSchuleInterval,
+    val teacher: BesteSchuleTeacher,
     val cachedAt: Instant
 )

@@ -34,6 +34,7 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.regularDateFormat
 import plus.vplan.app.core.utils.date.untilRelativeText
@@ -45,7 +46,6 @@ import plus.vplan.app.feature.calendar.ui.components.calendar.CalendarViewLesson
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.ui.main.components.result.SchoolEntityResults
 import plus.vplan.app.utils.safeBottomPadding
-import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
 
 
@@ -185,7 +185,7 @@ fun SearchResults(
                             results.filterIsInstance<SearchResult.Grade>().forEach { result ->
                                 GradeCard(
                                     grade = result.grade,
-                                    onClick = { onGradeClicked(result.grade.grade.grade.id) }
+                                    onClick = { onGradeClicked(result.grade.id) }
                                 )
                             }
                         }

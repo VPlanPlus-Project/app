@@ -33,6 +33,7 @@ import vplanplus.core.ui.generated.resources.bug_play
 import vplanplus.core.ui.generated.resources.calculator
 import vplanplus.core.ui.generated.resources.calendar
 import vplanplus.core.ui.generated.resources.calendar_cog
+import vplanplus.core.ui.generated.resources.calendars
 import vplanplus.core.ui.generated.resources.chart_no_axes_combined
 import vplanplus.core.ui.generated.resources.chart_no_axes_gantt
 import vplanplus.core.ui.generated.resources.check
@@ -207,6 +208,7 @@ object CoreUiRes {
         // UI elements
         val bell_ring: DrawableResource get() = Res.drawable.bell_ring
         val calendar: DrawableResource get() = Res.drawable.calendar
+        val calendars: DrawableResource get() = Res.drawable.calendars
         val calendar_cog: DrawableResource get() = Res.drawable.calendar_cog
         val circle_slash_2: DrawableResource get() = Res.drawable.circle_slash_2
         val circle_user_round: DrawableResource get() = Res.drawable.circle_user_round

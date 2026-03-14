@@ -92,9 +92,11 @@ kotlin {
             implementation(project(":core:sync"))
             implementation(project(":core:ui"))
             implementation(project(":core:utils"))
+            implementation(project(":core:common"))
 
 
             implementation(project(":feature:onboarding"))
+            implementation(project(":feature:grades"))
 
             // Compose
             implementation(libs.compose.components.resources)

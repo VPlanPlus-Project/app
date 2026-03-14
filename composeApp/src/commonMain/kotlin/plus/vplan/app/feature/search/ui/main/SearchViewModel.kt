@@ -10,12 +10,14 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.Day
@@ -23,11 +25,10 @@ import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
-import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
-import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
+import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
+import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.search.domain.model.SearchResult
 import plus.vplan.app.feature.search.domain.usecase.GetAssessmentsForProfileUseCase
 import plus.vplan.app.feature.search.domain.usecase.GetHomeworkForProfileUseCase
@@ -65,22 +66,26 @@ class SearchViewModel(
         viewModelScope.launch {
             var homeworkJob: Job? = null
             var assessmentJob: Job? = null
-            getCurrentProfileUseCase().collectLatest { currentProfile ->
-                state = state.copy(currentProfile = currentProfile)
-                homeworkJob?.cancel()
-                assessmentJob?.cancel()
-                if (currentProfile is Profile.StudentProfile) {
-                    homeworkJob = launch {
-                        getHomeworkForProfileUseCase(currentProfile)
-                            .collectLatest { state = state.copy(homework = it) }
+            getCurrentProfileUseCase()
+                .filterNotNull()
+                .collectLatest { currentProfile ->
+                    state = state.copy(currentProfile = currentProfile)
+                    homeworkJob?.cancel()
+                    assessmentJob?.cancel()
+                    if (currentProfile is Profile.StudentProfile) {
+                        homeworkJob = launch {
+                            getHomeworkForProfileUseCase(currentProfile)
+                                .collectLatest { state = state.copy(homework = it) }
+                        }
+                        assessmentJob = launch {
+                            getAssessmentsForProfileUseCase(currentProfile)
+                                .collectLatest { state = state.copy(assessments = it) }
+                        }
                     }
-                    assessmentJob = launch {
-                        getAssessmentsForProfileUseCase(currentProfile)
-                            .collectLatest { state = state.copy(assessments = it) }
+                    getSubjectsForProfileUseCase(currentProfile).let {
+                        state = state.copy(subjects = it)
                     }
                 }
-                getSubjectsForProfileUseCase(currentProfile).let { state = state.copy(subjects = it) }
-            }
         }
     }
 

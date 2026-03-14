@@ -41,13 +41,14 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.utils.number.roundTo
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.feature.profile.page.ui.components.GradesCard
 import plus.vplan.app.feature.profile.page.ui.components.GradesCardFeaturedGrade
+import plus.vplan.app.feature.profile.page.ui.components.GradesCardFeaturedGrade.Value
 import plus.vplan.app.feature.profile.page.ui.components.ProfileTitle
 import plus.vplan.app.getVppIdAuthUrl
 import plus.vplan.app.utils.openUrl
-import plus.vplan.app.utils.roundTo
 
 
 @Composable
@@ -170,11 +171,11 @@ private fun ProfileContent(
                                     areGradesLocked = state.areGradesLocked,
                                     subjects = subjectInstances,
                                     infiniteTransition = infiniteTransition,
-                                    averageGrade = if (state.averageGrade?.isNaN() == true) GradesCardFeaturedGrade.NotExisting else if (state.averageGrade == null) GradesCardFeaturedGrade.Loading else GradesCardFeaturedGrade.Value(state.averageGrade.roundTo(2).toString()),
+                                    averageGrade = if (state.averageGrade?.isNaN() == true) GradesCardFeaturedGrade.NotExisting else if (state.averageGrade == null) GradesCardFeaturedGrade.Loading else Value(state.averageGrade.roundTo(2).toString()),
                                     latestGrade = when (state.latestGrade) {
                                         is LatestGrade.Loading -> GradesCardFeaturedGrade.Loading
                                         is LatestGrade.NotExisting -> GradesCardFeaturedGrade.NotExisting
-                                        is LatestGrade.Value -> GradesCardFeaturedGrade.Value(state.latestGrade.value)
+                                        is LatestGrade.Value -> Value(state.latestGrade.value)
                                     },
                                     onRequestUnlock = {
                                         openGradesScreenAfterUnlock = true

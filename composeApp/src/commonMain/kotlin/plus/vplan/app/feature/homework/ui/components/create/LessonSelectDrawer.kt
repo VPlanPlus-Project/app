@@ -39,8 +39,8 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.ui.thenIf
+import plus.vplan.app.core.ui.components.SubjectIcon
+import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.utils.safeBottomPadding
 
 

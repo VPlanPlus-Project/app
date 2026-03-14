@@ -30,7 +30,7 @@ import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
-import plus.vplan.app.feature.grades.domain.usecase.LockGradesUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.main.ui.MainScreenHost
 import plus.vplan.app.feature.onboarding.OnboardingView
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase

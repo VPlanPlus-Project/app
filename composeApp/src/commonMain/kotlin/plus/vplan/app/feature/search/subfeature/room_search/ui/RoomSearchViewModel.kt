@@ -7,15 +7,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.model.LessonTime
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.GetLessonTimesForProfileUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.GetRoomOccupationMapUseCase
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.OccupancyMapRecord
@@ -37,17 +38,25 @@ class RoomSearchViewModel(
             }
         }
         viewModelScope.launch {
-            getCurrentProfileUseCase().collectLatest { currentProfile ->
-                _state.update { it.copy(currentProfile = currentProfile) }
-                combine(
-                    getRoomOccupationMapUseCase(currentProfile, LocalDate.now()),
-                    getLessonTimesForProfileUseCase(currentProfile)
-                ) { map, lessonTimes ->
-                    _state.update { oldState ->
-                        oldState.copy(rooms = map, lessonTimes = lessonTimes.associateWith { oldState.lessonTimes[it] ?: false }, initDone = true)
-                    }
-                }.collect()
-            }
+            getCurrentProfileUseCase()
+                .filterNotNull()
+                .collectLatest { currentProfile ->
+                    _state.update { it.copy(currentProfile = currentProfile) }
+                    combine(
+                        getRoomOccupationMapUseCase(currentProfile, LocalDate.now()),
+                        getLessonTimesForProfileUseCase(currentProfile)
+                    ) { map, lessonTimes ->
+                        _state.update { oldState ->
+                            oldState.copy(
+                                rooms = map,
+                                lessonTimes = lessonTimes.associateWith {
+                                    oldState.lessonTimes[it] ?: false
+                                },
+                                initDone = true
+                            )
+                        }
+                    }.collect()
+                }
         }
     }
 
@@ -76,5 +85,5 @@ data class RoomSearchState(
 }
 
 sealed class RoomSearchEvent {
-    data class ToggleLessonTimeSelection(val lessonTime: LessonTime): RoomSearchEvent()
+    data class ToggleLessonTimeSelection(val lessonTime: LessonTime) : RoomSearchEvent()
 }

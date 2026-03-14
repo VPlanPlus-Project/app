@@ -17,7 +17,7 @@ import plus.vplan.app.core.model.NetworkErrorKind
 import plus.vplan.app.core.model.NetworkException
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.SyncGradesUseCase
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 

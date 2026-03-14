@@ -1,9 +1,10 @@
 package plus.vplan.app.feature.assessment.domain.usecase
 
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.model.application.UpdateResult
 
 class UpdateAssessmentUseCase(
     private val assessmentRepository: AssessmentRepository,
@@ -26,8 +27,4 @@ class UpdateAssessmentUseCase(
         
         return UpdateResult.SUCCESS
     }
-}
-
-enum class UpdateResult {
-    SUCCESS, ERROR, DOES_NOT_EXIST
 }
