@@ -63,7 +63,7 @@ import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
 import plus.vplan.app.feature.grades.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.list.ui.GradesScreen
-import plus.vplan.app.feature.grades.page.analytics.ui.AnalyticsScreen
+import plus.vplan.app.feature.grades.ui.AnalyticsScreen
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel
 import plus.vplan.app.feature.homework.ui.components.detail.HomeworkDetailDrawer
@@ -362,7 +362,10 @@ fun MainScreenHost(
                 popExitTransition = defaultPopExitAnimation
             ) {
                 val args = it.toRoute<MainScreen.Analytics>()
-                AnalyticsScreen(navController, args.vppId)
+                AnalyticsScreen(
+                    navigateUp = navController::navigateUp,
+                    vppIdId = args.vppId
+                )
             }
         }
     }

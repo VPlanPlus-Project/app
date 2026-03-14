@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
-package plus.vplan.app.feature.grades.page.analytics.ui
+package plus.vplan.app.feature.grades.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

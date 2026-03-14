@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.page.analytics.ui
+package plus.vplan.app.feature.grades.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -54,23 +54,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.SubjectIcon
+import plus.vplan.app.core.ui.modifier.animatePlacement
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.ui.util.blendColor
-import plus.vplan.app.feature.grades.page.analytics.ui.components.SelectIntervalDrawer
-import plus.vplan.app.ui.animatePlacement
-import plus.vplan.app.utils.safeBottomPadding
-
+import plus.vplan.app.feature.grades.ui.components.SelectIntervalDrawer
 
 @Composable
 fun AnalyticsScreen(
-    navHostController: NavHostController,
+    navigateUp: () -> Unit,
     vppIdId: Int
 ) {
     val viewModel = koinViewModel<AnalyticsViewModel>()
@@ -81,7 +78,7 @@ fun AnalyticsScreen(
     AnalyticsContent(
         state = state,
         onEvent = viewModel::onEvent,
-        onBack = navHostController::navigateUp
+        onBack = navigateUp
     )
 }
 
@@ -246,7 +243,6 @@ private fun AnalyticsContent(
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = safeBottomPadding())
                     .fillMaxWidth()
                     .animateContentSize()
             ) {

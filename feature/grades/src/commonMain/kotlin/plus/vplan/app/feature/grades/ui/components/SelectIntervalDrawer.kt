@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.page.analytics.ui.components
+package plus.vplan.app.feature.grades.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
