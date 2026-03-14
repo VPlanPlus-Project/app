@@ -45,6 +45,7 @@ import io.github.vinceglb.filekit.path
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Profile
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.Button
 import plus.vplan.app.core.ui.components.ButtonSize
@@ -56,7 +57,6 @@ import plus.vplan.app.feature.homework.ui.components.create.RenameFileDialog
 import plus.vplan.app.feature.homework.ui.components.create.SubjectAndDateTile
 import plus.vplan.app.feature.homework.ui.components.create.VisibilityTile
 import plus.vplan.app.feature.homework.ui.components.create.VppIdBanner
-import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer

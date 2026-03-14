@@ -13,13 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.ModalBottomSheet
 import plus.vplan.app.core.ui.components.SheetActionItem
 import plus.vplan.app.core.ui.components.SheetConfiguration
 import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
-import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
+import plus.vplan.app.feature.grades.detail.ui.GradeDetailEvent
+import plus.vplan.app.feature.grades.detail.ui.GradeDetailViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

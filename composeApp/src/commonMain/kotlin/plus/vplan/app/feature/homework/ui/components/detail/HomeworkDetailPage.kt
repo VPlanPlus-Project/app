@@ -43,6 +43,7 @@ import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.HomeworkStatus
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.Button
 import plus.vplan.app.core.ui.components.ButtonSize

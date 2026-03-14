@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.feature.grades.detail.ui.GradeDetailEvent
+import plus.vplan.app.feature.grades.detail.ui.GradeDetailState
 import plus.vplan.app.feature.grades.detail.ui.components.GivenAtRow
 import plus.vplan.app.feature.grades.detail.ui.components.GivenByRow
 import plus.vplan.app.feature.grades.detail.ui.components.IntervalRow
@@ -101,7 +103,8 @@ fun GradeDetailPage(
                 GivenByRow("${grade.collection.teacher.forename} ${grade.collection.teacher.surname}")
                 if (vppId != null) UserRow(vppId.name)
                 OptionalRow(grade.isOptional)
-                UseForFinalGradeRow(grade.isSelectedForFinalGrade, grade.value == null) { onEvent(GradeDetailEvent.ToggleConsiderForFinalGrade) }
+                UseForFinalGradeRow(grade.isSelectedForFinalGrade, grade.value == null) { onEvent(
+                    GradeDetailEvent.ToggleConsiderForFinalGrade) }
 
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 Text(text = grade.collection.name)

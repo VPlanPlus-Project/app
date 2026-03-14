@@ -32,6 +32,7 @@ import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.model.application.UpdateResult
 import plus.vplan.app.domain.usecase.file.DeleteFileUseCase
 import plus.vplan.app.domain.usecase.file.DownloadFileUseCase
@@ -301,8 +302,4 @@ sealed class HomeworkDetailEvent {
     data class DeleteFile(val file: File) : HomeworkDetailEvent()
     data class AddFile(val file: AttachedFile) : HomeworkDetailEvent()
     data object Reload : HomeworkDetailEvent()
-}
-
-enum class UnoptimisticTaskState {
-    InProgress, Error, Success
 }

@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
-package plus.vplan.app.feature.grades.page.detail.ui
+package plus.vplan.app.feature.grades.detail.ui
 
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
@@ -21,6 +21,7 @@ import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.model.application.UpdateResult
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
@@ -28,7 +29,6 @@ import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseC
 import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.UpdateGradeUseCase
-import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 
 class GradeDetailViewModel(
     private val updateGradeUseCase: UpdateGradeUseCase,

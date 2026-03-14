@@ -18,11 +18,11 @@ import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkResult
 import plus.vplan.app.feature.homework.domain.usecase.CreateHomeworkUseCase
 import plus.vplan.app.feature.homework.domain.usecase.HideVppIdBannerUseCase
 import plus.vplan.app.feature.homework.domain.usecase.IsVppIdBannerAllowedUseCase
-import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 import kotlin.uuid.Uuid
 

@@ -23,6 +23,7 @@ import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.model.application.UpdateResult
 import plus.vplan.app.domain.usecase.file.DeleteFileUseCase
 import plus.vplan.app.domain.usecase.file.DownloadFileUseCase
@@ -36,7 +37,6 @@ import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentTypeUseC
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentVisibilityUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.DeleteAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
-import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 
 class AssessmentDetailViewModel(

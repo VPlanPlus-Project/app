@@ -43,6 +43,7 @@ import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.model.AppEntity
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.Button
 import plus.vplan.app.core.ui.components.ButtonSize
@@ -50,7 +51,6 @@ import plus.vplan.app.core.ui.components.ButtonState
 import plus.vplan.app.core.ui.components.ButtonType
 import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
-import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedByRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
