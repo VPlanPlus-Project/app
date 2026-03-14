@@ -1,8 +1,8 @@
-package plus.vplan.app.feature.settings.page.security.domain.usecase
+package plus.vplan.app.feature.grades.common.domain.usecase
 
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
-import plus.vplan.app.feature.settings.page.security.ui.GradeProtectLevel
+import plus.vplan.app.feature.grades.common.domain.model.GradeProtectLevel
 
 class SetGradeProtectionLevelUseCase(
     private val keyValueRepository: KeyValueRepository

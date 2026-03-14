@@ -7,10 +7,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import plus.vplan.app.feature.grades.common.domain.model.GradeProtectLevel
+import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeProtectionLevelUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.SetGradeProtectionLevelUseCase
 import plus.vplan.app.feature.settings.page.security.domain.usecase.BiometricDeviceState
 import plus.vplan.app.feature.settings.page.security.domain.usecase.GetBiometricDeviceStateUseCase
-import plus.vplan.app.feature.settings.page.security.domain.usecase.GetGradeProtectionLevelUseCase
-import plus.vplan.app.feature.settings.page.security.domain.usecase.SetGradeProtectionLevelUseCase
 
 class SecuritySettingsViewModel(
     private val getGradeProtectionLevelUseCase: GetGradeProtectionLevelUseCase,
@@ -45,18 +46,6 @@ data class SecuritySettingsState(
     val gradeProtectLevel: GradeProtectLevel? = null,
     val biometricDeviceState: BiometricDeviceState? = null
 )
-
-enum class GradeProtectLevel {
-    /**
-     * Uses the biometric authentication methods provided by the users device like fingerprint and face ID if available.
-     */
-    Biometric,
-
-    /**
-     * Does not protect grades
-     */
-    None
-}
 
 sealed class SecuritySettingsEvent {
     data object ToggleGradeProtection: SecuritySettingsEvent()

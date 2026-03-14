@@ -29,6 +29,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.platform.BiometricAuthentication
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.feature.grades.common.domain.model.GradeProtectLevel
 import plus.vplan.app.feature.settings.page.security.domain.usecase.BiometricDeviceState
 import plus.vplan.app.feature.settings.page.security.ui.components.EnrollBiometricAuthenticationDialog
 import plus.vplan.app.ui.platform.OpenBiometricSettings

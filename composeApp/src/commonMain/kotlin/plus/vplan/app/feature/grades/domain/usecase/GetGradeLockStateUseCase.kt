@@ -4,8 +4,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
-import plus.vplan.app.feature.settings.page.security.domain.usecase.GetGradeProtectionLevelUseCase
-import plus.vplan.app.feature.settings.page.security.ui.GradeProtectLevel
+import plus.vplan.app.feature.grades.common.domain.model.GradeProtectLevel
+import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeProtectionLevelUseCase
 
 class GetGradeLockStateUseCase(
     private val getGradeProtectionLevelUseCase: GetGradeProtectionLevelUseCase,
