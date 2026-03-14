@@ -31,7 +31,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
-import plus.vplan.app.utils.blendColor
+import plus.vplan.app.core.ui.util.blendColor
 import kotlin.math.max
 import kotlin.math.roundToInt
 

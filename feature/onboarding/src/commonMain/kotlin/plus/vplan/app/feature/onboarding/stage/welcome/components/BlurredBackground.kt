@@ -14,8 +14,8 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import plus.vplan.app.core.ui.util.blendColor
 import plus.vplan.app.feature.onboarding.AppBuildConfig
-import plus.vplan.app.feature.onboarding.utils.blendColor
 import kotlin.random.Random
 
 @Composable

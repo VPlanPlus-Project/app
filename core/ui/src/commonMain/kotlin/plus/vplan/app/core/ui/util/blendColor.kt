@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.onboarding.utils
+package plus.vplan.app.core.ui.util
 
 import androidx.compose.ui.graphics.Color
 

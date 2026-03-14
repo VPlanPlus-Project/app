@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import plus.vplan.app.utils.blendColor
+import plus.vplan.app.core.ui.util.blendColor
 import kotlin.math.absoluteValue
 
 @Composable

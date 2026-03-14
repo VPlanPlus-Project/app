@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.util.blendColor
 import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
-import plus.vplan.app.utils.blendColor
 
 @Composable
 fun GradeValue(
