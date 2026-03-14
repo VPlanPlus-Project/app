@@ -30,7 +30,6 @@ import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
 @Composable
 fun GradeValue(
     grade: GradeUiItem,
-    isSelected: Boolean,
     onClick: (() -> Unit)?,
 ) {
     GradeValue(
@@ -41,7 +40,7 @@ fun GradeValue(
             else append("-")
             if (isOptional) append(")")
         },
-        isSelected = isSelected,
+        isSelected = (grade is GradeUiItem.ActualGrade && grade.grade.isSelectedForFinalGrade) || grade is GradeUiItem.CustomGrade,
         intervalType = grade.intervalType,
         numericValue = when (grade) {
             is GradeUiItem.ActualGrade -> grade.grade.numericValue

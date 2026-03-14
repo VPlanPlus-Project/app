@@ -1,6 +1,5 @@
 package plus.vplan.app.feature.grades.page.view.ui
 
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
@@ -39,6 +38,7 @@ import plus.vplan.app.feature.grades.common.domain.usecase.CalculateAverageUseCa
 import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
+import plus.vplan.app.feature.grades.list.domain.model.Subject
 import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
 import plus.vplan.app.utils.atStartOfDay
 import kotlin.time.Duration.Companion.days
@@ -286,8 +286,9 @@ class GradesViewModel(
             avg = fullAverage,
             subjects = subjectsWithAverages,
             latestGrades = gradesForInterval
-                .filter { it.grade.givenAt.atStartOfDay() until LocalDateTime.now() < 14.days }
-                .sortedByDescending { it.grade.givenAt }
+                .map { it.grade }
+                .filter { it.givenAt.atStartOfDay() until LocalDateTime.now() < 14.days }
+                .sortedByDescending { it.givenAt }
                 .take(4)
         )
     }
@@ -483,25 +484,10 @@ data class GradesState(
 data class IntervalData(
     val avg: Double?,
     val subjects: List<Subject>,
-    val latestGrades: List<GradesItem>
+    val latestGrades: List<BesteSchuleGrade>
 )
 
-@Immutable
-data class Subject(
-    val id: Int,
-    val average: Double?,
-    val name: String,
-    val categories: List<Category>
-) {
-    data class Category(
-        val id: Int,
-        val name: String,
-        val average: Double?,
-        val count: Int,
-        val weight: Double,
-        val grades: List<GradeUiItem>,
-    )
-}
+
 
 data class GradesItem(
     val grade: BesteSchuleGrade,

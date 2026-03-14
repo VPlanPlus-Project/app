@@ -185,7 +185,7 @@ fun SearchResults(
                             results.filterIsInstance<SearchResult.Grade>().forEach { result ->
                                 GradeCard(
                                     grade = result.grade,
-                                    onClick = { onGradeClicked(result.grade.grade.id) }
+                                    onClick = { onGradeClicked(result.grade.id) }
                                 )
                             }
                         }

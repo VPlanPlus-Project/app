@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
 
-package plus.vplan.app.feature.grades.page.view.ui.components.latest
+package plus.vplan.app.feature.grades.list.ui.components.latest
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

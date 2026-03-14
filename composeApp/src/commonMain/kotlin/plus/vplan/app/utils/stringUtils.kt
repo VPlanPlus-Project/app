@@ -1,7 +1,5 @@
 package plus.vplan.app.utils
 
-const val DOT = "•"
-
 /**
  * @return a lowercase hash of the context string
  */

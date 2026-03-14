@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.page.view.ui.components.subject
+package plus.vplan.app.feature.grades.list.ui.components.subject
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -25,7 +25,7 @@ import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.utils.number.roundTo
 import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
-import plus.vplan.app.feature.grades.page.view.ui.Subject
+import plus.vplan.app.feature.grades.list.domain.model.Subject
 import kotlin.math.floor
 
 @Composable
@@ -103,7 +103,6 @@ fun Subjects(
                 GradeItem(
                     modifier = Modifier.padding(horizontal = (16+4).dp),
                     grade = grade,
-                    isSelectedForAverage = grade is GradeUiItem.CustomGrade || (grade is GradeUiItem.ActualGrade && grade.grade.isSelectedForFinalGrade),
                     onClick = {
                         if (grade is GradeUiItem.ActualGrade) onOpenGrade(grade.grade.id)
                     },

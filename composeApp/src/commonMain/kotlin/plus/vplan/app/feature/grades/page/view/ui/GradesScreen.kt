@@ -84,8 +84,8 @@ import plus.vplan.app.feature.grades.list.ui.components.GradesLocked
 import plus.vplan.app.feature.grades.list.ui.components.NoGradesForInterval
 import plus.vplan.app.feature.grades.list.ui.components.SelectYearDrawer
 import plus.vplan.app.feature.grades.list.ui.components.TopBar
-import plus.vplan.app.feature.grades.page.view.ui.components.latest.LatestGrades
-import plus.vplan.app.feature.grades.page.view.ui.components.subject.Subjects
+import plus.vplan.app.feature.grades.list.ui.components.latest.LatestGrades
+import plus.vplan.app.feature.grades.list.ui.components.subject.Subjects
 import plus.vplan.app.feature.main.ui.MainScreen
 import kotlin.math.roundToInt
 
@@ -277,7 +277,7 @@ private fun GradesContent(
 
                                         if (intervalData.latestGrades.isNotEmpty()) Column {
                                             LatestGrades(
-                                                grades = intervalData.latestGrades.associateWith { true },
+                                                grades = intervalData.latestGrades,
                                                 onOpenGrade = { gradeDrawerId = it }
                                             )
                                         }

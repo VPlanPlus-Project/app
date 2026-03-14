@@ -1,7 +1,7 @@
 package plus.vplan.app.feature.search.domain.model
 
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
-import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import kotlin.uuid.Uuid
 
 sealed class SearchResult(val type: Type) {
@@ -32,7 +32,7 @@ sealed class SearchResult(val type: Type) {
     data class Homework(val homework: plus.vplan.app.core.model.Homework): SearchResult(Type.Homework)
     data class Assessment(val assessment: plus.vplan.app.core.model.Assessment): SearchResult(Type.Assessment)
     data class Grade(
-        val grade: GradesItem
+        val grade: BesteSchuleGrade
     ): SearchResult(Type.Grade)
 
     enum class Type {

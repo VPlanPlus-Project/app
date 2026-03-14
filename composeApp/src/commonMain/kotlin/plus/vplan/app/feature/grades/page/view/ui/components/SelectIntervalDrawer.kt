@@ -15,8 +15,8 @@ import plus.vplan.app.core.ui.components.ModalBottomSheet
 import plus.vplan.app.core.ui.components.SelectContainer
 import plus.vplan.app.core.ui.components.SelectItem
 import plus.vplan.app.core.ui.components.SheetConfiguration
+import plus.vplan.app.core.utils.string.DOT
 import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
-import plus.vplan.app.utils.DOT
 
 @Composable
 private fun SelectIntervalDrawerContent(

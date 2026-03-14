@@ -25,9 +25,7 @@ import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.feature.calendar.ui.calculateLayouting
-import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.feature.search.domain.model.SearchResult
 
 class SearchUseCase(
@@ -40,8 +38,6 @@ class SearchUseCase(
     private val assessmentRepository: AssessmentRepository,
 ): KoinComponent {
     private val besteSchuleGradesRepository by inject<GradesRepository>()
-
-    private val intervalPopulator by inject<IntervalPopulator>()
 
     operator fun invoke(searchRequest: SearchRequest) = channelFlow {
         if (!searchRequest.hasActiveFilters) return@channelFlow send(emptyMap())
@@ -109,14 +105,6 @@ class SearchUseCase(
                     if (searchRequest.assessmentType == null) launch {
                         besteSchuleGradesRepository.getAll()
                             .map { response -> response.filter { grade -> query.lowercase() in grade.collection.name } }
-                            .map { grades ->
-                                grades.map { grade ->
-                                    GradesItem(
-                                        grade = grade,
-                                        interval = intervalPopulator.populateSingle(grade.collection.interval).first()
-                                    )
-                                }
-                            }
                             .collectLatest { grades ->
                                 results.value = results.value.plus(SearchResult.Type.Grade to grades.map { SearchResult.Grade(it) })
                             }

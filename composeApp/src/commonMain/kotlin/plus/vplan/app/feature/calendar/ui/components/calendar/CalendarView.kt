@@ -71,6 +71,7 @@ import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.until
+import plus.vplan.app.core.utils.string.DOT
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
 import plus.vplan.app.feature.calendar.ui.LessonRendering
 import plus.vplan.app.feature.calendar.ui.components.agenda.AssessmentCard
@@ -79,7 +80,6 @@ import plus.vplan.app.feature.home.ui.components.FollowingLessons
 import plus.vplan.app.feature.home.ui.components.HolidayScreen
 import plus.vplan.app.feature.home.ui.components.headerFont
 import plus.vplan.app.ui.components.InfoCard
-import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.minusWithCapAtMidnight
 import plus.vplan.app.utils.plusWithCapAtMidnight

@@ -1,44 +1,45 @@
-package plus.vplan.app.feature.grades.page.view.ui.components.subject
+package plus.vplan.app.feature.grades.list.ui.components.latest
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
-import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.core.ui.theme.CustomColor
-import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
 import plus.vplan.app.feature.grades.common.ui.GradeValue
-import plus.vplan.app.utils.DOT
 
 @Composable
-fun GradeItem(
+fun LatestGradeItem(
     modifier: Modifier = Modifier,
-    isSelectedForAverage: Boolean,
-    grade: GradeUiItem,
-    onClick: () -> Unit,
-    onDelete: () -> Unit,
+    grade: BesteSchuleGrade,
+    subjectColumnMinWidth: Dp = 0.dp,
+    onSubjectColumnWidthChange: (Dp) -> Unit = {},
+    onClick: () -> Unit
 ) {
+    val localDensity = LocalDensity.current
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -48,40 +49,46 @@ fun GradeItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        if (grade is GradeUiItem.CustomGrade) IconButton(
-            onClick = onDelete
-        ) {
-            Icon(
-                painter = painterResource(CoreUiRes.drawable.trash_2),
-                contentDescription = null,
-                tint = colors[CustomColor.Red]!!.getGroup().color,
-                modifier = Modifier.size(20.dp)
+        Row(
+            modifier = Modifier
+                .defaultMinSize(minWidth = subjectColumnMinWidth)
+                .onSizeChanged { with(localDensity) { onSubjectColumnWidthChange(it.width.toDp()) } },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) subject@{
+            val subjectIconModifier = Modifier
+                .size(24.dp)
+                .clip(RoundedCornerShape(8.dp))
+
+            SubjectIcon(
+                modifier = subjectIconModifier,
+                subject = grade.collection.subject.shortName
+            )
+
+            Text(
+                text = grade.collection.subject.shortName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline
             )
         }
+
         Column(Modifier.weight(1f)) {
             Text(
-                text = when (grade) {
-                    is GradeUiItem.ActualGrade -> grade.grade.collection.name
-                    is GradeUiItem.CustomGrade -> "Hinzugefügte Note"
-                },
+                text = grade.collection.name,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.labelMedium
             )
 
-            if (grade is GradeUiItem.ActualGrade) Text(
+            Text(
                 text = buildString {
-                    append(grade.grade.givenAt.format(LocalDate.Format {
+                    append(grade.givenAt.format(LocalDate.Format {
                         day(Padding.ZERO)
                         chars(". ")
                         monthName(longMonthNames)
                         char(' ')
                         year()
                     }))
-                    append(" $DOT ")
-                    append(grade.grade.collection.teacher.forename)
-                    append(" ")
-                    append(grade.grade.collection.teacher.surname)
                 },
                 maxLines = 1,
                 style = MaterialTheme.typography.bodySmall,
@@ -91,8 +98,7 @@ fun GradeItem(
 
         Column {
             GradeValue(
-                grade = grade,
-                isSelected = isSelectedForAverage,
+                grade = GradeUiItem.ActualGrade(grade),
                 onClick = null
             )
         }
