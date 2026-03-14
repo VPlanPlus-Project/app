@@ -72,6 +72,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.Switcher
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
 import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
@@ -85,7 +86,6 @@ import plus.vplan.app.feature.grades.page.view.ui.components.latest.LatestGrades
 import plus.vplan.app.feature.grades.page.view.ui.components.subject.Subjects
 import plus.vplan.app.feature.main.ui.MainScreen
 import plus.vplan.app.ui.components.ShimmerLoader
-import plus.vplan.app.ui.components.Switcher
 import plus.vplan.app.utils.toDp
 import kotlin.math.roundToInt
 
