@@ -61,8 +61,8 @@ import plus.vplan.app.feature.assessment.ui.components.detail.AssessmentDetailDr
 import plus.vplan.app.feature.calendar.ui.CalendarEvent
 import plus.vplan.app.feature.calendar.ui.CalendarScreen
 import plus.vplan.app.feature.calendar.ui.CalendarViewModel
+import plus.vplan.app.feature.grades.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.analytics.ui.AnalyticsScreen
-import plus.vplan.app.feature.grades.page.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.page.view.ui.GradesScreen
 import plus.vplan.app.feature.home.ui.HomeScreen
 import plus.vplan.app.feature.home.ui.HomeViewModel

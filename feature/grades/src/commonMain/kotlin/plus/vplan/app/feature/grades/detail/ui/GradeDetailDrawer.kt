@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.page.detail.ui
+package plus.vplan.app.feature.grades.detail.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,9 +25,6 @@ import plus.vplan.app.core.ui.components.SheetActionItem
 import plus.vplan.app.core.ui.components.SheetConfiguration
 import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
-import plus.vplan.app.feature.grades.detail.ui.GradeDetailEvent
-import plus.vplan.app.feature.grades.detail.ui.GradeDetailPage
-import plus.vplan.app.feature.grades.detail.ui.GradeDetailViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
