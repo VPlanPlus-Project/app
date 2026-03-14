@@ -49,6 +49,7 @@ import plus.vplan.app.core.ui.components.Button
 import plus.vplan.app.core.ui.components.ButtonSize
 import plus.vplan.app.core.ui.components.ButtonState
 import plus.vplan.app.core.ui.components.ButtonType
+import plus.vplan.app.core.ui.components.SubjectGroupRow
 import plus.vplan.app.feature.assessment.ui.components.create.TypeDrawer
 import plus.vplan.app.feature.assessment.ui.components.detail.components.TypeRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedAtRow
@@ -56,7 +57,6 @@ import plus.vplan.app.feature.homework.ui.components.detail.components.CreatedBy
 import plus.vplan.app.feature.homework.ui.components.detail.components.DueToRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.SavedLocalRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.ShareStatusRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.DateSelectConfiguration
 import plus.vplan.app.ui.components.DateSelectDrawer

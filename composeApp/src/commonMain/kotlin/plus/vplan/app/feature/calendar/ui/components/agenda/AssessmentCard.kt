@@ -31,9 +31,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format
 import plus.vplan.app.core.model.AppEntity
 import plus.vplan.app.core.model.Assessment
+import plus.vplan.app.core.ui.components.SubjectIcon
+import plus.vplan.app.core.ui.subjectColor
 import plus.vplan.app.core.utils.date.regularDateFormat
-import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.ui.subjectColor
 import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.toName
 

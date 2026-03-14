@@ -50,6 +50,7 @@ import plus.vplan.app.core.ui.components.ButtonSize
 import plus.vplan.app.core.ui.components.ButtonState
 import plus.vplan.app.core.ui.components.ButtonType
 import plus.vplan.app.core.ui.components.MetadataRow
+import plus.vplan.app.core.ui.components.SubjectGroupRow
 import plus.vplan.app.core.ui.components.tableNameStyle
 import plus.vplan.app.core.ui.components.tableValueStyle
 import plus.vplan.app.feature.homework.ui.components.create.LessonSelectDrawer
@@ -60,7 +61,6 @@ import plus.vplan.app.feature.homework.ui.components.detail.components.NewTaskRo
 import plus.vplan.app.feature.homework.ui.components.detail.components.SavedLocalRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.ShareStatusRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.StatusRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
 import plus.vplan.app.feature.homework.ui.components.detail.components.TaskRow
 import plus.vplan.app.ui.common.AttachedFile
 import plus.vplan.app.ui.components.DateSelectConfiguration

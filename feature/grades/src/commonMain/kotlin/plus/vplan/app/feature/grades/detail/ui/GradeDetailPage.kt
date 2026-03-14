@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.page.detail.ui
+package plus.vplan.app.feature.grades.detail.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
@@ -22,8 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.feature.grades.detail.ui.GradeDetailEvent
-import plus.vplan.app.feature.grades.detail.ui.GradeDetailState
+import plus.vplan.app.core.ui.components.SubjectGroupRow
 import plus.vplan.app.feature.grades.detail.ui.components.GivenAtRow
 import plus.vplan.app.feature.grades.detail.ui.components.GivenByRow
 import plus.vplan.app.feature.grades.detail.ui.components.IntervalRow
@@ -31,8 +30,6 @@ import plus.vplan.app.feature.grades.detail.ui.components.OptionalRow
 import plus.vplan.app.feature.grades.detail.ui.components.TypeRow
 import plus.vplan.app.feature.grades.detail.ui.components.UseForFinalGradeRow
 import plus.vplan.app.feature.grades.detail.ui.components.UserRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
-import plus.vplan.app.utils.safeBottomPadding
 
 
 @Composable
@@ -55,7 +52,6 @@ fun GradeDetailPage(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth()
-                        .padding(bottom = safeBottomPadding())
                 ) {
                     Text(
                         text = "Noten entsperren",
@@ -111,5 +107,4 @@ fun GradeDetailPage(
             }
         }
     }
-
 }

@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.homework.ui.components.detail.components
+package plus.vplan.app.core.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
@@ -11,12 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import plus.vplan.app.core.model.Group
-import plus.vplan.app.core.ui.components.MetadataRow
-import plus.vplan.app.core.ui.components.MetadataValueContainer
-import plus.vplan.app.core.ui.components.tableNameStyle
-import plus.vplan.app.core.ui.components.tableValueStyle
-import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.ui.subjectIcon
+import plus.vplan.app.core.ui.subjectIcon
 
 @Composable
 fun SubjectGroupRow(

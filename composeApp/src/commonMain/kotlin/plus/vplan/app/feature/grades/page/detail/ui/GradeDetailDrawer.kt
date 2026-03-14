@@ -10,17 +10,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.platform.AppPlatform
+import plus.vplan.app.core.platform.PlatformRepository
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.ModalBottomSheet
 import plus.vplan.app.core.ui.components.SheetActionItem
 import plus.vplan.app.core.ui.components.SheetConfiguration
+import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 import plus.vplan.app.feature.grades.detail.ui.GradeDetailEvent
+import plus.vplan.app.feature.grades.detail.ui.GradeDetailPage
 import plus.vplan.app.feature.grades.detail.ui.GradeDetailViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,6 +35,8 @@ fun GradeDetailDrawer(
     gradeId: Int,
     onDismiss: () -> Unit
 ) {
+    val platformRepository = koinInject<PlatformRepository>()
+
     val viewModel = koinViewModel<GradeDetailViewModel>()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -102,6 +110,7 @@ fun GradeDetailDrawer(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(contentPadding)
+                .thenIf(Modifier.padding(top = 16.dp)) { platformRepository.getPlatform() == AppPlatform.Android }
         ) {
             GradeDetailPage(state, viewModel::onEvent)
         }

@@ -67,6 +67,7 @@ import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.until
 import plus.vplan.app.feature.calendar.ui.LessonLayoutingInfo
@@ -77,7 +78,6 @@ import plus.vplan.app.feature.home.ui.components.FollowingLessons
 import plus.vplan.app.feature.home.ui.components.HolidayScreen
 import plus.vplan.app.feature.home.ui.components.headerFont
 import plus.vplan.app.ui.components.InfoCard
-import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.inWholeMinutes
 import plus.vplan.app.utils.minusWithCapAtMidnight

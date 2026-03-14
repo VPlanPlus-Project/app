@@ -18,9 +18,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.feature.grades.page.view.ui.components.GradeValue
-import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.utils.roundTo
 import plus.vplan.app.utils.toDp
 import kotlin.math.roundToInt

@@ -29,7 +29,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.ui.components.SubjectIcon
+import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.toDp
 import kotlin.time.ExperimentalTime

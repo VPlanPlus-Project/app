@@ -1,4 +1,4 @@
-package plus.vplan.app.ui.components
+package plus.vplan.app.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -13,8 +13,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.ui.subjectColor
-import plus.vplan.app.ui.subjectIcon
+import plus.vplan.app.core.ui.subjectColor
+import plus.vplan.app.core.ui.subjectIcon
 
 @Composable
 fun SubjectIcon(modifier: Modifier = Modifier, subject: String?, containerColor: Color = subject.subjectColor().getGroup().container, contentColor: Color = subject.subjectColor().getGroup().onContainer) {

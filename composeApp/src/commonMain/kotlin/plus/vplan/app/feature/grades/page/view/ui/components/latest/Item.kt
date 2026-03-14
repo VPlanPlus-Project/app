@@ -25,10 +25,10 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
 import plus.vplan.app.feature.grades.page.view.ui.components.GradeValue
-import plus.vplan.app.ui.components.SubjectIcon
 
 @Composable
 fun LatestGradeItem(
