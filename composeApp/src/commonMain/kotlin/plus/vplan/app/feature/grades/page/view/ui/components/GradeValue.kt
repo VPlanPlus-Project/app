@@ -25,7 +25,7 @@ import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.ui.util.blendColor
-import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
+import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
 
 @Composable
 fun GradeValue(

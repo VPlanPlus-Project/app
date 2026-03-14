@@ -27,7 +27,7 @@ import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.utils.date.longMonthNames
-import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
+import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
 import plus.vplan.app.feature.grades.page.view.ui.components.GradeValue
 import plus.vplan.app.utils.DOT
 

@@ -24,10 +24,10 @@ import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
+import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
+import plus.vplan.app.feature.grades.common.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
-import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GradeUiItem
 import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
