@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.sync.domain.usecase.besteschule
+package plus.vplan.app.feature.grades.common.domain.usecase
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.first
@@ -18,10 +18,9 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.application.StartTaskJson
 import plus.vplan.app.core.platform.NotificationRepository
+import plus.vplan.app.core.utils.date.atStartOfDay
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.until
-import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
-import plus.vplan.app.utils.atStartOfDay
 import kotlin.time.Duration.Companion.days
 
 class SyncGradesUseCase(
@@ -226,7 +225,9 @@ class SyncGradesUseCase(
                                     StartTaskJson.StartTaskNavigateTo(
                                         screen = "grades",
                                         value = Json.encodeToString(
-                                            StartTaskJson.StartTaskNavigateTo.Grades(gradeReceiverVppIds.first().id)
+                                            StartTaskJson.StartTaskNavigateTo.Grades(
+                                                gradeReceiverVppIds.first().id
+                                            )
                                         )
                                     )
                                 )

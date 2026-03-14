@@ -2,9 +2,6 @@ package plus.vplan.app.utils
 
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.atTime
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlin.time.Duration
@@ -20,8 +17,4 @@ infix operator fun LocalDate.minus(duration: Duration): LocalDate {
 
 fun LocalDate.atStartOfMonth(): LocalDate {
     return this - day.minus(1).days
-}
-
-fun LocalDate.atStartOfDay(): LocalDateTime {
-    return this.atTime(LocalTime.fromSecondOfDay(0))
 }

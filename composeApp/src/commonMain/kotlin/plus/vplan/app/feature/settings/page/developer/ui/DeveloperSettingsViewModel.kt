@@ -32,7 +32,7 @@ import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCas
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.feature.sync.domain.usecase.besteschule.SyncGradesUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncCause
 import plus.vplan.app.feature.sync.domain.usecase.fullsync.FullSyncUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
