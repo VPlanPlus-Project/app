@@ -32,10 +32,10 @@ import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Day
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.ui.components.ShimmerLoader
 import plus.vplan.app.ui.grayScale
-import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.toDp
 

@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.homework.ui.components.detail.components
+package plus.vplan.app.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import plus.vplan.app.ui.thenIf
+import plus.vplan.app.core.ui.modifier.thenIf
 
 @Composable fun tableNameStyle() = MaterialTheme.typography.bodyLarge.copy(Color.Gray)
 @Composable fun tableValueStyle() = MaterialTheme.typography.bodyMedium

@@ -95,6 +95,7 @@ kotlin {
 
 
             implementation(project(":feature:onboarding"))
+            implementation(project(":feature:grades"))
 
             // Compose
             implementation(libs.compose.components.resources)

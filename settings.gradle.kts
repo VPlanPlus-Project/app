@@ -63,8 +63,10 @@ include(":core:data")
 include(":core:network")
 include(":core:platform")
 include(":core:ui")
+include(":core:common")
 include(":core:sync")
 include(":core:analytics")
 
 // Feature modules
 include(":feature:onboarding")
+include(":feature:grades")

@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
@@ -25,16 +23,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.feature.grades.detail.ui.components.GivenAtRow
+import plus.vplan.app.feature.grades.detail.ui.components.GivenByRow
+import plus.vplan.app.feature.grades.detail.ui.components.IntervalRow
+import plus.vplan.app.feature.grades.detail.ui.components.OptionalRow
+import plus.vplan.app.feature.grades.detail.ui.components.TypeRow
+import plus.vplan.app.feature.grades.detail.ui.components.UseForFinalGradeRow
+import plus.vplan.app.feature.grades.detail.ui.components.UserRow
 import plus.vplan.app.feature.grades.domain.usecase.GradeLockState
-import plus.vplan.app.feature.grades.page.detail.ui.components.GivenAtRow
-import plus.vplan.app.feature.grades.page.detail.ui.components.GivenByRow
-import plus.vplan.app.feature.grades.page.detail.ui.components.IntervalRow
-import plus.vplan.app.feature.grades.page.detail.ui.components.OptionalRow
-import plus.vplan.app.feature.grades.page.detail.ui.components.TypeRow
-import plus.vplan.app.feature.grades.page.detail.ui.components.UseForFinalGradeRow
-import plus.vplan.app.feature.grades.page.detail.ui.components.UserRow
 import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.feature.homework.ui.components.detail.components.SubjectGroupRow
 import plus.vplan.app.utils.safeBottomPadding
@@ -95,32 +92,12 @@ fun GradeDetailPage(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = buildString {
-                            val value = if (grade.isOptional) "(${grade.value})" else grade.value
-                            when (grade.collection.interval.type) {
-                                is BesteSchuleInterval.Type.Sek2 -> {
-                                    if (grade.value == null) append("Note")
-                                    else append("$value Notenpunkte")
-                                }
-                                else -> {
-                                    append("Note")
-                                    if (grade.value != null) append(" $value")
-                                }
-                            }
-                        },
-                        style = MaterialTheme.typography.headlineLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
                     if (state.lockState == GradeLockState.Unlocked) FilledTonalIconButton(
                         enabled = state.reloadingState != UnoptimisticTaskState.InProgress,
                         onClick = { onEvent(GradeDetailEvent.LockGrades) }
@@ -166,14 +143,7 @@ fun GradeDetailPage(
                         }
                     }
                 }
-                Text(
-                    text = grade.collection.subject.fullName,
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
 
-                Spacer(Modifier.height(16.dp))
                 SubjectGroupRow(
                     canEdit = false,
                     allowGroup = false,

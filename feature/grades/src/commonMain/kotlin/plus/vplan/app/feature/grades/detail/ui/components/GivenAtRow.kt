@@ -1,17 +1,17 @@
-package plus.vplan.app.feature.grades.page.detail.ui.components
+package plus.vplan.app.feature.grades.detail.ui.components
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
+import plus.vplan.app.core.ui.components.MetadataRow
+import plus.vplan.app.core.ui.components.MetadataValueContainer
+import plus.vplan.app.core.ui.components.tableNameStyle
+import plus.vplan.app.core.ui.components.tableValueStyle
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.regularDateFormat
-import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataValueContainer
-import plus.vplan.app.feature.homework.ui.components.detail.components.tableNameStyle
-import plus.vplan.app.feature.homework.ui.components.detail.components.tableValueStyle
-import plus.vplan.app.utils.untilText
+import plus.vplan.app.core.utils.date.untilText
 
 @Composable
 fun GivenAtRow(

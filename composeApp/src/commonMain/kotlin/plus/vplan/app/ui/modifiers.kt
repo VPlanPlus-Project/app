@@ -44,10 +44,6 @@ fun Modifier.grayScale(saturation: Float = 0f): Modifier {
     )
 }
 
-fun Modifier.thenIf(modifier: Modifier, predicate: () -> Boolean): Modifier {
-    return this.then(if (predicate()) modifier else Modifier)
-}
-
 fun Modifier.animatePlacement(): Modifier = composed {
     val scope = rememberCoroutineScope()
     var targetOffset by remember { mutableStateOf(IntOffset.Zero) }

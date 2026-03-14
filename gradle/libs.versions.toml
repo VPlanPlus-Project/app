@@ -42,6 +42,7 @@ gradle-buildconfig-plugin = "6.0.7"
 kermit = "2.1.0"
 navigationCompose = "2.9.2"
 posthogAndroid = "3.34.3"
+human-readable = "1.12.3"
 
 # Navigation 3
 navigation3-ui = "1.0.0-alpha06"
@@ -132,6 +133,7 @@ filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "file
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekitCompose" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 posthog-android = { module = "com.posthog:posthog-android", version.ref = "posthogAndroid" }
+human-readable = { module = "nl.jacobras:Human-Readable", version.ref = "human-readable" }
 
 # VPlanPlus
 vpp-sp24 = { module = "plus.vplan.lib:sp24-kt", version.ref = "sp24-kt" }

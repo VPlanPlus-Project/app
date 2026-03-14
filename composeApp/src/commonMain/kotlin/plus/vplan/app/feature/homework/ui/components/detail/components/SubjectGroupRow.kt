@@ -11,6 +11,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import plus.vplan.app.core.model.Group
+import plus.vplan.app.core.ui.components.MetadataRow
+import plus.vplan.app.core.ui.components.MetadataValueContainer
+import plus.vplan.app.core.ui.components.tableNameStyle
+import plus.vplan.app.core.ui.components.tableValueStyle
 import plus.vplan.app.ui.components.SubjectIcon
 import plus.vplan.app.ui.subjectIcon
 

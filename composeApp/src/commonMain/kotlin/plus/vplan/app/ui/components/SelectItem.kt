@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
-import plus.vplan.app.ui.thenIf
+import plus.vplan.app.core.ui.modifier.thenIf
 
 @Composable
 fun SelectContainer(
