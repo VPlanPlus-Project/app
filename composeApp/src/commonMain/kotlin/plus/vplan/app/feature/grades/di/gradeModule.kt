@@ -9,7 +9,7 @@ import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.UpdateGradeUseCase
 import plus.vplan.app.feature.grades.detail.ui.GradeDetailViewModel
-import plus.vplan.app.feature.grades.list.ui.components.GradesViewModel
+import plus.vplan.app.feature.grades.list.ui.GradesViewModel
 import plus.vplan.app.feature.grades.page.analytics.ui.AnalyticsViewModel
 
 val gradeModule = module {

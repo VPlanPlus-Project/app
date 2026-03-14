@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.list.ui.components
+package plus.vplan.app.feature.grades.list.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

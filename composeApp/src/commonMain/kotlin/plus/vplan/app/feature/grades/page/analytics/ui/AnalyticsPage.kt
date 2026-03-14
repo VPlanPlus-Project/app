@@ -63,7 +63,7 @@ import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.ui.util.blendColor
-import plus.vplan.app.feature.grades.page.view.ui.components.SelectIntervalDrawer
+import plus.vplan.app.feature.grades.page.analytics.ui.components.SelectIntervalDrawer
 import plus.vplan.app.ui.animatePlacement
 import plus.vplan.app.utils.safeBottomPadding
 

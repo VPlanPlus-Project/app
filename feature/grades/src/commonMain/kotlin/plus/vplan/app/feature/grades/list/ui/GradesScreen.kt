@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 
-package plus.vplan.app.feature.grades.page.view.ui
+package plus.vplan.app.feature.grades.list.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -65,7 +65,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
@@ -80,22 +79,19 @@ import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 import plus.vplan.app.feature.grades.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.list.ui.components.AddGradeDialog
 import plus.vplan.app.feature.grades.list.ui.components.AverageCard
-import plus.vplan.app.feature.grades.list.ui.components.GradeDetailEvent
 import plus.vplan.app.feature.grades.list.ui.components.GradesLocked
-import plus.vplan.app.feature.grades.list.ui.components.GradesState
-import plus.vplan.app.feature.grades.list.ui.components.GradesViewModel
 import plus.vplan.app.feature.grades.list.ui.components.NoGradesForInterval
 import plus.vplan.app.feature.grades.list.ui.components.SelectYearDrawer
 import plus.vplan.app.feature.grades.list.ui.components.TopBar
 import plus.vplan.app.feature.grades.list.ui.components.latest.LatestGrades
 import plus.vplan.app.feature.grades.list.ui.components.subject.Subjects
-import plus.vplan.app.feature.main.ui.MainScreen
 import kotlin.math.roundToInt
 
 @Composable
 fun GradesScreen(
-    navHostController: NavHostController,
-    vppId: Int
+    onOpenAnalytics: (vppIdId: Int) -> Unit,
+    onBack: () -> Unit,
+    vppId: Int,
 ) {
     val viewModel = koinViewModel<GradesViewModel>()
     val state by viewModel.state.collectAsState()
@@ -104,9 +100,9 @@ fun GradesScreen(
 
     GradesContent(
         state = state,
-        onOpenAnalytics = remember(vppId) { { navHostController.navigate(MainScreen.Analytics(vppId)) } },
+        onOpenAnalytics = remember(vppId) { { onOpenAnalytics(vppId) } },
         onEvent = viewModel::onEvent,
-        onBack = navHostController::navigateUp
+        onBack = onBack,
     )
 }
 
@@ -155,7 +151,7 @@ private fun GradesContent(
         topBar = {
             TopBar(
                 subtitle = state.selectedYear?.name,
-                gradesLockState = state.gradeLockState!!,
+                gradesLockState = state.gradeLockState,
                 topScrollBehavior = topScrollBehavior,
                 isEditModeActive = state.isInEditMode,
                 onBack = onBack,
@@ -188,7 +184,7 @@ private fun GradesContent(
                     .fillMaxSize()
 
                 AnimatedContent(
-                    targetState = !state.gradeLockState!!.canAccess,
+                    targetState = !state.gradeLockState.canAccess,
                     modifier = Modifier.fillMaxSize()
                 ) { areGradesLocked ->
                     if (areGradesLocked) {
