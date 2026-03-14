@@ -11,40 +11,43 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.components.ModalBottomSheet
 import plus.vplan.app.core.ui.components.SelectContainer
 import plus.vplan.app.core.ui.components.SelectItem
 import plus.vplan.app.core.ui.components.SheetConfiguration
 import plus.vplan.app.core.utils.string.DOT
-import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 
 @Composable
 private fun SelectIntervalDrawerContent(
-    intervals: List<PopulatedInterval>,
-    selectedInterval: PopulatedInterval?,
-    onClickInterval: (PopulatedInterval) -> Unit
+    intervals: List<BesteSchuleInterval>,
+    selectedInterval: BesteSchuleInterval?,
+    onClickInterval: (BesteSchuleInterval) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         intervals
-            .groupBy { it.interval.year.id }
+            .groupBy { it.year.id }
             .forEach { (_, intervals) ->
                 SelectContainer {
                     intervals.forEach { interval ->
                         SelectItem(
                             icon = null,
                             title = buildString {
-                                append(interval.interval.name)
-                                append(" $DOT ${interval.interval.year.name}")
+                                append(interval.name)
+                                append(" $DOT ${interval.year.name}")
                             },
                             subtitle = buildString {
                                 val parts = mutableListOf<String>()
-                                interval.includedInterval?.let { includedIntervalInstance ->
+                                val includedInterval = interval.includedIntervalId?.let { includedIntervalId ->
+                                    intervals.firstOrNull { it.id == includedIntervalId }
+                                }
+                                includedInterval?.let { includedIntervalInstance ->
                                     parts.add("Inklusive ${includedIntervalInstance.name}")
                                 }
-                                (interval.interval.collectionIds.toSet() + interval.includedInterval?.collectionIds.orEmpty()
+                                (interval.collectionIds.toSet() + includedInterval?.collectionIds.orEmpty()
                                     .toSet()).size.let { collectionCount ->
                                     if (collectionCount > 1) parts.add("$collectionCount Leistungserhebungen")
                                     else if (collectionCount == 1) parts.add("eine Leistungserhebung")
@@ -64,9 +67,9 @@ private fun SelectIntervalDrawerContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectIntervalDrawer(
-    intervals: List<PopulatedInterval>,
-    selectedInterval: PopulatedInterval?,
-    onClickInterval: (PopulatedInterval) -> Unit,
+    intervals: List<BesteSchuleInterval>,
+    selectedInterval: BesteSchuleInterval?,
+    onClickInterval: (BesteSchuleInterval) -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(true)

@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.grades.page.view.ui
+package plus.vplan.app.feature.grades.list.ui.components
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -31,8 +31,6 @@ import plus.vplan.app.core.model.besteschule.BesteSchuleYear
 import plus.vplan.app.core.utils.date.atStartOfDay
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.date.until
-import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
-import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
 import plus.vplan.app.feature.grades.common.domain.usecase.CalculateAverageUseCase
@@ -57,8 +55,6 @@ class GradesViewModel(
     private val besteSchuleGradesRepository by inject<GradesRepository>()
 
     private val getGradeLockStateUseCase by inject<GetGradeLockStateUseCase>()
-
-    private val intervalPopulator by inject<IntervalPopulator>()
 
     private val keyValueRepository by inject<KeyValueRepository>()
 
@@ -107,14 +103,6 @@ class GradesViewModel(
                     }
 
                     besteSchuleGradesRepository.getAllForUser(schulverwalterUserId = schulverwalterUser.userId)
-                        .map {
-                            it.map { grade ->
-                                GradesItem(
-                                    grade = grade,
-                                    interval = intervalPopulator.populateSingle(grade.collection.interval).first(),
-                                )
-                            }
-                        }
                         .collectLatest { allGrades ->
                             val intervalDataMap = intervalsForYear.associateWith { interval ->
                                 calculateIntervalData(interval, intervalsForYear, allGrades)
@@ -170,7 +158,7 @@ class GradesViewModel(
     private suspend fun calculateIntervalData(
         interval: BesteSchuleInterval,
         allIntervalsInYear: List<BesteSchuleInterval>,
-        allGrades: List<GradesItem>
+        allGrades: List<BesteSchuleGrade>
     ): IntervalData {
         val relevantIntervalIds = buildSet {
             add(interval.id)
@@ -182,7 +170,7 @@ class GradesViewModel(
         }
 
         val gradesForInterval = allGrades.filter { grade ->
-            grade.grade.collection.interval.id in relevantIntervalIds
+            grade.collection.interval.id in relevantIntervalIds
         }
 
         if (gradesForInterval.isEmpty()) {
@@ -194,11 +182,11 @@ class GradesViewModel(
         }
 
         val subjects = gradesForInterval
-            .groupBy { grade -> grade.grade.collection.subject }
+            .groupBy { grade -> grade.collection.subject }
             .mapNotNull { (subject, gradesForSubject) ->
 
                 val categoriesMap = gradesForSubject.groupBy { grade ->
-                    grade.grade.collection.type
+                    grade.collection.type
                 }
 
                 val categories = categoriesMap.map { (type, gradesForType) ->
@@ -218,8 +206,8 @@ class GradesViewModel(
                         count = gradesForType.size,
                         weight = weight,
                         grades = gradesForType
-                            .filter { it.grade.value != null }
-                            .map { GradeUiItem.ActualGrade(it.grade) }
+                            .filter { it.value != null }
+                            .map { GradeUiItem.ActualGrade(it) }
                             .plus(customGrades),
                     )
                 }.sortedBy { it.name }
@@ -286,7 +274,6 @@ class GradesViewModel(
             avg = fullAverage,
             subjects = subjectsWithAverages,
             latestGrades = gradesForInterval
-                .map { it.grade }
                 .filter { it.givenAt.atStartOfDay() until LocalDateTime.now() < 14.days }
                 .sortedByDescending { it.givenAt }
                 .take(4)
@@ -304,17 +291,6 @@ class GradesViewModel(
     fun onEvent(event: GradeDetailEvent) {
         viewModelScope.launch {
             when (event) {
-                is GradeDetailEvent.ToggleConsiderForFinalGrade -> {
-
-                    besteSchuleGradesRepository.save(
-                        event.grade.copy(
-                            isSelectedForFinalGrade = !event.grade.isSelectedForFinalGrade
-                        )
-                    )
-
-                    recalculateInterval(event.grade.collection.interval.id)
-                }
-
                 is GradeDetailEvent.ToggleEditMode -> {
                     gradeState.update { it.copy(isInEditMode = !it.isInEditMode) }
                 }
@@ -401,58 +377,20 @@ class GradesViewModel(
         }
     }
 
-    private suspend fun recalculateInterval(intervalId: Int) {
-        val currentState = gradeState.value
-        val interval = currentState.intervalsForSelectedYear.keys.find {
-            it.id == intervalId
-        } ?: return
-
-        val allIntervalsInYear = currentState.intervalsForSelectedYear.keys.toList()
-        val schulverwalterUser = currentSchulverwalterUser.value ?: return
-
-        val allGrades = besteSchuleGradesRepository
-            .getAllForUser(schulverwalterUserId = schulverwalterUser.userId)
-            .first()
-            .map { grade ->
-                GradesItem(
-                    grade = grade,
-                    interval = intervalPopulator.populateSingle(grade.collection.interval).first(),
-                )
-            }
-
-        val newData = calculateIntervalData(interval, allIntervalsInYear, allGrades)
-
-        gradeState.update { state ->
-            state.copy(
-                intervalsForSelectedYear = state.intervalsForSelectedYear.toMutableMap().apply {
-                    put(interval, newData)
-                }
-            )
-        }
-    }
-
     private suspend fun recalculateAllIntervals() {
-        val currentState = gradeState.value
-        val allIntervalsInYear = currentState.intervalsForSelectedYear.keys.toList()
-        val schulverwalterUser = currentSchulverwalterUser.value ?: return
+        val updatedIntervalsMap = withContext(Dispatchers.Main) {
+            val currentState = gradeState.value
+            val allIntervalsInYear = currentState.intervalsForSelectedYear.keys.toList()
+            val schulverwalterUser = currentSchulverwalterUser.value ?: return@withContext null
 
-        val allGrades = withContext(Dispatchers.IO) {
-            besteSchuleGradesRepository
+            val allGrades = besteSchuleGradesRepository
                 .getAllForUser(schulverwalterUserId = schulverwalterUser.userId)
                 .first()
-                .map { grade ->
-                    GradesItem(
-                        grade = grade,
-                        interval = intervalPopulator.populateSingle(grade.collection.interval).first(),
-                    )
-                }
-        }
 
-        val updatedIntervalsMap = withContext(Dispatchers.Default) {
-            allIntervalsInYear.associateWith { interval ->
+            return@withContext allIntervalsInYear.associateWith { interval ->
                 calculateIntervalData(interval, allIntervalsInYear, allGrades)
             }
-        }
+        } ?: return
 
         gradeState.update { it.copy(intervalsForSelectedYear = updatedIntervalsMap) }
     }
@@ -487,15 +425,7 @@ data class IntervalData(
     val latestGrades: List<BesteSchuleGrade>
 )
 
-
-
-data class GradesItem(
-    val grade: BesteSchuleGrade,
-    val interval: PopulatedInterval,
-)
-
 sealed class GradeDetailEvent {
-    data class ToggleConsiderForFinalGrade(val grade: BesteSchuleGrade) : GradeDetailEvent()
     data object ToggleEditMode : GradeDetailEvent()
 
     data class AddGrade(val categoryId: Int, val grade: Int) : GradeDetailEvent()

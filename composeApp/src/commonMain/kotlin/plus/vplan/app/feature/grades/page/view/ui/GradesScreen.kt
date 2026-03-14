@@ -80,7 +80,10 @@ import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 import plus.vplan.app.feature.grades.detail.ui.GradeDetailDrawer
 import plus.vplan.app.feature.grades.list.ui.components.AddGradeDialog
 import plus.vplan.app.feature.grades.list.ui.components.AverageCard
+import plus.vplan.app.feature.grades.list.ui.components.GradeDetailEvent
 import plus.vplan.app.feature.grades.list.ui.components.GradesLocked
+import plus.vplan.app.feature.grades.list.ui.components.GradesState
+import plus.vplan.app.feature.grades.list.ui.components.GradesViewModel
 import plus.vplan.app.feature.grades.list.ui.components.NoGradesForInterval
 import plus.vplan.app.feature.grades.list.ui.components.SelectYearDrawer
 import plus.vplan.app.feature.grades.list.ui.components.TopBar
@@ -152,7 +155,7 @@ private fun GradesContent(
         topBar = {
             TopBar(
                 subtitle = state.selectedYear?.name,
-                gradesLockState = state.gradeLockState,
+                gradesLockState = state.gradeLockState!!,
                 topScrollBehavior = topScrollBehavior,
                 isEditModeActive = state.isInEditMode,
                 onBack = onBack,
@@ -185,7 +188,7 @@ private fun GradesContent(
                     .fillMaxSize()
 
                 AnimatedContent(
-                    targetState = !state.gradeLockState.canAccess,
+                    targetState = !state.gradeLockState!!.canAccess,
                     modifier = Modifier.fillMaxSize()
                 ) { areGradesLocked ->
                     if (areGradesLocked) {

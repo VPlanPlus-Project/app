@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -27,10 +26,9 @@ import plus.vplan.app.core.data.besteschule.SubjectsRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
-import plus.vplan.app.domain.model.populated.besteschule.PopulatedInterval
 
 class AnalyticsViewModel(
     private val vppIdRepository: VppIdRepository
@@ -41,8 +39,6 @@ class AnalyticsViewModel(
     private val besteSchuleGradesRepository by inject<GradesRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
     private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
-
-    private val intervalPopulator by inject<IntervalPopulator>()
 
     private var mainJob: Job? = null
     fun init(vppIdId: Int) {
@@ -62,11 +58,10 @@ class AnalyticsViewModel(
                 .collectLatest { vppId ->
                     launch {
                         besteSchuleIntervalsRepository.getAll()
-                            .flatMapLatest { intervalPopulator.populateMultiple(it) }
                             .collectLatest { intervals ->
                                 state = state.copy(
                                     intervals = intervals,
-                                    interval = if (state.intervals.isEmpty()) intervals.firstOrNull { LocalDate.now() in it.interval.from..it.interval.to } else state.interval
+                                    interval = if (state.intervals.isEmpty()) intervals.firstOrNull { LocalDate.now() in it.from..it.to } else state.interval
                                 )
                             }
                     }.let(activeJobs::add)
@@ -114,15 +109,15 @@ class AnalyticsViewModel(
             .filter { grade ->
                 state.filteredSubjects.any { subject -> grade.collection.subject.id == subject.id } || state.filteredSubjects.isEmpty()
             }
-            .filter { it.collection.interval.id in listOfNotNull(state.interval?.interval?.id, state.interval?.includedInterval?.id) }
+            .filter { it.collection.interval.id in listOfNotNull(state.interval?.id, state.interval?.includedIntervalId) }
         )
     }
 }
 
 data class AnalyticsState(
     val vppId: VppId? = null,
-    val interval: PopulatedInterval? = null,
-    val intervals: List<PopulatedInterval> = emptyList(),
+    val interval: BesteSchuleInterval? = null,
+    val intervals: List<BesteSchuleInterval> = emptyList(),
     val grades: List<BesteSchuleGrade> = emptyList(),
     val filteredGrades: List<BesteSchuleGrade> = emptyList(),
 
@@ -133,5 +128,5 @@ data class AnalyticsState(
 sealed class AnalyticsAction {
     data class ToggleSubjectFilter(val subject: BesteSchuleSubject) : AnalyticsAction()
 
-    data class SetInterval(val interval: PopulatedInterval) : AnalyticsAction()
+    data class SetInterval(val interval: BesteSchuleInterval) : AnalyticsAction()
 }

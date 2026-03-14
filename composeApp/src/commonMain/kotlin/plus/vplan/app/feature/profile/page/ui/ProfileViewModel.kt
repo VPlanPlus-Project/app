@@ -22,13 +22,11 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.model.populated.besteschule.IntervalPopulator
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
 import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
 import plus.vplan.app.feature.grades.common.domain.usecase.CalculateAverageUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
-import plus.vplan.app.feature.grades.page.view.ui.GradesItem
 import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
 
@@ -46,8 +44,6 @@ class ProfileViewModel(
 
     private val besteSchuleGradesRepository by inject<GradesRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
-
-    private val intervalPopulator by inject<IntervalPopulator>()
 
     init {
         viewModelScope.launch {
@@ -79,23 +75,17 @@ class ProfileViewModel(
 
                         val grades = besteSchuleGradesRepository.getAllForUser(schulverwalterUserId = vppId.schulverwalterConnection!!.userId)
                             .first()
-                            .map { grade ->
-                                GradesItem(
-                                    grade = grade,
-                                    interval = intervalPopulator.populateSingle(grade.collection.interval).first()
-                                )
-                            }
 
                         state.currentInterval?.let { interval ->
                             state = state.copy(
-                                averageGrade = calculateAverageUseCase(grades.map {
-                                    GradeUiItem.ActualGrade(it.grade)
+                                averageGrade = calculateAverageUseCase(grades.map { grade ->
+                                    GradeUiItem.ActualGrade(grade)
                                 }, interval),
                                 latestGrade = grades
-                                    .filter { grade -> grade.grade.collection.interval.id == interval.id }
-                                    .filterNot { grade -> grade.grade.value == null }
-                                    .maxByOrNull { grade -> grade.grade.givenAt }
-                                    ?.let { grade -> LatestGrade.Value(grade.grade.value!!) }
+                                    .filter { grade -> grade.collection.interval.id == interval.id }
+                                    .filterNot { grade -> grade.value == null }
+                                    .maxByOrNull { grade -> grade.givenAt }
+                                    ?.let { grade -> LatestGrade.Value(grade.value!!) }
                                     ?: LatestGrade.NotExisting
                             )
                         }

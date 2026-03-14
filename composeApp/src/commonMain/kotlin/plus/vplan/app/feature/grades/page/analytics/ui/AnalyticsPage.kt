@@ -161,7 +161,7 @@ private fun AnalyticsContent(
                 if (state.interval == null) return@gradesByGrade
                 val map = remember(state.filteredGrades) {
                     var max = 0
-                    when (state.interval.interval.type) {
+                    when (state.interval.type) {
                         is BesteSchuleInterval.Type.Sek2 -> (0..15).toList().associateWith { grade -> state.filteredGrades.count { it.numericValue == grade } }
                         else -> (1..6).toList().associateWith { grade -> state.filteredGrades.count { it.numericValue == grade } }
                     }
@@ -192,7 +192,7 @@ private fun AnalyticsContent(
                                 .weight(1f)
                                 .fillMaxHeight(percentageAnimation)
                                 .clip(RoundedCornerShape(8.dp, 8.dp, 4.dp, 4.dp))
-                                .background(when (state.interval.interval.type) {
+                                .background(when (state.interval.type) {
                                     is BesteSchuleInterval.Type.Sek2 -> blendColor(red.container, green.container, i/15f)
                                     else -> blendColor(green.container, red.container, (i-1)/5f)
                                 })
