@@ -54,6 +54,7 @@ import platform.UIKit.presentationController
 import platform.UIKit.secondaryLabelColor
 import platform.UIKit.sheetPresentationController
 import platform.darwin.NSObject
+import plus.vplan.app.core.ui.theme.AppTheme
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 @Composable
@@ -194,7 +195,9 @@ internal class ComposeSheetViewController(
         super.viewDidLoad()
 
         val composeVC = ComposeUIViewController {
-            contentProvider(paddingState.value)
+            AppTheme(dynamicColor = false) {
+                contentProvider(paddingState.value)
+            }
         }
 
         addChildViewController(composeVC)
