@@ -20,6 +20,8 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.kermit)
 
+            implementation(project(":core:model"))
+
             // Permissions
             implementation(libs.moko.permissions.compose)
             implementation(libs.moko.permissions.notifications)
