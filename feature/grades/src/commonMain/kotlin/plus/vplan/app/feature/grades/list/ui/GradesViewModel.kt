@@ -322,16 +322,28 @@ class GradesViewModel(
 
                 is GradeDetailEvent.RemoveGrade -> {
                     gradeState.update { state ->
+                        var removed = false
+
                         val updatedIntervalsMap = state.intervalsForSelectedYear.mapValues { (_, data) ->
                             val updatedSubjects = data.subjects.map { subject ->
                                 subject.copy(
                                     categories = subject.categories.map { category ->
-                                        category.copy(grades = category.grades.filter { it !is GradeUiItem.CustomGrade || it != event.grade })
+                                        category.copy(
+                                            grades = category.grades.filter { grade ->
+                                                if (!removed && grade is GradeUiItem.CustomGrade && grade == event.grade) {
+                                                    removed = true
+                                                    return@filter false
+                                                } else {
+                                                    return@filter true
+                                                }
+                                            }
+                                        )
                                     }
                                 )
                             }
                             data.copy(subjects = updatedSubjects)
                         }
+
                         state.copy(intervalsForSelectedYear = updatedIntervalsMap)
                     }
 
