@@ -342,7 +342,7 @@ private fun HomeContent(
                                 }
                             )
                             val info = state.day.day.info
-                            if (info != null) repeat(20) { DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = info) }
+                            if (info != null) DayInfoCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), info = info)
                             if (state.day.substitution.isEmpty()) InfoCard(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                                 imageVector = CoreUiRes.drawable.triangle_alert,
