@@ -228,16 +228,6 @@ jobs:
                     name: ios-build-artifacts
                     path: iosApp/build
 
-            - name: Load changelog
-              run: |
-                  if [ -f .deploy/CHANGELOG ]; then
-                    {
-                      echo "CHANGELOG<<EOF"
-                      cat .deploy/CHANGELOG
-                      echo "EOF"
-                    } >> $GITHUB_ENV
-                  fi
-
             -   name: Determine lane and upload to TestFlight
                 working-directory: iosApp
                 env:
