@@ -145,19 +145,20 @@ kotlin {
     }
 }
 
-// Generate a Version.xcconfig that Xcode includes so MARKETING_VERSION and
-// CURRENT_PROJECT_VERSION are always in sync with ApplicationConfig.
 val generateXcodeVersionConfig by tasks.registering {
     group = "build"
     description = "Writes iosApp/Configuration/Version.xcconfig from ApplicationConfig"
     val outFile = rootProject.file("iosApp/Configuration/Version.xcconfig")
+
+    val marketingVersion = applicationConfig.cfBundleShortVersionString
+
     outputs.file(outFile)
     doLast {
         outFile.parentFile.mkdirs()
         outFile.writeText(
             "// Auto-generated from ApplicationConfig - do not edit manually\n" +
-            "MARKETING_VERSION = ${applicationConfig.cfBundleShortVersionString}\n" +
-            "CURRENT_PROJECT_VERSION = 1\n"
+                    "MARKETING_VERSION = $marketingVersion\n" +
+                    "CURRENT_PROJECT_VERSION = 1\n"
         )
     }
 }
