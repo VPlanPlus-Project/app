@@ -9,7 +9,7 @@ data class BesteSchuleGrade(
     val isOptional: Boolean,
     val isSelectedForFinalGrade: Boolean,
     val schulverwalterUserId: Int,
-    val collectionId: Int,
+    val collection: BesteSchuleCollection,
     val givenAt: LocalDate,
     val cachedAt: Instant
 ) {

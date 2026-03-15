@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.model.Assessment
@@ -32,7 +33,6 @@ import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetFirstLessonStartUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetHolidaysUseCase

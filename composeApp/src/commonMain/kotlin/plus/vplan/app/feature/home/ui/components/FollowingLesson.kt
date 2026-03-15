@@ -29,9 +29,9 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.utils.DOT
-import plus.vplan.app.utils.toDp
+import plus.vplan.app.core.ui.components.SubjectIcon
+import plus.vplan.app.core.ui.util.textunit.toDp
+import plus.vplan.app.core.utils.string.DOT
 import kotlin.time.ExperimentalTime
 
 private fun LocalDateTime.format(): String {

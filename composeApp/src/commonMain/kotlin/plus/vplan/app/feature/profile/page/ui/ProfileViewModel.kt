@@ -11,25 +11,22 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.besteschule.GradesRepository
 import plus.vplan.app.core.data.besteschule.IntervalsRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.domain.model.populated.besteschule.CollectionPopulator
-import plus.vplan.app.domain.model.populated.besteschule.GradesPopulator
 import plus.vplan.app.domain.usecase.SetCurrentProfileUseCase
-import plus.vplan.app.feature.grades.domain.usecase.CalculateAverageUseCase
-import plus.vplan.app.feature.grades.domain.usecase.GetGradeLockStateUseCase
-import plus.vplan.app.feature.grades.domain.usecase.RequestGradeUnlockUseCase
-import plus.vplan.app.feature.grades.page.view.ui.GradesItem
-import plus.vplan.app.feature.profile.page.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
+import plus.vplan.app.feature.grades.common.domain.usecase.CalculateAverageUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
+import plus.vplan.app.feature.grades.common.domain.usecase.RequestGradeUnlockUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.GetProfilesUseCase
 import plus.vplan.app.feature.profile.page.domain.usecase.HasVppIdLinkedUseCase
 
@@ -47,9 +44,6 @@ class ProfileViewModel(
 
     private val besteSchuleGradesRepository by inject<GradesRepository>()
     private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
-
-    private val gradesPopulator by inject<GradesPopulator>()
-    private val collectionPopulator by inject<CollectionPopulator>()
 
     init {
         viewModelScope.launch {
@@ -80,23 +74,18 @@ class ProfileViewModel(
                         )
 
                         val grades = besteSchuleGradesRepository.getAllForUser(schulverwalterUserId = vppId.schulverwalterConnection!!.userId)
-                            .flatMapLatest { grades -> gradesPopulator.populateMultiple(grades) }
                             .first()
-                            .map { grade ->
-                                GradesItem(
-                                    grade = grade,
-                                    collection = collectionPopulator.populateSingle(grade.collection).first()
-                                )
-                            }
 
                         state.currentInterval?.let { interval ->
                             state = state.copy(
-                                averageGrade = calculateAverageUseCase(grades, interval),
+                                averageGrade = calculateAverageUseCase(grades.map { grade ->
+                                    GradeUiItem.ActualGrade(grade)
+                                }, interval),
                                 latestGrade = grades
                                     .filter { grade -> grade.collection.interval.id == interval.id }
-                                    .filterNot { grade -> grade.grade.grade.value == null }
-                                    .maxByOrNull { grade -> grade.grade.grade.givenAt }
-                                    ?.let { grade -> LatestGrade.Value(grade.grade.grade.value!!) }
+                                    .filterNot { grade -> grade.value == null }
+                                    .maxByOrNull { grade -> grade.givenAt }
+                                    ?.let { grade -> LatestGrade.Value(grade.value!!) }
                                     ?: LatestGrade.NotExisting
                             )
                         }

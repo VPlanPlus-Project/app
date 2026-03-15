@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
-import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

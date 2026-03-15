@@ -5,10 +5,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import plus.vplan.app.core.model.Assessment
-import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataRow
-import plus.vplan.app.feature.homework.ui.components.detail.components.MetadataValueContainer
-import plus.vplan.app.feature.homework.ui.components.detail.components.tableNameStyle
-import plus.vplan.app.feature.homework.ui.components.detail.components.tableValueStyle
+import plus.vplan.app.core.ui.components.MetadataRow
+import plus.vplan.app.core.ui.components.MetadataValueContainer
+import plus.vplan.app.core.ui.components.tableNameStyle
+import plus.vplan.app.core.ui.components.tableValueStyle
 import plus.vplan.app.utils.toName
 
 @Composable

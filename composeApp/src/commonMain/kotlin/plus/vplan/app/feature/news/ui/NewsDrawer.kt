@@ -34,10 +34,10 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.regularDateFormat
 import plus.vplan.app.feature.news.domain.usecase.NewsSchoolsState
 import plus.vplan.app.ui.components.FullscreenDrawer
-import plus.vplan.app.utils.toDp
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)

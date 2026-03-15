@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import plus.vplan.app.core.model.Response
+import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.feature.onboarding.stage.school_select.domain.usecase.OnboardingSchoolOption
 import plus.vplan.app.feature.onboarding.stage.school_select.domain.usecase.SearchForSchoolUseCase
 
@@ -20,7 +21,11 @@ class SchoolSearchViewModel(
 
     init {
         viewModelScope.launch {
-            searchForSchoolUseCase.init()
+            try {
+                searchForSchoolUseCase.init()
+            } catch (_: ApiException) {
+                state.update { it.copy(results = SchoolResults.Error) }
+            }
         }
     }
 

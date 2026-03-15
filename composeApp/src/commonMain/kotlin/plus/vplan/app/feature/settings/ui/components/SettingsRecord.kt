@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
-import plus.vplan.app.utils.blendColor
+import plus.vplan.app.core.ui.util.blendColor
 
 
 @Composable

@@ -1,9 +1,25 @@
 package plus.vplan.app.core.utils.date
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
+import kotlinx.datetime.until
 import kotlin.math.abs
 import kotlin.time.Instant
+
+infix fun LocalDate.untilText(other: LocalDate): String {
+    when (val days = this.until(other, DateTimeUnit.DAY)) {
+        -2L -> return "Vorgestern"
+        -1L -> return "Gestern"
+        0L -> return "Heute"
+        1L -> return "Morgen"
+        2L -> return "Übermorgen"
+        else -> {
+            if (days > 0) return "In $days Tagen"
+            return "Vor ${abs(days)} Tagen"
+        }
+    }
+}
 
 infix fun LocalDate.untilRelativeText(other: LocalDate): String? {
     val days = (other - this).days

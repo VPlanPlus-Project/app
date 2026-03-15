@@ -13,7 +13,8 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
-import plus.vplan.app.network.besteschule.NetworkRequestUnsuccessfulException
+import plus.vplan.app.core.model.application.network.ApiException
+import plus.vplan.app.core.model.application.network.NetworkRequestUnsuccessfulException
 import plus.vplan.app.network.besteschule.ResponseDataWrapper
 
 class HomeworkApiImpl(
@@ -26,100 +27,140 @@ class HomeworkApiImpl(
         filterGroups: List<String>?,
         filterSubjectInstances: List<String>?
     ): List<ApiHomeworkDto> {
-        val response = httpClient.get(baseUrl) {
-            access.authentication(this)
-            url {
-                filterGroups.orEmpty().let { parameters.append("filter_groups", it.joinToString(",")) }
-                filterSubjectInstances.orEmpty().let { parameters.append("filter_subject_instances", it.joinToString(",")) }
-                parameters.append("include_tasks", "true")
-                parameters.append("include_files", "true")
-                parameters.append("include_subject_instances", "true")
+        try {
+            val response = httpClient.get(baseUrl) {
+                access.authentication(this)
+                url {
+                    filterGroups.orEmpty().let { parameters.append("filter_groups", it.joinToString(",")) }
+                    filterSubjectInstances.orEmpty().let { parameters.append("filter_subject_instances", it.joinToString(",")) }
+                    parameters.append("include_tasks", "true")
+                    parameters.append("include_files", "true")
+                    parameters.append("include_subject_instances", "true")
+                }
             }
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+            return response.body<ResponseDataWrapper<List<ApiHomeworkDto>>>().data
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
-        return response.body<ResponseDataWrapper<List<ApiHomeworkDto>>>().data
     }
 
     override suspend fun getHomeworkById(vppId: VppId.Active, homeworkId: Int): ApiHomeworkDto? {
-        val response = httpClient.get("$baseUrl/$homeworkId") {
-            bearerAuth(vppId.accessToken)
-            url {
-                parameters.append("include_tasks", "true")
-                parameters.append("include_files", "true")
+        try {
+            val response = httpClient.get("$baseUrl/$homeworkId") {
+                bearerAuth(vppId.accessToken)
+                url {
+                    parameters.append("include_tasks", "true")
+                    parameters.append("include_files", "true")
+                }
             }
+            if (!response.status.isSuccess()) return null
+            return response.body<ResponseDataWrapper<ApiHomeworkDto>>().data
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-        if (!response.status.isSuccess()) return null
-        return response.body<ResponseDataWrapper<ApiHomeworkDto>>().data
     }
 
     override suspend fun createHomework(vppId: VppId.Active, request: HomeworkPostRequest): HomeworkPostResponse {
-        val response = httpClient.post(baseUrl) {
-            bearerAuth(vppId.accessToken)
-            contentType(ContentType.Application.Json)
-            setBody(request)
+        try {
+            val response = httpClient.post(baseUrl) {
+                bearerAuth(vppId.accessToken)
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+            return response.body<ResponseDataWrapper<HomeworkPostResponse>>().data
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
-        return response.body<ResponseDataWrapper<HomeworkPostResponse>>().data
     }
 
     override suspend fun updateHomework(vppId: VppId.Active, homeworkId: Int, request: HomeworkPatchRequest) {
-        val response = httpClient.patch("$baseUrl/$homeworkId") {
-            bearerAuth(vppId.accessToken)
-            contentType(ContentType.Application.Json)
-            setBody(request)
+        try {
+            val response = httpClient.patch("$baseUrl/$homeworkId") {
+                bearerAuth(vppId.accessToken)
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
     }
 
     override suspend fun deleteHomework(vppId: VppId.Active, homeworkId: Int) {
-        val response = httpClient.delete("$baseUrl/$homeworkId") {
-            bearerAuth(vppId.accessToken)
+        try {
+            val response = httpClient.delete("$baseUrl/$homeworkId") {
+                bearerAuth(vppId.accessToken)
+            }
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
     }
 
     override suspend fun addTask(vppId: VppId.Active, homeworkId: Int, content: String): Int {
-        val response = httpClient.post("$baseUrl/$homeworkId/task") {
-            bearerAuth(vppId.accessToken)
-            contentType(ContentType.Application.Json)
-            setBody(HomeworkAddTaskRequest(content))
+        try {
+            val response = httpClient.post("$baseUrl/$homeworkId/task") {
+                bearerAuth(vppId.accessToken)
+                contentType(ContentType.Application.Json)
+                setBody(HomeworkAddTaskRequest(content))
+            }
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+            return response.body<ResponseDataWrapper<Int>>().data
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
-        return response.body<ResponseDataWrapper<Int>>().data
     }
 
     override suspend fun updateTask(vppId: VppId.Active, homeworkId: Int, taskId: Int, content: String?, isDone: Boolean?) {
-        val response = httpClient.patch("$baseUrl/$homeworkId/task/$taskId") {
-            bearerAuth(vppId.accessToken)
-            contentType(ContentType.Application.Json)
-            if (isDone != null) setBody(HomeworkTaskUpdateDoneStateRequest(isDone))
-            else if (content != null) setBody(HomeworkTaskUpdateContentRequest(content))
+        try {
+            val response = httpClient.patch("$baseUrl/$homeworkId/task/$taskId") {
+                bearerAuth(vppId.accessToken)
+                contentType(ContentType.Application.Json)
+                if (isDone != null) setBody(HomeworkTaskUpdateDoneStateRequest(isDone))
+                else if (content != null) setBody(HomeworkTaskUpdateContentRequest(content))
+            }
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
     }
 
     override suspend fun deleteTask(vppId: VppId.Active, homeworkId: Int, taskId: Int) {
-        val response = httpClient.delete("$baseUrl/$homeworkId/task/$taskId") {
-            bearerAuth(vppId.accessToken)
+        try {
+            val response = httpClient.delete("$baseUrl/$homeworkId/task/$taskId") {
+                bearerAuth(vppId.accessToken)
+            }
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
     }
 
     override suspend fun linkFile(vppId: VppId.Active, homeworkId: Int, fileId: Int) {
-        val response = httpClient.post("$baseUrl/$homeworkId/file") {
-            bearerAuth(vppId.accessToken)
-            contentType(ContentType.Application.Json)
-            setBody(HomeworkFileLinkRequest(fileId))
+        try {
+            val response = httpClient.post("$baseUrl/$homeworkId/file") {
+                bearerAuth(vppId.accessToken)
+                contentType(ContentType.Application.Json)
+                setBody(HomeworkFileLinkRequest(fileId))
+            }
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
     }
 
     override suspend fun unlinkFile(vppId: VppId.Active, homeworkId: Int, fileId: Int) {
-        val response = httpClient.delete("$baseUrl/$homeworkId/file") {
-            bearerAuth(vppId.accessToken)
-            contentType(ContentType.Application.Json)
-            setBody(HomeworkFileLinkRequest(fileId))
+        try {
+            val response = httpClient.delete("$baseUrl/$homeworkId/file") {
+                bearerAuth(vppId.accessToken)
+                contentType(ContentType.Application.Json)
+                setBody(HomeworkFileLinkRequest(fileId))
+            }
+            if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
+        } catch (e: Exception) {
+            throw ApiException(e)
         }
-        if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
     }
 }

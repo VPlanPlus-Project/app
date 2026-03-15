@@ -87,13 +87,16 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.InformativePullToRefresh
+import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.theme.AppTheme
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.ui.theme.displayFontFamily
+import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
 import plus.vplan.app.core.utils.date.untilRelativeText
+import plus.vplan.app.core.utils.string.DOT
 import plus.vplan.app.core.utils.ui.plus
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
@@ -107,13 +110,10 @@ import plus.vplan.app.feature.news.ui.NewsDrawer
 import plus.vplan.app.feature.schulverwalter.domain.usecase.InitializeSchulverwalterReauthUseCase
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
 import plus.vplan.app.ui.components.InfoCard
-import plus.vplan.app.ui.components.SubjectIcon
-import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.longDayOfWeekNames
 import plus.vplan.app.utils.openUrl
 import plus.vplan.app.utils.progressIn
 import plus.vplan.app.utils.regularTimeFormat
-import plus.vplan.app.utils.toDp
 import plus.vplan.app.utils.transparent
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp
