@@ -1,7 +1,10 @@
 package plus.vplan.app.feature.onboarding.stage.school_select.domain.usecase
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.model.AliasProvider
+import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.core.utils.string.removeFollowingDuplicates
 
 class SearchForSchoolUseCase(
@@ -10,19 +13,25 @@ class SearchForSchoolUseCase(
     private val onlineSchools = mutableListOf<OnboardingSchoolOption>()
 
     suspend fun init() {
-        val response = schoolRepository.getAll()
-        onlineSchools.clear()
-        onlineSchools.addAll(
-            response
-                .sortedBy { it.name }
-                .map { school ->
-                    OnboardingSchoolOption(
-                        id = school.aliases.first { it.provider == AliasProvider.Vpp }.value.toInt(),
-                        name = school.name,
-                        sp24Id = school.aliases.firstOrNull { it.provider == AliasProvider.Sp24 }?.value?.toInt()
-                    )
-                }
-        )
+        withContext(Dispatchers.Default) {
+            val response = try {
+                schoolRepository.getAll()
+            } catch (e: ApiException) {
+                throw e
+            }
+            onlineSchools.clear()
+            onlineSchools.addAll(
+                response
+                    .sortedBy { it.name }
+                    .map { school ->
+                        OnboardingSchoolOption(
+                            id = school.aliases.first { it.provider == AliasProvider.Vpp }.value.toInt(),
+                            name = school.name,
+                            sp24Id = school.aliases.firstOrNull { it.provider == AliasProvider.Sp24 }?.value?.toInt()
+                        )
+                    }
+            )
+        }
     }
 
     suspend operator fun invoke(query: String): List<OnboardingSchoolOption> {

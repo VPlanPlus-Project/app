@@ -24,6 +24,7 @@ import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.Teacher
+import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
@@ -132,20 +133,25 @@ class FullSyncUseCase(
                             )
 
                             logger.i { "Checking stundenplan24.de credentials for ${school.id} (${school.name})" }
-                            val result = checkSp24CredentialsUseCase(client, Authentication(school.sp24Id, school.username, school.password))
-                            if (result !is plus.vplan.app.core.model.Response.Success) {
-                                if (result is plus.vplan.app.core.model.Response.Error.OnlineError.ConnectionError) {
-                                    logger.w { "No internet connection: $result, aborting" }
+                            try {
+                                val result = checkSp24CredentialsUseCase(client, Authentication(school.sp24Id, school.username, school.password))
+                                if (result !is plus.vplan.app.core.model.Response.Success) {
+                                    if (result is plus.vplan.app.core.model.Response.Error.OnlineError.ConnectionError) {
+                                        logger.w { "No internet connection: $result, aborting" }
+                                        return@forEachSchool
+                                    }
+                                    analyticsRepository.captureError("FullSync.CheckSp24Credentials", "Failed to check credentials: $result")
                                     return@forEachSchool
                                 }
-                                analyticsRepository.captureError("FullSync.CheckSp24Credentials", "Failed to check credentials: $result")
-                                return@forEachSchool
-                            }
 
-                            if (result.data is Sp24CredentialsValidity.Invalid.InvalidFirstTime) {
-                                logger.w { "stundenplan24.de-access for school ${school.id} (${school.name}) expired, sending notification" }
-                                schoolRepository.save(school.copy(credentialsValid = false))
-                                sendInvalidSp24CredentialsNotification(school.name, school.aliases.getByProvider(AliasProvider.Sp24)!!)
+                                if (result.data is Sp24CredentialsValidity.Invalid.InvalidFirstTime) {
+                                    logger.w { "stundenplan24.de-access for school ${school.id} (${school.name}) expired, sending notification" }
+                                    schoolRepository.save(school.copy(credentialsValid = false))
+                                    sendInvalidSp24CredentialsNotification(school.name, school.aliases.getByProvider(AliasProvider.Sp24)!!)
+                                    return@forEachSchool
+                                }
+                            } catch (e: ApiException) {
+                                logger.w { "Failed to check credentials (maybe offline): ${e.stackTraceToString()}" }
                                 return@forEachSchool
                             }
 

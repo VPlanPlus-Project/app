@@ -1,4 +1,4 @@
-package plus.vplan.app.network.besteschule
+package plus.vplan.app.core.model.application.network
 
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
