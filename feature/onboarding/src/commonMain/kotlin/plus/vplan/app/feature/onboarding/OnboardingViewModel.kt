@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import plus.vplan.app.core.model.School
-import plus.vplan.app.core.platform.AppPlatform
+import plus.vplan.app.core.model.application.AppPlatform
 import plus.vplan.app.core.platform.PlatformRepository
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
 import plus.vplan.app.feature.onboarding.stage.loading_data.domain.usecase.FetchAndStoreSchoolDataUseCase

@@ -4,10 +4,13 @@ package plus.vplan.app.feature.home.ui
 
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,9 +25,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -33,9 +38,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.LoadingIndicator
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -48,12 +50,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -79,14 +86,18 @@ import plus.vplan.app.core.model.ProfileType
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.InformativePullToRefresh
+import plus.vplan.app.core.ui.theme.AppTheme
 import plus.vplan.app.core.ui.components.SubjectIcon
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
 import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.core.utils.string.DOT
+import plus.vplan.app.core.utils.ui.plus
 import plus.vplan.app.feature.assessment.ui.components.create.NewAssessmentDrawer
 import plus.vplan.app.feature.home.ui.components.DayInfoCard
 import plus.vplan.app.feature.home.ui.components.FeedTitle
@@ -104,7 +115,6 @@ import plus.vplan.app.utils.openUrl
 import plus.vplan.app.utils.progressIn
 import plus.vplan.app.utils.regularTimeFormat
 import plus.vplan.app.utils.transparent
-import kotlin.uuid.ExperimentalUuidApi
 
 private val LESSON_NUMBER_TOP_PADDING = 16.dp
 private val LESSON_NUMBER_SIZE = 32.dp
@@ -124,7 +134,7 @@ fun HomeScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HomeContent(
     state: HomeState,
@@ -135,7 +145,6 @@ private fun HomeContent(
 ) {
     val scope = rememberCoroutineScope()
     val localDensity = LocalDensity.current
-    val pullToRefreshState = rememberPullToRefreshState()
     val initializeSchulverwalterReauthUseCase = koinInject<InitializeSchulverwalterReauthUseCase>()
 
     var isNewHomeworkDrawerVisible by rememberSaveable { mutableStateOf(false) }
@@ -146,24 +155,24 @@ private fun HomeContent(
 
     val vppId = (state.currentProfile as? Profile.StudentProfile)?.vppId
 
-    PullToRefreshBox(
-        state = pullToRefreshState,
-        onRefresh = { onEvent(HomeEvent.OnRefresh) },
-        isRefreshing = state.isUpdating,
-        indicator = {
-            LoadingIndicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter),
-                isRefreshing = state.isUpdating,
-                state = pullToRefreshState,
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
+    InformativePullToRefresh(
         modifier = Modifier
             .padding(bottom = contentPadding.calculateBottomPadding())
-            .fillMaxSize()
-    ) {
+            .fillMaxSize(),
+        isRefreshing = state.currentUpdateStage != null,
+        platform = state.platform,
+        onRefresh = { onEvent(HomeEvent.OnRefresh) },
+        refreshingContent = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                RefreshIndicator(
+                    currentUpdateStage = state.currentUpdateStage ?: HomeState.CurrentUpdateStage.Done,
+                )
+            }
+        }
+    ) { innerContentPadding ->
         Column(
             modifier = Modifier
                 .padding(top = 8.dp)
@@ -185,7 +194,7 @@ private fun HomeContent(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = contentPadding
+                    contentPadding = contentPadding + innerContentPadding
                 ) {
                     item {
                         Greeting(
@@ -905,6 +914,86 @@ private fun CurrentOrNextLesson(
         } else {
             Spacer(Modifier.size(8.dp))
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun RefreshIndicator(
+    currentUpdateStage: HomeState.CurrentUpdateStage,
+) {
+    val shape = RoundedCornerShape(8.dp)
+    Row(
+        modifier = Modifier
+            .padding(16.dp)
+            .wrapContentWidth()
+            .dropShadow(
+                shape = shape,
+                shadow = Shadow(
+                    offset = DpOffset(0.dp, 8.dp),
+                    radius = 16.dp,
+                    spread = 0.dp,
+                    alpha = 0.12f
+                )
+            )
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .animateContentSize()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AnimatedContent(
+            targetState = currentUpdateStage == HomeState.CurrentUpdateStage.Done
+        ) { isDone ->
+            if (isDone) Icon(
+                modifier = Modifier.size(24.dp),
+                painter = painterResource(CoreUiRes.drawable.check),
+                contentDescription = null,
+            )
+            else CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                strokeWidth = (2.5).dp,
+            )
+        }
+        Column {
+            Text(
+                text = "Aktualisieren",
+                style = MaterialTheme.typography.titleSmallEmphasized,
+                fontFamily = displayFontFamily(),
+            )
+            AnimatedContent(
+                targetState = currentUpdateStage,
+                modifier = Modifier.clipToBounds(),
+                transitionSpec = {
+                    fadeIn() + slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Up) togetherWith
+                            fadeOut() + slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Up)
+                }
+            ) { stage ->
+                Text(
+                    text = stage.title,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RefreshIndicatorPreview() {
+    AppTheme(dynamicColor = false) {
+        RefreshIndicator(HomeState.CurrentUpdateStage.Timetable)
+    }
+}
+
+@Preview
+@Composable
+private fun RefreshIndicatorPreviewDone() {
+    AppTheme(dynamicColor = false) {
+        RefreshIndicator(HomeState.CurrentUpdateStage.Done)
     }
 }
 

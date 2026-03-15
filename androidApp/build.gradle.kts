@@ -66,6 +66,13 @@ android {
             versionNameSuffix = "-debug"
         }
 
+        create("debug-staging") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.findByName("default") ?: run {
