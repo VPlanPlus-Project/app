@@ -171,12 +171,12 @@ jobs:
         runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
             -   name: Download Android build artifacts
-                uses: actions/download-artifact@v4
+                uses: actions/download-artifact@v8
                 with:
                     name: build-artifacts
 
             -   name: Download iOS build artifacts
-                uses: actions/download-artifact@v4
+                uses: actions/download-artifact@v8
                 with:
                     name: ios-build-artifacts
 
@@ -201,7 +201,7 @@ jobs:
         runs-on: blacksmith-4vcpu-ubuntu-2404
         steps:
             -   name: Download Android build artifacts
-                uses: actions/download-artifact@v4
+                uses: actions/download-artifact@v8
                 with:
                     name: build-artifacts
 
@@ -223,20 +223,10 @@ jobs:
                 uses: actions/checkout@v5
 
             -   name: Download iOS build artifacts
-                uses: actions/download-artifact@v4
+                uses: actions/download-artifact@v8
                 with:
                     name: ios-build-artifacts
                     path: iosApp/build
-
-            - name: Load changelog
-              run: |
-                  if [ -f .deploy/CHANGELOG ]; then
-                    {
-                      echo "CHANGELOG<<EOF"
-                      cat .deploy/CHANGELOG
-                      echo "EOF"
-                    } >> $GITHUB_ENV
-                  fi
 
             -   name: Determine lane and upload to TestFlight
                 working-directory: iosApp
