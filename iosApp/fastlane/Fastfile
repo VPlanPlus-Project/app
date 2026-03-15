@@ -121,6 +121,7 @@ platform :ios do
     upload_to_testflight(
       ipa: "./build/VPlanPlus.ipa",
       groups: ["Internal"],
+      changelog: ENV["CHANGELOG"] || "Es wurden keine Änderungen angegeben",
       distribute_external: true,
       skip_waiting_for_build_processing: true
     )
@@ -132,6 +133,7 @@ platform :ios do
     upload_to_testflight(
       ipa: "./build/VPlanPlus.ipa",
       groups: ["Closed"],
+      changelog: ENV["CHANGELOG"] || "Es wurden keine Änderungen angegeben",
       distribute_external: true,
       skip_waiting_for_build_processing: true
     )
@@ -143,6 +145,7 @@ platform :ios do
     upload_to_testflight(
       ipa: "./build/VPlanPlus.ipa",
       groups: ["Open"],
+      changelog: ENV["CHANGELOG"] || "Es wurden keine Änderungen angegeben",
       distribute_external: true,
       skip_waiting_for_build_processing: true
     )
@@ -161,25 +164,5 @@ platform :ios do
 
   error do |lane, exception|
     delete_keychain(name: CI_KEYCHAIN_NAME) if File.exist?(File.expand_path("~/Library/Keychains/#{CI_KEYCHAIN_NAME}-db"))
-  end
-
-  # Legacy lanes for backwards compatibility
-  desc "Build and upload a new beta build to TestFlight"
-  lane :beta do
-    build_ipa
-    authenticate_api
-    upload_to_testflight(
-      ipa: "../build/VPlanPlus.ipa",
-      skip_waiting_for_build_processing: true
-    )
-  end
-
-  desc "Upload an existing .ipa to TestFlight"
-  lane :upload do
-    authenticate_api
-    upload_to_testflight(
-      ipa: "../build/VPlanPlus.ipa",
-      skip_waiting_for_build_processing: true
-    )
   end
 end
