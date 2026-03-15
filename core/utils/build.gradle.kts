@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.vplanplus.kmp.library)
+    alias(libs.plugins.vplanplus.kmp.compose.library)
     alias(libs.plugins.serialization)
 }
 

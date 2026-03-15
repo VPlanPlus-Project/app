@@ -45,7 +45,7 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.AppBuildConfig
-import plus.vplan.app.core.platform.AppPlatform
+import plus.vplan.app.core.model.application.AppPlatform
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.displayFontFamily
 import plus.vplan.app.feature.settings.page.info.ui.components.FeedbackDrawer
