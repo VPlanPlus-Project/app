@@ -120,10 +120,7 @@ platform :ios do
     authenticate_api
     upload_to_testflight(
       ipa: "./build/VPlanPlus.ipa",
-      groups: ["Internal"],
-      changelog: File.exist?("../.deploy/CHANGELOG") ? File.read("../.deploy/CHANGELOG") : "Es wurden keine Änderungen angegeben.",
-      distribute_external: true,
-      skip_waiting_for_build_processing: false
+      skip_waiting_for_build_processing: true
     )
   end
 
