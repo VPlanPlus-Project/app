@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import plus.vplan.app.core.model.HomeworkStatus
+import plus.vplan.app.core.ui.components.MetadataRow
+import plus.vplan.app.core.ui.components.tableNameStyle
 import plus.vplan.app.core.ui.theme.ColorToken
 import plus.vplan.app.core.ui.theme.customColors
 import plus.vplan.app.ui.components.Badge
@@ -29,14 +31,17 @@ fun StatusRow(
                         color = customColors[ColorToken.Green]!!.get(),
                         text = "Erledigt"
                     )
+
                     HomeworkStatus.PENDING -> Badge(
                         color = MaterialTheme.colorScheme.outline,
                         text = "Ausstehend"
                     )
+
                     HomeworkStatus.OVERDUE -> Badge(
                         color = MaterialTheme.colorScheme.error,
                         text = "Überfällig"
                     )
+
                     null -> Unit
                 }
             }

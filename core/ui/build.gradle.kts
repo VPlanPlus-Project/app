@@ -11,4 +11,10 @@ kotlin {
         experimentalProperties["android.experimental.kmp.enableAndroidResources"] = true
         androidResources.enable = true
     }
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project(":core:model"))
+        }
+    }
 }

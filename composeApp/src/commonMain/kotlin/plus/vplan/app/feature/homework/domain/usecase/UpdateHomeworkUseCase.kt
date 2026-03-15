@@ -1,10 +1,10 @@
 package plus.vplan.app.feature.homework.domain.usecase
 
 import kotlinx.coroutines.flow.first
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.homework.HomeworkRepository
 import plus.vplan.app.core.model.Profile
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
-import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
+import plus.vplan.app.core.model.application.UpdateResult
 
 class UpdateHomeworkUseCase(
     private val homeworkRepository: HomeworkRepository,

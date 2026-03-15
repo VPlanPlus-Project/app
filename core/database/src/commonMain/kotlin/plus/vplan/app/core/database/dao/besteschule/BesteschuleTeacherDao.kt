@@ -4,17 +4,17 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
-import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleTeacher
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleTeacher
 
 @Dao
 interface BesteschuleTeacherDao {
     @Upsert
-    suspend fun upsert(items: List<DbBesteschuleTeacher>)
+    suspend fun upsert(items: List<DbBesteSchuleTeacher>)
 
     @Query("SELECT * FROM besteschule_teacher")
-    fun getAll(): Flow<List<DbBesteschuleTeacher>>
+    fun getAll(): Flow<List<DbBesteSchuleTeacher>>
 
     @Query("SELECT * FROM besteschule_teacher WHERE id = :teacherId")
-    fun getTeacher(teacherId: Int): Flow<DbBesteschuleTeacher?>
+    fun getTeacher(teacherId: Int): Flow<DbBesteSchuleTeacher?>
 
 }

@@ -14,7 +14,7 @@ import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
-import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.CheckIfVppIdIsStillConnectedUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.ConnectVppIdUseCase
 import plus.vplan.app.feature.profile.settings.page.main.domain.usecase.DeleteProfileUseCase

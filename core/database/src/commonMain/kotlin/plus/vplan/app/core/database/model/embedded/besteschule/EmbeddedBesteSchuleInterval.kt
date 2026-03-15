@@ -1,0 +1,42 @@
+package plus.vplan.app.core.database.model.embedded.besteschule
+
+import androidx.room.Embedded
+import androidx.room.Relation
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleCollection
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteSchuleInterval
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleIntervalUser
+import plus.vplan.app.core.database.model.database.besteschule.DbBesteschuleYear
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+
+data class EmbeddedBesteSchuleInterval(
+    @Embedded val interval: DbBesteSchuleInterval,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "interval_id",
+        entity = DbBesteschuleIntervalUser::class
+    ) val linkedAccountIds: List<DbBesteschuleIntervalUser>,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "interval_id",
+        entity = DbBesteSchuleCollection::class
+    ) val collections: List<DbBesteSchuleCollection>,
+    @Relation(
+        parentColumn = "year_id",
+        entityColumn = "id",
+        entity = DbBesteschuleYear::class
+    ) val year: DbBesteschuleYear
+) {
+    fun toModel() = BesteSchuleInterval(
+        id = this.interval.id,
+        type = BesteSchuleInterval.Type.fromString(this.interval.type),
+        name = this.interval.name,
+        from = this.interval.from,
+        to = this.interval.to,
+        includedIntervalId = this.interval.includedIntervalId,
+        year = this.year.toModel(),
+        linkedToSchulverwalterAccountIds = this.linkedAccountIds.map { it.schulverwalterUserId }
+            .toSet(),
+        collectionIds = collections.map { it.id }.toSet(),
+        cachedAt = interval.cachedAt
+    )
+}

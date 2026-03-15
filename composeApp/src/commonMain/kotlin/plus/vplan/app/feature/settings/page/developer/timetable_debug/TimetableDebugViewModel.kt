@@ -5,11 +5,12 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import plus.vplan.app.core.model.Timetable
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.data.week.WeekRepository
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.model.Timetable
 
 class TimetableDebugViewModel(
     private val weekRepository: WeekRepository,
@@ -25,23 +26,26 @@ class TimetableDebugViewModel(
 
     fun loadData() {
         viewModelScope.launch {
-            getCurrentProfileUseCase().collectLatest { profile ->
-                val school = profile.school
-                weekRepository.getBySchool(school).collectLatest collectWeek@{ weeks ->
-                    weeks.forEach { week ->
-                        launch {
-                            timetableRepository.getTimetableData(school.id, week.id).collectLatest { timetableMetadata ->
-                                val currentState = _state.value
-                                _state.value = currentState.copy(
-                                    weeks = (currentState.weeks + TimetableDebugState.Week(
-                                        week = week,
-                                        timetableMetadata = timetableMetadata
-                                    )).sortedBy { it.week.weekIndex }
-                                )
+            getCurrentProfileUseCase()
+                .filterNotNull()
+                .collectLatest { profile ->
+                    val school = profile.school
+                    weekRepository.getBySchool(school).collectLatest collectWeek@{ weeks ->
+                        weeks.forEach { week ->
+                            launch {
+                                timetableRepository.getTimetableData(school.id, week.id)
+                                    .collectLatest { timetableMetadata ->
+                                        val currentState = _state.value
+                                        _state.value = currentState.copy(
+                                            weeks = (currentState.weeks + TimetableDebugState.Week(
+                                                week = week,
+                                                timetableMetadata = timetableMetadata
+                                            )).sortedBy { it.week.weekIndex }
+                                        )
+                                    }
                             }
                         }
                     }
-                }
             }
         }
     }

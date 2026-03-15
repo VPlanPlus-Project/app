@@ -50,9 +50,9 @@ import plus.vplan.app.core.ui.components.ButtonState
 import plus.vplan.app.core.ui.components.ButtonType
 import plus.vplan.app.core.ui.theme.ColorToken
 import plus.vplan.app.core.ui.theme.customColors
+import plus.vplan.app.core.utils.string.DOT
 import plus.vplan.app.feature.profile.settings.page.main.ui.vpp_id_management.components.LogoutDialog
 import plus.vplan.app.ui.components.Badge
-import plus.vplan.app.utils.DOT
 import plus.vplan.app.utils.safeBottomPadding
 
 

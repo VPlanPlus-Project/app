@@ -64,11 +64,11 @@ import kotlinx.datetime.format
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.utils.date.until
 import plus.vplan.app.feature.search.subfeature.room_search.domain.usecase.Occupancy
-import plus.vplan.app.ui.thenIf
 import plus.vplan.app.utils.minusWithCapAtMidnight
 import plus.vplan.app.utils.plusWithCapAtMidnight
 import plus.vplan.app.utils.regularTimeFormat

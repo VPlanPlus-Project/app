@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.assessment.AssessmentRepository
 import plus.vplan.app.core.data.file.FileOperationProgress
 import plus.vplan.app.core.model.AppEntity
@@ -22,7 +23,8 @@ import plus.vplan.app.core.model.Assessment
 import plus.vplan.app.core.model.File
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
-import plus.vplan.app.domain.usecase.GetCurrentProfileUseCase
+import plus.vplan.app.core.model.application.UnoptimisticTaskState
+import plus.vplan.app.core.model.application.UpdateResult
 import plus.vplan.app.domain.usecase.file.DeleteFileUseCase
 import plus.vplan.app.domain.usecase.file.DownloadFileUseCase
 import plus.vplan.app.domain.usecase.file.GetFileThumbnailUseCase
@@ -35,8 +37,6 @@ import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentTypeUseC
 import plus.vplan.app.feature.assessment.domain.usecase.ChangeAssessmentVisibilityUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.DeleteAssessmentUseCase
 import plus.vplan.app.feature.assessment.domain.usecase.UpdateAssessmentUseCase
-import plus.vplan.app.feature.assessment.domain.usecase.UpdateResult
-import plus.vplan.app.feature.homework.ui.components.detail.UnoptimisticTaskState
 import plus.vplan.app.ui.common.AttachedFile
 
 class AssessmentDetailViewModel(

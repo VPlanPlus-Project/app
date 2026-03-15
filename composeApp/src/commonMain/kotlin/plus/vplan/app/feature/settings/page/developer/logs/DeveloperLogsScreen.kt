@@ -47,8 +47,8 @@ import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.bodyFontFamily
 import plus.vplan.app.core.ui.theme.colors
 import plus.vplan.app.core.ui.theme.monospaceFontFamily
+import plus.vplan.app.core.ui.util.blendColor
 import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.utils.blendColor
 import plus.vplan.app.utils.generateColor
 
 

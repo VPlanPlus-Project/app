@@ -16,12 +16,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import plus.vplan.app.feature.onboarding.AppBuildConfig
 import kotlin.random.Random
 
 private const val BUBBLE_COUNT = 8
 
 @Composable
-fun BlurredBackground(seed: String = "APP_VERSION") {
+fun BlurredBackground(seed: String = AppBuildConfig.APP_VERSION) {
     val isSystemInDarkTheme = isSystemInDarkTheme()
 
     // 1. Prepare the bubble data based on the seed
