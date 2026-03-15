@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import plus.vplan.app.ui.thenIf
+import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.utils.toBlackAndWhite
 
 @Composable

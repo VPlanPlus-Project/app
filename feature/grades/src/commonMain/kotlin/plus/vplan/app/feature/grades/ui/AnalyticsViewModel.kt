@@ -1,0 +1,132 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
+package plus.vplan.app.feature.grades.ui
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import plus.vplan.app.core.data.besteschule.GradesRepository
+import plus.vplan.app.core.data.besteschule.IntervalsRepository
+import plus.vplan.app.core.data.besteschule.SubjectsRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
+import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
+import plus.vplan.app.core.model.besteschule.BesteSchuleSubject
+import plus.vplan.app.core.utils.date.now
+
+class AnalyticsViewModel(
+    private val vppIdRepository: VppIdRepository
+) : ViewModel(), KoinComponent {
+    var state by mutableStateOf(AnalyticsState())
+        private set
+
+    private val besteSchuleGradesRepository by inject<GradesRepository>()
+    private val besteSchuleIntervalsRepository by inject<IntervalsRepository>()
+    private val besteSchuleSubjectsRepository by inject<SubjectsRepository>()
+
+    private var mainJob: Job? = null
+    fun init(vppIdId: Int) {
+        mainJob?.cancel()
+        state = AnalyticsState()
+        mainJob = viewModelScope.launch {
+            val activeJobs = mutableListOf<Job>()
+            vppIdRepository.getById(vppIdId)
+                .filterIsInstance<VppId.Active>()
+                .filter { it.schulverwalterConnection != null }
+                .distinctUntilChangedBy { it.id.hashCode() + it.schulverwalterConnection.hashCode() }
+                .onEach { vppIdActive ->
+                    activeJobs.forEach { it.cancelAndJoin() }
+                    activeJobs.clear()
+                    state = state.copy(vppId = vppIdActive)
+                }
+                .collectLatest { vppId ->
+                    launch {
+                        besteSchuleIntervalsRepository.getAll()
+                            .collectLatest { intervals ->
+                                state = state.copy(
+                                    intervals = intervals,
+                                    interval = if (state.intervals.isEmpty()) intervals.firstOrNull { LocalDate.now() in it.from..it.to } else state.interval
+                                )
+                            }
+                    }.let(activeJobs::add)
+
+                    launch {
+                        besteSchuleGradesRepository.getAllForUser(vppId.schulverwalterConnection!!.userId)
+                            .collectLatest { grades ->
+                                val subjects = besteSchuleSubjectsRepository.getAll().first()
+                                state = state.copy(
+                                    grades = grades,
+                                    filteredGrades = emptyList(),
+                                    availableSubjectFilters = grades
+                                        .map { it.collection.subject }
+                                        .distinct()
+                                        .let { schuleSubjects -> subjects.filter { subject -> subject.id in schuleSubjects.map { it.id } } }
+                                        .sortedBy { it.shortName },
+                                    filteredSubjects = emptyList()
+                                )
+                                updateFiltered()
+                            }
+                    }.let(activeJobs::add)
+                }
+        }
+    }
+
+    fun onEvent(event: AnalyticsAction) {
+        viewModelScope.launch {
+            when (event) {
+                is AnalyticsAction.ToggleSubjectFilter -> {
+                    val add = state.filteredSubjects.none { it.id == event.subject.id }
+                    state = if (add) state.copy(filteredSubjects = state.filteredSubjects + event.subject)
+                    else state.copy(filteredSubjects = state.filteredSubjects.filter { it.id != event.subject.id })
+                    updateFiltered()
+                }
+                is AnalyticsAction.SetInterval -> {
+                    state = state.copy(interval = event.interval)
+                    updateFiltered()
+                }
+            }
+        }
+    }
+
+    private fun updateFiltered() {
+        state = state.copy(filteredGrades = state.grades
+            .filter { grade ->
+                state.filteredSubjects.any { subject -> grade.collection.subject.id == subject.id } || state.filteredSubjects.isEmpty()
+            }
+            .filter { it.collection.interval.id in listOfNotNull(state.interval?.id, state.interval?.includedIntervalId) }
+        )
+    }
+}
+
+data class AnalyticsState(
+    val vppId: VppId? = null,
+    val interval: BesteSchuleInterval? = null,
+    val intervals: List<BesteSchuleInterval> = emptyList(),
+    val grades: List<BesteSchuleGrade> = emptyList(),
+    val filteredGrades: List<BesteSchuleGrade> = emptyList(),
+
+    val availableSubjectFilters: List<BesteSchuleSubject> = emptyList(),
+    val filteredSubjects: List<BesteSchuleSubject> = emptyList(),
+)
+
+sealed class AnalyticsAction {
+    data class ToggleSubjectFilter(val subject: BesteSchuleSubject) : AnalyticsAction()
+
+    data class SetInterval(val interval: BesteSchuleInterval) : AnalyticsAction()
+}

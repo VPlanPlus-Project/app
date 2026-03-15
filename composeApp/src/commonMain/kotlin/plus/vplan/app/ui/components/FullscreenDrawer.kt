@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
-import plus.vplan.app.ui.thenIf
+import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.utils.abs
 import plus.vplan.app.utils.ifNan
 import plus.vplan.app.utils.roundToNearest

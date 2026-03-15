@@ -6,6 +6,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
+import plus.vplan.app.core.ui.components.MetadataRow
+import plus.vplan.app.core.ui.components.MetadataValueContainer
+import plus.vplan.app.core.ui.components.tableNameStyle
+import plus.vplan.app.core.ui.components.tableValueStyle
 import plus.vplan.app.core.utils.date.regularDateFormat
 
 @Composable

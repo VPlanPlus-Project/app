@@ -10,6 +10,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import plus.vplan.app.core.ui.components.MetadataRow
+import plus.vplan.app.core.ui.components.MetadataValueContainer
+import plus.vplan.app.core.ui.components.tableNameStyle
+import plus.vplan.app.core.ui.components.tableValueStyle
 
 @Composable
 fun ShareStatusRow(
