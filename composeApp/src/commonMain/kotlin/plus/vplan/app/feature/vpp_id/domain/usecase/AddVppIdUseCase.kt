@@ -17,6 +17,7 @@ import plus.vplan.app.core.model.NetworkErrorKind
 import plus.vplan.app.core.model.NetworkException
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.feature.grades.common.domain.usecase.SyncGradesUseCase
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
@@ -46,10 +47,12 @@ class AddVppIdUseCase(
 
         logger.d { "Loaded school by vpp school id ${vppIdInfo.schoolId}" }
 
-        val group = groupRepository.getById(
-            identifier = Alias(AliasProvider.Vpp, vppIdInfo.groupId.toString(), 1),
-            forceUpdate = false,
-        ).first()
+        val group = try {
+            groupRepository.getById(
+                identifier = Alias(AliasProvider.Vpp, vppIdInfo.groupId.toString(), 1),
+                forceUpdate = false,
+            ).first()
+        } catch (_: ApiException) { null }
 
         if (group == null) {
             val errorMessage = "Group not found for VPP ID: ${vppIdInfo.id}, group alias: ${vppIdInfo.groupId}"
