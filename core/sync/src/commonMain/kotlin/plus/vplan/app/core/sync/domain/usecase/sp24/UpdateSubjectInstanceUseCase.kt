@@ -15,6 +15,7 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.Teacher
+import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Stundenplan24Client
 import plus.vplan.lib.sp24.source.extension.SubjectInstanceResponse
@@ -126,7 +127,9 @@ class UpdateSubjectInstanceUseCase(
         downloadedSubjectInstances
             .mapNotNull { (subjectInstance, sp24Alias) ->
                 val firstGroup = subjectInstance.classes.firstNotNullOfOrNull { groupName ->
-                    groupRepository.getById(identifier = Group.buildSp24Alias(sp24SchoolId.toInt(), groupName)).first()
+                    try {
+                        groupRepository.getById(identifier = Group.buildSp24Alias(sp24SchoolId.toInt(), groupName)).first()
+                    } catch (_: ApiException) { null }
                 } ?: return@mapNotNull null
 
                 val courses = coursesForGroups.getOrPut(firstGroup) { courseRepository.getByGroup(firstGroup).first() }
