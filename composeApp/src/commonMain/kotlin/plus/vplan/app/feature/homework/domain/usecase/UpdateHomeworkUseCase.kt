@@ -18,7 +18,8 @@ class UpdateHomeworkUseCase(
         
         // Sync the specific homework from the server with forceReload=true
         val success = homeworkRepository.syncById(vppId, homeworkId, forceReload = true)
-        if (!success) return UpdateResult.DOES_NOT_EXIST
+        if (success == HomeworkRepository.SyncResult.NotExists) return UpdateResult.DOES_NOT_EXIST
+        if (success is HomeworkRepository.SyncResult.Error) return UpdateResult.ERROR
 
         homeworkRepository.getById(homeworkId).first()
             ?: return UpdateResult.DOES_NOT_EXIST

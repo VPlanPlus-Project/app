@@ -17,6 +17,7 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.domain.service.ProfileService
 import plus.vplan.app.domain.usecase.file.UploadFileUseCase
 import plus.vplan.app.ui.common.AttachedFile
@@ -50,10 +51,14 @@ class CreateHomeworkUseCase(
             val groupId = profile.group.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toIntOrNull() ?: run {
                 val groupAlias = profile.group.aliases.firstOrNull()
                     ?: return unknownError("Group ${profile.group} has no aliases")
-                val downloadedGroup = groupRepository.getById(
-                    identifier = groupAlias,
-                    forceUpdate = true,
-                ).first() ?: return CreateHomeworkResult.Error.GroupNotFound
+                val downloadedGroup = try {
+                    groupRepository.getById(
+                        identifier = groupAlias,
+                        forceUpdate = true,
+                    ).first() ?: return CreateHomeworkResult.Error.GroupNotFound
+                } catch (e: ApiException) {
+                    return CreateHomeworkResult.Error.UnknownError(e.stackTraceToString())
+                }
                 val groupId = downloadedGroup.aliases.firstOrNull { it.provider == AliasProvider.Vpp }?.value?.toInt()
                 if (groupId == null) return unknownError("Group ${profile.group} not found on VPP")
                 return@run groupId
