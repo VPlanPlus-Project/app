@@ -97,7 +97,7 @@ platform :ios do
       output_name:                 "VPlanPlus.ipa",
       xcargs:                      "CODE_SIGN_STYLE=Manual " \
                                    "DEVELOPMENT_TEAM=BYCH2H5X5G " \
-                                   "CODE_SIGN_IDENTITY=\"Apple Distribution\"",
+                                   "CODE_SIGN_IDENTITY=\"Apple Distribution\" " \
                                    "iosApp:PROVISIONING_PROFILE_SPECIFIER=#{profile_uuid}",
       export_options: {
         method:                    "app-store",
