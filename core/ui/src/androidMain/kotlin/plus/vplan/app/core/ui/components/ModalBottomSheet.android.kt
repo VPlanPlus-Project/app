@@ -38,7 +38,6 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.util.paddingvalues.plus
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 actual fun ModalBottomSheet(
     onDismissRequest: () -> Unit,

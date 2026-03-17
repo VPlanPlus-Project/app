@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.ui.util.blendColor
 import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
 

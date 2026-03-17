@@ -4,15 +4,14 @@
 //
 
 import SwiftUI
-import ComposeApp
-import Onboarding
+import VPlanPlusShared
 
 /// Owns the presentation state for IosDevInfoSheet.
 /// Conforms to both protocol representations of IosDevInfoSheetHandler:
 ///   - Onboarding.IosDevInfoSheetHandler  (swift_name of the Onboarding framework protocol)
 ///   - ComposeApp.OnboardingIosDevInfoSheetHandler  (swift_name used by doInitKoin's parameter type)
 /// Both protocols have identical method signatures so one implementation satisfies both.
-final class IosDevInfoSheetCoordinator: NSObject, ObservableObject, IosDevInfoSheetHandler, OnboardingIosDevInfoSheetHandler {
+final class IosDevInfoSheetCoordinator: NSObject, ObservableObject, IosDevInfoSheetHandler {
     @Published var isPresented = false
     private var onDismiss: (() -> Void)? = nil
 

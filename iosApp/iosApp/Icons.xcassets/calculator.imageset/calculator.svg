@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24.0" height="24.0" viewBox="0 0 24.0 24.0">
+  <path d="M6.0,2.0L18.0,2.0Q20.0,2.0 20.0,4.0L20.0,20.0Q20.0,22.0 18.0,22.0L6.0,22.0Q4.0,22.0 4.0,20.0L4.0,4.0Q4.0,2.0 6.0,2.0Z" fill="#000000" fill-opacity="0.0" stroke="#000000" stroke-opacity="1.0" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8,6L16,6" fill="#000000" fill-opacity="0.0" stroke="#000000" stroke-opacity="1.0" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16,14L16,18" fill="#000000" fill-opacity="0.0" stroke="#000000" stroke-opacity="1.0" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16 10h.01" fill="#000000" fill-opacity="0.0" stroke="#000000" stroke-opacity="1.0" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 10h.01" fill="#000000" fill-opacity="0.0" stroke="#000000" stroke-opacity="1.0" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8 10h.01" fill="#000000" fill-opacity="0.0" stroke="#000000" stroke-opacity="1.0" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 14h.01" fill="#000000" fill-opacity="0.0" stroke="#000000" stroke-opacity="1.0" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8 14h.01" fill="#000000" fill-opacity="0.0" stroke="#000000" stroke-opacity="1.0" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 18h.01" fill="#000000" fill-opacity="0.0" stroke="#000000" stroke-opacity="1.0" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8 18h.01" fill="#000000" fill-opacity="0.0" stroke="#000000" stroke-opacity="1.0" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

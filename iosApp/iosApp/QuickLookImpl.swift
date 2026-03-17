@@ -6,9 +6,9 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
-import ComposeApp
+import VPlanPlusShared
 
-class QuickLookImpl : DataOpenQuicklook {
+class QuickLookImpl : VPlanPlusShared.OpenQuicklook {
     var onQuicklook: ((String) -> ())?
     
     func open(path: String) {

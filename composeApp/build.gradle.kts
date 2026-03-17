@@ -1,4 +1,7 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import groovy.lang.MissingFieldException
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import java.util.Properties
 
 val localProperties = Properties().apply {
@@ -42,12 +45,32 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
+            baseName = "VPlanPlusShared"
+            isStatic = false
+
+//            export(project(":core:analytics"))
+            export(project(":core:data"))
+//            export(project(":core:database"))
+//            export(project(":core:model"))
+//            export(project(":core:network"))
+//            export(project(":core:platform"))
+//            export(project(":core:sync"))
+            export(project(":core:ui"))
+            export(project(":core:utils"))
+//            export(project(":core:common"))
+
+
+            export(project(":feature:onboarding"))
+            export(project(":feature:grades"))
+
         }
     }
 
     sourceSets {
+        all {
+            languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
+        }
+
         androidMain.dependencies {
             // AndroidX
             implementation(libs.androidx.activity.compose)
@@ -136,6 +159,7 @@ kotlin {
             implementation(libs.filekit.core)
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.kermit)
+            api(libs.kmp.observable.viewmodel)
 
             // VPlanPlus
             implementation(libs.vpp.sp24)
@@ -143,6 +167,15 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+
+            // We need to use api here so that they are correctly included in the iOS build as we
+            // export them in the iOS target.
+            api(project(":core:data"))
+            api(project(":core:ui"))
+            api(project(":core:utils"))
+
+            api(project(":feature:onboarding"))
+            api(project(":feature:grades"))
         }
     }
 }

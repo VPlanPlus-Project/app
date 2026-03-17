@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.ComposeUIViewController
 import co.touchlab.kermit.Logger
+import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import platform.UIKit.UIViewController
@@ -12,10 +13,13 @@ import plus.vplan.app.core.data.file.OpenQuicklook
 import plus.vplan.app.feature.onboarding.IosDevInfoSheetHandler
 
 @Suppress("unused") // Is called in SwiftUI
-fun initKoin(quicklookImpl: OpenQuicklook, iosDevInfoSheetHandlerImpl: IosDevInfoSheetHandler) {
+fun initKoin(
+    quicklookImpl: OpenQuicklook,
+    iosDevInfoSheetHandlerImpl: IosDevInfoSheetHandler,
+): KoinApplication {
     quicklook = quicklookImpl
     iosDevInfoSheetHandler = iosDevInfoSheetHandlerImpl
-    plus.vplan.app.di.initKoin()
+    return plus.vplan.app.di.initKoin()
 }
 
 lateinit var mainViewController: UIViewController

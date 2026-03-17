@@ -3,19 +3,19 @@
 package plus.vplan.app.feature.grades.detail.ui
 
 import androidx.compose.runtime.Immutable
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
+import com.rickclephas.kmp.observableviewmodel.MutableStateFlow
+import com.rickclephas.kmp.observableviewmodel.ViewModel
+import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -26,6 +26,7 @@ import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.application.UnoptimisticTaskState
 import plus.vplan.app.core.model.application.UpdateResult
 import plus.vplan.app.core.model.besteschule.BesteSchuleGrade
+import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.feature.grades.common.domain.model.GradeLockState
 import plus.vplan.app.feature.grades.common.domain.usecase.GetGradeLockStateUseCase
 import plus.vplan.app.feature.grades.common.domain.usecase.LockGradesUseCase
@@ -38,8 +39,10 @@ class GradeDetailViewModel(
     private val requestGradeUnlockUseCase: RequestGradeUnlockUseCase,
     private val lockGradesUseCase: LockGradesUseCase,
 ) : ViewModel(), KoinComponent {
+
+    @NativeCoroutinesState
     val state: StateFlow<GradeDetailState>
-        field = MutableStateFlow(GradeDetailState())
+        field = MutableStateFlow(viewModelScope, GradeDetailState())
 
     private val profileRepository by inject<ProfileRepository>()
     private val besteSchuleGradesRepository by inject<GradesRepository>()
@@ -148,7 +151,25 @@ data class GradeDetailState(
     val initDone: Boolean = false,
     val reloadingState: UnoptimisticTaskState? = null,
     val lockState: GradeLockState? = null,
-)
+) {
+    val title = buildString {
+        val grade = this@GradeDetailState.grade ?: return@buildString
+        val value = if (grade.isOptional) "(${grade.value})" else grade.value
+        when (grade.collection.interval.type) {
+            is BesteSchuleInterval.Type.Sek2 -> {
+                if (grade.value == null) append("Note")
+                else append("$value Notenpunkte")
+            }
+
+            else -> {
+                append("Note")
+                if (grade.value != null) append(" $value")
+            }
+        }
+    }
+
+    val subtitle = this.grade?.collection?.subject?.fullName
+}
 
 sealed class GradeDetailEvent {
     data object ToggleConsiderForFinalGrade : GradeDetailEvent()

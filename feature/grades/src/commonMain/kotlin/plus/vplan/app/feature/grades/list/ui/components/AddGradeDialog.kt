@@ -21,6 +21,7 @@ import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.components.Grid
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.ui.util.blendColor
 
 @Composable

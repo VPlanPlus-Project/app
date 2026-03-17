@@ -26,12 +26,7 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 iosX64(),
                 iosArm64(),
                 iosSimulatorArm64()
-            ).forEach { iosTarget ->
-                iosTarget.binaries.framework {
-                    baseName = project.name.replaceFirstChar { it.uppercase() }
-                    isStatic = false
-                }
-            }
+            )
 
             sourceSets.commonMain.dependencies {
                 implementation(libs.findLibrary("kotlinx-coroutines-core").get())
