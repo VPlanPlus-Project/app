@@ -20,7 +20,6 @@
 		C68AA02A2F69BA4A0000C040 /* KMPNativeCoroutinesAsync in Frameworks */ = {isa = PBXBuildFile; productRef = C68AA0292F69BA4A0000C040 /* KMPNativeCoroutinesAsync */; };
 		C68AA02C2F69BA4A0000C040 /* KMPNativeCoroutinesCombine in Frameworks */ = {isa = PBXBuildFile; productRef = C68AA02B2F69BA4A0000C040 /* KMPNativeCoroutinesCombine */; };
 		C68AA02E2F69BA4A0000C040 /* KMPNativeCoroutinesCore in Frameworks */ = {isa = PBXBuildFile; productRef = C68AA02D2F69BA4A0000C040 /* KMPNativeCoroutinesCore */; };
-		C68AA0302F69BA4A0000C040 /* KMPNativeCoroutinesRxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = C68AA02F2F69BA4A0000C040 /* KMPNativeCoroutinesRxSwift */; };
 		C68AA0492F69E9D40000C040 /* Icons.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C68AA0482F69E9D40000C040 /* Icons.xcassets */; };
 		C68AA04E2F69EA560000C040 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = C68AA04D2F69EA540000C040 /* Colors.swift */; };
 		C6BF19082F5BA13B006E7408 /* Version.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C6BF19072F5BA13A006E7408 /* Version.xcconfig */; };
@@ -57,7 +56,6 @@
 				C68AA01F2F69B3E30000C040 /* KMPObservableViewModelCore in Frameworks */,
 				C68AA02E2F69BA4A0000C040 /* KMPNativeCoroutinesCore in Frameworks */,
 				C68AA02C2F69BA4A0000C040 /* KMPNativeCoroutinesCombine in Frameworks */,
-				C68AA0302F69BA4A0000C040 /* KMPNativeCoroutinesRxSwift in Frameworks */,
 				C68AA0212F69B3E30000C040 /* KMPObservableViewModelSwiftUI in Frameworks */,
 				C68AA02A2F69BA4A0000C040 /* KMPNativeCoroutinesAsync in Frameworks */,
 			);
@@ -166,7 +164,6 @@
 				C68AA0292F69BA4A0000C040 /* KMPNativeCoroutinesAsync */,
 				C68AA02B2F69BA4A0000C040 /* KMPNativeCoroutinesCombine */,
 				C68AA02D2F69BA4A0000C040 /* KMPNativeCoroutinesCore */,
-				C68AA02F2F69BA4A0000C040 /* KMPNativeCoroutinesRxSwift */,
 			);
 			productName = iosApp;
 			productReference = 7555FF7B242A565900829871 /* VPlanPlus.app */;
@@ -532,11 +529,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C68AA0282F69BA4A0000C040 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */;
 			productName = KMPNativeCoroutinesCore;
-		};
-		C68AA02F2F69BA4A0000C040 /* KMPNativeCoroutinesRxSwift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C68AA0282F69BA4A0000C040 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */;
-			productName = KMPNativeCoroutinesRxSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
