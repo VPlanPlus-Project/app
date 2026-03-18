@@ -26,6 +26,7 @@ import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.utils.date.longMonthNames
 import plus.vplan.app.core.utils.string.DOT
 import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem

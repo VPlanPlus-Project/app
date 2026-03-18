@@ -1,6 +1,6 @@
 import UIKit
 import SwiftUI
-import ComposeApp
+import VPlanPlusShared
 
 struct ComposeView: UIViewControllerRepresentable {
     let url: String

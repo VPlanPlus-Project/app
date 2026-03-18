@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.vplanplus.kmp.buildconfig)
     alias(libs.plugins.vplanplus.build.applicationConfig)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.kmpNativeCoroutines)
 }
 
 kotlin {
@@ -18,6 +19,10 @@ kotlin {
     }
 
     sourceSets {
+        all {
+            languageSettings.optIn("kotlin.experimental.ExperimentalObjCName")
+        }
+
         androidMain.dependencies {
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
@@ -41,6 +46,8 @@ kotlin {
 
             implementation(libs.vpp.sp24)
             implementation(libs.kermit)
+
+            implementation(libs.kmp.observable.viewmodel)
 
             // KotlinX
             implementation(libs.kotlinx.serialization.json)

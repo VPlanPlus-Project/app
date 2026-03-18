@@ -36,10 +36,10 @@ class KmpComposeLibraryConventionPlugin : Plugin<Project> {
                 iosArm64(),
                 iosSimulatorArm64()
             ).forEach { iosTarget ->
-                iosTarget.binaries.framework {
-                    baseName = project.name.replaceFirstChar { it.uppercase() }
-                    isStatic = false
-                }
+//                iosTarget.binaries.framework {
+//                    baseName = project.name.replaceFirstChar { it.uppercase() }
+//                    isStatic = false
+//                }
             }
 
             sourceSets.commonMain.dependencies {
