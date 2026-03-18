@@ -168,20 +168,24 @@ class FullSyncUseCase(
                                 groups.orEmpty().associateWith { group ->
                                     Group.buildSp24Alias(school.sp24Id.toInt(), group.name)
                                 }.forEach { (group, alias) ->
-                                    val existing = groupRepository.getById(
-                                        identifier = Group.buildSp24Alias(school.sp24Id.toInt(), group.name),
-                                        forceUpdate = true
-                                    ).first()
+                                    try {
+                                        val existing = groupRepository.getById(
+                                            identifier = Group.buildSp24Alias(school.sp24Id.toInt(), group.name),
+                                            forceUpdate = true
+                                        ).first()
 
-                                    if (existing == null) {
-                                        groupRepository.save(Group(
-                                            id = Uuid.random(),
-                                            school = school,
-                                            name = group.name,
-                                            aliases = setOf(alias),
-                                            cachedAt = Clock.System.now(),
-                                        ))
-                                    }
+
+                                        if (existing == null) {
+                                            groupRepository.save(Group(
+                                                id = Uuid.random(),
+                                                school = school,
+                                                name = group.name,
+                                                aliases = setOf(alias),
+                                                cachedAt = Clock.System.now(),
+                                            ))
+                                        }
+                                    } catch (_: ApiException) {}
+
                                 }
                             }
 
