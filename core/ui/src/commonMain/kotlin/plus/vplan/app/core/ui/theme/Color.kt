@@ -216,10 +216,10 @@ data class ColorGroup(
 data class ColorTheme(
     val dark: ColorGroup,
     val light: ColorGroup
-) {
-    @Composable
-    fun getGroup() = if (isSystemInDarkTheme()) dark else light
-}
+)
+
+@Composable
+fun ColorTheme.getGroup() = if (isSystemInDarkTheme()) dark else light
 
 val colors = mapOf(
     CustomColor.Yellow to ColorTheme(

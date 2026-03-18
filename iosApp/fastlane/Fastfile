@@ -13,7 +13,7 @@ default_platform(:ios)
 
 CI_KEYCHAIN_NAME = "ci_keychain"
 
-CHANGELOG_PATH = File.expand_path("../.deploy/CHANGELOG", __dir__)
+CHANGELOG_PATH = File.expand_path("../../.deploy/CHANGELOG", __dir__)
 DEFAULT_CHANGELOG = "Es wurden keine Änderungen angegeben."
 
 platform :ios do
@@ -110,8 +110,8 @@ platform :ios do
       output_name:                 "VPlanPlus.ipa",
       xcargs:                      "CODE_SIGN_STYLE=Manual " \
                                    "DEVELOPMENT_TEAM=BYCH2H5X5G " \
-                                   "PROVISIONING_PROFILE_SPECIFIER=#{profile_uuid} " \
-                                   "CODE_SIGN_IDENTITY=\"Apple Distribution\"",
+                                   "CODE_SIGN_IDENTITY=\"Apple Distribution\" " \
+                                   "PROVISIONING_PROFILE_SPECIFIER=#{profile_uuid}",
       export_options: {
         method:                    "app-store",
         teamID:                    "BYCH2H5X5G",

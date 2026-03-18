@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.ui.subjectColor
 import plus.vplan.app.core.ui.subjectIcon
+import plus.vplan.app.core.ui.theme.getGroup
 
 @Composable
 fun SubjectIcon(modifier: Modifier = Modifier, subject: String?, containerColor: Color = subject.subjectColor().getGroup().container, contentColor: Color = subject.subjectColor().getGroup().onContainer) {

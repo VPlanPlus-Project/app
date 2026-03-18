@@ -31,6 +31,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.serializer
+import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -305,8 +306,8 @@ val appModule = module(createdAtStart = true) {
     singleOf(::ProfileServiceImpl).bind<ProfileService>()
 }
 
-fun initKoin(configuration: KoinAppDeclaration? = null) {
-    startKoin {
+fun initKoin(configuration: KoinAppDeclaration? = null): KoinApplication {
+    return startKoin {
         configuration?.invoke(this)
         modules(platformModule, databaseModule, analyticsModule)
         modules(domainModule)

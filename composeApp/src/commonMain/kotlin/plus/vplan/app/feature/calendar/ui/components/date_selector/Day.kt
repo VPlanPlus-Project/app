@@ -36,6 +36,7 @@ import kotlinx.datetime.format
 import plus.vplan.app.core.ui.modifier.thenIf
 import plus.vplan.app.core.ui.theme.CustomColor
 import plus.vplan.app.core.ui.theme.colors
+import plus.vplan.app.core.ui.theme.getGroup
 import plus.vplan.app.core.ui.util.blendColor
 import plus.vplan.app.core.ui.util.textunit.toDp
 import plus.vplan.app.core.utils.date.atStartOfWeek
