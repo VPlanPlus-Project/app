@@ -204,7 +204,7 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override suspend fun syncById(vppId: VppId.Active, homeworkId: Int, forceReload: Boolean): Boolean {
+    override suspend fun syncById(vppId: VppId.Active, homeworkId: Int, forceReload: Boolean): HomeworkRepository.SyncResult {
         try {
             // Check if we already have fresh data (unless forceReload is true)
             if (!forceReload) {
@@ -212,18 +212,23 @@ class HomeworkRepositoryImpl(
                 if (existing != null) {
                     val age = Clock.System.now() - existing.homework.cachedAt
                     if (age.inWholeMinutes < 5) {
-                        return true // Data is fresh enough
+                        return HomeworkRepository.SyncResult.Success // Data is fresh enough
                     }
                 }
             }
             
             val dto = homeworkApi.getHomeworkById(vppId, homeworkId)
-                ?: return false // Homework not found on server
+                ?: return HomeworkRepository.SyncResult.NotExists // Homework not found on server
             
             // Resolve group and subject instance IDs from API to local UUIDs via aliases
             val groupId = dto.group?.let { groupEntity ->
                 val alias = Alias(AliasProvider.Vpp, groupEntity.id.toString(), 1)
-                groupRepository.getByIds(setOf(alias), forceUpdate = false).first()?.id
+                try {
+                    groupRepository.getByIds(setOf(alias), forceUpdate = false)
+                        .first()?.id
+                } catch (e: Exception) {
+                    return HomeworkRepository.SyncResult.Error(e)
+                }
             }
             
             val subjectInstanceId = dto.subjectInstance?.let { siEntity ->
@@ -268,9 +273,9 @@ class HomeworkRepositoryImpl(
                 tasksDoneProfile = emptyList(),
                 fileIds = dto.files.map { it.id }
             )
-            return true
+            return HomeworkRepository.SyncResult.Success
         } catch (e: Exception) {
-            return false
+            return HomeworkRepository.SyncResult.Error(e)
         }
     }
 
