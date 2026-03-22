@@ -10,6 +10,7 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import kotlin.uuid.Uuid
 
 interface HomeworkRepository {
@@ -26,7 +27,7 @@ interface HomeworkRepository {
     suspend fun deleteById(id: Int)
     suspend fun deleteById(ids: List<Int>)
     suspend fun sync(profile: Profile.StudentProfile)
-    suspend fun syncById(vppId: VppId.Active, homeworkId: Int, forceReload: Boolean = false): SyncResult
+    suspend fun syncById(authentication: VppSchoolAuthentication, homeworkId: Int, forceReload: Boolean = false): SyncResult
 
     sealed class SyncResult {
         data object Success: SyncResult()

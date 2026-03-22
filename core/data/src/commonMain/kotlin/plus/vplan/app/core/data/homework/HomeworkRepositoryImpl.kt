@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
+import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.database.dao.HomeworkDao
 import plus.vplan.app.core.database.model.database.DbHomework
 import plus.vplan.app.core.database.model.database.DbHomeworkTask
@@ -22,12 +23,14 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.utils.Optional
 import plus.vplan.app.network.vpp.homework.HomeworkApi
 import plus.vplan.app.network.vpp.homework.HomeworkPatchRequest
 import plus.vplan.app.network.vpp.homework.HomeworkPostRequest
 import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import plus.vplan.app.core.model.Optional as ModelOptional
 
@@ -35,14 +38,15 @@ class HomeworkRepositoryImpl(
     private val homeworkDao: HomeworkDao,
     private val homeworkApi: HomeworkApi,
     private val groupRepository: GroupRepository,
+    private val vppIdRepository: VppIdRepository,
     private val subjectInstanceRepository: SubjectInstanceRepository,
 ) : HomeworkRepository {
     override fun getAll(): Flow<List<Homework>> {
-        return homeworkDao.getAll().map { items -> items.map { it.toModel() } }
+        return homeworkDao.getAll().map { items -> items.mapNotNull { it.toModel() } }
     }
 
     override fun getAllForProfile(profile: Profile): Flow<List<Homework>> {
-        return homeworkDao.getByProfile(profile.id).map { items -> items.map { it.toModel() } }
+        return homeworkDao.getByProfile(profile.id).map { items -> items.mapNotNull { it.toModel() } }
     }
 
     override fun getById(id: Int): Flow<Homework?> {
@@ -56,14 +60,14 @@ class HomeworkRepositoryImpl(
     }
 
     override fun getByDate(date: LocalDate): Flow<List<Homework>> {
-        return homeworkDao.getByDate(date).map { items -> items.map { it.toModel() } }
+        return homeworkDao.getByDate(date).map { items -> items.mapNotNull { it.toModel() } }
     }
 
     override fun getByProfile(profileId: Uuid, date: LocalDate?): Flow<List<Homework>> {
         return if (date == null) {
-            homeworkDao.getByProfile(profileId).map { it.map { hw -> hw.toModel() } }
+            homeworkDao.getByProfile(profileId).map { it.mapNotNull { hw -> hw.toModel() } }
         } else {
-            homeworkDao.getByProfileAndDate(profileId, date).map { it.map { hw -> hw.toModel() } }
+            homeworkDao.getByProfileAndDate(profileId, date).map { it.mapNotNull { hw -> hw.toModel() } }
         }
     }
 
@@ -162,12 +166,14 @@ class HomeworkRepositoryImpl(
                 val alias = Alias(AliasProvider.Vpp, siEntity.id.toString(), 1)
                 subjectInstanceRepository.getByIds(setOf(alias), forceUpdate = false).first()?.id
             }
+
+            vppIdRepository.getById(dto.createdBy.id).first()!!
             
             val homework = DbHomework(
                 id = dto.id,
                 subjectInstanceId = subjectInstanceId,
                 groupId = groupId,
-                createdAt = kotlin.time.Instant.fromEpochMilliseconds(dto.createdAt),
+                createdAt = Instant.fromEpochSeconds(dto.createdAt),
                 dueTo = LocalDate.parse(dto.dueTo),
                 createdBy = dto.createdBy.id,
                 createdByProfileId = null,
@@ -204,7 +210,7 @@ class HomeworkRepositoryImpl(
         }
     }
 
-    override suspend fun syncById(vppId: VppId.Active, homeworkId: Int, forceReload: Boolean): HomeworkRepository.SyncResult {
+    override suspend fun syncById(authentication: VppSchoolAuthentication, homeworkId: Int, forceReload: Boolean): HomeworkRepository.SyncResult {
         try {
             // Check if we already have fresh data (unless forceReload is true)
             if (!forceReload) {
@@ -217,7 +223,7 @@ class HomeworkRepositoryImpl(
                 }
             }
             
-            val dto = homeworkApi.getHomeworkById(vppId, homeworkId)
+            val dto = homeworkApi.getHomeworkById(authentication, homeworkId)
                 ?: return HomeworkRepository.SyncResult.NotExists // Homework not found on server
             
             // Resolve group and subject instance IDs from API to local UUIDs via aliases
@@ -235,12 +241,14 @@ class HomeworkRepositoryImpl(
                 val alias = Alias(AliasProvider.Vpp, siEntity.id.toString(), 1)
                 subjectInstanceRepository.getByIds(setOf(alias), forceUpdate = false).first()?.id
             }
+
+            vppIdRepository.getById(dto.createdBy.id).first()!!
             
             val homework = DbHomework(
                 id = dto.id,
                 subjectInstanceId = subjectInstanceId,
                 groupId = groupId,
-                createdAt = kotlin.time.Instant.fromEpochMilliseconds(dto.createdAt),
+                createdAt = Instant.fromEpochSeconds(dto.createdAt),
                 dueTo = LocalDate.parse(dto.dueTo),
                 createdBy = dto.createdBy.id,
                 createdByProfileId = null,
@@ -255,16 +263,17 @@ class HomeworkRepositoryImpl(
                     cachedAt = Clock.System.now()
                 )
             }
-            
-            val tasksDoneAccount = dto.tasks.mapNotNull { taskWrapper ->
-                taskWrapper.value.done?.let { isDone ->
-                    DbHomeworkTaskDoneAccount(
-                        taskId = taskWrapper.value.id,
-                        vppId = vppId.id,
-                        isDone = isDone
-                    )
-                }
-            }
+
+            val tasksDoneAccount =
+                if (authentication is VppSchoolAuthentication.Vpp) dto.tasks.mapNotNull { taskWrapper ->
+                    taskWrapper.value.done?.let { isDone ->
+                        DbHomeworkTaskDoneAccount(
+                            taskId = taskWrapper.value.id,
+                            vppId = authentication.vppIdId,
+                            isDone = isDone
+                        )
+                    }
+                } else emptyList()
             
             homeworkDao.upsertSingleHomework(
                 homework = homework,

@@ -42,16 +42,21 @@ data class EmbeddedAssessment(
         entity = DbVppId::class
     ) val createdBy: EmbeddedVppId?
 ) {
-    fun toModel() = Assessment(
-        id = assessment.id,
-        creator = if (assessment.createdBy != null) AppEntity.VppId(createdBy!!.toModel()) else AppEntity.Profile(createdByProfile!!.toModel()!!),
-        createdAt = assessment.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()),
-        date = assessment.date,
-        isPublic = assessment.isPublic,
-        subjectInstance = subjectInstance.toModel(),
-        description = assessment.description,
-        type = Assessment.Type.entries[assessment.type],
-        files = files.map { it.toModel() },
-        cachedAt = assessment.cachedAt
-    )
+    fun toModel(): Assessment? {
+        val creator =
+            if (assessment.createdBy != null) AppEntity.VppId(createdBy?.toModel() ?: return null)
+            else AppEntity.Profile(createdByProfile?.toModel() ?: return null)
+        return Assessment(
+            id = assessment.id,
+            creator = creator,
+            createdAt = assessment.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()),
+            date = assessment.date,
+            isPublic = assessment.isPublic,
+            subjectInstance = subjectInstance.toModel(),
+            description = assessment.description,
+            type = Assessment.Type.entries[assessment.type],
+            files = files.map { it.toModel() },
+            cachedAt = assessment.cachedAt
+        )
+    }
 }

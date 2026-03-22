@@ -14,9 +14,9 @@ class UpdateAssessmentUseCase(
         val profile = getCurrentProfileUseCase().first() as? Profile.StudentProfile
             ?: return UpdateResult.ERROR
         
-        val vppId = profile.vppId ?: return UpdateResult.ERROR
+        val vppId = profile.vppId
 
-        val schoolApiAccess = vppId.buildVppSchoolAuthentication()
+        val schoolApiAccess = vppId?.buildVppSchoolAuthentication() ?: profile.school.buildSp24AppAuthentication()
         
         // Sync the specific assessment from the server with forceReload=true
         val success = assessmentRepository.syncById(schoolApiAccess, id, forceReload = true)

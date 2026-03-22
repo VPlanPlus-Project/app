@@ -52,7 +52,7 @@ data class EmbeddedHomework(
         entity = DbGroup::class
     ) val group: EmbeddedGroup?
 ) {
-    fun toModel(): Homework {
+    fun toModel(): Homework? {
         if (homework.id < 0) {
             return Homework.LocalHomework(
                 id = homework.id,
@@ -70,7 +70,7 @@ data class EmbeddedHomework(
             id = homework.id,
             dueTo = homework.dueTo,
             createdAt = homework.createdAt,
-            createdBy = createdBy!!.toModel(),
+            createdBy = createdBy?.toModel() ?: return null,
             subjectInstance = subjectInstance?.toModel(),
             group = group?.toModel(),
             isPublic = homework.isPublic,

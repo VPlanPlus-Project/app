@@ -23,7 +23,7 @@ interface VppIdRepository {
      * Returns a Flow that emits the VppId with the given [id] from the local database,
      * or `null` if it doesn't exist locally. Does not trigger any network download.
      */
-    fun getById(id: Int): Flow<VppId?>
+    fun getById(id: Int, forceReload: Boolean = false): Flow<VppId?>
 
     /** Returns a Flow of all locally-cached VppIds. */
     fun getVppIds(): Flow<List<VppId>>

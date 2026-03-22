@@ -15,7 +15,7 @@ interface HomeworkApi {
     ): List<ApiHomeworkDto>
 
     suspend fun getHomeworkById(
-        vppId: VppId.Active,
+        vppSchoolAuthentication: VppSchoolAuthentication,
         homeworkId: Int
     ): ApiHomeworkDto?
 

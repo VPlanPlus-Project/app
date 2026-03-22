@@ -44,14 +44,14 @@ class SchoolRepositoryImpl(
         return schools
     }
 
-    override fun getByIds(identifier: Set<Alias>): Flow<School?> {
+    override fun getByIds(identifier: Set<Alias>, forceReload: Boolean): Flow<School?> {
         if (identifier.isEmpty()) throw IllegalArgumentException("Identifiers cannot be empty")
         return this
             .findLocalIdByIdentifier(identifier)
             .distinctUntilChanged()
             .flatMapLatest { id -> id?.let { schoolDao.findById(id).map { it?.toModel() }.distinctUntilChanged() } ?: flowOf(null) }
             .map { school ->
-                if (school == null) {
+                if (school == null || forceReload) {
                     val result = schoolApi.getByAlias(identifier.first()) ?: return@map null
 
                     // Check if we already know the school by another alias
