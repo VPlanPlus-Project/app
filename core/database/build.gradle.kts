@@ -39,5 +39,4 @@ dependencies {
     kspAndroid(libs.androidx.room.compiler)
     kspIosArm64(libs.androidx.room.compiler)
     kspIosSimulatorArm64(libs.androidx.room.compiler)
-    kspIosX64(libs.androidx.room.compiler)
 }
