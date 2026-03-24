@@ -134,7 +134,10 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.UpdateTimetable -> {
                     if (state.isTimetableUpdateRunning) return@launch
                     state = state.copy(isTimetableUpdateRunning = true)
-                    updateTimetableUseCase(state.profile!!.school, forceUpdate = true)
+                    updateTimetableUseCase.updateTimetableRelatedToDate(
+                        school = state.profile!!.school,
+                        date = LocalDate.now()
+                    )
                     state = state.copy(isTimetableUpdateRunning = false)
                 }
                 DeveloperSettingsEvent.UpdateWeeks -> {

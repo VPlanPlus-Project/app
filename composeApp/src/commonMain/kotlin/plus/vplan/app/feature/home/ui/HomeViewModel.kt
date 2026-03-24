@@ -53,9 +53,11 @@ import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
 import plus.vplan.app.feature.home.domain.usecase.GetNewsUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
+import plus.vplan.app.utils.plus
 import plus.vplan.app.utils.sortedBySuspending
 import plus.vplan.lib.sp24.source.Authentication
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -252,8 +254,16 @@ class HomeViewModel(
                             withContext(Dispatchers.Default) { updateLessonTimesUseCase(school, client) }
                             state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Holidays) }
                             withContext(Dispatchers.Default) { updateHolidaysUseCase(school, client) }
-                            state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Timetable) }
-                            withContext(Dispatchers.Default) { updateTimetableUseCase(school, forceUpdate = false, client = client) }
+                            HomeState.CurrentUpdateStage.Timetable.ForWeek.entries.forEach { forWeek ->
+                                state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Timetable(forWeek)) }
+                                updateTimetableUseCase.updateTimetableRelatedToDate(
+                                    date = when (forWeek) {
+                                        HomeState.CurrentUpdateStage.Timetable.ForWeek.This -> LocalDate.now()
+                                        HomeState.CurrentUpdateStage.Timetable.ForWeek.Next -> LocalDate.now() + 7.days
+                                    },
+                                    school = school
+                                )
+                            }
                             setOfNotNull(
                                 LocalDate.now(),
                                 state.value.day?.day?.date,
@@ -304,7 +314,15 @@ data class HomeState(
         data object Connecting: CurrentUpdateStage("Verbinden...")
         data object LessonTimes: CurrentUpdateStage("Stundenzeiten")
         data object Holidays: CurrentUpdateStage("Ferien/Feiertage")
-        data object Timetable: CurrentUpdateStage("Stundenplan")
+        data class Timetable(val forWeek: ForWeek): CurrentUpdateStage(buildString {
+            append("Stundenplan ")
+            append(when (forWeek) {
+                ForWeek.This -> "diese Woche"
+                ForWeek.Next -> "nächste Woche"
+            })
+        }) {
+            enum class ForWeek { This, Next }
+        }
         data class SubstitutionPlan(val date: LocalDate): CurrentUpdateStage("Vertretungsplan " + ((LocalDate.now() untilRelativeText date) ?: date.format(regularDateFormatWithoutYear)))
         data object Done: CurrentUpdateStage("Fertig")
     }

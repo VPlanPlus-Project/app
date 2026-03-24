@@ -253,7 +253,15 @@ class FullSyncUseCase(
                                 start
                             }
 
-                            updateTimetableUseCase(school, client, forceUpdate = false)
+                            updateTimetableUseCase.updateTimetableRelatedToDate(
+                                date = LocalDate.now(),
+                                school = school,
+                            )
+
+                            updateTimetableUseCase.updateTimetableRelatedToDate(
+                                date = LocalDate.now() + 7.days,
+                                school = school,
+                            )
 
                             val profilesForSchool = profileRepository.getAll().first()
                                 .filter { it.school == school }
