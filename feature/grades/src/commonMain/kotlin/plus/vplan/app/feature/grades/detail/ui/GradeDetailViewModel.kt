@@ -7,16 +7,15 @@ import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import com.rickclephas.kmp.observableviewmodel.MutableStateFlow
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plus.vplan.app.core.data.besteschule.GradesRepository
@@ -50,7 +49,7 @@ class GradeDetailViewModel(
     private var mainJob: Job? = null
 
     init {
-        viewModelScope.launch gradeLock@{
+        viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Init.GradeLock")) gradeLock@{
             getGradeLockStateUseCase().collectLatest { lockState ->
                 state.update { state ->
                     state.copy(lockState = lockState)
@@ -72,43 +71,39 @@ class GradeDetailViewModel(
                 .collectLatest { grade ->
                     if (grade == null) return@collectLatest
 
-                    coroutineScope {
-                        profileRepository.getAll()
-                            .first()
-                            .filterIsInstance<Profile.StudentProfile>()
-                            .mapNotNull { it.vppId }
-                            .filter { it.schulverwalterConnection != null }
-                            .firstOrNull { it.schulverwalterConnection?.userId == grade.schulverwalterUserId }
-                            ?.let { user ->
-                                withContext(Dispatchers.Main) {
-                                    state.update { state ->
-                                        state.copy(
-                                            grade = grade,
-                                            gradeUser = user,
-                                            initDone = true,
-                                        )
-                                    }
-                                }
+                    profileRepository.getAll()
+                        .first()
+                        .filterIsInstance<Profile.StudentProfile>()
+                        .mapNotNull { it.vppId }
+                        .filter { it.schulverwalterConnection != null }
+                        .firstOrNull { it.schulverwalterConnection?.userId == grade.schulverwalterUserId }
+                        ?.let { user ->
+                            state.update { state ->
+                                state.copy(
+                                    grade = grade,
+                                    gradeUser = user,
+                                    initDone = true,
+                                )
                             }
-                    }
+                        }
                 }
         }
     }
 
     fun onEvent(event: GradeDetailEvent) {
-        viewModelScope.launch {
-            when (event) {
-                is GradeDetailEvent.ToggleConsiderForFinalGrade -> {
-                    withContext(Dispatchers.Default) {
-                        besteSchuleGradesRepository.save(
-                            state.value.grade!!.copy(
-                                isSelectedForFinalGrade = !state.value.grade!!.isSelectedForFinalGrade
-                            )
+        when (event) {
+            is GradeDetailEvent.ToggleConsiderForFinalGrade -> {
+                viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Event.ToggleConsiderForFinalGrade")) {
+                    besteSchuleGradesRepository.save(
+                        state.value.grade!!.copy(
+                            isSelectedForFinalGrade = !state.value.grade!!.isSelectedForFinalGrade
                         )
-                    }
+                    )
                 }
+            }
 
-                is GradeDetailEvent.Reload -> {
+            is GradeDetailEvent.Reload -> {
+                viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Event.Reload")) {
                     state.update { state ->
                         state.copy(reloadingState = UnoptimisticTaskState.InProgress)
                     }
@@ -135,9 +130,13 @@ class GradeDetailViewModel(
                         else -> Unit
                     }
                 }
+            }
 
-                is GradeDetailEvent.RequestGradesUnlock -> requestGradeUnlockUseCase()
-                is GradeDetailEvent.LockGrades -> lockGradesUseCase()
+            is GradeDetailEvent.RequestGradesUnlock -> requestGradeUnlockUseCase()
+            is GradeDetailEvent.LockGrades -> {
+                viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Event.LockGrades")) {
+                    lockGradesUseCase()
+                }
             }
         }
     }

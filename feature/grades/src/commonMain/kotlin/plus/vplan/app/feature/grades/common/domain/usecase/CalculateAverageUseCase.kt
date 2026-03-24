@@ -7,7 +7,7 @@ import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
 
 class CalculateAverageUseCase {
     suspend operator fun invoke(grades: List<GradeUiItem>, interval: BesteSchuleInterval): Double {
-        return withContext(Dispatchers.Main) {
+        return withContext(Dispatchers.Default) {
             val gradesForInterval = grades.filter {
                 val intervalForGrade = when (it) {
                     is GradeUiItem.ActualGrade -> it.grade.collection.interval
