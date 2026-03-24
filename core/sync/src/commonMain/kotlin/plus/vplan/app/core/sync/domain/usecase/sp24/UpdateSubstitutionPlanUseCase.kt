@@ -12,6 +12,7 @@ import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
 import plus.vplan.app.core.data.subject_instance.SubjectInstanceRepository
 import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
+import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.data.week.WeekRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Day
@@ -33,14 +34,28 @@ class UpdateSubstitutionPlanUseCase(
     private val subjectInstanceRepository: SubjectInstanceRepository,
     private val lessonTimeRepository: LessonTimeRepository,
     private val substitutionPlanRepository: SubstitutionPlanRepository,
+    private val timetableRepository: TimetableRepository,
     private val profileRepository: ProfileRepository,
 ) {
     private val logger = Logger.withTag("UpdateSubstitutionPlanUseCase")
 
     sealed class Result {
         data class Success(
-            val lessons: List<Lesson.SubstitutionPlanLesson>
-        ): Result()
+            val day: Day,
+            val insertedLessons: List<Lesson.SubstitutionPlanLesson>,
+            val profileResult: Map<Profile, ProfileResult>
+        ): Result() {
+            data class ProfileResult(
+                val previousPlanType: PreviousPlanType,
+                val previousLessons: List<Lesson>,
+                val newLessons: List<Lesson>,
+                val changedLessons: List<Lesson>,
+            ) {
+                enum class PreviousPlanType {
+                    Timetable, SubstitutionPlan
+                }
+            }
+        }
 
         data class Error(
             val message: String
@@ -83,6 +98,8 @@ class UpdateSubstitutionPlanUseCase(
             nextSchoolDay = null,
         ))
 
+        val day = dayRepository.getById(Day.buildId(sp24School.id, date)).first()!!
+
         val teachers = teacherRepository.getBySchool(sp24School).first()
         val rooms = roomRepository.getBySchool(sp24School).first()
         val groups = groupRepository.getBySchool(sp24School).first()
@@ -118,8 +135,9 @@ class UpdateSubstitutionPlanUseCase(
             )
         }
 
-        val profileMappings = profileRepository
-            .getAll().first()
+        val profiles = profileRepository.getAll().first()
+
+        val profileMappings = profiles
             .filter { it.school.id == sp24School.id }
             .associateWith { profile ->
                 lessons.filter { lesson ->
@@ -134,6 +152,28 @@ class UpdateSubstitutionPlanUseCase(
                 }
             }
 
+        // Prepare old lessons so that we can compare them later
+        val profilePreviousLessons = mutableMapOf<Profile, List<Lesson>>()
+        val profilePreviousPlanType = mutableMapOf<Profile, Result.Success.ProfileResult.PreviousPlanType>()
+
+        profiles
+            .forEach { profile ->
+                val substitutionLessons = substitutionPlanRepository.getForProfile(profile, date).first()
+                if (substitutionLessons.isEmpty()) {
+                    profilePreviousPlanType[profile] = Result.Success.ProfileResult.PreviousPlanType.Timetable
+                    profilePreviousLessons[profile] = timetableRepository.getTimetableLessonIdsForProfile(
+                        profile,
+                        timetableRepository.getCurrentVersion().first()
+                    ).mapNotNull { lessonId ->
+                        timetableRepository.getById(lessonId).first()
+                    }
+                } else {
+                    profilePreviousPlanType[profile] = Result.Success.ProfileResult.PreviousPlanType.SubstitutionPlan
+                    profilePreviousLessons[profile] = substitutionLessons
+                }
+            }
+
+        // Insert new lessons
         substitutionPlanRepository
             .replaceLessons(
                 date = date,
@@ -142,8 +182,27 @@ class UpdateSubstitutionPlanUseCase(
                 profileMappings = profileMappings
             )
 
+        // Compute new lessons
+        val profileResult = profiles.associateWith { profile ->
+            val previousLessons = profilePreviousLessons[profile]!!
+            val previousLessonSignatures = previousLessons.map { it.getLessonSignature() }
+            val newLessons = profileMappings[profile]!!
+
+            val changedLessons = newLessons
+                .filter { newLesson -> newLesson.getLessonSignature() !in previousLessonSignatures }
+
+            Result.Success.ProfileResult(
+                previousPlanType = profilePreviousPlanType[profile]!!,
+                previousLessons = previousLessons,
+                newLessons = newLessons,
+                changedLessons = changedLessons
+            )
+        }
+
         return Result.Success(
-            lessons = lessons
+            day = day,
+            insertedLessons = lessons,
+            profileResult = profileResult
         )
     }
 }

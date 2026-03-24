@@ -26,9 +26,10 @@ import plus.vplan.app.core.database.model.database.DbFcmLog
 import plus.vplan.app.core.model.Group
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
+import plus.vplan.app.core.sync.domain.usecase.notification.NotifyPlanChangedUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
-import plus.vplan.app.core.sync.domain.usecase.sp24.LegacyUpdateSubstitutionPlanUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.core.utils.date.now
@@ -44,7 +45,8 @@ class DeveloperSettingsViewModel(
     private val timetableRepository: TimetableRepository,
     private val keyValueRepository: KeyValueRepository,
     private val fcmRepository: FcmRepository,
-    private val legacyUpdateSubstitutionPlanUseCase: LegacyUpdateSubstitutionPlanUseCase,
+    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val notifyPlanChangedUseCase: NotifyPlanChangedUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
@@ -111,10 +113,22 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.UpdateSubstitutionPlan -> {
                     if (state.isSubstitutionPlanUpdateRunning) return@launch
                     state = state.copy(isSubstitutionPlanUpdateRunning = true)
-                    legacyUpdateSubstitutionPlanUseCase(
-                        state.profile!!.school, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
-                        allowNotification = true
-                    )
+                    listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY))
+                        .forEach { date ->
+                            val result = updateSubstitutionPlanUseCase(
+                                sp24School = state.profile!!.school,
+                                date = date,
+                            )
+
+                            if (result !is UpdateSubstitutionPlanUseCase.Result.Success) return@forEach
+
+                            notifyPlanChangedUseCase(
+                                profile = state.profile!!,
+                                date = date,
+                                day = result.day,
+                                changedLessons = result.profileResult[state.profile!!]!!.changedLessons
+                            )
+                        }
                     state = state.copy(isSubstitutionPlanUpdateRunning = false)
                 }
                 DeveloperSettingsEvent.UpdateTimetable -> {

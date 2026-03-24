@@ -26,9 +26,10 @@ import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.model.Teacher
 import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.core.model.getByProvider
+import plus.vplan.app.core.sync.domain.usecase.notification.NotifyPlanChangedUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
-import plus.vplan.app.core.sync.domain.usecase.sp24.LegacyUpdateSubstitutionPlanUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.core.utils.date.now
@@ -54,7 +55,8 @@ class FullSyncUseCase(
     private val keyValueRepository: KeyValueRepository,
     private val profileRepository: ProfileRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
-    private val legacyUpdateSubstitutionPlanUseCase: LegacyUpdateSubstitutionPlanUseCase,
+    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val notifyPlanChangedUseCase: NotifyPlanChangedUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
     private val syncGradesUseCase: SyncGradesUseCase,
@@ -252,7 +254,29 @@ class FullSyncUseCase(
                             }
 
                             updateTimetableUseCase(school, client, forceUpdate = false)
-                            legacyUpdateSubstitutionPlanUseCase(providedClient = client, sp24School = school, dates = listOf(today, nextDay), allowNotification = true)
+
+                            val profilesForSchool = profileRepository.getAll().first()
+                                .filter { it.school == school }
+                            listOf(today, nextDay).forEach forEachDate@{ date ->
+                                val result = updateSubstitutionPlanUseCase(
+                                    sp24School = school,
+                                    date = date,
+                                    providedClient = client
+                                )
+
+                                if (result !is UpdateSubstitutionPlanUseCase.Result.Success) return@forEachDate
+
+                                profilesForSchool.forEach { profile ->
+                                    val profileResult = result.profileResult[profile] ?: return@forEachDate
+                                    if (notifyPlanChangedUseCase.shouldSendNotification(result, profile))
+                                        notifyPlanChangedUseCase(
+                                            profile = profile,
+                                            date = date,
+                                            day = result.day,
+                                            changedLessons = profileResult.changedLessons,
+                                        )
+                                }
+                            }
                         }
                 }
 

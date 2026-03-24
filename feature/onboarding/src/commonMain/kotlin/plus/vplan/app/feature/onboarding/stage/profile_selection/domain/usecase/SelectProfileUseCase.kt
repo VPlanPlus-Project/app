@@ -14,7 +14,7 @@ import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.sync.domain.usecase.UpdateProfileLessonIndexUseCase
-import plus.vplan.app.core.sync.domain.usecase.sp24.LegacyUpdateSubstitutionPlanUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.onboarding.domain.model.OnboardingProfile
@@ -28,7 +28,7 @@ class SelectProfileUseCase(
     private val timetableRepository: TimetableRepository,
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
-    private val legacyUpdateSubstitutionPlanUseCase: LegacyUpdateSubstitutionPlanUseCase,
+    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val analyticsRepository: AnalyticsRepository,
     private val appScope: CoroutineScope,
 ) {
@@ -78,10 +78,9 @@ class SelectProfileUseCase(
         // not cancelled when the onboarding ViewModel is cleared.
         appScope.launch {
             updateTimetableUseCase(profile.school, forceUpdate = true)
-            legacyUpdateSubstitutionPlanUseCase(
+            updateSubstitutionPlanUseCase(
+                date = LocalDate.now(),
                 sp24School = profile.school,
-                dates = listOf(LocalDate.now()),
-                allowNotification = false
             )
         }
     }

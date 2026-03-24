@@ -14,7 +14,8 @@ import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
-import plus.vplan.app.core.sync.domain.usecase.sp24.LegacyUpdateSubstitutionPlanUseCase
+import plus.vplan.app.core.sync.domain.usecase.notification.NotifyPlanChangedUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 
@@ -22,10 +23,11 @@ class HandlePushNotificationUseCase(
     private val homeworkRepository: HomeworkRepository,
     private val updateAssessmentsUseCase: UpdateAssessmentsUseCase,
     private val schoolRepository: SchoolRepository,
-    private val legacyUpdateSubstitutionPlanUseCase: LegacyUpdateSubstitutionPlanUseCase,
+    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val analyticsRepository: AnalyticsRepository,
     private val profileRepository: ProfileRepository,
+    private val notifyPlanChangedUseCase: NotifyPlanChangedUseCase,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
     private val logger = Logger.withTag("HandlePushNotificationUseCase")
@@ -69,11 +71,23 @@ class HandlePushNotificationUseCase(
                         null
                     }
                 }
-                legacyUpdateSubstitutionPlanUseCase(
-                    sp24School = school,
-                    dates = dates,
-                    allowNotification = true
-                )
+
+                dates.forEach { date ->
+                    val result = updateSubstitutionPlanUseCase(
+                        sp24School = school,
+                        date = date
+                    )
+
+                    if (result !is UpdateSubstitutionPlanUseCase.Result.Success) return@forEach
+                    result.profileResult.keys.forEach { profile ->
+                        if (notifyPlanChangedUseCase.shouldSendNotification(result, profile)) notifyPlanChangedUseCase(
+                            profile = profile,
+                            date = date,
+                            day = result.day,
+                            changedLessons = result.profileResult[profile]!!.changedLessons
+                        )
+                    }
+                }
 
                 if (data.timetable) {
                     updateTimetableUseCase(
