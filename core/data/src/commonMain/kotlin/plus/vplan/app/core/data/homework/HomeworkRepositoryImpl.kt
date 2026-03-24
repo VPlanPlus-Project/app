@@ -1,7 +1,9 @@
 package plus.vplan.app.core.data.homework
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.data.group.GroupRepository
@@ -42,25 +44,35 @@ class HomeworkRepositoryImpl(
     private val subjectInstanceRepository: SubjectInstanceRepository,
 ) : HomeworkRepository {
     override fun getAll(): Flow<List<Homework>> {
-        return homeworkDao.getAll().map { items -> items.mapNotNull { it.toModel() } }
+        return homeworkDao.getAll()
+            .map { items -> items.mapNotNull { it.toModel() } }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getAllForProfile(profile: Profile): Flow<List<Homework>> {
-        return homeworkDao.getByProfile(profile.id).map { items -> items.mapNotNull { it.toModel() } }
+        return homeworkDao.getByProfile(profile.id)
+            .map { items -> items.mapNotNull { it.toModel() } }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getById(id: Int): Flow<Homework?> {
-        return homeworkDao.getById(id).map { it?.toModel() }
+        return homeworkDao.getById(id)
+            .map { it?.toModel() }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getByGroup(group: Group): Flow<List<Homework>> {
-        return getAll().map { homeworks ->
-            homeworks.filter { it.group?.id == group.id || it.subjectInstance?.groups?.any { it.id == group.id } == true }
-        }
+        return getAll()
+            .map { homeworks ->
+                homeworks.filter { it.group?.id == group.id || it.subjectInstance?.groups?.any { it.id == group.id } == true }
+            }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getByDate(date: LocalDate): Flow<List<Homework>> {
-        return homeworkDao.getByDate(date).map { items -> items.mapNotNull { it.toModel() } }
+        return homeworkDao.getByDate(date)
+            .map { items -> items.mapNotNull { it.toModel() } }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getByProfile(profileId: Uuid, date: LocalDate?): Flow<List<Homework>> {
@@ -68,14 +80,16 @@ class HomeworkRepositoryImpl(
             homeworkDao.getByProfile(profileId).map { it.mapNotNull { hw -> hw.toModel() } }
         } else {
             homeworkDao.getByProfileAndDate(profileId, date).map { it.mapNotNull { hw -> hw.toModel() } }
-        }
+        }.flowOn(Dispatchers.Default)
     }
 
     override fun getTaskById(id: Int): Flow<CacheState<Homework.HomeworkTask>> {
-        return homeworkDao.getTaskById(id).map { 
-            it?.toModel()?.let { task -> CacheState.Done(task) } 
-                ?: CacheState.NotExisting(id.toString())
-        }
+        return homeworkDao.getTaskById(id)
+            .map {
+                it?.toModel()?.let { task -> CacheState.Done(task) }
+                    ?: CacheState.NotExisting(id.toString())
+            }
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun save(homework: Homework) {

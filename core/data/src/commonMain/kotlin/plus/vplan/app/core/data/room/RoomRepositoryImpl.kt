@@ -3,6 +3,7 @@
 package plus.vplan.app.core.data.room
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import plus.vplan.app.core.database.dao.RoomDao
@@ -34,6 +36,7 @@ class RoomRepositoryImpl(
         roomDao.getAll()
             .map { items -> items.map { it.toModel() } }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
             .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
     }
 
@@ -44,6 +47,7 @@ class RoomRepositoryImpl(
                     roomDao.getBySchool(schoolId)
                         .map { items -> items.map { it.toModel() } }
                         .distinctUntilChanged()
+                        .flowOn(Dispatchers.Default)
                         .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
                 }
             }

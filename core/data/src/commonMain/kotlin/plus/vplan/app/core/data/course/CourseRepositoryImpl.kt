@@ -2,12 +2,14 @@
 
 package plus.vplan.app.core.data.course
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.core.database.dao.CourseDao
 import plus.vplan.app.core.database.model.database.DbCourse
@@ -25,28 +27,34 @@ class CourseRepositoryImpl(
     override fun getByIds(identifiers: Set<Alias>): Flow<Course?> {
         return combine(identifiers.map { courseDao.getIdByAlias(it.value, it.provider, it.version) }) { uuids ->
             uuids.firstNotNullOfOrNull { it }
-        }.distinctUntilChanged().flatMapLatest { id ->
-            if (id == null) flowOf(null)
-            else courseDao.findById(id).map { it?.toModel() }
         }
+            .distinctUntilChanged()
+            .flatMapLatest { id ->
+                if (id == null) flowOf(null)
+                else courseDao.findById(id).map { it?.toModel() }
+            }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getBySchool(school: School): Flow<List<Course>> {
         return courseDao.getBySchool(school.id)
             .map { courses -> courses.map { it.toModel() } }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getByGroup(group: Group): Flow<List<Course>> {
         return courseDao.getByGroup(group.id)
             .map { items -> items.map { it.toModel() } }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getAll(): Flow<List<Course>> {
         return courseDao.getAll()
             .map { courses -> courses.map { it.toModel() } }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     @Deprecated("Use alias")
@@ -54,6 +62,7 @@ class CourseRepositoryImpl(
         return courseDao.findById(id)
             .map { it?.toModel() }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun save(course: Course) {

@@ -1,8 +1,12 @@
 package plus.vplan.app.core.data.assessment
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -35,19 +39,27 @@ class AssessmentRepositoryImpl(
 ) : AssessmentRepository {
 
     override fun getAll(): Flow<List<Assessment>> {
-        return assessmentDao.getAll().map { items -> items.mapNotNull { it.toModel() } }
+        return assessmentDao.getAll()
+            .map { items -> items.mapNotNull { it.toModel() } }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getAllForProfile(profile: Profile): Flow<List<Assessment>> {
-        return assessmentDao.getByProfile(profile.id).map { items -> items.mapNotNull { it.toModel() } }
+        return assessmentDao.getByProfile(profile.id)
+            .map { items -> items.mapNotNull { it.toModel() } }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getById(id: Int): Flow<Assessment?> {
-        return assessmentDao.getById(id).map { it?.toModel() }
+        return assessmentDao.getById(id)
+            .map { it?.toModel() }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getByDate(date: LocalDate): Flow<List<Assessment>> {
-        return assessmentDao.getByDate(date).map { items -> items.mapNotNull { it.toModel() } }
+        return assessmentDao.getByDate(date)
+            .map { items -> items.mapNotNull { it.toModel() } }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getByProfile(profileId: Uuid, date: LocalDate?): Flow<List<Assessment>> {
@@ -55,7 +67,7 @@ class AssessmentRepositoryImpl(
             assessmentDao.getByProfile(profileId).map { items -> items.mapNotNull { it.toModel() } }
         } else {
             assessmentDao.getByProfileAndDate(profileId, date).map { items -> items.mapNotNull { it.toModel() } }
-        }
+        }.flowOn(Dispatchers.Default)
     }
 
     override suspend fun save(assessment: Assessment) {
@@ -97,52 +109,53 @@ class AssessmentRepositoryImpl(
         return null
     }
 
-    override suspend fun sync(schoolApiAccess: VppSchoolAuthentication, subjectInstanceAliases: List<Alias>) {
-        try {
-            val assessments = assessmentApi.getAssessments(schoolApiAccess, subjectInstanceAliases)
-            
-            val dbAssessments = mutableListOf<DbAssessment>()
-            val fileLinks = mutableListOf<FKAssessmentFile>()
+    override suspend fun sync(schoolApiAccess: VppSchoolAuthentication, subjectInstanceAliases: List<Alias>) =
+        withContext(Dispatchers.Default) {
+            try {
+                val assessments = assessmentApi.getAssessments(schoolApiAccess, subjectInstanceAliases)
 
-            for (dto in assessments) {
-                // Resolve subject instance alias
-                val subjectInstanceAlias = Alias(AliasProvider.Vpp, dto.subject.id.toString(), 1)
-                val subjectInstance = subjectInstanceRepository.getById(subjectInstanceAlias).first() ?: continue
+                val dbAssessments = mutableListOf<DbAssessment>()
+                val fileLinks = mutableListOf<FKAssessmentFile>()
 
-                dbAssessments.add(
-                    DbAssessment(
-                        id = dto.id,
-                        subjectInstanceId = subjectInstance.id,
-                        date = LocalDate.parse(dto.date),
-                        isPublic = dto.isPublic,
-                        createdAt = Instant.fromEpochSeconds(dto.createdAt),
-                        createdBy = dto.createdBy.id,
-                        createdByProfile = null,
-                        description = dto.description,
-                        type = Assessment.Type.valueOf(dto.type).ordinal,
-                        cachedAt = Clock.System.now()
+                for (dto in assessments) {
+                    // Resolve subject instance alias
+                    val subjectInstanceAlias = Alias(AliasProvider.Vpp, dto.subject.id.toString(), 1)
+                    val subjectInstance = subjectInstanceRepository.getById(subjectInstanceAlias).first() ?: continue
+
+                    dbAssessments.add(
+                        DbAssessment(
+                            id = dto.id,
+                            subjectInstanceId = subjectInstance.id,
+                            date = LocalDate.parse(dto.date),
+                            isPublic = dto.isPublic,
+                            createdAt = Instant.fromEpochSeconds(dto.createdAt),
+                            createdBy = dto.createdBy.id,
+                            createdByProfile = null,
+                            description = dto.description,
+                            type = Assessment.Type.valueOf(dto.type).ordinal,
+                            cachedAt = Clock.System.now()
+                        )
                     )
-                )
 
-                // Add file links
-                for (file in dto.files) {
-                    fileLinks.add(FKAssessmentFile(dto.id, file.id))
+                    // Add file links
+                    for (file in dto.files) {
+                        fileLinks.add(FKAssessmentFile(dto.id, file.id))
+                    }
                 }
-            }
 
-            if (dbAssessments.isNotEmpty()) {
-                assessmentDao.upsert(dbAssessments, fileLinks)
+                if (dbAssessments.isNotEmpty()) {
+                    assessmentDao.upsert(dbAssessments, fileLinks)
+                }
+            } catch (e: Exception) {
+                // Log error but don't throw - sync should be resilient
             }
-        } catch (e: Exception) {
-            // Log error but don't throw - sync should be resilient
         }
-    }
 
     override suspend fun syncById(
         schoolApiAccess: VppSchoolAuthentication, 
         assessmentId: Int, 
         forceReload: Boolean
-    ): Boolean {
+    ): Boolean = withContext(Dispatchers.Default) {
         try {
             // Check if we already have fresh data (unless forceReload is true)
             if (!forceReload) {
@@ -150,18 +163,18 @@ class AssessmentRepositoryImpl(
                 if (existing != null) {
                     val age = Clock.System.now() - existing.assessment.cachedAt
                     if (age.inWholeMinutes < 5) {
-                        return true // Data is fresh enough
+                        return@withContext true // Data is fresh enough
                     }
                 }
             }
             
             val dto = assessmentApi.getAssessmentById(schoolApiAccess, assessmentId)
-                ?: return false // Assessment not found on server
+                ?: return@withContext false // Assessment not found on server
             
             // Resolve subject instance alias
             val subjectInstanceAlias = Alias(AliasProvider.Vpp, dto.subject.id.toString(), 1)
             val subjectInstance = subjectInstanceRepository.getById(subjectInstanceAlias).first()
-                ?: return false // Subject instance not found
+                ?: return@withContext false // Subject instance not found
             
             val dbAssessment = DbAssessment(
                 id = dto.id,
@@ -179,9 +192,9 @@ class AssessmentRepositoryImpl(
             val fileLinks = dto.files.map { FKAssessmentFile(dto.id, it.id) }
             
             assessmentDao.upsert(listOf(dbAssessment), fileLinks)
-            return true
+            return@withContext true
         } catch (e: Exception) {
-            return false
+            return@withContext false
         }
     }
 

@@ -23,8 +23,10 @@ import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -136,14 +138,19 @@ class VppIdRepositoryImpl(
 
                 return@map vppId.toModel()
             }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getVppIds(): Flow<List<VppId>> {
-        return vppIdDao.getAll().map { it.map { item -> item.toModel() } }
+        return vppIdDao.getAll()
+            .map { it.map { item -> item.toModel() } }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getAllLocalIds(): Flow<List<Int>> {
-        return vppIdDao.getAll().map { it.map { item -> item.vppId.id } }
+        return vppIdDao.getAll()
+            .map { it.map { item -> item.vppId.id } }
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun getDevices(vppId: VppId.Active): List<VppIdDevice> = safe {
