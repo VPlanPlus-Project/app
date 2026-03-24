@@ -44,6 +44,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -356,6 +357,13 @@ private fun CalendarScreenContent(
                             if (cause == DateSelectionCause.DayClick && scrollProgress == 2f) scrollProgress = 0f
                         } }
                     )
+                    AnimatedVisibility(
+                        visible = state.isTimetableUpdating,
+                        enter = expandVertically(),
+                        exit = shrinkVertically()
+                    ) {
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    }
                     HorizontalDivider()
                     val isUserDraggingPager = pagerState.interactionSource.collectIsDraggedAsState().value
                     val isUserDraggingList = lazyListState.interactionSource.collectIsDraggedAsState().value

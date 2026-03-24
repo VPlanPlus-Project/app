@@ -20,9 +20,6 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
-import plus.vplan.app.core.utils.date.atStartOfWeek
-import plus.vplan.app.core.utils.date.now
-import plus.vplan.app.core.utils.list.takeContinuousBy
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Response
 import plus.vplan.lib.sp24.source.Stundenplan24Client
@@ -90,7 +87,7 @@ class UpdateTimetableUseCase(
         val rooms = roomRepository.getBySchool(sp24School).first()
         val teachers = teacherRepository.getBySchool(sp24School).first()
         val groups = groupRepository.getBySchool(sp24School).first()
-        val weeks = getWeekStates(sp24School)
+        val weeks = weekRepository.getBySchool(sp24School).first()
 
         val lessons = timetableResponse.data.lessons.mapNotNull { lesson ->
             val lessonGroups = lesson.classes.mapNotNull { groupName -> groups.firstOrNull { it.name == groupName } }
@@ -163,7 +160,7 @@ class UpdateTimetableUseCase(
      * Will backtrack the week for the most recent timetable that is valid for the date.
      */
     suspend fun updateTimetableRelatedToDate(date: LocalDate, school: School.AppSchool) {
-        val weeks = getWeekStates(school)
+        val weeks = weekRepository.getBySchool(school).first()
         val elapsedWeeksIncludingCurrent = weeks
             .filter { week -> week.start <= date }
             .sortedBy { it.weekIndex }
@@ -176,59 +173,5 @@ class UpdateTimetableUseCase(
             if (result == Result.NoDataForWeek) continue
             if (result is Result.Success) return
         }
-    }
-
-    /**
-     * Used to get weeks for the current school year as we have no way of knowing which weeks
-     * belong to a school year since the concept of school years does not exist in Stundenplan24.
-     */
-    private suspend fun getWeekStates(school: School.AppSchool): List<Week> {
-        val today = LocalDate.now()
-        val weeks = weekRepository.getBySchool(school).first()
-        if (weeks.isEmpty()) return emptyList()
-
-        fun getAllWeeksContainingWeek(week: Week): List<Week>? {
-            val firstWeek = weeks
-                .filter { it.start < week.start }
-                .filter { it.weekIndex == 1 }
-                .maxByOrNull { it.start }
-            if (firstWeek == null) return null
-            return weeks
-                .dropWhile { it != firstWeek }
-                .takeContinuousBy { it.weekIndex }
-        }
-
-        val weekStates = weeks
-            .sortedBy { it.start }
-            .let findWeeksWithMultipleSchoolYears@{ weeks ->
-                if (weeks.count { it.weekIndex == 1 } == 1) weeks
-                else {
-                    // There are multiple school years in the app so we need to
-                    // find the most appropriate for the given date.
-
-                    // Check if there is a week which is currently ongoing
-                    weeks
-                        .firstOrNull { it.start == today.atStartOfWeek() }
-                        ?.let { currentWeek ->
-                            getAllWeeksContainingWeek(currentWeek)?.let {
-                                return@findWeeksWithMultipleSchoolYears it
-                            }
-                        }
-
-                    // Find the next week starting after today
-                    weeks
-                        .filter { it.start > today }
-                        .minByOrNull { it.start }
-                        ?.let { nextWeek ->
-                            getAllWeeksContainingWeek(nextWeek)?.let {
-                                return@findWeeksWithMultipleSchoolYears it
-                            }
-                        }
-
-                    return emptyList()
-                }
-            }
-
-        return weekStates.sortedBy { it.weekIndex }
     }
 }

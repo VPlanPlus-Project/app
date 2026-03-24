@@ -19,7 +19,7 @@ import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Timetable
-import plus.vplan.app.utils.plus
+import plus.vplan.app.core.utils.date.plus
 import kotlin.time.Duration.Companion.days
 
 data class PopulatedDay(
