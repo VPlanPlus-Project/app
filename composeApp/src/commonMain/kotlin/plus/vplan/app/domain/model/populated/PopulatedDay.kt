@@ -87,7 +87,11 @@ class DayPopulator(
                             weekIndex = timetableWeek?.weekIndex ?: 0,
                             dayOfWeek = day.date.dayOfWeek
                         )
-                    }.map { it.toList() }
+                    }.map { timetableLessons ->
+                        timetableLessons
+                            .toList()
+                            .filter { timetableLesson -> timetableLesson.weekType == null || timetableLesson.weekType == day.week?.weekType }
+                    }
                 }
 
         val substitution = when (context) {

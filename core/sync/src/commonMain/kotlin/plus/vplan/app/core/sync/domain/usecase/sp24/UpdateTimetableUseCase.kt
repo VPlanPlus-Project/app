@@ -132,6 +132,7 @@ class UpdateTimetableUseCase(
         }
 
         val profiles = profileRepository.getAll().first()
+            .filter { profile -> profile.school.id == sp24School.id }
 
         val profileMappings = profiles
             .filter { it.school.id == sp24School.id }
