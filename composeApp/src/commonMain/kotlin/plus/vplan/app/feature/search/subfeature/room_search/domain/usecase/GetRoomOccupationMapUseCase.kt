@@ -2,12 +2,14 @@
 
 package plus.vplan.app.feature.search.subfeature.room_search.domain.usecase
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -62,6 +64,7 @@ class GetRoomOccupationMapUseCase(
             }.collect()
         }.collect()
     }
+        .flowOn(Dispatchers.Default)
 }
 
 sealed class Occupancy(
