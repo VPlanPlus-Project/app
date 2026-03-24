@@ -14,7 +14,7 @@ import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.School
-import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.LegacyUpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 
@@ -22,7 +22,7 @@ class HandlePushNotificationUseCase(
     private val homeworkRepository: HomeworkRepository,
     private val updateAssessmentsUseCase: UpdateAssessmentsUseCase,
     private val schoolRepository: SchoolRepository,
-    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val legacyUpdateSubstitutionPlanUseCase: LegacyUpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val analyticsRepository: AnalyticsRepository,
     private val profileRepository: ProfileRepository,
@@ -69,7 +69,7 @@ class HandlePushNotificationUseCase(
                         null
                     }
                 }
-                updateSubstitutionPlanUseCase(
+                legacyUpdateSubstitutionPlanUseCase(
                     sp24School = school,
                     dates = dates,
                     allowNotification = true

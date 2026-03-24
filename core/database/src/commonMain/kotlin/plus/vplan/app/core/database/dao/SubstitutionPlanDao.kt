@@ -55,15 +55,17 @@ interface SubstitutionPlanDao {
         groups: List<DbSubstitutionPlanGroupCrossover>,
         teachers: List<DbSubstitutionPlanTeacherCrossover>,
         rooms: List<DbSubstitutionPlanRoomCrossover>,
+        index: List<DbProfileSubstitutionPlanCache>
     ) {
         val oldLessons = getSubstitutionPlanBySchool(schoolId, date)
         deleteSubstitutionPlanByIds(oldLessons)
         upsert(lessons, groups, teachers, rooms)
+        replaceIndex(index, date)
     }
 
     @Transaction
-    suspend fun replaceIndex(index: List<DbProfileSubstitutionPlanCache>) {
-        index.map { it.profileId }.distinct().forEach { dropCacheForProfile(it) }
+    suspend fun replaceIndex(index: List<DbProfileSubstitutionPlanCache>, date: LocalDate?) {
+        index.map { it.profileId }.distinct().forEach { dropCacheForProfile(it, date) }
         upsert(index)
     }
 
@@ -125,8 +127,8 @@ interface SubstitutionPlanDao {
     @Query("SELECT * FROM substitution_plan_lesson")
     fun getAll(): Flow<List<EmbeddedSubstitutionPlanLesson>>
 
-    @Query("DELETE FROM profile_substitution_plan_cache WHERE profile_id = :profileId")
-    suspend fun dropCacheForProfile(profileId: Uuid)
+    @Query("DELETE FROM profile_substitution_plan_cache WHERE profile_id = :profileId AND (:date IS NULL OR substitution_lesson_id IN (SELECT substitution_plan_lesson.id FROM substitution_plan_lesson LEFT JOIN day ON day.id = substitution_plan_lesson.day_id WHERE day.date = :date))")
+    suspend fun dropCacheForProfile(profileId: Uuid, date: LocalDate?)
 
     @Upsert
     suspend fun upsert(entries: List<DbProfileSubstitutionPlanCache>)

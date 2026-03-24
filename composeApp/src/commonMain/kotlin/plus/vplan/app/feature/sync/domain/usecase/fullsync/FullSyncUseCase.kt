@@ -28,7 +28,7 @@ import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.core.model.getByProvider
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
-import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.LegacyUpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.core.utils.date.now
@@ -54,7 +54,7 @@ class FullSyncUseCase(
     private val keyValueRepository: KeyValueRepository,
     private val profileRepository: ProfileRepository,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
-    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val legacyUpdateSubstitutionPlanUseCase: LegacyUpdateSubstitutionPlanUseCase,
     private val updateSubjectInstanceUseCase: UpdateSubjectInstanceUseCase,
     private val checkSp24CredentialsUseCase: CheckSp24CredentialsUseCase,
     private val syncGradesUseCase: SyncGradesUseCase,
@@ -252,7 +252,7 @@ class FullSyncUseCase(
                             }
 
                             updateTimetableUseCase(school, client, forceUpdate = false)
-                            updateSubstitutionPlanUseCase(providedClient = client, sp24School = school, dates = listOf(today, nextDay), allowNotification = true)
+                            legacyUpdateSubstitutionPlanUseCase(providedClient = client, sp24School = school, dates = listOf(today, nextDay), allowNotification = true)
                         }
                 }
 

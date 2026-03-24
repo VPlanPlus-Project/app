@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -39,9 +38,7 @@ class GetRoomOccupationMapUseCase(
             timetableRepository.getCurrentVersion()
         ) { currentWeek, timetableVersion ->
             combine(
-                substitutionPlanRepository.getCurrentVersion().flatMapLatest { substitutionPlanVersion ->
-                    substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, date, substitutionPlanVersion)
-                },
+                substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, date),
                 timetableRepository.getTimetableForSchool(profile.school.id, timetableVersion)
                     .map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } },
                 roomRepository.getBySchool(profile.school)

@@ -28,7 +28,7 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.SubjectInstance
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
-import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
+import plus.vplan.app.core.sync.domain.usecase.sp24.LegacyUpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.core.utils.date.now
@@ -44,7 +44,7 @@ class DeveloperSettingsViewModel(
     private val timetableRepository: TimetableRepository,
     private val keyValueRepository: KeyValueRepository,
     private val fcmRepository: FcmRepository,
-    private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
+    private val legacyUpdateSubstitutionPlanUseCase: LegacyUpdateSubstitutionPlanUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val getCurrentProfileUseCase: GetCurrentProfileUseCase,
     private val updateWeeksUseCase: UpdateWeeksUseCase,
@@ -111,7 +111,7 @@ class DeveloperSettingsViewModel(
                 DeveloperSettingsEvent.UpdateSubstitutionPlan -> {
                     if (state.isSubstitutionPlanUpdateRunning) return@launch
                     state = state.copy(isSubstitutionPlanUpdateRunning = true)
-                    updateSubstitutionPlanUseCase(
+                    legacyUpdateSubstitutionPlanUseCase(
                         state.profile!!.school, listOf(LocalDate.now(), LocalDate.now().plus(1, DateTimeUnit.DAY)),
                         allowNotification = true
                     )

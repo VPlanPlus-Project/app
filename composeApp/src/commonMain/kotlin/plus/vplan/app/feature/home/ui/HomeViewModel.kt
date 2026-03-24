@@ -251,16 +251,19 @@ class HomeViewModel(
                             withContext(Dispatchers.Default) { updateTimetableUseCase(school, forceUpdate = false, client = client) }
                             state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.SubstitutionPlan) }
                             withContext(Dispatchers.Default) {
-                                updateSubstitutionPlanUseCase(
-                                    school,
-                                    setOfNotNull(
-                                        LocalDate.now(),
-                                        state.value.day?.day?.date,
-                                        state.value.day?.day?.nextSchoolDay
-                                    ).sorted(),
-                                    allowNotification = false,
-                                    providedClient = client
+                                setOfNotNull(
+                                    LocalDate.now(),
+                                    state.value.day?.day?.date,
+                                    state.value.day?.day?.nextSchoolDay
                                 )
+                                    .sorted()
+                                    .forEach { date ->
+                                        updateSubstitutionPlanUseCase(
+                                            school,
+                                            date = date,
+                                            providedClient = client
+                                        )
+                                    }
                             }
                             state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Done) }
                             delay(1.seconds)

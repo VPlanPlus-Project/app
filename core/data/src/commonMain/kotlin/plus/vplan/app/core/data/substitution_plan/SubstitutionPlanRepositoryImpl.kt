@@ -24,11 +24,11 @@ class SubstitutionPlanRepositoryImpl(
         vppDatabase.substitutionPlanDao.deleteAll()
     }
 
-    override suspend fun upsertLessons(
-        schoolId: Uuid,
+    override suspend fun replaceLessons(
         date: LocalDate,
+        schoolId: Uuid,
         lessons: List<Lesson.SubstitutionPlanLesson>,
-        version: Int,
+        profileMappings: Map<Profile, List<Lesson.SubstitutionPlanLesson>>
     ) {
         vppDatabase.substitutionPlanDao.insertDayVersion(
             schoolId = schoolId,
@@ -36,7 +36,7 @@ class SubstitutionPlanRepositoryImpl(
             lessons = lessons.map { lesson ->
                 DbSubstitutionPlanLesson(
                     id = lesson.id,
-                    dayId = Day.buildId(schoolId, lesson.date),
+                    dayId = Day.buildId(schoolId, date),
                     lessonNumber = lesson.lessonNumber,
                     subject = lesson.subject,
                     isSubjectChanged = lesson.isSubjectChanged,
@@ -45,46 +45,50 @@ class SubstitutionPlanRepositoryImpl(
                     isRoomChanged = lesson.isRoomChanged,
                     isTeacherChanged = lesson.isTeacherChanged,
                     lessonTimeId = lesson.lessonTime?.id,
-                    version = version
+                    version = 0
                 )
             },
             groups = lessons.flatMap { lesson ->
                 lesson.groups.map { group ->
-                    DbSubstitutionPlanGroupCrossover(group.id, lesson.id)
+                    DbSubstitutionPlanGroupCrossover(
+                        groupId = group.id,
+                        substitutionPlanLessonId = lesson.id
+                    )
                 }
             },
             teachers = lessons.flatMap { lesson ->
                 lesson.teachers.map { teacher ->
-                    DbSubstitutionPlanTeacherCrossover(teacher.id, lesson.id)
+                    DbSubstitutionPlanTeacherCrossover(
+                        teacherId = teacher.id,
+                        substitutionPlanLessonId = lesson.id
+                    )
                 }
             },
             rooms = lessons.flatMap { lesson ->
                 lesson.rooms.map { room ->
-                    DbSubstitutionPlanRoomCrossover(room.id, lesson.id)
+                    DbSubstitutionPlanRoomCrossover(
+                        roomId = room.id,
+                        substitutionPlanLessonId = lesson.id
+                    )
                 }
-            }
+            },
+            index = profileMappings.map { (profile, lessons) ->
+                lessons.map { lesson ->
+                    DbProfileSubstitutionPlanCache(
+                        profileId = profile.id,
+                        substitutionPlanLessonId = lesson.id,
+                    )
+                }
+            }.flatten()
         )
     }
 
-    override fun getCurrentVersion(): Flow<Int> {
-        return vppDatabase.substitutionPlanDao.getCurrentVersion().map { it ?: 0 }
+    override fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): Flow<List<Lesson.SubstitutionPlanLesson>> {
+        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date, 0).map { it.map { it.toModel() } }.distinctUntilChanged()
     }
 
-    override suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>) {
-        vppDatabase.substitutionPlanDao.replaceIndex(lessonIds.map {
-            DbProfileSubstitutionPlanCache(
-                profileId = profileId,
-                substitutionPlanLessonId = it
-            )
-        })
-    }
-
-    override fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>> {
-        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date, version).map { it.map { it.toModel() } }.distinctUntilChanged()
-    }
-
-    override fun getForProfile(profile: Profile, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>> {
-        return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date, version)
+    override fun getForProfile(profile: Profile, date: LocalDate): Flow<List<Lesson.SubstitutionPlanLesson>> {
+        return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date, 0)
             .map { it.map { it.toModel() } }
             .distinctUntilChanged()
     }
@@ -94,8 +98,8 @@ class SubstitutionPlanRepositoryImpl(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getSubstitutionPlanBySchool(schoolId: Uuid, version: Int): Flow<Set<Lesson.SubstitutionPlanLesson>> {
-        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, version)
+    override fun getSubstitutionPlanBySchool(schoolId: Uuid): Flow<Set<Lesson.SubstitutionPlanLesson>> {
+        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, 0)
             .map { items -> items.map { it.toModel() }.toSet() }
             .distinctUntilChanged()
     }
