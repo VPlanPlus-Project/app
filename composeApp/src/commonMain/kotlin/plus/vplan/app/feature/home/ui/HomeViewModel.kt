@@ -33,6 +33,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
 import kotlinx.datetime.atTime
+import kotlinx.datetime.format
 import plus.vplan.app.core.common.usecase.GetCurrentProfileUseCase
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
@@ -46,6 +47,8 @@ import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.regularDateFormatWithoutYear
+import plus.vplan.app.core.utils.date.untilRelativeText
 import plus.vplan.app.domain.model.populated.PopulatedDay
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
@@ -245,25 +248,28 @@ class HomeViewModel(
                                 Authentication(school.sp24Id, school.username, school.password),
                                 true
                             )
+                            state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Connecting) }
+                            withContext(Dispatchers.Default) { client.testConnection() }
                             state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.LessonTimes) }
                             withContext(Dispatchers.Default) { updateLessonTimesUseCase(school, client) }
                             state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Holidays) }
                             withContext(Dispatchers.Default) { updateHolidaysUseCase(school, client) }
                             state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Timetable) }
                             withContext(Dispatchers.Default) { updateTimetableUseCase(school, forceUpdate = false, client = client) }
-                            state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.SubstitutionPlan) }
-                            withContext(Dispatchers.Default) {
-                                updateSubstitutionPlanUseCase(
-                                    school,
-                                    setOfNotNull(
-                                        LocalDate.now(),
-                                        state.value.day?.day?.date,
-                                        state.value.day?.day?.nextSchoolDay
-                                    ).sorted(),
-                                    allowNotification = false,
-                                    providedClient = client
-                                )
-                            }
+                            setOfNotNull(
+                                LocalDate.now(),
+                                state.value.day?.day?.date,
+                                state.value.day?.day?.nextSchoolDay
+                            )
+                                .sorted()
+                                .forEach { date ->
+                                    state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.SubstitutionPlan(date)) }
+                                    updateSubstitutionPlanUseCase(
+                                        school,
+                                        date = date,
+                                        providedClient = client
+                                    )
+                                }
                             state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Done) }
                             delay(1.seconds)
                             state.update { state -> state.copy(currentUpdateStage = null) }
@@ -296,12 +302,13 @@ data class HomeState(
     val lastPlanUpdate: Instant? = null,
     val currentUpdateStage: CurrentUpdateStage? = null,
 ) {
-    enum class CurrentUpdateStage(val title: String) {
-        LessonTimes("Stundenzeiten"),
-        Holidays("Ferien/Feiertage"),
-        SubstitutionPlan("Vertretungsplan"),
-        Timetable("Stundenplan"),
-        Done("Fertig")
+    sealed class CurrentUpdateStage(val title: String) {
+        data object Connecting: CurrentUpdateStage("Verbinden...")
+        data object LessonTimes: CurrentUpdateStage("Stundenzeiten")
+        data object Holidays: CurrentUpdateStage("Ferien/Feiertage")
+        data object Timetable: CurrentUpdateStage("Stundenplan")
+        data class SubstitutionPlan(val date: LocalDate): CurrentUpdateStage("Vertretungsplan " + ((LocalDate.now() untilRelativeText date) ?: date.format(regularDateFormatWithoutYear)))
+        data object Done: CurrentUpdateStage("Fertig")
     }
 }
 

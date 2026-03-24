@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
@@ -41,9 +40,7 @@ class GetRoomOccupationMapUseCase(
             timetableRepository.getCurrentVersion()
         ) { currentWeek, timetableVersion ->
             combine(
-                substitutionPlanRepository.getCurrentVersion().flatMapLatest { substitutionPlanVersion ->
-                    substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, date, substitutionPlanVersion)
-                },
+                substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, date),
                 timetableRepository.getTimetableForSchool(profile.school.id, timetableVersion)
                     .map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } },
                 roomRepository.getBySchool(profile.school)
@@ -54,7 +51,7 @@ class GetRoomOccupationMapUseCase(
                 val lessons = substitution.ifEmpty { timetableLessons }
 
                 rooms.associateWith { room ->
-                    lessons.filter { room.id in it.rooms.orEmpty().map { it.id } }.map {
+                    lessons.filter { room.id in it.rooms.orEmpty().map { it.id } }.mapNotNull {
                         when (it) {
                             is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson.fromLesson(it, date)
                             is Lesson.TimetableLesson -> Occupancy.Lesson.fromLesson(it, date)
@@ -73,7 +70,8 @@ sealed class Occupancy(
 ) {
     data class Lesson(val lesson: plus.vplan.app.core.model.Lesson, val date: LocalDate, override val start: LocalDateTime, override val end: LocalDateTime) : Occupancy(start, end) {
         companion object {
-            fun fromLesson(lesson: plus.vplan.app.core.model.Lesson, contextDate: LocalDate): Occupancy {
+            fun fromLesson(lesson: plus.vplan.app.core.model.Lesson, contextDate: LocalDate): Occupancy? {
+                if (lesson.lessonTime == null) return null
                 return Lesson(lesson, contextDate, lesson.lessonTime!!.start.atDate(contextDate), lesson.lessonTime!!.end.atDate(contextDate))
             }
         }
