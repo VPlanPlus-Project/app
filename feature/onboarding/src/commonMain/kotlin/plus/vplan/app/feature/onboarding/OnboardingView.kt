@@ -64,7 +64,7 @@ fun OnboardingView(
                             SchoolSearch(onSchoolSelected = { viewModel.onSchoolSelected(it) })
                         }
                     }
-                    is Onboarding.SchoolCredentials, is Onboarding.LoadingData -> {
+                    is Onboarding.SchoolCredentials -> {
                         NavEntry(key = key, metadata = transitionSpec) {
                             Stundenplan24CredentialsScreen(
                                 sp24Id = onboardingState.selectedSchool?.sp24Id,
@@ -72,7 +72,7 @@ fun OnboardingView(
                                     viewModel.onCredentialsProvided(username, password)
                                 },
                             )
-                            if (it is Onboarding.LoadingData) LoadingDataDialogContent()
+                            if (onboardingState.isInitializingSchoolData) LoadingDataDialogContent()
                         }
                     }
                     is Onboarding.ProfileSelection -> {

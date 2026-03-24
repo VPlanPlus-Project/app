@@ -16,6 +16,8 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.model.VppId
@@ -57,7 +59,7 @@ class FileApiImpl(
 
             return response.body<ResponseDataWrapper<Int>>().data
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
     
@@ -82,7 +84,7 @@ class FileApiImpl(
 
             return response.bodyAsBytes()
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
     
@@ -102,7 +104,7 @@ class FileApiImpl(
                 throw NetworkRequestUnsuccessfulException(response)
             }
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
     
@@ -119,7 +121,7 @@ class FileApiImpl(
                 throw NetworkRequestUnsuccessfulException(response)
             }
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 }

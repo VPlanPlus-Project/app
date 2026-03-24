@@ -2,6 +2,7 @@ package plus.vplan.app.feature.onboarding.stage.school_credentials.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -23,21 +24,21 @@ class Stundenplan24CredentialsViewModel(
     }
 
     fun handleEvent(event: Stundenplan24CredentialsEvent) {
-        viewModelScope.launch {
-            when (event) {
-                is Stundenplan24CredentialsEvent.OnUsernameChanged -> state.update { state ->
-                    state.copy(
-                        username = event.username
-                    )
-                }
+        when (event) {
+            is Stundenplan24CredentialsEvent.OnUsernameChanged -> state.update { state ->
+                state.copy(
+                    username = event.username
+                )
+            }
 
-                is Stundenplan24CredentialsEvent.OnPasswordChanged -> state.update { state ->
-                    state.copy(
-                        password = event.password
-                    )
-                }
+            is Stundenplan24CredentialsEvent.OnPasswordChanged -> state.update { state ->
+                state.copy(
+                    password = event.password
+                )
+            }
 
-                is Stundenplan24CredentialsEvent.OnCheckClicked -> {
+            is Stundenplan24CredentialsEvent.OnCheckClicked -> {
+                viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Action.Check")) {
                     state.update { state -> state.copy(sp24CredentialsState = Sp24CredentialsState.LOADING) }
                     val result = checkCredentialsUseCase(
                         state.value.sp24Id!!,
@@ -67,9 +68,9 @@ class Stundenplan24CredentialsViewModel(
                         }
                     }
                 }
-                is Stundenplan24CredentialsEvent.OnScreenBecameActive -> {
-                    state.update { state -> state.copy(isThisStageFinished = false) }
-                }
+            }
+            is Stundenplan24CredentialsEvent.OnScreenBecameActive -> {
+                state.update { state -> state.copy(isThisStageFinished = false) }
             }
         }
     }

@@ -1,5 +1,7 @@
 package plus.vplan.app.feature.news.domain.usecase
 
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -7,6 +9,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -48,6 +51,7 @@ class GetNewsUseCase : KoinComponent {
                     }
             }
         }
+            .flowOn(Dispatchers.Default + CoroutineName(this::class.qualifiedName + ".Invoke"))
     }
 }
 

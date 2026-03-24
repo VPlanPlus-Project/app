@@ -24,9 +24,6 @@ internal sealed interface Onboarding : NavKey {
     data object SchoolCredentials: Onboarding
 
     @Serializable
-    data object LoadingData: Onboarding
-
-    @Serializable
     data object ProfileSelection: Onboarding
 
     @Serializable
