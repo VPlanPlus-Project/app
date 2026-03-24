@@ -35,11 +35,11 @@ class AssessmentRepositoryImpl(
 ) : AssessmentRepository {
 
     override fun getAll(): Flow<List<Assessment>> {
-        return assessmentDao.getAll().map { items -> items.map { it.toModel() } }
+        return assessmentDao.getAll().map { items -> items.mapNotNull { it.toModel() } }
     }
 
     override fun getAllForProfile(profile: Profile): Flow<List<Assessment>> {
-        return assessmentDao.getByProfile(profile.id).map { items -> items.map { it.toModel() } }
+        return assessmentDao.getByProfile(profile.id).map { items -> items.mapNotNull { it.toModel() } }
     }
 
     override fun getById(id: Int): Flow<Assessment?> {
@@ -47,14 +47,14 @@ class AssessmentRepositoryImpl(
     }
 
     override fun getByDate(date: LocalDate): Flow<List<Assessment>> {
-        return assessmentDao.getByDate(date).map { items -> items.map { it.toModel() } }
+        return assessmentDao.getByDate(date).map { items -> items.mapNotNull { it.toModel() } }
     }
 
     override fun getByProfile(profileId: Uuid, date: LocalDate?): Flow<List<Assessment>> {
         return if (date == null) {
-            assessmentDao.getByProfile(profileId).map { items -> items.map { it.toModel() } }
+            assessmentDao.getByProfile(profileId).map { items -> items.mapNotNull { it.toModel() } }
         } else {
-            assessmentDao.getByProfileAndDate(profileId, date).map { items -> items.map { it.toModel() } }
+            assessmentDao.getByProfileAndDate(profileId, date).map { items -> items.mapNotNull { it.toModel() } }
         }
     }
 
@@ -115,7 +115,7 @@ class AssessmentRepositoryImpl(
                         subjectInstanceId = subjectInstance.id,
                         date = LocalDate.parse(dto.date),
                         isPublic = dto.isPublic,
-                        createdAt = Instant.fromEpochMilliseconds(dto.createdAt),
+                        createdAt = Instant.fromEpochSeconds(dto.createdAt),
                         createdBy = dto.createdBy.id,
                         createdByProfile = null,
                         description = dto.description,
@@ -168,7 +168,7 @@ class AssessmentRepositoryImpl(
                 subjectInstanceId = subjectInstance.id,
                 date = LocalDate.parse(dto.date),
                 isPublic = dto.isPublic,
-                createdAt = Instant.fromEpochMilliseconds(dto.createdAt),
+                createdAt = Instant.fromEpochSeconds(dto.createdAt),
                 createdBy = dto.createdBy.id,
                 createdByProfile = null,
                 description = dto.description,

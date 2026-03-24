@@ -38,9 +38,9 @@ class HandlePushNotificationUseCase(
                 data.homeworkIds.forEach {
                     profileRepository.getAll().first()
                         .filterIsInstance<Profile.StudentProfile>()
-                        .mapNotNull { it.vppId }
+                        .mapNotNull { profile -> profile.vppId }
                         .forEach { vppId ->
-                            homeworkRepository.syncById(vppId, it, forceReload = true)
+                            homeworkRepository.syncById(vppId.buildVppSchoolAuthentication(), it, forceReload = true)
                         }
                 }
             }

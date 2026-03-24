@@ -31,7 +31,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import plus.vplan.app.core.database.VppDatabase
+import plus.vplan.app.core.database.dao.VppIdDao
 import plus.vplan.app.core.database.model.database.DbVppId
 import plus.vplan.app.core.database.model.database.DbVppIdAccess
 import plus.vplan.app.core.database.model.database.DbVppIdSchulverwalter
@@ -45,6 +45,7 @@ import plus.vplan.app.network.besteschule.ResponseDataWrapper
 import plus.vplan.app.network.vpp.GenericAuthenticationProvider
 import plus.vplan.app.network.vpp.getAuthenticationOptionsForRestrictedEntity
 import plus.vplan.app.network.vpp.model.IncludedModel
+import plus.vplan.app.network.vpp.user.VppIdApi
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -69,7 +70,8 @@ private inline fun <reified T> parseWrapped(body: String): T? {
 
 class VppIdRepositoryImpl(
     private val httpClient: HttpClient,
-    private val vppDatabase: VppDatabase,
+    private val vppIdApi: VppIdApi,
+    private val vppIdDao: VppIdDao,
     private val genericAuthenticationProvider: GenericAuthenticationProvider
 ) : VppIdRepository {
 
@@ -116,16 +118,32 @@ class VppIdRepositoryImpl(
         )
     }
 
-    override fun getById(id: Int): Flow<VppId?> {
-        return vppDatabase.vppIdDao.getById(id).map { it?.toModel() }
+    override fun getById(id: Int, forceReload: Boolean): Flow<VppId?> {
+        return vppIdDao.getById(id)
+            .map { vppId ->
+                if (vppId == null || forceReload) {
+                    val result = vppIdApi.getById(id) ?: return@map null
+
+                    vppIdDao.upsert(DbVppId(
+                        id = id,
+                        name = result.name,
+                        cachedAt = Clock.System.now(),
+                        creationReason = if (vppId == null) CreationReason.Cached else vppId.vppId.creationReason,
+                    ))
+
+                    return@map getById(id, false).first()
+                }
+
+                return@map vppId.toModel()
+            }
     }
 
     override fun getVppIds(): Flow<List<VppId>> {
-        return vppDatabase.vppIdDao.getAll().map { it.map { item -> item.toModel() } }
+        return vppIdDao.getAll().map { it.map { item -> item.toModel() } }
     }
 
     override fun getAllLocalIds(): Flow<List<Int>> {
-        return vppDatabase.vppIdDao.getAll().map { it.map { item -> item.vppId.id } }
+        return vppIdDao.getAll().map { it.map { item -> item.vppId.id } }
     }
 
     override suspend fun getDevices(vppId: VppId.Active): List<VppIdDevice> = safe {
@@ -168,8 +186,8 @@ class VppIdRepositoryImpl(
     }
 
     override suspend fun deleteAccessTokens(vppId: VppId.Active) {
-        vppDatabase.vppIdDao.deleteAccessToken(vppId.id)
-        vppDatabase.vppIdDao.deleteSchulverwalterAccessToken(vppId.id)
+        vppIdDao.deleteAccessToken(vppId.id)
+        vppIdDao.deleteSchulverwalterAccessToken(vppId.id)
     }
 
     override suspend fun getSchulverwalterReauthUrl(vppId: VppId.Active): String = safe {
@@ -210,18 +228,18 @@ class VppIdRepositoryImpl(
 
     override suspend fun save(vppId: VppId) {
         when (vppId) {
-            is VppId.Cached -> vppDatabase.vppIdDao.upsert(
+            is VppId.Cached -> vppIdDao.upsert(
                 vppId = DbVppId(
                     id = vppId.id,
                     name = vppId.name,
                     cachedAt = Clock.System.now(),
-                    creationReason = if (vppDatabase.vppIdDao.getById(vppId.id).first()?.vppId?.creationReason == CreationReason.Persisted)
+                    creationReason = if (vppIdDao.getById(vppId.id).first()?.vppId?.creationReason == CreationReason.Persisted)
                         CreationReason.Persisted else CreationReason.Cached
                 ),
                 groupCrossovers = vppId.groups.map { DbVppIdGroupCrossover(vppId.id, it) }
             )
 
-            is VppId.Active -> vppDatabase.vppIdDao.upsert(
+            is VppId.Active -> vppIdDao.upsert(
                 vppId = DbVppId(
                     id = vppId.id,
                     name = vppId.name,
@@ -256,7 +274,7 @@ class VppIdRepositoryImpl(
         }
 
         if (response.status == HttpStatusCode.NotFound) {
-            vppDatabase.vppIdDao.deleteById(listOf(id))
+            vppIdDao.deleteById(listOf(id))
             return@safe null
         }
 
@@ -266,9 +284,9 @@ class VppIdRepositoryImpl(
         }
 
         val data = response.body<ResponseDataWrapper<UserItemResponse>>().data
-        val existing = vppDatabase.vppIdDao.getById(id).first()
+        val existing = vppIdDao.getById(id).first()
 
-        vppDatabase.vppIdDao.upsert(
+        vppIdDao.upsert(
             vppId = DbVppId(
                 id = data.id,
                 name = data.username,
@@ -279,7 +297,7 @@ class VppIdRepositoryImpl(
             groupCrossovers = data.groups.map { DbVppIdGroupCrossover(data.id, it) }
         )
 
-        vppDatabase.vppIdDao.getById(id).first()?.toModel()
+        vppIdDao.getById(id).first()?.toModel()
     }
 
     override suspend fun checkTokenValidity(accessToken: String): Boolean = safe {

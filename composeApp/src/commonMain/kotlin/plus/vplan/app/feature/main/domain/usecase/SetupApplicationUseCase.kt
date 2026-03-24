@@ -10,7 +10,9 @@ import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.profile.ProfileRepository
+import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
+import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
 import plus.vplan.app.feature.main.domain.usecase.setup.DownloadVppSchoolIdentifierUseCase
@@ -25,6 +27,7 @@ class SetupApplicationUseCase(
     private val profileRepository: ProfileRepository,
     private val vppIdRepository: VppIdRepository,
     private val analyticsRepository: AnalyticsRepository,
+    private val schoolRepository: SchoolRepository,
 ) {
     private val logger = Logger.withTag("SetupApplicationUseCase")
     suspend operator fun invoke() {
@@ -77,6 +80,14 @@ class SetupApplicationUseCase(
         }
 
         if (analyticsRepository.isFeatureEnabled("core_sp24-api-log", true)) sendSp24CredentialsToServerUseCase()
+
+        profileRepository.getAll().first()
+            .map { it.school }
+            .distinctBy { it.id }
+            .filter { it.aliases.none { alias -> alias.provider == AliasProvider.Vpp } }
+            .forEach { school ->
+                schoolRepository.getById(school.aliases.first(), forceReload = true).first()
+            }
     }
 }
 

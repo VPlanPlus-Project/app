@@ -144,6 +144,8 @@ import plus.vplan.app.network.vpp.school.SchoolApi
 import plus.vplan.app.network.vpp.school.SchoolApiImpl
 import plus.vplan.app.network.vpp.subject_instance.SubjectInstanceApi
 import plus.vplan.app.network.vpp.subject_instance.SubjectInstanceApiImpl
+import plus.vplan.app.network.vpp.user.VppIdApi
+import plus.vplan.app.network.vpp.user.VppIdApiImpl
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -268,6 +270,7 @@ val appModule = module(createdAtStart = true) {
     singleOf(::HomeworkApiImpl).bind<HomeworkApi>()
     singleOf(::AssessmentApiImpl).bind<AssessmentApi>()
     singleOf(::FileApiImpl).bind<FileApi>()
+    singleOf(::VppIdApiImpl).bind<VppIdApi>()
 
     singleOf(::SchoolRepositoryImpl).bind<SchoolRepository>()
     singleOf(::GroupRepositoryImpl).bind<GroupRepository>()

@@ -14,10 +14,11 @@ class UpdateHomeworkUseCase(
         val profile = getCurrentProfileUseCase().first() as? Profile.StudentProfile
             ?: return UpdateResult.ERROR
 
-        val vppId = profile.vppId ?: return UpdateResult.ERROR
+        val vppId = profile.vppId
+        val schoolApiAccess = vppId?.buildVppSchoolAuthentication() ?: profile.school.buildSp24AppAuthentication()
         
         // Sync the specific homework from the server with forceReload=true
-        val success = homeworkRepository.syncById(vppId, homeworkId, forceReload = true)
+        val success = homeworkRepository.syncById(schoolApiAccess, homeworkId, forceReload = true)
         if (success == HomeworkRepository.SyncResult.NotExists) return UpdateResult.DOES_NOT_EXIST
         if (success is HomeworkRepository.SyncResult.Error) return UpdateResult.ERROR
 

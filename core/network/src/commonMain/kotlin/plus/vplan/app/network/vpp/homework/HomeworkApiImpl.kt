@@ -45,10 +45,10 @@ class HomeworkApiImpl(
         }
     }
 
-    override suspend fun getHomeworkById(vppId: VppId.Active, homeworkId: Int): ApiHomeworkDto? {
+    override suspend fun getHomeworkById(vppSchoolAuthentication: VppSchoolAuthentication, homeworkId: Int): ApiHomeworkDto? {
         try {
             val response = httpClient.get("$baseUrl/$homeworkId") {
-                bearerAuth(vppId.accessToken)
+                vppSchoolAuthentication.authentication(this)
                 url {
                     parameters.append("include_tasks", "true")
                     parameters.append("include_files", "true")

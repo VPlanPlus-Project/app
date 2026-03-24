@@ -6,9 +6,9 @@ import plus.vplan.app.core.model.School
 
 interface SchoolRepository {
     suspend fun getAll(): List<School>
-    fun getByIds(identifier: Set<Alias>): Flow<School?>
+    fun getByIds(identifier: Set<Alias>, forceReload: Boolean = false): Flow<School?>
 
-    fun getById(identifier: Alias): Flow<School?> = getByIds(setOf(identifier))
+    fun getById(identifier: Alias, forceReload: Boolean = false): Flow<School?> = getByIds(setOf(identifier), forceReload)
 
     suspend fun save(school: School.AppSchool): School.AppSchool
 }
