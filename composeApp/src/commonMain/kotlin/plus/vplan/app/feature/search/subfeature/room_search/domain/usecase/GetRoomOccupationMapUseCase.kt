@@ -52,7 +52,7 @@ class GetRoomOccupationMapUseCase(
                 val lessons = substitution.ifEmpty { timetableLessons }
 
                 rooms.associateWith { room ->
-                    lessons.filter { room.id in it.rooms.orEmpty().map { it.id } }.map {
+                    lessons.filter { room.id in it.rooms.orEmpty().map { it.id } }.mapNotNull {
                         when (it) {
                             is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson.fromLesson(it, date)
                             is Lesson.TimetableLesson -> Occupancy.Lesson.fromLesson(it, date)
@@ -70,7 +70,8 @@ sealed class Occupancy(
 ) {
     data class Lesson(val lesson: plus.vplan.app.core.model.Lesson, val date: LocalDate, override val start: LocalDateTime, override val end: LocalDateTime) : Occupancy(start, end) {
         companion object {
-            fun fromLesson(lesson: plus.vplan.app.core.model.Lesson, contextDate: LocalDate): Occupancy {
+            fun fromLesson(lesson: plus.vplan.app.core.model.Lesson, contextDate: LocalDate): Occupancy? {
+                if (lesson.lessonTime == null) return null
                 return Lesson(lesson, contextDate, lesson.lessonTime!!.start.atDate(contextDate), lesson.lessonTime!!.end.atDate(contextDate))
             }
         }
