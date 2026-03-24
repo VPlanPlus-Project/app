@@ -262,13 +262,11 @@ class HomeViewModel(
                                 .sorted()
                                 .forEach { date ->
                                     state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.SubstitutionPlan(date)) }
-                                    withContext(Dispatchers.Default) {
-                                        updateSubstitutionPlanUseCase(
-                                            school,
-                                            date = date,
-                                            providedClient = client
-                                        )
-                                    }
+                                    updateSubstitutionPlanUseCase(
+                                        school,
+                                        date = date,
+                                        providedClient = client
+                                    )
                                 }
                             state.update { state -> state.copy(currentUpdateStage = HomeState.CurrentUpdateStage.Done) }
                             delay(1.seconds)

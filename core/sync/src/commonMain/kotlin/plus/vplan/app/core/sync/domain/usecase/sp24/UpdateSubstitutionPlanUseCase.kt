@@ -1,7 +1,9 @@
 package plus.vplan.app.core.sync.domain.usecase.sp24
 
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.data.group.GroupRepository
@@ -66,7 +68,7 @@ class UpdateSubstitutionPlanUseCase(
         sp24School: School.AppSchool,
         date: LocalDate,
         providedClient: Stundenplan24Client? = null,
-    ): Result {
+    ): Result = withContext(Dispatchers.Default) {
         val client = providedClient ?: stundenplan24Repository.getSp24Client(
             Authentication(
                 sp24School.sp24Id,
@@ -78,7 +80,7 @@ class UpdateSubstitutionPlanUseCase(
 
         val substitutionPlanData = client.substitutionPlan.getSubstitutionPlan(date)
         if (!substitutionPlanData.isSuccess()) {
-            return Result.Error(
+            return@withContext Result.Error(
                 substitutionPlanData.throwable?.stackTraceToString()
                     ?: substitutionPlanData.toString()
             )
@@ -199,7 +201,7 @@ class UpdateSubstitutionPlanUseCase(
             )
         }
 
-        return Result.Success(
+        return@withContext Result.Success(
             day = day,
             insertedLessons = lessons,
             profileResult = profileResult
