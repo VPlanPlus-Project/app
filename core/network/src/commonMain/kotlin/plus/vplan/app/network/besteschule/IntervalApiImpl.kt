@@ -7,6 +7,8 @@ import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -46,7 +48,7 @@ class IntervalApiImpl(
 
             throw Exception("No valid access token found")
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -84,7 +86,7 @@ class IntervalApiImpl(
 
             return items.distinctBy { it.id }
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 }

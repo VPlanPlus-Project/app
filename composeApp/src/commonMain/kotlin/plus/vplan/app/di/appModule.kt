@@ -22,6 +22,7 @@ import io.ktor.utils.io.readRemaining
 import io.ktor.utils.io.readText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
@@ -195,6 +196,10 @@ val appModule = module(createdAtStart = true) {
         HttpClient {
             install(ContentNegotiation) {
                 register(ContentType.Application.Json, UndefinedStrippingConverter(appJson))
+            }
+
+            engine {
+                dispatcher = Dispatchers.IO
             }
 
             install(HttpRequestRetry) {

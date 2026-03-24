@@ -1,8 +1,10 @@
 package plus.vplan.app.feature.onboarding.stage.profile_selection.domain.usecase
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.KeyValueRepository
@@ -35,7 +37,7 @@ class SelectProfileUseCase(
     suspend operator fun invoke(
         onboardingProfile: OnboardingProfile,
         subjectInstances: Map<SubjectInstance, Boolean> = emptyMap()
-    ) {
+    ) = withContext(Dispatchers.Default) {
         val profile = when (onboardingProfile) {
             is OnboardingProfile.StudentProfile -> {
                 val group = groupRepository.getById(onboardingProfile.alias).first()!!

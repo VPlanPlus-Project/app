@@ -11,6 +11,8 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.currentCoroutineContext
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
 import plus.vplan.app.core.model.application.network.ApiException
@@ -41,7 +43,7 @@ class HomeworkApiImpl(
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
             return response.body<ResponseDataWrapper<List<ApiHomeworkDto>>>().data
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -57,7 +59,7 @@ class HomeworkApiImpl(
             if (!response.status.isSuccess()) return null
             return response.body<ResponseDataWrapper<ApiHomeworkDto>>().data
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -71,7 +73,7 @@ class HomeworkApiImpl(
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
             return response.body<ResponseDataWrapper<HomeworkPostResponse>>().data
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -84,7 +86,7 @@ class HomeworkApiImpl(
             }
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -95,7 +97,7 @@ class HomeworkApiImpl(
             }
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -109,7 +111,7 @@ class HomeworkApiImpl(
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
             return response.body<ResponseDataWrapper<Int>>().data
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -123,7 +125,7 @@ class HomeworkApiImpl(
             }
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -134,7 +136,7 @@ class HomeworkApiImpl(
             }
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -147,7 +149,7 @@ class HomeworkApiImpl(
             }
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -160,7 +162,7 @@ class HomeworkApiImpl(
             }
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 }

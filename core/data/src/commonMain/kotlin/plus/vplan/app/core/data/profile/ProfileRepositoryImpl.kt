@@ -1,7 +1,9 @@
 package plus.vplan.app.core.data.profile
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.core.database.dao.ProfileDao
 import plus.vplan.app.core.database.model.database.DbGroupProfile
@@ -18,12 +20,14 @@ class ProfileRepositoryImpl(
         return profileDao.getAll()
             .map { items -> items.mapNotNull { it.toModel() } }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getById(id: Uuid): Flow<Profile?> {
         return profileDao.getById(id)
             .map { it?.toModel() }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun delete(profile: Profile) {

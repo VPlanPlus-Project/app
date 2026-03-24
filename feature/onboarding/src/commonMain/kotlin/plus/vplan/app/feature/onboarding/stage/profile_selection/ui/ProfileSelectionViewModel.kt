@@ -2,6 +2,7 @@ package plus.vplan.app.feature.onboarding.stage.profile_selection.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -45,37 +46,37 @@ internal class ProfileSelectionViewModel(
     }
 
     fun onEvent(event: ProfileSelectionEvent) {
-        viewModelScope.launch {
-            when (event) {
-                is ProfileSelectionEvent.SelectProfileType ->
-                    state.update { it.copy(filterProfileType = event.profileType) }
+        when (event) {
+            is ProfileSelectionEvent.SelectProfileType ->
+                state.update { it.copy(filterProfileType = event.profileType) }
 
-                is ProfileSelectionEvent.SelectProfile -> {
-                    if (event.profile == null) return@launch
-                    // Signal to parent (OnboardingViewModel) which profile was selected.
-                    // The parent decides whether to navigate to SubjectInstanceSelection (student)
-                    // or directly to Permissions (teacher).
-                    state.update { it.copy(profileSelectedForParent = event.profile) }
-                }
+            is ProfileSelectionEvent.SelectProfile -> {
+                if (event.profile == null) return
+                // Signal to parent (OnboardingViewModel) which profile was selected.
+                // The parent decides whether to navigate to SubjectInstanceSelection (student)
+                // or directly to Permissions (teacher).
+                state.update { it.copy(profileSelectedForParent = event.profile) }
+            }
 
-                is ProfileSelectionEvent.ToggleSubjectInstance ->
-                    state.update {
-                        it.copy(
-                            subjectInstances = it.subjectInstances.plus(
-                                event.subjectInstance to !it.subjectInstances[event.subjectInstance]!!
-                            )
+            is ProfileSelectionEvent.ToggleSubjectInstance ->
+                state.update {
+                    it.copy(
+                        subjectInstances = it.subjectInstances.plus(
+                            event.subjectInstance to !it.subjectInstances[event.subjectInstance]!!
                         )
-                    }
-
-                is ProfileSelectionEvent.ToggleCourse -> {
-                    val affected = state.value.subjectInstances.filterKeys { it.course?.id == event.course.id }
-                    val isCourseFullySelected = affected.values.all { it }
-                    state.update {
-                        it.copy(subjectInstances = it.subjectInstances.plus(affected.mapValues { !isCourseFullySelected }))
-                    }
+                    )
                 }
 
-                is ProfileSelectionEvent.CommitProfile -> {
+            is ProfileSelectionEvent.ToggleCourse -> {
+                val affected = state.value.subjectInstances.filterKeys { it.course?.id == event.course.id }
+                val isCourseFullySelected = affected.values.all { it }
+                state.update {
+                    it.copy(subjectInstances = it.subjectInstances.plus(affected.mapValues { !isCourseFullySelected }))
+                }
+            }
+
+            is ProfileSelectionEvent.CommitProfile -> {
+                viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Action.Commit")) {
                     state.update { it.copy(saveState = ProfileSelectionSaveState.IN_PROGRESS) }
                     selectProfileUseCase(state.value.selectedProfile!!, state.value.subjectInstances)
                     state.update { it.copy(saveState = ProfileSelectionSaveState.DONE) }

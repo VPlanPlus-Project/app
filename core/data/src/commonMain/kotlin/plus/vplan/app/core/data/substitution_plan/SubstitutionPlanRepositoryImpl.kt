@@ -1,9 +1,11 @@
 package plus.vplan.app.core.data.substitution_plan
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.database.VppDatabase
@@ -83,13 +85,17 @@ class SubstitutionPlanRepositoryImpl(
     }
 
     override fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): Flow<List<Lesson.SubstitutionPlanLesson>> {
-        return vppDatabase.substitutionPlanDao.getSubstitutionPlanLessons(schoolId, date).map { it.map { it.toModel() } }.distinctUntilChanged()
+        return vppDatabase.substitutionPlanDao.getSubstitutionPlanLessons(schoolId, date)
+            .map { it.map { it.toModel() } }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getForProfile(profile: Profile, date: LocalDate): Flow<List<Lesson.SubstitutionPlanLesson>> {
         return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date)
             .map { it.map { it.toModel() } }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun getAll(): Set<Uuid> {
@@ -101,11 +107,13 @@ class SubstitutionPlanRepositoryImpl(
         return vppDatabase.substitutionPlanDao.getSubstitutionPlanLessons(schoolId)
             .map { items -> items.map { it.toModel() }.toSet() }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?> {
         return vppDatabase.substitutionPlanDao.getById(id)
             .map { it?.toModel() }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 }

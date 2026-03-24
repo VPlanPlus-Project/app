@@ -1,9 +1,11 @@
 package plus.vplan.app.core.data.lesson_times
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import plus.vplan.app.core.database.VppDatabase
@@ -26,6 +28,7 @@ class LessonTimeRepositoryImpl(
             vppDatabase.lessonTimeDao.getByGroup(group.id)
                 .map { it.map { lt -> lt.toModel() } }
                 .distinctUntilChanged()
+                .flowOn(Dispatchers.Default)
                 .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
         }
     }
@@ -34,6 +37,7 @@ class LessonTimeRepositoryImpl(
         return vppDatabase.lessonTimeDao.get(group.id, lessonNumber)
             .map { it?.toModel() }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getBySchool(school: School): Flow<List<LessonTime>> {
@@ -41,6 +45,7 @@ class LessonTimeRepositoryImpl(
             vppDatabase.lessonTimeDao.getBySchool(school.id)
                 .map { it.map { lt -> lt.toModel() } }
                 .distinctUntilChanged()
+                .flowOn(Dispatchers.Default)
                 .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
         }
     }
@@ -49,6 +54,7 @@ class LessonTimeRepositoryImpl(
         return vppDatabase.lessonTimeDao.getById(id)
             .map { it?.toModel() }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun save(lessonTimes: List<LessonTime>) {

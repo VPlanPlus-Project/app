@@ -18,8 +18,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -94,7 +97,9 @@ fun NavigationHost(task: StartTask?) {
                     ?.toSet()
                     .orEmpty()
                 value = if (aliases.isNotEmpty()) {
-                    schoolRepository.getByIds(aliases).first() as? School.AppSchool
+                    withContext(Dispatchers.Default + CoroutineName("${this@NavHost::class.qualifiedName}.OnboardingSchool")) {
+                        schoolRepository.getByIds(aliases).first() as? School.AppSchool
+                    }
                 } else null
             }
             OnboardingView(

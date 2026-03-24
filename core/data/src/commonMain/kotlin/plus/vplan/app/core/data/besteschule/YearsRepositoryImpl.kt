@@ -1,6 +1,8 @@
 package plus.vplan.app.core.data.besteschule
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.database.dao.besteschule.BesteschuleYearDao
@@ -19,25 +21,29 @@ class YearsRepositoryImpl(
         id: Int,
         forceRefresh: Boolean,
     ): Flow<BesteSchuleYear?> {
-        return yearDao.getById(id).map {
-            if (it == null || forceRefresh) {
-                val item = yearApi.getById(id)?.toEntity()
-                if (item != null) yearDao.upsert(listOf(item))
-                item?.toModel()
-            } else it.toModel()
-        }
+        return yearDao.getById(id)
+            .map {
+                if (it == null || forceRefresh) {
+                    val item = yearApi.getById(id)?.toEntity()
+                    if (item != null) yearDao.upsert(listOf(item))
+                    item?.toModel()
+                } else it.toModel()
+            }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getAll(forceRefresh: Boolean): Flow<List<BesteSchuleYear>> {
-        return yearDao.getAll().map { items ->
-            if (items.isEmpty() || forceRefresh) {
-                val apiItems = yearApi.getAll().map { it.toEntity() }
-                yearDao.upsert(apiItems)
-                items.map { it.toModel() }
-            } else {
-                items.map { it.toModel() }
+        return yearDao.getAll()
+            .map { items ->
+                if (items.isEmpty() || forceRefresh) {
+                    val apiItems = yearApi.getAll().map { it.toEntity() }
+                    yearDao.upsert(apiItems)
+                    items.map { it.toModel() }
+                } else {
+                    items.map { it.toModel() }
+                }
             }
-        }
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun setYear(userId: Int, yearId: Int?): Boolean {

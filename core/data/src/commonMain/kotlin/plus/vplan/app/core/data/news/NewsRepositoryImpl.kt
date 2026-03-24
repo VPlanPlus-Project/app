@@ -1,6 +1,8 @@
 package plus.vplan.app.core.data.news
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.core.database.dao.NewsDao
 import plus.vplan.app.core.database.model.database.DbNews
@@ -34,13 +36,18 @@ class NewsRepositoryImpl(
                     items
                 } else news
             }
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun getById(id: Int): Flow<News?> {
-        return newsDao.getById(id).map { it?.toModel() }
+        return newsDao.getById(id)
+            .map { it?.toModel() }
+            .flowOn(Dispatchers.Default)
     }
 
-    override suspend fun getAll(): Flow<List<News>> = newsDao.getAll().map { newsList -> newsList.map { it.toModel() } }
+    override suspend fun getAll(): Flow<List<News>> = newsDao.getAll()
+        .map { newsList -> newsList.map { it.toModel() } }
+        .flowOn(Dispatchers.Default)
 
     override suspend fun delete(news: List<News>) {
         newsDao.delete(news.map { it.id })

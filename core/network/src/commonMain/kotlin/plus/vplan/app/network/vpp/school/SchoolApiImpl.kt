@@ -6,6 +6,8 @@ import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.model.Alias
@@ -32,7 +34,7 @@ class SchoolApiImpl(
             return response.body<ResponseDataWrapper<List<ApiSchoolResponse>>>().data
                 .map { it.toDto() }
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -51,7 +53,7 @@ class SchoolApiImpl(
 
             return response.body<ResponseDataWrapper<ApiSchoolResponse>>().data.toDto()
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 }
