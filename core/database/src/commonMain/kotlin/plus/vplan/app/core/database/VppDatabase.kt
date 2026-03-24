@@ -3,6 +3,7 @@ package plus.vplan.app.core.database
 import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.DeleteTable
 import androidx.room.RenameColumn
 import androidx.room.RenameTable
@@ -261,6 +262,11 @@ import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstance
         AutoMigration(
             from = 16,
             to = 17
+        ),
+        AutoMigration( // Remove version from substitution plan
+            from = 17,
+            to = 18,
+            spec = VppDatabase.Migration17to18::class
         )
     ]
 )
@@ -308,7 +314,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val besteSchuleGradesDao: BesteschuleGradesDao
 
     companion object {
-        const val DATABASE_VERSION = 17
+        const val DATABASE_VERSION = 18
     }
 
     @RenameColumn(
@@ -663,6 +669,9 @@ abstract class VppDatabase : RoomDatabase() {
 
     @DeleteTable(tableName = "fk_news_school")
     class Migration15to16: AutoMigrationSpec
+
+    @DeleteColumn(tableName = "substitution_plan_lesson", columnName = "version")
+    class Migration17to18: AutoMigrationSpec
 }
 
 // Room compiler generates the `actual` implementations

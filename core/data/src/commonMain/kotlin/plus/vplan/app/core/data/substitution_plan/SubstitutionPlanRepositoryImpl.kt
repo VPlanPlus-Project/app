@@ -30,7 +30,7 @@ class SubstitutionPlanRepositoryImpl(
         lessons: List<Lesson.SubstitutionPlanLesson>,
         profileMappings: Map<Profile, List<Lesson.SubstitutionPlanLesson>>
     ) {
-        vppDatabase.substitutionPlanDao.insertDayVersion(
+        vppDatabase.substitutionPlanDao.upsertDay(
             schoolId = schoolId,
             date = date,
             lessons = lessons.map { lesson ->
@@ -45,7 +45,6 @@ class SubstitutionPlanRepositoryImpl(
                     isRoomChanged = lesson.isRoomChanged,
                     isTeacherChanged = lesson.isTeacherChanged,
                     lessonTimeId = lesson.lessonTime?.id,
-                    version = 0
                 )
             },
             groups = lessons.flatMap { lesson ->
@@ -84,11 +83,11 @@ class SubstitutionPlanRepositoryImpl(
     }
 
     override fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): Flow<List<Lesson.SubstitutionPlanLesson>> {
-        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, date, 0).map { it.map { it.toModel() } }.distinctUntilChanged()
+        return vppDatabase.substitutionPlanDao.getSubstitutionPlanLessons(schoolId, date).map { it.map { it.toModel() } }.distinctUntilChanged()
     }
 
     override fun getForProfile(profile: Profile, date: LocalDate): Flow<List<Lesson.SubstitutionPlanLesson>> {
-        return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date, 0)
+        return vppDatabase.substitutionPlanDao.getForProfile(profile.id, date)
             .map { it.map { it.toModel() } }
             .distinctUntilChanged()
     }
@@ -99,7 +98,7 @@ class SubstitutionPlanRepositoryImpl(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getSubstitutionPlanBySchool(schoolId: Uuid): Flow<Set<Lesson.SubstitutionPlanLesson>> {
-        return vppDatabase.substitutionPlanDao.getTimetableLessons(schoolId, 0)
+        return vppDatabase.substitutionPlanDao.getSubstitutionPlanLessons(schoolId)
             .map { items -> items.map { it.toModel() }.toSet() }
             .distinctUntilChanged()
     }

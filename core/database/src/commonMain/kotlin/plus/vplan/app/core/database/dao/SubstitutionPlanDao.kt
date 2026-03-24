@@ -48,7 +48,7 @@ interface SubstitutionPlanDao {
     suspend fun deleteAll()
 
     @Transaction
-    suspend fun insertDayVersion(
+    suspend fun upsertDay(
         schoolId: Uuid,
         date: LocalDate,
         lessons: List<DbSubstitutionPlanLesson>,
@@ -82,27 +82,25 @@ interface SubstitutionPlanDao {
         WHERE substitution_plan_lesson.day_id IN (
             SELECT id FROM day WHERE school_id = :schoolId AND date = :date
         )
-        AND (:version IS NULL OR version = :version)
         AND substitution_plan_lesson.id IN (
             SELECT substitution_plan_lesson_id FROM substitution_plan_group_crossover
             LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id
             WHERE school_groups.school_id = :schoolId
         )
     """)
-    fun getTimetableLessons(schoolId: Uuid, date: LocalDate, version: Int?): Flow<List<EmbeddedSubstitutionPlanLesson>>
+    fun getSubstitutionPlanLessons(schoolId: Uuid, date: LocalDate): Flow<List<EmbeddedSubstitutionPlanLesson>>
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
     @Query("""
         SELECT * FROM substitution_plan_lesson
-        WHERE version = :version
-          AND substitution_plan_lesson.id IN (
+        WHERE substitution_plan_lesson.id IN (
               SELECT substitution_plan_lesson_id FROM substitution_plan_group_crossover
               LEFT JOIN school_groups ON school_groups.id = substitution_plan_group_crossover.group_id
               WHERE school_groups.school_id = :schoolId
           )
     """)
-    fun getTimetableLessons(schoolId: Uuid, version: Int): Flow<List<EmbeddedSubstitutionPlanLesson>>
+    fun getSubstitutionPlanLessons(schoolId: Uuid): Flow<List<EmbeddedSubstitutionPlanLesson>>
 
     @Transaction
     @Query("SELECT * FROM substitution_plan_lesson WHERE id = :id")
@@ -119,9 +117,8 @@ interface SubstitutionPlanDao {
         AND substitution_plan_lesson.day_id IN (
             SELECT id FROM day WHERE date = :date
         )
-        AND (:version IS NULL OR version = :version)
     """)
-    fun getForProfile(profileId: Uuid, date: LocalDate, version: Int?): Flow<List<EmbeddedSubstitutionPlanLesson>>
+    fun getForProfile(profileId: Uuid, date: LocalDate): Flow<List<EmbeddedSubstitutionPlanLesson>>
 
     @Transaction
     @Query("SELECT * FROM substitution_plan_lesson")
@@ -132,7 +129,4 @@ interface SubstitutionPlanDao {
 
     @Upsert
     suspend fun upsert(entries: List<DbProfileSubstitutionPlanCache>)
-
-    @Query("SELECT MAX(version) FROM substitution_plan_lesson")
-    fun getCurrentVersion(): Flow<Int?>
 }
