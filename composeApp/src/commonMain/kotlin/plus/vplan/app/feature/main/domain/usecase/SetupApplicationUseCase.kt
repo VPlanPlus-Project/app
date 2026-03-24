@@ -38,7 +38,8 @@ class SetupApplicationUseCase(
     suspend operator fun invoke() {
         withContext(Dispatchers.Default + CoroutineName("${this::class.qualifiedName}.Invoke")) {
             updateFirebaseTokenUseCase()
-            platformNotificationRepository.initialize()if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != AppBuildConfig.APP_VERSION_CODE.toString()) {
+            platformNotificationRepository.initialize()
+            if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != AppBuildConfig.APP_VERSION_CODE.toString()) {
                 logger.i { "First run of VPlanPlus" }
                 logger.d { "Saving migration flags" }
 

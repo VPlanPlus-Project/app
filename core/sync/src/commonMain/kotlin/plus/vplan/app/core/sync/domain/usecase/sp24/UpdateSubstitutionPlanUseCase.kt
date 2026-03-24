@@ -138,6 +138,7 @@ class UpdateSubstitutionPlanUseCase(
         }
 
         val profiles = profileRepository.getAll().first()
+            .filter { profile -> profile.school.id == sp24School.id }
 
         val profileMappings = profiles
             .filter { it.school.id == sp24School.id }
@@ -163,12 +164,7 @@ class UpdateSubstitutionPlanUseCase(
                 val substitutionLessons = substitutionPlanRepository.getForProfile(profile, date).first()
                 if (substitutionLessons.isEmpty()) {
                     profilePreviousPlanType[profile] = Result.Success.ProfileResult.PreviousPlanType.Timetable
-                    profilePreviousLessons[profile] = timetableRepository.getTimetableLessonIdsForProfile(
-                        profile,
-                        timetableRepository.getCurrentVersion().first()
-                    ).mapNotNull { lessonId ->
-                        timetableRepository.getById(lessonId).first()
-                    }
+                    profilePreviousLessons[profile] = timetableRepository.getForProfile(profile).first().toList()
                 } else {
                     profilePreviousPlanType[profile] = Result.Success.ProfileResult.PreviousPlanType.SubstitutionPlan
                     profilePreviousLessons[profile] = substitutionLessons

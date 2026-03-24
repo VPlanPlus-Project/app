@@ -27,7 +27,7 @@ class TimetableRepositoryImpl(
     override suspend fun upsertLessons(
         timetableId: Uuid,
         lessons: List<Lesson.TimetableLesson>,
-        version: Int,
+        profileMapping: Map<Profile, List<Lesson.TimetableLesson>>,
     ) {
         vppDatabase.timetableDao.replaceForTimetable(
             timetableId = timetableId,
@@ -40,7 +40,6 @@ class TimetableRepositoryImpl(
                     subject = lesson.subject,
                     timetableId = lesson.timetableId,
                     lessonTimeId = lesson.lessonTime?.id,
-                    version = version,
                 )
             },
             groups = lessons.flatMap { lesson ->
@@ -71,42 +70,36 @@ class TimetableRepositoryImpl(
                 lesson.limitedToWeeks.orEmpty().map { week ->
                     DbTimetableWeekLimitation(timetableLessonId = lesson.id, weekId = week.id)
                 }
+            },
+            index = profileMapping.flatMap { (profile, lessons) ->
+                lessons.map { lesson ->
+                    DbProfileTimetableCache(
+                        profileId = profile.id,
+                        timetableLessonId = lesson.id,
+                    )
+                }
             }
         )
-    }
-
-    override fun getCurrentVersion(): Flow<Int> {
-        return vppDatabase.timetableDao.getCurrentVersion()
-            .map { it ?: 1 }
-            .distinctUntilChanged()
-            .flowOn(Dispatchers.Default)
-    }
-
-    override suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>) {
-        vppDatabase.timetableDao.replaceIndex(lessonIds.map {
-            DbProfileTimetableCache(
-                profileId = profileId,
-                timetableLessonId = it
-            )
-        })
     }
 
     override suspend fun deleteAllTimetables() {
         vppDatabase.timetableDao.deleteAll()
     }
 
-    override fun getTimetableForSchool(schoolId: Uuid, version: Int): Flow<List<Lesson.TimetableLesson>> {
-        return vppDatabase.timetableDao.getBySchool(schoolId, version)
+    override fun getTimetableForSchool(schoolId: Uuid): Flow<List<Lesson.TimetableLesson>> {
+        return vppDatabase.timetableDao.getBySchool(schoolId)
             .map { it.map { l -> l.toModel() } }
             .flowOn(Dispatchers.Default)
     }
 
-    override suspend fun getTimetableLessonIdsForProfile(profile: Profile, version: Int): Set<Uuid> {
+    override fun getForProfile(profile: Profile): Flow<Set<Lesson.TimetableLesson>> {
         return when (profile) {
-            is Profile.StudentProfile -> vppDatabase.timetableDao.getLessonIdsByGroupAndVersion(profile.group.id, version)
-            is Profile.TeacherProfile -> vppDatabase.timetableDao.getLessonIdsByTeacherAndVersion(profile.teacher.id, version)
-            else -> throw Exception("Not possible")
-        }.toSet()
+            is Profile.StudentProfile -> vppDatabase.timetableDao.getLessonIdsByGroupAndVersion(profile.group.id)
+            is Profile.TeacherProfile -> vppDatabase.timetableDao.getLessonIdsByTeacherAndVersion(profile.teacher.id)
+        }
+            .map { items -> items.map { it.toModel() }.toSet() }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getById(id: Uuid): Flow<Lesson.TimetableLesson?> {

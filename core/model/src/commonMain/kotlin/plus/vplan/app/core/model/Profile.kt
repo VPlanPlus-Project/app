@@ -2,7 +2,7 @@ package plus.vplan.app.core.model
 
 import kotlin.uuid.Uuid
 
-abstract class Profile : Item<Uuid, DataTag> {
+sealed class Profile : Item<Uuid, DataTag> {
     abstract val profileType: ProfileType
     abstract val name: String
 
