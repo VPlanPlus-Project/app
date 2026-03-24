@@ -94,12 +94,10 @@ class DayPopulator(
             is PopulationContext.Profile -> substitutionPlanRepository.getForProfile(
                 profile = context.profile,
                 date = day.date,
-                version = null,
             )
             is PopulationContext.School -> substitutionPlanRepository.getSubstitutionPlanBySchool(
                 schoolId = context.school.id,
                 date = day.date,
-                version = null
             )
         }
 

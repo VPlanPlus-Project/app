@@ -36,7 +36,7 @@ class DayRepositoryImpl(
         return dayDao
             .getBySchool(
                 date = LocalDate.parse(id.substringAfter("/")),
-                schoolId = Uuid.parseHex(id.substringBefore("/"))
+                schoolId = Uuid.parse(id.substringBefore("/"))
             )
             .map { it?.toModel() }
             .distinctUntilChanged()

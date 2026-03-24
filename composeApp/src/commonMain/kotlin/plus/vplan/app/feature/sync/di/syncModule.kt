@@ -2,6 +2,7 @@ package plus.vplan.app.feature.sync.di
 
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
+import plus.vplan.app.core.sync.domain.usecase.notification.NotifyPlanChangedUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateLessonTimesUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubjectInstanceUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
@@ -27,4 +28,6 @@ val syncModule = module {
     singleOf(::UpdateAssessmentsUseCase)
     singleOf(::SyncGradesUseCase)
     singleOf(::FullSyncUseCase)
+
+    singleOf(::NotifyPlanChangedUseCase)
 }

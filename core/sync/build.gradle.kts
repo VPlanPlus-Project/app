@@ -17,6 +17,7 @@ kotlin {
             implementation(project(":core:data"))
             implementation(project(":core:model"))
             implementation(project(":core:platform"))
+            implementation(project(":core:platform"))
             implementation(project(":core:utils"))
             implementation(project(":core:analytics"))
 

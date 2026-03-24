@@ -8,10 +8,8 @@ import kotlinx.datetime.isoDayNumber
 import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.lesson_times.LessonTimeRepository
-import plus.vplan.app.core.data.profile.ProfileRepository
 import plus.vplan.app.core.data.room.RoomRepository
 import plus.vplan.app.core.data.stundenplan24.Stundenplan24Repository
-import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.data.week.WeekRepository
@@ -20,7 +18,6 @@ import plus.vplan.app.core.model.Response
 import plus.vplan.app.core.model.School
 import plus.vplan.app.core.model.Timetable
 import plus.vplan.app.core.model.Week
-import plus.vplan.app.core.sync.domain.usecase.UpdateProfileLessonIndexUseCase
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.core.utils.list.takeContinuousBy
@@ -39,9 +36,6 @@ class UpdateTimetableUseCase(
     private val teacherRepository: TeacherRepository,
     private val weekRepository: WeekRepository,
     private val timetableRepository: TimetableRepository,
-    private val substitutionPlanRepository: SubstitutionPlanRepository,
-    private val profileRepository: ProfileRepository,
-    private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
     private val lessonTimeRepository: LessonTimeRepository,
     private val analyticsRepository: AnalyticsRepository,
 ) {
@@ -164,11 +158,6 @@ class UpdateTimetableUseCase(
                     else -> LOGGER.e { "Invalid timetable state: $timetableResponse" }
                 }
             }
-        }
-
-        val substitutionPlanVersion = substitutionPlanRepository.getCurrentVersion().first()
-        profileRepository.getAll().first().forEach { profile ->
-            updateProfileLessonIndexUseCase(profile, substitutionPlanVersion, insertVersion)
         }
 
         return null

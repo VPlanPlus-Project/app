@@ -14,6 +14,7 @@ import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
 import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.VppId
+import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
 import plus.vplan.app.feature.main.domain.usecase.setup.DownloadVppSchoolIdentifierUseCase
 import plus.vplan.app.feature.system.usecase.sp24.SendSp24CredentialsToServerUseCase
@@ -28,10 +29,12 @@ class SetupApplicationUseCase(
     private val vppIdRepository: VppIdRepository,
     private val analyticsRepository: AnalyticsRepository,
     private val schoolRepository: SchoolRepository,
+    private val platformNotificationRepository: NotificationRepository,
 ) {
     private val logger = Logger.withTag("SetupApplicationUseCase")
     suspend operator fun invoke() {
         updateFirebaseTokenUseCase()
+        platformNotificationRepository.initialize()
         if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != AppBuildConfig.APP_VERSION_CODE.toString()) {
             logger.i { "First run of VPlanPlus" }
             logger.d { "Saving migration flags" }

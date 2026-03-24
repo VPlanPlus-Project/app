@@ -9,7 +9,6 @@ import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.profile.ProfileRepository
-import plus.vplan.app.core.data.substitution_plan.SubstitutionPlanRepository
 import plus.vplan.app.core.data.teacher.TeacherRepository
 import plus.vplan.app.core.data.timetable.TimetableRepository
 import plus.vplan.app.core.model.Profile
@@ -27,7 +26,6 @@ class SelectProfileUseCase(
     private val teacherRepository: TeacherRepository,
     private val keyValueRepository: KeyValueRepository,
     private val timetableRepository: TimetableRepository,
-    private val substitutionPlanRepository: SubstitutionPlanRepository,
     private val updateProfileLessonIndexUseCase: UpdateProfileLessonIndexUseCase,
     private val updateTimetableUseCase: UpdateTimetableUseCase,
     private val updateSubstitutionPlanUseCase: UpdateSubstitutionPlanUseCase,
@@ -74,17 +72,15 @@ class SelectProfileUseCase(
         // Build the lesson index immediately from whatever data is already in the DB
         // so the home screen has something to show before the network sync completes.
         val currentTimetableVersion = timetableRepository.getCurrentVersion().first()
-        val currentSubstitutionPlanVersion = substitutionPlanRepository.getCurrentVersion().first()
-        updateProfileLessonIndexUseCase(profile, currentSubstitutionPlanVersion, currentTimetableVersion)
+        updateProfileLessonIndexUseCase(profile, currentTimetableVersion)
 
         // Launch timetable and substitution plan sync in the app scope so it is
         // not cancelled when the onboarding ViewModel is cleared.
         appScope.launch {
             updateTimetableUseCase(profile.school, forceUpdate = true)
             updateSubstitutionPlanUseCase(
+                date = LocalDate.now(),
                 sp24School = profile.school,
-                dates = listOf(LocalDate.now()),
-                allowNotification = false
             )
         }
     }

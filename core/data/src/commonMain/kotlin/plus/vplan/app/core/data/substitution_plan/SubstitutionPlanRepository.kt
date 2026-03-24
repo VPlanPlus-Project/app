@@ -9,19 +9,16 @@ import kotlin.uuid.Uuid
 interface SubstitutionPlanRepository {
     suspend fun deleteAllSubstitutionPlans()
 
-    suspend fun upsertLessons(
-        schoolId: Uuid,
+    suspend fun replaceLessons(
         date: LocalDate,
+        schoolId: Uuid,
         lessons: List<Lesson.SubstitutionPlanLesson>,
-        version: Int,
+        profileMappings: Map<Profile, List<Lesson.SubstitutionPlanLesson>>
     )
-    fun getCurrentVersion(): Flow<Int>
 
-    suspend fun replaceLessonIndex(profileId: Uuid, lessonIds: Set<Uuid>)
-
-    fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>>
-    fun getForProfile(profile: Profile, date: LocalDate, version: Int?): Flow<List<Lesson.SubstitutionPlanLesson>>
+    fun getSubstitutionPlanBySchool(schoolId: Uuid, date: LocalDate): Flow<List<Lesson.SubstitutionPlanLesson>>
+    fun getForProfile(profile: Profile, date: LocalDate): Flow<List<Lesson.SubstitutionPlanLesson>>
     suspend fun getAll(): Set<Uuid>
-    fun getSubstitutionPlanBySchool(schoolId: Uuid, version: Int): Flow<Set<Lesson.SubstitutionPlanLesson>>
+    fun getSubstitutionPlanBySchool(schoolId: Uuid): Flow<Set<Lesson.SubstitutionPlanLesson>>
     fun getById(id: Uuid): Flow<Lesson.SubstitutionPlanLesson?>
 }
