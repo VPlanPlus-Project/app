@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package plus.vplan.app.core.utils.coroutines
 
 import kotlinx.coroutines.flow.MutableStateFlow
