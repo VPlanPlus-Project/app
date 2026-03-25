@@ -17,6 +17,7 @@ import plus.vplan.app.core.model.School
 import plus.vplan.app.core.sync.domain.usecase.notification.NotifyPlanChangedUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
+import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
 
 class HandlePushNotificationUseCase(
@@ -90,9 +91,9 @@ class HandlePushNotificationUseCase(
                 }
 
                 if (data.timetable) {
-                    updateTimetableUseCase(
-                        sp24School = school,
-                        forceUpdate = true,
+                    updateTimetableUseCase.updateTimetableRelatedToDate(
+                        school = school,
+                        date = LocalDate.now()
                     )
                 }
             }

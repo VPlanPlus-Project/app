@@ -57,7 +57,8 @@ interface TimetableDao {
         groups: List<DbTimetableGroupCrossover>,
         teachers: List<DbTimetableTeacherCrossover>,
         rooms: List<DbTimetableRoomCrossover>,
-        weekLimitations: List<DbTimetableWeekLimitation>
+        weekLimitations: List<DbTimetableWeekLimitation>,
+        index: List<DbProfileTimetableCache>
     ) {
         Logger.d { "Start replacing" }
         val oldLessons = getLessonIdsByTimetable(timetableId)
@@ -68,24 +69,25 @@ interface TimetableDao {
         Logger.d { "Upserted new lessons" }
         upsertWeekLimitations(weekLimitations)
         Logger.d { "Upserted week limitations" }
+        replaceIndex(index, timetableId)
     }
 
     @Transaction
-    suspend fun replaceIndex(index: List<DbProfileTimetableCache>) {
-        index.map { it.profileId }.distinct().forEach { dropIndexForProfile(it) }
+    suspend fun replaceIndex(index: List<DbProfileTimetableCache>, timetableId: Uuid) {
+        index.map { it.profileId }.distinct().forEach { dropIndexForProfile(it, timetableId) }
         upsert(index)
     }
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
-    @Query("SELECT * FROM timetable_lessons LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id WHERE school_groups.school_id = :schoolId AND version = :version GROUP BY timetable_lessons.id")
-    fun getBySchool(schoolId: Uuid, version: Int): Flow<List<EmbeddedTimetableLesson>>
+    @Query("SELECT * FROM timetable_lessons LEFT JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id LEFT JOIN school_groups ON school_groups.id = timetable_group_crossover.group_id WHERE school_groups.school_id = :schoolId GROUP BY timetable_lessons.id")
+    fun getBySchool(schoolId: Uuid): Flow<List<EmbeddedTimetableLesson>>
 
-    @Query("SELECT timetable_lessons.id FROM timetable_lessons JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id WHERE timetable_group_crossover.group_id = :groupId AND timetable_lessons.version = :version GROUP BY timetable_lessons.id")
-    suspend fun getLessonIdsByGroupAndVersion(groupId: Uuid, version: Int): List<Uuid>
+    @Query("SELECT * FROM timetable_lessons JOIN timetable_group_crossover ON timetable_group_crossover.timetable_lesson_id = timetable_lessons.id WHERE timetable_group_crossover.group_id = :groupId GROUP BY timetable_lessons.id")
+    fun getLessonIdsByGroupAndVersion(groupId: Uuid): Flow<List<EmbeddedTimetableLesson>>
 
-    @Query("SELECT timetable_lessons.id FROM timetable_lessons JOIN timetable_teacher_crossover ON timetable_teacher_crossover.timetable_lesson_id = timetable_lessons.id WHERE timetable_teacher_crossover.teacher_id = :teacherId AND timetable_lessons.version = :version GROUP BY timetable_lessons.id")
-    suspend fun getLessonIdsByTeacherAndVersion(teacherId: Uuid, version: Int): List<Uuid>
+    @Query("SELECT * FROM timetable_lessons JOIN timetable_teacher_crossover ON timetable_teacher_crossover.timetable_lesson_id = timetable_lessons.id WHERE timetable_teacher_crossover.teacher_id = :teacherId GROUP BY timetable_lessons.id")
+    fun getLessonIdsByTeacherAndVersion(teacherId: Uuid): Flow<List<EmbeddedTimetableLesson>>
 
     @Transaction
     @RewriteQueriesToDropUnusedColumns
@@ -167,8 +169,8 @@ GROUP BY tl.id
     """)
     fun getLessonsForProfile(profileId: Uuid, currentWeekIndex: Int, dayOfWeek: DayOfWeek): Flow<List<EmbeddedTimetableLesson>>
 
-    @Query("DELETE FROM profile_timetable_cache WHERE profile_id = :profileId")
-    suspend fun dropIndexForProfile(profileId: Uuid)
+    @Query("DELETE FROM profile_timetable_cache WHERE profile_id = :profileId AND (:timetableId IS NULL OR :timetableId IN (SELECT id FROM timetable_lessons WHERE timetable_id = :timetableId))")
+    suspend fun dropIndexForProfile(profileId: Uuid, timetableId: Uuid?)
 
     @Query("SELECT * FROM timetables WHERE school_id = :schoolId AND week_id = :weekId LIMIT 1")
     fun getTimetableData(schoolId: Uuid, weekId: String): Flow<EmbeddedTimetable?>
@@ -181,7 +183,4 @@ GROUP BY tl.id
 
     @Upsert
     suspend fun upsertWeekLimitations(limitations: List<DbTimetableWeekLimitation>)
-
-    @Query("SELECT MAX(version) FROM timetable_lessons")
-    fun getCurrentVersion(): Flow<Int?>
 }

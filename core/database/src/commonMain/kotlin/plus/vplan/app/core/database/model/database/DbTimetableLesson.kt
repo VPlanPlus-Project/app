@@ -38,5 +38,4 @@ data class DbTimetableLesson(
     @ColumnInfo(name = "subject") val subject: String?,
     @ColumnInfo(name = "week_type") val weekType: String?,
     @ColumnInfo(name = "lesson_time_id", defaultValue = "NULL") val lessonTimeId: String?,
-    @ColumnInfo(name = "version", defaultValue = "1") val version: Int
 )

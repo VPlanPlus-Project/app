@@ -19,7 +19,7 @@ import plus.vplan.app.core.model.Holiday
 import plus.vplan.app.core.model.Homework
 import plus.vplan.app.core.model.Lesson
 import plus.vplan.app.core.model.Timetable
-import plus.vplan.app.utils.plus
+import plus.vplan.app.core.utils.date.plus
 import kotlin.time.Duration.Companion.days
 
 data class PopulatedDay(
@@ -87,7 +87,11 @@ class DayPopulator(
                             weekIndex = timetableWeek?.weekIndex ?: 0,
                             dayOfWeek = day.date.dayOfWeek
                         )
-                    }.map { it.toList() }
+                    }.map { timetableLessons ->
+                        timetableLessons
+                            .toList()
+                            .filter { timetableLesson -> timetableLesson.weekType == null || timetableLesson.weekType == day.week?.weekType }
+                    }
                 }
 
         val substitution = when (context) {

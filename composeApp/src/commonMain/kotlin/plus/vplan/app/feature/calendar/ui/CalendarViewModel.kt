@@ -32,15 +32,17 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Week
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.plus
 import plus.vplan.app.domain.usecase.GetCurrentDateTimeUseCase
 import plus.vplan.app.domain.usecase.GetDayUseCase
+import plus.vplan.app.feature.calendar.domain.usecase.DownloadDayIfNecessaryUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetFirstLessonStartUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetHolidaysUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.GetLastDisplayTypeUseCase
 import plus.vplan.app.feature.calendar.domain.usecase.SetLastDisplayTypeUseCase
 import plus.vplan.app.utils.atStartOfMonth
 import plus.vplan.app.utils.inWholeMinutes
-import plus.vplan.app.utils.plus
+import kotlin.comparisons.nullsLast
 import kotlin.time.Duration.Companion.days
 
 class CalendarViewModel(
@@ -52,6 +54,7 @@ class CalendarViewModel(
     private val getFirstLessonStartUseCase: GetFirstLessonStartUseCase,
     private val getHolidaysUseCase: GetHolidaysUseCase,
     private val keyValueRepository: KeyValueRepository,
+    private val downloadDayIfNecessaryUseCase: DownloadDayIfNecessaryUseCase,
 ) : ViewModel() {
     val state: StateFlow<CalendarState>
         field = MutableStateFlow(CalendarState())
@@ -65,6 +68,12 @@ class CalendarViewModel(
                 .collect { time ->
                     state.update { it.copy(currentTime = time) }
                 }
+        }
+
+        viewModelScope.launch {
+            downloadDayIfNecessaryUseCase.isRunning.collect { isRunning ->
+                state.update { it.copy(isTimetableUpdating = isRunning) }
+            }
         }
 
         viewModelScope.launch {
@@ -110,6 +119,9 @@ class CalendarViewModel(
 
     private fun launchDay(profile: Profile, date: LocalDate): Job {
         return viewModelScope.launch {
+            launch {
+                downloadDayIfNecessaryUseCase(date, profile.school)
+            }
             keyValueRepository.get(Keys.forceReducedCalendarView.key)
                 .map { it.toBoolean() }
                 .collectLatest { forceReduced ->
@@ -199,7 +211,8 @@ data class CalendarState(
     val start: LocalTime = LocalTime(0, 0),
     val holidays: Set<LocalDate> = emptySet(),
     val selectorDays: Map<LocalDate, DateSelectorDay> = emptyMap(),
-    val calendarDays: Map<LocalDate, CalendarDay> = emptyMap()
+    val calendarDays: Map<LocalDate, CalendarDay> = emptyMap(),
+    val isTimetableUpdating: Boolean = false,
 )
 
 sealed class CalendarEvent {
@@ -228,7 +241,7 @@ data class CalendarDay(
     val week: Week? = null,
     val assessments: List<Assessment> = emptyList(),
     val homework: List<Homework> = emptyList(),
-    val lessons: LessonRendering? = null
+    val lessons: LessonRendering? = null,
 )
 
 suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> {
@@ -238,7 +251,12 @@ suspend fun Collection<Lesson>.calculateLayouting(): List<LessonLayoutingInfo> {
     return withContext(Dispatchers.Default) {
 
         val lessons = this@calculateLayouting
-            .filter { it.lessonTime != null }
+            .filter { lesson -> lesson.lessonTime != null }
+            .sortedWith(
+                compareBy<Lesson> { lesson -> lesson.lessonTime!!.start }
+                    .thenBy(nullsLast()) { lesson -> lesson.subject }
+                    .thenBy(nullsLast()) { lesson -> lesson.teachers.map { it.name }.sorted().joinToString() }
+            )
             .sortedBy { it.lessonTime!!.start.inWholeMinutes() }
 
         data class Event(val time: Int, val isStart: Boolean, val lesson: Lesson)

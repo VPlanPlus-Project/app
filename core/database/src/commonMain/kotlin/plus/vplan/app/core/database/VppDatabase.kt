@@ -267,6 +267,11 @@ import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstance
             from = 17,
             to = 18,
             spec = VppDatabase.Migration17to18::class
+        ),
+        AutoMigration( // Remove version from timetable lesson
+            from = 18,
+            to = 19,
+            spec = VppDatabase.Migration18to19::class
         )
     ]
 )
@@ -314,7 +319,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val besteSchuleGradesDao: BesteschuleGradesDao
 
     companion object {
-        const val DATABASE_VERSION = 18
+        const val DATABASE_VERSION = 19
     }
 
     @RenameColumn(
@@ -672,6 +677,9 @@ abstract class VppDatabase : RoomDatabase() {
 
     @DeleteColumn(tableName = "substitution_plan_lesson", columnName = "version")
     class Migration17to18: AutoMigrationSpec
+
+    @DeleteColumn(tableName = "timetable_lessons", columnName = "version")
+    class Migration18to19: AutoMigrationSpec
 }
 
 // Room compiler generates the `actual` implementations
