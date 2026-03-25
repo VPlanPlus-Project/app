@@ -669,6 +669,7 @@ abstract class VppDatabase : RoomDatabase() {
         override fun onPostMigrate(connection: SQLiteConnection) {
             connection.execSQL("""DELETE FROM assessments WHERE subject_instance_id NOT IN (SELECT alias FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp');""")
             connection.execSQL("""UPDATE assessments SET subject_instance_id = (SELECT subject_instances_aliases.subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = assessments.subject_instance_id);""")
+            connection.execSQL("""DELETE FROM assessments WHERE subject_instance_id IS NULL""")
         }
     }
 
