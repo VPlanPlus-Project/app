@@ -6,6 +6,8 @@ import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.currentCoroutineContext
 import plus.vplan.app.core.model.application.network.ApiException
 import plus.vplan.app.core.model.application.network.NetworkRequestUnsuccessfulException
 
@@ -29,7 +31,7 @@ class BesteSchuleApiImpl(
 
             else throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 }

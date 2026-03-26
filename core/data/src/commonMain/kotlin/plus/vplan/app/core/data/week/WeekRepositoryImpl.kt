@@ -1,9 +1,11 @@
 package plus.vplan.app.core.data.week
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.datetime.LocalDate
@@ -91,6 +93,7 @@ class WeekRepositoryImpl(
                     weekStates.sortedBy { it.weekIndex }
                 }
                 .distinctUntilChanged()
+                .flowOn(Dispatchers.Default)
                 .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
         }
     }
@@ -99,6 +102,7 @@ class WeekRepositoryImpl(
         return weekDao.getById(id)
             .map { it?.toModel() }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun delete(weeks: List<Week>) {

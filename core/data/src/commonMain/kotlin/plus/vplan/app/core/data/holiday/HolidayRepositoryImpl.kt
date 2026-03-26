@@ -1,6 +1,8 @@
 package plus.vplan.app.core.data.holiday
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import plus.vplan.app.core.database.dao.HolidayDao
 import plus.vplan.app.core.database.model.database.DbHoliday
@@ -15,7 +17,9 @@ class HolidayRepositoryImpl(
     }
 
     override fun getBySchool(school: School.AppSchool): Flow<List<Holiday>> {
-        return holidayDao.getBySchoolId(school.id).map { items -> items.map { it.toModel() } }
+        return holidayDao.getBySchoolId(school.id)
+            .map { items -> items.map { it.toModel() } }
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun save(holidays: List<Holiday>) {

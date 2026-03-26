@@ -1,7 +1,9 @@
 package plus.vplan.app.core.data.besteschule
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.database.dao.besteschule.BesteschuleCollectionDao
@@ -27,65 +29,73 @@ class GradesRepositoryImpl(
 ): GradesRepository {
 
     override fun getById(id: Int, forceRefresh: Boolean): Flow<BesteSchuleGrade?> {
-        return gradesDao.getById(id).map { item  ->
-            if (item == null || forceRefresh) {
-                val result = gradesApi.getById(id) ?: return@map null
-                val existing = gradesDao.getAll().first()
-                try {
-                    teachersDao.upsert(listOf(result.teacher.toEntity()))
-                    subjectDao.upsert(listOf(result.subject.toEntity()))
-                    intervalsRepository.getById(result.collection.intervalId).first()
-                    collectionsDao.upsert(listOf(result.collection.toEntity().copy(teacherId = result.teacher.id)))
-                    gradesDao.upsert(listOf(result.toEntity(existing.map { existingItem -> existingItem.grade })))
-                } catch (e: Exception) {
-                    throw RuntimeException("Failed to getById", e)
-                }
-                return@map getById(id).first()
-            } else return@map item.toModel()
-        }
+        return gradesDao.getById(id)
+            .map { item ->
+                if (item == null || forceRefresh) {
+                    val result = gradesApi.getById(id) ?: return@map null
+                    val existing = gradesDao.getAll().first()
+                    try {
+                        teachersDao.upsert(listOf(result.teacher.toEntity()))
+                        subjectDao.upsert(listOf(result.subject.toEntity()))
+                        intervalsRepository.getById(result.collection.intervalId).first()
+                        collectionsDao.upsert(
+                            listOf(result.collection.toEntity().copy(teacherId = result.teacher.id))
+                        )
+                        gradesDao.upsert(listOf(result.toEntity(existing.map { existingItem -> existingItem.grade })))
+                    } catch (e: Exception) {
+                        throw RuntimeException("Failed to getById", e)
+                    }
+                    return@map getById(id).first()
+                } else return@map item.toModel()
+            }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getAll(forceRefresh: Boolean): Flow<List<BesteSchuleGrade>> {
-        return gradesDao.getAll().map { items ->
-            if (items.isEmpty() || forceRefresh) {
-                val result = gradesApi.getAll()
-                try {
-                    teachersDao.upsert(result.map { it.teacher.toEntity() }.distinctBy { it.id })
-                    subjectDao.upsert(result.map { it.subject.toEntity() }.distinctBy { it.id })
-                    result.map { it.collection.intervalId }.distinct().forEach { intervalsRepository.getById(it).first() }
-                    collectionsDao.upsert(result.map { it.collection.toEntity().copy(teacherId = it.teacher.id) }.distinctBy { it.id })
-                    gradesDao.upsert(result.map { it.toEntity(items.map { grade -> grade.grade }) })
-                    gradesDao.getAll().first().map { it.toModel() }
-                } catch (e: Exception) {
-                    throw RuntimeException("Failed to getAll", e)
+        return gradesDao.getAll()
+            .map { items ->
+                if (items.isEmpty() || forceRefresh) {
+                    val result = gradesApi.getAll()
+                    try {
+                        teachersDao.upsert(result.map { it.teacher.toEntity() }.distinctBy { it.id })
+                        subjectDao.upsert(result.map { it.subject.toEntity() }.distinctBy { it.id })
+                        result.map { it.collection.intervalId }.distinct().forEach { intervalsRepository.getById(it).first() }
+                        collectionsDao.upsert(result.map { it.collection.toEntity().copy(teacherId = it.teacher.id) }.distinctBy { it.id })
+                        gradesDao.upsert(result.map { it.toEntity(items.map { grade -> grade.grade }) })
+                        gradesDao.getAll().first().map { it.toModel() }
+                    } catch (e: Exception) {
+                        throw RuntimeException("Failed to getAll", e)
+                    }
+                } else {
+                    items.map { it.toModel() }
                 }
-            } else {
-                items.map { it.toModel() }
             }
-        }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getAllForUser(
         schulverwalterUserId: Int,
         forceRefresh: Boolean
     ): Flow<List<BesteSchuleGrade>> {
-        return gradesDao.getAllForUser(schulverwalterUserId).map { items ->
-            if (items.isEmpty() || forceRefresh) {
-                val result = gradesApi.getAllForUser(schulverwalterUserId)
-                try {
-                    teachersDao.upsert(result.map { it.teacher.toEntity() }.distinctBy { it.id })
-                    subjectDao.upsert(result.map { it.subject.toEntity() }.distinctBy { it.id })
-                    result.map { it.collection.intervalId }.distinct().forEach { intervalsRepository.getById(it).first() }
-                    collectionsDao.upsert(result.map { it.collection.toEntity().copy(teacherId = it.teacher.id) }.distinctBy { it.id })
-                    gradesDao.upsert(result.map { it.toEntity(items.map { grade -> grade.grade }) })
-                } catch (e: Exception) {
-                    throw RuntimeException("Failed to getAllForUser", e)
+        return gradesDao.getAllForUser(schulverwalterUserId)
+            .map { items ->
+                if (items.isEmpty() || forceRefresh) {
+                    val result = gradesApi.getAllForUser(schulverwalterUserId)
+                    try {
+                        teachersDao.upsert(result.map { it.teacher.toEntity() }.distinctBy { it.id })
+                        subjectDao.upsert(result.map { it.subject.toEntity() }.distinctBy { it.id })
+                        result.map { it.collection.intervalId }.distinct().forEach { intervalsRepository.getById(it).first() }
+                        collectionsDao.upsert(result.map { it.collection.toEntity().copy(teacherId = it.teacher.id) }.distinctBy { it.id })
+                        gradesDao.upsert(result.map { it.toEntity(items.map { grade -> grade.grade }) })
+                    } catch (e: Exception) {
+                        throw RuntimeException("Failed to getAllForUser", e)
+                    }
+                    gradesDao.getAll().first().map { it.toModel() }
+                } else {
+                    items.map { it.toModel() }
                 }
-                gradesDao.getAll().first().map { it.toModel() }
-            } else {
-                items.map { it.toModel() }
             }
-        }
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun save(grade: BesteSchuleGrade) {

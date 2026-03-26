@@ -1,5 +1,7 @@
 package plus.vplan.app.feature.onboarding.stage.loading_data.domain.usecase
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import plus.vplan.app.core.data.group.GroupRepository
 import plus.vplan.app.core.data.holiday.HolidayRepository
 import plus.vplan.app.core.data.room.RoomRepository
@@ -38,7 +40,7 @@ class FetchAndStoreSchoolDataUseCase(
         sp24SchoolId: Int,
         username: String,
         password: String,
-    ): List<OnboardingProfile> {
+    ): List<OnboardingProfile> = withContext(Dispatchers.Default) {
         val client = stundenplan24Repository.getSp24Client(
             Authentication(sp24SchoolId.toString(), username, password),
             withCache = true
@@ -117,6 +119,6 @@ class FetchAndStoreSchoolDataUseCase(
         updateLessonTimesUseCase(school, client)
         updateSubjectInstanceUseCase(school, client)
 
-        return buildProfileOptionsFromLocalDataUseCase(school)
+        return@withContext buildProfileOptionsFromLocalDataUseCase(school)
     }
 }

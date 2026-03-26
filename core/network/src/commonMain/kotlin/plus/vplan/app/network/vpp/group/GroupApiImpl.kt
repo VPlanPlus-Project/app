@@ -6,6 +6,8 @@ import io.ktor.client.request.get
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plus.vplan.app.core.model.Alias
@@ -44,7 +46,7 @@ class GroupApiImpl(
                 .data
                 .toDto()
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 }

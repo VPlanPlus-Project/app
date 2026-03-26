@@ -3,10 +3,12 @@
 package plus.vplan.app.core.data.day
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -50,6 +52,7 @@ class DayRepositoryImpl(
             )
             .map { it?.toModel() }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getBySchool(school: School.AppSchool): Flow<Set<Day>> {
@@ -58,6 +61,7 @@ class DayRepositoryImpl(
                 .getBySchool(school.id)
                 .map { it.map { day -> day.toModel() }.toSet() }
                 .distinctUntilChanged()
+                .flowOn(Dispatchers.Default)
                 .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
         }
     }
@@ -80,5 +84,6 @@ class DayRepositoryImpl(
                 }
             }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 }

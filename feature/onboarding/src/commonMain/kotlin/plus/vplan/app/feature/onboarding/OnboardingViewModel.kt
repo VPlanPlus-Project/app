@@ -3,6 +3,7 @@ package plus.vplan.app.feature.onboarding
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,13 +65,14 @@ internal class OnboardingViewModel(
                 password = password
             )
         }
-        backStack.add(Onboarding.LoadingData)
+
+        state.update { it.copy(isInitializingSchoolData = true) }
 
         initDataJob?.cancel()
-        initDataJob = viewModelScope.launch {
+        initDataJob = viewModelScope.launch(CoroutineName("${this@OnboardingViewModel::class.qualifiedName}.InitData")) {
             val options = fetchAndStoreSchoolDataUseCase(state.value.selectedSchool!!.sp24Id!!, username, password)
 
-            state.update { it.copy(profileOptions = options) }
+            state.update { it.copy(profileOptions = options, isInitializingSchoolData = false) }
             backStack.add(Onboarding.ProfileSelection)
         }
     }
@@ -81,24 +83,29 @@ internal class OnboardingViewModel(
      * options directly from the local DB and jumps straight to ProfileSelection.
      */
     fun initWithSchool(school: School.AppSchool) {
-        resetBackStack(Onboarding.LoadingData)
-        state.update {
-            it.copy(
-                selectedSchool = OnboardingSchoolOption(
-                    id = null,
-                    name = school.name,
-                    sp24Id = school.sp24Id.toIntOrNull()
-                ),
-                username = school.username,
-                password = school.password,
-            )
-        }
+        try {
+            state.update { it.copy(isInitializingSchoolData = true) }
 
-        initDataJob?.cancel()
-        initDataJob = viewModelScope.launch {
-            val options = buildProfileOptionsFromLocalDataUseCase(school)
-            state.update { it.copy(profileOptions = options) }
-            resetBackStack(Onboarding.ProfileSelection)
+            state.update {
+                it.copy(
+                    selectedSchool = OnboardingSchoolOption(
+                        id = null,
+                        name = school.name,
+                        sp24Id = school.sp24Id.toIntOrNull()
+                    ),
+                    username = school.username,
+                    password = school.password,
+                )
+            }
+
+            initDataJob?.cancel()
+            initDataJob = viewModelScope.launch(CoroutineName("${this@OnboardingViewModel::class.qualifiedName}.InitData")) {
+                val options = buildProfileOptionsFromLocalDataUseCase(school)
+                state.update { it.copy(profileOptions = options) }
+                resetBackStack(Onboarding.ProfileSelection)
+            }
+        } finally {
+            state.update { it.copy(isInitializingSchoolData = false) }
         }
     }
 
@@ -127,7 +134,7 @@ internal class OnboardingViewModel(
     fun onPermissionsDone() {
         val profile = state.value.selectedOnboardingProfile
         if (profile is OnboardingProfile.TeacherProfile) {
-            viewModelScope.launch {
+            viewModelScope.launch(CoroutineName("${this@OnboardingViewModel::class.qualifiedName}.SelectProfileUseCase")) {
                 selectProfileUseCase(profile)
                 this@OnboardingViewModel.showIosFinishSheetOrFinish()
             }
@@ -154,6 +161,7 @@ data class OnboardingState(
     val selectedSchool: OnboardingSchoolOption? = null,
     val username: String = "",
     val password: String = "",
+    val isInitializingSchoolData: Boolean = false,
     val profileOptions: List<OnboardingProfile> = emptyList(),
     val selectedOnboardingProfile: OnboardingProfile? = null,
 )

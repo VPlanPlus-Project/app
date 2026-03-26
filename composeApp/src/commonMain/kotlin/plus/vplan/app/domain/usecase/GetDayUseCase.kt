@@ -2,9 +2,11 @@
 
 package plus.vplan.app.domain.usecase
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.datetime.LocalDate
 import plus.vplan.app.core.data.day.DayRepository
 import plus.vplan.app.core.model.Profile
@@ -23,5 +25,6 @@ class GetDayUseCase(
             .flatMapLatest { day ->
                 dayPopulator.populateSingle(day, PopulationContext.Profile(profile))
             }
+            .flowOn(Dispatchers.Default)
     }
 }

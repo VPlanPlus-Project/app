@@ -2,6 +2,7 @@ package plus.vplan.app.feature.onboarding.stage.school_select.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,7 @@ class SchoolSearchViewModel(
         field = MutableStateFlow(OnboardingSchoolSearchState())
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Init")) {
             try {
                 searchForSchoolUseCase.init()
             } catch (_: ApiException) {
@@ -32,7 +33,7 @@ class SchoolSearchViewModel(
     private var searchJob: Job? = null
     private fun search() {
         searchJob?.cancel()
-        searchJob = viewModelScope.launch {
+        searchJob = viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Action.Search")) {
             state.update { it.copy(results = SchoolResults.Loading) }
             val response = try {
                 Response.Success(searchForSchoolUseCase(state.value.searchQuery))
@@ -49,48 +50,46 @@ class SchoolSearchViewModel(
     }
 
     fun handleEvent(event: SchoolSearchEvent) {
-        viewModelScope.launch {
-            when (event) {
-                is SchoolSearchEvent.OnScreenBecameActive -> {
-                    state.update { it.copy(isSchoolActivelySelected = false) }
+        when (event) {
+            is SchoolSearchEvent.OnScreenBecameActive -> {
+                state.update { it.copy(isSchoolActivelySelected = false) }
+            }
+            is SchoolSearchEvent.OnQueryChanged -> {
+                state.update {
+                    it.copy(
+                        searchQuery = event.query,
+                        textFieldError = null,
+                    )
                 }
-                is SchoolSearchEvent.OnQueryChanged -> {
-                    state.update {
-                        it.copy(
-                            searchQuery = event.query,
-                            textFieldError = null,
-                        )
-                    }
-                    search()
+                search()
+            }
+            is SchoolSearchEvent.OnUseSp24SchoolClicked -> {
+                if ((state.value.searchQuery.toIntOrNull() ?: 0) !in 10000000..99999999) {
+                    state.update { it.copy(textFieldError = SchoolSearchTextFieldError.BadSp24Id) }
+                    return
                 }
-                is SchoolSearchEvent.OnUseSp24SchoolClicked -> {
-                    if ((state.value.searchQuery.toIntOrNull() ?: 0) !in 10000000..99999999) {
-                        state.update { it.copy(textFieldError = SchoolSearchTextFieldError.BadSp24Id) }
-                        return@launch
-                    }
-                    state.update {
-                        it.copy(
-                            isSchoolActivelySelected = true,
-                            selected = OnboardingSchoolOption(
-                                id = null,
-                                name  = "Unknown School",
-                                sp24Id = state.value.searchQuery.toInt(),
-                                searchOptimizedName = state.value.searchQuery
-                            )
+                state.update {
+                    it.copy(
+                        isSchoolActivelySelected = true,
+                        selected = OnboardingSchoolOption(
+                            id = null,
+                            name  = "Unknown School",
+                            sp24Id = state.value.searchQuery.toInt(),
+                            searchOptimizedName = state.value.searchQuery
                         )
-                    }
+                    )
                 }
-                is SchoolSearchEvent.OnSchoolSelected -> {
-                    if (event.school.sp24Id == null) {
-                        state.update { it.copy(textFieldError = SchoolSearchTextFieldError.SchoolNotFound) }
-                        return@launch
-                    }
-                    state.update {
-                        it.copy(
-                            isSchoolActivelySelected = true,
-                            selected = event.school
-                        )
-                    }
+            }
+            is SchoolSearchEvent.OnSchoolSelected -> {
+                if (event.school.sp24Id == null) {
+                    state.update { it.copy(textFieldError = SchoolSearchTextFieldError.SchoolNotFound) }
+                    return
+                }
+                state.update {
+                    it.copy(
+                        isSchoolActivelySelected = true,
+                        selected = event.school
+                    )
                 }
             }
         }

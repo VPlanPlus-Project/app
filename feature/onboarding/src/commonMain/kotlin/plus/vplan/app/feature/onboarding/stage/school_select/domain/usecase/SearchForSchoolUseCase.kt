@@ -34,11 +34,11 @@ class SearchForSchoolUseCase(
         }
     }
 
-    suspend operator fun invoke(query: String): List<OnboardingSchoolOption> {
+    suspend operator fun invoke(query: String): List<OnboardingSchoolOption> = withContext(Dispatchers.Default) {
         if (onlineSchools.isEmpty()) init()
-        if (query.isBlank()) return emptyList()
+        if (query.isBlank()) return@withContext emptyList()
         val adjustedQuery = query.optimizeForSearch()
-        return onlineSchools
+        return@withContext onlineSchools
             .filter {
                 it.searchOptimizedName.contains(adjustedQuery) ||
                         it.searchOptimizedName.split(" ").joinToString("") { wordPart -> wordPart.first().toString() }.contains(adjustedQuery) ||

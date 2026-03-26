@@ -11,6 +11,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.currentCoroutineContext
 import plus.vplan.app.core.model.Alias
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.model.VppSchoolAuthentication
@@ -40,7 +42,7 @@ class AssessmentApiImpl(
             if (response.status != HttpStatusCode.OK) throw NetworkRequestUnsuccessfulException(response)
             return response.body<ResponseDataWrapper<List<ApiAssessmentDto>>>().data
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -58,7 +60,7 @@ class AssessmentApiImpl(
             if (!response.status.isSuccess()) return null
             return response.body<ResponseDataWrapper<ApiAssessmentDto>>().data
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -75,7 +77,7 @@ class AssessmentApiImpl(
             if (response.status != HttpStatusCode.OK) throw NetworkRequestUnsuccessfulException(response)
             return response.body<ResponseDataWrapper<AssessmentPostResponse>>().data
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -92,7 +94,7 @@ class AssessmentApiImpl(
             }
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -106,7 +108,7 @@ class AssessmentApiImpl(
             }
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -123,7 +125,7 @@ class AssessmentApiImpl(
             }
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -138,7 +140,7 @@ class AssessmentApiImpl(
             }
             if (!response.status.isSuccess()) throw NetworkRequestUnsuccessfulException(response)
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 }

@@ -4,6 +4,7 @@ package plus.vplan.app.feature.calendar.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -62,7 +64,7 @@ class CalendarViewModel(
     private var dayJobs: Map<LocalDate, Job> = emptyMap()
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Init.DateTime")) {
             getCurrentDateTimeUseCase()
                 .debounce(100)
                 .collect { time ->
@@ -70,7 +72,7 @@ class CalendarViewModel(
                 }
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Init.DisplayType")) {
             downloadDayIfNecessaryUseCase.isRunning.collect { isRunning ->
                 state.update { it.copy(isTimetableUpdating = isRunning) }
             }
@@ -82,7 +84,7 @@ class CalendarViewModel(
             }
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Init.Profile")) {
             getCurrentProfileUseCase()
                 .filterNotNull()
                 .collect { profile ->
@@ -99,7 +101,7 @@ class CalendarViewModel(
     }
 
     private fun launchHolidays(profile: Profile) {
-        viewModelScope.launch {
+        viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".LaunchHolidays")) {
             getHolidaysUseCase(profile).collect { holidays ->
                 state.update { it.copy(holidays = holidays.toSet()) }
             }
@@ -118,7 +120,7 @@ class CalendarViewModel(
     }
 
     private fun launchDay(profile: Profile, date: LocalDate): Job {
-        return viewModelScope.launch {
+        return viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".LaunchDay")) {
             launch {
                 downloadDayIfNecessaryUseCase(date, profile.school)
             }
@@ -133,6 +135,7 @@ class CalendarViewModel(
                             val assessmentIds = day.assessments.map { it.id }.sorted()
                             "${day.day.id}|${day.day.dayType}|${day.day.info}|$timetableIds|$substitutionIds|$homeworkIds|$assessmentIds"
                         }
+                        .flowOn(Dispatchers.Default)
                         .collect { day ->
                             val lessons = day.substitution.ifEmpty { day.timetable }
 
@@ -140,18 +143,20 @@ class CalendarViewModel(
                                 .groupBy { it.lessonNumber }
                                 .mapValues { (_, l) -> l.sortedBy { it.subject } }
 
-                            val hasTooManyInterpolated = lessons.count { it.lessonTime?.interpolated == false } < lessons.size / 2
+                            val hasTooManyInterpolated =
+                                lessons.count { it.lessonTime?.interpolated == false } < lessons.size / 2
                             val hasMissingLessonTimes = lessons.any { it.lessonTime == null }
 
-                            val lessonRendering = if (state.value.displayType == DisplayType.Agenda || hasTooManyInterpolated || hasMissingLessonTimes || forceReduced) {
-                                LessonRendering.ListView(lessonsGrouped)
-                            } else {
-                                try {
-                                    LessonRendering.Layouted(lessons.calculateLayouting())
-                                } catch (_: LessonWithoutTimeException) {
+                            val lessonRendering =
+                                if (state.value.displayType == DisplayType.Agenda || hasTooManyInterpolated || hasMissingLessonTimes || forceReduced) {
                                     LessonRendering.ListView(lessonsGrouped)
+                                } else {
+                                    try {
+                                        LessonRendering.Layouted(lessons.calculateLayouting())
+                                    } catch (_: LessonWithoutTimeException) {
+                                        LessonRendering.ListView(lessonsGrouped)
+                                    }
                                 }
-                            }
 
                             val calendarDay = CalendarDay(
                                 date = date,
@@ -166,9 +171,17 @@ class CalendarViewModel(
                             val selectorDay = DateSelectorDay(
                                 date = date,
                                 homework = day.homework.map { hw ->
+                                    val subject = hw.subjectInstance?.subject
+                                        ?: hw.group?.name
+                                        ?: "?"
+
+                                    val allTasksDone = profile is Profile.StudentProfile && hw.tasks.all {
+                                        it.isDone(profile)
+                                    }
+
                                     DateSelectorDay.HomeworkItem(
-                                        subject = hw.subjectInstance?.subject ?: hw.group?.name ?: "?",
-                                        isDone = profile is Profile.StudentProfile && hw.tasks.all { it.isDone(profile) }
+                                        subject = subject,
+                                        isDone = allTasksDone
                                     )
                                 }.sortedBy { it.subject },
                                 assessments = day.assessments.map { it.subjectInstance.subject },
@@ -188,13 +201,14 @@ class CalendarViewModel(
     }
 
     fun onEvent(event: CalendarEvent) {
-        viewModelScope.launch {
-            when (event) {
-                is CalendarEvent.SelectDate -> {
-                    state.update { it.copy(selectedDate = event.date) }
-                    state.value.currentProfile?.let { launchDaysForMonth(it) }
-                }
-                is CalendarEvent.SelectDisplayType -> {
+        when (event) {
+            is CalendarEvent.SelectDate -> {
+                state.update { it.copy(selectedDate = event.date) }
+                state.value.currentProfile?.let { launchDaysForMonth(it) }
+            }
+
+            is CalendarEvent.SelectDisplayType -> {
+                viewModelScope.launch(CoroutineName(this::class.qualifiedName + ".Action.SelectDisplayType")) {
                     setLastDisplayTypeUseCase(event.displayType)
                 }
             }
@@ -217,7 +231,7 @@ data class CalendarState(
 
 sealed class CalendarEvent {
     data class SelectDate(val date: LocalDate) : CalendarEvent()
-    data class SelectDisplayType(val displayType: DisplayType): CalendarEvent()
+    data class SelectDisplayType(val displayType: DisplayType) : CalendarEvent()
 }
 
 data class DateSelectorDay(
@@ -332,4 +346,5 @@ sealed class LessonRendering {
 }
 
 sealed class LessonLayoutingException(message: String) : Exception(message)
-class LessonWithoutTimeException(lesson: Lesson) : LessonLayoutingException("Lesson ${lesson.id} has no lesson time")
+class LessonWithoutTimeException(lesson: Lesson) :
+    LessonLayoutingException("Lesson ${lesson.id} has no lesson time")

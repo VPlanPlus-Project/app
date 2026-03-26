@@ -3,6 +3,7 @@
 package plus.vplan.app.core.data.subject_instance
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import plus.vplan.app.core.database.dao.SubjectInstanceDao
@@ -38,6 +40,7 @@ class SubjectInstanceRepositoryImpl(
         subjectInstanceDao.getAll()
             .map { items -> items.map { it.toModel() } }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
             .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
     }
 
@@ -47,32 +50,35 @@ class SubjectInstanceRepositoryImpl(
     ): Flow<SubjectInstance?> {
         return combine(identifiers.map { subjectInstanceDao.getIdByAlias(it.value, it.provider, it.version) }) { uuids ->
             uuids.firstNotNullOfOrNull { it }
-        }.distinctUntilChanged().flatMapLatest { id ->
-            if (id == null) flowOf(null)
-            else subjectInstanceDao.findById(id).map { it?.toModel() }.distinctUntilChanged()
-        }.map { subjectInstance ->
-            if (subjectInstance == null || forceUpdate) {
-                val response = subjectInstanceApi.getByAlias(identifiers.first())
-                    ?: return@map null
-
-                val responseAliases = response.aliases.mapNotNull { it.toModel() }.toSet()
-
-                val localId = findLocalIdByIdentifier(responseAliases).first()
-                    ?: return@map null
-
-                val item = subjectInstance ?: subjectInstanceDao.findById(localId).first()!!.toModel()
-
-                val missingAliases = responseAliases.filter { alias ->
-                    item.aliases.none { it.toString() == alias.toString() }
-                }
-
-                missingAliases.forEach { alias ->
-                    subjectInstanceDao.upsert(DbSubjectInstanceAlias.fromAlias(alias, localId))
-                }
-
-                getByIds(identifiers).first()!!
-            } else subjectInstance
         }
+            .distinctUntilChanged().flatMapLatest { id ->
+                if (id == null) flowOf(null)
+                else subjectInstanceDao.findById(id).map { it?.toModel() }.distinctUntilChanged()
+            }
+            .map { subjectInstance ->
+                if (subjectInstance == null || forceUpdate) {
+                    val response = subjectInstanceApi.getByAlias(identifiers.first())
+                        ?: return@map null
+
+                    val responseAliases = response.aliases.mapNotNull { it.toModel() }.toSet()
+
+                    val localId = findLocalIdByIdentifier(responseAliases).first()
+                        ?: return@map null
+
+                    val item = subjectInstance ?: subjectInstanceDao.findById(localId).first()!!.toModel()
+
+                    val missingAliases = responseAliases.filter { alias ->
+                        item.aliases.none { it.toString() == alias.toString() }
+                    }
+
+                    missingAliases.forEach { alias ->
+                        subjectInstanceDao.upsert(DbSubjectInstanceAlias.fromAlias(alias, localId))
+                    }
+
+                    getByIds(identifiers).first()!!
+                } else subjectInstance
+            }
+            .flowOn(Dispatchers.Default)
     }
 
     private fun findLocalIdByIdentifier(identifiers: Set<Alias>): Flow<Uuid?> {
@@ -94,6 +100,7 @@ class SubjectInstanceRepositoryImpl(
             subjectInstanceDao.getByGroup(group.id)
                 .map { items -> items.map { it.toModel() } }
                 .distinctUntilChanged()
+                .flowOn(Dispatchers.Default)
                 .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
         }
     }
@@ -102,6 +109,7 @@ class SubjectInstanceRepositoryImpl(
         return subjectInstanceDao.getByTeacher(teacher.id)
             .map { items -> items.map { it.toModel() } }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getBySchool(school: School): Flow<List<SubjectInstance>> {
@@ -109,6 +117,7 @@ class SubjectInstanceRepositoryImpl(
             subjectInstanceDao.getBySchool(school.id)
                 .map { items -> items.map { it.toModel() } }
                 .distinctUntilChanged()
+                .flowOn(Dispatchers.Default)
                 .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
         }
     }
@@ -120,6 +129,7 @@ class SubjectInstanceRepositoryImpl(
         return subjectInstanceDao.findById(id)
             .map { it?.toModel() }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun save(subjectInstance: SubjectInstance) {

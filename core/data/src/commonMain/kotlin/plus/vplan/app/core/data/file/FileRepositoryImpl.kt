@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import plus.vplan.app.core.database.VppDatabase
@@ -35,13 +36,17 @@ class FileRepositoryImpl(
     private val fileProgressMap = mutableMapOf<Int, MutableStateFlow<FileOperationProgress>>()
     
     override fun getFileById(id: Int): Flow<File?> {
-        return vppDatabase.fileDao.getById(id).map { it?.toModel() }
+        return vppDatabase.fileDao.getById(id)
+            .map { it?.toModel() }
+            .flowOn(Dispatchers.Default)
     }
     
     override fun getFilesByIds(ids: List<Int>): Flow<List<File>> {
-        return vppDatabase.fileDao.getAll().map { allFiles ->
-            allFiles.filter { it.id in ids }.map { it.toModel() }
-        }
+        return vppDatabase.fileDao.getAll()
+            .map { allFiles ->
+                allFiles.filter { it.id in ids }.map { it.toModel() }
+            }
+            .flowOn(Dispatchers.Default)
     }
     
     override fun observeFileProgress(fileId: Int): Flow<FileOperationProgress> {
@@ -159,15 +164,15 @@ class FileRepositoryImpl(
             send(FileOperationProgress.Error(error))
             updateProgress(file.id, FileOperationProgress.Error(error))
         }
-    }
+    }.flowOn(Dispatchers.Default)
     
     override suspend fun makeFileOfflineReady(
         file: File,
         schoolApiAccess: VppSchoolAuthentication
-    ): Response<Unit> = withContext(Dispatchers.IO) {
-        if (file.isOfflineReady) return@withContext Response.Success(Unit)
+    ): Response<Unit> {
+        if (file.isOfflineReady) return Response.Success(Unit)
         
-        downloadFile(file, schoolApiAccess).first().let { result ->
+        return downloadFile(file, schoolApiAccess).first().let { result ->
             when (result) {
                 is FileOperationProgress.Success -> Response.Success(Unit)
                 is FileOperationProgress.Error -> result.error
@@ -180,7 +185,7 @@ class FileRepositoryImpl(
         file: File,
         newName: String,
         vppId: VppId.Active?
-    ): Response<Unit> = withContext(Dispatchers.IO) {
+    ): Response<Unit> {
         val oldName = file.name
         
         // Update locally first
@@ -188,7 +193,7 @@ class FileRepositoryImpl(
         
         // If it's a local-only file or no vppId provided, we're done
         if (file.id < 0 || vppId == null) {
-            return@withContext Response.Success(Unit)
+            return Response.Success(Unit)
         }
         
         // Update on server
@@ -198,12 +203,12 @@ class FileRepositoryImpl(
                 newName = newName,
                 vppId = vppId
             )
-            Response.Success(Unit)
+            return Response.Success(Unit)
         } catch (e: Exception) {
             logger.e(e) { "Error renaming file ${file.id}" }
             // Rollback on error
             vppDatabase.fileDao.updateName(file.id, oldName)
-            Response.Error.Other(e.message ?: "Unknown error")
+            return Response.Error.Other(e.message ?: "Unknown error")
         }
     }
     

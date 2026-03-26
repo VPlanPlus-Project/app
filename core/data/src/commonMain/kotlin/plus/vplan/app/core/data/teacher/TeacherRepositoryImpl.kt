@@ -3,6 +3,7 @@
 package plus.vplan.app.core.data.teacher
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import plus.vplan.app.core.database.dao.TeacherDao
@@ -32,6 +34,7 @@ class TeacherRepositoryImpl(
         teacherDao.getAll()
             .map { teachers -> teachers.map { it.toModel() } }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
             .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
     }
 
@@ -42,6 +45,7 @@ class TeacherRepositoryImpl(
             .flatMapLatest { id ->
                 id?.let { teacherDao.findById(id).map { it?.toModel() }.distinctUntilChanged() } ?: flowOf(null)
             }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getBySchool(school: School): Flow<List<Teacher>> {
@@ -49,6 +53,7 @@ class TeacherRepositoryImpl(
             teacherDao.getBySchool(school.id)
                 .map { teachers -> teachers.map { it.toModel() } }
                 .distinctUntilChanged()
+                .flowOn(Dispatchers.Default)
                 .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
         }
     }
@@ -60,6 +65,7 @@ class TeacherRepositoryImpl(
         return teacherDao.findById(id)
             .map { it?.toModel() }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     private fun findLocalIdByIdentifier(identifiers: Set<Alias>): Flow<Uuid?> {
@@ -73,7 +79,7 @@ class TeacherRepositoryImpl(
                     )
                 }
             )
-        }
+        }.flowOn(Dispatchers.Default)
     }
 
     override suspend fun save(teacher: Teacher): Teacher {

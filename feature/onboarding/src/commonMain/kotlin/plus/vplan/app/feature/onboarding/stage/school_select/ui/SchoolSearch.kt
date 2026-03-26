@@ -132,7 +132,7 @@ private fun SchoolSearchContent(
                         .imePadding()
                         .padding(horizontal = 16.dp),
                     query = state.searchQuery,
-                    results = (state.results as SchoolResults.Results).results,
+                    results = (state.results as? SchoolResults.Results)?.results.orEmpty(),
                     onEvent = onEvent,
                 )
             }

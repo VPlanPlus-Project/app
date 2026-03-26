@@ -7,6 +7,8 @@ import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -43,7 +45,7 @@ class GradesApiImpl(
 
             return items.distinctBy { it.id }
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -67,7 +69,7 @@ class GradesApiImpl(
             return response.body<ResponseDataWrapper<List<ApiGradeResponse>>>().data
                 .map { it.toDto(access.schulverwalterUserId) }
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 
@@ -102,7 +104,7 @@ class GradesApiImpl(
 
             return null
         } catch (e: Exception) {
-            throw ApiException(e)
+            throw ApiException(e, currentCoroutineContext()[CoroutineName]?.name)
         }
     }
 }

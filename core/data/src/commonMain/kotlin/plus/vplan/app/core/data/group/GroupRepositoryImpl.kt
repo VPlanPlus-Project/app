@@ -3,6 +3,7 @@
 package plus.vplan.app.core.data.group
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import plus.vplan.app.core.data.school.SchoolRepository
@@ -40,6 +42,7 @@ class GroupRepositoryImpl(
         groupDao.getAll()
             .map { items -> items.map { it.toModel() } }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
             .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
     }
 
@@ -50,6 +53,7 @@ class GroupRepositoryImpl(
                     groupDao.getBySchool(schoolId)
                         .map { items -> items.map { it.toModel() } }
                         .distinctUntilChanged()
+                        .flowOn(Dispatchers.Default)
                         .shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000L), replay = 1)
                 }
             }
@@ -108,6 +112,7 @@ class GroupRepositoryImpl(
                     }
                 } else group
             }
+            .flowOn(Dispatchers.Default)
     }
 
     private fun findLocalIdByIdentifier(identifiers: Set<Alias>): Flow<Uuid?> {
