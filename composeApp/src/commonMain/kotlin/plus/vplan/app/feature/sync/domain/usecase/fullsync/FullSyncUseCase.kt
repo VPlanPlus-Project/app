@@ -33,6 +33,7 @@ import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateSubstitutionPlanUseCas
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateTimetableUseCase
 import plus.vplan.app.core.sync.domain.usecase.sp24.UpdateWeeksUseCase
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.plus
 import plus.vplan.app.feature.grades.common.domain.usecase.SyncGradesUseCase
 import plus.vplan.app.feature.sync.domain.usecase.sp24.UpdateHolidaysUseCase
 import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateAssessmentsUseCase
@@ -40,7 +41,6 @@ import plus.vplan.app.feature.sync.domain.usecase.vpp.UpdateHomeworkUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.CheckSp24CredentialsUseCase
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.SendInvalidSp24CredentialsNotification
 import plus.vplan.app.feature.system.usecase.sp24.check_sp24_credentials_validity.Sp24CredentialsValidity
-import plus.vplan.app.utils.plus
 import plus.vplan.lib.sp24.source.Authentication
 import plus.vplan.lib.sp24.source.Response
 import kotlin.time.Clock
@@ -253,7 +253,15 @@ class FullSyncUseCase(
                                 start
                             }
 
-                            updateTimetableUseCase(school, client, forceUpdate = false)
+                            updateTimetableUseCase.updateTimetableRelatedToDate(
+                                date = LocalDate.now(),
+                                school = school,
+                            )
+
+                            updateTimetableUseCase.updateTimetableRelatedToDate(
+                                date = LocalDate.now() + 7.days,
+                                school = school,
+                            )
 
                             val profilesForSchool = profileRepository.getAll().first()
                                 .filter { it.school == school }

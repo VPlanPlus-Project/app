@@ -8,8 +8,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.utils.date.plus
 import plus.vplan.app.feature.calendar.ui.DateSelectorDay
-import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
 @Composable

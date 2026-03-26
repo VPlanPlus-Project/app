@@ -143,7 +143,7 @@ fun FollowingLesson(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = "Nur in ${(lesson as Lesson.TimetableLesson).weekType}-Woche",
+                                text = "Nur in ${lesson.weekType}-Woche",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )

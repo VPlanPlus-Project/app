@@ -14,9 +14,9 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.until
 import plus.vplan.app.core.utils.date.atStartOfWeek
 import plus.vplan.app.core.utils.date.now
+import plus.vplan.app.core.utils.date.plus
 import plus.vplan.app.feature.calendar.ui.DateSelectorDay
 import plus.vplan.app.utils.minus
-import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
 const val WEEK_PAGER_SIZE = Int.MAX_VALUE

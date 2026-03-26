@@ -986,7 +986,7 @@ private fun RefreshIndicator(
 @Composable
 private fun RefreshIndicatorPreview() {
     AppTheme(dynamicColor = false) {
-        RefreshIndicator(HomeState.CurrentUpdateStage.Timetable)
+        RefreshIndicator(HomeState.CurrentUpdateStage.Timetable(HomeState.CurrentUpdateStage.Timetable.ForWeek.Next))
     }
 }
 

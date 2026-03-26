@@ -12,9 +12,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
+import plus.vplan.app.core.utils.date.plus
 import plus.vplan.app.feature.calendar.ui.DateSelectorDay
 import plus.vplan.app.utils.minus
-import plus.vplan.app.utils.plus
 import kotlin.time.Duration.Companion.days
 
 @Composable
@@ -27,7 +27,7 @@ fun Month(
     scrollProgress: Float,
     onDateSelected: (DateSelectionCause, LocalDate) -> Unit = { _, _ -> },
 ) {
-    var weekRowHeight = remember(scrollProgress, containerMaxHeight) { if (scrollProgress <= 1f) weekHeightDefault * scrollProgress
+    val weekRowHeight = remember(scrollProgress, containerMaxHeight) { if (scrollProgress <= 1f) weekHeightDefault * scrollProgress
     else (containerMaxHeight / 5) * (scrollProgress/2).coerceIn(0f, 1f) }
 
     Column(Modifier.fillMaxWidth()) {

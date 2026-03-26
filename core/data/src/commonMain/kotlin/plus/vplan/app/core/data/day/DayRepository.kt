@@ -9,5 +9,5 @@ interface DayRepository {
     suspend fun save(day: Day)
     fun getById(id: String): Flow<Day?>
     fun getBySchool(school: School.AppSchool): Flow<Set<Day>>
-    fun getBySchool(school: School.AppSchool, date: LocalDate): Flow<Day?>
+    fun getBySchool(school: School.AppSchool, date: LocalDate): Flow<Day>
 }

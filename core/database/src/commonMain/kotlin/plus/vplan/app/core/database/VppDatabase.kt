@@ -267,6 +267,11 @@ import plus.vplan.app.core.database.model.database.foreign_key.FKSubjectInstance
             from = 17,
             to = 18,
             spec = VppDatabase.Migration17to18::class
+        ),
+        AutoMigration( // Remove version from timetable lesson
+            from = 18,
+            to = 19,
+            spec = VppDatabase.Migration18to19::class
         )
     ]
 )
@@ -314,7 +319,7 @@ abstract class VppDatabase : RoomDatabase() {
     abstract val besteSchuleGradesDao: BesteschuleGradesDao
 
     companion object {
-        const val DATABASE_VERSION = 18
+        const val DATABASE_VERSION = 19
     }
 
     @RenameColumn(
@@ -664,6 +669,8 @@ abstract class VppDatabase : RoomDatabase() {
         override fun onPostMigrate(connection: SQLiteConnection) {
             connection.execSQL("""DELETE FROM assessments WHERE subject_instance_id NOT IN (SELECT alias FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp');""")
             connection.execSQL("""UPDATE assessments SET subject_instance_id = (SELECT subject_instances_aliases.subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = assessments.subject_instance_id);""")
+            connection.execSQL("""DELETE FROM assessments WHERE subject_instance_id IS NULL""")
+            connection.execSQL("""DELETE FROM profile_assessment_index WHERE profile_assessment_index.assessment_id NOT IN (SELECT id FROM assessments);""")
         }
     }
 
@@ -672,6 +679,9 @@ abstract class VppDatabase : RoomDatabase() {
 
     @DeleteColumn(tableName = "substitution_plan_lesson", columnName = "version")
     class Migration17to18: AutoMigrationSpec
+
+    @DeleteColumn(tableName = "timetable_lessons", columnName = "version")
+    class Migration18to19: AutoMigrationSpec
 }
 
 // Room compiler generates the `actual` implementations

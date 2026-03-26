@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package plus.vplan.app.feature.search.subfeature.room_search.domain.usecase
 
 import kotlinx.coroutines.Dispatchers
@@ -10,6 +8,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atDate
@@ -23,7 +22,6 @@ import plus.vplan.app.core.model.Profile
 import plus.vplan.app.core.model.Room
 import plus.vplan.app.core.utils.date.now
 import plus.vplan.app.utils.overlaps
-import kotlin.uuid.ExperimentalUuidApi
 
 class GetRoomOccupationMapUseCase(
     private val roomRepository: RoomRepository,
@@ -32,35 +30,44 @@ class GetRoomOccupationMapUseCase(
     private val weekRepository: WeekRepository,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
-    operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> = channelFlow {
-        combine(
-            weekRepository.getBySchool(profile.school).map { weeks ->
-                weeks.firstOrNull { LocalDate.now() in it.start..it.end }
-            },
-            timetableRepository.getCurrentVersion()
-        ) { currentWeek, timetableVersion ->
-            combine(
-                substitutionPlanRepository.getSubstitutionPlanBySchool(profile.school.id, date),
-                timetableRepository.getTimetableForSchool(profile.school.id, timetableVersion)
-                    .map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } },
-                roomRepository.getBySchool(profile.school)
-            ) { substitutionPlanLessons, timetableLessons, rooms ->
-                val substitution = substitutionPlanLessons
-                    .filter { lesson -> lesson.subject != null }
+    operator fun invoke(profile: Profile, date: LocalDate): Flow<List<OccupancyMapRecord>> =
+        channelFlow {
+            weekRepository.getBySchool(profile.school)
+                .map { weeks -> weeks.firstOrNull { LocalDate.now() in it.start..it.end } }
+                .mapLatest { currentWeek ->
+                    combine(
+                        substitutionPlanRepository.getSubstitutionPlanBySchool(
+                            schoolId = profile.school.id,
+                            date = date
+                        ),
+                        timetableRepository.getTimetableForSchool(profile.school.id)
+                            .map { it.filter { it.dayOfWeek == date.dayOfWeek && (it.weekType == null || it.weekType == currentWeek?.weekType) } },
+                        roomRepository.getBySchool(profile.school)
+                    ) { substitutionPlanLessons, timetableLessons, rooms ->
+                        val substitution = substitutionPlanLessons
+                            .filter { lesson -> lesson.subject != null }
 
-                val lessons = substitution.ifEmpty { timetableLessons }
+                        val lessons = substitution.ifEmpty { timetableLessons }
 
-                rooms.associateWith { room ->
-                    lessons.filter { room.id in it.rooms.orEmpty().map { it.id } }.mapNotNull {
-                        when (it) {
-                            is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson.fromLesson(it, date)
-                            is Lesson.TimetableLesson -> Occupancy.Lesson.fromLesson(it, date)
-                        }
-                    }.toSet()
-                }.let { map -> send(map.map { OccupancyMapRecord(it.key, it.value) }) }
-            }.collect()
-        }.collect()
-    }
+                        rooms.associateWith { room ->
+                            lessons.filter { room.id in it.rooms.orEmpty().map { it.id } }
+                                .mapNotNull {
+                                    when (it) {
+                                        is Lesson.SubstitutionPlanLesson -> Occupancy.Lesson.fromLesson(
+                                            it,
+                                            date
+                                        )
+
+                                        is Lesson.TimetableLesson -> Occupancy.Lesson.fromLesson(
+                                            it,
+                                            date
+                                        )
+                                    }
+                                }.toSet()
+                        }.let { map -> send(map.map { OccupancyMapRecord(it.key, it.value) }) }
+                    }.collect()
+                }.collect()
+        }
         .flowOn(Dispatchers.Default)
 }
 
@@ -68,11 +75,24 @@ sealed class Occupancy(
     open val start: LocalDateTime,
     open val end: LocalDateTime
 ) {
-    data class Lesson(val lesson: plus.vplan.app.core.model.Lesson, val date: LocalDate, override val start: LocalDateTime, override val end: LocalDateTime) : Occupancy(start, end) {
+    data class Lesson(
+        val lesson: plus.vplan.app.core.model.Lesson,
+        val date: LocalDate,
+        override val start: LocalDateTime,
+        override val end: LocalDateTime
+    ) : Occupancy(start, end) {
         companion object {
-            fun fromLesson(lesson: plus.vplan.app.core.model.Lesson, contextDate: LocalDate): Occupancy? {
+            fun fromLesson(
+                lesson: plus.vplan.app.core.model.Lesson,
+                contextDate: LocalDate
+            ): Occupancy? {
                 if (lesson.lessonTime == null) return null
-                return Lesson(lesson, contextDate, lesson.lessonTime!!.start.atDate(contextDate), lesson.lessonTime!!.end.atDate(contextDate))
+                return Lesson(
+                    lesson,
+                    contextDate,
+                    lesson.lessonTime!!.start.atDate(contextDate),
+                    lesson.lessonTime!!.end.atDate(contextDate)
+                )
             }
         }
     }
@@ -82,5 +102,6 @@ data class OccupancyMapRecord(
     val room: Room,
     val occupancies: Set<Occupancy>
 ) {
-    fun isAvailableAtLessonTime(lessonTime: LessonTime): Boolean = this.occupancies.none { (lessonTime.start..lessonTime.end) overlaps (it.start.time..it.end.time) }
+    fun isAvailableAtLessonTime(lessonTime: LessonTime): Boolean =
+        this.occupancies.none { (lessonTime.start..lessonTime.end) overlaps (it.start.time..it.end.time) }
 }
