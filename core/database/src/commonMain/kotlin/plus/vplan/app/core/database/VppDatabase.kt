@@ -670,6 +670,7 @@ abstract class VppDatabase : RoomDatabase() {
             connection.execSQL("""DELETE FROM assessments WHERE subject_instance_id NOT IN (SELECT alias FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp');""")
             connection.execSQL("""UPDATE assessments SET subject_instance_id = (SELECT subject_instances_aliases.subject_instance_id FROM subject_instances_aliases WHERE subject_instances_aliases.alias_type = 'vpp' AND subject_instances_aliases.alias = assessments.subject_instance_id);""")
             connection.execSQL("""DELETE FROM assessments WHERE subject_instance_id IS NULL""")
+            connection.execSQL("""DELETE FROM profile_assessment_index WHERE profile_assessment_index.assessment_id NOT IN (SELECT id FROM assessments);""")
         }
     }
 
