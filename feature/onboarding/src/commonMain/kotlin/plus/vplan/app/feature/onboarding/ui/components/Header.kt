@@ -1,4 +1,4 @@
-package plus.vplan.app.feature.onboarding.stage.school_select.ui.components
+package plus.vplan.app.feature.onboarding.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,16 +8,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import plus.vplan.app.core.ui.theme.displayFontFamily
 
 @Composable
-@Preview
-fun OnboardingSchoolSearchHead(modifier: Modifier = Modifier) {
+fun OnboardingHeader(
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 32.dp),
+    title: String,
+    subtitle: String
+) {
     Column(modifier) {
         Text(
-            text = "Finde deine Schule",
+            text = title,
             fontFamily = displayFontFamily(),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineMedium,
@@ -25,7 +29,7 @@ fun OnboardingSchoolSearchHead(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
         )
         Text(
-            text = "Suche nach dem Namen oder der Stundenplan24.de-Schulnummer deiner Schule.",
+            text = subtitle,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier

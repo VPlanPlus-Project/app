@@ -12,18 +12,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,11 +35,11 @@ fun PasswordField(
     areCredentialsInvalid: Boolean,
     onPasswordChanged: (String) -> Unit,
     onCheckCredentials: () -> Unit,
-    hideBottomLine: Boolean,
+    passwordVisible: Boolean = false,
+    onTogglePasswordVisible: (to: Boolean) -> Unit,
     shape: Shape = TextFieldDefaults.shape
 ) {
-    var passwordVisible by remember { mutableStateOf(false) }
-    TextField(
+    OutlinedTextField(
         value = password,
         onValueChange = { onPasswordChanged(it) },
         label = { Text("Passwort") },
@@ -57,12 +52,6 @@ fun PasswordField(
         ),
         singleLine = true,
         isError = areCredentialsInvalid,
-        colors = if (hideBottomLine) TextFieldDefaults.colors(
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-            errorIndicatorColor = Color.Transparent,
-        ) else TextFieldDefaults.colors(),
         shape = shape,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         leadingIcon = {
@@ -74,7 +63,7 @@ fun PasswordField(
         },
         trailingIcon = {
             IconButton(
-                onClick = { passwordVisible = !passwordVisible }
+                onClick = { onTogglePasswordVisible(!passwordVisible) }
             ) {
                 AnimatedContent(
                     targetState = passwordVisible

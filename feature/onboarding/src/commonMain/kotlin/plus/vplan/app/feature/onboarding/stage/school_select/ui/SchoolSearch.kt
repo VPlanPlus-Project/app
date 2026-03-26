@@ -29,10 +29,10 @@ import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.ui.theme.AppTheme
 import plus.vplan.app.feature.onboarding.stage.school_select.domain.usecase.OnboardingSchoolOption
-import plus.vplan.app.feature.onboarding.stage.school_select.ui.components.OnboardingSchoolSearchHead
 import plus.vplan.app.feature.onboarding.stage.school_select.ui.components.SearchBar
 import plus.vplan.app.feature.onboarding.stage.school_select.ui.components.search_results.Error
 import plus.vplan.app.feature.onboarding.stage.school_select.ui.components.search_results.SearchResults
+import plus.vplan.app.feature.onboarding.ui.components.OnboardingHeader
 
 @Composable
 fun SchoolSearch(
@@ -72,10 +72,9 @@ private fun SchoolSearchContent(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            OnboardingSchoolSearchHead(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 32.dp)
+            OnboardingHeader(
+                title = "Finde deine Schule",
+                subtitle = "Suche nach dem Namen oder der Stundenplan24.de-Schulnummer deiner Schule."
             )
             SearchBar(
                 modifier = Modifier

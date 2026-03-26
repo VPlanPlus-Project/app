@@ -68,6 +68,7 @@ fun OnboardingView(
                         NavEntry(key = key, metadata = transitionSpec) {
                             Stundenplan24CredentialsScreen(
                                 sp24Id = onboardingState.selectedSchool?.sp24Id,
+                                isLoadingSchool = onboardingState.isInitializingSchoolData,
                                 onValidCredentialsProvided = { username, password ->
                                     viewModel.onCredentialsProvided(username, password)
                                 },

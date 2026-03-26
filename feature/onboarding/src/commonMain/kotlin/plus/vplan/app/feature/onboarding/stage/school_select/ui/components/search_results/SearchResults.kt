@@ -81,7 +81,7 @@ fun SearchResults(
 
                     Button(
                         onClick = { onEvent(SchoolSearchEvent.OnUseSp24SchoolClicked) },
-                        modifier = Modifier.padding(bottom = 8.dp),
+                        modifier = Modifier.padding(bottom = 16.dp),
                         text = "Weiter mit $query",
                         icon = CoreUiRes.drawable.arrow_right,
                     )
@@ -101,7 +101,7 @@ fun SearchResults(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainer)
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
                             .defaultMinSize(minHeight = 48.dp)
                             .clickable { onEvent(SchoolSearchEvent.OnSchoolSelected(school)) }
                             .padding(8.dp),
@@ -110,7 +110,7 @@ fun SearchResults(
                         Text(
                             text = school.name,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -118,7 +118,7 @@ fun SearchResults(
                             Text(
                                 text = school.sp24Id.toString(),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
