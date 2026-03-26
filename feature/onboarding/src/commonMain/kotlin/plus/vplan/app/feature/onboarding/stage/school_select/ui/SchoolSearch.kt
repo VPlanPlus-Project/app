@@ -3,28 +3,27 @@ package plus.vplan.app.feature.onboarding.stage.school_select.ui
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
@@ -60,38 +59,35 @@ private fun SchoolSearchContent(
     state: OnboardingSchoolSearchState,
     onEvent: (SchoolSearchEvent) -> Unit,
 ) {
-    Column(Modifier.fillMaxSize()) {
-        val layoutDirection = LocalLayoutDirection.current
+    val searchBarFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        searchBarFocusRequester.requestFocus()
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(WindowInsets.safeDrawing.asPaddingValues())
+    ) {
         Column(
-            modifier = Modifier
-                .padding(
-                    top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
-                    start = WindowInsets.safeDrawing.asPaddingValues().calculateStartPadding(layoutDirection),
-                    end = WindowInsets.safeDrawing.asPaddingValues().calculateEndPadding(layoutDirection)
-                )
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         ) {
             OnboardingSchoolSearchHead(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 32.dp, bottom = 24.dp)
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 32.dp)
             )
             SearchBar(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 8.dp),
+                    .padding(horizontal = 16.dp),
                 query = state.searchQuery,
                 textFieldError = state.textFieldError,
-                onEvent = onEvent
+                onEvent = onEvent,
+                searchBarFocusRequester = searchBarFocusRequester
             )
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
             androidx.compose.animation.AnimatedVisibility(
                 visible = state.results is SchoolResults.Loading && state.searchQuery.isNotBlank(),
                 enter = fadeIn(),
@@ -123,13 +119,13 @@ private fun SchoolSearchContent(
 
             androidx.compose.animation.AnimatedVisibility(
                 visible = state.results is SchoolResults.Results && state.searchQuery.isNotBlank(),
-                enter = fadeIn() + slideInVertically { it/3 },
-                exit = fadeOut()
+                enter = fadeIn() + slideInVertically { -it/3 },
+                exit = fadeOut(),
+                modifier = Modifier.clipToBounds()
             ) {
                 SearchResults(
                     modifier = Modifier
                         .fillMaxSize()
-                        .imePadding()
                         .padding(horizontal = 16.dp),
                     query = state.searchQuery,
                     results = (state.results as? SchoolResults.Results)?.results.orEmpty(),

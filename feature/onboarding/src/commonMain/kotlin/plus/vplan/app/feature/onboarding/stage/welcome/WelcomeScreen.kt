@@ -87,7 +87,11 @@ private fun OnboardingWelcomeScreenContent(
     animationState: OnboardingWelcomeScreenAnimationState,
     onNext: () -> Unit = {}
 ) {
-    Box(Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+    ) {
         Text(
             text = "${AppBuildConfig.APP_VERSION} (${AppBuildConfig.APP_VERSION_CODE})",
             style = MaterialTheme.typography.bodySmall,
