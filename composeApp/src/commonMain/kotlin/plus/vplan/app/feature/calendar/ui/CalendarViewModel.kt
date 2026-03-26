@@ -171,14 +171,17 @@ class CalendarViewModel(
                             val selectorDay = DateSelectorDay(
                                 date = date,
                                 homework = day.homework.map { hw ->
+                                    val subject = hw.subjectInstance?.subject
+                                        ?: hw.group?.name
+                                        ?: "?"
+
+                                    val allTasksDone = profile is Profile.StudentProfile && hw.tasks.all {
+                                        it.isDone(profile)
+                                    }
+
                                     DateSelectorDay.HomeworkItem(
-                                        subject = hw.subjectInstance?.subject ?: hw.group?.name
-                                        ?: "?",
-                                        isDone = profile is Profile.StudentProfile && hw.tasks.all {
-                                            it.isDone(
-                                                profile
-                                            )
-                                        }
+                                        subject = subject,
+                                        isDone = allTasksDone
                                     )
                                 }.sortedBy { it.subject },
                                 assessments = day.assessments.map { it.subjectInstance.subject },
