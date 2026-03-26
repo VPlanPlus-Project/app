@@ -3,8 +3,10 @@ package plus.vplan.app.feature.onboarding
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,7 +41,11 @@ fun OnboardingView(
         else viewModel.reset()
     }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+    ) {
         AnimatedVisibility(
             modifier = Modifier.fillMaxSize(),
             visible = viewModel.backStack.lastOrNull() is Onboarding.Welcome,

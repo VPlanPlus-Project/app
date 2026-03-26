@@ -15,7 +15,7 @@ import plus.vplan.app.core.ui.theme.displayFontFamily
 fun OnboardingHeader(
     modifier: Modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 32.dp),
+        .padding(horizontal = 16.dp, vertical = 24.dp),
     title: String,
     subtitle: String
 ) {

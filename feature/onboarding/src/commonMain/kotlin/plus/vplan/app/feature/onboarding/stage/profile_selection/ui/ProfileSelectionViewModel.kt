@@ -50,6 +50,9 @@ internal class ProfileSelectionViewModel(
             is ProfileSelectionEvent.SelectProfileType ->
                 state.update { it.copy(filterProfileType = event.profileType) }
 
+            is ProfileSelectionEvent.ShowUntrustedProfiles ->
+                state.update { state -> state.copy(showUntrustedProfiles = true) }
+
             is ProfileSelectionEvent.SelectProfile -> {
                 if (event.profile == null) return
                 // Signal to parent (OnboardingViewModel) which profile was selected.
@@ -93,7 +96,23 @@ internal data class ProfileSelectionState(
     val filterProfileType: ProfileType? = null,
     val subjectInstances: Map<SubjectInstance, Boolean> = emptyMap(),
     val saveState: ProfileSelectionSaveState = ProfileSelectionSaveState.NOT_STARTED,
-)
+    val showUntrustedProfiles: Boolean = false,
+) {
+    val hasStudentProfiles = this.options.any { it.type == ProfileType.STUDENT }
+    val hasUntrustedStudentProfiles = this.options.filterIsInstance<OnboardingProfile.StudentProfile>().any { !it.isTrustedName }
+    val hasTeacherProfiles = this.options.any { it.type == ProfileType.TEACHER }
+    val hasUntrustedTeacherProfiles = this.options.filterIsInstance<OnboardingProfile.TeacherProfile>().any { !it.isTrustedName }
+
+    val hasUntrustedProfiles = this.hasUntrustedStudentProfiles || this.hasUntrustedTeacherProfiles
+
+    val resultingVisibleStudentOptions = options
+        .filterIsInstance<OnboardingProfile.StudentProfile>()
+        .filter { it.isTrustedName || showUntrustedProfiles }
+
+    val resultingVisibleTeacherOptions = options
+        .filterIsInstance<OnboardingProfile.TeacherProfile>()
+        .filter { it.isTrustedName || showUntrustedProfiles }
+}
 
 internal enum class ProfileSelectionSaveState {
     NOT_STARTED, IN_PROGRESS, DONE;
@@ -106,6 +125,7 @@ internal enum class ProfileSelectionSaveState {
 
 internal sealed class ProfileSelectionEvent {
     data class SelectProfileType(val profileType: ProfileType?) : ProfileSelectionEvent()
+    data object ShowUntrustedProfiles: ProfileSelectionEvent()
     data class SelectProfile(val profile: OnboardingProfile?) : ProfileSelectionEvent()
     data object CommitProfile : ProfileSelectionEvent()
     data class ToggleSubjectInstance(val subjectInstance: SubjectInstance) : ProfileSelectionEvent()

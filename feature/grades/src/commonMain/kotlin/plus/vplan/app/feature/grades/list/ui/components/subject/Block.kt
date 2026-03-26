@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import plus.vplan.app.core.model.besteschule.BesteSchuleInterval
 import plus.vplan.app.core.ui.CoreUiRes
+import plus.vplan.app.core.ui.components.WavySeparator
 import plus.vplan.app.core.utils.number.roundTo
 import plus.vplan.app.feature.grades.common.domain.model.GradeUiItem
 import plus.vplan.app.feature.grades.list.domain.model.Subject

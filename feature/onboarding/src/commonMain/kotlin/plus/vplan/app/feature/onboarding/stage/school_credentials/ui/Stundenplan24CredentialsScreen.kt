@@ -25,6 +25,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import plus.vplan.app.core.ui.CoreUiRes
 import plus.vplan.app.core.ui.components.Button
 import plus.vplan.app.core.ui.components.ButtonSize
+import plus.vplan.app.core.ui.components.ButtonState
 import plus.vplan.app.core.ui.theme.AppTheme
 import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.components.PasswordField
 import plus.vplan.app.feature.onboarding.stage.school_credentials.ui.components.UsernameField
@@ -113,7 +114,7 @@ private fun Stundenplan24CredentialsContent(
 
         Button(
             text = "Anmelden",
-            state = state.sp24CredentialsState.toButtonState(),
+            state = if (state.isLoading) ButtonState.Disabled else state.sp24CredentialsState.toButtonState(),
             icon = CoreUiRes.drawable.arrow_right,
             onlyEventOnActive = true,
             modifier = Modifier.padding(bottom = 16.dp),
