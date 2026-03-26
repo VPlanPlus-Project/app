@@ -21,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,6 +40,7 @@ fun SearchResults(
     results: List<OnboardingSchoolOption>,
     onEvent: (SchoolSearchEvent) -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     AnimatedContent(
         targetState = query.isNotBlank() && results.isEmpty(),
         modifier = modifier.fillMaxSize()
@@ -80,7 +83,10 @@ fun SearchResults(
                     }
 
                     Button(
-                        onClick = { onEvent(SchoolSearchEvent.OnUseSp24SchoolClicked) },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onEvent(SchoolSearchEvent.OnUseSp24SchoolClicked)
+                        },
                         modifier = Modifier.padding(bottom = 16.dp),
                         text = "Weiter mit $query",
                         icon = CoreUiRes.drawable.arrow_right,
@@ -103,7 +109,10 @@ fun SearchResults(
                             .clip(RoundedCornerShape(4.dp))
                             .background(MaterialTheme.colorScheme.secondaryContainer)
                             .defaultMinSize(minHeight = 48.dp)
-                            .clickable { onEvent(SchoolSearchEvent.OnSchoolSelected(school)) }
+                            .clickable {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onEvent(SchoolSearchEvent.OnSchoolSelected(school))
+                            }
                             .padding(8.dp),
                         verticalArrangement = Arrangement.Center
                     ) {

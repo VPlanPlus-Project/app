@@ -14,6 +14,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
@@ -24,6 +26,7 @@ import plus.vplan.app.core.ui.components.ButtonState
 
 @Composable
 internal fun FinishedScreen(onFinish: () -> Unit) {
+    val haptic = LocalHapticFeedback.current
     Column(
         modifier = Modifier
             .safeDrawingPadding()
@@ -69,7 +72,10 @@ internal fun FinishedScreen(onFinish: () -> Unit) {
                 icon = CoreUiRes.drawable.check,
                 size = ButtonSize.Big,
                 onlyEventOnActive = true,
-                onClick = onFinish
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onFinish()
+                }
             )
         }
     }

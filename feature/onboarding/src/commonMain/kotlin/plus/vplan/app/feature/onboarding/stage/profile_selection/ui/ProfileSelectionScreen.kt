@@ -27,6 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
@@ -72,6 +74,7 @@ private fun ProfileListContent(
     state: ProfileSelectionState,
     onEvent: (ProfileSelectionEvent) -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -123,7 +126,10 @@ private fun ProfileListContent(
                                     .defaultMinSize(minHeight = 48.dp)
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(MaterialTheme.colorScheme.surfaceContainer)
-                                    .clickable { onEvent(ProfileSelectionEvent.SelectProfile(it)) }
+                                    .clickable {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        onEvent(ProfileSelectionEvent.SelectProfile(it))
+                                    }
                                     .padding(vertical = 8.dp, horizontal = 16.dp),
                                 verticalArrangement = Arrangement.Center
                             ) {
@@ -167,7 +173,10 @@ private fun ProfileListContent(
                                     .defaultMinSize(minHeight = 48.dp)
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(MaterialTheme.colorScheme.surfaceContainer)
-                                    .clickable { onEvent(ProfileSelectionEvent.SelectProfile(it)) }
+                                    .clickable {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        onEvent(ProfileSelectionEvent.SelectProfile(it))
+                                    }
                                     .padding(vertical = 8.dp, horizontal = 16.dp),
                                 verticalArrangement = Arrangement.Center
                             ) {

@@ -19,6 +19,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
@@ -70,6 +72,7 @@ private fun Stundenplan24CredentialsContent(
     state: Stundenplan24CredentialsState,
     onEvent: (Stundenplan24CredentialsEvent) -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     val passwordFocusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         passwordFocusRequester.requestFocus()
@@ -105,7 +108,10 @@ private fun Stundenplan24CredentialsContent(
                 passwordFocusRequester = passwordFocusRequester,
                 areCredentialsInvalid = state.sp24CredentialsState == Sp24CredentialsState.INVALID,
                 onPasswordChanged = { onEvent(Stundenplan24CredentialsEvent.OnPasswordChanged(it)) },
-                onCheckCredentials = { onEvent(Stundenplan24CredentialsEvent.OnCheckClicked) },
+                onCheckCredentials = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onEvent(Stundenplan24CredentialsEvent.OnCheckClicked)
+                },
                 shape = RoundedCornerShape(8.dp),
                 passwordVisible = state.isPasswordVisible,
                 onTogglePasswordVisible = { onEvent(Stundenplan24CredentialsEvent.SetPasswordVisible(it)) }
@@ -119,7 +125,10 @@ private fun Stundenplan24CredentialsContent(
             onlyEventOnActive = true,
             modifier = Modifier.padding(bottom = 16.dp),
             size = ButtonSize.Big,
-            onClick = { onEvent(Stundenplan24CredentialsEvent.OnCheckClicked) }
+            onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onEvent(Stundenplan24CredentialsEvent.OnCheckClicked)
+            }
         )
     }
 }

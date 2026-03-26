@@ -17,6 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.icerock.moko.permissions.DeniedAlwaysException
@@ -44,6 +46,7 @@ internal fun PermissionsScreen(onDone: () -> Unit) {
 
     val permissionRepository = koinInject<PermissionRepository> { parametersOf(controller) }
     val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
 
     LaunchedEffect(Unit) {
         if (permissionRepository.isGranted(Permission.REMOTE_NOTIFICATION)) onDone()
@@ -96,6 +99,7 @@ internal fun PermissionsScreen(onDone: () -> Unit) {
                 size = ButtonSize.Big,
                 onlyEventOnActive = true,
                 onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     scope.launch {
                         try {
                             permissionRepository.request(Permission.REMOTE_NOTIFICATION)

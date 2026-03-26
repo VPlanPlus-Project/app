@@ -16,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,6 +41,7 @@ fun TeacherNoticeScreen(
 private fun TeacherNoticeContent(
     onContinue: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     Box(
         modifier = Modifier
             .safeDrawingPadding()
@@ -119,7 +122,10 @@ private fun TeacherNoticeContent(
                 .padding(16.dp),
             text = "Weiter",
             size = ButtonSize.Big,
-            onClick = onContinue,
+            onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onContinue()
+            },
             icon = CoreUiRes.drawable.arrow_right,
         )
     }
