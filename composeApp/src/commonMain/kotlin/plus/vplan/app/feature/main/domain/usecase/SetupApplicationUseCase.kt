@@ -13,9 +13,7 @@ import plus.vplan.app.core.analytics.AnalyticsRepository
 import plus.vplan.app.core.data.KeyValueRepository
 import plus.vplan.app.core.data.Keys
 import plus.vplan.app.core.data.profile.ProfileRepository
-import plus.vplan.app.core.data.school.SchoolRepository
 import plus.vplan.app.core.data.vpp_id.VppIdRepository
-import plus.vplan.app.core.model.AliasProvider
 import plus.vplan.app.core.model.VppId
 import plus.vplan.app.core.platform.NotificationRepository
 import plus.vplan.app.feature.main.domain.usecase.setup.DoAssessmentsAndHomeworkIndexMigrationUseCase
@@ -31,14 +29,14 @@ class SetupApplicationUseCase(
     private val profileRepository: ProfileRepository,
     private val vppIdRepository: VppIdRepository,
     private val analyticsRepository: AnalyticsRepository,
-    private val schoolRepository: SchoolRepository,
     private val platformNotificationRepository: NotificationRepository,
 ) {
     private val logger = Logger.withTag("SetupApplicationUseCase")
     suspend operator fun invoke() {
         withContext(Dispatchers.Default + CoroutineName("${this::class.qualifiedName}.Invoke")) {
             updateFirebaseTokenUseCase()
-            platformNotificationRepository.initialize()if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != AppBuildConfig.APP_VERSION_CODE.toString()) {
+            platformNotificationRepository.initialize()
+            if (keyValueRepository.get(Keys.PREVIOUS_APP_VERSION).first() != AppBuildConfig.APP_VERSION_CODE.toString()) {
                 logger.i { "First run of VPlanPlus" }
                 logger.d { "Saving migration flags" }
 
@@ -86,14 +84,6 @@ class SetupApplicationUseCase(
             }
 
             if (analyticsRepository.isFeatureEnabled("core_sp24-api-log", true)) sendSp24CredentialsToServerUseCase()
-
-            profileRepository.getAll().first()
-                .map { it.school }
-                .distinctBy { it.id }
-                .filter { it.aliases.none { alias -> alias.provider == AliasProvider.Vpp } }
-                .forEach { school ->
-                    schoolRepository.getById(school.aliases.first(), forceReload = true).first()
-                }
         }
     }
 }
